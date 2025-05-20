@@ -1,0 +1,36 @@
+---
+- name: Install dependencies
+  ansible.builtin.apt:
+    name:
+      - software-properties-common
+    update_cache: true
+  become: true
+
+- name: Add CRI-O repository key
+  ansible.builtin.get_url:
+    url: "https://download.opensuse.org/repositories/isv:/cri-o:/stable:/{{ crio_version }}/deb/Release.key"
+    dest: /etc/apt/keyrings/cri-o-apt-keyring.asc
+    mode: '0644'
+  become: true
+
+- name: Add CRI-O repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.asc] https://download.opensuse.org/repositories/isv:/cri-o:/stable:/{{ crio_version }}/deb/ /"
+    filename: cri-o
+    state: present
+  become: true
+
+- name: Install kubernetes packages
+  ansible.builtin.apt:
+    name:
+      - cri-o
+    state: present
+    update_cache: true
+  become: true
+
+- name: Start CRI-O service
+  ansible.builtin.systemd:
+    name: crio
+    state: started
+    enabled: true
+  become: true
