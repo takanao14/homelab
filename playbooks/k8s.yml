@@ -3,7 +3,6 @@
   hosts:
     - k8s
   roles:
-    - apt_mirror
     - package_upgrade
     - crio
     - kubernetes
