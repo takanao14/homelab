@@ -1,0 +1,9 @@
+---
+- name: Install k8s packages
+  hosts:
+    - k8s
+  roles:
+    - package_upgrade
+    - crio
+    - kubernetes
+    - reboot
