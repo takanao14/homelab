@@ -20,16 +20,6 @@
     state: present
   become: true
 
-- name: Hold kubernetes packages
-  ansible.builtin.dpkg_selections:
-    name: "{{ item }}"
-    selection: install
-  loop:
-    - kubelet
-    - kubeadm
-    - kubectl
-  become: true
-
 - name: Install kubernetes packages
   ansible.builtin.apt:
     name:
