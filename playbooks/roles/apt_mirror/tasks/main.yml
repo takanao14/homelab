@@ -1,0 +1,8 @@
+---
+- name: Install mirror list
+  ansible.builtin.copy:
+    src: 00-mirror.sources
+    dest: /etc/apt/sources.list.d/00-mirror.sources
+    mode: '0644'
+  when: ansible_architecture == 'x86_64'
+  become: true
