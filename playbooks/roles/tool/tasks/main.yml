@@ -1,0 +1,8 @@
+---
+- name: Install tool dependencies
+  ansible.builtin.apt:
+    name:
+      - clang
+      - bash-completion
+    update_cache: true
+  become: true

@@ -6,4 +6,5 @@
     - package_upgrade
     - crio
     - kubernetes
+    - tool
     - reboot
