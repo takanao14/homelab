@@ -1,1 +1,9 @@
-sudo kubeadm init --pod-network-cidr 10.244.0.0/24 --skip-phases=addon/kube-proxy
+# cluster setup
+
+setup follow steps
+
+- kubeadm.md
+  create cluster
+
+- cilium.md
+  install cni
