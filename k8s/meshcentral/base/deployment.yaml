@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meshcentral
+  labels:
+    app: meshcentral
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: meshcentral
+  template:
+    metadata:
+      labels:
+        app: meshcentral
+    spec:
+      containers:
+      - name: meshcentral
+        image: ghcr.io/ylianst/meshcentral:1.1.56-slim
+        ports:
+        - containerPort: 443
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        envFrom:
+          - configMapRef:
+              name: meshcentral-config
+        volumeMounts:
+        - name: data
+          mountPath: /opt/meshcentral/meshcentral-data
+        - name: files
+          mountPath: /opt/meshcentral/meshcentral-files
+        - name: backups
+          mountPath: /opt/meshcentral/meshcentral-backups
+        - name: web
+          mountPath: /opt/meshcentral/meshcentral-web
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: meshcentral-data
+      - name: files
+        persistentVolumeClaim:
+          claimName: meshcentral-files
+      - name: backups
+        persistentVolumeClaim:
+          claimName: meshcentral-backups
+      - name: web
+        persistentVolumeClaim:
+          claimName: meshcentral-web

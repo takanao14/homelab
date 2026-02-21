@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: meshcentral
+  annotations:
+    io.cilium/load-balancer-ip: "192.168.20.200" # dummy address
+spec:
+  type: LoadBalancer

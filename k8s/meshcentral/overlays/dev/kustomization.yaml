@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: meshcentral
+
+resources:
+- namespace.yaml
+- ../../base
+
+patches:
+- path: loadbalancer.yaml
+  target:
+    kind: Service
+    name: meshcentral
+
+configMapGenerator:
+  - name: meshcentral-config
+    envs:
+      - .env
+
+replacements:
+  - source:
+      kind: ConfigMap
+      name: meshcentral-config
+      fieldPath: data.HOSTNAME
+    targets:
+      - select:
+          kind: Service
+          name: meshcentral
+        fieldPaths:
+          - metadata.annotations.[io.cilium/load-balancer-ip]
