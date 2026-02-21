@@ -1,0 +1,17 @@
+engines:
+  replicated:
+    mayastor:
+      enabled: false
+  local:
+    zfs:
+      enabled: false
+    lvm:
+      enabled: false
+loki:
+  enabled: false
+alloy:
+  enabled: false
+localpv-provisioner:
+  hostpathClass:
+    isDefaultClass: true
+    basePath: "/srv/storage/volume"

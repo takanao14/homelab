@@ -1,0 +1,9 @@
+apiVersion: "cilium.io/v2alpha1"
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: "homelab-l2-policy"
+spec:
+  interfaces:
+    - ^eth0$  # For wired LAN. Use ^wlan0$ for Wi-Fi
+  externalIPs: true
+  loadBalancerIPs: true

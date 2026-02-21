@@ -1,0 +1,44 @@
+apiVersion: k0sctl.k0sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: ${K0S_CLUSTER_NAME}
+spec:
+  hosts:
+  - role: controller
+    ssh:
+      address: ${K0S_CONTROLLER_ADDRESS}
+      user: ${K0S_SSH_USER}
+      port: 22
+      keyPath: ~/.ssh/id_ed25519
+  - role: worker
+    ssh:
+      address: ${K0S_WORKER_ADDRESS}
+      user: ${K0S_SSH_USER}
+      port: 22
+      keyPath: ~/.ssh/id_ed25519
+    files:
+      - name: setup-ssd
+        src: ./hook/ssdsetup.sh
+        dstDir: /tmp/
+        perm: 0755
+      - name: mirror-config
+        src: ./hook/mirror.sh
+        dstDir: /tmp/
+        perm: 0755
+    hooks:
+      apply:
+        before:
+          - /tmp/ssdsetup.sh
+          - /tmp/mirror.sh
+  k0s:
+    config:
+      spec:
+        storage:
+          type: kine # Use kine instead of etcd for homelab environment
+        network:
+          provider: custom # Set to custom to use Cilium
+          kubeProxy: # Disable kube-proxy since using Cilium
+            disabled: true
+  options:
+    wait:
+      enabled: false

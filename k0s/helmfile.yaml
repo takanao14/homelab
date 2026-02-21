@@ -1,0 +1,18 @@
+repositories:
+  - name: openebs
+    url: https://openebs.github.io/openebs
+
+releases:
+  - name: cilium
+    namespace: kube-system
+    chart: oci://quay.io/cilium/charts/cilium
+    version: 1.19.1
+    values:
+      - values/cilium.yaml.gotmpl
+
+  - name: openebs
+    namespace: openebs
+    chart: openebs/openebs
+    version: 4.4.0
+    values:
+      - values/openebs.yaml
