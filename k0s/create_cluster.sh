@@ -1,68 +1,109 @@
 #!/bin/bash
 set -euo pipefail
 
-# Color output
+# create_cluster.sh
+# Entry point for k0s cluster management
+# Usage: ./create_cluster.sh <dev|prd> <command>
+
+# ============================================================================
+# Constants
+# ============================================================================
+
+# Color output for better readability
 export RED='\033[0;31m'
 export GREEN='\033[0;32m'
 export YELLOW='\033[1;33m'
 export NC='\033[0m'
 
-# Helper to show usage before sourcing lib if possible, or just basic usage
-usage_stub() {
-    echo "Usage: $(basename "$0") <dev|prd> <command> [args...]" >&2
+# Resolve script directory for consistent path references
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TEMPLATE_FILE="$SCRIPT_DIR/k0sctl.tmpl.yaml"
+LIB_FILE="$SCRIPT_DIR/template_lib.sh"
+
+# ============================================================================
+# Error handling utilities
+# ============================================================================
+
+die() {
+    echo -e "${RED}✗${NC} Error: $*" >&2
+    exit 1
 }
 
+usage() {
+    echo "Usage: $(basename "$0") <dev|prd> <command>" >&2
+}
+
+# ============================================================================
+# Environment configuration
+# ============================================================================
+
+setup_env_config() {
+    local target="$1"
+
+    # Map environment target to configuration
+    case "$target" in
+        dev)
+            ENV_FILE="$SCRIPT_DIR/.env.dev"
+            K0SCTRL_FILE="$SCRIPT_DIR/dev-homelab-k0sctl.yaml"
+            KUBECONFIG_OUT="$HOME/.kube/dev-homelab.yaml"
+            ;;
+        prd)
+            ENV_FILE="$SCRIPT_DIR/.env.homelab"
+            K0SCTRL_FILE="$SCRIPT_DIR/homelab-k0sctl.yaml"
+            KUBECONFIG_OUT="$HOME/.kube/homelab.yaml"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+# ============================================================================
+# Main entry point
+# ============================================================================
+
+# Validate environment target argument
 if [ "${1:-}" = "" ]; then
-    usage_stub
+    usage
     exit 2
 fi
 
 ENV_TARGET="$1"
 shift
 
-case "$ENV_TARGET" in
-    dev)
-        ENV_FILE=".env.dev"
-        K0SCTRL_FILE="dev-homelab-k0sctl.yaml"
-        KUBECONFIG_OUT="$HOME/.kube/dev-homelab.yaml"
-        ;;
-    prd)
-        ENV_FILE=".env.homelab"
-        K0SCTRL_FILE="homelab-k0sctl.yaml"
-        KUBECONFIG_OUT="$HOME/.kube/homelab.yaml"
-        ;;
-    *)
-        usage_stub
-        exit 2
-        ;;
-esac
-
-# Load env file if it exists
-if [ -f "$ENV_FILE" ]; then
-    # shellcheck source=/dev/null
-    set -a
-    . "$ENV_FILE"
-    set +a
-else
-    echo -e "${RED}✗${NC} Error: environment file not found: $ENV_FILE"
-    exit 1
+# Setup environment configuration
+if ! setup_env_config "$ENV_TARGET"; then
+    usage
+    die "Invalid environment target: $ENV_TARGET (must be dev or prd)"
 fi
 
-export K0S_SSH_USER="${K0S_SSH_USER}"
-export K0S_CONTROLLER_ADDRESS="${K0S_CONTROLLER_ADDRESS}"
-export K0S_WORKER_ADDRESS="${K0S_WORKER_ADDRESS}"
-export K0S_CLUSTER_NAME="${K0S_CLUSTER_NAME}"
-
-TEMPLATE_FILE="k0sctl.tmpl.yaml"
-LIB_FILE="$(dirname "$0")/template_lib.sh"
-
-if [ -f "$LIB_FILE" ]; then
-    # shellcheck source=/dev/null
-    . "$LIB_FILE"
-else
-    echo -e "${RED}✗${NC} Error: library file not found: $LIB_FILE"
-    exit 1
+# Validate environment file exists
+if [ ! -f "$ENV_FILE" ]; then
+    die "Environment file not found: $ENV_FILE"
 fi
 
-# Entrypoint
-run_main "$TEMPLATE_FILE" "$K0SCTRL_FILE" "$KUBECONFIG_OUT" "$@"
+# Source environment file with set -a to export all variables
+set -a
+# shellcheck disable=SC1090
+source "$ENV_FILE"
+set +a
+
+# Validate command argument
+if [ "${#@}" -eq 0 ]; then
+    usage
+    exit 2
+fi
+
+COMMAND="$1"
+
+# Validate library file exists
+if [ ! -f "$LIB_FILE" ]; then
+    die "Library file not found: $LIB_FILE"
+fi
+
+# Source library
+# shellcheck source=/dev/null
+. "$LIB_FILE"
+
+# Entrypoint: pass arguments in order: command, environment, script_dir, template_file, k0sctl_file, kubeconfig_out
+run_main "$COMMAND" "$ENV_TARGET" "$SCRIPT_DIR" "$TEMPLATE_FILE" "$K0SCTRL_FILE" "$KUBECONFIG_OUT"
