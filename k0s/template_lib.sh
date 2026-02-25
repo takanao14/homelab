@@ -1,30 +1,35 @@
 #!/bin/bash
 set -euo pipefail
 
-# makedev template library
-# Expected to be `source`d by `makedev.sh` or `makeprd.sh`.
-#
-# Provided functions:
-#  - usage, preflight, generate_config, run_apply, run_reset, run_kubeconfig, run_helmfile, run_main
+# template_lib.sh
+# Common logic for k0s cluster management
 
 # Prevent double-sourcing
-if [ "${MAKEDEV_LIB_LOADED:-0}" -eq 1 ]; then
+if [ "${TEMPLATE_LIB_LOADED:-0}" -eq 1 ]; then
     return 0
 fi
-MAKEDEV_LIB_LOADED=1
+TEMPLATE_LIB_LOADED=1
+
+# Color output (ensure these are defined if this script is sourced)
+export RED='\033[0;31m'
+export GREEN='\033[0;32m'
+export YELLOW='\033[1;33m'
+export NC='\033[0m'
 
 usage() {
-    local output_file="$1"
-    local kubeconfig_out="$2"
+    local script_name
+    script_name=$(basename "$0")
+
     cat <<EOF
-Usage: $0 <command>
+Usage: $script_name <dev|prd> <command>
+
 Commands:
-  apply       Generate config and run: k0sctl apply --config $output_file
+  apply       Generate config and run: k0sctl apply
               Then fetch kubeconfig and run helmfile apply.
-  reset       Run: k0sctl reset --config $output_file
-  kubeconfig  Generate config and output kubeconfig to $kubeconfig_out
+  reset       Run: k0sctl reset
+  kubeconfig  Generate config and output kubeconfig
   helmfile    Run: helmfile apply (uses env vars from script)
-  gen         Only generate $output_file from template
+  config      Only generate k0sctl config from template
   help        Show this message
 EOF
 }
@@ -39,9 +44,9 @@ preflight() {
     done
 }
 
-generate_config() {
+generate_k0sctl_config() {
     local template_file="$1"
-    local output_file="$2"
+    local k0sctl_file="$2"
 
     echo -e "${YELLOW:-}→${NC:-} Generating k0sctl configuration..."
 
@@ -59,49 +64,49 @@ generate_config() {
         fi
     done
 
-    if envsubst < "$template_file" > "$output_file"; then
-        echo -e "${GREEN:-}✓${NC:-} Configuration generated: $output_file"
+    if envsubst < "$template_file" > "$k0sctl_file"; then
+        echo -e "${GREEN:-}✓${NC:-} Configuration generated: $k0sctl_file"
     else
         echo -e "${RED:-}✗${NC:-} Error: Failed to generate configuration"
         exit 1
     fi
 }
 
-run_apply() {
+k0sctl_apply() {
     local template_file="$1"
-    local output_file="$2"
+    local k0sctl_file="$2"
 
-    generate_config "$template_file" "$output_file"
-    echo -e "${YELLOW:-}→${NC:-} Running: k0sctl apply --config $output_file"
-    k0sctl apply --config "$output_file"
+    generate_k0sctl_config "$template_file" "$k0sctl_file"
+    echo -e "${YELLOW:-}→${NC:-} Running: k0sctl apply --config $k0sctl_file"
+    k0sctl apply --config "$k0sctl_file"
 }
 
-run_reset() {
+k0sctl_reset() {
     local template_file="$1"
-    local output_file="$2"
+    local k0sctl_file="$2"
 
     # If config doesn't exist, generate it so k0sctl knows targets
-    if [ ! -f "$output_file" ]; then
-        generate_config "$template_file" "$output_file"
+    if [ ! -f "$k0sctl_file" ]; then
+        generate_k0sctl_config "$template_file" "$k0sctl_file"
     fi
-    echo -e "${YELLOW:-}→${NC:-} Running: k0sctl reset --config $output_file"
-    k0sctl reset --config "$output_file"
+    echo -e "${YELLOW:-}→${NC:-} Running: k0sctl reset --config $k0sctl_file"
+    k0sctl reset --config "$k0sctl_file"
 }
 
-run_kubeconfig() {
+generate_kubeconfig() {
     local template_file="$1"
-    local output_file="$2"
+    local k0sctl_file="$2"
     local kubeconfig_out="$3"
 
-    generate_config "$template_file" "$output_file"
+    generate_k0sctl_config "$template_file" "$k0sctl_file"
     echo -e "${YELLOW:-}→${NC:-} Fetching kubeconfig via k0sctl"
     mkdir -p "$(dirname "$kubeconfig_out")"
     # k0sctl kubeconfig writes to stdout; capture to file
-    k0sctl kubeconfig --config "$output_file" > "$kubeconfig_out"
+    k0sctl kubeconfig --config "$k0sctl_file" > "$kubeconfig_out"
     echo -e "${GREEN:-}✓${NC:-} kubeconfig written to: $kubeconfig_out"
 }
 
-run_helmfile() {
+helmfile_apply() {
     echo -e "${YELLOW:-}→${NC:-} Running: helmfile apply"
     echo -e "${YELLOW:-}→${NC:-} Using KUBECONFIG: ${KUBECONFIG:-unknown}"
 
@@ -110,51 +115,54 @@ run_helmfile() {
         exit 1
     fi
 
-    # helmfile will use the environment variables exported by makedev.sh/makeprd.sh
+    # helmfile will use the environment variables exported by the caller script
     helmfile apply
 }
 
 run_main() {
     local template_file="$1"
-    local output_file="$2"
+    local k0sctl_file="$2"
     local kubeconfig_out="$3"
-    shift 3
-    local command="${1:-}"
+    local command="${4:-}"
 
     if [ -z "$command" ]; then
-        usage "$output_file" "$kubeconfig_out"
+        usage
         exit 1
     fi
+
+    case "$command" in
+        help|-h|--help)
+            usage
+            exit 0
+            ;;
+    esac
 
     preflight
 
     case "$command" in
         apply)
-            run_apply "$template_file" "$output_file"
-            run_kubeconfig "$template_file" "$output_file" "$kubeconfig_out"
+            k0sctl_apply "$template_file" "$k0sctl_file"
+            generate_kubeconfig "$template_file" "$k0sctl_file" "$kubeconfig_out"
             export KUBECONFIG="$kubeconfig_out"
-            run_helmfile
+            helmfile_apply
             echo -e "${GREEN:-}✓${NC:-} Cluster setup completed successfully!"
             ;;
         reset)
-            run_reset "$template_file" "$output_file"
+            k0sctl_reset "$template_file" "$k0sctl_file"
             ;;
         kubeconfig)
-            run_kubeconfig "$template_file" "$output_file" "$kubeconfig_out"
+            generate_kubeconfig "$template_file" "$k0sctl_file" "$kubeconfig_out"
             ;;
         helmfile)
             export KUBECONFIG="$kubeconfig_out"
-            run_helmfile
+            helmfile_apply
             ;;
-        gen)
-            generate_config "$template_file" "$output_file"
-            ;;
-        help|-h|--help)
-            usage "$output_file" "$kubeconfig_out"
+        config)
+            generate_k0sctl_config "$template_file" "$k0sctl_file"
             ;;
         *)
             echo -e "${RED:-}✗${NC:-} Unknown command: $command"
-            usage "$output_file" "$kubeconfig_out"
+            usage
             exit 2
             ;;
     esac

@@ -7,12 +7,13 @@ export GREEN='\033[0;32m'
 export YELLOW='\033[1;33m'
 export NC='\033[0m'
 
-usage() {
+# Helper to show usage before sourcing lib if possible, or just basic usage
+usage_stub() {
     echo "Usage: $(basename "$0") <dev|prd> <command> [args...]" >&2
 }
 
 if [ "${1:-}" = "" ]; then
-    usage
+    usage_stub
     exit 2
 fi
 
@@ -22,16 +23,16 @@ shift
 case "$ENV_TARGET" in
     dev)
         ENV_FILE=".env.dev"
-        OUTPUT_FILE="dev-homelab-k0sctl.yaml"
+        K0SCTRL_FILE="dev-homelab-k0sctl.yaml"
         KUBECONFIG_OUT="$HOME/.kube/dev-homelab.yaml"
         ;;
     prd)
         ENV_FILE=".env.homelab"
-        OUTPUT_FILE="homelab-k0sctl.yaml"
+        K0SCTRL_FILE="homelab-k0sctl.yaml"
         KUBECONFIG_OUT="$HOME/.kube/homelab.yaml"
         ;;
     *)
-        usage
+        usage_stub
         exit 2
         ;;
 esac
@@ -64,4 +65,4 @@ else
 fi
 
 # Entrypoint
-run_main "$TEMPLATE_FILE" "$OUTPUT_FILE" "$KUBECONFIG_OUT" "$@"
+run_main "$TEMPLATE_FILE" "$K0SCTRL_FILE" "$KUBECONFIG_OUT" "$@"
