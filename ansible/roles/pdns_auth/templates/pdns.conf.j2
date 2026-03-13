@@ -1,0 +1,44 @@
+# system settings
+
+# backend
+launch=gsqlite3
+gsqlite3-database=/var/lib/powerdns/pdns.sqlite3
+
+# security
+setuid=pdns
+setgid=pdns
+
+# logging
+loglevel=4
+
+# network
+{% if pdns_role == 'primary' %}
+local-address={{ pdns_primary_addr }}
+local-port={{ pdns_primary_port }}
+primary=yes
+secondary=no
+# Primary specific
+disable-axfr=no
+allow-axfr-ips={{ pdns_primary_allow_axfr_ips }}
+also-notify={{ pdns_primary_also_notify }}
+api-key={{ pdns_primary_api_key }}
+webserver-address={{ pdns_primary_addr }}
+{% else %}
+local-address={{ pdns_secondary_addr }}
+local-port={{ pdns_secondary_port }}
+primary=no
+secondary=yes
+# Secondary specific
+disable-axfr=yes
+api-key={{ pdns_secondary_api_key }}
+webserver-address={{ pdns_secondary_addr }}
+{% endif %}
+
+# misc
+version-string=powerdns
+
+# Web API (Common)
+webserver=yes
+webserver-port={{ pdns_webserver_port }}
+webserver-allow-from={{ pdns_webserver_allow_from }}
+api=yes

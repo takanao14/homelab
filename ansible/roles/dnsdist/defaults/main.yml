@@ -1,0 +1,58 @@
+---
+# Fallback address for dnsdist frontend bind/web UI.
+# By default use the primary IPv4 fact; override per-host if needed.
+dnsdist_server_addr: "{{ ansible_facts['default_ipv4'].address | default(ansible_host) }}"
+
+dnsdist_repo_base_url: "http://repo.powerdns.com/ubuntu"
+dnsdist_repo_release: "{{ ansible_facts['distribution_release'] | default('noble') }}"
+dnsdist_repo_channel: "dnsdist-20"
+dnsdist_repo_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc"
+dnsdist_repo_key_path: "/etc/apt/keyrings/dnsdist-20-pub.asc"
+dnsdist_repo_pin_path: "/etc/apt/preferences.d/dnsdist-20"
+
+# Variable mappings from global vars
+primary_auth_server: "{{ lookup('ansible.builtin.env', 'PRIMARY_AUTH_SERVER') }}"
+secondary_auth_server: "{{ lookup('ansible.builtin.env', 'SECONDARY_AUTH_SERVER') }}"
+dnsdist_local_forwarder: "{{ lookup('ansible.builtin.env', 'DNSDIST_LOCAL_FORWARDER') }}"
+dnsdist_web_password: "{{ lookup('ansible.builtin.env', 'DNSDIST_WEB_PASSWORD') }}"
+dnsdist_web_api_key: "{{ lookup('ansible.builtin.env', 'DNSDIST_WEB_API_KEY') }}"
+dnsdist_console_key: "{{ lookup('ansible.builtin.env', 'DNSDIST_CONSOLE_KEY') }}"
+dnsdist_mgmt_acl: "{{ lookup('ansible.builtin.env', 'DNSDIST_MGMT_ACL') }}"
+dnsdist_console_acl: "{{ lookup('ansible.builtin.env', 'DNSDIST_CONSOLE_ACL') }}"
+
+dnsdist_packet_cache_size: "{{ lookup('ansible.builtin.env', 'DNSDIST_PACKET_CACHE_SIZE') }}"
+dnsdist_packet_cache_max_ttl: "{{ lookup('ansible.builtin.env', 'DNSDIST_PACKET_CACHE_MAX_TTL') }}"
+
+# Internal Domain setup
+dnsdist_internal_domain: "{{ lookup('ansible.builtin.env', 'DNSDIST_INTERNAL_DOMAIN') }}"
+dnsdist_internal_check_name: "{{ lookup('ansible.builtin.env', 'DNSDIST_INTERNAL_CHECK_NAME') }}"
+
+# Backend Servers Configuration
+dnsdist_internal_backends:
+  - name: auth1
+    address: "{{ primary_auth_server }}"
+    pool: internal
+    checkName: "{{ dnsdist_internal_check_name }}"
+    checkType: A
+  - name: auth2
+    address: "{{ secondary_auth_server }}"
+    pool: internal
+    checkName: "{{ dnsdist_internal_check_name }}"
+    checkType: A
+
+dnsdist_default_backends:
+  - name: local-forwarder
+    address: "{{ dnsdist_local_forwarder }}"
+    pool: ""
+    checkName: "google.com."
+    checkType: A
+  - name: google-dns
+    address: "8.8.8.8:53"
+    pool: ""
+    checkName: "google.com."
+    checkType: A
+  - name: cloudflare-dns
+    address: "1.1.1.1:53"
+    pool: ""
+    checkName: "cloudflare.com."
+    checkType: A

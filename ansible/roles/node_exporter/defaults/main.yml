@@ -1,0 +1,7 @@
+---
+# Default arguments for prometheus-node-exporter
+# Example:
+# node_exporter_args:
+#   - '--collector.textfile.directory=/var/lib/node_exporter/textfile_collector'
+#   - '--no-collector.wifi'
+node_exporter_args: []

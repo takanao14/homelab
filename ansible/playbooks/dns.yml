@@ -1,0 +1,20 @@
+---
+- name: Setup Secondary DNS Servers
+  hosts: dns_secondary
+  serial: 1
+  any_errors_fatal: true
+  roles:
+    - role: dnsdist
+      tags: dnsdist
+    - role: pdns_auth
+      tags: pdns_auth
+
+- name: Setup Primary DNS Server
+  hosts: dns_primary
+  serial: 1
+  any_errors_fatal: true
+  roles:
+    - role: dnsdist
+      tags: dnsdist
+    - role: pdns_auth
+      tags: pdns_auth

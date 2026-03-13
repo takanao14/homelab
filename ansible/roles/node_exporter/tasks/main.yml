@@ -1,0 +1,27 @@
+---
+- name: Install prometheus-node-exporter
+  apt:
+    name: prometheus-node-exporter
+    state: present
+    update_cache: yes
+
+- name: Install lm-sensors for temperature monitoring on amd64
+  apt:
+    name: lm-sensors
+    state: present
+  when: ansible_facts['architecture'] == "x86_64"
+
+- name: Configure node_exporter args
+  template:
+    src: prometheus-node-exporter.default.j2
+    dest: /etc/default/prometheus-node-exporter
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart node_exporter
+
+- name: Ensure prometheus-node-exporter is started and enabled
+  service:
+    name: prometheus-node-exporter
+    state: started
+    enabled: yes

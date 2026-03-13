@@ -1,0 +1,61 @@
+---
+- name: Create Proxmox maintenance user
+  hosts: proxmox
+  any_errors_fatal: true
+  vars:
+    target_user: "{{ lookup('env', 'MAINTENANCE_USER') }}"
+    ssh_key_path: "{{ lookup('env', 'SSH_KEY_PATH') }}"
+    target_password_hash: "{{ lookup('env', 'MAINTENANCE_PASSWORD_HASH') }}"
+
+  tasks:
+    - name: Ensure sudo is installed
+      ansible.builtin.apt:
+        name: sudo
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Ensure the user exists
+      ansible.builtin.user:
+        name: "{{ target_user }}"
+        password: "{{ target_password_hash }}"
+        shell: /bin/bash
+        groups: sudo
+        append: true
+        create_home: true
+
+    - name: Ensure the user has passwordless sudo
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/{{ target_user }}"
+        content: "{{ target_user }} ALL=(ALL) NOPASSWD: ALL"
+        mode: '0440'
+        validate: /usr/sbin/visudo -cf %s
+
+    - name: Set authorized key for the user
+      ansible.builtin.authorized_key:
+        user: "{{ target_user }}"
+        state: present
+        key: "{{ lookup('file', ssh_key_path) }}"
+
+    # Set access permissions for Proxmox GUI (Web UI)
+    - name: Check if user exists in Proxmox
+      ansible.builtin.shell: "pveum user list | grep -q '{{ target_user }}@pam'"
+      register: pve_user_exists
+      check_mode: false
+      changed_when: false
+      failed_when: false
+
+    - name: Add user to Proxmox VE
+      ansible.builtin.command: "pveum user add '{{ target_user }}@pam' --comment 'Managed by Ansible'"
+      when: pve_user_exists.rc != 0
+
+    - name: Check Administrator role
+      ansible.builtin.shell: "pveum user permissions '{{ target_user }}@pam' | grep -q 'Administrator'"
+      register: pve_user_perm
+      check_mode: false
+      changed_when: false
+      failed_when: false
+
+    - name: Grant Administrator role to user
+      ansible.builtin.command: "pveum acl modify / -user '{{ target_user }}@pam' -role Administrator"
+      when: pve_user_perm.rc != 0

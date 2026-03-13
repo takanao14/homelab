@@ -1,0 +1,66 @@
+-- backend
+
+-- internal backends
+{% for backend in dnsdist_internal_backends %}
+newServer({
+    address="{{ backend.address }}",
+    pool="{{ backend.pool }}",
+    name="{{ backend.name }}",
+    checkName="{{ backend.checkName }}",
+    checkType="{{ backend.checkType }}",
+})
+{% endfor %}
+
+-- recursive (internet) backends
+{% for backend in dnsdist_default_backends %}
+newServer({
+    address="{{ backend.address }}",
+    pool="{{ backend.pool }}",
+    name="{{ backend.name }}",
+    checkName="{{ backend.checkName }}",
+    checkType="{{ backend.checkType }}",
+})
+{% endfor %}
+
+-- Packet Cache for recursive (internet) queries
+-- Pool "" is the default pool containing external resolvers
+local pc = newPacketCache({{ dnsdist_packet_cache_size }}, {
+    maxTTL={{ dnsdist_packet_cache_max_ttl }},
+    temporaryFailureTTL=60,
+    staleTTL=60
+})
+getPool(""):setCache(pc)
+
+-- internal domain routing
+addAction("{{ dnsdist_internal_domain }}", SetNoRecurseAction())
+addAction("{{ dnsdist_internal_domain }}", PoolAction("internal"))
+
+-- default routing
+
+-- Frontend
+setLocal("{{ dnsdist_server_addr }}:53")
+
+-- logging
+setRingBuffersSize(10000)
+
+-- console setting
+local consoleKey="{{ dnsdist_console_key }}"
+local consoleACL="{{ dnsdist_console_acl }}"
+
+controlSocket("0.0.0.0:5199")
+setKey(consoleKey)
+setConsoleACL(consoleACL)
+
+-- api setting
+local webPass="{{ dnsdist_web_password }}"
+local webApiKey="{{ dnsdist_web_api_key }}"
+local mgmtACL="{{ dnsdist_mgmt_acl }}"
+
+webserver("{{ dnsdist_server_addr }}:8083")
+setWebserverConfig({
+    password=webPass,
+    apiKey=webApiKey,
+    acl=mgmtACL,
+    statsRequireAuthentication=false,
+    dashboardRequiresAuthentication=false
+})

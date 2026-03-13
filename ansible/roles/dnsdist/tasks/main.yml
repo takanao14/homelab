@@ -1,0 +1,56 @@
+---
+- name: Validate dnsdist supported OS
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == 'Debian'
+      - ansible_facts['distribution'] == 'Ubuntu'
+    fail_msg: "dnsdist role currently supports Ubuntu only."
+
+- name: Ensure apt keyring directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Install PowerDNS repository key
+  ansible.builtin.get_url:
+    url: "{{ dnsdist_repo_key_url }}"
+    dest: "{{ dnsdist_repo_key_path }}"
+    mode: "0644"
+
+- name: Configure dnsdist apt pinning
+  ansible.builtin.copy:
+    dest: "{{ dnsdist_repo_pin_path }}"
+    mode: "0644"
+    content: |
+      Package: dnsdist*
+      Pin: origin repo.powerdns.com
+      Pin-Priority: 600
+
+- name: Configure PowerDNS dnsdist repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by={{ dnsdist_repo_key_path }}] {{ dnsdist_repo_base_url }} {{ dnsdist_repo_release }}-{{ dnsdist_repo_channel }} main"
+    filename: dnsdist
+    state: present
+    update_cache: true
+
+- name: Install dnsdist package
+  ansible.builtin.apt:
+    name: dnsdist
+    state: present
+
+- name: Deploy dnsdist configuration
+  ansible.builtin.template:
+    src: dnsdist.conf.j2
+    dest: /etc/dnsdist/dnsdist.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart dnsdist
+
+- name: Ensure dnsdist service is enabled and started
+  ansible.builtin.systemd:
+    name: dnsdist
+    enabled: true
+    state: started
+    daemon_reload: true

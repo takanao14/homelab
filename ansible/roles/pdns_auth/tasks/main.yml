@@ -1,0 +1,88 @@
+---
+- name: Validate pdns role parameter
+  ansible.builtin.assert:
+    that:
+      - pdns_role is defined
+      - pdns_role in ['primary', 'secondary']
+    fail_msg: "pdns_role must be either 'primary' or 'secondary'."
+
+- name: Validate environment variables
+  ansible.builtin.assert:
+    that:
+      - pdns_primary_addr is defined and pdns_primary_addr | length > 0
+      - pdns_secondary_addr is defined and pdns_secondary_addr | length > 0
+    fail_msg: "PDNS server addresses are missing. Check env vars PRIMARY_AUTH_SERVER / SECONDARY_AUTH_SERVER."
+
+- name: Ensure apt keyring directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Install PowerDNS repository key
+  ansible.builtin.get_url:
+    url: "{{ pdns_repo_key_url }}"
+    dest: "{{ pdns_repo_key_path }}"
+    mode: "0644"
+
+- name: Configure pdns apt pinning
+  ansible.builtin.copy:
+    dest: "{{ pdns_repo_pin_path }}"
+    mode: "0644"
+    content: |
+      Package: pdns-*
+      Pin: origin repo.powerdns.com
+      Pin-Priority: 600
+
+- name: Configure PowerDNS authoritative repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by={{ pdns_repo_key_path }}] {{ pdns_repo_base_url }} {{ pdns_repo_release }}-{{ pdns_repo_channel }} main"
+    filename: pdns-auth
+    state: present
+    update_cache: true
+
+- name: Install pdns packages
+  ansible.builtin.apt:
+    name:
+      - pdns-server
+      - pdns-backend-sqlite3
+      - sqlite3
+    state: present
+
+- name: Ensure PowerDNS data directory exists
+  ansible.builtin.file:
+    path: /var/lib/powerdns
+    state: directory
+    owner: pdns
+    group: pdns
+    mode: "0755"
+
+- name: Initialize PowerDNS sqlite database
+  ansible.builtin.shell: |
+    sqlite3 /var/lib/powerdns/pdns.sqlite3 < /usr/share/pdns-backend-sqlite3/schema/schema.sqlite3.sql
+  args:
+    creates: /var/lib/powerdns/pdns.sqlite3
+
+- name: Ensure PowerDNS data directory ownership
+  ansible.builtin.file:
+    path: /var/lib/powerdns
+    state: directory
+    owner: pdns
+    group: pdns
+    recurse: true
+
+- name: Deploy pdns configuration
+  ansible.builtin.template:
+    src: "pdns.conf.j2"
+    dest: /etc/powerdns/pdns.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart pdns
+
+- name: Ensure pdns service is enabled and started
+  ansible.builtin.systemd:
+    name: pdns
+    enabled: true
+    state: started
+    daemon_reload: true
