@@ -8,6 +8,14 @@
     target_password_hash: "{{ lookup('env', 'MAINTENANCE_PASSWORD_HASH') }}"
 
   tasks:
+    - name: Validate required environment variables
+      ansible.builtin.assert:
+        that:
+          - target_user | length > 0
+          - ssh_key_path | length > 0
+          - target_password_hash | length > 0
+        fail_msg: "Required environment variables (MAINTENANCE_USER, etc.) are missing. Check your .envrc."
+
     - name: Ensure sudo is installed
       ansible.builtin.apt:
         name: sudo

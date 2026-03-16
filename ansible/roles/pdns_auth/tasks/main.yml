@@ -6,12 +6,16 @@
       - pdns_role in ['primary', 'secondary']
     fail_msg: "pdns_role must be either 'primary' or 'secondary'."
 
-- name: Validate environment variables
+- name: Validate required environment variables
   ansible.builtin.assert:
     that:
-      - pdns_primary_addr is defined and pdns_primary_addr | length > 0
-      - pdns_secondary_addr is defined and pdns_secondary_addr | length > 0
-    fail_msg: "PDNS server addresses are missing. Check env vars PRIMARY_AUTH_SERVER / SECONDARY_AUTH_SERVER."
+      - pdns_primary_addr | length > 0
+      - pdns_secondary_addr | length > 0
+      - pdns_primary_api_key | length > 0 if pdns_role == 'primary' else true
+      - pdns_secondary_api_key | length > 0 if pdns_role == 'secondary' else true
+      - pdns_primary_allow_axfr_ips | length > 0 if pdns_role == 'primary' else true
+      - pdns_primary_also_notify | length > 0 if pdns_role == 'primary' else true
+    fail_msg: "Required environment variables for pdns_auth are missing. Check your .envrc."
 
 - name: Ensure apt keyring directory exists
   ansible.builtin.file:

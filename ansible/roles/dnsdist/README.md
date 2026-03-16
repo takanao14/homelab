@@ -18,8 +18,8 @@ All variables are configured in `defaults/main.yml` and are designed to be popul
 - `PRIMARY_AUTH_SERVER`: Address of the primary authoritative DNS server.
 - `SECONDARY_AUTH_SERVER`: Address of the secondary authoritative DNS server.
 - `DNSDIST_LOCAL_FORWARDER`: Address of a local recursive resolver (e.g., Unbound).
-- `DNSDIST_INTERNAL_DOMAIN`: The internal domain to route to authoritative backends (e.g., `homelab.internal.`).
-- `DNSDIST_INTERNAL_CHECK_NAME`: The FQDN to use for health checks against internal backends (e.g., `ns1.homelab.internal.`).
+- `DNSDIST_INTERNAL_DOMAIN`: The internal domain to route to authoritative backends (e.g., `example.internal.`).
+- `DNSDIST_INTERNAL_CHECK_NAME`: The FQDN to use for health checks against internal backends (e.g., `ns1.example.internal.`).
 - `DNSDIST_WEB_PASSWORD`, `DNSDIST_WEB_API_KEY`, `DNSDIST_CONSOLE_KEY`: Credentials for the web UI and console.
 - `DNSDIST_MGMT_ACL`, `DNSDIST_CONSOLE_ACL`: IP ranges allowed to access management interfaces.
 
