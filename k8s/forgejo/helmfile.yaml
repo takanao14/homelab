@@ -1,0 +1,7 @@
+releases:
+  - name: forgejo
+    namespace: forgejo
+    chart: oci://code.forgejo.org/forgejo-helm/forgejo
+    createNamespace: true
+    values:
+      - values.yaml.gotmpl
