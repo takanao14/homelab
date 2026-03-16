@@ -1,0 +1,6 @@
+---
+# https://gethomepage.dev/latest/configs/settings/
+title: HomeLab Portal
+description: Homelab Portal
+
+logpath: stdout

@@ -1,0 +1,119 @@
+---
+# https://gethomepage.dev/latest/configs/services/
+
+- DNS:
+    - Authoritative:
+        - PowerDNS auth1:
+            icon: powerdns.png
+            href: http://{{HOMEPAGE_VAR_PDNS_AUTH_PRIMARY}}:8081/
+            description: Primary Authoritative DNS ({{HOMEPAGE_VAR_PDNS_AUTH_PRIMARY}}:1053)
+            proxmoxNode: {{HOMEPAGE_VAR_PDNS_AUTH_PRMARY_PVE_NODE}}
+            proxmoxVMID: {{HOMEPAGE_VAR_PDNS_AUTH_PRIMARY_PVE_VMID}}
+            proxmoxType: {{HOMEPAGE_VAR_PDNS_AUTH_PRIMARY_PVE_TYPE}}
+            siteMonitor: http://{{HOMEPAGE_VAR_PDNS_AUTH_PRIMARY}}:8081/
+
+        - PowerDNS auth2:
+            icon: powerdns.png
+            href: http://{{HOMEPAGE_VAR_PDNS_AUTH_SECONDARY}}:8081/
+            description: Secondary Authoritative DNS ({{HOMEPAGE_VAR_PDNS_AUTH_SECONDARY}}:1053)
+            siteMonitor: http://{{HOMEPAGE_VAR_PDNS_AUTH_SECONDARY}}:8081/
+
+    - DNS Balancer:
+        - dnsdist1:
+            icon: mdi-dns
+            href: http://{{HOMEPAGE_VAR_DNSDIST1}}:8083/
+            description: DNS Load Balancer ({{HOMEPAGE_VAR_DNSDIST1}}:53)
+            proxmoxNode: {{HOMEPAGE_VAR_DNSIST1_PVE_NODE}}
+            proxmoxVMID: {{HOMEPAGE_VAR_DNSDIST1_PVE_VMID}}
+            proxmoxType: {{HOMEPAGE_VAR_DNSDIST1_PVE_TYPE}}
+            siteMonitor: http://{{HOMEPAGE_VAR_DNSDIST1}}:8083/
+
+        - dnsdist2:
+            icon: mdi-dns
+            href: http://{{HOMEPAGE_VAR_DNSDIST2}}:8083/
+            description: DNS Load Balancer ({{HOMEPAGE_VAR_DNSDIST2}}:53)
+            siteMonitor: http://{{HOMEPAGE_VAR_DNSDIST2}}:8083/
+
+- VM/Storage:
+    - HyperVisor:
+        - Proxmox VE Homelab:
+            icon: proxmox.png
+            href: http://node1.homelab.internal:8006/
+            description: Virtualization Platform
+            widget:
+              type: proxmox
+              url: https://node1.homelab.internal:8006
+              username: {{HOMEPAGE_VAR_PROXMOX_USERNAME}}
+              password: {{HOMEPAGE_VAR_PROXMOX_HOMELAB_PASSWORD}}
+              node: {{HOMEPAGE_VAR_PROXMOX_HOMELAB_NODE}}
+
+        - Proxmox VE Dev:
+            icon: proxmox.png
+            href: http://pve.homelab.internal:8006/
+            description: Virtualization Platform
+            widget:
+              type: proxmox
+              url: https://pve.homelab.internal:8006
+              username: {{HOMEPAGE_VAR_PROXMOX_USERNAME}}
+              password: {{HOMEPAGE_VAR_PROXMOX_DEV_PASSWORD}}
+              node: {{HOMEPAGE_VAR_PROXMOX_DEV_NODE}}
+
+    - Storage:
+        - TrueNAS:
+            icon: truenas.png
+            href: http://truenas.homelab.internal/
+            description: Network Storage
+            proxmoxNode: {{HOMEPAGE_VAR_TRUENAS_NODE}}
+            proxmoxVMID: {{HOMEPAGE_VAR_TRUENAS_VMID}}
+
+            widget:
+                type: truenas
+                url: http://truenas.homelab.internal
+                key: {{HOMEPAGE_VAR_TRUENAS_KEY}}
+                nasType: scale # defaults to scale, must be set to 'core' if using enablePools with TrueNAS Core
+
+- Monitoring:
+    - Grafana:
+        icon: grafana.png
+        href: http://grafana.homelab.internal/
+        description: Metrics Visualization
+        widget:
+          type: grafana
+          version: 2 # optional, default is 1
+          url: http://grafana.homelab.internal
+          username: {{HOMEPAGE_VAR_GRAFANA_USERNAME}}
+          password: {{HOMEPAGE_VAR_GRAFANA_PASSWORD}}
+
+    - Prometheus:
+        icon: prometheus.png
+        href: http://prometheus.homelab.internal:9090/
+        description: Monitoring System
+        widget:
+          type: prometheus
+          url: http://prometheus.homelab.internal:9090
+
+- Develop:
+    - forgejo:
+        icon: forgejo.png
+        href: http://git.homelab.internal/
+        description: Git Repository
+
+- Network Element:
+    - bgw1:
+        icon: mdi-router
+        description: Border Gateway (bgw1.homelab.internal)
+
+    - C1200:
+        icon: mdi-switch
+        href: http://c1200.homelab.internal/
+        description: L3-SW (c1200.homelab.internal)
+
+    - WiFi-AP1:
+        icon: mdi-access-point-network
+        href: http://wifiap1.homelab.internal/
+        description: wifi-ap1
+
+    - WiFi-AP2:
+        icon: mdi-access-point-network
+        href: http://wifiap2.homelab.internal/
+        description: wifi-ap2
