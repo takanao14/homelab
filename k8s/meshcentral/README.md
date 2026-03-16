@@ -37,7 +37,7 @@ echo "HOSTNAME=192.168.20.200" > overlays/dev/.env
 kustomize build overlays/dev
 
 # Apply to cluster
-kustomize build overlays/dev | kubectl apply -f -
+kustomize apply -k overlays/dev
 ```
 
 ## Configuration Details
