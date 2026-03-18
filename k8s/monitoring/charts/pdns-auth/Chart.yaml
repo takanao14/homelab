@@ -1,0 +1,5 @@
+apiVersion: v2
+name: pdns-auth
+description: ServiceMonitor and Endpoints for external PowerDNS Authoritative instances
+type: application
+version: 0.1.0

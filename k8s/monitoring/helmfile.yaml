@@ -1,0 +1,49 @@
+repositories:
+  - name: prometheus-community
+    url: https://prometheus-community.github.io/helm-charts
+  - name: grafana
+    url: https://grafana.github.io/helm-charts
+
+releases:
+  - name: prometheus
+    namespace: monitoring
+    createNamespace: true
+    chart: prometheus-community/kube-prometheus-stack
+    valuesTemplate:
+      - values/prometheus.yaml.gotmpl
+  - name: blackbox-exporter
+    namespace: monitoring
+    createNamespace: true
+    chart: prometheus-community/prometheus-blackbox-exporter
+    valuesTemplate:
+      - values/blackbox-exporter.yaml.gotmpl
+  - name: prometheus-pve-exporter
+    namespace: monitoring
+    createNamespace: true
+    chart: ./charts/prometheus-pve-exporter
+    valuesTemplate:
+      - values/prometheus-pve-exporter.yaml.gotmpl
+  - name: node-exporter-external
+    namespace: monitoring
+    createNamespace: true
+    chart: ./charts/node-exporter-external
+    valuesTemplate:
+      - values/node-exporter.yaml.gotmpl
+  - name: dnsdist
+    namespace: monitoring
+    createNamespace: true
+    chart: ./charts/dnsdist
+    valuesTemplate:
+      - values/dnsdist.yaml.gotmpl
+  - name: pdns-auth
+    namespace: monitoring
+    createNamespace: true
+    chart: ./charts/pdns-auth
+    valuesTemplate:
+      - values/pdns-auth.yaml.gotmpl
+  - name: snmp-exporter
+    namespace: monitoring
+    createNamespace: true
+    chart: prometheus-community/prometheus-snmp-exporter
+    valuesTemplate:
+      - values/snmp-exporter.yaml.gotmpl

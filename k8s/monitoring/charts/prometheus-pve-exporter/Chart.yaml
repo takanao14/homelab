@@ -1,0 +1,5 @@
+apiVersion: v2
+name: prometheus-pve-exporter
+description: Deployment and Probe for Proxmox VE exporter
+type: application
+version: 0.1.0

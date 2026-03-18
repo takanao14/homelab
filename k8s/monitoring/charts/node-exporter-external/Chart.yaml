@@ -1,0 +1,5 @@
+apiVersion: v2
+name: node-exporter-external
+description: ServiceMonitor and Endpoints for external node-exporter instances
+type: application
+version: 0.1.0

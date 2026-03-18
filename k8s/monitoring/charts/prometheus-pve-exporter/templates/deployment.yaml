@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-pve-exporter
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: prometheus-pve-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus-pve-exporter
+  template:
+    metadata:
+      labels:
+        app: prometheus-pve-exporter
+    spec:
+      containers:
+        - name: pve-exporter
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.port }}
+          args:
+            - --config.file=/etc/pve-exporter/pve.yml
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/pve-exporter
+              readOnly: true
+      volumes:
+        - name: config-volume
+          secret:
+            secretName: pve-exporter-config

@@ -1,0 +1,7 @@
+port: 8083
+metricsPath: /metrics
+
+targetIPs:
+{{- range (requiredEnv "DNSDIST_TARGET_IPS" | splitList " ") }}
+  - {{ . | quote }}
+{{- end }}

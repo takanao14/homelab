@@ -1,0 +1,5 @@
+apiVersion: v2
+name: dnsdist
+description: ServiceMonitor and Endpoints for external dnsdist instances
+type: application
+version: 0.1.0

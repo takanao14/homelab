@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: pve-hosts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  interval: 60s
+  prober:
+    url: prometheus-pve-exporter.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.port }}
+    path: /pve
+  targets:
+    staticConfig:
+      relabelingConfigs:
+        {{- range .Values.targets }}
+        - sourceLabels: [__param_target]
+          regex: {{ printf "%s(:[0-9]+)?" (.ip | replace "." "\\.") | quote }}
+          targetLabel: __param_module
+          replacement: {{ .module }}
+        {{- end }}
+      static:
+        {{- range .Values.targets }}
+        - {{ .ip }}
+        {{- end }}

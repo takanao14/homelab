@@ -1,0 +1,7 @@
+port: 9100
+metricsPath: /metrics
+
+targetIPs:
+{{- range (requiredEnv "NODE_EXPORTER_TARGET_IPS" | splitList " ") }}
+  - {{ . | quote }}
+{{- end }}

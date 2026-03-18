@@ -1,0 +1,55 @@
+# values.yaml
+prometheus:
+  prometheusSpec:
+    # ServiceMonitor discovery selector
+    # Allow all ServiceMonitors to be discovered
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
+    retention: 30d
+    resourceSpec:
+      requests:
+        memory: 512Mi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+  service:
+    type: LoadBalancer
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: prometheus.k8s.homelab.internal
+
+grafana:
+  defaultDashboardsTimezone: jst
+  adminPassword: {{ requiredEnv "GRAFANA_ADMIN_PASSWORD" }}
+  persistence:
+    enabled: true
+    type: pvc
+    accessModes:
+      - ReadWriteOnce
+    size: 5Gi
+  initChownData:
+    enabled: false
+  service:
+    type: LoadBalancer
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: grafana.k8s.homelab.internal
+    externalTrafficPolicy: Local
+
+# k0s + Cilium
+# kube-proxy: Disabled because Cilium replaces it with kubeProxyReplacement
+# kubeControllerManager/kubeScheduler: Disabled because they run as static pods in k0s
+# and cannot be discovered by default ServiceMonitor settings
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+
+

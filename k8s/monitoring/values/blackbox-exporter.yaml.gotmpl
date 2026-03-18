@@ -1,0 +1,86 @@
+config:
+  modules:
+    http_2xx:
+      prober: http
+      timeout: 5s
+      http:
+        valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+        follow_redirects: true
+        preferred_ip_protocol: "ip4"
+    icmp:
+      prober: icmp
+      timeout: 5s
+      icmp:
+        preferred_ip_protocol: "ip4"
+    dns_external:
+      prober: dns
+      timeout: 5s
+      dns:
+        query_name: "google.com"
+        query_type: "A"
+        valid_rcodes:
+          - NOERROR
+    dns_internal:
+      prober: dns
+      timeout: 5s
+      dns:
+        query_name: {{ requiredEnv "BLACKBOX_DNS_INTERNAL_QUERY_NAME" | quote }}
+        query_type: "A"
+        valid_rcodes:
+          - NOERROR
+
+extraManifests:
+  - apiVersion: monitoring.coreos.com/v1
+    kind: Probe
+    metadata:
+      name: icmp-network-devices
+      namespace: monitoring
+      labels:
+        release: prometheus
+    spec:
+      interval: 60s
+      module: icmp
+      prober:
+        url: blackbox-exporter-prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+      targets:
+        staticConfig:
+          static:
+{{- range (requiredEnv "BLACKBOX_ICMP_TARGET_IPS" | splitList " ") }}
+            - {{ . | quote }}
+{{- end }}
+  - apiVersion: monitoring.coreos.com/v1
+    kind: Probe
+    metadata:
+      name: dns-external
+      namespace: monitoring
+      labels:
+        release: prometheus
+    spec:
+      interval: 60s
+      module: dns_external
+      prober:
+        url: blackbox-exporter-prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+      targets:
+        staticConfig:
+          static:
+{{- range (requiredEnv "BLACKBOX_DNS_EXTERNAL_TARGET_IPS" | splitList " ") }}
+            - {{ . | quote }}
+{{- end }}
+  - apiVersion: monitoring.coreos.com/v1
+    kind: Probe
+    metadata:
+      name: dns-internal
+      namespace: monitoring
+      labels:
+        release: prometheus
+    spec:
+      interval: 60s
+      module: dns_internal
+      prober:
+        url: blackbox-exporter-prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+      targets:
+        staticConfig:
+          static:
+{{- range (requiredEnv "BLACKBOX_DNS_INTERNAL_TARGET_IPS" | splitList " ") }}
+            - {{ . | quote }}
+{{- end }}

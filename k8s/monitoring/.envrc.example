@@ -1,0 +1,61 @@
+# Copy this file to .envrc and fill with real values.
+# cp .envrc.example .envrc
+
+export GRAFANA_ADMIN_PASSWORD="changeme"
+
+export HOMELAB_USER='user@pve'
+export HOMELAB_TOKEN_NAME='api-readonly'
+export HOMELAB_TOKEN_VALUE='replace-with-homelab-token-secret'
+
+export DEV_USER='user@pve'
+export DEV_TOKEN_NAME='api-readonly'
+export DEV_TOKEN_VALUE='replace-with-dev-token-secret'
+
+export PVE_HOMELAB_IP="192.168.x.x"
+export PVE_DEV_IP="192.168.x.x"
+
+export BLACKBOX_DNS_INTERNAL_QUERY_NAME='replace-your-internal-query'
+
+BLACKBOX_ICMP_TARGETS=(
+  192.168.x.1
+  192.168.x.2
+)
+export BLACKBOX_ICMP_TARGET_IPS="${BLACKBOX_ICMP_TARGETS[*]}"
+
+BLACKBOX_DNS_EXTERNAL_TARGETS=(
+  192.168.x.3
+  192.168.x.4
+)
+export BLACKBOX_DNS_EXTERNAL_TARGET_IPS="${BLACKBOX_DNS_EXTERNAL_TARGETS[*]}"
+
+BLACKBOX_DNS_INTERNAL_TARGETS=(
+  192.168.x.3
+  192.168.x.4
+)
+export BLACKBOX_DNS_INTERNAL_TARGET_IPS="${BLACKBOX_DNS_INTERNAL_TARGETS[*]}"
+
+NODE_EXPORTER_TARGETS=(
+  192.168.x.1
+  192.168.x.2
+)
+export NODE_EXPORTER_TARGET_IPS="${NODE_EXPORTER_TARGETS[*]}"
+
+export SNMP_COMMUNITY="changeme"
+
+SNMP_TARGETS=(
+  192.168.x.1
+  192.168.x.2
+)
+export SNMP_TARGET_IPS="${SNMP_TARGETS[*]}"
+
+DNSDIST_TARGETS=(
+  192.168.x.1
+  192.168.x.2
+)
+export DNSDIST_TARGET_IPS="${DNSDIST_TARGETS[*]}"
+
+PDNS_AUTH_TARGETS=(
+  192.168.x.1
+  192.168.x.2
+)
+export PDNS_AUTH_TARGET_IPS="${PDNS_AUTH_TARGETS[*]}"
