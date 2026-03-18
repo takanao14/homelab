@@ -1,0 +1,9 @@
+.github
+.idea
+.vscode
+.envrc
+.envs
+.env
+types-dnscontrol.d.ts
+ansible/inventories/homelab/hosts.yml
+k8s/monitoring/values/default-values.yaml
