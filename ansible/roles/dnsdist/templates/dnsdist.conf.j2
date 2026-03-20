@@ -32,8 +32,12 @@ local pc = newPacketCache({{ dnsdist_packet_cache_size }}, {
 getPool(""):setCache(pc)
 
 -- internal domain routing
-addAction("{{ dnsdist_internal_domain }}", SetNoRecurseAction())
-addAction("{{ dnsdist_internal_domain }}", PoolAction("internal"))
+local internal_domains = newSuffixMatchNode()
+{% for domain in dnsdist_internal_domains %}
+internal_domains:add("{{ domain }}")
+{% endfor %}
+addAction(SuffixMatchNodeRule(internal_domains), SetNoRecurseAction())
+addAction(SuffixMatchNodeRule(internal_domains), PoolAction("internal"))
 
 -- default routing
 

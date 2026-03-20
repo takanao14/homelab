@@ -17,7 +17,7 @@
       - dnsdist_console_key | length > 0
       - dnsdist_mgmt_acl | length > 0
       - dnsdist_console_acl | length > 0
-      - dnsdist_internal_domain | length > 0
+      - dnsdist_internal_domains | length > 0
       - dnsdist_internal_check_name | length > 0
     fail_msg: "Required environment variables (PRIMARY_AUTH_SERVER, etc.) are missing. Check your .envrc."
 

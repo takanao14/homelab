@@ -7,10 +7,20 @@
 export PRIMARY_AUTH_SERVER="<YOUR_PRIMARY_AUTH_SERVER_IP:PORT>"
 # Secondary PowerDNS Authoritative Server address (e.g., 192.168.x.11:53)
 export SECONDARY_AUTH_SERVER="<YOUR_SECONDARY_AUTH_SERVER_IP:PORT>"
+
 # dnsdist local forwarder address (e.g., 192.168.x.100:53)
 export DNSDIST_LOCAL_FORWARDER="<YOUR_DNSDIST_LOCAL_FORWARDER_IP:PORT>"
-# Internal domain for dnsdist routing (e.g., example.internal.)
-export DNSDIST_INTERNAL_DOMAIN="example.internal."
+
+# dnsdist ACL
+export DNSDIST_MGMT_ACL="<YOUR_DNSDIST_MANAGEMENT_ACL_IP_RANGE>" # e.g., 192.168.x.0/24
+export DNSDIST_CONSOLE_ACL="<YOUR_DNSDIST_CONSOLE_ACL_IP_RANGE>" # e.g., 192.168.x.0/24
+
+# dnsdist packet cache settings
+export DNSDIST_PACKET_CACHE_SIZE="100000" # Example: 100000
+export DNSDIST_PACKET_CACHE_MAX_TTL="3600" # Example: 3600 seconds
+
+# Internal domain for dnsdist routing (e.g., sub1.example.internal., sub2.example.internal.)
+export DNSDIST_INTERNAL_DOMAINS="sub1.example.internal., sub2.example.internal."
 # Internal check name for dnsdist backends (e.g., ns1.example.internal.)
 export DNSDIST_INTERNAL_CHECK_NAME="ns1.example.internal."
 
@@ -18,12 +28,6 @@ export DNSDIST_INTERNAL_CHECK_NAME="ns1.example.internal."
 export DNSDIST_WEB_PASSWORD="<YOUR_DNSDIST_WEB_PASSWORD>"
 export DNSDIST_WEB_API_KEY="<YOUR_DNSDIST_WEB_API_KEY>"
 export DNSDIST_CONSOLE_KEY="<YOUR_DNSDIST_CONSOLE_KEY>"
-export DNSDIST_MGMT_ACL="<YOUR_DNSDIST_MANAGEMENT_ACL_IP_RANGE>" # e.g., 192.168.x.0/24
-export DNSDIST_CONSOLE_ACL="<YOUR_DNSDIST_CONSOLE_ACL_IP_RANGE>" # e.g., 192.168.x.0/24
-
-# dnsdist packet cache settings
-export DNSDIST_PACKET_CACHE_SIZE="100000" # Example: 100000
-export DNSDIST_PACKET_CACHE_MAX_TTL="3600" # Example: 3600 seconds
 
 # PowerDNS API keys
 export PDNS_PRIMARY_API_KEY="<YOUR_PDNS_PRIMARY_API_KEY>"

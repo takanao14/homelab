@@ -24,7 +24,8 @@ dnsdist_packet_cache_size: "{{ lookup('ansible.builtin.env', 'DNSDIST_PACKET_CAC
 dnsdist_packet_cache_max_ttl: "{{ lookup('ansible.builtin.env', 'DNSDIST_PACKET_CACHE_MAX_TTL') }}"
 
 # Internal Domain setup
-dnsdist_internal_domain: "{{ lookup('ansible.builtin.env', 'DNSDIST_INTERNAL_DOMAIN') }}"
+# DNSDIST_INTERNAL_DOMAINS accepts a comma-separated list (e.g. "butaco.net., home.arpa.")
+dnsdist_internal_domains: "{{ lookup('ansible.builtin.env', 'DNSDIST_INTERNAL_DOMAINS') | split(',') | map('trim') | list }}"
 dnsdist_internal_check_name: "{{ lookup('ansible.builtin.env', 'DNSDIST_INTERNAL_CHECK_NAME') }}"
 
 # Backend Servers Configuration
