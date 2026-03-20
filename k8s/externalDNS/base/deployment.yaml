@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: external-dns
+  template:
+    metadata:
+      labels:
+        app: external-dns
+    spec:
+      serviceAccountName: external-dns
+      containers:
+        - name: external-dns
+          image: registry.k8s.io/external-dns/external-dns:v0.20.0
+          args:
+            - --source=service
+            - --provider=pdns
+            - --pdns-server=$(PDNS_API_URL)
+            - --pdns-server-id=$(PDNS_SERVER_ID)
+            - --pdns-api-key=$(PDNS_HTTP_API_KEY)
+            - --txt-owner-id=$(OWNER_ID_FOR_THIS_EXTERNAL_DNS)
+            - --domain-filter=$(DOMAIN_FILTER)
+            - --log-level=debug
+            - --interval=30s
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          envFrom:
+            - secretRef:
+                name: external-dns-env
