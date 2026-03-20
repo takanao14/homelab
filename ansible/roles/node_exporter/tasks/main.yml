@@ -20,6 +20,30 @@
     mode: '0644'
   notify: restart node_exporter
 
+- name: Ensure textfile collector directory exists
+  file:
+    path: /var/lib/node_exporter/textfile_collector
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install Raspberry Pi monitoring script
+  template:
+    src: rpi_throttled_metrics.sh.j2
+    dest: /usr/local/bin/rpi_throttled_metrics.sh
+    owner: root
+    group: root
+    mode: '0755'
+  when: ansible_facts['architecture'] in ["aarch64", "armv7l"]
+
+- name: Add cron job for Raspberry Pi monitoring script
+  cron:
+    name: "Raspberry Pi Throttling Metrics"
+    minute: "*"
+    job: "/usr/local/bin/rpi_throttled_metrics.sh > /var/lib/node_exporter/textfile_collector/rpi_throttled.prom"
+  when: ansible_facts['architecture'] in ["aarch64", "armv7l"]
+
 - name: Ensure prometheus-node-exporter is started and enabled
   service:
     name: prometheus-node-exporter
