@@ -1,0 +1,32 @@
+#!/bin/bash
+# Ansible managed: rpi_throttled_metrics.sh.j2
+# Export Raspberry Pi throttling status to Node Exporter textfile collector
+
+STATUS=$(vcgencmd get_throttled | cut -d= -f2)
+
+# Bit 0: Under-voltage detected
+# Bit 1: Arm frequency capped
+# Bit 2: Currently throttled
+# Bit 16: Under-voltage has occurred
+# Bit 17: Arm frequency capped has occurred
+# Bit 18: Throttling has occurred
+
+echo "# HELP rpi_throttled_under_voltage Raspberry Pi under-voltage status (0: OK, 1: Under-voltage)"
+echo "# TYPE rpi_throttled_under_voltage gauge"
+echo "rpi_throttled_under_voltage $(( (STATUS & 0x1) ))"
+
+echo "# HELP rpi_throttled_under_voltage_occurred Raspberry Pi under-voltage has occurred since boot"
+echo "# TYPE rpi_throttled_under_voltage_occurred gauge"
+echo "rpi_throttled_under_voltage_occurred $(( (STATUS & 0x10000) >> 16 ))"
+
+echo "# HELP rpi_throttled_arm_frequency_capped Raspberry Pi ARM frequency capped status"
+echo "# TYPE rpi_throttled_arm_frequency_capped gauge"
+echo "rpi_throttled_arm_frequency_capped $(( (STATUS & 0x2) >> 1 ))"
+
+echo "# HELP rpi_throttled_thermal_throttling Raspberry Pi thermal throttling status"
+echo "# TYPE rpi_throttled_thermal_throttling gauge"
+echo "rpi_throttled_thermal_throttling $(( (STATUS & 0x4) >> 2 ))"
+
+echo "# HELP rpi_throttled_occurred Raspberry Pi throttling has occurred since boot"
+echo "# TYPE rpi_throttled_occurred gauge"
+echo "rpi_throttled_occurred $(( (STATUS & 0x40000) >> 18 ))"
