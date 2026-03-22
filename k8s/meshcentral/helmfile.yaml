@@ -1,0 +1,7 @@
+releases:
+  - name: meshcentral
+    namespace: meshcentral
+    chart: ./chart
+    createNamespace: true
+    values:
+      - values.yaml.gotmpl

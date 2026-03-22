@@ -1,0 +1,6 @@
+apiVersion: v2
+name: meshcentral
+description: MeshCentral remote management server for homelab
+type: application
+version: 0.1.0
+appVersion: "1.1.56"

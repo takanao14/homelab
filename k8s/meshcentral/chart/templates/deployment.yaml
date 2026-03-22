@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meshcentral
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: meshcentral
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: meshcentral
+  template:
+    metadata:
+      labels:
+        app: meshcentral
+    spec:
+      containers:
+      - name: meshcentral
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        ports:
+        - containerPort: 443
+        resources:
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+        envFrom:
+          - configMapRef:
+              name: meshcentral-config
+        volumeMounts:
+        - name: data
+          mountPath: /opt/meshcentral/meshcentral-data
+        - name: files
+          mountPath: /opt/meshcentral/meshcentral-files
+        - name: backups
+          mountPath: /opt/meshcentral/meshcentral-backups
+        - name: web
+          mountPath: /opt/meshcentral/meshcentral-web
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: meshcentral-data
+      - name: files
+        persistentVolumeClaim:
+          claimName: meshcentral-files
+      - name: backups
+        persistentVolumeClaim:
+          claimName: meshcentral-backups
+      - name: web
+        persistentVolumeClaim:
+          claimName: meshcentral-web
