@@ -1,61 +1,76 @@
 # MeshCentral on Kubernetes
 
-Kustomize manifests for deploying MeshCentral on Kubernetes (k0s).
+Helm chart for deploying MeshCentral on Kubernetes (k0s), managed via Helmfile.
 
 ## Directory Structure
 
-*   `base/`: Common Deployment and Service (ClusterIP) definitions
-*   `overlays/dev/`: Configuration for development environment (Namespace, PVC, LoadBalancer, ConfigMap)
+*   `chart/`: Helm chart for MeshCentral
+*   `helmfile.yaml`: Helmfile release definition
+*   `values.yaml.gotmpl`: Environment-specific values (injected via environment variables)
+*   `.envrc.sample`: Sample environment variable definitions
 
 ## Prerequisites
 
 *   **Kubernetes Cluster**
 *   **CNI**: Cilium (L2 LoadBalancer feature must be enabled)
 *   **Storage**: A default StorageClass must exist
-*   **Tools**: Kustomize, kubectl
+*   **Tools**: Helm, Helmfile, kubectl
 
 ## Deployment
 
 ### 1. Configure Environment Variables
 
-Create a `.env` file in the `overlays/dev` directory and set the required environment variables.
-Specifically, `HOSTNAME` is used as the LoadBalancer static IP address.
-
 ```bash
-# Example of creating overlays/dev/.env
-echo "HOSTNAME=192.168.20.200" > overlays/dev/.env
+cp .envrc.sample .envrc
+# Edit .envrc with actual values
 ```
 
-**Required Variables in .env:**
+| Variable | Description |
+| :--- | :--- |
+| `MESHCENTRAL_LB_IP` | Static IP address for the LoadBalancer |
 
-*   `HOSTNAME`: LoadBalancer IP address for the MeshCentral service (e.g., `192.168.20.200`)
+### 2. Load Environment Variables
 
-### 2. Deploy
+```bash
+# Using direnv
+direnv allow
+
+# Or manually
+source .envrc
+```
+
+### 3. Deploy
 
 ```bash
 # Verify manifests
-kustomize build overlays/dev
+helmfile template
 
 # Apply to cluster
-kustomize apply -k overlays/dev
+helmfile apply
 ```
 
 ## Configuration Details
 
 ### Static IP Address (LoadBalancer)
 
-The `replacements` feature in `overlays/dev/kustomization.yaml` automatically injects the value of the `HOSTNAME` variable from the `.env` file into the Service's `io.cilium/load-balancer-ip` annotation.
-This allows you to manage the IP address centrally via environment variables.
-The `HOSTNAME` environment variable should be set to the IP address or DNS name where MeshCentral will operate. Since it's configured as an ExternalIP here, an IP address is used.
+`MESHCENTRAL_LB_IP` is injected via `values.yaml.gotmpl` into the Service's `io.cilium/load-balancer-ip` annotation, allowing Cilium to assign a static IP to the LoadBalancer.
 
 ### Storage (PVC)
 
-The following PersistentVolumeClaims are defined in `base/pvc.yaml`.
-The StorageClass is not explicitly set in the manifests, assuming the default StorageClass or set via overlays.
+PersistentVolumeClaims are defined in `chart/templates/pvc.yaml` and sized via `chart/values.yaml`.
 
-| PVC Name | Size | Description |
+| PVC Name | Default Size | Mount Path |
 | :--- | :--- | :--- |
-| `meshcentral-data` | 1Gi | Configuration data |
-| `meshcentral-files` | 10Gi | Uploaded files |
-| `meshcentral-backups` | 5Gi | Backups |
-| `meshcentral-web` | 1Gi | Web content |
+| `meshcentral-data` | 1Gi | `/opt/meshcentral/meshcentral-data` |
+| `meshcentral-files` | 10Gi | `/opt/meshcentral/meshcentral-files` |
+| `meshcentral-backups` | 5Gi | `/opt/meshcentral/meshcentral-backups` |
+| `meshcentral-web` | 1Gi | `/opt/meshcentral/meshcentral-web` |
+
+### Resource Limits
+
+Default resource requests/limits defined in `chart/values.yaml`:
+
+| | CPU | Memory |
+| :--- | :--- | :--- |
+| Requests | 100m | 256Mi |
+| Limits | 1000m | 1Gi |
