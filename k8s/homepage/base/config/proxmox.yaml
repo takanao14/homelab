@@ -1,9 +1,0 @@
-pve: # must match your actual Proxmox node name
-  url: {{HOMEPAGE_VAR_PROXMOX_DEV_URL}}
-  token: {{HOMEPAGE_VAR_PROXMOX_USERNAME}}
-  secret: {{HOMEPAGE_VAR_PROXMOX_DEV_PASSWORD}}
-
-node1:
-  url: {{HOMEPAGE_VAR_PROXMOX_HOMELAB_URL}}
-  token: {{HOMEPAGE_VAR_PROXMOX_USERNAME}}
-  secret: {{HOMEPAGE_VAR_PROXMOX_HOMELAB_PASSWORD}}
