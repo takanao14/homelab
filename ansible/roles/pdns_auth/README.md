@@ -2,42 +2,59 @@
 
 Installs and configures PowerDNS Authoritative Server with an SQLite3 backend on Debian-based systems.
 
-This role can configure the server as either a `primary` (master) or `secondary` (slave) instance.
+Supports both `primary` (master) and `secondary` (slave) configurations.
 
 ## Functionality
-- Adds the official PowerDNS repository for `pdns-auth`.
+
+- Adds the official PowerDNS APT repository for `pdns-auth`.
 - Installs `pdns-server`, `pdns-backend-sqlite3`, and `sqlite3`.
 - Initializes the SQLite database if it doesn't exist.
-- Deploys a configuration file (`/etc/powerdns/pdns.conf`) based on the specified role (`primary` or `secondary`).
+- Deploys `/etc/powerdns/pdns.conf` based on the role (`primary` or `secondary`).
 - Enables and starts the `pdns` service.
 
 ## Variables
 
-### Role-Defining Variable
-- `pdns_role`: Must be set to either `primary` or `secondary`. This is typically done in `group_vars`.
-  ```yaml
-  # In inventories/homelab/group_vars/dns_primary.yml
-  pdns_role: primary
-  ```
+### Role-defining variable
 
-### Environment Variables
-All other variables are configured in `defaults/main.yml` and are designed to be populated from environment variables using `lookup('ansible.builtin.env', '...')`. See `ansible/.envrc.sample` for a complete list and descriptions.
+```yaml
+# Set in group_vars (e.g., inventories/homelab/group_vars/dns_primary.yml)
+pdns_role: primary   # or secondary
+```
 
-#### Key Environment Variables
-- `PRIMARY_AUTH_SERVER`: Address of the primary server (used by both roles).
-- `SECONDARY_AUTH_SERVER`: Address of the secondary server (used by both roles).
-- `PDNS_PRIMARY_API_KEY`: API key for the primary server.
-- `PDNS_SECONDARY_API_KEY`: API key for the secondary server.
-- `PDNS_PRIMARY_ALLOW_AXFR_IPS`: IP(s) allowed to perform zone transfers from the primary (should be the secondary's IP).
-- `PDNS_PRIMARY_ALSO_NOTIFY`: IP(s) to send NOTIFY packets to when a zone on the primary changes.
-- `PDNS_WEBSERVER_PORT`: Port for the webserver/API.
-- `PDNS_WEBSERVER_ALLOW_FROM`: IP range(s) allowed to access the webserver/API.
+### Secrets (from SOPS-encrypted `secrets.enc.env`)
+
+Loaded via `lookup('ansible.builtin.env', ...)`. Set these in `ansible/secrets.enc.env`.
+
+| Variable | Description |
+|----------|-------------|
+| `PDNS_PRIMARY_API_KEY` | API key for the primary PowerDNS server |
+| `PDNS_SECONDARY_API_KEY` | API key for the secondary PowerDNS server |
+
+### Non-secret variables (in `defaults/main.yml`)
+
+Hardcoded defaults; override per-group or per-host as needed.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `pdns_webserver_port` | `8081` | API/webserver listen port |
+| `pdns_webserver_allow_from` | `192.168.10.0/24,...` | Allowed IP ranges for API access |
+| `pdns_primary_allow_axfr_ips` | `192.168.10.0/24` | IPs allowed to perform zone transfers |
+| `pdns_primary_also_notify` | `192.168.10.241` | IPs to NOTIFY on zone change |
+
+### Shared variables (from `group_vars/all.yml`)
+
+| Variable | Description |
+|----------|-------------|
+| `primary_auth_server` | `host:port` of the primary auth server |
+| `secondary_auth_server` | `host:port` of the secondary auth server |
+
+These are split into `pdns_primary_addr`/`pdns_primary_port` and `pdns_secondary_addr`/`pdns_secondary_port` in `defaults/main.yml`.
 
 ## Dependencies
+
 None.
 
 ## Usage
-This role is typically used within a playbook targeting DNS servers, with the `pdns_role` variable differentiating the behavior.
 
 ```yaml
 # In playbooks/dns.yml
@@ -46,7 +63,7 @@ This role is typically used within a playbook targeting DNS servers, with the `p
   roles:
     - role: pdns_auth
 
-- name: Setup Secondary DNS Servers
+- name: Setup Secondary DNS Server
   hosts: dns_secondary
   roles:
     - role: pdns_auth

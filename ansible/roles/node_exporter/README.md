@@ -3,20 +3,21 @@
 Installs and configures `prometheus-node-exporter` on Debian-based systems.
 
 ## Functionality
-- Installs the `prometheus-node-exporter` package from APT repositories.
-- Installs `lm-sensors` on x86_64 architectures to enable temperature metric collection.
-- Configures command-line arguments for the `node_exporter` service via `/etc/default/prometheus-node-exporter`.
-- Ensures the `prometheus-node-exporter` service is started and enabled on boot.
+
+- Installs `prometheus-node-exporter` from APT.
+- Installs `lm-sensors` on x86_64 for temperature metric collection.
+- Configures command-line arguments via `/etc/default/prometheus-node-exporter`.
+- Sets up the textfile collector directory (`/var/lib/node_exporter/textfile_collector`).
+- On ARM hosts (Raspberry Pi), installs a throttling metrics script and a cron job to collect it.
+- Ensures the service is started and enabled.
 
 ## Variables
 
 ### `node_exporter_args`
-A list of command-line arguments to pass to the `node_exporter` service. This is useful for enabling or disabling specific collectors.
 
-**Default:** `[]` (empty list)
+A list of command-line arguments passed to `node_exporter`. Defined per-host in the inventory.
 
-**Example:**
-This variable is typically defined in the inventory file (`inventories/homelab/hosts.yml`) to apply host-specific settings.
+**Default:** `[]`
 
 ```yaml
 # In inventories/homelab/hosts.yml
@@ -34,16 +35,15 @@ node_exporter:
 ```
 
 ## Dependencies
+
 None.
 
 ## Usage
-This role is typically used within a playbook targeting hosts that require monitoring.
 
 ```yaml
-# In a playbook, e.g., playbooks/node_exporter.yml
+# In playbooks/node_exporter.yml
 - name: Install and configure prometheus-node-exporter
   hosts: node_exporter
-  become: yes
   roles:
     - node_exporter
 ```

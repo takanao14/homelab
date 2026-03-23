@@ -1,65 +1,115 @@
 # Homelab Ansible Automation
 
-This directory contains Ansible playbooks and roles used to provision, configure, and manage the infrastructure of the homelab environment.
+Ansible playbooks and roles for provisioning and configuring homelab infrastructure.
 
 ## Directory Structure
 
-- `ansible.cfg`: Default Ansible configuration.
-- `.envrc.sample`: A template for environment variables.
-- `inventories/`: Inventory files defining hosts and groups.
-  - `homelab/hosts.yml.sample`: A sample inventory file.
-- `playbooks/`: High-level playbooks that map roles to host groups.
-- `roles/`: Reusable Ansible roles for specific services.
+```
+ansible/
+├── ansible.cfg
+├── secrets.enc.env                          # SOPS-encrypted secrets (committed)
+├── .envrc                                   # Decrypts secrets and inventory (gitignored)
+├── inventories/
+│   └── homelab/
+│       ├── hosts.enc.yml                    # SOPS-encrypted inventory (committed)
+│       ├── hosts.yml                        # Decrypted inventory (gitignored, auto-generated)
+│       └── group_vars/
+│           ├── all.yml                      # Shared non-secret variables
+│           ├── dns_primary.yml
+│           └── dns_secondary.yml
+├── playbooks/
+│   ├── dns.yml
+│   ├── node_exporter.yml
+│   └── proxmox.yml
+└── roles/
+    ├── dnsdist/
+    ├── pdns_auth/
+    └── node_exporter/
+```
 
 ## Getting Started
 
-### 1. Create Inventory File
-The main inventory file `inventories/homelab/hosts.yml` is ignored by Git to protect sensitive information. To get started, copy the sample file and edit it to match your environment.
+### 1. Set Up Secrets
+
+Secrets are managed with SOPS. Edit the encrypted files directly:
 
 ```bash
 cd ansible
-cp inventories/homelab/hosts.yml.sample inventories/homelab/hosts.yml
-vi inventories/homelab/hosts.yml # Edit IPs and usernames
+sops edit secrets.enc.env          # API keys, passwords
+sops edit inventories/homelab/hosts.enc.yml   # SSH usernames, hosts
 ```
 
-### 2. Set Up Environment Variables
-This project uses `direnv` to manage environment variables for sensitive data (passwords, API keys). Copy the sample file, fill in your values, and then enable it.
+### 2. Load Environment Variables
+
+The `.envrc` decrypts secrets and auto-generates `hosts.yml` from the encrypted inventory:
 
 ```bash
-cp .envrc.sample .envrc
-vi .envrc # Edit your secret values
-direnv allow
+direnv allow   # first time only; re-run after .envrc changes
 ```
+
+On each directory entry, `direnv` will:
+1. Decrypt `secrets.enc.env` and export the variables.
+2. Decrypt `inventories/homelab/hosts.enc.yml` → `inventories/homelab/hosts.yml`.
 
 ### 3. Run Playbooks
-Once your inventory and environment variables are set, you can run the playbooks.
 
 ```bash
-# Example: Run the DNS playbook
+# DNS stack
 ansible-playbook playbooks/dns.yml
 
-# Example: Run the Node Exporter playbook
+# Node Exporter
 ansible-playbook playbooks/node_exporter.yml
+
+# Proxmox maintenance user setup
+ansible-playbook playbooks/proxmox.yml
+
+# Dry run
+ansible-playbook playbooks/dns.yml --check
 ```
 
 ## Playbooks
 
-A brief overview of the available playbooks. For details on required variables, see `.envrc.sample`.
-
 ### DNS (`playbooks/dns.yml`)
-Deploys and configures the homelab DNS infrastructure using PowerDNS Authoritative Server and dnsdist.
-- **Roles used:** `dnsdist`, `pdns_auth`
-- **Target hosts:** `dns_primary`, `dns_secondary`
+Deploys PowerDNS Authoritative Server and dnsdist.
+- **Roles:** `pdns_auth`, `dnsdist`
+- **Hosts:** `dns_primary`, `dns_secondary`
 
 ### Node Exporter (`playbooks/node_exporter.yml`)
-Installs and configures `prometheus-node-exporter` for metric collection.
-- **Roles used:** `node_exporter`
-- **Target hosts:** `node_exporter` group
+Installs `prometheus-node-exporter` for metrics collection.
+- **Role:** `node_exporter`
+- **Hosts:** `node_exporter` group
 
 ### Proxmox Configuration (`playbooks/proxmox.yml`)
-Configures baseline settings on Proxmox VE hosts, such as creating a maintenance user.
-- **Target hosts:** `proxmox`
+Creates a maintenance user on Proxmox VE hosts with sudo and Proxmox Administrator privileges.
+- **Hosts:** `proxmox`
+- **Secrets required:** `MAINTENANCE_USER`, `MAINTENANCE_PASSWORD_HASH`, `SSH_KEY_PATH`
+
+## Secret Variables
+
+| Variable | Used by | Description |
+|----------|---------|-------------|
+| `MAINTENANCE_USER` | proxmox.yml | Maintenance username |
+| `MAINTENANCE_PASSWORD_HASH` | proxmox.yml | Hashed password (`openssl passwd -6`) |
+| `SSH_KEY_PATH` | proxmox.yml | Path to SSH public key file |
+| `DNSDIST_WEB_PASSWORD` | dnsdist role | dnsdist web UI password |
+| `DNSDIST_WEB_API_KEY` | dnsdist role | dnsdist API key |
+| `DNSDIST_CONSOLE_KEY` | dnsdist role | dnsdist console key |
+| `PDNS_PRIMARY_API_KEY` | pdns_auth role | PowerDNS primary API key |
+| `PDNS_SECONDARY_API_KEY` | pdns_auth role | PowerDNS secondary API key |
+
+## Non-Secret Configuration
+
+Shared non-secret variables are in `inventories/homelab/group_vars/all.yml`:
+
+```yaml
+primary_auth_server: "192.168.10.242:1053"
+secondary_auth_server: "192.168.10.241:1053"
+```
+
+Host-specific non-secret variables (e.g., `pdns_role`, `node_exporter_args`) are defined in their respective group_vars files or the inventory.
 
 ## Tips
-- Use `ansible-playbook <playbook> --check` for a dry run.
-- Ensure your local SSH keys are properly loaded (`ssh-add`) to connect to the target machines.
+
+- Use `--check` for dry runs.
+- Ensure your SSH keys are loaded (`ssh-add`) before running playbooks.
+- `hosts.yml` is gitignored; it is regenerated from `hosts.enc.yml` by `.envrc` on each `direnv allow`.
