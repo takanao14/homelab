@@ -138,10 +138,7 @@ k0sctl_reset() {
     local template_file="$1"
     local k0sctl_file="$2"
 
-    # If config doesn't exist, generate it so k0sctl knows targets
-    if [ ! -f "$k0sctl_file" ]; then
-        generate_k0sctl_config "$template_file" "$k0sctl_file"
-    fi
+    generate_k0sctl_config "$template_file" "$k0sctl_file"
 
     # Reset cluster and remove all nodes
     log_info "Running: k0sctl reset --config $k0sctl_file"
@@ -157,8 +154,10 @@ generate_kubeconfig() {
     local k0sctl_file="$2"
     local kubeconfig_out="$3"
 
-    # Generate k0sctl config if not already done
-    generate_k0sctl_config "$template_file" "$k0sctl_file"
+    # Only generate k0sctl config if the file is missing or empty
+    if [ ! -s "$k0sctl_file" ]; then
+        generate_k0sctl_config "$template_file" "$k0sctl_file"
+    fi
 
     # Fetch kubeconfig from the cluster
     log_info "Fetching kubeconfig via k0sctl"
@@ -184,17 +183,11 @@ helmfile_apply() {
 # ============================================================================
 # Gateway API CRDs
 # ============================================================================
-# Cleanup
-# ============================================================================
 
-cleanup_k0sctl_file() {
-    local k0sctl_file="$1"
-
-    # Remove the temporary k0sctl config file if it exists
-    if [ -f "$k0sctl_file" ]; then
-        rm -f "$k0sctl_file"
-        log_info "Cleaned up k0sctl config: $k0sctl_file"
-    fi
+gateway_api_apply() {
+    log_info "Applying Gateway API CRDs..."
+    kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
+    log_success "Gateway API CRDs applied successfully!"
 }
 
 # ============================================================================
@@ -202,13 +195,11 @@ cleanup_k0sctl_file() {
 # ============================================================================
 
 run_main() {
-    # Arguments: command, environment, base_dir, template_file, k0sctl_file, kubeconfig_out
+    # Arguments: command, base_dir, template_file, kubeconfig_out
     local command="${1:-}"
-    local environment="${2:-}"
-    local base_dir="${3:-}"
-    local template_file="${4:-}"
-    local k0sctl_file="${5:-}"
-    local kubeconfig_out="${6:-}"
+    local base_dir="${2:-}"
+    local template_file="${3:-}"
+    local kubeconfig_out="${4:-}"
 
     # Validate all arguments are provided
     if ! validate_vars command base_dir template_file kubeconfig_out; then
@@ -227,15 +218,21 @@ run_main() {
     # Check that all required commands are available
     preflight
 
+    # Allocate a temp file for the k0sctl config; clean up on any exit
+    local k0sctl_file
+    k0sctl_file=$(mktemp "$base_dir/k0sctl-XXXXXX")
+    # shellcheck disable=SC2064
+    trap "rm -f '$k0sctl_file'" EXIT
+
     # Dispatch to the appropriate command handler
     case "$command" in
         apply)
-            # Full cluster setup: k0sctl → kubeconfig → helmfile → cilium → kustomize
+            # Full cluster setup: k0sctl → kubeconfig → helmfile → gateway-api → cilium
             k0sctl_apply "$template_file" "$k0sctl_file"
             generate_kubeconfig "$template_file" "$k0sctl_file" "$kubeconfig_out"
             export KUBECONFIG="$kubeconfig_out"
-            helmfile_apply
             helmfile_apply "$base_dir"
+            gateway_api_apply
             cilium status --wait
             log_success "Cluster setup completed successfully!"
             ;;
@@ -252,14 +249,15 @@ run_main() {
             export KUBECONFIG="$kubeconfig_out"
             helmfile_apply "$base_dir"
             ;;
-        kustomize_apply)
-            # Apply kustomize overlay only (requires existing kubeconfig)
+        gateway-api)
+            # Apply Gateway API CRDs only (requires existing kubeconfig)
             export KUBECONFIG="$kubeconfig_out"
-            kustomize_apply "$environment" "$base_dir"
+            gateway_api_apply
             ;;
         config)
-            # Generate k0sctl config only (no apply)
+            # Generate k0sctl config from template and print to stdout
             generate_k0sctl_config "$template_file" "$k0sctl_file"
+            cat "$k0sctl_file"
             ;;
         *)
             log_error "Unknown command: $command"
