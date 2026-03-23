@@ -1,45 +1,42 @@
 # MeshCentral on Kubernetes
 
-Helm chart for deploying MeshCentral on Kubernetes (k0s), managed via Helmfile.
+Helm chart for deploying MeshCentral on the homelab Kubernetes cluster, managed via Helmfile.
 
 ## Directory Structure
 
-*   `chart/`: Helm chart for MeshCentral
-*   `helmfile.yaml`: Helmfile release definition
-*   `values.yaml.gotmpl`: Environment-specific values (injected via environment variables)
-*   `.envrc.sample`: Sample environment variable definitions
+```
+meshcentral/
+├── helmfile.yaml
+├── values.yaml.gotmpl       # Environment-specific values (via requiredEnv)
+├── .envrc                   # Sets env vars (gitignored)
+└── chart/                   # Helm chart
+    ├── Chart.yaml
+    ├── values.yaml
+    └── templates/
+        ├── deployment.yaml  # Includes checksum annotation for auto-restart on ConfigMap change
+        ├── configmap.yaml
+        ├── service.yaml
+        └── pvc.yaml
+```
 
 ## Prerequisites
 
-*   **Kubernetes Cluster**
-*   **CNI**: Cilium (L2 LoadBalancer feature must be enabled)
-*   **Storage**: A default StorageClass must exist
-*   **Tools**: Helm, Helmfile, kubectl
+- Kubernetes cluster
+- CNI: Cilium with L2 LoadBalancer enabled
+- A default StorageClass
+- `helm`, `helmfile`, `kubectl`
 
 ## Deployment
 
-### 1. Configure Environment Variables
+### 1. Set up secrets
 
 ```bash
-cp .envrc.sample .envrc
-# Edit .envrc with actual values
-```
-
-| Variable | Description |
-| :--- | :--- |
-| `MESHCENTRAL_LB_IP` | Static IP address for the LoadBalancer |
-
-### 2. Load Environment Variables
-
-```bash
-# Using direnv
+cd k8s/meshcentral
+sops edit secrets.enc.env
 direnv allow
-
-# Or manually
-source .envrc
 ```
 
-### 3. Deploy
+### 2. Deploy
 
 ```bash
 # Verify manifests
@@ -49,28 +46,26 @@ helmfile template
 helmfile apply
 ```
 
-## Configuration Details
+## Secret Variables
 
-### Static IP Address (LoadBalancer)
+| Variable | Description |
+|----------|-------------|
+| `MESHCENTRAL_LB_IP` | Static IP address for the LoadBalancer Service |
 
-`MESHCENTRAL_LB_IP` is injected via `values.yaml.gotmpl` into the Service's `io.cilium/load-balancer-ip` annotation, allowing Cilium to assign a static IP to the LoadBalancer.
+The IP is injected via `values.yaml.gotmpl` into the `io.cilium/load-balancer-ip` annotation.
 
-### Storage (PVC)
-
-PersistentVolumeClaims are defined in `chart/templates/pvc.yaml` and sized via `chart/values.yaml`.
+## Storage
 
 | PVC Name | Default Size | Mount Path |
-| :--- | :--- | :--- |
+|----------|-------------|-----------|
 | `meshcentral-data` | 1Gi | `/opt/meshcentral/meshcentral-data` |
 | `meshcentral-files` | 10Gi | `/opt/meshcentral/meshcentral-files` |
 | `meshcentral-backups` | 5Gi | `/opt/meshcentral/meshcentral-backups` |
 | `meshcentral-web` | 1Gi | `/opt/meshcentral/meshcentral-web` |
 
-### Resource Limits
-
-Default resource requests/limits defined in `chart/values.yaml`:
+## Resource Limits
 
 | | CPU | Memory |
-| :--- | :--- | :--- |
+|-|-----|--------|
 | Requests | 100m | 256Mi |
 | Limits | 1000m | 1Gi |
