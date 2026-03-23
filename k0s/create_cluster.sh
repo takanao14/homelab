@@ -42,13 +42,11 @@ setup_env_config() {
     case "$target" in
         dev)
             ENV_FILE="$SCRIPT_DIR/.env.dev"
-            K0SCTRL_FILE="$SCRIPT_DIR/dev-homelab-k0sctl.yaml"
-            KUBECONFIG_OUT="$HOME/.kube/dev-homelab.yaml"
+            KUBECONFIG_OUT="$HOME/.kube/dev.yaml"
             ;;
         prd)
-            ENV_FILE="$SCRIPT_DIR/.env.homelab"
-            K0SCTRL_FILE="$SCRIPT_DIR/homelab-k0sctl.yaml"
-            KUBECONFIG_OUT="$HOME/.kube/homelab.yaml"
+            ENV_FILE="$SCRIPT_DIR/.env.prd"
+            KUBECONFIG_OUT="$HOME/.kube/prd.yaml"
             ;;
         *)
             return 1
