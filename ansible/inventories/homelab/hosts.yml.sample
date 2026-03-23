@@ -9,7 +9,6 @@ all:
     secondary01:
       ansible_host: your secondary DNS host IP
       ansible_user: user for this host
-      ansible_become: true
     node1:
       ansible_host: your node host IP
     node2:

@@ -1,0 +1,2 @@
+inventories/homelab/hosts.yml
+!inventories/homelab/hosts.enc.yml
