@@ -1,0 +1,17 @@
+proxmox:
+  prd:
+    url: https://node1.home.butaco.net:8006
+    username: {{ requiredEnv "PROXMOX_PRD_USERNAME" }}
+    password: {{ requiredEnv "PROXMOX_PRD_PASSWORD" }}
+    node: node1
+  dev:
+    url: https://pve.home.butaco.net:8006
+    username: {{ requiredEnv "PROXMOX_DEV_USERNAME" }}
+    password: {{ requiredEnv "PROXMOX_DEV_PASSWORD" }}
+    node: pve
+
+truenas:
+  key: {{ requiredEnv "TRUENAS_API_KEY" }}
+
+grafana:
+  password: {{ requiredEnv "GRAFANA_PASSWORD" }}

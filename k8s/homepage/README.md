@@ -1,32 +1,45 @@
 # Homepage
 
-[Homepage](https://gethomepage.dev/) is a modern, fully static, fast, secure fully customizable application dashboard with integrations for over 100 services and translations into over 40 languages.
+[Homepage](https://gethomepage.dev/) dashboard deployed on the homelab Kubernetes cluster.
 
 ## Directory Structure
 
 ```
-.
-├── helmfile.yaml           # Helmfile entrypoint (environments: dev, prd)
-├── values-dev.yaml         # Dev environment overrides
-├── values-prd.yaml         # Prd environment overrides
-└── chart/                  # Custom Helm chart
+homepage/
+├── helmfile.yaml                  # Helmfile entrypoint (environments: dev, prd)
+├── values-common.yaml.gotmpl      # Common values (credentials via requiredEnv)
+├── values-dev.yaml.gotmpl         # Dev environment overrides
+├── values-prd.yaml.gotmpl         # Prd environment overrides
+├── secrets.enc.env                # SOPS-encrypted secrets (committed)
+├── .envrc                         # Decrypts secrets (gitignored)
+└── chart/                         # Custom Helm chart
     ├── Chart.yaml
-    ├── values.yaml         # Default values
+    ├── values.yaml
     └── templates/
-        ├── _config.tpl     # Homepage config templates (services, widgets, etc.)
-        ├── secret-config.yaml  # ConfigMap rendered from _config.tpl
+        ├── _config.tpl            # Homepage config templates (services, widgets, etc.)
+        ├── secret-config.yaml     # Secret rendered from _config.tpl
         ├── deployment.yaml
-        ├── service.yaml    # LoadBalancer with external-dns annotation
+        ├── service.yaml           # LoadBalancer with ExternalDNS annotation
         └── rbac.yaml
 ```
 
 ## Deployment
 
+### 1. Set up secrets
+
 ```bash
-# Apply to production
+cd k8s/homepage
+sops edit secrets.enc.env
+direnv allow
+```
+
+### 2. Apply
+
+```bash
+# Production
 helmfile -e prd apply
 
-# Apply to development
+# Development
 helmfile -e dev apply
 
 # Dry-run (diff)
@@ -35,24 +48,20 @@ helmfile -e prd diff
 
 ## Configuration
 
-Homepage configuration files (`services.yaml`, `widgets.yaml`, `settings.yaml`, `proxmox.yaml`, `kubernetes.yaml`) are generated from Go templates in `chart/templates/_config.tpl` and embedded into a Kubernetes `Secret` (`homepage-config`) via `chart/templates/secret-config.yaml`.
+Homepage configuration (`services.yaml`, `widgets.yaml`, `settings.yaml`, etc.) is generated from Go templates in `chart/templates/_config.tpl` and embedded into a Kubernetes Secret (`homepage-config`).
 
-### Values
+Non-sensitive service URLs and IPs are hardcoded in the chart templates. Credentials are injected via `requiredEnv`.
 
-Default values are defined in `chart/values.yaml`. Environment-specific overrides are in `values-dev.yaml` and `values-prd.yaml`.
+## Secret Variables
 
-| Key | Description |
-|-----|-------------|
-| `hostname` | ExternalDNS hostname for the LoadBalancer Service |
-| `proxmox.prd` / `proxmox.dev` | Proxmox VE connection info |
-| `pdns.primary` / `pdns.secondary` | PowerDNS authoritative server info |
-| `dnsdist.dnsdist1` / `dnsdist.dnsdist2` | dnsdist load balancer info |
-| `truenas` | TrueNAS connection info |
-| `grafana` / `prometheus` | Monitoring service info |
-| `forgejo` | Forgejo (Git) URL |
-| `network` | Network device addresses |
-
-> **Note:** `values-*.yaml` may contain sensitive data (passwords, API keys) and must not be committed to the repository.
+| Variable | Description |
+|----------|-------------|
+| `PROXMOX_PRD_USERNAME` | Proxmox VE username (production) |
+| `PROXMOX_PRD_PASSWORD` | Proxmox VE password/token (production) |
+| `PROXMOX_DEV_USERNAME` | Proxmox VE username (development) |
+| `PROXMOX_DEV_PASSWORD` | Proxmox VE password/token (development) |
+| `TRUENAS_API_KEY` | TrueNAS API key |
+| `GRAFANA_PASSWORD` | Grafana admin password |
 
 ## Services Displayed
 
