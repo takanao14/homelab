@@ -1,18 +1,21 @@
 ---
 - name: Install prometheus-node-exporter
-  apt:
+  become: true
+  ansible.builtin.apt:
     name: prometheus-node-exporter
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Install lm-sensors for temperature monitoring on amd64
-  apt:
+  become: true
+  ansible.builtin.apt:
     name: lm-sensors
     state: present
   when: ansible_facts['architecture'] == "x86_64"
 
 - name: Configure node_exporter args
-  template:
+  become: true
+  ansible.builtin.template:
     src: prometheus-node-exporter.default.j2
     dest: /etc/default/prometheus-node-exporter
     owner: root
@@ -21,7 +24,8 @@
   notify: restart node_exporter
 
 - name: Ensure textfile collector directory exists
-  file:
+  become: true
+  ansible.builtin.file:
     path: /var/lib/node_exporter/textfile_collector
     state: directory
     owner: root
@@ -29,7 +33,8 @@
     mode: '0755'
 
 - name: Install Raspberry Pi monitoring script
-  template:
+  become: true
+  ansible.builtin.template:
     src: rpi_throttled_metrics.sh.j2
     dest: /usr/local/bin/rpi_throttled_metrics.sh
     owner: root
@@ -38,14 +43,16 @@
   when: ansible_facts['architecture'] in ["aarch64", "armv7l"]
 
 - name: Add cron job for Raspberry Pi monitoring script
-  cron:
+  become: true
+  ansible.builtin.cron:
     name: "Raspberry Pi Throttling Metrics"
     minute: "*"
     job: "/usr/local/bin/rpi_throttled_metrics.sh > /var/lib/node_exporter/textfile_collector/rpi_throttled.prom"
   when: ansible_facts['architecture'] in ["aarch64", "armv7l"]
 
 - name: Ensure prometheus-node-exporter is started and enabled
-  service:
+  become: true
+  ansible.builtin.service:
     name: prometheus-node-exporter
     state: started
-    enabled: yes
+    enabled: true

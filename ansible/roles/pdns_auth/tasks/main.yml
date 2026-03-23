@@ -15,21 +15,24 @@
       - pdns_secondary_api_key | length > 0 if pdns_role == 'secondary' else true
       - pdns_primary_allow_axfr_ips | length > 0 if pdns_role == 'primary' else true
       - pdns_primary_also_notify | length > 0 if pdns_role == 'primary' else true
-    fail_msg: "Required environment variables for pdns_auth are missing. Check your .envrc."
+    fail_msg: "Required environment variables for pdns_auth are missing. Check your .envrc.prd.dev."
 
 - name: Ensure apt keyring directory exists
+  become: true
   ansible.builtin.file:
     path: /etc/apt/keyrings
     state: directory
     mode: "0755"
 
 - name: Install PowerDNS repository key
+  become: true
   ansible.builtin.get_url:
     url: "{{ pdns_repo_key_url }}"
     dest: "{{ pdns_repo_key_path }}"
     mode: "0644"
 
 - name: Configure pdns apt pinning
+  become: true
   ansible.builtin.copy:
     dest: "{{ pdns_repo_pin_path }}"
     mode: "0644"
@@ -39,6 +42,7 @@
       Pin-Priority: 600
 
 - name: Configure PowerDNS authoritative repository
+  become: true
   ansible.builtin.apt_repository:
     repo: "deb [signed-by={{ pdns_repo_key_path }}] {{ pdns_repo_base_url }} {{ pdns_repo_release }}-{{ pdns_repo_channel }} main"
     filename: pdns-auth
@@ -46,6 +50,7 @@
     update_cache: true
 
 - name: Install pdns packages
+  become: true
   ansible.builtin.apt:
     name:
       - pdns-server
@@ -54,6 +59,7 @@
     state: present
 
 - name: Ensure PowerDNS data directory exists
+  become: true
   ansible.builtin.file:
     path: /var/lib/powerdns
     state: directory
@@ -62,12 +68,14 @@
     mode: "0755"
 
 - name: Initialize PowerDNS sqlite database
+  become: true
   ansible.builtin.shell: |
     sqlite3 /var/lib/powerdns/pdns.sqlite3 < /usr/share/pdns-backend-sqlite3/schema/schema.sqlite3.sql
   args:
     creates: /var/lib/powerdns/pdns.sqlite3
 
 - name: Ensure PowerDNS data directory ownership
+  become: true
   ansible.builtin.file:
     path: /var/lib/powerdns
     state: directory
@@ -76,6 +84,7 @@
     recurse: true
 
 - name: Deploy pdns configuration
+  become: true
   ansible.builtin.template:
     src: "pdns.conf.j2"
     dest: /etc/powerdns/pdns.conf
@@ -85,6 +94,7 @@
   notify: Restart pdns
 
 - name: Ensure pdns service is enabled and started
+  become: true
   ansible.builtin.systemd:
     name: pdns
     enabled: true

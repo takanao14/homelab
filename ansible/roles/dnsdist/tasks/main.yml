@@ -11,7 +11,6 @@
     that:
       - primary_auth_server | length > 0
       - secondary_auth_server | length > 0
-      - dnsdist_local_forwarder | length > 0
       - dnsdist_web_password | length > 0
       - dnsdist_web_api_key | length > 0
       - dnsdist_console_key | length > 0
@@ -19,21 +18,24 @@
       - dnsdist_console_acl | length > 0
       - dnsdist_internal_domains | length > 0
       - dnsdist_internal_check_name | length > 0
-    fail_msg: "Required environment variables (PRIMARY_AUTH_SERVER, etc.) are missing. Check your .envrc."
+    fail_msg: "Required environment variables (PRIMARY_AUTH_SERVER, etc.) are missing. Check your .envrc.prd.dev."
 
 - name: Ensure apt keyring directory exists
+  become: true
   ansible.builtin.file:
     path: /etc/apt/keyrings
     state: directory
     mode: "0755"
 
 - name: Install PowerDNS repository key
+  become: true
   ansible.builtin.get_url:
     url: "{{ dnsdist_repo_key_url }}"
     dest: "{{ dnsdist_repo_key_path }}"
     mode: "0644"
 
 - name: Configure dnsdist apt pinning
+  become: true
   ansible.builtin.copy:
     dest: "{{ dnsdist_repo_pin_path }}"
     mode: "0644"
@@ -43,6 +45,7 @@
       Pin-Priority: 600
 
 - name: Configure PowerDNS dnsdist repository
+  become: true
   ansible.builtin.apt_repository:
     repo: "deb [signed-by={{ dnsdist_repo_key_path }}] {{ dnsdist_repo_base_url }} {{ dnsdist_repo_release }}-{{ dnsdist_repo_channel }} main"
     filename: dnsdist
@@ -50,11 +53,13 @@
     update_cache: true
 
 - name: Install dnsdist package
+  become: true
   ansible.builtin.apt:
     name: dnsdist
     state: present
 
 - name: Deploy dnsdist configuration
+  become: true
   ansible.builtin.template:
     src: dnsdist.conf.j2
     dest: /etc/dnsdist/dnsdist.conf
@@ -64,6 +69,7 @@
   notify: Restart dnsdist
 
 - name: Ensure dnsdist service is enabled and started
+  become: true
   ansible.builtin.systemd:
     name: dnsdist
     enabled: true
