@@ -5,56 +5,67 @@ Scripts for managing the k0s cluster lifecycle using k0sctl and Helmfile.
 ## Prerequisites
 
 | Tool | Purpose |
-|---|---|
+|------|---------|
 | `k0sctl` | Cluster setup / reset |
 | `helmfile` / `helm` | Helm deployments for CNI and storage |
 | `kubectl` | Apply Gateway API CRDs |
 | `cilium` CLI | Wait for Cilium to become ready |
 | `envsubst` | Expand variables in the k0sctl config template |
+| `sops` | Decrypt secrets files |
+| `direnv` | Auto-load environment variables |
 
 ## Directory Structure
 
 ```
 k0s/
-├── create_cluster.sh          # Entry point
-├── template_lib.sh            # Core logic (sourced by create_cluster.sh)
-├── k0sctl.tmpl.yaml           # k0sctl config template (expanded with envsubst)
-├── helmfile.yaml              # Helm release definitions (cilium / openebs / cilium-config)
-├── .env.dev                   # dev environment variables (gitignored)
-├── .env.dev.sample            # dev environment variables sample
-├── .env.prd                   # prd environment variables (gitignored)
-├── .env.prd.sample            # prd environment variables sample
+├── create_cluster.sh              # Entry point
+├── template_lib.sh                # Core logic (sourced by create_cluster.sh)
+├── k0sctl.tmpl.yaml               # k0sctl config template (expanded with envsubst)
+├── helmfile.yaml                  # Helm release definitions (cilium / openebs / cilium-config)
+├── .env.dev                       # Dev non-secret variables (gitignored)
+├── .env.prd                       # Prd non-secret variables (gitignored)
+├── secrets.dev.enc.env            # SOPS-encrypted secrets for dev (committed)
+├── secrets.prd.enc.env            # SOPS-encrypted secrets for prd (committed)
 ├── charts/
-│   └── cilium-config/         # Local chart for Cilium L2 policy and IP pool
+│   └── cilium-config/             # Local chart for Cilium L2 policy and IP pool
 ├── values/
-│   ├── cilium.yaml.gotmpl     # Cilium Helm values
+│   ├── cilium.yaml.gotmpl         # Cilium Helm values
 │   ├── cilium-config.yaml.gotmpl  # cilium-config Helm values (IP pool range)
-│   └── openebs.yaml           # OpenEBS Helm values
+│   └── openebs.yaml               # OpenEBS Helm values
 ├── hook/
-│   ├── ssdsetup.sh            # Format and mount SSD on worker node
-│   └── mirror.sh              # Configure containerd docker.io mirror
+│   ├── ssdsetup.sh                # Format and mount SSD on worker node
+│   └── mirror.sh                  # Configure containerd docker.io mirror
 └── test/
-    ├── default-openebs.yaml   # Smoke test for OpenEBS default StorageClass
-    └── load-balancer.yaml     # Smoke test for LoadBalancer Service
+    ├── default-openebs.yaml       # Smoke test for OpenEBS default StorageClass
+    └── load-balancer.yaml         # Smoke test for LoadBalancer Service
 ```
 
 ## Environment Variables
 
-Defined in `.env.*` files per environment. Automatically sourced by `create_cluster.sh`. Copy from the sample files to get started.
+Variables are split between plain `.env.*` files (non-secrets) and SOPS-encrypted `secrets.*.enc.env` files (secrets). Both are sourced automatically by `create_cluster.sh`.
 
-```bash
-cp .env.dev.sample .env.dev
-cp .env.prd.sample .env.prd
-```
+### Non-secret (`.env.dev` / `.env.prd`)
 
 | Variable | Description |
-|---|---|
-| `K0S_SSH_USER` | SSH username |
+|----------|-------------|
 | `K0S_CONTROLLER_ADDRESS` | Controller node IP address |
 | `K0S_WORKER_ADDRESS` | Worker node IP address |
 | `K0S_CLUSTER_NAME` | Cluster name (k0sctl metadata) |
 | `K0S_LB_POOL_START` | Cilium LoadBalancer IP pool start address |
 | `K0S_LB_POOL_STOP` | Cilium LoadBalancer IP pool end address |
+
+### Secrets (`secrets.dev.enc.env` / `secrets.prd.enc.env`)
+
+| Variable | Description |
+|----------|-------------|
+| `K0S_SSH_USER` | SSH username for cluster nodes |
+
+Edit secrets with:
+
+```bash
+sops edit secrets.dev.enc.env
+sops edit secrets.prd.enc.env
+```
 
 ## Usage
 
@@ -63,7 +74,7 @@ cp .env.prd.sample .env.prd
 ```
 
 | Command | Description |
-|---|---|
+|---------|-------------|
 | `apply` | Full setup: k0sctl apply → fetch kubeconfig → helmfile apply → Gateway API CRDs |
 | `reset` | Reset the cluster: k0sctl reset |
 | `kubeconfig` | Write kubeconfig to `~/.kube/<env>.yaml` |

@@ -66,10 +66,19 @@ if [ ! -f "$ENV_FILE" ]; then
     die "Environment file not found: $ENV_FILE"
 fi
 
-# Source environment file with set -a to export all variablesREADwo
+# Source environment file with set -a to export all variables
 set -a
 # shellcheck disable=SC1090
 source "$ENV_FILE"
+# Source SOPS-encrypted secrets file if it exists
+SECRETS_FILE="$SCRIPT_DIR/secrets.$ENV_TARGET.enc.env"
+if [ -f "$SECRETS_FILE" ]; then
+    _tmp_secrets=$(mktemp)
+    trap 'rm -f "$_tmp_secrets"' EXIT
+    sops --decrypt "$SECRETS_FILE" > "$_tmp_secrets"
+    # shellcheck disable=SC1090
+    source "$_tmp_secrets"
+fi
 set +a
 
 # Validate command argument
