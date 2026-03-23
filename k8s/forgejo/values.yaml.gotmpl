@@ -1,18 +1,20 @@
+{{- $domain := "git.prd.butaco.net" -}}
+{{- $sshDomain := "gitssh.prd.butaco.net" -}}
+
 gitea:
   config:
     APP_NAME: 'Forgejo: Git with a cup of tea'
     repository.pull-request:
       WORK_IN_PROGRESS_PREFIXES: 'WIP:,[WIP]:'
     server:
-      DOMAIN: {{ requiredEnv "FORGEJO_DOMAIN" | quote }}
-      SSH_DOMAIN: {{ requiredEnv "FORGEJO_SSH_DOMAIN" | quote }}
+      DOMAIN: {{ $domain | quote }}
+      SSH_DOMAIN: {{ $sshDomain | quote }}
       HTTP_PORT: 3000
       # Port displayed in the UI
       SSH_PORT: 22
       # Port actually bound within the container
       SSH_LISTEN_PORT: 2222
   admin:
-    # Inject via environment variables based on AGENTS.md rules
     username: {{ requiredEnv "FORGEJO_ADMIN_USERNAME" | quote }}
     password: {{ requiredEnv "FORGEJO_ADMIN_PASSWORD" | quote }}
     email: {{ requiredEnv "FORGEJO_ADMIN_EMAIL" | quote }}
@@ -26,10 +28,10 @@ service:
     targetPort: 3000
     type: LoadBalancer
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: {{ requiredEnv "FORGEJO_DOMAIN" | quote }}
+      external-dns.alpha.kubernetes.io/hostname: {{ $domain | quote }}
   ssh:
     port: 22
     targetPort: 2222
     type: LoadBalancer
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: {{ requiredEnv "FORGEJO_SSH_DOMAIN" | quote }}
+      external-dns.alpha.kubernetes.io/hostname: {{ $sshDomain | quote }}

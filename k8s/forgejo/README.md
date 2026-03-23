@@ -1,55 +1,55 @@
 # Forgejo
 
-A self-hosted Git service (Forgejo) deployed on the Kubernetes cluster within the homelab.
+Self-hosted Git service deployed on the homelab Kubernetes cluster.
 
 ## Architecture
 
 - **Chart**: `forgejo/forgejo` (OCI: `code.forgejo.org/forgejo-helm`)
-- **Deployment**: Managed using `helmfile`
+- **Deployment**: Managed with `helmfile`
+- **Persistence**: 100Gi Persistent Volume
+- **Service**: HTTP (port 80) and SSH (port 22) via LoadBalancer; hostnames registered automatically by ExternalDNS
+
+## Directory Structure
+
+```
+forgejo/
+├── helmfile.yaml
+├── values.yaml.gotmpl       # All values; domain/SSH domain as local Go template vars
+├── secrets.enc.env          # SOPS-encrypted secrets (committed)
+└── .envrc                   # Decrypts secrets (gitignored)
+```
 
 ## Deployment
 
-Set the following environment variables before running `helmfile`.
-All variables use `envRequired` in the template — missing any will cause an immediate rendering error, preventing a broken deploy.
+### 1. Set up secrets
 
 ```bash
-export FORGEJO_DOMAIN=git.exmaple.com
-export FORGEJO_SSH_DOMAIN=gitssh.exmaple.com
-export FORGEJO_ADMIN_USERNAME=admin
-export FORGEJO_ADMIN_PASSWORD=your_secure_password
-export FORGEJO_ADMIN_EMAIL=admin@example.com
-
-helmfile apply
-```
-
-A `.envrc.sample` is provided as a commit-safe template. Copy it and fill in the actual values:
-
-```bash
-cp .envrc.sample .envrc
-# Edit .envrc with actual values
+cd k8s/forgejo
+sops edit secrets.enc.env
 direnv allow
 ```
 
-You can also manage these values with `.envrc` (via `direnv`):
+### 2. Apply
 
-| Variable | Description | Example |
-| :--- | :--- | :--- |
-| `FORGEJO_DOMAIN` | HTTP domain for Forgejo UI | `git.exmaple.com` |
-| `FORGEJO_SSH_DOMAIN` | SSH domain for Forgejo | `gitssh.exmaple.com` |
-| `FORGEJO_ADMIN_USERNAME` | Initial admin username | `admin` |
-| `FORGEJO_ADMIN_PASSWORD` | Initial admin password | `your_secure_password` |
-| `FORGEJO_ADMIN_EMAIL` | Initial admin email | `admin@example.com` |
+```bash
+helmfile apply
+```
 
-## Configuration Details
+## Configuration
 
-- **Domain / SSH Domain**: Configured via `FORGEJO_DOMAIN` / `FORGEJO_SSH_DOMAIN` environment variables (see `.envrc`).
-- **Persistence**: 100Gi Persistent Volume
-- **Service**:
-    - HTTP (Port 80): via `LoadBalancer`.
-    - SSH (Port 22): via `LoadBalancer`.
-    - Hostname is automatically resolved by `external-dns` using the same domain variables.
+Domains are defined as Go template variables at the top of `values.yaml.gotmpl` (not environment variables, since they are not sensitive):
 
-## Admin Configuration
+```gotmpl
+{{- $domain    := "git.prd.butaco.net" -}}
+{{- $sshDomain := "gitssh.prd.butaco.net" -}}
+```
 
-Admin credentials are injected via environment variables.
-See `values.yaml.gotmpl` for details.
+Admin credentials are injected via `requiredEnv` — a missing variable causes an immediate rendering error, preventing a broken deploy.
+
+## Secret Variables
+
+| Variable | Description |
+|----------|-------------|
+| `FORGEJO_ADMIN_USERNAME` | Initial admin username |
+| `FORGEJO_ADMIN_PASSWORD` | Initial admin password |
+| `FORGEJO_ADMIN_EMAIL` | Initial admin email |

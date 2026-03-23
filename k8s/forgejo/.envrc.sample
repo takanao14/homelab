@@ -1,6 +1,0 @@
-export FORGEJO_ADMIN_USERNAME="admin"
-export FORGEJO_ADMIN_PASSWORD="your-secure-password"
-export FORGEJO_ADMIN_EMAIL="admin@example.com"
-export FORGEJO_DOMAIN="git.example.com"
-export FORGEJO_SSH_DOMAIN="gitssh.example.com"
-
