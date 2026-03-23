@@ -1,0 +1,46 @@
+namespace: homepage
+
+image:
+  repository: ghcr.io/gethomepage/homepage
+  tag: v1.10.1
+
+pdns:
+  primary:
+    addr: ns1.home.butaco.net
+    pveNode: node1
+    pveVmid: "103"
+    pveType: lxc
+  secondary:
+    addr: ns2.home.butaco.net
+
+dnsdist:
+  dnsdist1:
+    addr: dist1.home.butaco.net
+    pveNode: node1
+    pveVmid: "103"
+    pveType: lxc
+  dnsdist2:
+    addr: dist2.home.butaco.net
+
+truenas:
+  url: http://truenas.home.butaco.net
+  node: node1
+  vmid: "100"
+  key: ""
+
+grafana:
+  url: http://grafana.prd.butaco.net
+  username: admin
+  password: ""
+
+prometheus:
+  url: http://prometheus.prd.butaco.net:9090
+
+forgejo:
+  url: http://git.prd.butaco.net/
+
+network:
+  bgw1: bgw1.home.butaco.net
+  c1200: c1200.home.butaco.net
+  wifiAp1: wifiap1.home.butaco.net
+  wifiAp2: wifiap2.home.butaco.net
