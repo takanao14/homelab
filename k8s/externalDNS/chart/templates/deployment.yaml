@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+  namespace: {{ .Release.Namespace }}
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: external-dns
+  template:
+    metadata:
+      labels:
+        app: external-dns
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: external-dns
+      containers:
+        - name: external-dns
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          args:
+            - --source=service
+            - --provider=pdns
+            - --pdns-server=$(PDNS_API_URL)
+            - --pdns-server-id=$(PDNS_SERVER_ID)
+            - --pdns-api-key=$(PDNS_HTTP_API_KEY)
+            - --txt-owner-id=$(OWNER_ID_FOR_THIS_EXTERNAL_DNS)
+            - --domain-filter=$(DOMAIN_FILTER)
+            - --log-level=debug
+            - --interval=30s
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          envFrom:
+            - secretRef:
+                name: external-dns-env
