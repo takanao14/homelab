@@ -5,19 +5,19 @@ image:
 port: 9221
 
 pveConfig: |
-  cluster_homelab:
-    user: "{{ requiredEnv "HOMELAB_USER" }}"
-    token_name: "{{ requiredEnv "HOMELAB_TOKEN_NAME" }}"
-    token_value: "{{ requiredEnv "HOMELAB_TOKEN_VALUE" }}"
+  cluster_prd:
+    user: "{{ requiredEnv "PROXMOX_PRD_USER" }}"
+    token_name: "{{ requiredEnv "PROXMOX_PRD_TOKEN_NAME" }}"
+    token_value: "{{ requiredEnv "PROXMOX_PRD_TOKEN_VALUE" }}"
     verify_ssl: false
   cluster_dev:
-    user: "{{ requiredEnv "DEV_USER" }}"
-    token_name: "{{ requiredEnv "DEV_TOKEN_NAME" }}"
-    token_value: "{{ requiredEnv "DEV_TOKEN_VALUE" }}"
+    user: "{{ requiredEnv "PROXMOX_DEV_USER" }}"
+    token_name: "{{ requiredEnv "PROXMOX_DEV_TOKEN_NAME" }}"
+    token_value: "{{ requiredEnv "PROXMOX_DEV_TOKEN_VALUE" }}"
     verify_ssl: false
 
 targets:
-  - ip: {{ requiredEnv "PVE_DEV_IP" | quote }}
+  - ip: "192.168.10.10"
     module: cluster_dev
-  - ip: {{ requiredEnv "PVE_HOMELAB_IP" | quote }}
-    module: cluster_homelab
+  - ip: "192.168.10.11"
+    module: cluster_prd

@@ -2,6 +2,7 @@ port: 9100
 metricsPath: /metrics
 
 targetIPs:
-{{- range (requiredEnv "NODE_EXPORTER_TARGET_IPS" | splitList " ") }}
-  - {{ . | quote }}
-{{- end }}
+  - "192.168.10.10"
+  - "192.168.10.11"
+  - "192.168.10.240"
+  - "192.168.10.241"

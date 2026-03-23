@@ -21,7 +21,7 @@ prometheus:
   service:
     type: LoadBalancer
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: prometheus.k8s.homelab.internal
+      external-dns.alpha.kubernetes.io/hostname: prometheus.prd.butaco.net
 
 grafana:
   defaultDashboardsTimezone: jst
@@ -37,7 +37,7 @@ grafana:
   service:
     type: LoadBalancer
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: grafana.k8s.homelab.internal
+      external-dns.alpha.kubernetes.io/hostname: grafana.prd.butaco.net
     externalTrafficPolicy: Local
 
 # k0s + Cilium
@@ -50,6 +50,3 @@ kubeScheduler:
   enabled: false
 kubeProxy:
   enabled: false
-
-
-

@@ -24,7 +24,7 @@ config:
       prober: dns
       timeout: 5s
       dns:
-        query_name: {{ requiredEnv "BLACKBOX_DNS_INTERNAL_QUERY_NAME" | quote }}
+        query_name: "ns1.home.butaco.net"
         query_type: "A"
         valid_rcodes:
           - NOERROR
@@ -45,9 +45,15 @@ extraManifests:
       targets:
         staticConfig:
           static:
-{{- range (requiredEnv "BLACKBOX_ICMP_TARGET_IPS" | splitList " ") }}
-            - {{ . | quote }}
-{{- end }}
+            - "192.168.10.1"
+            - "192.168.10.2"
+            - "192.168.10.10"
+            - "192.168.10.11"
+            - "192.168.10.240"
+            - "192.168.10.241"
+            - "192.168.10.242"
+            - "192.168.10.253"
+            - "192.168.10.254"
   - apiVersion: monitoring.coreos.com/v1
     kind: Probe
     metadata:
@@ -63,9 +69,8 @@ extraManifests:
       targets:
         staticConfig:
           static:
-{{- range (requiredEnv "BLACKBOX_DNS_EXTERNAL_TARGET_IPS" | splitList " ") }}
-            - {{ . | quote }}
-{{- end }}
+            - "192.168.10.241"
+            - "192.168.10.242"
   - apiVersion: monitoring.coreos.com/v1
     kind: Probe
     metadata:
@@ -81,6 +86,5 @@ extraManifests:
       targets:
         staticConfig:
           static:
-{{- range (requiredEnv "BLACKBOX_DNS_INTERNAL_TARGET_IPS" | splitList " ") }}
-            - {{ . | quote }}
-{{- end }}
+            - "192.168.10.241"
+            - "192.168.10.242"

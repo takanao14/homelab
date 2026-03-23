@@ -41,6 +41,5 @@ extraManifests:
             - targetLabel: __param_auth
               replacement: homelab_v2
           static:
-            {{- range (requiredEnv "SNMP_TARGET_IPS" | splitList " ") }}
-            - {{ . | quote }}
-            {{- end }}
+            - "192.168.10.1"
+            - "192.168.10.2"

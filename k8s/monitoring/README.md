@@ -1,24 +1,27 @@
 # Monitoring Stack
 
-This directory contains the monitoring stack configuration for the homelab Kubernetes cluster.
+Monitoring stack for the homelab Kubernetes cluster, deployed via Helmfile.
 
 ## Components
 
-- **kube-prometheus-stack**: Prometheus, Grafana, and Alertmanager deployed via Helm
-- **blackbox-exporter**: ICMP and DNS probing metrics deployed via Helm
-- **snmp-exporter**: SNMP metrics polling deployed via Helm
-- **prometheus-pve-exporter**: Proxmox VE metrics polling deployed via local Helm chart
-- **node-exporter (external)**: Scraping node-exporter running on external nodes via local Helm chart
-- **dnsdist**: DNS load balancer metrics via local Helm chart
-- **pdns-auth**: PowerDNS Authoritative metrics via local Helm chart
+| Release | Chart | Description |
+|---------|-------|-------------|
+| `prometheus` | `kube-prometheus-stack` | Prometheus, Grafana, Alertmanager |
+| `blackbox-exporter` | `prometheus-blackbox-exporter` | ICMP and DNS probing |
+| `snmp-exporter` | `prometheus-snmp-exporter` | SNMP metrics polling |
+| `prometheus-pve-exporter` | local chart | Proxmox VE metrics |
+| `node-exporter-external` | local chart | Scrape external node-exporter instances |
+| `dnsdist` | local chart | dnsdist metrics |
+| `pdns-auth` | local chart | PowerDNS Authoritative metrics |
 
 ## Directory Structure
 
 ```
 monitoring/
-├── helmfile.yaml                # Main deployment configuration
-├── .envrc.example               # Template for environment variables
-├── values/                      # Helm values for each release
+├── helmfile.yaml
+├── secrets.enc.env              # SOPS-encrypted secrets (committed)
+├── .envrc                       # Decrypts secrets (gitignored)
+├── values/
 │   ├── prometheus.yaml.gotmpl
 │   ├── blackbox-exporter.yaml.gotmpl
 │   ├── snmp-exporter.yaml.gotmpl
@@ -27,54 +30,52 @@ monitoring/
 │   ├── pdns-auth.yaml.gotmpl
 │   ├── prometheus-pve-exporter.yaml.gotmpl
 │   └── default-values.yaml      # Reference: default values from upstream charts
-└── charts/                      # Local Helm charts for custom exporters
-    ├── node-exporter-external/  # Service and ServiceMonitor for external node-exporter
-    ├── dnsdist/                 # Service and ServiceMonitor for dnsdist
-    ├── pdns-auth/               # Service and ServiceMonitor for PowerDNS Auth
-    └── prometheus-pve-exporter/ # Deployment, Secret, and Probe for PVE Exporter
+└── charts/
+    ├── node-exporter-external/
+    ├── dnsdist/
+    ├── pdns-auth/
+    └── prometheus-pve-exporter/ # Includes checksum annotation for auto-restart on Secret change
 ```
 
 ## Deployment
 
 ### Prerequisites
 
-- Kubernetes cluster
-- `helmfile` installed ([installation guide](https://github.com/helmfile/helmfile))
-- `kubectl` configured with appropriate context
-- `direnv` available (for environment variable injection)
+- Kubernetes cluster with `helmfile`, `kubectl`
+- `sops` + `direnv` for secret management
 
-### 1. Configure Environment Variables
-
-Copy and edit the environment variables file with your actual credentials and target IPs:
+### 1. Set up secrets
 
 ```bash
 cd k8s/monitoring
-cp .envrc.example .envrc
-vi .envrc
+sops edit secrets.enc.env
 direnv allow
 ```
 
-**Note:** Keep `k8s/monitoring/.envrc` local only; never commit credentials. Use `.envrc.example` as the tracked template.
-
-### 2. Deploy All Releases
-
-Deploy the entire monitoring stack with a single command:
+### 2. Deploy
 
 ```bash
 helmfile apply
 ```
 
-This will:
-- Add necessary Helm repositories
-- Create the `monitoring` namespace if it doesn't exist
-- Install or upgrade all releases (kube-prometheus-stack, blackbox-exporter, snmp-exporter, and all local charts)
-- Inject credentials and target IPs from environment variables via `.gotmpl` values files
+## Secret Variables
 
-### Accessing the Dashboards
+| Variable | Used by | Description |
+|----------|---------|-------------|
+| `GRAFANA_ADMIN_PASSWORD` | prometheus (Grafana) | Grafana admin password |
+| `PROXMOX_PRD_USER` | prometheus-pve-exporter | Proxmox VE API username |
+| `PROXMOX_PRD_PASSWORD` | prometheus-pve-exporter | Proxmox VE API password |
 
-Access Grafana via LoadBalancer/Ingress (depending on your cluster setup):
-- URL: `http://grafana.k8s.homelab.internal` (or similar depending on your DNS)
-- The admin password is managed by the Helm release (check secrets or predefined values).
+Non-sensitive values (IPs, hostnames, ports) are hardcoded directly in the `values/*.yaml.gotmpl` files.
 
-Access Prometheus:
-- URL: `http://prometheus.k8s.homelab.internal` (or similar depending on your DNS)
+## Accessing Dashboards
+
+- **Grafana**: `http://grafana.prd.butaco.net` (LoadBalancer via ExternalDNS)
+- **Prometheus**: `http://prometheus.prd.butaco.net` (LoadBalancer via ExternalDNS)
+
+Admin credentials are managed by the Helm release. The Grafana password is set via `GRAFANA_ADMIN_PASSWORD`.
+
+## Notes
+
+- The `prometheus-pve-exporter` Deployment has a checksum annotation on its Secret, so it automatically restarts when the Secret changes (e.g., after `helmfile apply` with updated credentials).
+- Target IPs for external exporters (blackbox, node-exporter, etc.) are hardcoded in values files.
