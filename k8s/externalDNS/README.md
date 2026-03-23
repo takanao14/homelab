@@ -1,83 +1,71 @@
-# ExternalDNS for PowerDNS (Home Lab)
+# ExternalDNS for PowerDNS
 
-This repository manages the ExternalDNS configuration used to automatically register DNS records to PowerDNS (pdns) from a home lab Kubernetes cluster.
-
-It utilizes Kustomize to manage different configurations for development (`dev`) and production (`prd`) environments.
+Manages ExternalDNS to automatically register DNS records to PowerDNS from the homelab Kubernetes cluster. Uses Helmfile with dev/prd environments.
 
 ## Directory Structure
 
-```text
-.
-├── README.md           # This file
-├── namespace.yaml      # Common Namespace definition
-├── base/               # Common base resources
-│   ├── deployment.yaml # ExternalDNS Deployment
-│   ├── kustomization.yaml
-│   └── rbac.yaml       # ServiceAccount and RBAC settings
-└── overlays/           # Environment-specific configurations
-    ├── dev/
-    │   ├── .env        # Secret variables for development (not committed)
-    │   ├── .env.sample # Template for .env (committed)
-    │   └── kustomization.yaml
-    └── prd/
-        ├── .env        # Secret variables for production (not committed)
-        ├── .env.sample # Template for .env (committed)
-        └── kustomization.yaml
+```
+externalDNS/
+├── helmfile.yaml              # Helmfile entrypoint
+├── values-common.yaml.gotmpl  # Common values (references env vars)
+├── values-dev.yaml.gotmpl     # Development environment values
+├── values-prd.yaml.gotmpl     # Production environment values
+├── secrets.enc.env            # SOPS-encrypted secrets (committed)
+├── .envrc                     # Decrypts secrets (gitignored)
+└── chart/                     # Helm chart
+    ├── Chart.yaml
+    ├── values.yaml
+    └── templates/
+        ├── deployment.yaml    # Includes checksum annotation for auto-restart on Secret change
+        ├── rbac.yaml
+        └── secret.yaml
 ```
 
 ## Prerequisites
 
-- A PowerDNS server must be running with the HTTP API enabled.
-- Network connectivity from the Kubernetes cluster to the PowerDNS API must be established.
+- `helmfile` + `helm`
+- PowerDNS server with HTTP API enabled
+- Network connectivity from the Kubernetes cluster to the PowerDNS API
 
 ## Deployment
 
-### 1. Create Namespace
-```bash
-kubectl apply -f namespace.yaml
-```
-
-### 2. Create `.env` from Template
-Copy the provided sample file and fill in the actual values for your environment:
+### 1. Set up secrets
 
 ```bash
-# For development
-cp overlays/dev/.env.sample overlays/dev/.env
-# Edit overlays/dev/.env with actual values
-
-# For production
-cp overlays/prd/.env.sample overlays/prd/.env
-# Edit overlays/prd/.env with actual values
+cd k8s/externalDNS
+sops edit secrets.enc.env
 ```
 
-### 3. Environment-Specific Deployment
-After verifying and editing the contents of `overlays/<env>/.env`, run the following commands:
+Then allow direnv:
 
-**Development (dev):**
 ```bash
-kubectl apply -k overlays/dev
+direnv allow
 ```
 
-**Production (prd):**
+### 2. Apply
+
 ```bash
-kubectl apply -k overlays/prd
+# Development
+helmfile -e dev apply
+
+# Production
+helmfile -e prd apply
 ```
 
-## Configuration (.env)
+## Configuration
 
-Define the following variables in the `.env` file for each environment. These are expanded as a Kubernetes Secret (`external-dns-env`) via `secretGenerator`.
+| Value | Source | Description |
+|-------|--------|-------------|
+| `pdns.apiUrl` | hardcoded | PowerDNS API endpoint |
+| `pdns.serverId` | hardcoded | PowerDNS server ID (`localhost`) |
+| `pdns.apiKey` | `PDNS_API_KEY` env var | PowerDNS API key |
+| `ownerId` | `values-<env>.yaml.gotmpl` | ID for records managed by this instance |
+| `domainFilter` | `values-<env>.yaml.gotmpl` | Target domain filter |
 
-| Variable Name | Description | Example |
-| :--- | :--- | :--- |
-| `PDNS_API_URL` | PowerDNS API endpoint | `http://192.168.xx.yy:8081` |
-| `PDNS_SERVER_ID` | PowerDNS server ID | `localhost` |
-| `PDNS_HTTP_API_KEY` | PowerDNS API key | `your-secret-key` |
-| `OWNER_ID_FOR_THIS_EXTERNAL_DNS` | ID to identify records managed by this ExternalDNS instance | `externaldns-cluster` |
-| `DOMAIN_FILTER` | Filter for the target domains to be processed | `dev.example.com.` |
+The PowerDNS API key is stored in a Kubernetes Secret and passed to the container via `envFrom`. The Deployment has a checksum annotation on the Secret so it automatically restarts when the Secret changes.
 
-## Notes
+## Secret Variables
 
-- **Security:** The `.env` files contain sensitive information such as API keys. Handle them with care.
-  - `.env` files are listed in `.gitignore` and **must not be committed** to the repository.
-  - `.env.sample` files serve as commit-safe templates. Keep them up to date whenever new variables are added.
-- **Resource Conflicts:** If you are deploying multiple environments to the same Kubernetes cluster, you may need to specify a `namePrefix` in `kustomization.yaml` to avoid naming collisions.
+| Variable | Description |
+|----------|-------------|
+| `PDNS_API_KEY` | PowerDNS HTTP API key |
