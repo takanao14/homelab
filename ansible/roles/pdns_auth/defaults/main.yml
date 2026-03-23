@@ -6,16 +6,17 @@ pdns_repo_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc"
 pdns_repo_key_path: "/etc/apt/keyrings/auth-50-pub.asc"
 pdns_repo_pin_path: "/etc/apt/preferences.d/auth-50"
 
-pdns_webserver_port: "{{ lookup('ansible.builtin.env', 'PDNS_WEBSERVER_PORT') }}"
-pdns_webserver_allow_from: "{{ lookup('ansible.builtin.env', 'PDNS_WEBSERVER_ALLOW_FROM') }}"
+pdns_webserver_port: 8081
+pdns_webserver_allow_from: "192.168.10.0/24,192.168.20.0/24,192.168.30.0/24"
 
-# Prefer explicit vars; these defaults allow reuse of existing dns_servers vars.
-pdns_primary_addr: "{{ lookup('ansible.builtin.env', 'PRIMARY_AUTH_SERVER').split(':')[0] }}"
-pdns_primary_port: "{{ lookup('ansible.builtin.env', 'PRIMARY_AUTH_SERVER').split(':')[1] }}"
-pdns_secondary_addr: "{{ lookup('ansible.builtin.env', 'SECONDARY_AUTH_SERVER').split(':')[0] }}"
-pdns_secondary_port: "{{ lookup('ansible.builtin.env', 'SECONDARY_AUTH_SERVER').split(':')[1] }}"
+pdns_primary_addr: "{{ primary_auth_server.split(':')[0] }}"
+pdns_primary_port: "{{ primary_auth_server.split(':')[1] }}"
+pdns_secondary_addr: "{{ secondary_auth_server.split(':')[0] }}"
+pdns_secondary_port: "{{ secondary_auth_server.split(':')[1] }}"
 
-pdns_primary_allow_axfr_ips: "{{ lookup('ansible.builtin.env', 'PDNS_PRIMARY_ALLOW_AXFR_IPS') }}"
-pdns_primary_also_notify: "{{ lookup('ansible.builtin.env', 'PDNS_PRIMARY_ALSO_NOTIFY') }}"
+pdns_primary_allow_axfr_ips: "192.168.10.0/24"
+pdns_primary_also_notify: "{{ secondary_auth_server }}"
+
+# Secrets - loaded via env vars from SOPS-encrypted secrets.enc.env
 pdns_primary_api_key: "{{ lookup('ansible.builtin.env', 'PDNS_PRIMARY_API_KEY') }}"
 pdns_secondary_api_key: "{{ lookup('ansible.builtin.env', 'PDNS_SECONDARY_API_KEY') }}"

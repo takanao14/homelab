@@ -10,23 +10,22 @@ dnsdist_repo_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc"
 dnsdist_repo_key_path: "/etc/apt/keyrings/dnsdist-20-pub.asc"
 dnsdist_repo_pin_path: "/etc/apt/preferences.d/dnsdist-20"
 
-# Variable mappings from global vars
-primary_auth_server: "{{ lookup('ansible.builtin.env', 'PRIMARY_AUTH_SERVER') }}"
-secondary_auth_server: "{{ lookup('ansible.builtin.env', 'SECONDARY_AUTH_SERVER') }}"
-dnsdist_local_forwarder: "{{ lookup('ansible.builtin.env', 'DNSDIST_LOCAL_FORWARDER') }}"
+dnsdist_mgmt_acl: "127.0.0.1/32,192.168.0.0/16,10.0.0.0/8"
+dnsdist_console_acl: "127.0.0.1/32"
+
+dnsdist_packet_cache_size: 10000
+dnsdist_packet_cache_max_ttl: 86400
+
+dnsdist_internal_domains:
+  - "home.butaco.net."
+  - "prd.butaco.net."
+  - "dev.butaco.net."
+dnsdist_internal_check_name: "ns1.home.butaco.net."
+
+# Secrets - loaded via env vars from SOPS-encrypted secrets.enc.env
 dnsdist_web_password: "{{ lookup('ansible.builtin.env', 'DNSDIST_WEB_PASSWORD') }}"
 dnsdist_web_api_key: "{{ lookup('ansible.builtin.env', 'DNSDIST_WEB_API_KEY') }}"
 dnsdist_console_key: "{{ lookup('ansible.builtin.env', 'DNSDIST_CONSOLE_KEY') }}"
-dnsdist_mgmt_acl: "{{ lookup('ansible.builtin.env', 'DNSDIST_MGMT_ACL') }}"
-dnsdist_console_acl: "{{ lookup('ansible.builtin.env', 'DNSDIST_CONSOLE_ACL') }}"
-
-dnsdist_packet_cache_size: "{{ lookup('ansible.builtin.env', 'DNSDIST_PACKET_CACHE_SIZE') }}"
-dnsdist_packet_cache_max_ttl: "{{ lookup('ansible.builtin.env', 'DNSDIST_PACKET_CACHE_MAX_TTL') }}"
-
-# Internal Domain setup
-# DNSDIST_INTERNAL_DOMAINS accepts a comma-separated list (e.g. "butaco.net., home.arpa.")
-dnsdist_internal_domains: "{{ lookup('ansible.builtin.env', 'DNSDIST_INTERNAL_DOMAINS') | split(',') | map('trim') | list }}"
-dnsdist_internal_check_name: "{{ lookup('ansible.builtin.env', 'DNSDIST_INTERNAL_CHECK_NAME') }}"
 
 # Backend Servers Configuration
 dnsdist_internal_backends:
@@ -43,7 +42,7 @@ dnsdist_internal_backends:
 
 dnsdist_default_backends:
   - name: local-forwarder
-    address: "{{ dnsdist_local_forwarder }}"
+    address: "192.168.10.1:53"
     pool: ""
     checkName: "google.com."
     checkType: A
