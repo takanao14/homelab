@@ -58,21 +58,6 @@ validate_vars() {
 }
 
 # ============================================================================
-# Environment mapping
-# ============================================================================
-
-get_overlay_name() {
-    local environment="$1"
-
-    # Map environment to overlay directory name (dev → dev, prd → homelab)
-    if [ "$environment" = "prd" ]; then
-        echo "homelab"
-    else
-        echo "$environment"
-    fi
-}
-
-# ============================================================================
 # Usage
 # ============================================================================
 
@@ -84,12 +69,12 @@ usage() {
 Usage: $script_name <dev|prd> <command>
 
 Commands:
-  apply       Full cluster setup: k0sctl apply → kubeconfig → helmfile apply → kustomize overlay
+  apply       Full cluster setup: k0sctl apply → kubeconfig → helmfile apply → gateway-api CRDs
   reset       Reset cluster: k0sctl reset
   kubeconfig  Generate and output kubeconfig to \$HOME/.kube/<env>.yaml
   helmfile    Apply helmfile only (requires kubeconfig to exist)
-  kustomize_apply  Apply kustomize overlay only (requires kubeconfig to exist)
-  config      Generate k0sctl config from template (no apply)
+  gateway-api Apply Gateway API CRDs only (requires kubeconfig to exist)
+  config      Generate k0sctl config from template and print to stdout
   help        Show this message
 EOF
 }
@@ -188,43 +173,16 @@ generate_kubeconfig() {
 # ============================================================================
 
 helmfile_apply() {
+    local base_dir="$1"
+
     log_info "Running: helmfile apply"
     log_info "Using KUBECONFIG: ${KUBECONFIG:-unknown}"
 
-    # helmfile will use the environment variables exported by the caller script
-    # Assumes KUBECONFIG is already set in the environment
-    helmfile apply
+    helmfile -f "$base_dir/helmfile.yaml" apply
 }
 
 # ============================================================================
-# Kustomize
-# ============================================================================
-
-kustomize_apply() {
-    local environment="$1"
-    local base_dir="$2"
-
-    log_info "Applying kustomize overlay for environment: $environment"
-
-    # Get the overlay directory name based on environment
-    local overlay_name
-    overlay_name=$(get_overlay_name "$environment")
-
-    # Resolve the kustomize overlay path
-    local kustomize_overlay="$base_dir/kustomize/overlays/$overlay_name"
-
-    # Verify the overlay directory exists
-    if [ ! -d "$kustomize_overlay" ]; then
-        log_error "kustomize overlay not found: $kustomize_overlay"
-        exit 1
-    fi
-
-    # Apply the kustomize overlay
-    log_info "Running: kubectl apply -k $kustomize_overlay"
-    kubectl apply -k "$kustomize_overlay"
-    log_success "Kustomize overlay applied successfully!"
-}
-
+# Gateway API CRDs
 # ============================================================================
 # Cleanup
 # ============================================================================
@@ -253,7 +211,7 @@ run_main() {
     local kubeconfig_out="${6:-}"
 
     # Validate all arguments are provided
-    if ! validate_vars command environment base_dir template_file k0sctl_file kubeconfig_out; then
+    if ! validate_vars command base_dir template_file kubeconfig_out; then
         usage
         exit 1
     fi
@@ -277,25 +235,22 @@ run_main() {
             generate_kubeconfig "$template_file" "$k0sctl_file" "$kubeconfig_out"
             export KUBECONFIG="$kubeconfig_out"
             helmfile_apply
+            helmfile_apply "$base_dir"
             cilium status --wait
-            kustomize_apply "$environment" "$base_dir"
-            cleanup_k0sctl_file "$k0sctl_file"
             log_success "Cluster setup completed successfully!"
             ;;
         reset)
             # Tear down cluster
             k0sctl_reset "$template_file" "$k0sctl_file"
-            cleanup_k0sctl_file "$k0sctl_file"
             ;;
         kubeconfig)
             # Fetch kubeconfig only
             generate_kubeconfig "$template_file" "$k0sctl_file" "$kubeconfig_out"
-            cleanup_k0sctl_file "$k0sctl_file"
             ;;
         helmfile)
             # Apply helmfile only (requires existing kubeconfig)
             export KUBECONFIG="$kubeconfig_out"
-            helmfile_apply
+            helmfile_apply "$base_dir"
             ;;
         kustomize_apply)
             # Apply kustomize overlay only (requires existing kubeconfig)
