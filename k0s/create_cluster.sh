@@ -92,14 +92,5 @@ fi
 
 COMMAND="$1"
 
-# Validate library file exists
-if [ ! -f "$LIB_FILE" ]; then
-    die "Library file not found: $LIB_FILE"
-fi
-
-# Source library
-# shellcheck source=/dev/null
-. "$LIB_FILE"
-
-# Entrypoint: pass arguments in order: command, environment, script_dir, template_file, k0sctl_file, kubeconfig_out
-run_main "$COMMAND" "$ENV_TARGET" "$SCRIPT_DIR" "$TEMPLATE_FILE" "$K0SCTRL_FILE" "$KUBECONFIG_OUT"
+# Entrypoint: pass arguments in order: command, script_dir, template_file, kubeconfig_out
+run_main "$COMMAND" "$SCRIPT_DIR" "$TEMPLATE_FILE" "$KUBECONFIG_OUT"
