@@ -1,0 +1,12 @@
+environments:
+  dev: {}
+  prd: {}
+---
+releases:
+  - name: external-dns
+    namespace: dns-homelab
+    chart: ./chart
+    createNamespace: true
+    values:
+      - values-common.yaml.gotmpl
+      - values-{{ .Environment.Name }}.yaml.gotmpl
