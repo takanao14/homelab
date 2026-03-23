@@ -1,0 +1,6 @@
+l2Policy:
+  interface: "^eth0$"
+
+ipPool:
+  start: ""
+  stop: ""

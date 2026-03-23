@@ -12,7 +12,14 @@ releases:
 
   - name: openebs
     namespace: openebs
+    createNamespace: true
     chart: openebs/openebs
     version: 4.4.0
     values:
       - values/openebs.yaml
+
+  - name: cilium-config
+    namespace: kube-system
+    chart: ./charts/cilium-config
+    values:
+      - values/cilium-config.yaml.gotmpl
