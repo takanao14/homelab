@@ -9,16 +9,18 @@ set -euo pipefail
 # Constants
 # ============================================================================
 
-# Color output for better readability
-export RED='\033[0;31m'
-export GREEN='\033[0;32m'
-export YELLOW='\033[1;33m'
-export NC='\033[0m'
-
 # Resolve script directory for consistent path references
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TEMPLATE_FILE="$SCRIPT_DIR/k0sctl.tmpl.yaml"
 LIB_FILE="$SCRIPT_DIR/template_lib.sh"
+
+# Source library early so color vars and log helpers are available everywhere
+if [ ! -f "$LIB_FILE" ]; then
+    echo "Error: Library file not found: $LIB_FILE" >&2
+    exit 1
+fi
+# shellcheck source=/dev/null
+. "$LIB_FILE"
 
 # ============================================================================
 # Error handling utilities
