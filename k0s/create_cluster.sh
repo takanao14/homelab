@@ -37,21 +37,9 @@ die() {
 
 setup_env_config() {
     local target="$1"
-
-    # Map environment target to configuration
-    case "$target" in
-        dev)
-            ENV_FILE="$SCRIPT_DIR/.env.dev"
-            KUBECONFIG_OUT="$HOME/.kube/dev.yaml"
-            ;;
-        prd)
-            ENV_FILE="$SCRIPT_DIR/.env.prd"
-            KUBECONFIG_OUT="$HOME/.kube/prd.yaml"
-            ;;
-        *)
-            return 1
-            ;;
-    esac
+    [[ "$target" == "dev" || "$target" == "prd" ]] || return 1
+    ENV_FILE="$SCRIPT_DIR/.env.$target"
+    KUBECONFIG_OUT="$HOME/.kube/$target.yaml"
 }
 
 # ============================================================================
@@ -78,7 +66,7 @@ if [ ! -f "$ENV_FILE" ]; then
     die "Environment file not found: $ENV_FILE"
 fi
 
-# Source environment file with set -a to export all variables
+# Source environment file with set -a to export all variablesREADwo
 set -a
 # shellcheck disable=SC1090
 source "$ENV_FILE"
