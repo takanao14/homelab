@@ -101,8 +101,6 @@ preflight_checks
 
 format_device "/dev/sdb"
 
-sudo systemctl daemon-reload
-
 setup_mount /dev/sdb /srv/storage/volume
 
 sudo systemctl daemon-reload
