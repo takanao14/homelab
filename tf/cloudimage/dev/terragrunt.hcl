@@ -3,7 +3,7 @@ include "root" {
 }
 
 terraform {
-  source = "${get_parent_terragrunt_dir()}/modules"
+  source = "${get_parent_terragrunt_dir()}/modules/proxmox-cloudimage"
 }
 
 inputs = {
