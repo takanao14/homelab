@@ -8,8 +8,13 @@ all:
             ansible_user: ENC[AES256_GCM,data:ud+VVjYvdA==,iv:A+yKhu2DjD/xiM4VTjRwjDTSfiUMnQnZ9Eu4kugldUM=,tag:0cyY9bETlyLHujOu9h4n9g==,type:str]
         pve:
             ansible_host: 192.168.10.10
+            ansible_user: ENC[AES256_GCM,data:OJtr9Q==,iv:rBXl4mv0lxM2wDYBG+enLWc4uOlHrs9RrQqyXINwRs0=,tag:JaRt8uTHKutxZPByz8slgw==,type:str]
         node1:
             ansible_host: 192.168.10.11
+            ansible_user: ENC[AES256_GCM,data:N0/xQw==,iv:/brKGneeR6pxidJg8yjAZIg7tYla8qKtqaD/7wTla/M=,tag:L01oEH3uaPmCSQlx67gPYA==,type:str]
+        node2:
+            ansible_host: 192.168.10.13
+            ansible_user: ENC[AES256_GCM,data:bYO93w==,iv:AQ9MfZyvupLbvf8vxdoS3P+vHHUzlQBmI40jkpYMzvU=,tag:vnlrGNK7+MO2y2BCniknnw==,type:str]
         rpi3:
             ansible_host: 192.168.10.240
         rpi4:
@@ -27,6 +32,7 @@ all:
             hosts:
                 pve: null
                 node1: null
+                node2: null
         node_exporter:
             hosts:
                 pve:
@@ -38,6 +44,14 @@ all:
                         - --no-collector.udp_queues
                         - --no-collector.systemd
                 node1:
+                    node_exporter_args:
+                        - --no-collector.schedstat
+                        - --no-collector.netstat
+                        - --no-collector.sockstat
+                        - --no-collector.softnet
+                        - --no-collector.udp_queues
+                        - --no-collector.systemd
+                node2:
                     node_exporter_args:
                         - --no-collector.schedstat
                         - --no-collector.netstat
@@ -88,7 +102,7 @@ sops:
             NmhoOXRTVTlOcU95a3dnaHdOYys2RHMKbWezv3B+dnh2ixjFiyIxGtRAR4MffPKx
             YHo0hS/1GcVSo5ETxfYqk9Z1ztfb5eViWtVFzvSDdjkrEK1+1tOwfQ==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-03-23T10:57:23Z"
-    mac: ENC[AES256_GCM,data:T928fwr3KxxwBppNvuY2AaGF0hgIt4wGe9TVcI+YsBOTpIuE25/N2cFxh1to5dFn94rcHhPJ6aEwiElhKHchaGW/KY5wuOy6mqLSzx6+3AlcbO4yoLOnKbFYVPkikYgOVOLKa6skoQJZZEqVjeVKrRXhU6g8cdrrkLC62voTPuc=,iv:M7hSbtkSzzxsnK1KyjAC2rDBk6FgYuooPbgXZvmnOPQ=,tag:0T9foBex3zTF4goNikrueg==,type:str]
+    lastmodified: "2026-03-27T17:26:10Z"
+    mac: ENC[AES256_GCM,data:VWQ5FHO7Asva3XN6moDs6oT72VtGm5U4lFkM5PFotLV7Lzwy9Nysi0v0WKkPGkpyFAvUFyhkvBqMi+iOQHjWXswTAT/U/FV1ycIGcFIbhHApnjgwQLWtR0cdan8pMzQUZLnmOZ1ha2SBvvY/cXXePgNOo9TRU0VuMQS9E9iASAw=,iv:C4oN5ufXxVNLQbrBfG7vQEre+kUobc6ohzW9W9SigGE=,tag:6uLkrCU1zwrKUbj98NRZoQ==,type:str]
     encrypted_regex: ansible_user
     version: 3.12.2
