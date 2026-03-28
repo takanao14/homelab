@@ -50,9 +50,7 @@ Variables are split between plain `.env.*` files (non-secrets) and SOPS-encrypte
 |----------|-------------|
 | `K0S_CONTROLLER_ADDRESS` | Controller node IP address |
 | `K0S_WORKER_ADDRESS` | Worker node IP address |
-| `K0S_CLUSTER_NAME` | Cluster name (k0sctl metadata) |
-| `K0S_LB_POOL_START` | Cilium LoadBalancer IP pool start address |
-| `K0S_LB_POOL_STOP` | Cilium LoadBalancer IP pool end address |
+| `K0S_LB_POOL` | Cilium LoadBalancer IP pool range (`start,stop`) |
 
 ### Secrets (`secrets.dev.enc.env` / `secrets.prd.enc.env`)
 

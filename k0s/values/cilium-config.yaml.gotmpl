@@ -1,3 +1,3 @@
 ipPool:
-  start: {{ requiredEnv "K0S_LB_POOL_START" | quote }}
-  stop: {{ requiredEnv "K0S_LB_POOL_STOP" | quote }}
+  start: {{ requiredEnv "K0S_LB_POOL" | splitList "," | first | quote }}
+  stop: {{ requiredEnv "K0S_LB_POOL" | splitList "," | last | quote }}
