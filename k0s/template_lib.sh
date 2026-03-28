@@ -101,6 +101,36 @@ generate_kubeconfig() {
     log_success "kubeconfig written to: $kubeconfig_out"
 }
 
+# ── wait for cluster ──────────────────────────────────────────────────────────
+
+wait_for_cluster() {
+    local timeout=300
+    local interval=5
+    local elapsed=0
+
+    log_info "Waiting for API server to be reachable..."
+    until kubectl get nodes &>/dev/null; do
+        if [[ "$elapsed" -ge "$timeout" ]]; then
+            log_error "Timeout waiting for API server"
+            return 1
+        fi
+        sleep "$interval"
+        elapsed=$((elapsed + interval))
+    done
+    log_success "API server is reachable"
+
+    log_info "Waiting for worker node to register..."
+    until kubectl get nodes --no-headers 2>/dev/null | grep -qv "^$"; do
+        if [[ "$elapsed" -ge "$timeout" ]]; then
+            log_error "Timeout waiting for worker node"
+            return 1
+        fi
+        sleep "$interval"
+        elapsed=$((elapsed + interval))
+    done
+    log_success "Worker node registered (CNI not yet required)"
+}
+
 # ── helmfile ──────────────────────────────────────────────────────────────────
 
 helmfile_apply() {
@@ -140,6 +170,7 @@ run_main() {
             k0sctl apply --config "$k0sctl_file"
             generate_kubeconfig "$template_file" "$k0sctl_file" "$kubeconfig_out"
             export KUBECONFIG="$kubeconfig_out"
+            wait_for_cluster
             helmfile_apply "$base_dir"
             gateway_api_apply
             cilium status --wait

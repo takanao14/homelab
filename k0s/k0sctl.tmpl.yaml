@@ -19,17 +19,17 @@ spec:
     files:
       - name: setup-ssd
         src: ./hook/ssdsetup.sh
-        dstDir: /tmp/
+        dstDir: /home/${K0S_SSH_USER}/k0sctl-hooks/
         perm: 0755
       - name: mirror-config
         src: ./hook/mirror.sh
-        dstDir: /tmp/
+        dstDir: /home/${K0S_SSH_USER}/k0sctl-hooks/
         perm: 0755
     hooks:
       apply:
         before:
-          - /tmp/ssdsetup.sh
-          - /tmp/mirror.sh
+          - /home/${K0S_SSH_USER}/k0sctl-hooks/ssdsetup.sh
+          - /home/${K0S_SSH_USER}/k0sctl-hooks/mirror.sh
   k0s:
     config:
       spec:
