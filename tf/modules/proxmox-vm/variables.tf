@@ -11,7 +11,9 @@ variable "vms" {
     ipv4             = string
     ipv4gw           = string
     bridge           = string
+    dns_domain       = optional(string)
     dns_servers      = list(string)
+    os_type          = optional(string)
     scsi_hardware    = optional(string)
     disks = map(object({
       datastore_id = string

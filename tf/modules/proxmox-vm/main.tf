@@ -24,6 +24,10 @@ resource "proxmox_virtual_environment_vm" "vm" {
   bios    = "ovmf"
   machine = "q35"
 
+  operating_system {
+    type = each.value.os_type
+  }
+
   scsi_hardware = each.value.scsi_hardware
 
   dynamic "disk" {
@@ -52,6 +56,13 @@ resource "proxmox_virtual_environment_vm" "vm" {
     mtu    = 1 # Inherit MTU from bridge
   }
 
+  lifecycle {
+    ignore_changes = [
+      disk,        # file_id is cleared by Proxmox after VM creation
+      initialization, # cloud-init only applies on first boot
+    ]
+  }
+
   initialization {
     datastore_id = each.value.config_datastore
 
@@ -63,6 +74,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
     }
 
     dns {
+      domain  = each.value.dns_domain
       servers = each.value.dns_servers
     }
 
