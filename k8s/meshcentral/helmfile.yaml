@@ -4,4 +4,4 @@ releases:
     chart: ./chart
     createNamespace: true
     values:
-      - values.yaml.gotmpl
+      - values.yaml

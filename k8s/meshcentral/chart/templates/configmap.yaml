@@ -4,5 +4,5 @@ metadata:
   name: meshcentral-config
   namespace: {{ .Release.Namespace }}
 data:
-  HOSTNAME: {{ .Values.loadBalancerIP | quote }}
+  HOSTNAME: {{ .Values.hostname | quote }}
   DYNAMIC_CONFIG: {{ .Values.dynamicConfig | toString | quote }}
