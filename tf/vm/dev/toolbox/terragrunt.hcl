@@ -1,0 +1,33 @@
+include "root" {
+  path = find_in_parent_folders("root.hcl")
+}
+
+terraform {
+  source = "${get_parent_terragrunt_dir()}/modules/proxmox-vm"
+}
+
+locals {
+  env    = read_terragrunt_config(find_in_parent_folders("env.hcl"))
+  common = read_terragrunt_config(find_in_parent_folders("common.hcl"))
+
+  base_vars = merge(local.env.locals.vm_defaults, {
+    dns_servers = local.common.locals.dns_internal
+    dns_domain  = local.common.locals.dns_domain
+  })
+}
+
+inputs = {
+  vms = {
+    "toolbox" = merge(local.base_vars, {
+      cores  = 4
+      memory = 8192
+      ipv4   = "192.168.20.20/24"
+      disks = {
+        scsi0 = merge(local.env.locals.disk_defaults, {
+          size    = 100
+          file_id = "local:iso/ubuntu-24.04-custom.img"
+        })
+      }
+    })
+  }
+}
