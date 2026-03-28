@@ -1,3 +1,8 @@
+{{- $clusters := list
+  (dict "name" "cluster_dev"  "envPrefix" "DEV"  "ip" "192.168.10.10")
+  (dict "name" "cluster_prd"  "envPrefix" "PRD"  "ip" "192.168.10.11")
+  (dict "name" "cluster_prd2" "envPrefix" "PRD2" "ip" "192.168.10.13")
+-}}
 image:
   repository: prompve/prometheus-pve-exporter
   tag: "3.8.1"
@@ -5,18 +10,14 @@ image:
 port: 9221
 
 proxmoxClusters:
-  - name: cluster_dev
-    envPrefix: DEV
-    ip: "192.168.10.10"
-  - name: cluster_prd
-    envPrefix: PRD
-    ip: "192.168.10.11"
-  - name: cluster_prd2
-    envPrefix: PRD2
-    ip: "192.168.10.13"
+  {{- range $clusters }}
+  - name: {{ .name }}
+    envPrefix: {{ .envPrefix }}
+    ip: {{ .ip | quote }}
+  {{- end }}
 
 pveConfig: |
-  {{- range .Values.proxmoxClusters }}
+  {{- range $clusters }}
   {{ .name }}:
     user: "{{ requiredEnv (printf "PROXMOX_%s_USER" .envPrefix) }}"
     token_name: "{{ requiredEnv (printf "PROXMOX_%s_TOKEN_NAME" .envPrefix) }}"
@@ -25,7 +26,7 @@ pveConfig: |
   {{- end }}
 
 targets:
-  {{- range .Values.proxmoxClusters }}
+  {{- range $clusters }}
   - ip: {{ .ip | quote }}
     module: {{ .name }}
   {{- end }}

@@ -21,24 +21,32 @@ releases:
     namespace: monitoring
     createNamespace: true
     chart: ./charts/prometheus-pve-exporter
+    needs:
+      - monitoring/prometheus
     valuesTemplate:
       - values/prometheus-pve-exporter.yaml.gotmpl
   - name: node-exporter-external
     namespace: monitoring
     createNamespace: true
     chart: ./charts/node-exporter-external
+    needs:
+      - monitoring/prometheus
     valuesTemplate:
       - values/node-exporter.yaml.gotmpl
   - name: dnsdist
     namespace: monitoring
     createNamespace: true
     chart: ./charts/dnsdist
+    needs:
+      - monitoring/prometheus
     valuesTemplate:
       - values/dnsdist.yaml.gotmpl
   - name: pdns-auth
     namespace: monitoring
     createNamespace: true
     chart: ./charts/pdns-auth
+    needs:
+      - monitoring/prometheus
     valuesTemplate:
       - values/pdns-auth.yaml.gotmpl
   - name: snmp-exporter
