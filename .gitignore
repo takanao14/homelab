@@ -1,7 +1,5 @@
 .github
 .idea
 .vscode
-.envrc
-*.env
 !*.enc.env
 !*.env.sample
