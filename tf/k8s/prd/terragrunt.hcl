@@ -18,10 +18,10 @@ locals {
 
 inputs = {
   vms = {
-    "dev-k0s-cp1" = merge(local.base_vars, {
+    "k0s-cp1" = merge(local.base_vars, {
       cores  = 2
       memory = 4096
-      ipv4   = "192.168.20.11/24"
+      ipv4   = "192.168.30.11/24"
       disks = {
         scsi0 = merge(local.env.locals.common_disk_settings, {
           size    = 40
@@ -29,17 +29,17 @@ inputs = {
         })
       }
     })
-    "dev-k0s-worker1" = merge(local.base_vars, {
+    "k0s-worker1" = merge(local.base_vars, {
       cores  = 8
-      memory = 8192
-      ipv4   = "192.168.20.12/24"
+      memory = 16384
+      ipv4   = "192.168.30.12/24"
       disks = {
         scsi0 = merge(local.env.locals.common_disk_settings, {
           size    = 64
           file_id = local.env.locals.os_image
         })
         scsi1 = merge(local.env.locals.common_disk_settings, {
-          size = 100
+          size = 300
         })
       }
     })
