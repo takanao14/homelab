@@ -4,6 +4,7 @@
 title: HomeLab Portal
 description: Homelab Portal
 logpath: stdout
+
 {{- end }}
 
 {{- define "homepage.config.services" -}}
@@ -116,6 +117,12 @@ logpath: stdout
         icon: forgejo.png
         href: {{ .Values.forgejo.url }}
         description: Git Repository
+
+- Remote Management:
+    - meshcentral:
+        icon: si-intel-#0071C5
+        href: {{ .Values.meshcentral.url }}
+        description: MeshCentral AMT remote control
 
 - Network Element:
     - bgw1:

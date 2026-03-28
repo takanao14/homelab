@@ -39,6 +39,9 @@ prometheus:
 forgejo:
   url: http://git.prd.butaco.net/
 
+meshcentral:
+  url: https://meshcentral.dev.butaco.net
+
 network:
   bgw1: bgw1.home.butaco.net
   c1200: c1200.home.butaco.net
