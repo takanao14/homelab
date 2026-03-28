@@ -8,7 +8,7 @@ terraform {
 
 locals {
   images_common = read_terragrunt_config(find_in_parent_folders("images.hcl"))
-  node_name     = "node1"
+  node_name     = "node2"
   datastore_id  = "local"
 }
 
