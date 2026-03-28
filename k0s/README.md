@@ -18,8 +18,7 @@ Scripts for managing the k0s cluster lifecycle using k0sctl and Helmfile.
 
 ```
 k0s/
-├── create_cluster.sh              # Entry point
-├── template_lib.sh                # Core logic (sourced by create_cluster.sh)
+├── Makefile                       # Entry point and all cluster management logic
 ├── k0sctl.tmpl.yaml               # k0sctl config template (expanded with envsubst)
 ├── helmfile.yaml                  # Helm release definitions (cilium / openebs / cilium-config)
 ├── .env.dev                       # Dev non-secret variables (gitignored)
@@ -68,11 +67,11 @@ sops edit secrets.prd.enc.env
 ## Usage
 
 ```bash
-./create_cluster.sh <dev|prd> <command>
+make ENV=<dev|prd> <target>
 ```
 
-| Command | Description |
-|---------|-------------|
+| Target | Description |
+|--------|-------------|
 | `apply` | Full setup: k0sctl apply → fetch kubeconfig → helmfile apply → Gateway API CRDs |
 | `reset` | Reset the cluster: k0sctl reset |
 | `kubeconfig` | Write kubeconfig to `~/.kube/<env>.yaml` |
@@ -85,16 +84,16 @@ sops edit secrets.prd.enc.env
 
 ```bash
 # Inspect the generated config
-./create_cluster.sh dev config
+make ENV=dev config
 
 # Build a new dev cluster
-./create_cluster.sh dev apply
+make ENV=dev apply
 
 # Re-apply Helmfile only
-./create_cluster.sh dev helmfile
+make ENV=dev helmfile
 
 # Reset the cluster
-./create_cluster.sh dev reset
+make ENV=dev reset
 ```
 
 Kubeconfig is written to `~/.kube/dev.yaml` or `~/.kube/prd.yaml`.
