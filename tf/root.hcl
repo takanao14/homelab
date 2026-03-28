@@ -16,6 +16,6 @@ remote_state {
 }
 
 inputs = {
-  password       = get_env("VM_PASSWORD", "")
-  ssh_public_key = get_env("VM_SSH_PUBLIC_KEY", "")
+  password       = get_env("TF_VM_PASSWORD")
+  ssh_public_key = get_env("TF_VM_SSH_PUBLIC_KEY")
 }
