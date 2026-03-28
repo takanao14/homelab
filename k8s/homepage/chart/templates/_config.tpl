@@ -67,6 +67,17 @@ logpath: stdout
               password: {{ .Values.proxmox.dev.password }}
               node: {{ .Values.proxmox.dev.node }}
 
+        - Proxmox VE Prod2:
+            icon: proxmox.png
+            href: {{ .Values.proxmox.prd2.url }}
+            description: Virtualization Platform
+            widget:
+              type: proxmox
+              url: {{ .Values.proxmox.prd2.url }}
+              username: {{ .Values.proxmox.prd2.username }}
+              password: {{ .Values.proxmox.prd2.password }}
+              node: {{ .Values.proxmox.prd2.node }}
+
     - Storage:
         - TrueNAS:
             icon: truenas.png
@@ -128,6 +139,7 @@ logpath: stdout
 {{- end }}
 
 {{- define "homepage.config.proxmox" -}}
+
 {{ .Values.proxmox.dev.node }}:
   url: {{ .Values.proxmox.dev.url }}
   token: {{ .Values.proxmox.dev.username }}
@@ -137,6 +149,12 @@ logpath: stdout
   url: {{ .Values.proxmox.prd.url }}
   token: {{ .Values.proxmox.prd.username }}
   secret: {{ .Values.proxmox.prd.password }}
+
+{{ .Values.proxmox.prd2.node }}:
+  url: {{ .Values.proxmox.prd2.url }}
+  token: {{ .Values.proxmox.prd2.username }}
+  secret: {{ .Values.proxmox.prd2.password }}
+
 {{- end }}
 
 {{- define "homepage.config.widgets" -}}
@@ -155,4 +173,5 @@ logpath: stdout
       cpu: true
       memory: true
       showLabel: true
+
 {{- end }}
