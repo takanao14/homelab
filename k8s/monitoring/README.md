@@ -62,9 +62,17 @@ helmfile apply
 
 | Variable | Used by | Description |
 |----------|---------|-------------|
-| `GRAFANA_ADMIN_PASSWORD` | prometheus (Grafana) | Grafana admin password |
-| `PROXMOX_PRD_USER` | prometheus-pve-exporter | Proxmox VE API username |
-| `PROXMOX_PRD_PASSWORD` | prometheus-pve-exporter | Proxmox VE API password |
+| `GRAFANA_ADMIN_PASSWORD` | prometheus | Grafana admin password |
+| `SNMP_COMMUNITY` | snmp-exporter | SNMP community string |
+| `PROXMOX_PRD_USER` | prometheus-pve-exporter | Proxmox PRD API username |
+| `PROXMOX_PRD_TOKEN_NAME` | prometheus-pve-exporter | Proxmox PRD API token name |
+| `PROXMOX_PRD_TOKEN_VALUE` | prometheus-pve-exporter | Proxmox PRD API token value |
+| `PROXMOX_DEV_USER` | prometheus-pve-exporter | Proxmox DEV API username |
+| `PROXMOX_DEV_TOKEN_NAME` | prometheus-pve-exporter | Proxmox DEV API token name |
+| `PROXMOX_DEV_TOKEN_VALUE` | prometheus-pve-exporter | Proxmox DEV API token value |
+| `PROXMOX_PRD2_USER` | prometheus-pve-exporter | Proxmox PRD2 API username |
+| `PROXMOX_PRD2_TOKEN_NAME` | prometheus-pve-exporter | Proxmox PRD2 API token name |
+| `PROXMOX_PRD2_TOKEN_VALUE` | prometheus-pve-exporter | Proxmox PRD2 API token value |
 
 Non-sensitive values (IPs, hostnames, ports) are hardcoded directly in the `values/*.yaml.gotmpl` files.
 

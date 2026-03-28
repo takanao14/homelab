@@ -4,20 +4,28 @@ image:
 
 port: 9221
 
+proxmoxClusters:
+  - name: cluster_dev
+    envPrefix: DEV
+    ip: "192.168.10.10"
+  - name: cluster_prd
+    envPrefix: PRD
+    ip: "192.168.10.11"
+  - name: cluster_prd2
+    envPrefix: PRD2
+    ip: "192.168.10.13"
+
 pveConfig: |
-  cluster_prd:
-    user: "{{ requiredEnv "PROXMOX_PRD_USER" }}"
-    token_name: "{{ requiredEnv "PROXMOX_PRD_TOKEN_NAME" }}"
-    token_value: "{{ requiredEnv "PROXMOX_PRD_TOKEN_VALUE" }}"
+  {{- range .Values.proxmoxClusters }}
+  {{ .name }}:
+    user: "{{ requiredEnv (printf "PROXMOX_%s_USER" .envPrefix) }}"
+    token_name: "{{ requiredEnv (printf "PROXMOX_%s_TOKEN_NAME" .envPrefix) }}"
+    token_value: "{{ requiredEnv (printf "PROXMOX_%s_TOKEN_VALUE" .envPrefix) }}"
     verify_ssl: false
-  cluster_dev:
-    user: "{{ requiredEnv "PROXMOX_DEV_USER" }}"
-    token_name: "{{ requiredEnv "PROXMOX_DEV_TOKEN_NAME" }}"
-    token_value: "{{ requiredEnv "PROXMOX_DEV_TOKEN_VALUE" }}"
-    verify_ssl: false
+  {{- end }}
 
 targets:
-  - ip: "192.168.10.10"
-    module: cluster_dev
-  - ip: "192.168.10.11"
-    module: cluster_prd
+  {{- range .Values.proxmoxClusters }}
+  - ip: {{ .ip | quote }}
+    module: {{ .name }}
+  {{- end }}
