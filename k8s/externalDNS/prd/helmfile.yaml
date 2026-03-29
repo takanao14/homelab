@@ -1,0 +1,19 @@
+releases:
+  - name: external-dns
+    namespace: dns-homelab
+    chart: ../chart
+    createNamespace: true
+    values:
+      - ../values-common.yaml.gotmpl
+      - values.yaml.gotmpl
+    hooks:
+      - events: [prepare]
+        command: bash
+        args:
+          - -c
+          - |
+            ctx=$(kubectl config current-context 2>/dev/null || echo "none")
+            if [[ "$ctx" != "prd-homelab" ]]; then
+              echo "ERROR: wrong cluster — expected prd-homelab, got: $ctx" >&2
+              exit 1
+            fi
