@@ -31,7 +31,7 @@ inputs = {
     })
     "k0s-worker1" = merge(local.base_vars, {
       cores  = 8
-      memory = 16384
+      memory = 24576
       ipv4   = "192.168.30.12/24"
       disks = {
         scsi0 = merge(local.env.locals.common_disk_settings, {
