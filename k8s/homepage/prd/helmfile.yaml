@@ -1,10 +1,11 @@
 releases:
-  - name: meshcentral
-    namespace: meshcentral
-    chart: ./chart
+  - name: homepage
+    namespace: homepage
+    chart: ../chart
     createNamespace: true
     values:
-      - values.yaml
+      - ../values-common.yaml.gotmpl
+      - values.yaml.gotmpl
     hooks:
       - events: [prepare]
         command: bash
