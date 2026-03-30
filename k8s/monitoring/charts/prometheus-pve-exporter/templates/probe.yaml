@@ -8,7 +8,7 @@ metadata:
 spec:
   interval: 60s
   prober:
-    url: prometheus-pve-exporter.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.port }}
+    url: prometheus-pve-exporter:{{ .Values.port }}
     path: /pve
   targets:
     staticConfig:
