@@ -41,7 +41,7 @@ extraManifests:
       interval: 60s
       module: icmp
       prober:
-        url: blackbox-exporter-prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+        url: blackbox-exporter-prometheus-blackbox-exporter:9115
       targets:
         staticConfig:
           static:
@@ -66,7 +66,7 @@ extraManifests:
       interval: 60s
       module: dns_external
       prober:
-        url: blackbox-exporter-prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+        url: blackbox-exporter-prometheus-blackbox-exporter:9115
       targets:
         staticConfig:
           static:
@@ -83,7 +83,7 @@ extraManifests:
       interval: 60s
       module: dns_internal
       prober:
-        url: blackbox-exporter-prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+        url: blackbox-exporter-prometheus-blackbox-exporter:9115
       targets:
         staticConfig:
           static:
