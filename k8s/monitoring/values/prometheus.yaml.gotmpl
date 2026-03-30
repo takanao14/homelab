@@ -26,6 +26,11 @@ prometheus:
 grafana:
   defaultDashboardsTimezone: jst
   adminPassword: {{ requiredEnv "GRAFANA_ADMIN_PASSWORD" }}
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://loki:3100
+      access: proxy
   persistence:
     enabled: true
     type: pvc
