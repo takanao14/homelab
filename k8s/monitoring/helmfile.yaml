@@ -79,3 +79,13 @@ releases:
     chart: grafana/loki
     valuesTemplate:
       - values/loki.yaml.gotmpl
+    hooks:
+      - events: [postsync]
+        command: kubectl
+        args:
+          - annotate
+          - --overwrite
+          - svc/loki
+          - -n
+          - monitoring
+          - "external-dns.alpha.kubernetes.io/hostname=loki.prd.butaco.net"
