@@ -12,13 +12,13 @@ Scripts for managing the k0s cluster lifecycle using k0sctl and Helmfile.
 | `cilium` CLI | Wait for Cilium to become ready |
 | `envsubst` | Expand variables in the k0sctl config template |
 | `sops` | Decrypt secrets files |
-| `direnv` | Auto-load environment variables |
 
 ## Directory Structure
 
 ```
 k0s/
-├── Makefile                       # Entry point and all cluster management logic
+├── create_cluster.sh              # Entry point: ./create_cluster.sh <dev|prd> <command>
+├── template_lib.sh                # Shared library (cluster management logic)
 ├── k0sctl.tmpl.yaml               # k0sctl config template (expanded with envsubst)
 ├── helmfile.yaml                  # Helm release definitions (cilium / openebs / cilium-config)
 ├── .env.dev                       # Dev non-secret variables (gitignored)
@@ -34,6 +34,8 @@ k0s/
 ├── hook/
 │   ├── ssdsetup.sh                # Format and mount SSD on worker node
 │   └── mirror.sh                  # Configure containerd docker.io mirror
+├── scripts/
+│   └── wait-cilium-crds.sh        # Helmfile presync hook: wait for Cilium CRDs
 └── test/
     ├── default-openebs.yaml       # Smoke test for OpenEBS default StorageClass
     └── load-balancer.yaml         # Smoke test for LoadBalancer Service
@@ -41,7 +43,7 @@ k0s/
 
 ## Environment Variables
 
-Variables are split between plain `.env.*` files (non-secrets) and SOPS-encrypted `secrets.*.enc.env` files (secrets). Both are sourced automatically by `create_cluster.sh`.
+Variables are split between plain `.env.*` files (non-secrets) and SOPS-encrypted `secrets.*.enc.env` files (secrets).
 
 ### Non-secret (`.env.dev` / `.env.prd`)
 
@@ -67,11 +69,11 @@ sops edit secrets.prd.enc.env
 ## Usage
 
 ```bash
-make ENV=<dev|prd> <target>
+./create_cluster.sh <dev|prd> <command>
 ```
 
-| Target | Description |
-|--------|-------------|
+| Command | Description |
+|---------|-------------|
 | `apply` | Full setup: k0sctl apply → fetch kubeconfig → helmfile apply → Gateway API CRDs |
 | `reset` | Reset the cluster: k0sctl reset |
 | `kubeconfig` | Write kubeconfig to `~/.kube/<env>.yaml` |
@@ -84,16 +86,16 @@ make ENV=<dev|prd> <target>
 
 ```bash
 # Inspect the generated config
-make ENV=dev config
+./create_cluster.sh dev config
 
 # Build a new dev cluster
-make ENV=dev apply
+./create_cluster.sh dev apply
 
 # Re-apply Helmfile only
-make ENV=dev helmfile
+./create_cluster.sh dev helmfile
 
 # Reset the cluster
-make ENV=dev reset
+./create_cluster.sh dev reset
 ```
 
 Kubeconfig is written to `~/.kube/dev.yaml` or `~/.kube/prd.yaml`.
@@ -101,5 +103,5 @@ Kubeconfig is written to `~/.kube/dev.yaml` or `~/.kube/prd.yaml`.
 ## Cluster Architecture
 
 - **Datastore**: kine (etcd replacement, suited for single-node control plane)
-- **CNI**: Cilium (kube-proxy disabled, L2 LoadBalancer, Gateway API enabled)
-- **Storage CSI**: OpenEBS LocalPV (uses SSD mounted at `/srv/storage/volume`)
+- **CNI**: Cilium v1.19.2 (kube-proxy disabled, L2 LoadBalancer, Gateway API enabled)
+- **Storage CSI**: OpenEBS v4.4.0 LocalPV (uses SSD mounted at `/srv/storage/volume`)

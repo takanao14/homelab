@@ -16,14 +16,21 @@ ansible/
 │       └── group_vars/
 │           ├── all.yml                      # Shared non-secret variables
 │           ├── dns_primary.yml
-│           └── dns_secondary.yml
+│           ├── dns_secondary.yml
+│           ├── dhcp.yml
+│           └── syslog.yml
 ├── playbooks/
 │   ├── dns.yml
+│   ├── dhcp.yml
+│   ├── syslog.yml
 │   ├── node_exporter.yml
 │   └── proxmox.yml
 └── roles/
     ├── dnsdist/
+    ├── dnscollector/
     ├── pdns_auth/
+    ├── kea/
+    ├── vector/
     └── node_exporter/
 ```
 
@@ -57,6 +64,12 @@ On each directory entry, `direnv` will:
 # DNS stack
 ansible-playbook playbooks/dns.yml
 
+# DHCP server
+ansible-playbook playbooks/dhcp.yml
+
+# Syslog aggregator
+ansible-playbook playbooks/syslog.yml
+
 # Node Exporter
 ansible-playbook playbooks/node_exporter.yml
 
@@ -73,6 +86,18 @@ ansible-playbook playbooks/dns.yml --check
 Deploys PowerDNS Authoritative Server and dnsdist.
 - **Roles:** `pdns_auth`, `dnsdist`
 - **Hosts:** `dns_primary`, `dns_secondary`
+
+### DHCP (`playbooks/dhcp.yml`)
+Deploys Kea DHCPv4 server.
+- **Role:** `kea`
+- **Hosts:** `dhcp`
+- **Config:** `group_vars/dhcp.yml` (`kea_subnet4` でサブネット・プール・予約を定義)
+
+### Syslog (`playbooks/syslog.yml`)
+Deploys Vector as a syslog aggregator (UDP 514), parses RFC 3164/5424 および非標準フォーマット、Lokiへ転送。
+- **Role:** `vector`
+- **Hosts:** `syslog`
+- **Config:** `group_vars/syslog.yml` (`vector_config` でsource/transform/sinkを定義)
 
 ### Node Exporter (`playbooks/node_exporter.yml`)
 Installs `prometheus-node-exporter` for metrics collection.
