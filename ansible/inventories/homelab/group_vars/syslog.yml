@@ -1,0 +1,67 @@
+---
+vector_config:
+  sources:
+    syslog_udp:
+      type: socket
+      address: "0.0.0.0:514"
+      mode: udp
+      decoding:
+        codec: bytes
+
+  transforms:
+    parse_syslog:
+      type: remap
+      inputs:
+        - syslog_udp
+      source: |
+        msg = string!(.message)
+        .parse_error = false
+
+        if match(msg, r'^<\d+>1 ') {
+          # RFC 5424 (Catalyst 1200)
+          parsed, err = parse_syslog(msg)
+          if err == null {
+            . = merge(., parsed)
+          } else {
+            .parse_error = true
+          }
+        } else if match(msg, r'^<\d+>\[') {
+          # WiFi AP (non-standard)
+          parsed, err = parse_regex(msg, r'^<(?P<pri>\d+)>\[(?P<mac>[^\]]+)\]\s+(?P<host>\S+)\s*:\s*(?P<message>.+)$')
+          if err == null {
+            pri = to_int!(parsed.pri)
+            .severity = to_string(mod(pri, 8))
+            .facility = to_string(floor(to_float(pri) / 8.0))
+            .host = parsed.host
+            .message = parsed.message
+            .appname = parsed.mac
+          } else {
+            .parse_error = true
+          }
+        } else {
+          # RFC 3164 variant (IX2106)
+          parsed, err = parse_syslog(msg)
+          if err == null {
+            . = merge(., parsed)
+          } else {
+            .parse_error = true
+          }
+        }
+
+        # Ensure default values for required label fields
+        if !exists(.host) || is_null(.host) { .host = .source_ip }
+        if !exists(.appname) || is_null(.appname) { .appname = "unknown" }
+        if !exists(.severity) || is_null(.severity) { .severity = "unknown" }
+
+  sinks:
+    loki:
+      type: loki
+      inputs:
+        - parse_syslog
+      endpoint: "http://loki.prd.butaco.net:3100"
+      encoding:
+        codec: json
+      labels:
+        host: "{{ '{{' }} host {{ '}}' }}"
+        appname: "{{ '{{' }} appname {{ '}}' }}"
+        severity: "{{ '{{' }} severity {{ '}}' }}"

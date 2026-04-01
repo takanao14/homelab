@@ -6,6 +6,9 @@ all:
         secondary01:
             ansible_host: 192.168.10.241
             ansible_user: ENC[AES256_GCM,data:ud+VVjYvdA==,iv:A+yKhu2DjD/xiM4VTjRwjDTSfiUMnQnZ9Eu4kugldUM=,tag:0cyY9bETlyLHujOu9h4n9g==,type:str]
+        syslog01:
+            ansible_host: 192.168.10.243
+            ansible_user: ENC[AES256_GCM,data:itHmHQ==,iv:mKxXMt217FbzU+sDkFUsbLdMJu8UAKXNs4NntIpMq8s=,tag:gpqrg2VVIKRvvQOwcsGa1g==,type:str]
         pve:
             ansible_host: 192.168.10.10
             ansible_user: ENC[AES256_GCM,data:OJtr9Q==,iv:rBXl4mv0lxM2wDYBG+enLWc4uOlHrs9RrQqyXINwRs0=,tag:JaRt8uTHKutxZPByz8slgw==,type:str]
@@ -26,6 +29,9 @@ all:
         dns_secondary:
             hosts:
                 secondary01: null
+        syslog:
+            hosts:
+                syslog01: null
         proxmox:
             vars:
                 ansible_user: ENC[AES256_GCM,data:PxQk+g==,iv:7KcfaR7id2BJn8xWx//Ga7OzOFczJTWOrL0Iga8fNdk=,tag:p0WTS08mPpPNV2go8TEL0w==,type:str]

@@ -1,0 +1,6 @@
+---
+- name: Setup Syslog Aggregator
+  hosts: syslog
+  roles:
+    - role: vector
+      tags: vector

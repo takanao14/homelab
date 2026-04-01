@@ -1,0 +1,3 @@
+---
+vector_loki_endpoint: "http://loki:3100"
+vector_config: {}

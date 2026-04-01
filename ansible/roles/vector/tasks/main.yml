@@ -1,0 +1,37 @@
+---
+- name: Install curl
+  become: true
+  ansible.builtin.apt:
+    name: curl
+    state: present
+    update_cache: true
+
+- name: Add Vector repository
+  become: true
+  ansible.builtin.shell:
+    cmd: bash -c "$(curl -L https://setup.vector.dev)"
+    creates: /etc/apt/sources.list.d/vector.list
+
+- name: Install Vector
+  become: true
+  ansible.builtin.apt:
+    name: vector
+    state: present
+    update_cache: true
+
+- name: Configure Vector
+  become: true
+  ansible.builtin.template:
+    src: vector.yaml.j2
+    dest: /etc/vector/vector.yaml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart vector
+
+- name: Ensure Vector is started and enabled
+  become: true
+  ansible.builtin.service:
+    name: vector
+    state: started
+    enabled: true
