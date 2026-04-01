@@ -111,7 +111,7 @@ sops:
             NmhoOXRTVTlOcU95a3dnaHdOYys2RHMKbWezv3B+dnh2ixjFiyIxGtRAR4MffPKx
             YHo0hS/1GcVSo5ETxfYqk9Z1ztfb5eViWtVFzvSDdjkrEK1+1tOwfQ==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-04-01T13:26:16Z"
-    mac: ENC[AES256_GCM,data:4LiugQrxbrsg1NNrsRmutfhNwvBzgwx6kybUka1FqIbdMdZfvDjy7JXJ0Urn0ZJ8kTZ7UmbLR1iSfD609Fxl7u7e1odthWfopEZiupwp95MNtmQIelu7vYUDWp+zCU0/5BCSkqltX85lOtwuCZX66YYGZLqo1y7iNp4uVcg2Ip8=,iv:KZA7Wn6yNhQ2OGLS7R92Wi7VzHzROTiPnZchDdlijS4=,tag:t1AECF2oG3cdzJfDErJZrQ==,type:str]
+    lastmodified: "2026-04-01T13:26:47Z"
+    mac: ENC[AES256_GCM,data:8A9bGWtJut7i4FuqF6BnZzVaddr/vHaJopUWLrdZfJrsK2uLYKatHyFZzPsBJcEF3R8bLYDTZDZm7iP7AIeHz/GX9FgKqJG1amcoxTRqMWGAwToXOK+JNnhGXbdzZTlne/AsIk18pvAJIHxSTZU5+6D6tac7URk0bp9RyBOJ55o=,iv:lbiaoh0PFEUZyVj+vZkcleh+7TCu1PIFiJUXrnNbM2o=,tag:c0h/DxvEMh0+dDthLpxz8g==,type:str]
     encrypted_regex: ansible_user
     version: 3.12.2
