@@ -1,0 +1,8 @@
+---
+- name: Setup DHCP Server
+  hosts: dhcp
+  serial: 1
+  any_errors_fatal: true
+  roles:
+    - role: kea
+      tags: kea

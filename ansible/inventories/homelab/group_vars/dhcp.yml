@@ -1,0 +1,12 @@
+---
+kea_subnet4:
+  - subnet: "192.168.110.0/24"
+    pool: "192.168.110.30 - 192.168.110.127"
+    routers: "192.168.110.1"
+    dns_servers: "192.168.10.242,192.168.10.241"
+    domain_name: "home.butaco.net"
+    reservations:
+      - hw_address: "f8:0d:ac:37:76:19"
+        ip_address: "192.168.110.11"
+      - hw_address: "c8:d9:d2:97:8f:bb"
+        ip_address: "192.168.110.12"
