@@ -1,0 +1,75 @@
+---
+- name: Download dnscollector binary
+  become: true
+  ansible.builtin.get_url:
+    url: "https://github.com/dmachard/DNS-collector/releases/download/v{{ dnscollector_version }}/DNS-collector_{{ dnscollector_version }}_linux_{{ dnscollector_arch }}.tar.gz"
+    dest: "/tmp/dnscollector-{{ dnscollector_version }}-{{ dnscollector_arch }}.tar.gz"
+    mode: "0644"
+
+- name: Extract dnscollector binary
+  become: true
+  ansible.builtin.unarchive:
+    src: "/tmp/dnscollector-{{ dnscollector_version }}-{{ dnscollector_arch }}.tar.gz"
+    dest: /usr/local/bin/
+    remote_src: true
+    include:
+      - dnscollector
+  notify: restart dnscollector
+
+- name: Ensure dnscollector binary is executable
+  become: true
+  ansible.builtin.file:
+    path: /usr/local/bin/dnscollector
+    mode: "0755"
+    owner: root
+    group: root
+
+- name: Create dnscollector config directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/dnscollector
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy dnscollector configuration
+  become: true
+  ansible.builtin.template:
+    src: dnscollector.yaml.j2
+    dest: /etc/dnscollector/config.yaml
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart dnscollector
+
+- name: Deploy dnscollector systemd unit
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/dnscollector.service
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=DNS Collector
+      After=network.target
+      Before=dnsdist.service pdns.service
+
+      [Service]
+      ExecStart=/usr/local/bin/dnscollector -config /etc/dnscollector/config.yaml
+      UMask=0000
+      Restart=on-failure
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: restart dnscollector
+
+- name: Ensure dnscollector is enabled and started
+  become: true
+  ansible.builtin.systemd:
+    name: dnscollector
+    enabled: true
+    state: started
+    daemon_reload: true

@@ -47,6 +47,11 @@ setLocal("{{ dnsdist_server_addr }}:53")
 -- logging
 setRingBuffersSize(10000)
 
+-- dnstap
+local dnstapLogger = newFrameStreamUnixLogger("/run/dnstap-dnsdist.sock")
+addAction(AllRule(), DnstapLogAction("dnsdist", dnstapLogger))
+addResponseAction(AllRule(), DnstapLogResponseAction("dnsdist", dnstapLogger))
+
 -- console setting
 local consoleKey="{{ dnsdist_console_key }}"
 local consoleACL="{{ dnsdist_console_acl }}"

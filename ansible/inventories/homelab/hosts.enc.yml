@@ -32,9 +32,12 @@ all:
         syslog:
             hosts:
                 syslog01: null
+        dhcp:
+            hosts:
+                rpi4: null
         proxmox:
             vars:
-                ansible_user: ENC[AES256_GCM,data:PxQk+g==,iv:7KcfaR7id2BJn8xWx//Ga7OzOFczJTWOrL0Iga8fNdk=,tag:p0WTS08mPpPNV2go8TEL0w==,type:str]
+                ansible_user: ENC[AES256_GCM,data:VQZYbw==,iv:udsmlW+1p5MNAl4WQ2jCFbZaRYYYRSjQzhM/2Lw4/Tc=,tag:Gj6IGHi69XCEvOqzLp4nmg==,type:str]
             hosts:
                 pve: null
                 node1: null
@@ -108,7 +111,7 @@ sops:
             NmhoOXRTVTlOcU95a3dnaHdOYys2RHMKbWezv3B+dnh2ixjFiyIxGtRAR4MffPKx
             YHo0hS/1GcVSo5ETxfYqk9Z1ztfb5eViWtVFzvSDdjkrEK1+1tOwfQ==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-03-27T17:26:10Z"
-    mac: ENC[AES256_GCM,data:VWQ5FHO7Asva3XN6moDs6oT72VtGm5U4lFkM5PFotLV7Lzwy9Nysi0v0WKkPGkpyFAvUFyhkvBqMi+iOQHjWXswTAT/U/FV1ycIGcFIbhHApnjgwQLWtR0cdan8pMzQUZLnmOZ1ha2SBvvY/cXXePgNOo9TRU0VuMQS9E9iASAw=,iv:C4oN5ufXxVNLQbrBfG7vQEre+kUobc6ohzW9W9SigGE=,tag:6uLkrCU1zwrKUbj98NRZoQ==,type:str]
+    lastmodified: "2026-04-01T13:25:22Z"
+    mac: ENC[AES256_GCM,data:VF23Kmm6x4s914Uh1yFFUtJLmzQqRMDzsQh4A4NnMDMA/PLwu2OpAVIp0zoXIHnKelVnq7+msZjWK/x/wEroG0T0xzhrycfppJqNG2D4LvQC7T8ktzfjEkDKKYuFdtGvf406J9d3B6mQsueMe9FhpAcSfkW3kOXT1216hrFv378=,iv:a7nRg0KYI/YrlABSATG+6RZdm2aVM6mwLLiZYrE1DAM=,tag:hyw26b/tIqKBowSikHu5Og==,type:str]
     encrypted_regex: ansible_user
     version: 3.12.2

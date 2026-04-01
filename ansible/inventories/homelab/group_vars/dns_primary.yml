@@ -1,2 +1,31 @@
 ---
 pdns_role: primary
+
+vector_config:
+  sources:
+    journald:
+      type: journald
+      include_units:
+        - dnsdist
+        - pdns
+        - dnscollector
+        - ssh
+  transforms:
+    parse_journald:
+      type: remap
+      inputs:
+        - journald
+      source: |
+        .host = get_hostname!()
+        .unit = string(.SYSTEMD_UNIT) ?? "unknown"
+  sinks:
+    loki:
+      type: loki
+      inputs:
+        - parse_journald
+      endpoint: "http://192.168.30.134:3100"
+      encoding:
+        codec: json
+      labels:
+        host: "{{ '{{' }} host {{ '}}' }}"
+        unit: "{{ '{{' }} unit {{ '}}' }}"

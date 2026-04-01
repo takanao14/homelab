@@ -9,6 +9,9 @@ all:
     secondary01:
       ansible_host: your secondary DNS host IP
       ansible_user: user for this host
+    syslog01:
+      ansible_host: your syslog host IP
+      ansible_user: user for this host
     node1:
       ansible_host: your node host IP
     node2:
@@ -18,6 +21,12 @@ all:
       hosts:
         primary01:
     dns_secondary:
+      hosts:
+        secondary01:
+    syslog:
+      hosts:
+        syslog01:
+    dhcp:
       hosts:
         secondary01:
     proxmox:

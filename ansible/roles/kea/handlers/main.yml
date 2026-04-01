@@ -1,0 +1,6 @@
+---
+- name: restart kea-dhcp4
+  become: true
+  ansible.builtin.systemd:
+    name: kea-dhcp4-server
+    state: restarted

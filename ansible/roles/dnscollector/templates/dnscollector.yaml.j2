@@ -1,0 +1,27 @@
+global:
+  trace:
+    verbose: false
+
+pipelines:
+  - name: dnsdist
+    dnstap:
+      sock-path: {{ dnscollector_dnsdist_socket }}
+    routing-policy:
+      forward: [ {{ 'console' if dnscollector_debug else 'loki-dnsdist' }} ]
+
+{% if dnscollector_debug %}
+  - name: console
+    stdout:
+      mode: text
+{% else %}
+  - name: loki-dnsdist
+    lokiclient:
+      server-url: "{{ dnscollector_loki_url }}/loki/api/v1/push"
+      job-name: dns
+      mode: flat-json
+      relabel-configs:
+        - target_label: host
+          replacement: "{{ inventory_hostname }}"
+        - target_label: producer
+          replacement: dnsdist
+{% endif %}

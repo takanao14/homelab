@@ -1,0 +1,10 @@
+---
+dnscollector_version: "2.2.1"
+dnscollector_loki_url: "http://192.168.30.134:3100"
+dnscollector_dnsdist_socket: "/run/dnstap-dnsdist.sock"
+dnscollector_debug: false
+
+_dnscollector_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+dnscollector_arch: "{{ _dnscollector_arch_map[ansible_facts['architecture']] }}"

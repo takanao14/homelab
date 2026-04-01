@@ -1,0 +1,51 @@
+---
+- name: Install socat
+  become: true
+  ansible.builtin.apt:
+    name: socat
+    state: present
+    update_cache: true
+
+- name: Install kea-dhcp4-server
+  become: true
+  ansible.builtin.apt:
+    name: kea-dhcp4-server
+    state: present
+    update_cache: true
+
+- name: Ensure /var/lib/kea exists and has correct permissions
+  become: true
+  ansible.builtin.file:
+    path: /var/lib/kea
+    state: directory
+    owner: _kea
+    group: _kea
+    mode: "0750"
+    recurse: true
+
+- name: Ensure /run/kea exists and has correct permissions
+  become: true
+  ansible.builtin.file:
+    path: /run/kea
+    state: directory
+    owner: _kea
+    group: _kea
+    mode: "0755"
+
+- name: Deploy kea-dhcp4 configuration
+  become: true
+  ansible.builtin.template:
+    src: kea-dhcp4.conf.j2
+    dest: /etc/kea/kea-dhcp4.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart kea-dhcp4
+
+- name: Ensure kea-dhcp4-server is enabled and started
+  become: true
+  ansible.builtin.systemd:
+    name: kea-dhcp4-server
+    enabled: true
+    state: started
+    daemon_reload: true

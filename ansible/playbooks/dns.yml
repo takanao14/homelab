@@ -4,17 +4,25 @@
   serial: 1
   any_errors_fatal: true
   roles:
+    - role: dnscollector
+      tags: dnscollector
     - role: dnsdist
       tags: dnsdist
     - role: pdns_auth
       tags: pdns_auth
+    - role: vector
+      tags: vector
 
 - name: Setup Primary DNS Server
   hosts: dns_primary
   serial: 1
   any_errors_fatal: true
   roles:
+    - role: dnscollector
+      tags: dnscollector
     - role: dnsdist
       tags: dnsdist
     - role: pdns_auth
       tags: pdns_auth
+    - role: vector
+      tags: vector
