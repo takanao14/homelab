@@ -4,8 +4,8 @@ locals {
     unprivileged = true
     nesting      = true
     ifname       = "eth0"
-    bridge       = "vmbr0"
-    ipv4gw       = "192.168.10.1"
+    bridge       = "vnets001"
+    ipv4gw       = "192.168.20.1"
     cores        = 2
     memory       = 1024
     on_boot      = true
