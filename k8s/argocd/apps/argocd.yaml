@@ -11,7 +11,7 @@ spec:
       targetRevision: 9.4.17
       helm:
         valueFiles:
-          - $values/k8s/argocd/values/argocd.yaml.gotmpl
+          - $values/k8s/argocd/values/argocd.yaml
     - repoURL: https://github.com/takanao14/homelab.git
       targetRevision: HEAD
       ref: values
