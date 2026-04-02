@@ -1,0 +1,5 @@
+server:
+  ingress:
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: argocd.prd.butaco.net
+    hostname: argocd.prd.butaco.net
