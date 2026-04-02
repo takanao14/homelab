@@ -1,3 +1,7 @@
+configs:
+  cm:
+    helm.valuesFileSchemes: secrets+age-import, secrets+gpg-import, secrets+age-import-kubernetes, secrets+gpg-import-kubernetes, secrets, secrets+literal
+
 server:
   extraArgs:
     - --insecure
