@@ -44,6 +44,7 @@ repoServer:
           curl -Lo /tmp/helm-secrets.tar.gz \
             https://github.com/jkroepke/helm-secrets/releases/download/v4.6.2/helm-secrets.tar.gz
           tar -xf /tmp/helm-secrets.tar.gz -C /custom-tools/helm-plugins
+          sed -i '/^command:/d' /custom-tools/helm-plugins/helm-secrets/plugin.yaml
       volumeMounts:
         - mountPath: /custom-tools
           name: custom-tools
