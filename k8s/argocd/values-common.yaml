@@ -4,3 +4,42 @@ server:
   ingress:
     enabled: true
     ingressClassName: cilium
+
+repoServer:
+  env:
+    - name: HELM_SECRETS_BACKEND
+      value: sops
+    - name: SOPS_AGE_KEY_FILE
+      value: /helm-secrets-private-keys/key.txt
+    - name: HELM_PLUGINS
+      value: /custom-tools/helm-plugins
+    - name: HELM_SECRETS_HELM_PATH
+      value: /usr/local/bin/helm
+  volumes:
+    - name: helm-secrets-private-keys
+      secret:
+        secretName: helm-secrets-private-keys
+    - name: custom-tools
+      emptyDir: {}
+  volumeMounts:
+    - mountPath: /helm-secrets-private-keys/
+      name: helm-secrets-private-keys
+    - mountPath: /custom-tools
+      name: custom-tools
+  initContainers:
+    - name: download-tools
+      image: alpine:latest
+      command: [sh, -ec]
+      args:
+        - |
+          apk add --no-cache curl bash
+          curl -Lo /custom-tools/sops \
+            https://github.com/getsops/sops/releases/download/v3.9.4/sops-v3.9.4.linux.amd64
+          chmod +x /custom-tools/sops
+          mkdir -p /custom-tools/helm-plugins
+          curl -Lo /tmp/helm-secrets.tar.gz \
+            https://github.com/jkroepke/helm-secrets/releases/download/v4.6.2/helm-secrets.tar.gz
+          tar -xf /tmp/helm-secrets.tar.gz -C /custom-tools/helm-plugins
+      volumeMounts:
+        - mountPath: /custom-tools
+          name: custom-tools

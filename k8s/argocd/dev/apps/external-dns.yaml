@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/takanao14/homelab.git
+      targetRevision: HEAD
+      path: k8s/externalDNS/chart
+      helm:
+        valueFiles:
+          - $values/k8s/externalDNS/values-common.yaml
+          - $values/k8s/externalDNS/dev/values.yaml
+          - secrets+age-import:///helm-secrets-private-keys/key.txt?$values/k8s/externalDNS/secrets.enc.yaml
+    - repoURL: https://github.com/takanao14/homelab.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dns-homelab
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
