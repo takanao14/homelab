@@ -21,7 +21,9 @@ spec:
         - name: external-dns
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           args:
-            - --source=service
+            {{- range .Values.sources }}
+            - --source={{ . }}
+            {{- end }}
             - --provider=pdns
             - --pdns-server=$(PDNS_API_URL)
             - --pdns-server-id=$(PDNS_SERVER_ID)
