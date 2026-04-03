@@ -54,6 +54,6 @@ repoServer:
           name: cmp-tmp
         - mountPath: /helm-secrets-private-keys/
           name: helm-secrets-private-keys
-        - mountPath: /home/argocd/cmp-server/plugin.yaml
+        - mountPath: /home/argocd/cmp-server/config/plugin.yaml
           subPath: helm-secrets.yaml
           name: argocd-cmp-cm
