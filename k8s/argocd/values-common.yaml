@@ -19,6 +19,8 @@ repoServer:
       value: /custom-tools/helm-plugins
     - name: HELM_SECRETS_HELM_PATH
       value: /usr/local/bin/helm
+    - name: HELM_SECRETS_SOPS_PATH
+      value: /custom-tools/sops
   volumes:
     - name: helm-secrets-private-keys
       secret:
