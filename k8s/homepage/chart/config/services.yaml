@@ -1,13 +1,3 @@
-{{- define "homepage.config.settings" -}}
----
-# https://gethomepage.dev/latest/configs/settings/
-title: HomeLab Portal
-description: Homelab Portal
-logpath: stdout
-
-{{- end }}
-
-{{- define "homepage.config.services" -}}
 ---
 # https://gethomepage.dev/latest/configs/services/
 
@@ -46,38 +36,18 @@ logpath: stdout
 
 - VM/Storage:
     - HyperVisor:
-        - Proxmox VE Prod:
+        {{- range $key, $val := .Values.proxmox }}
+        - Proxmox VE {{ $key | title }}:
             icon: proxmox.png
-            href: {{ .Values.proxmox.prd.url }}
+            href: {{ $val.url }}
             description: Virtualization Platform
             widget:
               type: proxmox
-              url: {{ .Values.proxmox.prd.url }}
-              username: {{ .Values.proxmox.prd.username }}
-              password: {{ .Values.proxmox.prd.password }}
-              node: {{ .Values.proxmox.prd.node }}
-
-        - Proxmox VE Dev:
-            icon: proxmox.png
-            href: {{ .Values.proxmox.dev.url }}
-            description: Virtualization Platform
-            widget:
-              type: proxmox
-              url: {{ .Values.proxmox.dev.url }}
-              username: {{ .Values.proxmox.dev.username }}
-              password: {{ .Values.proxmox.dev.password }}
-              node: {{ .Values.proxmox.dev.node }}
-
-        - Proxmox VE Prod2:
-            icon: proxmox.png
-            href: {{ .Values.proxmox.prd2.url }}
-            description: Virtualization Platform
-            widget:
-              type: proxmox
-              url: {{ .Values.proxmox.prd2.url }}
-              username: {{ .Values.proxmox.prd2.username }}
-              password: {{ .Values.proxmox.prd2.password }}
-              node: {{ .Values.proxmox.prd2.node }}
+              url: {{ $val.url }}
+              username: {{ $val.username }}
+              password: {{ $val.password }}
+              node: {{ $val.node }}
+        {{- end }}
 
     - Storage:
         - TrueNAS:
@@ -143,42 +113,3 @@ logpath: stdout
         icon: mdi-access-point-network
         href: http://{{ .Values.network.wifiAp2 }}/
         description: wifi-ap2
-{{- end }}
-
-{{- define "homepage.config.proxmox" -}}
-
-{{ .Values.proxmox.dev.node }}:
-  url: {{ .Values.proxmox.dev.url }}
-  token: {{ .Values.proxmox.dev.username }}
-  secret: {{ .Values.proxmox.dev.password }}
-
-{{ .Values.proxmox.prd.node }}:
-  url: {{ .Values.proxmox.prd.url }}
-  token: {{ .Values.proxmox.prd.username }}
-  secret: {{ .Values.proxmox.prd.password }}
-
-{{ .Values.proxmox.prd2.node }}:
-  url: {{ .Values.proxmox.prd2.url }}
-  token: {{ .Values.proxmox.prd2.username }}
-  secret: {{ .Values.proxmox.prd2.password }}
-
-{{- end }}
-
-{{- define "homepage.config.widgets" -}}
----
-# https://gethomepage.dev/latest/configs/widgets/
-
-- kubernetes:
-    cluster:
-      show: true
-      cpu: true
-      memory: true
-      showLabel: true
-      label: "k0s Cluster"
-    nodes:
-      show: true
-      cpu: true
-      memory: true
-      showLabel: true
-
-{{- end }}

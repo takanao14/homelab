@@ -1,1 +1,12 @@
 hostname: www.prd.butaco.net
+
+proxmox:
+  prd:
+    url: https://node1.home.butaco.net:8006
+    node: node1
+  dev:
+    url: https://pve.home.butaco.net:8006
+    node: pve
+  prd2:
+    url: https://node2.home.butaco.net:8006
+    node: node2

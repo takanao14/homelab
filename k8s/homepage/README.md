@@ -5,68 +5,68 @@
 ## Directory Structure
 
 ```
-homepage/
-├── helmfile.yaml                  # Helmfile entrypoint (environments: dev, prd)
-├── values-common.yaml.gotmpl      # Common values (credentials via requiredEnv)
-├── values-dev.yaml.gotmpl         # Dev environment overrides
-├── values-prd.yaml.gotmpl         # Prd environment overrides
-├── secrets.enc.env                # SOPS-encrypted secrets (committed)
-├── .envrc                         # Decrypts secrets (gitignored)
-└── chart/                         # Custom Helm chart
+k8s/homepage/
+├── values.yaml            # Environment values (hostname, Proxmox URLs, etc.)
+├── secrets.enc.yaml       # SOPS-encrypted secrets (YAML format)
+└── chart/                 # Custom Helm chart
     ├── Chart.yaml
-    ├── values.yaml
-    └── templates/
-        ├── _config.tpl            # Homepage config templates (services, widgets, etc.)
-        ├── secret-config.yaml     # Secret rendered from _config.tpl
+    ├── values.yaml        # Default chart values
+    ├── config/            # Homepage YAML configurations (tpl expanded)
+    │   ├── settings.yaml
+    │   ├── services.yaml
+    │   ├── widgets.yaml
+    │   └── ...
+    └── templates/         # Kubernetes manifests
+        ├── secret-config.yaml # Mounts config/*.yaml as Secrets
         ├── deployment.yaml
-        ├── service.yaml           # LoadBalancer with ExternalDNS annotation
+        ├── service.yaml
         └── rbac.yaml
 ```
 
 ## Deployment
 
+This application is managed by **ArgoCD** with the `helm-secrets` plugin.
+
 ### 1. Set up secrets
+
+Secrets are managed using SOPS.
 
 ```bash
 cd k8s/homepage
-sops edit secrets.enc.env
-direnv allow
+sops edit secrets.enc.yaml
 ```
 
-### 2. Apply
+### 2. Apply via ArgoCD
 
-```bash
-# Production
-helmfile -e prd apply
+The application is defined in `k8s/argocd/prd/apps/homepage.yaml`. Changes pushed to the `main` branch are automatically synchronized by ArgoCD.
 
-# Development
-helmfile -e dev apply
-
-# Dry-run (diff)
-helmfile -e prd diff
-```
+To manually trigger a sync:
+- Use the ArgoCD UI.
+- Or use `argocd app sync homepage`.
 
 ## Configuration
 
-Homepage configuration (`services.yaml`, `widgets.yaml`, `settings.yaml`, etc.) is generated from Go templates in `chart/templates/_config.tpl` and embedded into a Kubernetes Secret (`homepage-config`).
+Homepage configuration (`services.yaml`, `widgets.yaml`, `settings.yaml`, etc.) is located in the `chart/config/` directory.
 
-Non-sensitive service URLs and IPs are hardcoded in the chart templates. Credentials are injected via `requiredEnv`.
+- These files are standard Homepage YAMLs, but they can contain Helm templates (`{{ .Values... }}`).
+- The `chart/templates/secret-config.yaml` template automatically reads all `*.yaml` files in `chart/config/` and creates a Kubernetes Secret named `homepage-config`.
+- Credentials and environment-specific URLs are injected from `values.yaml` and `secrets.enc.yaml`.
 
-## Secret Variables
+## Secret Structure
 
-| Variable | Description |
-|----------|-------------|
-| `PROXMOX_PRD_USERNAME` | Proxmox VE username (production) |
-| `PROXMOX_PRD_PASSWORD` | Proxmox VE password/token (production) |
-| `PROXMOX_DEV_USERNAME` | Proxmox VE username (development) |
-| `PROXMOX_DEV_PASSWORD` | Proxmox VE password/token (development) |
-| `TRUENAS_API_KEY` | TrueNAS API key |
-| `GRAFANA_PASSWORD` | Grafana admin password |
+The following structure is expected in `secrets.enc.yaml`:
+
+| Path | Description |
+|------|-------------|
+| `proxmox.prd.password` | Proxmox VE password/token (production) |
+| `proxmox.dev.password` | Proxmox VE password/token (development) |
+| `truenas.key` | TrueNAS API key |
+| `grafana.password` | Grafana admin password |
 
 ## Services Displayed
 
 - **DNS**: PowerDNS auth1/auth2, dnsdist1/dnsdist2
-- **VM/Storage**: Proxmox VE (Prd/Dev), TrueNAS
+- **VM/Storage**: Proxmox VE (Prd/Dev/Prd2), TrueNAS
 - **Monitoring**: Grafana, Prometheus
 - **Develop**: Forgejo
 - **Network**: Border Gateway, L3-SW, WiFi APs

@@ -1,0 +1,6 @@
+{{- range $key, $val := .Values.proxmox }}
+{{ $val.node }}:
+  url: {{ $val.url }}
+  token: {{ $val.username }}
+  secret: {{ $val.password }}
+{{- end }}
