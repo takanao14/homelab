@@ -37,6 +37,7 @@
 - VM/Storage:
     - HyperVisor:
         {{- range $key, $val := .Values.proxmox }}
+        {{- if and $val.node $val.url }}
         - Proxmox VE {{ $key | title }}:
             icon: proxmox.png
             href: {{ $val.url }}
@@ -47,6 +48,7 @@
               username: {{ $val.username }}
               password: {{ $val.password }}
               node: {{ $val.node }}
+        {{- end }}
         {{- end }}
 
     - Storage:
