@@ -36,6 +36,12 @@ grafana:
 prometheus:
   url: http://prometheus.prd.butaco.net:9090
 
+prd-argo:
+  url: https://argo.prd.butaco.net/
+
+dev-argo:
+  url: https://argo.dev.butaco.net/
+
 forgejo:
   url: http://git.prd.butaco.net/
 

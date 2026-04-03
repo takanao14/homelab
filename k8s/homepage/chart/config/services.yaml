@@ -90,6 +90,17 @@
         href: {{ .Values.forgejo.url }}
         description: Git Repository
 
+- CD:
+    - ArgoCD(Prod):
+        icon: argo.png
+        href: {{ .Values.prd-argo.url }}
+        description: Continuous Delivery
+
+    - ArgoCD(Dev):
+        icon: argo.png
+        href: {{ .Values.dev-argo.url }}
+        description: Continuous Delivery
+
 - Remote Management:
     - meshcentral:
         icon: si-intel-#0071C5
