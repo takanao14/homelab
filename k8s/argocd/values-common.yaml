@@ -44,11 +44,7 @@ repoServer:
           curl -Lo /tmp/helm-secrets.tar.gz \
             https://github.com/jkroepke/helm-secrets/releases/download/v4.6.2/helm-secrets.tar.gz
           tar -xf /tmp/helm-secrets.tar.gz -C /custom-tools/helm-plugins
-          python3 -c "
-p = '/custom-tools/helm-plugins/helm-secrets/plugin.yaml'
-lines = open(p).readlines()
-open(p, 'w').writelines(l for l in lines if not l.startswith('command:'))
-"
+          python3 -c "p='/custom-tools/helm-plugins/helm-secrets/plugin.yaml';lines=open(p).readlines();open(p,'w').writelines(l for l in lines if not l.startswith('command:'))"
       volumeMounts:
         - mountPath: /custom-tools
           name: custom-tools
