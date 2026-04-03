@@ -13,7 +13,7 @@ spec:
         valueFiles:
           - $values/k8s/externalDNS/values-common.yaml
           - $values/k8s/externalDNS/dev/values.yaml
-          - secrets+age-import:///helm-secrets-private-keys/key.txt?$values/k8s/externalDNS/secrets.enc.yaml
+          - secrets://$values/k8s/externalDNS/secrets.enc.yaml
     - repoURL: https://github.com/takanao14/homelab.git
       targetRevision: HEAD
       ref: values
