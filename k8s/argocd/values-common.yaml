@@ -24,6 +24,8 @@ server:
 
 repoServer:
   volumes:
+    - name: plugins
+      emptyDir: {}
     - name: helm-secrets-private-keys
       secret:
         secretName: helm-secrets-private-keys
