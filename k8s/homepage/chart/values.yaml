@@ -37,10 +37,10 @@ prometheus:
   url: http://prometheus.prd.butaco.net:9090
 
 prd-argo:
-  url: https://argocd.prd.butaco.net/
+  url: http://argocd.prd.butaco.net/
 
 dev-argo:
-  url: https://argocd.dev.butaco.net/
+  url: http://argocd.dev.butaco.net/
 
 forgejo:
   url: http://git.prd.butaco.net/
