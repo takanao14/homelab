@@ -47,6 +47,8 @@ repoServer:
           value: sops
         - name: SOPS_AGE_KEY_FILE
           value: /helm-secrets-private-keys/key.txt
+        - name: HELM_CACHE_HOME
+          value: /tmp/helm-cache
       volumeMounts:
         - mountPath: /home/argocd/cmp-server/plugins
           name: plugins
