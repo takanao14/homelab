@@ -5,18 +5,15 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  sources:
-    - repoURL: https://github.com/takanao14/homelab.git
-      targetRevision: HEAD
-      path: k8s/externalDNS/chart
-      helm:
-        valueFiles:
-          - $values/k8s/externalDNS/values-common.yaml
-          - $values/k8s/externalDNS/dev/values.yaml
-          - secrets://secrets.enc.yaml
-    - repoURL: https://github.com/takanao14/homelab.git
-      targetRevision: HEAD
-      ref: values
+  source:
+    repoURL: https://github.com/takanao14/homelab.git
+    targetRevision: HEAD
+    path: k8s/externalDNS/chart
+    plugin:
+      name: helm-secrets
+      env:
+        - name: HELM_VALUES
+          value: "../values-common.yaml,../dev/values.yaml,secrets://secrets.enc.yaml"
   destination:
     server: https://kubernetes.default.svc
     namespace: dns-homelab
