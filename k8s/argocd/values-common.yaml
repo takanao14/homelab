@@ -12,7 +12,7 @@ configs:
         generate:
           command: [sh, -c]
           args:
-            - helm secrets template "$ARGOCD_APP_NAME" . $(echo "$HELM_VALUES" | tr ',' '\n' | sed 's/^/-f /' | tr '\n' ' ')
+            - helm secrets template "$ARGOCD_APP_NAME" . $(echo "$ARGOCD_ENV_HELM_VALUES" | tr ',' '\n' | sed 's/^/-f /' | tr '\n' ' ')
         lockRepo: false
 
 server:
