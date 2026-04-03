@@ -1,10 +1,10 @@
 releases:
   - name: homepage
     namespace: homepage
-    chart: ../chart
+    chart: ./chart
     createNamespace: true
     values:
-      - ../values-common.yaml.gotmpl
+      - values-common.yaml.gotmpl
       - values.yaml.gotmpl
     hooks:
       - events: [prepare]
