@@ -13,7 +13,7 @@ spec:
         valueFiles:
           - $values/k8s/externalDNS/values-common.yaml
           - $values/k8s/externalDNS/dev/values.yaml
-          - secrets://$values/k8s/externalDNS/secrets.enc.yaml
+          - secrets://secrets.enc.yaml
     - repoURL: https://github.com/takanao14/homelab.git
       targetRevision: HEAD
       ref: values
