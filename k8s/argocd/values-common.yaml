@@ -36,7 +36,7 @@ repoServer:
       command: [sh, -ec]
       args:
         - |
-          apk add --no-cache curl bash python3
+          apk add --no-cache curl bash
           curl -Lo /custom-tools/sops \
             https://github.com/getsops/sops/releases/download/v3.9.4/sops-v3.9.4.linux.amd64
           chmod +x /custom-tools/sops
@@ -44,7 +44,7 @@ repoServer:
           curl -Lo /tmp/helm-secrets.tar.gz \
             https://github.com/jkroepke/helm-secrets/releases/download/v4.6.2/helm-secrets.tar.gz
           tar -xf /tmp/helm-secrets.tar.gz -C /custom-tools/helm-plugins
-          python3 -c "p='/custom-tools/helm-plugins/helm-secrets/plugin.yaml';lines=open(p).readlines();open(p,'w').writelines(l for l in lines if not l.startswith('command:'))"
+          sed -i '/^command:/d' /custom-tools/helm-plugins/helm-secrets/plugin.yaml
       volumeMounts:
         - mountPath: /custom-tools
           name: custom-tools
