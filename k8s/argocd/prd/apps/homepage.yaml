@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homepage
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/takanao14/homelab.git
+    targetRevision: HEAD
+    path: k8s/homepage/chart
+    plugin:
+      name: helm-secrets
+      env:
+        - name: HELM_VALUES
+          value: "../values-common.yaml,../values.yaml,secrets://../secrets.enc.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: homepage
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
