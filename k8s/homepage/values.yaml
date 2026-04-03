@@ -1,5 +1,11 @@
 hostname: www.prd.butaco.net
 
+prd-argo:
+  url: https://argocd.prd.butaco.net
+
+dev-argo:
+  url: https://argocd.dev.butaco.net
+
 proxmox:
   prd:
     url: https://node1.home.butaco.net:8006
