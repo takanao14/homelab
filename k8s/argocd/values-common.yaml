@@ -13,8 +13,8 @@ configs:
           command: [sh, -c]
           args:
             - |
-              helm secrets template "$ARGOCD_APP_NAME" . \
-                $(echo "$HELM_VALUES" | tr ',' '\n' | sed 's/^/-f /' | tr '\n' ' ')
+              echo "ARGOCD_APP_NAME=${ARGOCD_APP_NAME}"
+              echo "HELM_VALUES=${HELM_VALUES}"
         lockRepo: false
 
 server:
