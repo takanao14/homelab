@@ -2,8 +2,8 @@
 # https://gethomepage.dev/latest/configs/bookmarks/
 
 - Homepage:
-  - dashboard icon
-    - DashboardIcon:
+  - Dashboard icons:
+    - Dashboard:
       href: https://github.com/homarr-labs/dashboard-icons
 
     - Material Design Icons:
@@ -11,9 +11,6 @@
 
     - Simple Icons:
       href: https://simpleicons.org/
-
-    - DashboardIcon:
-      href: https://github.com/homarr-labs/dashboard-icons
 
     - Selfhst:
       href: https://selfh.st/icons/
