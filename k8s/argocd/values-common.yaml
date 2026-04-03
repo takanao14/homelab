@@ -27,8 +27,6 @@ repoServer:
     - name: helm-secrets-private-keys
       secret:
         secretName: helm-secrets-private-keys
-    - name: plugins
-      emptyDir: {}
     - name: cmp-tmp
       emptyDir: {}
     - name: argocd-cmp-cm
