@@ -1,6 +1,21 @@
 configs:
   cm:
     helm.valuesFileSchemes: secrets+age-import, secrets+gpg-import, secrets+age-import-kubernetes, secrets+gpg-import-kubernetes, secrets, secrets+literal
+  cmp:
+    create: true
+    plugins:
+      helm-secrets:
+        allowConcurrency: true
+        discover:
+          find:
+            glob: "**/Chart.yaml"
+        generate:
+          command: [sh, -c]
+          args:
+            - |
+              helm secrets template "$ARGOCD_APP_NAME" . \
+                $(echo "$HELM_VALUES" | tr ',' '\n' | sed 's/^/-f /' | tr '\n' ' ')
+        lockRepo: false
 
 server:
   extraArgs:
@@ -10,43 +25,35 @@ server:
     ingressClassName: cilium
 
 repoServer:
-  env:
-    - name: HELM_SECRETS_BACKEND
-      value: sops
-    - name: SOPS_AGE_KEY_FILE
-      value: /helm-secrets-private-keys/key.txt
-    - name: HELM_PLUGINS
-      value: /custom-tools/helm-plugins
-    - name: HELM_SECRETS_HELM_PATH
-      value: /usr/local/bin/helm
-    - name: HELM_SECRETS_SOPS_PATH
-      value: /custom-tools/sops
   volumes:
     - name: helm-secrets-private-keys
       secret:
         secretName: helm-secrets-private-keys
-    - name: custom-tools
+    - name: plugins
       emptyDir: {}
-  volumeMounts:
-    - mountPath: /helm-secrets-private-keys/
-      name: helm-secrets-private-keys
-    - mountPath: /custom-tools
-      name: custom-tools
-  initContainers:
-    - name: download-tools
-      image: alpine:latest
-      command: [sh, -ec]
-      args:
-        - |
-          apk add --no-cache curl bash
-          curl -Lo /custom-tools/sops \
-            https://github.com/getsops/sops/releases/download/v3.9.4/sops-v3.9.4.linux.amd64
-          chmod +x /custom-tools/sops
-          mkdir -p /custom-tools/helm-plugins
-          curl -Lo /tmp/helm-secrets.tar.gz \
-            https://github.com/jkroepke/helm-secrets/releases/download/v4.6.2/helm-secrets.tar.gz
-          tar -xf /tmp/helm-secrets.tar.gz -C /custom-tools/helm-plugins
-          sed -i '/^command:/d' /custom-tools/helm-plugins/helm-secrets/plugin.yaml
+    - name: cmp-tmp
+      emptyDir: {}
+    - name: argocd-cmp-cm
+      configMap:
+        name: argocd-cmp-cm
+  extraContainers:
+    - name: helm-secrets-cmp
+      image: ghcr.io/takanao14/argocd-helm-secrets-cmp:latest
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      env:
+        - name: HELM_SECRETS_BACKEND
+          value: sops
+        - name: SOPS_AGE_KEY_FILE
+          value: /helm-secrets-private-keys/key.txt
       volumeMounts:
-        - mountPath: /custom-tools
-          name: custom-tools
+        - mountPath: /home/argocd/cmp-server/plugins
+          name: plugins
+        - mountPath: /tmp
+          name: cmp-tmp
+        - mountPath: /helm-secrets-private-keys/
+          name: helm-secrets-private-keys
+        - mountPath: /home/argocd/cmp-server/plugin.yaml
+          subPath: helm-secrets.yaml
+          name: argocd-cmp-cm
