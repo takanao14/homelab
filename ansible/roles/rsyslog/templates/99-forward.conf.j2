@@ -1,0 +1,10 @@
+## Managed by Ansible - forward all logs to central syslog aggregator
+## RFC 5424 format with UTC timestamps for reliable parsing in Vector
+template(name="ForwardRFC5424UTC" type="string"
+  string="<%PRI%>1 %TIMESTAMP:::date-rfc3339% %HOSTNAME% %APP-NAME% %PROCID% %MSGID% %STRUCTURED-DATA% %MSG%\n")
+
+{% if rsyslog_forward_protocol == "tcp" %}
+*.* action(type="omfwd" target="{{ rsyslog_forward_host }}" port="{{ rsyslog_forward_port }}" protocol="tcp" template="ForwardRFC5424UTC")
+{% else %}
+*.* action(type="omfwd" target="{{ rsyslog_forward_host }}" port="{{ rsyslog_forward_port }}" protocol="udp" template="ForwardRFC5424UTC")
+{% endif %}

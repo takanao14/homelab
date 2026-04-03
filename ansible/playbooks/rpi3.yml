@@ -1,0 +1,6 @@
+---
+- name: Configure rpi3
+  hosts: rpi3
+  roles:
+    - role: rsyslog
+      tags: rsyslog

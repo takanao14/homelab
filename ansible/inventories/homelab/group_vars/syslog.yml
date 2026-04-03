@@ -49,7 +49,12 @@ vector_config:
         }
 
         # Ensure default values for required label fields
-        if !exists(.host) || is_null(.host) { .host = .source_ip }
+        # parse_syslog() returns .hostname for RFC 5424; socket source pre-fills .host with source IP
+        if exists(.hostname) && !is_null(.hostname) {
+          .host = .hostname
+        } else if !exists(.host) || is_null(.host) {
+          .host = .source_ip
+        }
         if !exists(.appname) || is_null(.appname) { .appname = "unknown" }
         if !exists(.severity) || is_null(.severity) { .severity = "unknown" }
 

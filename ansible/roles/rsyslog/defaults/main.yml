@@ -1,0 +1,4 @@
+---
+rsyslog_forward_host: "192.168.10.243"
+rsyslog_forward_port: 514
+rsyslog_forward_protocol: "udp"  # tcp or udp
