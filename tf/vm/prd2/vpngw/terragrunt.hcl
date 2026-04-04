@@ -19,9 +19,11 @@ locals {
 inputs = {
   vms = {
     "vpngw" = merge(local.base_vars, {
-      cores  = 2
-      memory = 1024
-      ipv4   = "192.168.10.3/24"
+      cores   = 2
+      memory  = 1024
+      bridge  = "vmbr0"
+      ipv4    = "192.168.10.3/24"
+      ipv4gw  = "192.168.10.1"
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 10

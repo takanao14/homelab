@@ -5,8 +5,6 @@ locals {
     qemu_guest_agent = true
     on_boot          = true
     scsi_hardware    = "virtio-scsi-single"
-    bridge           = "vmbr0"
-    ipv4gw           = "192.168.10.1"
     username         = get_env("TF_VM_USERNAME")
   }
   disk_defaults = {
