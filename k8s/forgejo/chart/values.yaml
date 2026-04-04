@@ -1,0 +1,29 @@
+forgejo:
+  gitea:
+    config:
+      APP_NAME: 'Forgejo: Git with a cup of tea'
+      repository.pull-request:
+        WORK_IN_PROGRESS_PREFIXES: 'WIP:,[WIP]:'
+      server:
+        DOMAIN: "git.prd.butaco.net"
+        SSH_DOMAIN: "gitssh.prd.butaco.net"
+        HTTP_PORT: 3000
+        SSH_PORT: 22
+        SSH_LISTEN_PORT: 2222
+
+  persistence:
+    size: 100Gi
+
+  service:
+    http:
+      port: 80
+      targetPort: 3000
+      type: LoadBalancer
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: "git.prd.butaco.net"
+    ssh:
+      port: 22
+      targetPort: 2222
+      type: LoadBalancer
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: "gitssh.prd.butaco.net"
