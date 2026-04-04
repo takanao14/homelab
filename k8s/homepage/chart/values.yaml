@@ -1,8 +1,20 @@
+hostname: www.prd.butaco.net
 namespace: homepage
 
 image:
   repository: ghcr.io/gethomepage/homepage
   tag: v1.10.1
+
+proxmox:
+  prd:
+    url: https://node1.home.butaco.net:8006
+    node: node1
+  dev:
+    url: https://pve.home.butaco.net:8006
+    node: pve
+  prd2:
+    url: https://node2.home.butaco.net:8006
+    node: node2
 
 pdns:
   primary:
@@ -37,10 +49,10 @@ prometheus:
   url: http://prometheus.prd.butaco.net:9090
 
 prd-argo:
-  url: http://argocd.prd.butaco.net/
+  url: http://argocd.prd.butaco.net
 
 dev-argo:
-  url: http://argocd.dev.butaco.net/
+  url: http://argocd.dev.butaco.net
 
 forgejo:
   url: http://git.prd.butaco.net/
