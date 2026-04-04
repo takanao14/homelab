@@ -13,7 +13,7 @@ spec:
         name: helm-secrets
         env:
           - name: HELM_VALUES
-            value: "${homelab}/k8s/forgejo/values.yaml,secrets://${homelab}/k8s/forgejo/secrets.enc.yaml"
+            value: "$ARGOCD_APP_SOURCE_homelab/k8s/forgejo/values.yaml,secrets://$ARGOCD_APP_SOURCE_homelab/k8s/forgejo/secrets.enc.yaml"
     - repoURL: https://github.com/takanao14/homelab.git
       targetRevision: HEAD
       ref: homelab
