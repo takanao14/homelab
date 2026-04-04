@@ -3,21 +3,21 @@
 
 - Homepage:
   - Homepage:
-    - abbrev: HP
-    - href: https://gethomepage.dev/
+    - abbr: HP
+      href: https://gethomepage.dev/
 
   - Dashboard Icons:
-    - abbrev: DI
-    - href: https://github.com/homarr-labs/dashboard-icons
+    - abbr: DI
+      href: https://github.com/homarr-labs/dashboard-icons
 
   - Material Design Icons:
-    - abbrev: MD
-    - href: https://pictogrammers.com/library/mdi/
+    - abbr: MD
+      href: https://pictogrammers.com/library/mdi/
 
   - Simple Icons:
-    - abbrev: SI
-    - href: https://simpleicons.org/
+    - abbr: SI
+      href: https://simpleicons.org/
 
   - Selfhst Icons:
-    - abbrev: SE
-    - href: https://selfh.st/icons/
+    - abbr: SE
+      href: https://selfh.st/icons/
