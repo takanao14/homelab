@@ -13,7 +13,7 @@ configs:
           command: [sh, -c]
           args:
             - |
-              helm dep update 2>/dev/null || true
+              helm dep update >/dev/null 2>&1 || true
               helm secrets template "$ARGOCD_APP_NAME" . --namespace "$ARGOCD_APP_NAMESPACE" $(echo "$ARGOCD_ENV_HELM_VALUES" | tr ',' '\n' | sed 's/^/-f /' | tr '\n' ' ')
         lockRepo: false
 
