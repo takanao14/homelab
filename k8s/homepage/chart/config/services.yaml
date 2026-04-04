@@ -92,12 +92,12 @@
 
 - CD:
     - ArgoCD(Prod):
-        icon: argo.png
+        icon: argo-cd.png
         href: {{ (index .Values "prd-argo").url }}
         description: Continuous Delivery
 
     - ArgoCD(Dev):
-        icon: argo.png
+        icon: argo-cd.png
         href: {{ (index .Values "dev-argo").url }}
         description: Continuous Delivery
 
