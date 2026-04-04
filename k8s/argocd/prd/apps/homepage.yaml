@@ -5,18 +5,15 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  sources:
-    - repoURL: https://github.com/takanao14/homelab.git
-      targetRevision: HEAD
-      path: k8s/homepage/chart
-      plugin:
-        name: helm-secrets
-        env:
-          - name: HELM_VALUES
-            value: "$values/k8s/homepage/values.yaml,secrets://$values/k8s/homepage/secrets.enc.yaml"
-    - repoURL: https://github.com/takanao14/homelab.git
-      targetRevision: HEAD
-      ref: values
+  source:
+    repoURL: https://github.com/takanao14/homelab.git
+    targetRevision: HEAD
+    path: k8s/homepage/chart
+    plugin:
+      name: helm-secrets
+      env:
+        - name: HELM_VALUES
+          value: "../values.yaml,secrets://../secrets.enc.yaml"
   destination:
     server: https://kubernetes.default.svc
     namespace: homepage
