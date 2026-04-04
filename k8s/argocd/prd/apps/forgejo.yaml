@@ -13,10 +13,10 @@ spec:
         name: helm-secrets
         env:
           - name: HELM_VALUES
-            value: "$ARGOCD_APP_SOURCE_homelab/k8s/forgejo/values.yaml,secrets://$ARGOCD_APP_SOURCE_homelab/k8s/forgejo/secrets.enc.yaml"
+            value: "$values/k8s/forgejo/values.yaml,secrets://$values/k8s/forgejo/secrets.enc.yaml"
     - repoURL: https://github.com/takanao14/homelab.git
       targetRevision: HEAD
-      ref: homelab
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: forgejo
