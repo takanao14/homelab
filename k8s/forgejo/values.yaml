@@ -1,4 +1,10 @@
 forgejo:
+  postgresql-ha:
+    enabled: false
+
+  redis-cluster:
+    enabled: false
+
   gitea:
     config:
       APP_NAME: 'Forgejo: Git with a cup of tea'
