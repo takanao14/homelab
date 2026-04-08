@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: snmp-exporter
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: prometheus-snmp-exporter
+      targetRevision: 9.13.1
+      helm:
+        valueFiles:
+          - $values/k8s/monitoring/values/snmp-exporter.yaml
+          - secrets+age-import-kubernetes://argocd/helm-secrets-private-keys#key.txt!$values/k8s/monitoring/secrets.enc.yaml
+    - repoURL: https://github.com/takanao14/homelab.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
