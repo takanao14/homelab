@@ -1,0 +1,19 @@
+---
+forgejo_version: "14.0.3"
+forgejo_user: git
+forgejo_group: git
+forgejo_home: /var/lib/forgejo
+forgejo_config_dir: /etc/forgejo
+forgejo_binary: /usr/local/bin/forgejo
+
+forgejo_domain: "forgejo.home.butaco.net"
+forgejo_http_port: 80
+forgejo_ssh_port: 2222
+
+forgejo_db_type: sqlite3
+forgejo_db_path: "{{ forgejo_home }}/data/forgejo.db"
+
+forgejo_secret_key: ""
+forgejo_internal_token: ""
+forgejo_jwt_secret: ""
+forgejo_lfs_jwt_secret: ""

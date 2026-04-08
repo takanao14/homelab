@@ -22,10 +22,10 @@ dnsdist_internal_domains:
   - "dev.butaco.net."
 dnsdist_internal_check_name: "ns1.home.butaco.net."
 
-# Secrets - loaded via env vars from SOPS-encrypted secrets.enc.env
-dnsdist_web_password: "{{ lookup('ansible.builtin.env', 'DNSDIST_WEB_PASSWORD') }}"
-dnsdist_web_api_key: "{{ lookup('ansible.builtin.env', 'DNSDIST_WEB_API_KEY') }}"
-dnsdist_console_key: "{{ lookup('ansible.builtin.env', 'DNSDIST_CONSOLE_KEY') }}"
+# Secrets - loaded via community.sops.sops from group_vars/all.sops.yaml
+dnsdist_web_password: "{{ DNSDIST_WEB_PASSWORD }}"
+dnsdist_web_api_key: "{{ DNSDIST_WEB_API_KEY }}"
+dnsdist_console_key: "{{ DNSDIST_CONSOLE_KEY }}"
 
 # Backend Servers Configuration
 dnsdist_internal_backends:

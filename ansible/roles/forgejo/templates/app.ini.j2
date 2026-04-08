@@ -1,0 +1,41 @@
+APP_NAME = Forgejo
+RUN_USER = {{ forgejo_user }}
+RUN_MODE = prod
+WORK_PATH = {{ forgejo_home }}
+
+[server]
+DOMAIN           = {{ forgejo_domain }}
+HTTP_PORT        = {{ forgejo_http_port }}
+ROOT_URL         = http://{{ forgejo_domain }}
+SSH_DOMAIN       = {{ forgejo_domain }}
+SSH_PORT         = {{ forgejo_ssh_port }}
+START_SSH_SERVER = true
+LFS_START_SERVER = true
+LFS_JWT_SECRET   = {{ forgejo_lfs_jwt_secret }}
+
+[database]
+DB_TYPE  = {{ forgejo_db_type }}
+PATH     = {{ forgejo_db_path }}
+
+[repository]
+ROOT = {{ forgejo_home }}/repos
+
+[log]
+ROOT_PATH = {{ forgejo_home }}/log
+MODE      = console
+LEVEL     = info
+
+[security]
+INSTALL_LOCK   = true
+SECRET_KEY     = {{ forgejo_secret_key }}
+INTERNAL_TOKEN = {{ forgejo_internal_token }}
+
+[oauth2]
+JWT_SECRET = {{ forgejo_jwt_secret }}
+
+[service]
+DISABLE_REGISTRATION = false
+REQUIRE_SIGNIN_VIEW  = false
+
+[actions]
+ENABLED = true

@@ -3,9 +3,9 @@
   hosts: proxmox
   any_errors_fatal: true
   vars:
-    target_user: "{{ lookup('env', 'MAINTENANCE_USER') }}"
-    ssh_key_path: "{{ lookup('env', 'SSH_KEY_PATH') | expanduser }}"
-    target_password_hash: "{{ lookup('env', 'MAINTENANCE_PASSWORD_HASH') }}"
+    target_user: "{{ MAINTENANCE_USER }}"
+    ssh_key_path: "{{ SSH_KEY_PATH | expanduser }}"
+    target_password_hash: "{{ MAINTENANCE_PASSWORD_HASH }}"
 
   tasks:
     - name: Validate required environment variables

@@ -1,0 +1,17 @@
+[Unit]
+Description=Forgejo Runner
+After=network.target
+
+[Service]
+Type=simple
+User={{ forgejo_runner_user }}
+Group={{ forgejo_runner_group }}
+WorkingDirectory={{ forgejo_runner_home }}
+ExecStart={{ forgejo_runner_binary }} daemon --config {{ forgejo_runner_config }}
+Restart=always
+RestartSec=5s
+Environment=DOCKER_HOST=unix:///run/user/{{ forgejo_runner_uid }}/podman/podman.sock
+Environment=XDG_RUNTIME_DIR=/run/user/{{ forgejo_runner_uid }}
+
+[Install]
+WantedBy=multi-user.target

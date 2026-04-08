@@ -17,6 +17,6 @@ pdns_secondary_port: "{{ secondary_auth_server.split(':')[1] }}"
 pdns_primary_allow_axfr_ips: "192.168.10.0/24"
 pdns_primary_also_notify: "{{ secondary_auth_server }}"
 
-# Secrets - loaded via env vars from SOPS-encrypted secrets.enc.env
-pdns_primary_api_key: "{{ lookup('ansible.builtin.env', 'PDNS_PRIMARY_API_KEY') }}"
-pdns_secondary_api_key: "{{ lookup('ansible.builtin.env', 'PDNS_SECONDARY_API_KEY') }}"
+# Secrets - loaded via community.sops.sops from group_vars/all.sops.yaml
+pdns_primary_api_key: "{{ PDNS_PRIMARY_API_KEY }}"
+pdns_secondary_api_key: "{{ PDNS_SECONDARY_API_KEY }}"

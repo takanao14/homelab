@@ -1,0 +1,14 @@
+log:
+  level: info
+
+runner:
+  file: {{ forgejo_runner_home }}/.runner
+  capacity: 1
+  timeout: 3h
+  fetch_interval: 2s
+
+cache:
+  enabled: false
+
+container:
+  network: host

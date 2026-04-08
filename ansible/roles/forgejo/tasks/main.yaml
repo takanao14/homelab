@@ -1,0 +1,78 @@
+---
+- name: Create forgejo group
+  become: true
+  ansible.builtin.group:
+    name: "{{ forgejo_group }}"
+    system: true
+    state: present
+
+- name: Create forgejo user
+  become: true
+  ansible.builtin.user:
+    name: "{{ forgejo_user }}"
+    group: "{{ forgejo_group }}"
+    home: "{{ forgejo_home }}"
+    shell: /bin/bash
+    system: true
+    state: present
+
+- name: Create required directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ forgejo_user }}"
+    group: "{{ forgejo_group }}"
+    mode: '0750'
+  loop:
+    - "{{ forgejo_home }}"
+    - "{{ forgejo_home }}/data"
+    - "{{ forgejo_home }}/repos"
+    - "{{ forgejo_home }}/log"
+    - "{{ forgejo_config_dir }}"
+
+- name: Install git
+  become: true
+  ansible.builtin.apt:
+    name: git
+    state: present
+    update_cache: true
+
+- name: Download forgejo binary
+  become: true
+  ansible.builtin.get_url:
+    url: "https://codeberg.org/forgejo/forgejo/releases/download/v{{ forgejo_version }}/forgejo-{{ forgejo_version }}-linux-amd64"
+    dest: "{{ forgejo_binary }}"
+    owner: root
+    group: root
+    mode: '0755'
+  notify: restart forgejo
+
+- name: Deploy forgejo app.ini
+  become: true
+  ansible.builtin.template:
+    src: app.ini.j2
+    dest: "{{ forgejo_config_dir }}/app.ini"
+    owner: "{{ forgejo_user }}"
+    group: "{{ forgejo_group }}"
+    mode: '0640'
+  notify: restart forgejo
+
+- name: Deploy forgejo systemd unit
+  become: true
+  ansible.builtin.template:
+    src: forgejo.service.j2
+    dest: /etc/systemd/system/forgejo.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart forgejo
+
+- name: Ensure forgejo is started and enabled
+  become: true
+  ansible.builtin.service:
+    name: forgejo
+    state: started
+    enabled: true

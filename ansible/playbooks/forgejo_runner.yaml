@@ -1,0 +1,6 @@
+---
+- name: Setup Forgejo Runner
+  hosts: forgejo_runner
+  roles:
+    - role: forgejo_runner
+      tags: forgejo_runner

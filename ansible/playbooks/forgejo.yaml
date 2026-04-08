@@ -1,0 +1,6 @@
+---
+- name: Setup Forgejo
+  hosts: forgejo
+  roles:
+    - role: forgejo
+      tags: forgejo

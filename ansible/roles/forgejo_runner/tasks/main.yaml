@@ -1,0 +1,141 @@
+---
+- name: Create forgejo-runner group
+  become: true
+  ansible.builtin.group:
+    name: "{{ forgejo_runner_group }}"
+    system: true
+    state: present
+
+- name: Create forgejo-runner user
+  become: true
+  ansible.builtin.user:
+    name: "{{ forgejo_runner_user }}"
+    group: "{{ forgejo_runner_group }}"
+    home: "{{ forgejo_runner_home }}"
+    shell: /bin/bash
+    system: true
+    state: present
+
+- name: Create required directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ forgejo_runner_user }}"
+    group: "{{ forgejo_runner_group }}"
+    mode: '0750'
+  loop:
+    - "{{ forgejo_runner_home }}"
+    - "{{ forgejo_runner_config | dirname }}"
+
+- name: Install dependencies
+  become: true
+  ansible.builtin.apt:
+    name:
+      - git
+      - podman
+      - uidmap
+      - slirp4netns
+    state: present
+    update_cache: true
+
+- name: Add subuid for runner user
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/subuid
+    line: "{{ forgejo_runner_user }}:100000:65536"
+    create: true
+
+- name: Add subgid for runner user
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/subgid
+    line: "{{ forgejo_runner_user }}:100000:65536"
+    create: true
+
+- name: Enable lingering for runner user
+  become: true
+  ansible.builtin.command:
+    cmd: loginctl enable-linger {{ forgejo_runner_user }}
+    creates: /var/lib/systemd/linger/{{ forgejo_runner_user }}
+
+- name: Enable podman socket for runner user
+  become: true
+  ansible.builtin.command:
+    cmd: systemctl --user -M {{ forgejo_runner_user }}@ enable --now podman.socket
+  changed_when: false
+
+- name: Get runner user uid
+  become: true
+  ansible.builtin.command:
+    cmd: id -u {{ forgejo_runner_user }}
+  register: forgejo_runner_uid_result
+  changed_when: false
+
+- name: Set runner uid fact
+  ansible.builtin.set_fact:
+    forgejo_runner_uid: "{{ forgejo_runner_uid_result.stdout }}"
+
+- name: Download forgejo-runner binary
+  become: true
+  ansible.builtin.get_url:
+    url: "https://code.forgejo.org/forgejo/runner/releases/download/v{{ forgejo_runner_version }}/forgejo-runner-{{ forgejo_runner_version }}-linux-amd64"
+    dest: "{{ forgejo_runner_binary }}"
+    owner: root
+    group: root
+    mode: '0755'
+  notify: restart forgejo-runner
+
+- name: Deploy forgejo-runner config
+  become: true
+  ansible.builtin.template:
+    src: config.yml.j2
+    dest: "{{ forgejo_runner_config }}"
+    owner: "{{ forgejo_runner_user }}"
+    group: "{{ forgejo_runner_group }}"
+    mode: '0640'
+  notify: restart forgejo-runner
+
+- name: Get runner registration token from Forgejo API
+  ansible.builtin.uri:
+    url: "{{ forgejo_runner_url }}/api/v1/admin/runners/registration-token"
+    method: GET
+    headers:
+      Authorization: "token {{ forgejo_admin_token }}"
+    status_code: 200
+  register: forgejo_registration
+  when: not (forgejo_runner_home + '/.runner') is file
+
+- name: Register forgejo-runner
+  become: true
+  ansible.builtin.command:
+    cmd: >
+      runuser -u {{ forgejo_runner_user }} --
+      {{ forgejo_runner_binary }} register
+      --no-interactive
+      --instance {{ forgejo_runner_url }}
+      --token {{ forgejo_registration.json.token }}
+      --name {{ forgejo_runner_name }}
+      --labels {{ forgejo_runner_labels | join(',') }}
+      --config {{ forgejo_runner_config }}
+    creates: "{{ forgejo_runner_home }}/.runner"
+  when: not (forgejo_runner_home + '/.runner') is file
+
+- name: Deploy forgejo-runner systemd unit
+  become: true
+  ansible.builtin.template:
+    src: forgejo-runner.service.j2
+    dest: /etc/systemd/system/forgejo-runner.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart forgejo-runner
+
+- name: Ensure forgejo-runner is started and enabled
+  become: true
+  ansible.builtin.service:
+    name: forgejo-runner
+    state: started
+    enabled: true

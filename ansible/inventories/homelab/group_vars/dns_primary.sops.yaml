@@ -1,0 +1,16 @@
+PDNS_PRIMARY_API_KEY: ENC[AES256_GCM,data:vNvK/cd5iUDfX9V/Gzcsew==,iv:1Jyffxjz3JotnM5pk5l4jfOYNRMzYf4EszQjWFc/eGM=,tag:Xuj8wBDDQ32QT8VKM6Hg4A==,type:str]
+sops:
+    age:
+        - recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSAyQnVrTS8vOVdvREc5SmR1
+            WW9qTmZsUlkwRjlvQmp4RWVQbWxUVjAyczEwClppTnVwVC9CQ1hEeStNTFdCa2lk
+            YUNWZmNIOVJ0OUNtTXNramRaTW9DZEUKLS0tIDN6bXk2ZkZ6VHh6VUNvMzNYeThM
+            a01hbVFzUDJhbm9oa0RpRGIwVk8yR2MKLA8jY/JskEfntV0Pce8oeweIOyceWQOE
+            lScYZq8v1X//9xxorH1Ton5U6JztpSSuOiXjqQ+fumsNAEy95zadhA==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2026-04-08T07:27:37Z"
+    mac: ENC[AES256_GCM,data:XddJz7k9hTCVnf6gSUErhJ4f/xRj7zThQeYScCYx88kSq/Dpmh+UMmmQpO+E+0xWeoBWjKcWnUllGn0TkNXI77U4wKTWyy7FGe6+RhhJ8gByIAmp3cl5vkZU8U8cmXPQ3muzvUwmalr/vQDsUn5ejisKyvpvXIr/yrgsP5Dl8nE=,iv:0ed3Wd44/dqrO91UIiBALjdzPsQlcWCkqlS4Ztas1z8=,tag:VcZA/ATGKmTr7TiThR5b6g==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.12.2

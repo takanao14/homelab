@@ -2,46 +2,56 @@ all:
     hosts:
         primary01:
             ansible_host: 192.168.10.242
-            ansible_user: ENC[AES256_GCM,data:NDU+sw==,iv:8DmRHowx8b6IJAwK9leYODNfcVut9xSzopO6qV5H28E=,tag:0DtOYRv1ML1JKG58ZXKjFg==,type:str]
         secondary01:
             ansible_host: 192.168.10.241
-            ansible_user: ENC[AES256_GCM,data:ud+VVjYvdA==,iv:A+yKhu2DjD/xiM4VTjRwjDTSfiUMnQnZ9Eu4kugldUM=,tag:0cyY9bETlyLHujOu9h4n9g==,type:str]
         syslog01:
             ansible_host: 192.168.10.243
-            ansible_user: ENC[AES256_GCM,data:itHmHQ==,iv:mKxXMt217FbzU+sDkFUsbLdMJu8UAKXNs4NntIpMq8s=,tag:gpqrg2VVIKRvvQOwcsGa1g==,type:str]
+        forgejo01:
+            ansible_host: 192.168.10.245
+        forgejo-runner01:
+            ansible_host: 192.168.10.246
         pve:
             ansible_host: 192.168.10.10
-            ansible_user: ENC[AES256_GCM,data:OJtr9Q==,iv:rBXl4mv0lxM2wDYBG+enLWc4uOlHrs9RrQqyXINwRs0=,tag:JaRt8uTHKutxZPByz8slgw==,type:str]
         node1:
             ansible_host: 192.168.10.11
-            ansible_user: ENC[AES256_GCM,data:N0/xQw==,iv:/brKGneeR6pxidJg8yjAZIg7tYla8qKtqaD/7wTla/M=,tag:L01oEH3uaPmCSQlx67gPYA==,type:str]
         node2:
             ansible_host: 192.168.10.13
-            ansible_user: ENC[AES256_GCM,data:bYO93w==,iv:AQ9MfZyvupLbvf8vxdoS3P+vHHUzlQBmI40jkpYMzvU=,tag:vnlrGNK7+MO2y2BCniknnw==,type:str]
         rpi3:
             ansible_host: 192.168.10.240
         rpi4:
             ansible_host: 192.168.10.241
     children:
-        dns_primary:
-            hosts:
-                primary01: null
-        dns_secondary:
-            hosts:
-                secondary01: null
+        dns_servers:
+            children:
+                dns_primary:
+                    hosts:
+                        primary01: null
+                dns_secondary:
+                    hosts:
+                        secondary01: null
+        
         syslog:
             hosts:
                 syslog01: null
+        
+        forgejo:
+            hosts:
+                forgejo01: null
+        
+        forgejo_runner:
+            hosts:
+                forgejo-runner01: null
+        
         dhcp:
             hosts:
                 rpi4: null
+        
         proxmox:
-            vars:
-                ansible_user: ENC[AES256_GCM,data:VQZYbw==,iv:udsmlW+1p5MNAl4WQ2jCFbZaRYYYRSjQzhM/2Lw4/Tc=,tag:Gj6IGHi69XCEvOqzLp4nmg==,type:str]
             hosts:
                 pve: null
                 node1: null
                 node2: null
+        
         node_exporter:
             hosts:
                 pve:
@@ -68,7 +78,6 @@ all:
                         - --no-collector.softnet
                         - --no-collector.udp_queues
                         - --no-collector.systemd
-                # raspberry pi os
                 rpi3:
                     node_exporter_args:
                         - --no-collector.schedstat
@@ -84,7 +93,6 @@ all:
                         - --no-collector.selinux
                         - --no-collector.xfs
                         - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
-                # ubuntu on raspberry pi
                 rpi4:
                     node_exporter_args:
                         - --no-collector.schedstat
@@ -100,18 +108,3 @@ all:
                         - --no-collector.selinux
                         - --no-collector.xfs
                         - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
-sops:
-    age:
-        - recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
-          enc: |
-            -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBLa1pnWDA0UkFTV045Nmll
-            QWlKYkZoT2FMcjdhamZ2Smp3cXl2U29lOFZ3CnNsK2Zzd1FyOU8wYllGS01qKzdS
-            bTRobHgyei9SSzZtMjhZMnZ2eGZiU2sKLS0tIEt5b2ppV2ZGaTg0TzBBQnRaSzNT
-            NmhoOXRTVTlOcU95a3dnaHdOYys2RHMKbWezv3B+dnh2ixjFiyIxGtRAR4MffPKx
-            YHo0hS/1GcVSo5ETxfYqk9Z1ztfb5eViWtVFzvSDdjkrEK1+1tOwfQ==
-            -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-04-01T13:26:47Z"
-    mac: ENC[AES256_GCM,data:8A9bGWtJut7i4FuqF6BnZzVaddr/vHaJopUWLrdZfJrsK2uLYKatHyFZzPsBJcEF3R8bLYDTZDZm7iP7AIeHz/GX9FgKqJG1amcoxTRqMWGAwToXOK+JNnhGXbdzZTlne/AsIk18pvAJIHxSTZU5+6D6tac7URk0bp9RyBOJ55o=,iv:lbiaoh0PFEUZyVj+vZkcleh+7TCu1PIFiJUXrnNbM2o=,tag:c0h/DxvEMh0+dDthLpxz8g==,type:str]
-    encrypted_regex: ansible_user
-    version: 3.12.2

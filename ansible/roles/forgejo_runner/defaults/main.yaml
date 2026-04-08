@@ -1,0 +1,15 @@
+---
+forgejo_runner_version: "12.8.0"
+dnscontrol_version: "4.36.1"
+forgejo_runner_user: runner
+forgejo_runner_group: runner
+forgejo_runner_home: /var/lib/forgejo-runner
+forgejo_runner_binary: /usr/local/bin/forgejo-runner
+forgejo_runner_config: /etc/forgejo-runner/config.yml
+
+forgejo_runner_url: "http://forgejo.home.butaco.net"
+forgejo_admin_token: ""
+forgejo_runner_name: "{{ inventory_hostname }}"
+forgejo_runner_labels:
+  - "self-hosted:docker://node:20-bookworm"
+  - "ubuntu-24.04:docker://node:20-bookworm"
