@@ -10,7 +10,7 @@
   "labels": ["dependencies", "renovate"],
   "vulnerabilityAlerts": {
     "labels": ["security"],
-    "assignees": ["@me"]
+    "assignees": ["takanao14"]
   },
   "packageRules": [
     {
