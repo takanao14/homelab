@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/ylianst/meshcentral
-  tag: 1.1.56-slim
+  tag: 1.1.58-slim
 
 resources:
   requests:
