@@ -1,0 +1,10 @@
+apiVersion: v2
+name: snmp-exporter
+description: Wrapper chart for prometheus-snmp-exporter
+type: application
+version: 0.1.0
+
+dependencies:
+  - name: prometheus-snmp-exporter
+    version: 9.13.1
+    repository: https://prometheus-community.github.io/helm-charts

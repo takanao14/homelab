@@ -7,17 +7,15 @@ metadata:
     argocd.argoproj.io/sync-wave: "1"
 spec:
   project: default
-  sources:
-    - repoURL: https://prometheus-community.github.io/helm-charts
-      chart: prometheus-snmp-exporter
-      targetRevision: 9.13.1
-      helm:
-        valueFiles:
-          - $values/k8s/monitoring/values/snmp-exporter.yaml
-          - secrets+age-import-kubernetes://argocd/helm-secrets-private-keys#key.txt!$values/k8s/monitoring/secrets.enc.yaml
-    - repoURL: https://github.com/takanao14/homelab.git
-      targetRevision: HEAD
-      ref: values
+  source:
+    repoURL: https://github.com/takanao14/homelab.git
+    targetRevision: HEAD
+    path: k8s/monitoring/charts/snmp-exporter
+    plugin:
+      name: helm-secrets
+      env:
+        - name: HELM_VALUES
+          value: "../../values/snmp-exporter.yaml,secrets://../../secrets.enc.yaml"
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

@@ -9,6 +9,13 @@ configs:
         discover:
           find:
             glob: "**/Chart.yaml"
+        init:
+          command: [sh, -c]
+          args:
+            - |
+              if grep -q "^dependencies:" Chart.yaml 2>/dev/null; then
+                helm dependency update .
+              fi
         generate:
           command: [sh, -c]
           args:
