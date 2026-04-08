@@ -1,0 +1,6 @@
+port: 8083
+metricsPath: /metrics
+
+targetIPs:
+  - "192.168.10.241"
+  - "192.168.10.242"
