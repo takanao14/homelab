@@ -8,3 +8,5 @@ creation_rules:
     encrypted_regex: ansible_user
   - path_regex: .*\.enc$
     age: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
+  - path_regex: .*\.sops\.yaml$
+    age: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
