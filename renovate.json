@@ -4,8 +4,7 @@
     "config:recommended",
     ":separateMajorReleases",
     ":combinePatchMinorReleases",
-    ":rebaseStalePrs",
-    ":enableHelpfulLabels"
+    ":rebaseStalePrs"
   ],
   "labels": ["dependencies", "renovate"],
   "vulnerabilityAlerts": {
