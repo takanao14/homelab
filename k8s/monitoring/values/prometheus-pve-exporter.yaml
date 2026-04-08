@@ -1,0 +1,13 @@
+image:
+  repository: prompve/prometheus-pve-exporter
+  tag: "3.8.1"
+
+port: 9221
+
+targets:
+  - ip: "192.168.10.10"
+    module: cluster_dev
+  - ip: "192.168.10.11"
+    module: cluster_prd
+  - ip: "192.168.10.12"
+    module: cluster_prd2
