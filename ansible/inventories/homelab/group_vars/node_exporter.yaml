@@ -1,0 +1,8 @@
+---
+node_exporter_base_args:
+    - --no-collector.schedstat
+    - --no-collector.netstat
+    - --no-collector.sockstat
+    - --no-collector.softnet
+    - --no-collector.udp_queues
+    - --no-collector.systemd

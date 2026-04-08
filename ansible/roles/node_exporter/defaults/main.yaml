@@ -1,7 +1,6 @@
 ---
-# Default arguments for prometheus-node-exporter
-# Example:
-# node_exporter_args:
-#   - '--collector.textfile.directory=/var/lib/node_exporter/textfile_collector'
-#   - '--no-collector.wifi'
-node_exporter_args: []
+# Arguments for prometheus-node-exporter, combined from two layers:
+#   node_exporter_base_args  - common args for all hosts (group_vars/node_exporter)
+#   node_exporter_rpi_args   - RPi-specific args (group_vars/node_exporter_rpi)
+node_exporter_base_args: []
+node_exporter_rpi_args: []

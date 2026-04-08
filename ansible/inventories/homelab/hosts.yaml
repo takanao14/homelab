@@ -29,82 +29,36 @@ all:
                 dns_secondary:
                     hosts:
                         secondary01: null
-        
+
         syslog:
             hosts:
                 syslog01: null
-        
+
         forgejo:
             hosts:
                 forgejo01: null
-        
+
         forgejo_runner:
             hosts:
                 forgejo-runner01: null
-        
+
         dhcp:
             hosts:
                 rpi4: null
-        
+
         proxmox:
             hosts:
                 pve: null
                 node1: null
                 node2: null
-        
+
         node_exporter:
+            children:
+                node_exporter_rpi:
+                    hosts:
+                        rpi3: null
+                        rpi4: null
             hosts:
-                pve:
-                    node_exporter_args:
-                        - --no-collector.schedstat
-                        - --no-collector.netstat
-                        - --no-collector.sockstat
-                        - --no-collector.softnet
-                        - --no-collector.udp_queues
-                        - --no-collector.systemd
-                node1:
-                    node_exporter_args:
-                        - --no-collector.schedstat
-                        - --no-collector.netstat
-                        - --no-collector.sockstat
-                        - --no-collector.softnet
-                        - --no-collector.udp_queues
-                        - --no-collector.systemd
-                node2:
-                    node_exporter_args:
-                        - --no-collector.schedstat
-                        - --no-collector.netstat
-                        - --no-collector.sockstat
-                        - --no-collector.softnet
-                        - --no-collector.udp_queues
-                        - --no-collector.systemd
-                rpi3:
-                    node_exporter_args:
-                        - --no-collector.schedstat
-                        - --no-collector.netstat
-                        - --no-collector.sockstat
-                        - --no-collector.softnet
-                        - --no-collector.udp_queues
-                        - --no-collector.systemd
-                        - --no-collector.btrfs
-                        - --no-collector.edac
-                        - --no-collector.nfs
-                        - --no-collector.nvme
-                        - --no-collector.selinux
-                        - --no-collector.xfs
-                        - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
-                rpi4:
-                    node_exporter_args:
-                        - --no-collector.schedstat
-                        - --no-collector.netstat
-                        - --no-collector.sockstat
-                        - --no-collector.softnet
-                        - --no-collector.udp_queues
-                        - --no-collector.systemd
-                        - --no-collector.btrfs
-                        - --no-collector.edac
-                        - --no-collector.mdadm
-                        - --no-collector.nvme
-                        - --no-collector.selinux
-                        - --no-collector.xfs
-                        - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
+                pve: null
+                node1: null
+                node2: null

@@ -1,0 +1,10 @@
+---
+node_exporter_rpi_args:
+    - --no-collector.btrfs
+    - --no-collector.edac
+    - --no-collector.nvme
+    - --no-collector.selinux
+    - --no-collector.xfs
+    - --no-collector.nfs
+    - --no-collector.mdadm
+    - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector

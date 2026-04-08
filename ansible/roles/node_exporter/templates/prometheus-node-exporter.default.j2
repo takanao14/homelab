@@ -1,2 +1,2 @@
 # Ansible managed
-ARGS="{{ node_exporter_args | join(' ') }}"
+ARGS="{{ (node_exporter_base_args + node_exporter_rpi_args) | join(' ') }}"
