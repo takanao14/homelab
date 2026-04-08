@@ -27,5 +27,5 @@ vector_config:
       encoding:
         codec: json
       labels:
-        host: "{{ '{{' }} host {{ '}}' }}"
-        unit: "{{ '{{' }} unit {{ '}}' }}"
+        host: !unsafe "{{ host }}"
+        unit: !unsafe "{{ unit }}"

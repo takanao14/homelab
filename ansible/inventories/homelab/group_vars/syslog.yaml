@@ -67,6 +67,6 @@ vector_config:
       encoding:
         codec: json
       labels:
-        host: "{{ '{{' }} host {{ '}}' }}"
-        appname: "{{ '{{' }} appname {{ '}}' }}"
-        severity: "{{ '{{' }} severity {{ '}}' }}"
+        host: !unsafe "{{ host }}"
+        appname: !unsafe "{{ appname }}"
+        severity: !unsafe "{{ severity }}"
