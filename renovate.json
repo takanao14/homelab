@@ -1,0 +1,40 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":separateMajorReleases",
+    ":combinePatchMinorReleases",
+    ":rebaseStalePrs",
+    ":enableHelpfulLabels"
+  ],
+  "labels": ["dependencies", "renovate"],
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "assignees": ["@me"]
+  },
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": false
+    },
+    {
+      "matchPackageNames": ["ghcr.io/gethomepage/homepage"],
+      "groupName": "homepage updates"
+    }
+  ],
+  "helm-values": {
+    "fileMatch": ["(^|/)values\\.yaml$"]
+  },
+  "kubernetes": {
+    "fileMatch": ["(^|/)k8s/.+\\.yaml$"]
+  },
+  "regexManagers": [
+    {
+      "fileMatch": ["(^|/)ansible/.+\\.yaml$", "(^|/)ansible/.+\\.yml$"],
+      "matchStrings": [
+        "image:\\s*\"?(?<depName>[^\"]+):(?<currentValue>[^\"]+)\"?"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ]
+}
