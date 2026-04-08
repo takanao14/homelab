@@ -16,8 +16,11 @@ ansible/
 │       │   ├── all.sops.yaml                # SOPS-encrypted global secrets
 │       │   ├── dns_primary.yaml
 │       │   ├── dns_secondary.yaml
+│       │   ├── dns_servers.yaml
 │       │   ├── dhcp.yaml
-│       │   └── syslog.yaml
+│       │   ├── syslog.yaml
+│       │   ├── node_exporter.yaml           # Common node_exporter args (all hosts)
+│       │   └── node_exporter_rpi.yaml       # RPi-specific node_exporter args
 │       └── host_vars/
 │           └── <hostname>.sops.yaml         # SOPS-encrypted host-specific secrets (e.g. ansible_user)
 ├── playbooks/
@@ -25,6 +28,9 @@ ansible/
 │   ├── dhcp.yaml
 │   ├── syslog.yaml
 │   ├── node_exporter.yaml
+│   ├── forgejo.yaml
+│   ├── forgejo_runner.yaml
+│   ├── rpi3.yaml
 │   └── proxmox.yaml
 └── roles/
     ├── dnsdist/
@@ -32,7 +38,10 @@ ansible/
     ├── pdns_auth/
     ├── kea/
     ├── vector/
-    └── node_exporter/
+    ├── node_exporter/
+    ├── forgejo/
+    ├── forgejo_runner/
+    └── rsyslog/
 ```
 
 ## Getting Started
@@ -81,6 +90,15 @@ ansible-playbook playbooks/syslog.yaml
 # Node Exporter
 ansible-playbook playbooks/node_exporter.yaml
 
+# Forgejo
+ansible-playbook playbooks/forgejo.yaml
+
+# Forgejo Runner
+ansible-playbook playbooks/forgejo_runner.yaml
+
+# Raspberry Pi 3 (rsyslog)
+ansible-playbook playbooks/rpi3.yaml
+
 # Proxmox maintenance user setup
 ansible-playbook playbooks/proxmox.yaml
 
@@ -110,7 +128,25 @@ Deploys Vector as a syslog aggregator (UDP 514), parses RFC 3164/5424 および�
 ### Node Exporter (`playbooks/node_exporter.yaml`)
 Installs `prometheus-node-exporter` for metrics collection.
 - **Role:** `node_exporter`
-- **Hosts:** `node_exporter` group
+- **Hosts:** `node_exporter` group (includes `node_exporter_rpi` subgroup for Raspberry Pi hosts)
+- **Config:**
+  - `group_vars/node_exporter.yaml` (`node_exporter_base_args`: common args for all hosts)
+  - `group_vars/node_exporter_rpi.yaml` (`node_exporter_rpi_args`: RPi-specific args)
+
+### Forgejo (`playbooks/forgejo.yaml`)
+Deploys Forgejo self-hosted Git service.
+- **Role:** `forgejo`
+- **Hosts:** `forgejo`
+
+### Forgejo Runner (`playbooks/forgejo_runner.yaml`)
+Deploys Forgejo Actions Runner.
+- **Role:** `forgejo_runner`
+- **Hosts:** `forgejo_runner`
+
+### Raspberry Pi 3 (`playbooks/rpi3.yaml`)
+Configures rsyslog on Raspberry Pi 3.
+- **Role:** `rsyslog`
+- **Hosts:** `rpi3`
 
 ### Proxmox Configuration (`playbooks/proxmox.yaml`)
 Creates a maintenance user on Proxmox VE hosts with sudo and Proxmox Administrator privileges.
@@ -139,7 +175,7 @@ primary_auth_server: "192.168.10.242:1053"
 secondary_auth_server: "192.168.10.241:1053"
 ```
 
-Host-specific non-secret variables (e.g., `pdns_role`, `node_exporter_args`) are defined in their respective group_vars files or the inventory.
+Host-specific non-secret variables (e.g., `pdns_role`, `node_exporter_base_args`) are defined in their respective group_vars files or the inventory.
 
 ## Tips
 
