@@ -21,8 +21,9 @@ k0s/
 ├── template_lib.sh                # Shared library (cluster management logic)
 ├── k0sctl.tmpl.yaml               # k0sctl config template (expanded with envsubst)
 ├── helmfile.yaml                  # Helm release definitions (cilium / openebs / cilium-config)
-├── .env.dev                       # Dev non-secret variables (gitignored)
-├── .env.prd                       # Prd non-secret variables (gitignored)
+├── env/
+│   ├── dev.sh                     # Dev non-secret variables (committed)
+│   └── prd.sh                     # Prd non-secret variables (committed)
 ├── secrets.dev.enc.env            # SOPS-encrypted secrets for dev (committed)
 ├── secrets.prd.enc.env            # SOPS-encrypted secrets for prd (committed)
 ├── charts/
@@ -43,9 +44,9 @@ k0s/
 
 ## Environment Variables
 
-Variables are split between plain `.env.*` files (non-secrets) and SOPS-encrypted `secrets.*.enc.env` files (secrets).
+Variables are split between plain `env/` files (non-secrets) and SOPS-encrypted `secrets.*.enc.env` files (secrets).
 
-### Non-secret (`.env.dev` / `.env.prd`)
+### Non-secret (`env/dev.sh` / `env/prd.sh`)
 
 | Variable | Description |
 |----------|-------------|
