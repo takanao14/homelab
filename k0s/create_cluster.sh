@@ -27,7 +27,7 @@ fi
 
 # ── paths ─────────────────────────────────────────────────────────────────────
 
-ENV_FILE="$SCRIPT_DIR/.env.$ENV_TARGET"
+ENV_FILE="$SCRIPT_DIR/env/$ENV_TARGET.sh"
 SECRETS_FILE="$SCRIPT_DIR/secrets.$ENV_TARGET.enc.env"
 TEMPLATE_FILE="$SCRIPT_DIR/k0sctl.tmpl.yaml"
 KUBECONFIG_OUT="$HOME/.kube/$ENV_TARGET.yaml"
