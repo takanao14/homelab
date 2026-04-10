@@ -48,15 +48,15 @@ ansible/
 
 ### 1. Install Dependencies
 
-Install the required Ansible collections and Python dependencies:
+Install the SOPS binary and the required Ansible collections:
 
 ```bash
-cd ansible
-# Install Ansible collections
-ansible-galaxy collection install -r requirements.yaml
+# Install SOPS binary (macOS)
+brew install sops
 
-# Install Python requirements (required for community.sops)
-pip install sops
+# Install Ansible collections
+cd ansible
+ansible-galaxy collection install -r requirements.yaml
 ```
 
 ### 2. Set Up Secrets
