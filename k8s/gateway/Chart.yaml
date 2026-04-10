@@ -1,0 +1,5 @@
+apiVersion: v2
+name: gateway
+description: Shared Gateway for prd.butaco.net
+type: application
+version: 0.1.0
