@@ -45,8 +45,8 @@
             widget:
               type: proxmox
               url: {{ $val.url }}
-              token: {{ $val.token }}
-              secret: {{ $val.secret }}
+              username: {{ $val.token }}
+              password: {{ $val.secret }}
               node: {{ $val.node }}
         {{- end }}
         {{- end }}
