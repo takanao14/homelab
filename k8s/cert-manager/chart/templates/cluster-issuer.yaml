@@ -5,7 +5,7 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: {{ index .Values "cert-manager" "cloudflare" "email" | quote }}
+    email: {{ .Values.cloudflare.email | quote }}
     privateKeySecretRef:
       name: letsencrypt-prod-account-key
     solvers:
