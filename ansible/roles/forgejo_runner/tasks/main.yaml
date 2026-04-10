@@ -73,16 +73,14 @@
     cmd: systemctl --user -M {{ forgejo_runner_user }}@ enable --now podman.socket
   when: podman_socket_status.stdout | trim != 'enabled'
 
-- name: Get runner user uid
-  become: true
-  ansible.builtin.command:
-    cmd: id -u {{ forgejo_runner_user }}
-  register: forgejo_runner_uid_result
-  changed_when: false
+- name: Get runner user info
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ forgejo_runner_user }}"
 
 - name: Set runner uid fact
   ansible.builtin.set_fact:
-    forgejo_runner_uid: "{{ forgejo_runner_uid_result.stdout }}"
+    forgejo_runner_uid: "{{ ansible_facts.getent_passwd[forgejo_runner_user][1] }}"
 
 - name: Download forgejo-runner binary
   become: true
