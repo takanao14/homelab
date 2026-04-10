@@ -143,6 +143,9 @@ helmfile_apply() {
 # ── gateway API CRDs ──────────────────────────────────────────────────────────
 
 gateway_api_apply() {
+    # Gateway API CRD version must match what the installed Cilium version requires.
+    # Check the supported version at: https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/
+    # Current: v1.4.1 experimental for Cilium 1.19.2
     log_info "Applying Gateway API CRDs..."
     kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/experimental-install.yaml
     log_success "Gateway API CRDs applied"
