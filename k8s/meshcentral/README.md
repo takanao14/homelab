@@ -1,58 +1,27 @@
-# MeshCentral on Kubernetes
+# MeshCentral
 
-Helm chart for deploying MeshCentral on the homelab Kubernetes cluster, managed via Helmfile.
+[MeshCentral](https://meshcentral.com/) remote management server deployed on the dev cluster. Managed by ArgoCD.
 
 ## Directory Structure
 
 ```
 meshcentral/
-├── helmfile.yaml
-├── values.yaml.gotmpl       # Environment-specific values (via requiredEnv)
-├── .envrc                   # Sets env vars (gitignored)
-└── chart/                   # Helm chart
+├── values.yaml            # hostname: meshcentral.dev.butaco.net
+└── chart/                 # Custom Helm chart
     ├── Chart.yaml
-    ├── values.yaml
+    ├── values.yaml        # Default chart values
     └── templates/
-        ├── deployment.yaml  # Includes checksum annotation for auto-restart on ConfigMap change
+        ├── deployment.yaml  # Checksum annotation for auto-restart on ConfigMap change
         ├── configmap.yaml
-        ├── service.yaml
+        ├── service.yaml     # ClusterIP
         └── pvc.yaml
 ```
 
-## Prerequisites
+## Access
 
-- Kubernetes cluster
-- CNI: Cilium with L2 LoadBalancer enabled
-- A default StorageClass
-- `helm`, `helmfile`, `kubectl`
+Exposed via Gateway API HTTPRoute. Hostname is set in `values.yaml`.
 
-## Deployment
-
-### 1. Set up secrets
-
-```bash
-cd k8s/meshcentral
-sops edit secrets.enc.env
-direnv allow
-```
-
-### 2. Deploy
-
-```bash
-# Verify manifests
-helmfile template
-
-# Apply to cluster
-helmfile apply
-```
-
-## Secret Variables
-
-| Variable | Description |
-|----------|-------------|
-| `MESHCENTRAL_LB_IP` | Static IP address for the LoadBalancer Service |
-
-The IP is injected via `values.yaml.gotmpl` into the `io.cilium/load-balancer-ip` annotation.
+> `butaco.net` is a personal domain. Replace it in `values.yaml`.
 
 ## Storage
 
