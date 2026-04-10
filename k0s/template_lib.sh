@@ -144,7 +144,7 @@ helmfile_apply() {
 
 gateway_api_apply() {
     log_info "Applying Gateway API CRDs..."
-    kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
+    kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/experimental-install.yaml
     log_success "Gateway API CRDs applied"
 }
 
