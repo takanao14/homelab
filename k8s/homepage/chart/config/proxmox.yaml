@@ -2,7 +2,7 @@
 {{- if and $val.node $val.url }}
 {{ $val.node }}:
   url: {{ $val.url }}
-  token: {{ $val.username }}
-  secret: {{ $val.password }}
+  token: {{ $val.token }}
+  secret: {{ $val.secret }}
 {{- end }}
 {{- end }}
