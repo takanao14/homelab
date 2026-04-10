@@ -17,9 +17,7 @@ kube-prometheus-stack:
               requests:
                 storage: 10Gi
     service:
-      type: LoadBalancer
-      annotations:
-        external-dns.alpha.kubernetes.io/hostname: prometheus.prd.butaco.net
+      type: ClusterIP
 
   grafana:
     defaultDashboardsTimezone: jst
@@ -37,10 +35,7 @@ kube-prometheus-stack:
     initChownData:
       enabled: false
     service:
-      type: LoadBalancer
-      annotations:
-        external-dns.alpha.kubernetes.io/hostname: grafana.prd.butaco.net
-      externalTrafficPolicy: Local
+      type: ClusterIP
 
   kubeControllerManager:
     enabled: false
@@ -48,3 +43,9 @@ kube-prometheus-stack:
     enabled: false
   kubeProxy:
     enabled: false
+
+grafana:
+  hostname: grafana.prd.butaco.net
+
+prometheus:
+  hostname: prometheus.prd.butaco.net
