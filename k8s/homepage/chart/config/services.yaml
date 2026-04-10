@@ -45,8 +45,8 @@
             widget:
               type: proxmox
               url: {{ $val.url }}
-              username: {{ $val.username }}
-              password: {{ $val.password }}
+              token: {{ $val.token }}
+              secret: {{ $val.secret }}
               node: {{ $val.node }}
         {{- end }}
         {{- end }}
@@ -93,12 +93,12 @@
 - CD:
     - ArgoCD(Prod):
         icon: argo-cd.png
-        href: {{ (index .Values "prd-argo").url }}
+        href: {{ .Values.prdArgo.url }}
         description: Continuous Delivery
 
     - ArgoCD(Dev):
         icon: argo-cd.png
-        href: {{ (index .Values "dev-argo").url }}
+        href: {{ .Values.devArgo.url }}
         description: Continuous Delivery
 
 - Remote Management:

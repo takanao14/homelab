@@ -45,7 +45,9 @@ sops edit k8s/homepage/secrets.enc.yaml
 
 | Path | Description |
 |------|-------------|
-| `proxmox.prd.password` | Proxmox VE API token (prd) |
-| `proxmox.dev.password` | Proxmox VE API token (dev) |
+| `proxmox.prd.token` | Proxmox VE API token ID (prd, format: `user@pam!tokenname`) |
+| `proxmox.prd.secret` | Proxmox VE API token secret (prd) |
+| `proxmox.dev.token` | Proxmox VE API token ID (dev) |
+| `proxmox.dev.secret` | Proxmox VE API token secret (dev) |
 | `truenas.key` | TrueNAS API key |
 | `grafana.password` | Grafana admin password |
