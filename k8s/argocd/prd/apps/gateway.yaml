@@ -11,6 +11,8 @@ spec:
     path: k8s/gateway
     helm:
       releaseName: gateway
+      values: |
+        domain: prd.butaco.net
   destination:
     server: https://kubernetes.default.svc
     namespace: gateway-system

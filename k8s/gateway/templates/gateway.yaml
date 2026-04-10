@@ -12,7 +12,7 @@ spec:
       tls:
         mode: Terminate
         certificateRefs:
-          - name: wildcard-prd-butaco-net-tls
+          - name: wildcard-{{ .Values.domain | replace "." "-" }}-tls
             namespace: cert-manager
       allowedRoutes:
         namespaces:

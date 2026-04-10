@@ -13,7 +13,7 @@ spec:
       name: helm-secrets
       env:
         - name: HELM_VALUES
-          value: "values.yaml,prd/values.yaml,secrets://secrets.enc.yaml"
+          value: "values.yaml,dev/values.yaml,secrets://secrets.enc.yaml"
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager

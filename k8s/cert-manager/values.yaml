@@ -1,4 +1,6 @@
 email: ""
 
+domain: ""
+
 cloudflare:
   apiToken: ""

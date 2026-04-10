@@ -11,4 +11,4 @@ spec:
   to:
     - group: ""
       kind: Secret
-      name: wildcard-prd-butaco-net-tls
+      name: wildcard-{{ .Values.domain | replace "." "-" }}-tls
