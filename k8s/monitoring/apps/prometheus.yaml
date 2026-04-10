@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prometheus
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/takanao14/homelab.git
+    targetRevision: HEAD
+    path: k8s/monitoring/charts/prometheus
+    plugin:
+      name: helm-secrets
+      env:
+        - name: HELM_VALUES
+          value: "../../values/prometheus.yaml,secrets://../../secrets.enc.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
