@@ -59,11 +59,19 @@
     cmd: loginctl enable-linger {{ forgejo_runner_user }}
     creates: /var/lib/systemd/linger/{{ forgejo_runner_user }}
 
+- name: Check podman socket enabled status
+  become: true
+  ansible.builtin.command:
+    cmd: systemctl --user -M {{ forgejo_runner_user }}@ is-enabled podman.socket
+  register: podman_socket_status
+  changed_when: false
+  failed_when: false
+
 - name: Enable podman socket for runner user
   become: true
   ansible.builtin.command:
     cmd: systemctl --user -M {{ forgejo_runner_user }}@ enable --now podman.socket
-  changed_when: false
+  when: podman_socket_status.stdout | trim != 'enabled'
 
 - name: Get runner user uid
   become: true
