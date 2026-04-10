@@ -1,0 +1,18 @@
+---
+caddy_binary: /usr/local/bin/caddy
+caddy_config: /etc/caddy/Caddyfile
+caddy_env_file: /etc/caddy/caddy.env
+caddy_user: caddy
+caddy_group: caddy
+
+# ACME account email (used for Let's Encrypt expiry notifications)
+caddy_acme_email: ""
+
+# ACME CA endpoint
+# Let's Encrypt staging: https://acme-staging-v02.api.letsencrypt.org/directory
+# Let's Encrypt production: https://acme-v02.api.letsencrypt.org/directory
+caddy_acme_ca: "https://acme-v02.api.letsencrypt.org/directory"
+
+# List of reverse proxy upstreams
+# Override in group_vars/caddy.yaml
+caddy_upstreams: []

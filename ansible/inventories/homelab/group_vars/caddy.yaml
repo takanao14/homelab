@@ -1,0 +1,12 @@
+---
+caddy_upstreams:
+  - hostname: pdns1.home.butaco.net
+    backend: 192.168.10.242:8081
+  - hostname: pdns2.home.butaco.net
+    backend: 192.168.10.241:8081
+  - hostname: dnsdist1.home.butaco.net
+    backend: 192.168.10.242:8083
+  - hostname: dnsdist2.home.butaco.net
+    backend: 192.168.10.241:8083
+  - hostname: forgejo.home.butaco.net
+    backend: 192.168.10.245:3000

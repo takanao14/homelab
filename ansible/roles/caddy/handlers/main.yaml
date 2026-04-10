@@ -1,0 +1,8 @@
+---
+- name: restart caddy
+  become: true
+  ansible.builtin.systemd:
+    name: caddy
+    state: restarted
+    daemon_reload: true
+  ignore_errors: "{{ ansible_check_mode }}"

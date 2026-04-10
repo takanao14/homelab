@@ -1,0 +1,8 @@
+---
+- name: Setup Caddy reverse proxy
+  hosts: caddy
+  roles:
+    - role: timezone
+      tags: timezone
+    - role: caddy
+      tags: caddy

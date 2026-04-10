@@ -1,0 +1,12 @@
+{
+	email {{ caddy_acme_email }}
+	acme_dns cloudflare {env.CF_API_TOKEN}
+	acme_ca {{ caddy_acme_ca }}
+}
+
+{% for upstream in caddy_upstreams %}
+{{ upstream.hostname }} {
+	reverse_proxy {{ upstream.backend }}
+}
+
+{% endfor %}
