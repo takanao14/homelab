@@ -1,5 +1,7 @@
 all:
     hosts:
+        caddy01:
+            ansible_host: 192.168.10.244
         primary01:
             ansible_host: 192.168.10.242
         secondary01:
@@ -41,6 +43,10 @@ all:
         forgejo_runner:
             hosts:
                 forgejo-runner01: null
+
+        caddy:
+            hosts:
+                caddy01: null
 
         dhcp:
             hosts:
