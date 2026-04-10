@@ -9,7 +9,7 @@ spec:
       namespace: gateway-system
       sectionName: https
   hostnames:
-    - argocd.dev.butaco.net
+    - {{ .Values.server.ingress.hostname }}
   rules:
     - backendRefs:
         - name: argocd-server
