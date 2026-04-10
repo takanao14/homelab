@@ -35,11 +35,8 @@ k0s/
 ├── hook/
 │   ├── ssdsetup.sh                # Format and mount SSD on worker node
 │   └── mirror.sh                  # Configure containerd docker.io mirror
-├── scripts/
-│   └── wait-cilium-crds.sh        # Helmfile presync hook: wait for Cilium CRDs
-└── test/
-    ├── default-openebs.yaml       # Smoke test for OpenEBS default StorageClass
-    └── load-balancer.yaml         # Smoke test for LoadBalancer Service
+└── scripts/
+    └── wait-cilium-crds.sh        # Helmfile presync hook: wait for Cilium CRDs
 ```
 
 ## Environment Variables
