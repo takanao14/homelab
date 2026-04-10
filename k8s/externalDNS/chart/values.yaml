@@ -5,6 +5,7 @@ image:
 sources:
   - service
   - ingress
+  - gateway-httproute
 
 resources:
   requests:
