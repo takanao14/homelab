@@ -26,8 +26,7 @@ server:
   extraArgs:
     - --insecure
   ingress:
-    enabled: true
-    ingressClassName: cilium
+    enabled: false
 
 repoServer:
   volumes:
