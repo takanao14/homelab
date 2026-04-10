@@ -4,5 +4,7 @@
   serial: 1
   any_errors_fatal: true
   roles:
+    - role: timezone
+      tags: timezone
     - role: kea
       tags: kea

@@ -2,5 +2,7 @@
 - name: Setup Syslog Aggregator
   hosts: syslog
   roles:
+    - role: timezone
+      tags: timezone
     - role: vector
       tags: vector

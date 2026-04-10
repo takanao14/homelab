@@ -2,5 +2,7 @@
 - name: Configure rpi3
   hosts: rpi3
   roles:
+    - role: timezone
+      tags: timezone
     - role: rsyslog
       tags: rsyslog

@@ -2,5 +2,7 @@
 - name: Setup Forgejo Runner
   hosts: forgejo_runner
   roles:
+    - role: timezone
+      tags: timezone
     - role: forgejo_runner
       tags: forgejo_runner
