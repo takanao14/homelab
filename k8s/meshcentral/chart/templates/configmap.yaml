@@ -6,10 +6,10 @@ metadata:
 data:
   HOSTNAME: {{ .Values.hostname | quote }}
   DYNAMIC_CONFIG: {{ .Values.dynamicConfig | toString | quote }}
-  REVERSE_PROXY: "true"
+  REVERSE_PROXY: {{ .Values.hostname | quote }}
   REVERSE_PROXY_TLS_PORT: "443"
   NODE_ENV: "production"
-  # Use HTTP on port 80 for internal communication with the gateway
-  TLS_OFF: "true"
-  PORT: "80"
+  # Use port 443 (HTTP) for internal communication with the gateway
+  TLS_OFFLOAD: "true"
+  PORT: "443"
 

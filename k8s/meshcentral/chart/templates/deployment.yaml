@@ -21,10 +21,10 @@ spec:
       - name: meshcentral
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
         ports:
-        - containerPort: 80
+        - containerPort: 443
         readinessProbe:
           tcpSocket:
-            port: 80
+            port: 443
           initialDelaySeconds: 5
           periodSeconds: 10
         resources:
