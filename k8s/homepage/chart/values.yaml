@@ -39,7 +39,7 @@ dnsdist:
     url: https://dnsdist2.home.butaco.net
 
 truenas:
-  url: http://truenas.home.butaco.net
+  url: https://truenas-ui.home.butaco.net
   node: node1
   vmid: "100"
   key: ""
