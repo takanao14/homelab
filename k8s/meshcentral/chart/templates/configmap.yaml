@@ -6,3 +6,6 @@ metadata:
 data:
   HOSTNAME: {{ .Values.hostname | quote }}
   DYNAMIC_CONFIG: {{ .Values.dynamicConfig | toString | quote }}
+  REVERSE_PROXY: "true"
+  REVERSE_PROXY_TLS_PORT: "443"
+  NODE_ENV: "production"

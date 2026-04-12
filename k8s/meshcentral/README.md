@@ -14,12 +14,15 @@ meshcentral/
         ├── deployment.yaml  # Checksum annotation for auto-restart on ConfigMap change
         ├── configmap.yaml
         ├── service.yaml     # ClusterIP
+        ├── httproute.yaml   # Gateway API HTTPRoute
         └── pvc.yaml
 ```
 
 ## Access
 
-Exposed via Gateway API HTTPRoute. Hostname is set in `values.yaml`.
+Exposed via Gateway API HTTPRoute (`shared-gateway` in `gateway-system`). Hostname is set in `values.yaml`. TLS is terminated at the Gateway.
+
+MeshCentral is configured with `REVERSE_PROXY: "true"` to handle traffic behind the gateway.
 
 > `butaco.net` is a personal domain. Replace it in `values.yaml`.
 

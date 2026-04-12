@@ -5,10 +5,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: meshcentral
-  annotations:
-    external-dns.alpha.kubernetes.io/hostname: {{ .Values.hostname }}
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: meshcentral
   ports:
