@@ -5,7 +5,7 @@
     - Authoritative:
         - PowerDNS auth1:
             icon: powerdns.png
-            href: http://{{ .Values.pdns.primary.addr }}/
+            href: {{ .Values.pdns.primary.url }}
             description: Primary Authoritative DNS ({{ .Values.pdns.primary.addr }}:1053)
             proxmoxNode: {{ .Values.pdns.primary.pveNode }}
             proxmoxVMID: {{ .Values.pdns.primary.pveVmid }}
@@ -14,14 +14,14 @@
 
         - PowerDNS auth2:
             icon: powerdns.png
-            href: http://{{ .Values.pdns.secondary.addr }}/
+            href: {{ .Values.pdns.secondary.url }}
             description: Secondary Authoritative DNS ({{ .Values.pdns.secondary.addr }}:1053)
             siteMonitor: http://{{ .Values.pdns.secondary.addr }}:8081/
 
     - DNS Balancer:
         - dnsdist1:
             icon: mdi-dns
-            href: http://{{ .Values.dnsdist.dnsdist1.addr }}/
+            href: {{ .Values.dnsdist.dnsdist1.url }}
             description: DNS Load Balancer ({{ .Values.dnsdist.dnsdist1.addr }}:53)
             proxmoxNode: {{ .Values.dnsdist.dnsdist1.pveNode }}
             proxmoxVMID: {{ .Values.dnsdist.dnsdist1.pveVmid }}
@@ -30,7 +30,7 @@
 
         - dnsdist2:
             icon: mdi-dns
-            href: http://{{ .Values.dnsdist.dnsdist2.addr }}/
+            href: {{ .Values.dnsdist.dnsdist2.url }}
             description: DNS Load Balancer ({{ .Values.dnsdist.dnsdist2.addr }}:53)
             siteMonitor: http://{{ .Values.dnsdist.dnsdist2.addr }}:8083/
 

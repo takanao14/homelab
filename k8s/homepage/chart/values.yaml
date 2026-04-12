@@ -18,21 +18,25 @@ proxmox:
 
 pdns:
   primary:
-    addr: pdns1.home.butaco.net
+    addr: ns1.home.butaco.net
+    url: https://pdns1.home.butaco.net
     pveNode: node1
     pveVmid: "103"
     pveType: lxc
   secondary:
-    addr: pdns2.home.butaco.net
+    addr: ns2.home.butaco.net
+    url: https://pdns2.home.butaco.net
 
 dnsdist:
   dnsdist1:
-    addr: dnsdist1.home.butaco.net
+    addr: dist1.home.butaco.net
+    url: https://dnsdist1.home.butaco.net
     pveNode: node1
     pveVmid: "103"
     pveType: lxc
   dnsdist2:
-    addr: dnsdist2.home.butaco.net
+    addr: dist2.home.butaco.net
+    url: https://dnsdist2.home.butaco.net
 
 truenas:
   url: http://truenas.home.butaco.net
