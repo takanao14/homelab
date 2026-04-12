@@ -9,7 +9,7 @@ data:
   REVERSE_PROXY: "true"
   REVERSE_PROXY_TLS_PORT: "443"
   NODE_ENV: "production"
-  # Disable internal TLS and listen on port 443 with HTTP (for the proxy)
-  TLS: "off"
-  PORT: "443"
+  # Use HTTP on port 80 for internal communication with the gateway
+  TLS_OFF: "true"
+  PORT: "80"
 

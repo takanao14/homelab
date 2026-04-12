@@ -13,4 +13,4 @@ spec:
   rules:
     - backendRefs:
         - name: meshcentral
-          port: 443
+          port: 80
