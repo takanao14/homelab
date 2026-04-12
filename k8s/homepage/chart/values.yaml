@@ -59,7 +59,7 @@ devArgo:
   url: https://argocd.dev.butaco.net
 
 forgejo:
-  url: http://forgejo.home.butaco.net/
+  url: https://forgejo.home.butaco.net/
 
 meshcentral:
   url: https://meshcentral.dev.butaco.net

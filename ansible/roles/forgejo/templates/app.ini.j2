@@ -6,7 +6,7 @@ WORK_PATH = {{ forgejo_home }}
 [server]
 DOMAIN           = {{ forgejo_domain }}
 HTTP_PORT        = {{ forgejo_http_port }}
-ROOT_URL         = http://{{ forgejo_domain }}
+ROOT_URL         = {{ forgejo_protocol }}://{{ forgejo_domain }}
 SSH_DOMAIN       = {{ forgejo_domain }}
 SSH_PORT         = {{ forgejo_ssh_port }}
 START_SSH_SERVER = true
