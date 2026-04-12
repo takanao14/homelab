@@ -32,6 +32,7 @@ Installs and configures [Forgejo](https://forgejo.org/) self-hosted Git service 
 | `forgejo_config_dir` | `/etc/forgejo` | Config directory |
 | `forgejo_binary` | `/usr/local/bin/forgejo` | Binary path |
 | `forgejo_domain` | `forgejo.home.butaco.net` | Public domain name |
+| `forgejo_ssh_domain` | (None) | SSH domain name (optional, defaults to `forgejo_domain`) |
 | `forgejo_http_port` | `80` | HTTP listen port |
 | `forgejo_ssh_port` | `2222` | SSH listen port |
 | `forgejo_db_type` | `sqlite3` | Database backend |
