@@ -2,3 +2,5 @@
 collections:
   - name: community.sops
     version: 2.2.7
+  - name: community.postgresql
+    version: 4.2.0

@@ -1,0 +1,20 @@
+---
+netbox_version: "4.5.7"
+netbox_user: netbox
+netbox_group: netbox
+netbox_home: /opt/netbox
+netbox_venv: /opt/netbox/venv
+
+netbox_domain: "netbox-ui.home.butaco.net"
+netbox_port: 8080
+
+netbox_db_name: netbox
+netbox_db_user: netbox
+netbox_db_password: ""
+
+netbox_secret_key: ""
+netbox_api_token_pepper: ""
+
+netbox_superuser_name: admin
+netbox_superuser_email: "admin@home.butaco.net"
+netbox_superuser_password: ""

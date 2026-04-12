@@ -1,0 +1,33 @@
+ALLOWED_HOSTS = ['{{ netbox_domain }}', 'localhost', '127.0.0.1']
+
+CSRF_TRUSTED_ORIGINS = ['https://{{ netbox_domain }}']
+
+DATABASE = {
+    'ENGINE': 'django.db.backends.postgresql',
+    'NAME': '{{ netbox_db_name }}',
+    'USER': '{{ netbox_db_user }}',
+    'PASSWORD': '{{ netbox_db_password }}',
+    'HOST': 'localhost',
+    'PORT': '5432',
+}
+
+REDIS = {
+    'tasks': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DATABASE': 0,
+        'SSL': False,
+    },
+    'caching': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DATABASE': 1,
+        'SSL': False,
+    }
+}
+
+SECRET_KEY = '{{ netbox_secret_key }}'
+
+API_TOKEN_PEPPERS = {
+    1: '{{ netbox_api_token_pepper }}',
+}

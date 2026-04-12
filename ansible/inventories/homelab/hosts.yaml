@@ -12,6 +12,8 @@ all:
             ansible_host: 192.168.10.245
         forgejo-runner01:
             ansible_host: 192.168.10.246
+        netbox01:
+            ansible_host: 192.168.10.247
         pve:
             ansible_host: 192.168.10.10
         node1:
@@ -43,6 +45,10 @@ all:
         forgejo_runner:
             hosts:
                 forgejo-runner01: null
+
+        netbox:
+            hosts:
+                netbox01: null
 
         caddy:
             hosts:
