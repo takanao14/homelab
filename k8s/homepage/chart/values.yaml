@@ -20,8 +20,8 @@ pdns:
   primary:
     addr: ns1.home.butaco.net
     url: https://pdns1.home.butaco.net
-    pveNode: node1
-    pveVmid: "103"
+    pveNode: node2
+    pveVmid: "100"
     pveType: lxc
   secondary:
     addr: ns2.home.butaco.net
@@ -31,8 +31,8 @@ dnsdist:
   dnsdist1:
     addr: dist1.home.butaco.net
     url: https://dnsdist1.home.butaco.net
-    pveNode: node1
-    pveVmid: "103"
+    pveNode: node2
+    pveVmid: "100"
     pveType: lxc
   dnsdist2:
     addr: dist2.home.butaco.net
