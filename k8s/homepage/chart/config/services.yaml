@@ -34,35 +34,43 @@
             description: DNS Load Balancer ({{ .Values.dnsdist.dnsdist2.addr }}:53)
             siteMonitor: http://{{ .Values.dnsdist.dnsdist2.addr }}:8083/
 
-- VM/Storage:
-    - HyperVisor:
-        {{- range $key, $val := .Values.proxmox }}
-        {{- if and $val.node $val.url }}
-        - Proxmox VE {{ $key | title }}:
-            icon: proxmox.png
-            href: {{ $val.url }}
-            description: Virtualization Platform
-            widget:
-              type: proxmox
-              url: {{ $val.url }}
-              username: {{ $val.token }}
-              password: {{ $val.secret }}
-              node: {{ $val.node }}
-        {{- end }}
-        {{- end }}
+- HyperVisor:
+    {{- range $key, $val := .Values.proxmox }}
+    {{- if and $val.node $val.url }}
+    - Proxmox VE {{ $key | title }}:
+        icon: proxmox.png
+        href: {{ $val.url }}
+        description: Virtualization Platform
+        widget:
+          type: proxmox
+          url: {{ $val.url }}
+          username: {{ $val.token }}
+          password: {{ $val.secret }}
+          node: {{ $val.node }}
+    {{- end }}
+    {{- end }}
 
-    - Storage:
-        - TrueNAS:
-            icon: truenas.png
-            href: {{ .Values.truenas.url }}
-            description: Network Storage
-            proxmoxNode: {{ .Values.truenas.node }}
-            proxmoxVMID: {{ .Values.truenas.vmid }}
-            widget:
-              type: truenas
-              url: {{ .Values.truenas.url }}
-              key: {{ .Values.truenas.key }}
-              nasType: scale
+- Storage:
+    - TrueNAS:
+        icon: truenas.png
+        href: {{ .Values.truenas.url }}
+        description: Network Storage
+        proxmoxNode: {{ .Values.truenas.pveNode }}
+        proxmoxVMID: {{ .Values.truenas.pveVmid }}
+        widget:
+          type: truenas
+          url: {{ .Values.truenas.url }}
+          key: {{ .Values.truenas.key }}
+          nasType: scale
+
+- IPAM:
+    - NetBox:
+        icon: netbox.png
+        href: {{ .Values.netbox.url }}
+        description: IP Management
+        proxmoxNode: {{ .Values.netbox.pveNode }}
+        proxmoxVMID: {{ .Values.netbox.pveVmid }}
+        proxmoxType: {{ .Values.netbox.pveType }}
 
 - Monitoring:
     - Grafana:

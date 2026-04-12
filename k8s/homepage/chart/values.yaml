@@ -40,9 +40,15 @@ dnsdist:
 
 truenas:
   url: https://truenas-ui.home.butaco.net
-  node: node1
-  vmid: "100"
+  pveNode: node1
+  pveVmid: "100"
   key: ""
+
+netbox:
+  url: https://netbox-ui.home.butaco.net
+  pveNode: node2
+  pveVmid: "106"
+  pveType: lxc
 
 grafana:
   url: https://grafana.prd.butaco.net
