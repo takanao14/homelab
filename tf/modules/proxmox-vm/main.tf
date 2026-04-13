@@ -19,6 +19,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
 
   memory {
     dedicated = each.value.memory
+    floating  = each.value.balloon ? each.value.memory : 0
   }
 
   bios    = "ovmf"
@@ -54,6 +55,17 @@ resource "proxmox_virtual_environment_vm" "vm" {
     bridge = each.value.bridge
     model  = "virtio"
     mtu    = 1 # Inherit MTU from bridge
+  }
+
+  dynamic "hostpci" {
+    for_each = each.value.pci_devices
+    content {
+      device  = hostpci.key
+      id      = hostpci.value.id
+      mapping = hostpci.value.mapping
+      pcie    = hostpci.value.pcie
+      rombar  = hostpci.value.rombar
+    }
   }
 
   lifecycle {
