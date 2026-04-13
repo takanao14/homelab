@@ -1,0 +1,8 @@
+---
+- name: Setup Ollama with ROCm
+  hosts: ollama
+  roles:
+    - role: timezone
+      tags: timezone
+    - role: ollama
+      tags: ollama

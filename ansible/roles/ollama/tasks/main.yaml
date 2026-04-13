@@ -1,0 +1,104 @@
+---
+- name: Install prerequisites
+  become: true
+  ansible.builtin.apt:
+    name:
+      - wget
+      - python3-setuptools
+      - python3-wheel
+    state: present
+    update_cache: true
+
+- name: Download amdgpu-install package
+  become: true
+  ansible.builtin.get_url:
+    url: "https://repo.radeon.com/amdgpu-install/7.2.1/ubuntu/noble/amdgpu-install_7.2.1.70201-1_all.deb"
+    dest: /tmp/amdgpu-install.deb
+    mode: '0644'
+
+- name: Install amdgpu-install package
+  become: true
+  ansible.builtin.apt:
+    deb: /tmp/amdgpu-install.deb
+    state: present
+
+- name: Install HWE kernel
+  become: true
+  ansible.builtin.apt:
+    name: linux-generic-hwe-24.04
+    state: present
+
+- name: Install amdgpu-dkms and ROCm
+  become: true
+  ansible.builtin.apt:
+    name:
+      - amdgpu-dkms
+      - rocm
+    state: present
+    update_cache: true
+  async: 3600
+  poll: 30
+
+- name: Add user to render and video groups
+  become: true
+  ansible.builtin.user:
+    name: "{{ ansible_facts['env']['USER'] }}"
+    groups:
+      - render
+      - video
+    append: true
+
+- name: Reboot to apply HWE kernel and GPU driver
+  become: true
+  ansible.builtin.reboot:
+    reboot_timeout: 300
+  when: not ansible_check_mode
+
+- name: Download Ollama installer
+  become: true
+  ansible.builtin.get_url:
+    url: "https://ollama.com/install.sh"
+    dest: /tmp/ollama-install.sh
+    mode: '0755'
+
+- name: Install Ollama
+  become: true
+  ansible.builtin.command:
+    cmd: /tmp/ollama-install.sh
+  changed_when: true
+
+- name: Ensure systemd override directory exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/ollama.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy ollama systemd override
+  become: true
+  ansible.builtin.template:
+    src: ollama.service.override.j2
+    dest: /etc/systemd/system/ollama.service.d/override.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart ollama
+
+- name: Ensure ollama is started and enabled
+  become: true
+  ansible.builtin.service:
+    name: ollama
+    state: started
+    enabled: true
+
+- name: Pull Ollama models
+  become: true
+  ansible.builtin.command:
+    cmd: "ollama pull {{ item }}"
+  loop: "{{ ollama_models }}"
+  changed_when: true
+  when: ollama_models | length > 0

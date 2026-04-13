@@ -1,0 +1,46 @@
+---
+- name: Check if Lemonade PPA sources file exists
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list.d/lemonade-team-ubuntu-stable-noble.sources
+  register: lemonade_ppa_sources
+
+- name: Add Lemonade PPA
+  become: true
+  ansible.builtin.apt_repository:
+    repo: ppa:lemonade-team/stable
+    state: present
+  when: not lemonade_ppa_sources.stat.exists
+
+- name: Install lemonade-server
+  become: true
+  ansible.builtin.apt:
+    name: lemonade-server
+    state: present
+    update_cache: true
+
+- name: Install llamacpp:rocm backend
+  become: true
+  ansible.builtin.command:
+    cmd: lemonade backends install llamacpp:rocm
+    creates: /var/lib/lemonade/.cache/lemonade/bin/llamacpp/rocm
+
+- name: Configure lemonade host
+  become: true
+  ansible.builtin.command:
+    cmd: lemonade config set host={{ lemonade_host }} port={{ lemonade_port }} llamacpp.backend={{ lemonade_llamacpp_backend }}
+  notify: restart lemonade
+
+- name: Ensure lemonade-server is started and enabled
+  become: true
+  ansible.builtin.service:
+    name: lemonade-server
+    state: started
+    enabled: true
+
+- name: Pull Lemonade models
+  become: true
+  ansible.builtin.command:
+    cmd: "lemonade pull {{ item }}"
+  loop: "{{ lemonade_models }}"
+  changed_when: true
+  when: lemonade_models | length > 0

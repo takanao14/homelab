@@ -1,0 +1,6 @@
+---
+lemonade_host: "0.0.0.0"
+lemonade_port: 13305
+lemonade_models:
+  - Qwen3-8B-GGUF
+  - Qwen3-14B-GGUF

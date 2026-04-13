@@ -1,0 +1,5 @@
+---
+lemonade_host: "0.0.0.0"
+lemonade_port: 13305
+lemonade_llamacpp_backend: "rocm"
+lemonade_models: []

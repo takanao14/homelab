@@ -1,0 +1,4 @@
+#!/bin/bash
+source {{ comfyui_venv }}/bin/activate
+cd {{ comfyui_dir }}
+exec python main.py --listen {{ comfyui_host }} --port {{ comfyui_port }}

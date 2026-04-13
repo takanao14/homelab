@@ -1,0 +1,5 @@
+---
+ollama_version: "0.6.5"
+ollama_host: "0.0.0.0"
+ollama_port: 11434
+ollama_models: []

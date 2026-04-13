@@ -1,0 +1,8 @@
+---
+- name: Setup Lemonade
+  hosts: ollama
+  roles:
+    - role: timezone
+      tags: timezone
+    - role: lemonade
+      tags: lemonade
