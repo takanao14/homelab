@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: open-webui
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://helm.openwebui.com/
+      chart: open-webui
+      targetRevision: 6.x
+      helm:
+        values: |
+          ollama:
+            enabled: false
+          openaiBaseApiUrl: http://gpuvm.home.butaco.net:13305/api/v1
+          persistence:
+            enabled: true
+            size: 2Gi
+          ingress:
+            enabled: false
+          httproute:
+            enabled: true
+            hostnames:
+              - open-webui.dev.butaco.net
+            parentRefs:
+              - name: shared-gateway
+                namespace: gateway-system
+                sectionName: https
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: open-webui
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
