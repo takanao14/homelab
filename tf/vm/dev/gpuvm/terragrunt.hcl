@@ -27,7 +27,7 @@ inputs = {
       ipv4gw  = local.common.locals.dev.net20.ipv4gw
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
-          size    = 200
+          size    = 400
           file_id = "local:iso/ubuntu-24.04-custom.img"
         })
       }
