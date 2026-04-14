@@ -4,5 +4,7 @@
   roles:
     - role: timezone
       tags: timezone
+    - role: rocm
+      tags: rocm
     - role: ollama
       tags: ollama

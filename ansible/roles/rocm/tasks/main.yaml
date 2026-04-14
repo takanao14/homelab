@@ -1,0 +1,55 @@
+---
+- name: Install prerequisites
+  become: true
+  ansible.builtin.apt:
+    name:
+      - wget
+      - python3-setuptools
+      - python3-wheel
+    state: present
+    update_cache: true
+
+- name: Download amdgpu-install package
+  become: true
+  ansible.builtin.get_url:
+    url: "https://repo.radeon.com/amdgpu-install/7.2.1/ubuntu/noble/amdgpu-install_7.2.1.70201-1_all.deb"
+    dest: /tmp/amdgpu-install.deb
+    mode: '0644'
+
+- name: Install amdgpu-install package
+  become: true
+  ansible.builtin.apt:
+    deb: /tmp/amdgpu-install.deb
+    state: present
+
+- name: Install HWE kernel
+  become: true
+  ansible.builtin.apt:
+    name: linux-generic-hwe-24.04
+    state: present
+
+- name: Install amdgpu-dkms and ROCm
+  become: true
+  ansible.builtin.apt:
+    name:
+      - amdgpu-dkms
+      - rocm
+    state: present
+    update_cache: true
+  async: 3600
+  poll: 30
+
+- name: Add user to render and video groups
+  become: true
+  ansible.builtin.user:
+    name: "{{ ansible_facts['env']['USER'] }}"
+    groups:
+      - render
+      - video
+    append: true
+
+- name: Reboot to apply HWE kernel and GPU driver
+  become: true
+  ansible.builtin.reboot:
+    reboot_timeout: 300
+  when: not ansible_check_mode
