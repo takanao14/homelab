@@ -1,4 +1,5 @@
 ---
+caddy_ip: "192.168.10.244"
 caddy_upstreams:
   - hostname: pdns1.home.butaco.net
     backend: 192.168.10.242:8081

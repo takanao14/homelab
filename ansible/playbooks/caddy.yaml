@@ -6,3 +6,52 @@
       tags: timezone
     - role: caddy
       tags: caddy
+
+- name: Sync caddy DNS records to homelab-private
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tags: sync_dns
+  vars_files:
+    - "{{ playbook_dir }}/../inventories/homelab/group_vars/caddy.yaml"
+  vars:
+    homelab_private_path: "{{ lookup('env', 'HOMELAB_PRIVATE_PATH') | default(lookup('env', 'HOME') + '/homelab-private', true) }}"
+    dnsconfig_path: "{{ homelab_private_path }}/dns-record/home-zone/dnsconfig.js"
+  tasks:
+    - name: Check if homelab-private repository exists
+      ansible.builtin.stat:
+        path: "{{ homelab_private_path }}"
+      register: homelab_private_stat
+
+    - name: Skip if homelab-private not found
+      ansible.builtin.debug:
+        msg: "homelab-private not found at {{ homelab_private_path }}, skipping DNS sync"
+      when: not homelab_private_stat.stat.exists
+
+    - name: Update caddy section in dnsconfig.js
+      ansible.builtin.blockinfile:
+        path: "{{ dnsconfig_path }}"
+        marker: "    // {mark} caddy"
+        block: |
+          {% for upstream in caddy_upstreams %}
+              A("{{ upstream.hostname.split('.')[0] }}", "{{ caddy_ip }}"),
+          {% endfor %}
+      when: homelab_private_stat.stat.exists
+
+    - name: Check if dnsconfig.js has changes
+      ansible.builtin.command:
+        cmd: git diff --quiet dns-record/home-zone/dnsconfig.js
+        chdir: "{{ homelab_private_path }}"
+      register: git_diff
+      changed_when: false
+      failed_when: false
+      when: homelab_private_stat.stat.exists
+
+    - name: Commit and push dnsconfig.js
+      ansible.builtin.shell: |
+        git add dns-record/home-zone/dnsconfig.js
+        git commit -m "sync: update caddy DNS records from ansible"
+        git push
+      args:
+        chdir: "{{ homelab_private_path }}"
+      when: homelab_private_stat.stat.exists and git_diff.rc != 0
