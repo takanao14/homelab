@@ -109,10 +109,22 @@
         href: {{ .Values.devArgo.url }}
         description: Continuous Delivery
 
+- Application:
+    - Open WebUI:
+        icon: open-webui.png
+        href: {{ .Values.openWebui.url }}
+        description: Local LLM WebUI
+
+    - Lemonade:
+        icon: mdi-chat
+        href: {{ .Values.lemonade.url }}
+        description: Local LLM Lemonade Client
+
+
 - Remote Management:
-    - meshcentral:
+    - MeshCentral:
         icon: si-intel-#0071C5
-        href: {{ .Values.meshcentral.url }}
+        href: {{ .Values.meshCentral.url }}
         description: MeshCentral AMT remote control
 
 - Network Element:
