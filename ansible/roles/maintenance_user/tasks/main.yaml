@@ -25,7 +25,7 @@
       become: true
       ansible.builtin.user:
         name: "{{ maintenance_user }}"
-        password: "{{ maintenance_password_hash | default(omit) }}"
+        password: "{{ maintenance_password_hash if (maintenance_password_hash | length > 0) else omit }}"
         shell: /bin/bash
         groups: sudo
         append: true
@@ -40,11 +40,17 @@
         mode: '0440'
         validate: /usr/sbin/visudo -cf %s
 
+    - name: Resolve SSH key from path
+      ansible.builtin.set_fact:
+        _maintenance_ssh_key_resolved: >-
+          {{ maintenance_ssh_key if (maintenance_ssh_key | length > 0)
+             else (lookup('file', maintenance_ssh_key_path | expanduser, errors='ignore') | default('')) }}
+
     - name: Add maintenance SSH authorized key
       become: true
       ansible.builtin.authorized_key:
         user: "{{ maintenance_user }}"
         state: present
-        key: "{{ maintenance_ssh_key | default(lookup('file', maintenance_ssh_key_path | expanduser)) }}"
-      when: (maintenance_ssh_key | length > 0) or (maintenance_ssh_key_path | length > 0)
+        key: "{{ _maintenance_ssh_key_resolved }}"
+      when: _maintenance_ssh_key_resolved | length > 0
   when: _maintenance_user_should_run
