@@ -18,8 +18,17 @@
     state: present
     update_cache: true
 
+- name: Add lemonade user to video group
+  become: true
+  ansible.builtin.user:
+    name: lemonade
+    groups:
+      - video
+    append: true
+
 - name: Install llamacpp:rocm backend
   become: true
+  become_user: lemonade
   ansible.builtin.command:
     cmd: lemonade backends install llamacpp:rocm
     creates: /var/lib/lemonade/.cache/lemonade/bin/llamacpp/rocm
