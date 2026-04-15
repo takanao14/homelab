@@ -1,0 +1,17 @@
+---
+# Defaults for maintenance_user role
+maintenance_user: >-
+  {{ lookup('env', 'MAINTENANCE_USER')
+     | default(vars.MAINTENANCE_USER | default('admin'), true) }}
+maintenance_password_hash: >-
+  {{ lookup('env', 'MAINTENANCE_PASSWORD_HASH')
+     | default(vars.MAINTENANCE_PASSWORD_HASH | default(''), true) }}
+maintenance_ssh_key_path: >-
+  {{ lookup('env', 'SSH_KEY_PATH')
+     | default(vars.SSH_KEY_PATH | default(''), true) }}
+maintenance_ssh_key: ""
+# If maintenance_ssh_key is not provided, it will look up maintenance_ssh_key_path
+# with expanduser filter.
+
+# Whether to force user creation even if not an LXC container
+maintenance_user_force: false

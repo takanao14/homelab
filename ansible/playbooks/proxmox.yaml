@@ -2,57 +2,17 @@
 - name: Create Proxmox maintenance user
   hosts: proxmox
   any_errors_fatal: true
-  vars:
-    target_user: "{{ MAINTENANCE_USER }}"
-    ssh_key_path: "{{ SSH_KEY_PATH | expanduser }}"
-    target_password_hash: "{{ MAINTENANCE_PASSWORD_HASH }}"
+
+  roles:
+    - role: maintenance_user
+      maintenance_user_force: true
+      tags: maintenance_user
 
   tasks:
-    - name: Validate required environment variables
-      ansible.builtin.assert:
-        that:
-          - target_user | length > 0
-          - ssh_key_path | length > 0
-          - target_password_hash | length > 0
-        fail_msg: "Required environment variables (MAINTENANCE_USER, etc.) are missing. Check your .envrc.prd.dev."
-
-    - name: Ensure sudo is installed
-      become: true
-      ansible.builtin.apt:
-        name: sudo
-        state: present
-        update_cache: true
-        cache_valid_time: 3600
-
-    - name: Ensure the user exists
-      become: true
-      ansible.builtin.user:
-        name: "{{ target_user }}"
-        password: "{{ target_password_hash }}"
-        shell: /bin/bash
-        groups: sudo
-        append: true
-        create_home: true
-
-    - name: Ensure the user has passwordless sudo
-      become: true
-      ansible.builtin.copy:
-        dest: "/etc/sudoers.d/{{ target_user }}"
-        content: "{{ target_user }} ALL=(ALL) NOPASSWD: ALL"
-        mode: '0440'
-        validate: /usr/sbin/visudo -cf %s
-
-    - name: Set authorized key for the user
-      become: true
-      ansible.builtin.authorized_key:
-        user: "{{ target_user }}"
-        state: present
-        key: "{{ lookup('file', ssh_key_path) }}"
-
     # Set access permissions for Proxmox GUI (Web UI)
     - name: Check if user exists in Proxmox
       become: true
-      ansible.builtin.shell: "pveum user list | grep -q '{{ target_user }}@pam'"
+      ansible.builtin.shell: "pveum user list | grep -q '{{ maintenance_user }}@pam'"
       register: pve_user_exists
       check_mode: false
       changed_when: false
@@ -60,12 +20,12 @@
 
     - name: Add user to Proxmox VE
       become: true
-      ansible.builtin.command: "pveum user add '{{ target_user }}@pam' --comment 'Managed by Ansible'"
+      ansible.builtin.command: "pveum user add '{{ maintenance_user }}@pam' --comment 'Managed by Ansible'"
       when: pve_user_exists.rc != 0
 
     - name: Check Administrator role
       become: true
-      ansible.builtin.shell: "pveum user permissions '{{ target_user }}@pam' | grep -q 'Administrator'"
+      ansible.builtin.shell: "pveum user permissions '{{ maintenance_user }}@pam' | grep -q 'Administrator'"
       register: pve_user_perm
       check_mode: false
       changed_when: false
@@ -73,5 +33,5 @@
 
     - name: Grant Administrator role to user
       become: true
-      ansible.builtin.command: "pveum acl modify / -user '{{ target_user }}@pam' -role Administrator"
+      ansible.builtin.command: "pveum acl modify / -user '{{ maintenance_user }}@pam' -role Administrator"
       when: pve_user_perm.rc != 0
