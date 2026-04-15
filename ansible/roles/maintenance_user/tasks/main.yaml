@@ -1,7 +1,7 @@
 ---
 - name: Determine if maintenance user should be created
   ansible.builtin.set_fact:
-    _maintenance_user_should_run: "{{ ansible_virtualization_type == 'lxc' or maintenance_user_force | bool }}"
+    _maintenance_user_should_run: "{{ ansible_facts['virtualization_type'] == 'lxc' or maintenance_user_force | bool }}"
 
 - name: Setup maintenance user
   block:
@@ -19,7 +19,7 @@
         state: present
         update_cache: true
         cache_valid_time: 3600
-      when: ansible_os_family == "Debian"
+      when: ansible_facts['os_family'] == "Debian"
 
     - name: Create the maintenance user
       become: true
