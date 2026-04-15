@@ -1,0 +1,7 @@
+---
+- name: Create maintenance user on LXC containers
+  hosts: lxc
+  any_errors_fatal: false
+  roles:
+    - role: maintenance_user
+      tags: maintenance_user

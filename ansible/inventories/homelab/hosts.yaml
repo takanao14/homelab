@@ -64,6 +64,15 @@ all:
             hosts:
                 rpi4: null
 
+        lxc:
+            hosts:
+                caddy01: null
+                primary01: null
+                syslog01: null
+                forgejo01: null
+                forgejo-runner01: null
+                netbox01: null
+
         proxmox:
             hosts:
                 pve: null
