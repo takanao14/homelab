@@ -28,7 +28,6 @@
     name:
       - linux-generic-hwe-24.04
       - linux-headers-generic-hwe-24.04
-      - linux-modules-extra-generic-hwe-24.04
     state: present
 
 - name: Reboot to apply HWE kernel
@@ -44,8 +43,8 @@
   become: true
   ansible.builtin.apt:
     name:
-      - "linux-headers-{{ ansible_kernel }}"
-      - "linux-modules-extra-{{ ansible_kernel }}"
+      - "linux-headers-{{ ansible_facts['kernel'] }}"
+      - "linux-modules-extra-{{ ansible_facts['kernel'] }}"
     state: present
     update_cache: true
 
