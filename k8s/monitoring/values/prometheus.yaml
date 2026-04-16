@@ -21,6 +21,12 @@ kube-prometheus-stack:
 
   grafana:
     defaultDashboardsTimezone: jst
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        labelValue: "1"
+        searchNamespace: ALL
     additionalDataSources:
       - name: Loki
         type: loki
