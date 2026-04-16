@@ -1,90 +1,98 @@
 all:
-    hosts:
-        caddy01:
-            ansible_host: 192.168.10.244
-        primary01:
-            ansible_host: 192.168.10.242
-        secondary01:
-            ansible_host: 192.168.10.241
-        syslog01:
-            ansible_host: 192.168.10.243
-        forgejo01:
-            ansible_host: 192.168.10.245
-        forgejo-runner01:
-            ansible_host: 192.168.10.246
-        netbox01:
-            ansible_host: 192.168.10.247
-        gpuvm01:
-            ansible_host: 192.168.20.22
-        pve:
-            ansible_host: 192.168.10.10
-        node1:
-            ansible_host: 192.168.10.11
-        node2:
-            ansible_host: 192.168.10.12
-        rpi3:
-            ansible_host: 192.168.10.240
-        rpi4:
-            ansible_host: 192.168.10.241
-    children:
-        dns_servers:
-            children:
-                dns_primary:
-                    hosts:
-                        primary01: null
-                dns_secondary:
-                    hosts:
-                        secondary01: null
+  hosts:
+    caddy01:
+      ansible_host: 192.168.10.244
+    primary01:
+      ansible_host: 192.168.10.242
+    secondary01:
+      ansible_host: 192.168.10.241
+    syslog01:
+      ansible_host: 192.168.10.243
+    forgejo01:
+      ansible_host: 192.168.10.245
+    forgejo-runner01:
+      ansible_host: 192.168.10.246
+    netbox01:
+      ansible_host: 192.168.10.247
+    gpuvm01:
+      ansible_host: 192.168.20.22
+    pve:
+      ansible_host: 192.168.10.10
+    node1:
+      ansible_host: 192.168.10.11
+    node2:
+      ansible_host: 192.168.10.12
+    rpi3:
+      ansible_host: 192.168.10.240
+    rpi4:
+      ansible_host: 192.168.10.241
+    dev-cp1:
+      ansible_host: 192.168.20.11
+    dev-worker1:
+      ansible_host: 192.168.20.12
+    prd-cp1:
+      ansible_host: 192.168.30.11
+    prd-worker1:
+      ansible_host: 192.168.30.12
+  children:
+    dns_servers:
+      children:
+        dns_primary:
+          hosts:
+            primary01: null
+        dns_secondary:
+          hosts:
+            secondary01: null
 
-        syslog:
-            hosts:
-                syslog01: null
+    syslog:
+      hosts:
+        syslog01: null
 
-        forgejo:
-            hosts:
-                forgejo01: null
+    forgejo:
+      hosts:
+        forgejo01: null
 
-        forgejo_runner:
-            hosts:
-                forgejo-runner01: null
+    forgejo_runner:
+      hosts:
+        forgejo-runner01: null
 
-        netbox:
-            hosts:
-                netbox01: null
+    netbox:
+      hosts:
+        netbox01: null
 
-        ollama:
-            hosts:
-                gpuvm01: null
+    ollama:
+      hosts:
+        gpuvm01: null
 
-        caddy:
-            hosts:
-                caddy01: null
+    caddy:
+      hosts:
+        caddy01: null
 
-        dhcp:
-            hosts:
-                rpi4: null
+    dhcp:
+      hosts:
+        rpi4: null
 
-        lxc:
-            hosts:
-                caddy01: null
-                primary01: null
-                syslog01: null
-                forgejo01: null
-                netbox01: null
+    lxc:
+      hosts:
+        caddy01: null
+        primary01: null
+        syslog01: null
+        forgejo01: null
+        netbox01: null
 
-        proxmox:
-            hosts:
-                pve: null
-                node1: null
-                node2: null
+    proxmox:
+      hosts:
+        pve: null
+        node1: null
+        node2: null
 
-        node_exporter:
-            children:
-                node_exporter_rpi:
-                    hosts:
-                        rpi3: null
-                        rpi4: null
-            hosts:
-                pve: null
-                node1: null
-                node2: null
+    node_exporter:
+      children:
+        node_exporter_rpi:
+          hosts:
+            rpi3: null
+            rpi4: null
+      hosts:
+        pve: null
+        node1: null
+        node2: null
