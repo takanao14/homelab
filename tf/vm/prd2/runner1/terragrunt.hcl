@@ -21,6 +21,7 @@ inputs = {
     "runner1" = merge(local.base_vars, {
       cores   = 2
       memory  = 4096
+      balloon = false
       bridge  = local.common.locals.prd2.net10.bridge
       ipv4    = "192.168.10.246/24"
       ipv4gw  = local.common.locals.prd2.net10.ipv4gw

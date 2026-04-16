@@ -21,6 +21,7 @@ inputs = {
     "vpngw" = merge(local.base_vars, {
       cores   = 2
       memory  = 1024
+      balloon = false
       bridge  = "vmbr0"
       ipv4    = "192.168.10.3/24"
       ipv4gw  = "192.168.10.1"
