@@ -10,7 +10,7 @@ locals {
   env = read_terragrunt_config("${get_terragrunt_dir()}/env.hcl")
   common = read_terragrunt_config(find_in_parent_folders("common.hcl"))
 
-  base_vars = merge(local.env.locals.common_vars, {
+  base_vars = merge(local.env.locals.vm_defaults, {
     dns_servers = local.common.locals.dns_internal
     dns_domain  = local.common.locals.dns_domain
   })
@@ -23,7 +23,7 @@ inputs = {
       memory = 4096
       ipv4   = "192.168.20.11/24"
       disks = {
-        scsi0 = merge(local.env.locals.common_disk_settings, {
+        scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 40
           file_id = local.env.locals.os_image
         })
@@ -34,11 +34,11 @@ inputs = {
       memory = 8192
       ipv4   = "192.168.20.12/24"
       disks = {
-        scsi0 = merge(local.env.locals.common_disk_settings, {
+        scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 64
           file_id = local.env.locals.os_image
         })
-        scsi1 = merge(local.env.locals.common_disk_settings, {
+        scsi1 = merge(local.env.locals.disk_defaults, {
           size = 100
         })
       }

@@ -1,5 +1,5 @@
 locals {
-  common_vars = {
+  vm_defaults = {
     node_name        = "node1"
     config_datastore = "data-nvme"
     username         = get_env("TF_VM_USERNAME")
@@ -10,7 +10,7 @@ locals {
     on_boot          = true
     os_type          = "l26"
   }
-  common_disk_settings = {
+  disk_defaults = {
     datastore_id = "data-nvme"
     cache        = "writeback"
     ssd          = true

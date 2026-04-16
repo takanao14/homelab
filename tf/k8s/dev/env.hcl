@@ -1,5 +1,5 @@
 locals {
-  common_vars = {
+  vm_defaults = {
     node_name        = "pve"
     config_datastore = "local-zfs"
     username         = get_env("TF_VM_USERNAME")
@@ -10,7 +10,7 @@ locals {
     on_boot          = false
     os_type          = "l26"
   }
-  common_disk_settings = {
+  disk_defaults = {
     datastore_id = "local-zfs"
     cache        = "writeback"
     ssd          = true
