@@ -1,0 +1,5 @@
+---
+- name: Configure apt mirror for Ubuntu hosts
+  hosts: all
+  roles:
+    - apt_mirror
