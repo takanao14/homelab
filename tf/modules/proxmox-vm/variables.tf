@@ -24,7 +24,7 @@ variable "vms" {
       ssd          = optional(bool)
       discard      = optional(string)
     }))
-    balloon = optional(bool, true)
+    balloon = optional(bool, false)
     pci_devices = optional(map(object({
       id      = optional(string)
       mapping = optional(string)
