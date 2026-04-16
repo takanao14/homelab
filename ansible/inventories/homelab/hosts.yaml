@@ -21,7 +21,7 @@ all:
         node1:
             ansible_host: 192.168.10.11
         node2:
-            ansible_host: 192.168.10.13
+            ansible_host: 192.168.10.12
         rpi3:
             ansible_host: 192.168.10.240
         rpi4:
