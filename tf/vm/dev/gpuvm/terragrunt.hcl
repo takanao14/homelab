@@ -21,7 +21,6 @@ inputs = {
     "gpuvm" = merge(local.base_vars, {
       cores   = 8
       memory  = 32768
-      balloon = false
       bridge  = local.common.locals.dev.net20.bridge
       ipv4    = "192.168.20.22/24"
       ipv4gw  = local.common.locals.dev.net20.ipv4gw
