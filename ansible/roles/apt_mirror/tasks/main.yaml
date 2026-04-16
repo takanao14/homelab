@@ -2,24 +2,34 @@
 # Ubuntu のみ対象
 - name: Skip non-Ubuntu systems
   ansible.builtin.meta: end_host
-  when: ansible_distribution != "Ubuntu"
+  when: ansible_facts["distribution"] != "Ubuntu"
 
-# Ubuntu 24.04+ は DEB822 形式 (/etc/apt/sources.list.d/ubuntu.sources)
-- name: Replace mirror in DEB822 sources (Ubuntu 24.04+)
+- name: Check DEB822 sources file existence
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list.d/ubuntu.sources
+  register: deb822_sources
+
+- name: Check sources.list existence
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list
+  register: legacy_sources
+
+# DEB822 形式 (/etc/apt/sources.list.d/ubuntu.sources) が存在する場合
+- name: Replace mirror in DEB822 sources
   become: true
   ansible.builtin.replace:
     path: /etc/apt/sources.list.d/ubuntu.sources
     regexp: 'http://archive\.ubuntu\.com/ubuntu'
     replace: "{{ apt_mirror_url }}"
-  when: ansible_distribution_major_version | int >= 24
+  when: deb822_sources.stat.exists
   notify: Update apt cache
 
-# Ubuntu 22.04 以前は /etc/apt/sources.list
-- name: Replace mirror in sources.list (Ubuntu 22.04 and earlier)
+# 旧形式 (/etc/apt/sources.list) が存在する場合 (security エントリは除外)
+- name: Replace mirror in sources.list
   become: true
   ansible.builtin.replace:
     path: /etc/apt/sources.list
-    regexp: 'http://archive\.ubuntu\.com/ubuntu'
+    regexp: 'http://archive\.ubuntu\.com/ubuntu(?=[ \t]+(?![\w.-]*security))'
     replace: "{{ apt_mirror_url }}"
-  when: ansible_distribution_major_version | int < 24
+  when: legacy_sources.stat.exists
   notify: Update apt cache

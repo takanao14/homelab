@@ -1,3 +1,2 @@
 ---
-apt_mirror_url: "http://ftp.jaist.ac.jp/pub/Linux/ubuntu"
-apt_security_mirror_url: "http://security.ubuntu.com/ubuntu"
+apt_mirror_url: "http://ftp.udx.icscoe.jp/Linux/ubuntu"
