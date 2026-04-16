@@ -22,11 +22,32 @@
     deb: /tmp/amdgpu-install.deb
     state: present
 
-- name: Install HWE kernel
+- name: Install HWE kernel and headers
   become: true
   ansible.builtin.apt:
-    name: linux-generic-hwe-24.04
+    name:
+      - linux-generic-hwe-24.04
+      - linux-headers-generic-hwe-24.04
+      - linux-modules-extra-generic-hwe-24.04
     state: present
+
+- name: Reboot to apply HWE kernel
+  become: true
+  ansible.builtin.reboot:
+    reboot_timeout: 300
+  when: not ansible_check_mode
+
+- name: Gather facts after reboot
+  ansible.builtin.setup:
+
+- name: Install kernel headers for running kernel
+  become: true
+  ansible.builtin.apt:
+    name:
+      - "linux-headers-{{ ansible_kernel }}"
+      - "linux-modules-extra-{{ ansible_kernel }}"
+    state: present
+    update_cache: true
 
 - name: Install amdgpu-dkms and ROCm
   become: true
@@ -48,7 +69,24 @@
       - video
     append: true
 
-- name: Reboot to apply HWE kernel and GPU driver
+- name: Configure ROCm library path
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/ld.so.conf.d/rocm.conf
+    content: |
+      /opt/rocm/lib
+      /opt/rocm/lib64
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Update ldconfig
+  become: true
+  ansible.builtin.command:
+    cmd: ldconfig
+  changed_when: false
+
+- name: Reboot to apply GPU driver
   become: true
   ansible.builtin.reboot:
     reboot_timeout: 300
