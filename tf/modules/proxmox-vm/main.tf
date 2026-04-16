@@ -70,8 +70,8 @@ resource "proxmox_virtual_environment_vm" "vm" {
 
   lifecycle {
     ignore_changes = [
-      disk,        # file_id is cleared by Proxmox after VM creation
-      initialization, # cloud-init only applies on first boot
+      disk[0].file_id, # file_id is cleared by Proxmox after VM creation
+      initialization,  # cloud-init only applies on first boot
     ]
   }
 
