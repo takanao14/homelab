@@ -117,13 +117,13 @@ Deploys PowerDNS Authoritative Server and dnsdist.
 Deploys Kea DHCPv4 server.
 - **Role:** `kea`
 - **Hosts:** `dhcp`
-- **Config:** `group_vars/dhcp.yaml` (`kea_subnet4` でサブネット・プール・予約を定義)
+- **Config:** `group_vars/dhcp.yaml` (define subnets, pools, and reservations via `kea_subnet4`)
 
 ### Syslog (`playbooks/syslog.yaml`)
-Deploys Vector as a syslog aggregator (UDP 514), parses RFC 3164/5424 および非標準フォーマット、Lokiへ転送。
+Deploys Vector as a syslog aggregator (UDP 514), parses RFC 3164/5424 and non-standard formats, and forwards to Loki.
 - **Role:** `vector`
 - **Hosts:** `syslog`
-- **Config:** `group_vars/syslog.yaml` (`vector_config` でsource/transform/sinkを定義)
+- **Config:** `group_vars/syslog.yaml` (define sources, transforms, and sinks via `vector_config`)
 
 ### Node Exporter (`playbooks/node_exporter.yaml`)
 Installs `prometheus-node-exporter` for metrics collection.
