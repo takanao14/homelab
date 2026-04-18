@@ -1,5 +1,0 @@
-apiVersion: v2
-name: ollama-external
-description: ServiceMonitor and Endpoints for external Ollama instance
-type: application
-version: 0.1.0
