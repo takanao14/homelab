@@ -1,0 +1,12 @@
+services:
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - PROMETHEUS_URL=${PROMETHEUS_URL}
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning
+      - ./generated:/var/lib/grafana/dashboards
