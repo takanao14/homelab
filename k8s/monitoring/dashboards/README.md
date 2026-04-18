@@ -17,16 +17,23 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 
 ```
 .
-├── cmd/generate/main.go          # Dashboard definitions (Go)
-├── generated/                    # Generated JSON output (git-ignored)
-├── provisioning/                 # Local Grafana provisioning config
-│   ├── datasources/              # Prometheus datasource
-│   └── dashboards/               # Dashboard file provider
-├── docker-compose.yml            # Local development Grafana
+├── cmd/generate/               # Dashboard definitions (Go)
+│   ├── main.go                 # Entrypoint and common functions
+│   ├── node.go                 # node-overview dashboard definition
+│   ├── proxmox.go              # proxmox-overview dashboard definition
+│   ├── gpu.go                  # gpu-overview dashboard definition
+│   ├── dns.go                  # dns-overview dashboard definition
+│   ├── network.go              # network-overview dashboard definition
+│   └── uptime.go               # uptime dashboard definition
+├── generated/                  # Generated JSON output (git-ignored)
+├── provisioning/               # Local Grafana provisioning config
+│   ├── datasources/            # Prometheus datasource
+│   └── dashboards/             # Dashboard file provider
+├── docker-compose.yml          # Local development Grafana
 └── Makefile
 ```
 
-To add a new dashboard, add an entry to the `dashboards` map in `cmd/generate/main.go`.
+To add a new dashboard, create a new `.go` file in `cmd/generate/` (e.g., `new_dashboard.go`) and add an entry to the `dashboards` map in `cmd/generate/main.go`.
 The Helm template auto-discovers all JSON files in `charts/prometheus/dashboards/`, so no template changes are needed.
 
 ## Development
@@ -48,7 +55,7 @@ make dev
 
 Opens at http://localhost:3000. Dashboards and the Prometheus datasource are provisioned automatically.
 
-Edit `cmd/generate/main.go`, then re-run `make dev` to reload.
+Edit `.go` files in `cmd/generate/`, then re-run `make dev` to reload.
 
 ### Stop
 
@@ -61,7 +68,7 @@ make dev-stop
 `make deploy` generates JSON and copies it to `charts/prometheus/dashboards/`. Commit the diff and ArgoCD will sync the updated ConfigMaps to the cluster.
 
 ```
-Edit cmd/generate/main.go
+Edit .go files in cmd/generate/
   → make deploy  (generate JSON + copy to Helm chart)
   → git commit & push
   → ArgoCD syncs ConfigMaps
