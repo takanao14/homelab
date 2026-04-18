@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: pdns-auth-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  staticConfigs:
+    - targets:
+        {{- range .Values.targetIPs }}
+        - "{{ . }}:{{ $.Values.port }}"
+        {{- end }}
+  metricsPath: {{ .Values.metricsPath }}
+  scrapeInterval: 30s
