@@ -1,0 +1,4 @@
+port: 5000
+metricsPath: /metrics
+
+targetIP: "192.168.20.22"

@@ -90,3 +90,31 @@
   ansible.builtin.reboot:
     reboot_timeout: 300
   when: not ansible_check_mode
+
+- name: Add device-metrics-exporter apt repository
+  become: true
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/device-metrics-exporter/apt/1.4.0 noble main"
+    filename: device-metrics-exporter
+    state: present
+
+- name: Install amdgpu-exporter
+  become: true
+  ansible.builtin.apt:
+    name: amdgpu-exporter
+    state: present
+    update_cache: true
+
+- name: Enable and start gpuagent
+  become: true
+  ansible.builtin.service:
+    name: gpuagent
+    state: started
+    enabled: true
+
+- name: Enable and start amd-metrics-exporter
+  become: true
+  ansible.builtin.service:
+    name: amd-metrics-exporter
+    state: started
+    enabled: true

@@ -1,0 +1,5 @@
+apiVersion: v2
+name: amd-gpu-external
+description: ServiceMonitor and Endpoints for external AMD GPU metrics exporter
+type: application
+version: 0.1.0

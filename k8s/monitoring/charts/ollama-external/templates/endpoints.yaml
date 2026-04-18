@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: external-ollama
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: external-ollama
+    release: prometheus
+subsets:
+  - addresses:
+      - ip: {{ .Values.targetIP | quote }}
+    ports:
+      - name: metrics
+        port: {{ .Values.port }}
+        protocol: TCP

@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: external-ollama-monitor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: external-ollama
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: {{ .Values.metricsPath }}

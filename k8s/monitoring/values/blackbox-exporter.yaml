@@ -58,6 +58,7 @@ prometheus-blackbox-exporter:
               - "192.168.10.254"
               - "192.168.110.11"
               - "192.168.110.12"
+              - "192.168.20.22"
     - apiVersion: monitoring.coreos.com/v1
       kind: Probe
       metadata:

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-amd-gpu
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: external-amd-gpu
+    release: prometheus
+spec:
+  clusterIP: None
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: {{ .Values.port }}
+      targetPort: {{ .Values.port }}
