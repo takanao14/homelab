@@ -15,7 +15,7 @@ spec:
       name: helm-secrets
       env:
         - name: HELM_VALUES
-          value: "../../values/prometheus.yaml,secrets://../../secrets.enc.yaml"
+          value: "../../values/prometheus.yaml,../../values/rules.yaml,secrets://../../secrets.enc.yaml"
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
