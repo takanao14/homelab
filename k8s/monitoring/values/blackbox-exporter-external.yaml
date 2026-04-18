@@ -1,8 +1,8 @@
-# rpi4 上で稼働する外部 blackbox_exporter のエンドポイント
+# External blackbox_exporter endpoint running on rpi4
 blackboxExporterURL: "192.168.10.241:9115"
 scrapeInterval: 60s
 
-# ICMP プローブ対象 (ネットワーク機器 + 各ホスト)
+# ICMP probe targets (network devices + hosts)
 icmp:
   targets:
     - ip: "192.168.10.1"
@@ -32,7 +32,7 @@ icmp:
     - ip: "192.168.20.22"
       name: "gpuvm"
 
-# DNS 外部解決プローブ (google.com を各 DNS サーバーに問い合わせ)
+# DNS external resolution probe (query google.com against each DNS server)
 dnsExternal:
   targets:
     - ip: "192.168.10.241"
@@ -40,7 +40,7 @@ dnsExternal:
     - ip: "192.168.10.242"
       name: "ns1"
 
-# DNS 内部解決プローブ (ns1.home.butaco.net を各 DNS サーバーに問い合わせ)
+# DNS internal resolution probe (query ns1.home.butaco.net against each DNS server)
 dnsInternal:
   targets:
     - ip: "192.168.10.241"
