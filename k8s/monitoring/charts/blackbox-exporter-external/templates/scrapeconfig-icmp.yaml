@@ -10,16 +10,17 @@ spec:
   params:
     module: [icmp]
   staticConfigs:
-    - targets:
-        {{- range .Values.icmp.targets }}
-        - {{ . | quote }}
-        {{- end }}
+    {{- range .Values.icmp.targets }}
+    - targets: [{{ .ip | quote }}]
+      labels:
+        name: {{ .name | quote }}
+    {{- end }}
   relabelings:
     # 監視対象 IP を __param_target にセット
     - sourceLabels: [__address__]
       targetLabel: __param_target
-    # instance ラベルを監視対象 IP に設定
-    - sourceLabels: [__param_target]
+    # instance ラベルをホスト名に設定
+    - sourceLabels: [name]
       targetLabel: instance
     # スクレイプ先を rpi4 の blackbox_exporter に向ける
     - targetLabel: __address__

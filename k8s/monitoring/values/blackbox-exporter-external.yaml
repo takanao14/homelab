@@ -5,28 +5,45 @@ scrapeInterval: 60s
 # ICMP プローブ対象 (ネットワーク機器 + 各ホスト)
 icmp:
   targets:
-    - "192.168.10.1"    # router
-    - "192.168.10.2"    # AP
-    - "192.168.10.10"   # prd1 (node1)
-    - "192.168.10.11"   # prd2 (node2)
-    - "192.168.10.12"   # prd3 (node3)
-    - "192.168.10.240"  # rpi4
-    - "192.168.10.241"  # ns1 / dnsdist
-    - "192.168.10.242"  # ns2 / pdns-auth
-    - "192.168.10.253"  # NAS
-    - "192.168.10.254"  # switch
-    - "192.168.110.11"  # gpu-vm
-    - "192.168.110.12"  # k0s-worker1
-    - "192.168.20.22"   # IoT device
+    - ip: "192.168.10.1"
+      name: "router"
+    - ip: "192.168.10.2"
+      name: "ap"
+    - ip: "192.168.10.10"
+      name: "prd1"
+    - ip: "192.168.10.11"
+      name: "prd2"
+    - ip: "192.168.10.12"
+      name: "prd3"
+    - ip: "192.168.10.240"
+      name: "rpi4"
+    - ip: "192.168.10.241"
+      name: "ns1"
+    - ip: "192.168.10.242"
+      name: "ns2"
+    - ip: "192.168.10.253"
+      name: "nas"
+    - ip: "192.168.10.254"
+      name: "switch"
+    - ip: "192.168.110.11"
+      name: "gpu-vm"
+    - ip: "192.168.110.12"
+      name: "k0s-worker1"
+    - ip: "192.168.20.22"
+      name: "iot-device"
 
 # DNS 外部解決プローブ (google.com を各 DNS サーバーに問い合わせ)
 dnsExternal:
   targets:
-    - "192.168.10.241"  # dnsdist
-    - "192.168.10.242"  # pdns-auth
+    - ip: "192.168.10.241"
+      name: "ns1"
+    - ip: "192.168.10.242"
+      name: "ns2"
 
 # DNS 内部解決プローブ (ns1.home.butaco.net を各 DNS サーバーに問い合わせ)
 dnsInternal:
   targets:
-    - "192.168.10.241"  # dnsdist
-    - "192.168.10.242"  # pdns-auth
+    - ip: "192.168.10.241"
+      name: "ns1"
+    - ip: "192.168.10.242"
+      name: "ns2"

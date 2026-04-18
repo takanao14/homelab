@@ -10,14 +10,15 @@ spec:
   params:
     module: [dns_external]
   staticConfigs:
-    - targets:
-        {{- range .Values.dnsExternal.targets }}
-        - {{ . | quote }}
-        {{- end }}
+    {{- range .Values.dnsExternal.targets }}
+    - targets: [{{ .ip | quote }}]
+      labels:
+        name: {{ .name | quote }}
+    {{- end }}
   relabelings:
     - sourceLabels: [__address__]
       targetLabel: __param_target
-    - sourceLabels: [__param_target]
+    - sourceLabels: [name]
       targetLabel: instance
     - targetLabel: __address__
       replacement: {{ .Values.blackboxExporterURL | quote }}
