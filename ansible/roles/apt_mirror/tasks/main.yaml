@@ -1,5 +1,5 @@
 ---
-# Ubuntu のみ対象
+# Ubuntu only
 - name: Skip non-Ubuntu systems
   ansible.builtin.meta: end_host
   when: ansible_facts["distribution"] != "Ubuntu"
@@ -14,7 +14,7 @@
     path: /etc/apt/sources.list
   register: legacy_sources
 
-# DEB822 形式 (/etc/apt/sources.list.d/ubuntu.sources) が存在する場合
+# When DEB822 format (/etc/apt/sources.list.d/ubuntu.sources) exists
 - name: Replace mirror in DEB822 sources
   become: true
   ansible.builtin.replace:
@@ -24,7 +24,7 @@
   when: deb822_sources.stat.exists
   notify: Update apt cache
 
-# 旧形式 (/etc/apt/sources.list) が存在する場合 (security エントリは除外)
+# When legacy format (/etc/apt/sources.list) exists (security entries excluded)
 - name: Replace mirror in sources.list
   become: true
   ansible.builtin.replace:
