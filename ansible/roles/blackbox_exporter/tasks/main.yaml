@@ -4,7 +4,7 @@
   ansible.builtin.apt:
     name:
       - prometheus-blackbox-exporter
-      - libcap2-bin  # setcap コマンドに必要
+      - libcap2-bin  # required for setcap command
     state: present
     update_cache: true
 
@@ -18,8 +18,8 @@
     mode: '0644'
   notify: restart blackbox_exporter
 
-# ICMP に CAP_NET_RAW が必要。
-# AmbientCapabilities より setcap の方が確実に動作するため採用。
+# CAP_NET_RAW is required for ICMP.
+# setcap is used instead of AmbientCapabilities as it works more reliably.
 - name: Grant CAP_NET_RAW to blackbox_exporter binary (for ICMP)
   become: true
   community.general.capabilities:
