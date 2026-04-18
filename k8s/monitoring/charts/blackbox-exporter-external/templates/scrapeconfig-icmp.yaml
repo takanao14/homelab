@@ -16,13 +16,13 @@ spec:
         name: {{ .name | quote }}
     {{- end }}
   relabelings:
-    # 監視対象 IP を __param_target にセット
+    # Set target IP as __param_target
     - sourceLabels: [__address__]
       targetLabel: __param_target
-    # instance ラベルをホスト名に設定
+    # Set instance label to hostname
     - sourceLabels: [name]
       targetLabel: instance
-    # スクレイプ先を rpi4 の blackbox_exporter に向ける
+    # Point scrape target to blackbox_exporter on rpi4
     - targetLabel: __address__
       replacement: {{ .Values.blackboxExporterURL | quote }}
   scrapeInterval: {{ .Values.scrapeInterval }}
