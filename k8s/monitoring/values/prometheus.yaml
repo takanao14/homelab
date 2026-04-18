@@ -2,8 +2,20 @@ kube-prometheus-stack:
   prometheus:
     prometheusSpec:
       serviceMonitorSelectorNilUsesHelmValues: false
-      serviceMonitorSelector: {}
+      serviceMonitorSelector:
+        matchLabels:
+          release: prometheus
       serviceMonitorNamespaceSelector: {}
+      ruleSelectorNilUsesHelmValues: false
+      ruleSelector:
+        matchLabels:
+          release: prometheus
+      ruleSelectorNamespaceSelector: {}
+      scrapeConfigSelectorNilUsesHelmValues: false
+      scrapeConfigSelector:
+        matchLabels:
+          release: prometheus
+      scrapeConfigNamespaceSelector: {}
       retention: 30d
       resourceSpec:
         requests:

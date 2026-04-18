@@ -3,6 +3,8 @@ kube-prometheus-stack:
     prometheusSpec:
       additionalPrometheusRulesMap:
         hardware-alerts:
+          labels:
+            release: prometheus
           groups:
             - name: hardware-temp.rules
               rules:
