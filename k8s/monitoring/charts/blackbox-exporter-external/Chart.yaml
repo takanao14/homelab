@@ -1,0 +1,5 @@
+apiVersion: v2
+name: blackbox-exporter-external
+description: ScrapeConfigs for external blackbox_exporter on rpi4
+type: application
+version: 0.1.0

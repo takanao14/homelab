@@ -1,0 +1,35 @@
+---
+- name: Install prometheus-blackbox-exporter
+  become: true
+  ansible.builtin.apt:
+    name:
+      - prometheus-blackbox-exporter
+      - libcap2-bin  # setcap コマンドに必要
+    state: present
+    update_cache: true
+
+- name: Deploy blackbox_exporter config
+  become: true
+  ansible.builtin.template:
+    src: blackbox.yml.j2
+    dest: "{{ blackbox_exporter_config_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart blackbox_exporter
+
+# ICMP に CAP_NET_RAW が必要。
+# AmbientCapabilities より setcap の方が確実に動作するため採用。
+- name: Grant CAP_NET_RAW to blackbox_exporter binary (for ICMP)
+  become: true
+  community.general.capabilities:
+    path: /usr/bin/prometheus-blackbox-exporter
+    capability: cap_net_raw+ep
+    state: present
+
+- name: Ensure prometheus-blackbox-exporter is started and enabled
+  become: true
+  ansible.builtin.service:
+    name: prometheus-blackbox-exporter
+    state: started
+    enabled: true

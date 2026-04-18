@@ -97,3 +97,7 @@ all:
         node1: null
         node2: null
         gpuvm01: null
+
+    blackbox_exporter:
+      hosts:
+        rpi4: null

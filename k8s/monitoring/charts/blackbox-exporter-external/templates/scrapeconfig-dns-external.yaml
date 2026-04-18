@@ -1,0 +1,24 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: dns-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  metricsPath: /probe
+  params:
+    module: [dns_external]
+  staticConfigs:
+    - targets:
+        {{- range .Values.dnsExternal.targets }}
+        - {{ . | quote }}
+        {{- end }}
+  relabelings:
+    - sourceLabels: [__address__]
+      targetLabel: __param_target
+    - sourceLabels: [__param_target]
+      targetLabel: instance
+    - targetLabel: __address__
+      replacement: {{ .Values.blackboxExporterURL | quote }}
+  scrapeInterval: {{ .Values.scrapeInterval }}

@@ -1,0 +1,32 @@
+# rpi4 上で稼働する外部 blackbox_exporter のエンドポイント
+blackboxExporterURL: "192.168.10.241:9115"
+scrapeInterval: 60s
+
+# ICMP プローブ対象 (ネットワーク機器 + 各ホスト)
+icmp:
+  targets:
+    - "192.168.10.1"    # router
+    - "192.168.10.2"    # AP
+    - "192.168.10.10"   # prd1 (node1)
+    - "192.168.10.11"   # prd2 (node2)
+    - "192.168.10.12"   # prd3 (node3)
+    - "192.168.10.240"  # rpi4
+    - "192.168.10.241"  # ns1 / dnsdist
+    - "192.168.10.242"  # ns2 / pdns-auth
+    - "192.168.10.253"  # NAS
+    - "192.168.10.254"  # switch
+    - "192.168.110.11"  # gpu-vm
+    - "192.168.110.12"  # k0s-worker1
+    - "192.168.20.22"   # IoT device
+
+# DNS 外部解決プローブ (google.com を各 DNS サーバーに問い合わせ)
+dnsExternal:
+  targets:
+    - "192.168.10.241"  # dnsdist
+    - "192.168.10.242"  # pdns-auth
+
+# DNS 内部解決プローブ (ns1.home.butaco.net を各 DNS サーバーに問い合わせ)
+dnsInternal:
+  targets:
+    - "192.168.10.241"  # dnsdist
+    - "192.168.10.242"  # pdns-auth

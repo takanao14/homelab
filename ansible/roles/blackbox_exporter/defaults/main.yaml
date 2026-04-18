@@ -1,0 +1,6 @@
+---
+blackbox_exporter_port: 9115
+blackbox_exporter_config_path: /etc/prometheus/blackbox.yml
+
+# DNS internal probe で解決する内部ドメイン
+blackbox_exporter_dns_internal_query: "ns1.home.butaco.net"
