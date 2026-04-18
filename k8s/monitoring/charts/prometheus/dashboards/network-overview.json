@@ -1,0 +1,261 @@
+{
+  "uid": "network-overview",
+  "title": "Network Overview",
+  "tags": [
+    "network",
+    "infrastructure"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "fiscalYearStartMonth": 0,
+  "refresh": "60s",
+  "schemaVersion": 42,
+  "panels": [
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count by (instance) (ifOperStatus{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"} == 1)",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "title": "Interfaces Up",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum by (instance) (rate(ifHCInOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8)",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "title": "Total Traffic In",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum by (instance) (rate(ifHCOutOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8)",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "title": "Total Traffic Out",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(ifHCInOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8",
+          "legendFormat": "{{instance}} {{ifDescr}} {{ifAlias}}"
+        }
+      ],
+      "title": "Traffic In (bps)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(ifHCOutOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8",
+          "legendFormat": "{{instance}} {{ifDescr}} {{ifAlias}}"
+        }
+      ],
+      "title": "Traffic Out (bps)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(ifInErrors{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m])",
+          "legendFormat": "{{instance}} {{ifDescr}} In"
+        },
+        {
+          "expr": "rate(ifOutErrors{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m])",
+          "legendFormat": "{{instance}} {{ifDescr}} Out"
+        }
+      ],
+      "title": "Interface Errors",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 20
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(ifInDiscards{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m])",
+          "legendFormat": "{{instance}} {{ifDescr}} In"
+        },
+        {
+          "expr": "rate(ifOutDiscards{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m])",
+          "legendFormat": "{{instance}} {{ifDescr}} Out"
+        }
+      ],
+      "title": "Interface Discards",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps"
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "datasource",
+        "label": "Datasource",
+        "skipUrlSync": false,
+        "query": "prometheus",
+        "multi": false,
+        "allowCustomValue": true,
+        "includeAll": false,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "instance",
+        "label": "Device",
+        "skipUrlSync": false,
+        "query": "label_values(ifHCInOctets, instance)",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      }
+    ]
+  },
+  "annotations": {}
+}

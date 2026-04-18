@@ -20,8 +20,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", nodename=\"$node\"}[5m])) * 100)",
-          "legendFormat": "CPU Usage"
+          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[5m]) * on(instance) group_left(nodename) node_uname_info) * 100)",
+          "legendFormat": "{{nodename}}"
         }
       ],
       "title": "CPU Usage",
@@ -48,8 +48,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "100 - (node_memory_MemAvailable_bytes{nodename=\"$node\"} / node_memory_MemTotal_bytes{nodename=\"$node\"} * 100)",
-          "legendFormat": "Memory Usage"
+          "expr": "(1 - node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"}) * on(instance) group_left(nodename) node_uname_info * 100",
+          "legendFormat": "{{nodename}}"
         }
       ],
       "title": "Memory Usage",
@@ -76,8 +76,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "node_load1{nodename=\"$node\"}",
-          "legendFormat": "Load 1m"
+          "expr": "node_load1{instance=~\"$instance\"} * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}}"
         }
       ],
       "title": "Load Average (1m)",
@@ -104,8 +104,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "node_time_seconds{nodename=\"$node\"} - node_boot_time_seconds{nodename=\"$node\"}",
-          "legendFormat": "Uptime"
+          "expr": "(node_time_seconds{instance=~\"$instance\"} - node_boot_time_seconds{instance=~\"$instance\"}) * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}}"
         }
       ],
       "title": "Uptime",
@@ -132,8 +132,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "100 - (avg by (cpu) (rate(node_cpu_seconds_total{mode=\"idle\", nodename=\"$node\"}[5m])) * 100)",
-          "legendFormat": "CPU {{cpu}}"
+          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[5m]) * on(instance) group_left(nodename) node_uname_info) * 100)",
+          "legendFormat": "{{nodename}}"
         }
       ],
       "title": "CPU Usage (%)",
@@ -144,7 +144,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
         "y": 4
       },
@@ -160,19 +160,19 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "node_memory_MemTotal_bytes{nodename=\"$node\"}",
-          "legendFormat": "Total"
+          "expr": "node_load1{instance=~\"$instance\"} * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} 1m"
         },
         {
-          "expr": "node_memory_MemAvailable_bytes{nodename=\"$node\"}",
-          "legendFormat": "Available"
+          "expr": "node_load5{instance=~\"$instance\"} * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} 5m"
         },
         {
-          "expr": "node_memory_MemTotal_bytes{nodename=\"$node\"} - node_memory_MemAvailable_bytes{nodename=\"$node\"}",
-          "legendFormat": "Used"
+          "expr": "node_load15{instance=~\"$instance\"} * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} 15m"
         }
       ],
-      "title": "Memory",
+      "title": "Load Average",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -180,9 +180,41 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 4
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "(node_memory_MemTotal_bytes{instance=~\"$instance\"} - node_memory_MemAvailable_bytes{instance=~\"$instance\"}) * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} Used"
+        },
+        {
+          "expr": "node_memory_MemAvailable_bytes{instance=~\"$instance\"} * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} Available"
+        }
+      ],
+      "title": "Memory Used",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 20
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -196,15 +228,19 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(node_network_receive_bytes_total{nodename=\"$node\", device!=\"lo\"}[5m])",
-          "legendFormat": "Rx {{device}}"
+          "expr": "((node_thermal_zone_temp{type=~\"x86_pkg_temp|cpu-thermal\", instance=~\"$instance\"}) or (node_hwmon_temp_celsius{chip=~\".*18_3\", sensor=\"temp3\", instance=~\"$instance\"})) * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} CPU {{type}}{{chip}}"
         },
         {
-          "expr": "rate(node_network_transmit_bytes_total{nodename=\"$node\", device!=\"lo\"}[5m])",
-          "legendFormat": "Tx {{device}}"
+          "expr": "(nvme_temperature_celsius{instance=~\"$instance\"}) * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} NVMe {{device}}"
+        },
+        {
+          "expr": "(smartmon_temperature_celsius_raw_value{instance=~\"$instance\"}) * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} Disk {{device}}"
         }
       ],
-      "title": "Network I/O",
+      "title": "Temperature",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -214,7 +250,83 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 12
+        "y": 28
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "(rate(node_cpu_package_throttles_total{instance=~\"$instance\"}[5m])) * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} Throttles"
+        },
+        {
+          "expr": "(rpi_throttled_thermal_throttling{instance=~\"$instance\"}) * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} RPi Thermal Throttled"
+        },
+        {
+          "expr": "(rpi_throttled_occurred{instance=~\"$instance\"}) * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} RPi Thermal Throttled Occurred"
+        },
+        {
+          "expr": "(rpi_throttled_under_voltage{instance=~\"$instance\"}) * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} RPi Under Voltage"
+        },
+        {
+          "expr": "(rpi_throttled_under_voltage_occurred{instance=~\"$instance\"}) * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} RPi Under Voltage Occurred"
+        }
+      ],
+      "title": "CPU Throttling \u0026 Power Issues",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 28
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(node_disk_read_bytes_total{instance=~\"$instance\", device!~\"dm-.*\"}[5m]) * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} Read {{device}}"
+        },
+        {
+          "expr": "rate(node_disk_written_bytes_total{instance=~\"$instance\", device!~\"dm-.*\"}[5m]) * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} Write {{device}}"
+        }
+      ],
+      "title": "Disk I/O",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 36
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -228,15 +340,15 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(node_disk_read_bytes_total{nodename=\"$node\"}[5m])",
-          "legendFormat": "Read {{device}}"
+          "expr": "rate(node_network_receive_bytes_total{instance=~\"$instance\", device!=\"lo\"}[5m]) * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} Rx {{device}}"
         },
         {
-          "expr": "rate(node_disk_written_bytes_total{nodename=\"$node\"}[5m])",
-          "legendFormat": "Write {{device}}"
+          "expr": "rate(node_network_transmit_bytes_total{instance=~\"$instance\", device!=\"lo\"}[5m]) * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} Tx {{device}}"
         }
       ],
-      "title": "Disk I/O",
+      "title": "Network I/O",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -244,14 +356,50 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 12
+        "w": 24,
+        "x": 0,
+        "y": 44
       },
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
           "unit": "Bps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "node_zfs_arc_size{instance=~\"$instance\"} * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} ARC Size"
+        },
+        {
+          "expr": "node_zfs_arc_c_max{instance=~\"$instance\"} * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} ARC Max"
+        },
+        {
+          "expr": "node_zfs_arc_c_min{instance=~\"$instance\"} * on(instance) group_left(nodename) node_uname_info",
+          "legendFormat": "{{nodename}} ARC Min"
+        }
+      ],
+      "title": "ZFS ARC Size",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 52
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
         },
         "overrides": []
       }
@@ -277,16 +425,34 @@
         "name": "node",
         "label": "Node",
         "skipUrlSync": false,
-        "query": "label_values(node_uname_info, nodename)",
+        "query": "label_values(node_uname_info{nodename!=\"k0s-worker1\"}, nodename)",
         "datasource": {
           "type": "prometheus",
           "uid": "$datasource"
         },
-        "multi": false,
+        "multi": true,
         "allowCustomValue": true,
         "refresh": 2,
         "sort": 1,
-        "includeAll": false,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "instance",
+        "hide": 2,
+        "skipUrlSync": false,
+        "query": "label_values(node_uname_info{nodename=~\"$node\"}, instance)",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "includeAll": true,
         "auto": false,
         "auto_min": "10s",
         "auto_count": 30

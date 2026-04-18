@@ -1,0 +1,395 @@
+{
+  "uid": "proxmox-overview",
+  "title": "Proxmox Overview",
+  "tags": [
+    "proxmox",
+    "infrastructure"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "fiscalYearStartMonth": 0,
+  "refresh": "30s",
+  "schemaVersion": 42,
+  "panels": [
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count by (instance) (pve_up{id=~\"qemu/.*\", instance=~\"$instance(:.*)?\"} == 1) * on(instance) group_left(name) pve_node_info",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "title": "Running VMs",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count by (instance) (pve_up{id=~\"lxc/.*\", instance=~\"$instance(:.*)?\"} == 1) * on(instance) group_left(name) pve_node_info",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "title": "Running LXCs",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "pve_cpu_usage_ratio{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * on(instance) group_left(name) pve_node_info",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "title": "Node CPU Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "pve_memory_usage_bytes{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} / pve_memory_size_bytes{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * 100 * on(instance) group_left(name) pve_node_info",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "title": "Node Memory Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "pve_disk_usage_bytes{id=~\"storage/.*\", instance=~\"$instance(:.*)?\"} / pve_disk_size_bytes{id=~\"storage/.*\", instance=~\"$instance(:.*)?\"} * 100 * on(id, instance) group_left(storage, node) pve_storage_info",
+          "legendFormat": "{{node}}/{{storage}}"
+        }
+      ],
+      "title": "Storage Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "pve_cpu_usage_ratio{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * on(instance) group_left(name) pve_node_info",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "title": "Node CPU Usage (%)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "pve_memory_usage_bytes{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * on(instance) group_left(name) pve_node_info",
+          "legendFormat": "{{name}} Used"
+        },
+        {
+          "expr": "pve_memory_size_bytes{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * on(instance) group_left(name) pve_node_info",
+          "legendFormat": "{{name}} Total"
+        }
+      ],
+      "title": "Node Memory Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "(label_replace((node_thermal_zone_temp{type=~\"x86_pkg_temp|cpu-thermal\", instance=~\"$instance(:.*)?\"}) or (node_hwmon_temp_celsius{chip=~\".*18_3\", sensor=\"temp3\", instance=~\"$instance(:.*)?\"}), \"addr\", \"$1\", \"instance\", \"(.*):9100\")) * on(addr) group_left(name) (label_replace(pve_node_info, \"addr\", \"$1\", \"instance\", \"(.*)\"))",
+          "legendFormat": "{{name}} CPU {{type}}{{chip}}"
+        },
+        {
+          "expr": "(label_replace(smartmon_temperature_celsius_raw_value{instance=~\"$instance(:.*)?\"}, \"addr\", \"$1\", \"instance\", \"(.*):9100\")) * on(addr) group_left(name) (label_replace(pve_node_info, \"addr\", \"$1\", \"instance\", \"(.*)\"))",
+          "legendFormat": "{{name}} Disk {{device}}"
+        }
+      ],
+      "title": "Node Temperature",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "pve_cpu_usage_ratio{id=~\"qemu/.*|lxc/.*\", instance=~\"$instance(:.*)?\"} * on(id, instance) group_left(name) pve_guest_info",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "title": "Guest CPU Usage (%)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "pve_memory_usage_bytes{id=~\"qemu/.*|lxc/.*\", instance=~\"$instance(:.*)?\"} * on(id, instance) group_left(name) pve_guest_info",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "title": "Guest Memory Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 40
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "pve_disk_usage_bytes{id=~\"storage/.*\", instance=~\"$instance(:.*)?\"} * on(id, instance) group_left(storage, node) pve_storage_info",
+          "legendFormat": "{{node}}/{{storage}} Used"
+        },
+        {
+          "expr": "pve_disk_size_bytes{id=~\"storage/.*\", instance=~\"$instance(:.*)?\"} * on(id, instance) group_left(storage, node) pve_storage_info",
+          "legendFormat": "{{node}}/{{storage}} Total"
+        }
+      ],
+      "title": "Storage Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 48
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "datasource",
+        "label": "Datasource",
+        "skipUrlSync": false,
+        "query": "prometheus",
+        "multi": false,
+        "allowCustomValue": true,
+        "includeAll": false,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "node",
+        "label": "Node",
+        "skipUrlSync": false,
+        "query": "label_values(pve_node_info, name)",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "instance",
+        "hide": 2,
+        "skipUrlSync": false,
+        "query": "label_values(pve_node_info{name=~\"$node\"}, instance)",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      }
+    ]
+  },
+  "annotations": {}
+}

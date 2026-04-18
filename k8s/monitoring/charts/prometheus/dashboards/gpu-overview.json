@@ -1,0 +1,350 @@
+{
+  "uid": "gpu-overview",
+  "title": "GPU Overview",
+  "tags": [
+    "gpu",
+    "infrastructure"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "fiscalYearStartMonth": 0,
+  "refresh": "30s",
+  "schemaVersion": 42,
+  "panels": [
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "amd_gpu_gfx_activity{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "legendFormat": "GFX Activity"
+        }
+      ],
+      "title": "GFX Activity",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "amd_gpu_used_vram{job=\"scrapeConfig/monitoring/amd-gpu-external\"} / amd_gpu_total_vram{job=\"scrapeConfig/monitoring/amd-gpu-external\"} * 100",
+          "legendFormat": "VRAM Usage"
+        }
+      ],
+      "title": "VRAM Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "amd_gpu_edge_temperature{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "legendFormat": "Edge Temp"
+        }
+      ],
+      "title": "Temperature (Edge)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "amd_gpu_power_usage{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "legendFormat": "Power"
+        }
+      ],
+      "title": "Power Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "amd_gpu_gfx_activity{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "legendFormat": "GFX"
+        },
+        {
+          "expr": "amd_gpu_umc_activity{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "legendFormat": "Memory Controller"
+        },
+        {
+          "expr": "amd_gpu_vcn_activity{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "legendFormat": "Video Codec"
+        }
+      ],
+      "title": "GPU Activity (%)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "amd_gpu_used_vram{job=\"scrapeConfig/monitoring/amd-gpu-external\"} * 1024 * 1024",
+          "legendFormat": "Used"
+        },
+        {
+          "expr": "amd_gpu_total_vram{job=\"scrapeConfig/monitoring/amd-gpu-external\"} * 1024 * 1024",
+          "legendFormat": "Total"
+        }
+      ],
+      "title": "VRAM",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "amd_gpu_used_gtt{job=\"scrapeConfig/monitoring/amd-gpu-external\"} * 1024 * 1024",
+          "legendFormat": "Used"
+        },
+        {
+          "expr": "amd_gpu_total_gtt{job=\"scrapeConfig/monitoring/amd-gpu-external\"} * 1024 * 1024",
+          "legendFormat": "Total"
+        }
+      ],
+      "title": "GTT Memory",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "amd_gpu_edge_temperature{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "legendFormat": "Edge"
+        },
+        {
+          "expr": "amd_gpu_junction_temperature{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "legendFormat": "Junction (Hotspot)"
+        },
+        {
+          "expr": "amd_gpu_memory_temperature{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "legendFormat": "Memory"
+        }
+      ],
+      "title": "Temperature",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "amd_gpu_power_usage{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "legendFormat": "Current"
+        },
+        {
+          "expr": "amd_gpu_average_package_power{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "legendFormat": "Average"
+        }
+      ],
+      "title": "Power",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 28
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "amd_gpu_clock{job=\"scrapeConfig/monitoring/amd-gpu-external\", clock_type=\"GPU_CLOCK_TYPE_SYSTEM\"} * 1000 * 1000",
+          "legendFormat": "GPU Core"
+        },
+        {
+          "expr": "amd_gpu_clock{job=\"scrapeConfig/monitoring/amd-gpu-external\", clock_type=\"GPU_CLOCK_TYPE_MEMORY\"} * 1000 * 1000",
+          "legendFormat": "Memory"
+        }
+      ],
+      "title": "Clock Speed",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 28
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "hertz"
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "datasource",
+        "label": "Datasource",
+        "skipUrlSync": false,
+        "query": "prometheus",
+        "multi": false,
+        "allowCustomValue": true,
+        "includeAll": false,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      }
+    ]
+  },
+  "annotations": {}
+}

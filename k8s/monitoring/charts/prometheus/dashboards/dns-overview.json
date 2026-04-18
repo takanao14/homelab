@@ -1,0 +1,378 @@
+{
+  "uid": "dns-overview",
+  "title": "DNS Overview",
+  "tags": [
+    "dns",
+    "infrastructure"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "fiscalYearStartMonth": 0,
+  "refresh": "30s",
+  "schemaVersion": 42,
+  "panels": [
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]))",
+          "legendFormat": "QPS"
+        }
+      ],
+      "title": "dnsdist QPS",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])) / clamp_min(sum(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]) + rate(dnsdist_cache_misses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])), 1) * 100",
+          "legendFormat": "Cache Hit Rate"
+        }
+      ],
+      "title": "dnsdist Cache Hit Rate",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "avg(dnsdist_latency_avg100{job=\"scrapeConfig/monitoring/dnsdist-external\"})",
+          "legendFormat": "Avg Latency"
+        }
+      ],
+      "title": "dnsdist Avg Latency",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "µs"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(pdns_auth_udp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]))",
+          "legendFormat": "QPS"
+        }
+      ],
+      "title": "pdns-auth QPS",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])",
+          "legendFormat": "{{instance}} Queries"
+        },
+        {
+          "expr": "rate(dnsdist_responses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])",
+          "legendFormat": "{{instance}} Responses"
+        }
+      ],
+      "title": "dnsdist Query Rate",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(dnsdist_frontend_noerror{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])",
+          "legendFormat": "{{instance}} NOERROR"
+        },
+        {
+          "expr": "rate(dnsdist_frontend_nxdomain{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])",
+          "legendFormat": "{{instance}} NXDOMAIN"
+        },
+        {
+          "expr": "rate(dnsdist_frontend_servfail{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])",
+          "legendFormat": "{{instance}} SERVFAIL"
+        }
+      ],
+      "title": "dnsdist Response Codes",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "dnsdist_latency_avg100{job=\"scrapeConfig/monitoring/dnsdist-external\"}",
+          "legendFormat": "{{instance}} avg100"
+        },
+        {
+          "expr": "dnsdist_latency_avg1000{job=\"scrapeConfig/monitoring/dnsdist-external\"}",
+          "legendFormat": "{{instance}} avg1000"
+        }
+      ],
+      "title": "dnsdist Latency",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 20
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "µs"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])",
+          "legendFormat": "{{instance}} Hits"
+        },
+        {
+          "expr": "rate(dnsdist_cache_misses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])",
+          "legendFormat": "{{instance}} Misses"
+        }
+      ],
+      "title": "dnsdist Cache",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(pdns_auth_udp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m])",
+          "legendFormat": "{{instance}} UDP"
+        },
+        {
+          "expr": "rate(pdns_auth_tcp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m])",
+          "legendFormat": "{{instance}} TCP"
+        }
+      ],
+      "title": "pdns-auth Query Rate",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(pdns_auth_noerror_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m])",
+          "legendFormat": "{{instance}} NOERROR"
+        },
+        {
+          "expr": "rate(pdns_auth_nxdomain_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m])",
+          "legendFormat": "{{instance}} NXDOMAIN"
+        },
+        {
+          "expr": "rate(pdns_auth_servfail_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m])",
+          "legendFormat": "{{instance}} SERVFAIL"
+        }
+      ],
+      "title": "pdns-auth Response Codes",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 36
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "pdns_auth_latency{job=\"scrapeConfig/monitoring/pdns-auth-external\"}",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "title": "pdns-auth Latency",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 36
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "µs"
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "datasource",
+        "label": "Datasource",
+        "skipUrlSync": false,
+        "query": "prometheus",
+        "multi": false,
+        "allowCustomValue": true,
+        "includeAll": false,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      }
+    ]
+  },
+  "annotations": {}
+}
