@@ -67,7 +67,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				Unit("watt").
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`amd_gpu_power_usage{` + gpuFilter + `}`).
+					Expr(`amd_gpu_average_package_power{` + gpuFilter + `}`).
 					LegendFormat("Power"),
 				),
 		).

@@ -104,7 +104,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "amd_gpu_power_usage{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "expr": "amd_gpu_average_package_power{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
           "legendFormat": "Power"
         }
       ],
