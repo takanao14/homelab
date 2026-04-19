@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/grafana/grafana-foundation-sdk/go/bargauge"
+	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
 	"github.com/grafana/grafana-foundation-sdk/go/stat"
@@ -23,7 +25,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		Uid("node-overview").
 		Tags([]string{"nodes", "infrastructure"}).
 		Timezone("browser").
-		Time("now-1h", "now").
+		Time("now-1d", "now").
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
@@ -54,49 +56,54 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Hide(dashboard.VariableHideHideVariable),
 		).
 		WithPanel(
-			stat.NewPanelBuilder().
+			bargauge.NewPanelBuilder().
 				Title("CPU Usage").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(8).
 				Unit("percent").
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + instFilter + `}[5m]) ` + joinNodename + `) * 100)`).
 					LegendFormat("{{nodename}}"),
-				),
+				).
+				Decimals(1),
 		).
 		// MemAvailable includes reclaimable cache, giving a more realistic usage figure than MemFree.
 		WithPanel(
-			stat.NewPanelBuilder().
+			bargauge.NewPanelBuilder().
 				Title("Memory Usage").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(8).
 				Unit("percent").
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(1 - node_memory_MemAvailable_bytes{` + instFilter + `} / node_memory_MemTotal_bytes{` + instFilter + `}) ` + joinNodename + ` * 100`).
 					LegendFormat("{{nodename}}"),
-				),
+				).Decimals(1),
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Load Average (1m)").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(8).
 				Unit("short").
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`node_load1{` + instFilter + `} ` + joinNodename).
 					LegendFormat("{{nodename}}"),
-				),
+				).Decimals(2),
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Uptime").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(8).
 				Unit("s").
+				GraphMode(common.BigValueGraphModeNone).
+				Orientation(common.VizOrientationAuto).
+				ColorMode(common.BigValueColorModeBackground).
+				ColorScheme(dashboard.NewFieldColorBuilder().Mode(dashboard.FieldColorModeIdContinuousRdYlGr)).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(node_time_seconds{` + instFilter + `} - node_boot_time_seconds{` + instFilter + `}) ` + joinNodename).
 					LegendFormat("{{nodename}}"),
-				),
+				).Decimals(2),
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().

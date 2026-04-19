@@ -9,7 +9,7 @@
   "editable": true,
   "graphTooltip": 1,
   "time": {
-    "from": "now-1h",
+    "from": "now-1d",
     "to": "now"
   },
   "fiscalYearStartMonth": 0,
@@ -95,7 +95,8 @@
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit"
+          "unit": "percentunit",
+          "decimals": 1
         },
         "overrides": []
       }
@@ -123,7 +124,8 @@
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
-          "unit": "percent"
+          "unit": "percent",
+          "decimals": 1
         },
         "overrides": []
       }
@@ -151,7 +153,8 @@
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
-          "unit": "percent"
+          "unit": "percent",
+          "decimals": 1
         },
         "overrides": []
       }

@@ -23,7 +23,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		Uid("dns-overview").
 		Tags([]string{"dns", "infrastructure"}).
 		Timezone("browser").
-		Time("now-1h", "now").
+		Time("now-1d", "now").
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
@@ -40,7 +40,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(rate(dnsdist_queries{` + dnsdist + `}[5m]))`).
 					LegendFormat("QPS"),
-				),
+				).Decimals(1),
 		).
 		// clamp_min prevents division by zero when there are no queries yet.
 		WithPanel(
@@ -52,7 +52,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(rate(dnsdist_cache_hits{` + dnsdist + `}[5m])) / clamp_min(sum(rate(dnsdist_cache_hits{` + dnsdist + `}[5m]) + rate(dnsdist_cache_misses{` + dnsdist + `}[5m])), 1) * 100`).
 					LegendFormat("Cache Hit Rate"),
-				),
+				).Decimals(2),
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
@@ -63,7 +63,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`avg(dnsdist_latency_avg100{` + dnsdist + `})`).
 					LegendFormat("Avg Latency"),
-				),
+				).Decimals(1),
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
@@ -74,7 +74,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(rate(pdns_auth_udp_queries{` + pdns + `}[5m]))`).
 					LegendFormat("QPS"),
-				),
+				).Decimals(1),
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().

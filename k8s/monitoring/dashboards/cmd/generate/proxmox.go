@@ -31,7 +31,7 @@ func buildProxmoxOverview() (*dashboard.Dashboard, error) {
 		Uid("proxmox-overview").
 		Tags([]string{"proxmox", "infrastructure"}).
 		Timezone("browser").
-		Time("now-1h", "now").
+		Time("now-1d", "now").
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
@@ -87,6 +87,7 @@ func buildProxmoxOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("percentunit").
+				Decimals(1).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`pve_cpu_usage_ratio{id=~"node/.*", ` + instFilter + `} ` + joinNode).
 					LegendFormat("{{name}}"),
@@ -98,6 +99,7 @@ func buildProxmoxOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("percent").
+				Decimals(1).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`pve_memory_usage_bytes{id=~"node/.*", ` + instFilter + `} / pve_memory_size_bytes{id=~"node/.*", ` + instFilter + `} * 100 ` + joinNode).
 					LegendFormat("{{name}}"),
@@ -109,6 +111,7 @@ func buildProxmoxOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(4).
 				Unit("percent").
+				Decimals(1).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`pve_disk_usage_bytes{id=~"storage/.*", ` + instFilter + `} / pve_disk_size_bytes{id=~"storage/.*", ` + instFilter + `} * 100 ` + joinStorage).
 					LegendFormat("{{node}}/{{storage}}"),

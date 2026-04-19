@@ -18,7 +18,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 		Uid("gpu-overview").
 		Tags([]string{"gpu", "infrastructure"}).
 		Timezone("browser").
-		Time("now-1h", "now").
+		Time("now-1d", "now").
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(

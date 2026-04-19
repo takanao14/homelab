@@ -43,7 +43,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 		Uid("uptime").
 		Tags([]string{"uptime", "infrastructure"}).
 		Timezone("browser").
-		Time("now-1h", "now").
+		Time("now-1d", "now").
 		Refresh("60s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
@@ -58,6 +58,9 @@ func buildUptime() (*dashboard.Dashboard, error) {
 				Span(24).Height(4).
 				Thresholds(probeThresholds).
 				Mappings(probeValueMappings).
+				GraphMode(common.BigValueGraphModeNone).
+				Orientation(common.VizOrientationAuto).
+				ColorMode(common.BigValueColorModeBackground).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`probe_success{` + icmpJob + `}`).
 					LegendFormat("{{instance}}"),
@@ -70,6 +73,9 @@ func buildUptime() (*dashboard.Dashboard, error) {
 				Span(12).Height(4).
 				Thresholds(probeThresholds).
 				Mappings(probeValueMappings).
+				GraphMode(common.BigValueGraphModeNone).
+				Orientation(common.VizOrientationAuto).
+				ColorMode(common.BigValueColorModeBackground).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`probe_success{` + dnsExtJob + `}`).
 					LegendFormat("{{instance}}"),
@@ -82,6 +88,9 @@ func buildUptime() (*dashboard.Dashboard, error) {
 				Span(12).Height(4).
 				Thresholds(probeThresholds).
 				Mappings(probeValueMappings).
+				GraphMode(common.BigValueGraphModeNone).
+				Orientation(common.VizOrientationAuto).
+				ColorMode(common.BigValueColorModeBackground).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`probe_success{` + dnsIntJob + `}`).
 					LegendFormat("{{instance}}"),

@@ -9,7 +9,7 @@
   "editable": true,
   "graphTooltip": 1,
   "time": {
-    "from": "now-1h",
+    "from": "now-1d",
     "to": "now"
   },
   "fiscalYearStartMonth": 0,
@@ -17,7 +17,7 @@
   "schemaVersion": 42,
   "panels": [
     {
-      "type": "stat",
+      "type": "bargauge",
       "targets": [
         {
           "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[5m]) * on(instance) group_left(nodename) node_uname_info) * 100)",
@@ -31,21 +31,22 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 4,
-        "w": 6,
+        "h": 8,
+        "w": 12,
         "x": 0,
         "y": 0
       },
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
-          "unit": "percent"
+          "unit": "percent",
+          "decimals": 1
         },
         "overrides": []
       }
     },
     {
-      "type": "stat",
+      "type": "bargauge",
       "targets": [
         {
           "expr": "(1 - node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"}) * on(instance) group_left(nodename) node_uname_info * 100",
@@ -59,15 +60,16 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 6,
+        "h": 8,
+        "w": 12,
+        "x": 12,
         "y": 0
       },
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
-          "unit": "percent"
+          "unit": "percent",
+          "decimals": 1
         },
         "overrides": []
       }
@@ -87,15 +89,16 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 0
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
       },
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "decimals": 2
         },
         "overrides": []
       }
@@ -115,15 +118,32 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 0
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "decimals": 2,
+          "color": {
+            "mode": "continuous-RdYlGr"
+          }
         },
         "overrides": []
       }
@@ -146,7 +166,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 4
+        "y": 16
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -182,7 +202,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 24
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -214,7 +234,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 32
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -250,7 +270,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 28
+        "y": 40
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -294,7 +314,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 28
+        "y": 40
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -326,7 +346,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 36
+        "y": 48
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -358,7 +378,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 56
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -394,7 +414,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 52
+        "y": 64
       },
       "repeatDirection": "h",
       "fieldConfig": {

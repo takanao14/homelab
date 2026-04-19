@@ -20,7 +20,7 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 		Uid("network-overview").
 		Tags([]string{"network", "infrastructure"}).
 		Timezone("browser").
-		Time("now-1h", "now").
+		Time("now-1d", "now").
 		Refresh("60s"). // SNMP scrapes are expensive; 60s is a reasonable interval.
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
