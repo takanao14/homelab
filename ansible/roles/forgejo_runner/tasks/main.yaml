@@ -28,15 +28,6 @@
     - "{{ forgejo_runner_home }}"
     - "{{ forgejo_runner_config | dirname }}"
 
-- name: Remove podman
-  become: true
-  ansible.builtin.apt:
-    name:
-      - podman
-      - uidmap
-      - slirp4netns
-    state: absent
-
 - name: Install prerequisites for Docker repo
   become: true
   ansible.builtin.apt:
