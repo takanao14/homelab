@@ -60,6 +60,10 @@ all:
       hosts:
         netbox01: null
 
+    gpuvm:
+      hosts:
+        gpuvm01: null
+
     ollama:
       hosts:
         gpuvm01: null

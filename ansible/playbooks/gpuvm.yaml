@@ -1,0 +1,8 @@
+---
+- name: Setup ROCm
+  hosts: gpuvm
+  roles:
+    - role: timezone
+      tags: timezone
+    - role: rocm
+      tags: rocm
