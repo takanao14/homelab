@@ -15,8 +15,8 @@ Manages VMs, LXC containers, and cloud images on Proxmox using Terragrunt + Terr
 ```
 tf/
 ├── root.hcl                        # Terragrunt root config (generates provider / backend)
-├── common.hcl                      # Shared locals (DNS servers, domain)
-├── provider.tf                     # Proxmox provider definition (bpg/proxmox ~> 0.99)
+├── common.hcl                      # Shared locals (DNS servers, domain, networks)
+├── provider.tf                     # Proxmox provider definition (bpg/proxmox ~> 0.101)
 ├── .env/
 │   ├── secrets.env.sample          # Secret template
 │   ├── secrets.dev.enc.env         # SOPS-encrypted dev secrets (committed)
@@ -34,11 +34,13 @@ tf/
 ├── vm/
 │   ├── dev/
 │   │   ├── env.hcl                 # dev VM defaults
+│   │   ├── gpuvm/                  # GPU VM (8c/32GB, 200GB+300GB, PCIe Passthrough)
 │   │   ├── guibox/                 # GUI box VM (4c/16GB, XRDP)
 │   │   ├── testvm/                 # Test VMs x2 (Ubuntu / Rocky)
 │   │   └── toolbox/                # Toolbox VM (4c/8GB)
 │   └── prd2/
 │       ├── env.hcl                 # prd2 VM defaults
+│       ├── runner1/                # Forgejo runner VM (2c/4GB)
 │       └── vpngw/                  # VPN gateway VM (2c/1GB)
 ├── k8s/
 │   ├── dev/
@@ -55,7 +57,10 @@ tf/
     │   └── syslog/                 # Syslog container
     └── prd2/
         ├── env.hcl                 # prd2 LXC defaults
+        ├── caddy/                  # Caddy reverse proxy
         ├── dns/                    # DNS container
+        ├── forgejo/                # Forgejo container
+        ├── netbox/                 # Netbox container
         └── syslog/                 # Syslog container
 ```
 
@@ -96,7 +101,7 @@ terragrunt run-all apply
 ## Architecture
 
 - **Backend**: Local state (`terraform.tfstate` per component directory)
-- **Provider**: bpg/proxmox ~> 0.99
+- **Provider**: bpg/proxmox ~> 0.101
 - **Environment separation**: dev / prd / prd2 (per Proxmox node)
-- **Networking**: dev=vnets001, prd=vnets30, prd2=vmbr0
+- **Networking**: Configured via `common.hcl` per environment (e.g. `vmbr0`, `vnets001`)
 - **Storage**: dev=local-zfs, prd=data-nvme, prd2=local-lvm
