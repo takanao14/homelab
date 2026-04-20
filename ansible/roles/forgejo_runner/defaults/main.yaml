@@ -11,5 +11,5 @@ forgejo_runner_url: "http://forgejo.home.butaco.net"
 forgejo_admin_token: ""
 forgejo_runner_name: "{{ inventory_hostname }}"
 forgejo_runner_labels:
-  - "self-hosted:docker://node:20-bookworm"
-  - "ubuntu-24.04:docker://node:20-bookworm"
+  - "self-hosted:docker://catthehacker/ubuntu:act-24.04"
+  - "ubuntu-24.04:docker://catthehacker/ubuntu:act-24.04"
