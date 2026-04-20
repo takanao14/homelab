@@ -116,7 +116,7 @@
         description: Local LLM WebUI
 
     - ComfyUI:
-        icon: confyui.png
+        icon: comfyui.png
         href: { { .Values.comfyUI.url } }
         description: ComfyUI
 
