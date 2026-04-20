@@ -1,0 +1,24 @@
+image:
+  repository: forgejo.home.butaco.net/takanao/comfyui-docker
+  tag: latest
+
+resources:
+  limits:
+    amd.com/gpu: "1"
+  requests:
+    amd.com/gpu: "1"
+
+storage:
+  size: 50Gi
+  storageClassName: openebs-hostpath
+
+nodeSelector:
+  gpu: amd
+
+tolerations:
+  - key: gpu
+    operator: Equal
+    value: amd
+    effect: NoSchedule
+
+hostname: comfyui.dev.butaco.net

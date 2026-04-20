@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: comfyui
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/takanao14/homelab.git
+      targetRevision: HEAD
+      path: k8s/comfyui/chart
+      helm:
+        valueFiles:
+          - $values/k8s/comfyui/values.yaml
+    - repoURL: https://github.com/takanao14/homelab.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: comfyui
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
