@@ -1,0 +1,40 @@
+repositories:
+  - name: openebs
+    url: https://openebs.github.io/openebs
+  - name: amd-gpu
+    url: https://rocm.github.io/k8s-device-plugin
+
+releases:
+  - name: cilium
+    namespace: kube-system
+    chart: oci://quay.io/cilium/charts/cilium
+    version: 1.19.2
+    values:
+      - values/cilium.yaml.gotmpl
+
+  - name: openebs
+    namespace: openebs
+    createNamespace: true
+    chart: openebs/openebs
+    version: 4.4.0
+    values:
+      - values/openebs.yaml
+
+  - name: amd-gpu-device-plugin
+    namespace: kube-system
+    chart: amd-gpu/amd-gpu
+    values:
+      - values/amd-device-plugin.yaml
+
+  - name: cilium-config
+    namespace: kube-system
+    chart: ./charts/cilium-config
+    needs:
+      - kube-system/cilium
+    hooks:
+      - events: ["presync"]
+        command: "bash"
+        args:
+          - ./scripts/wait-cilium-crds.sh
+    values:
+      - values/cilium-config.yaml.gotmpl

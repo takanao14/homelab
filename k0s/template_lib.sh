@@ -134,10 +134,10 @@ wait_for_cluster() {
 # ── helmfile ──────────────────────────────────────────────────────────────────
 
 helmfile_apply() {
-    local base_dir="$1"
+    local helmfile_file="$1"
     log_info "Running: helmfile apply"
     log_info "Using KUBECONFIG: ${KUBECONFIG:-unknown}"
-    helmfile -f "$base_dir/helmfile.yaml" apply
+    helmfile -f "$helmfile_file" apply
 }
 
 # ── gateway API CRDs ──────────────────────────────────────────────────────────
@@ -158,6 +158,7 @@ run_main() {
     local base_dir="$2"
     local template_file="$3"
     local kubeconfig_out="$4"
+    local helmfile_file="$5"
 
     preflight
 
@@ -174,7 +175,7 @@ run_main() {
             generate_kubeconfig "$template_file" "$k0sctl_file" "$kubeconfig_out"
             export KUBECONFIG="$kubeconfig_out"
             wait_for_cluster
-            helmfile_apply "$base_dir"
+            helmfile_apply "$helmfile_file"
             gateway_api_apply
             cilium status --wait
             log_success "Cluster setup completed successfully!"
@@ -189,7 +190,7 @@ run_main() {
             ;;
         helmfile)
             export KUBECONFIG="$kubeconfig_out"
-            helmfile_apply "$base_dir"
+            helmfile_apply "$helmfile_file"
             ;;
         gateway-api)
             export KUBECONFIG="$kubeconfig_out"

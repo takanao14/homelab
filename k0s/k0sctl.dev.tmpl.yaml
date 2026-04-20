@@ -30,6 +30,29 @@ spec:
         before:
           - /home/${K0S_SSH_USER}/k0sctl-hooks/ssdsetup.sh
           - /home/${K0S_SSH_USER}/k0sctl-hooks/mirror.sh
+  - role: worker
+    ssh:
+      address: ${K0S_GPU_WORKER_ADDRESS}
+      user: ${K0S_SSH_USER}
+      port: 22
+      keyPath: ~/.ssh/id_ed25519
+    installFlags:
+      - --labels=gpu=amd
+      - --taints=gpu=amd:NoSchedule
+    files:
+      - name: setup-ssd
+        src: ./hook/ssdsetup.sh
+        dstDir: /home/${K0S_SSH_USER}/k0sctl-hooks/
+        perm: 0755
+      - name: mirror-config
+        src: ./hook/mirror.sh
+        dstDir: /home/${K0S_SSH_USER}/k0sctl-hooks/
+        perm: 0755
+    hooks:
+      apply:
+        before:
+          - /home/${K0S_SSH_USER}/k0sctl-hooks/ssdsetup.sh
+          - /home/${K0S_SSH_USER}/k0sctl-hooks/mirror.sh
   k0s:
     config:
       spec:
