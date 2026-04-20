@@ -22,7 +22,7 @@ inputs = {
       dns_servers = local.common.locals.dns_internal
       disks = {
         disk0 = merge(local.env.locals.disk_defaults, {
-          size = 50
+          size = 150
         })
       }
     })
