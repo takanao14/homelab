@@ -117,7 +117,7 @@
 
     - ComfyUI:
         icon: comfyui.png
-        href: { { .Values.comfyUI.url } }
+        href: {{ .Values.comfyUI.url }}
         description: ComfyUI
 
 - Remote Management:
