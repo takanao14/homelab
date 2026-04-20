@@ -64,10 +64,6 @@ all:
       hosts:
         gpuvm01: null
 
-    ollama:
-      hosts:
-        gpuvm01: null
-
     caddy:
       hosts:
         caddy01: null

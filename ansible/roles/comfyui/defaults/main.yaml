@@ -1,7 +1,0 @@
----
-comfyui_user: "{{ ansible_facts['env']['USER'] }}"
-comfyui_dir: /home/{{ comfyui_user }}/ComfyUI
-comfyui_venv: /home/{{ comfyui_user }}/comfyui-env
-comfyui_host: "0.0.0.0"
-comfyui_port: 8188
-comfyui_checkpoints: []

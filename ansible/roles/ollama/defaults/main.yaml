@@ -1,5 +1,0 @@
----
-ollama_host: "0.0.0.0"
-ollama_port: 11434
-ollama_num_ctx: 32768
-ollama_models: []

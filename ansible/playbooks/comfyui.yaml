@@ -1,8 +1,0 @@
----
-- name: Setup ComfyUI with ROCm
-  hosts: ollama
-  roles:
-    - role: timezone
-      tags: timezone
-    - role: comfyui
-      tags: comfyui
