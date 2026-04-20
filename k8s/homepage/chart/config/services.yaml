@@ -115,6 +115,11 @@
         href: {{ .Values.openWebui.url }}
         description: Local LLM WebUI
 
+    - ComfyUI:
+        icon: confyui.png
+        href: { { .Values.comfyUI.url } }
+        description: ComfyUI
+
 - Remote Management:
     - MeshCentral:
         icon: si-intel-#0071C5

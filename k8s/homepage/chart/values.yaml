@@ -70,6 +70,9 @@ forgejo:
 openWebui:
   url: https://open-webui.dev.butaco.net
 
+comfyUI:
+  url: https://comfyui.dev.butaco.net
+
 meshCentral:
   url: https://meshcentral.dev.butaco.net
 
