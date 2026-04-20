@@ -1,6 +1,6 @@
 ---
 - name: Setup Lemonade
-  hosts: ollama
+  hosts: gpuvm
   roles:
     - role: timezone
       tags: timezone
