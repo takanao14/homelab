@@ -12,6 +12,8 @@ storage:
   size: 100Gi
   storageClassName: openebs-hostpath
 
+numCtx: 32768
+
 nodeSelector:
   gpu: amd
 

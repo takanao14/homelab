@@ -21,6 +21,9 @@ spec:
           ports:
             - containerPort: 11434
           resources: {{ toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: OLLAMA_NUM_CTX
+              value: {{ .Values.numCtx | quote }}
           volumeMounts:
             - name: models
               mountPath: /root/.ollama
