@@ -4,7 +4,7 @@ metadata:
   name: comfyui
   namespace: {{ .Release.Namespace }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   strategy:
     type: Recreate
   selector:

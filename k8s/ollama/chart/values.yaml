@@ -1,3 +1,5 @@
+replicaCount: 0
+
 image:
   repository: ollama/ollama
   tag: rocm

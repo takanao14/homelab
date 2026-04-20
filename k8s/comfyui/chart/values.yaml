@@ -1,3 +1,5 @@
+replicaCount: 0
+
 image:
   repository: forgejo.home.butaco.net/takanao/comfyui-docker
   tag: latest
