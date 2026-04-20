@@ -28,59 +28,65 @@
     - "{{ forgejo_runner_home }}"
     - "{{ forgejo_runner_config | dirname }}"
 
-- name: Install dependencies
+- name: Remove podman
+  become: true
+  ansible.builtin.apt:
+    name:
+      - podman
+      - uidmap
+      - slirp4netns
+    state: absent
+
+- name: Install prerequisites for Docker repo
   become: true
   ansible.builtin.apt:
     name:
       - git
-      - podman
-      - uidmap
-      - slirp4netns
+      - ca-certificates
+      - curl
     state: present
     update_cache: true
 
-- name: Add subuid for runner user
+- name: Add Docker GPG key
   become: true
-  ansible.builtin.lineinfile:
-    path: /etc/subuid
-    line: "{{ forgejo_runner_user }}:100000:65536"
-    create: true
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
 
-- name: Add subgid for runner user
+- name: Add Docker repository
   become: true
-  ansible.builtin.lineinfile:
-    path: /etc/subgid
-    line: "{{ forgejo_runner_user }}:100000:65536"
-    create: true
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/ubuntu
+      {{ ansible_facts["distribution_release"] }} stable
+    state: present
+    filename: docker
 
-- name: Enable lingering for runner user
+- name: Install Docker CE
   become: true
-  ansible.builtin.command:
-    cmd: loginctl enable-linger {{ forgejo_runner_user }}
-    creates: /var/lib/systemd/linger/{{ forgejo_runner_user }}
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    state: present
+    update_cache: true
 
-- name: Check podman socket enabled status
+- name: Add runner user to docker group
   become: true
-  ansible.builtin.command:
-    cmd: systemctl --user -M {{ forgejo_runner_user }}@ is-enabled podman.socket
-  register: podman_socket_status
-  changed_when: false
-  failed_when: false
+  ansible.builtin.user:
+    name: "{{ forgejo_runner_user }}"
+    groups: docker
+    append: true
 
-- name: Enable podman socket for runner user
+- name: Ensure docker is started and enabled
   become: true
-  ansible.builtin.command:
-    cmd: systemctl --user -M {{ forgejo_runner_user }}@ enable --now podman.socket
-  when: podman_socket_status.stdout | trim != 'enabled'
-
-- name: Get runner user info
-  ansible.builtin.getent:
-    database: passwd
-    key: "{{ forgejo_runner_user }}"
-
-- name: Set runner uid fact
-  ansible.builtin.set_fact:
-    forgejo_runner_uid: "{{ ansible_facts.getent_passwd[forgejo_runner_user][1] }}"
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
 
 - name: Download forgejo-runner binary
   become: true
