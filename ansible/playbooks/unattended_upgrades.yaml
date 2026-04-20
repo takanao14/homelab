@@ -1,0 +1,7 @@
+---
+- name: Enable unattended security upgrades
+  hosts: all:!proxmox
+  any_errors_fatal: false
+  roles:
+    - role: unattended_upgrades
+      tags: unattended_upgrades
