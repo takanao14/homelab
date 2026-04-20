@@ -7,7 +7,7 @@ Scripts for managing the k0s cluster lifecycle using k0sctl and Helmfile.
 | Tool | Purpose |
 |------|---------|
 | `k0sctl` | Cluster setup / reset |
-| `helmfile` / `helm` | Helm deployments for CNI and storage |
+| `helmfile` / `helm` | Helm deployments for CNI, storage, and device plugins |
 | `kubectl` | Apply Gateway API CRDs |
 | `cilium` CLI | Wait for Cilium to become ready |
 | `envsubst` | Expand variables in the k0sctl config template |
@@ -19,8 +19,10 @@ Scripts for managing the k0s cluster lifecycle using k0sctl and Helmfile.
 k0s/
 ├── create_cluster.sh              # Entry point: ./create_cluster.sh <dev|prd> <command>
 ├── template_lib.sh                # Shared library (cluster management logic)
-├── k0sctl.tmpl.yaml               # k0sctl config template (expanded with envsubst)
-├── helmfile.yaml                  # Helm release definitions (cilium / openebs / cilium-config)
+├── k0sctl.tmpl.yaml               # Default k0sctl config template
+├── k0sctl.dev.tmpl.yaml           # Dev-specific k0sctl config template (GPU node)
+├── helmfile.yaml                  # Default Helm release definitions (cilium / openebs / cilium-config)
+├── helmfile.dev.yaml              # Dev-specific Helm releases (includes amd-gpu-device-plugin)
 ├── env/
 │   ├── dev.sh                     # Dev non-secret variables (committed)
 │   └── prd.sh                     # Prd non-secret variables (committed)
@@ -29,6 +31,7 @@ k0s/
 ├── charts/
 │   └── cilium-config/             # Local chart for Cilium L2 policy and IP pool
 ├── values/
+│   ├── amd-device-plugin.yaml     # AMD GPU Device Plugin Helm values
 │   ├── cilium.yaml.gotmpl         # Cilium Helm values
 │   ├── cilium-config.yaml.gotmpl  # cilium-config Helm values (IP pool range)
 │   └── openebs.yaml               # OpenEBS Helm values
@@ -49,6 +52,7 @@ Variables are split between plain `env/` files (non-secrets) and SOPS-encrypted 
 |----------|-------------|
 | `K0S_CONTROLLER_ADDRESS` | Controller node IP address |
 | `K0S_WORKER_ADDRESS` | Worker node IP address |
+| `K0S_GPU_WORKER_ADDRESS` | GPU Worker node IP address (dev only) |
 | `K0S_LB_POOL` | Cilium LoadBalancer IP pool range (`start,stop`) |
 
 ### Secrets (`secrets.dev.enc.env` / `secrets.prd.enc.env`)
@@ -103,3 +107,4 @@ Kubeconfig is written to `~/.kube/dev.yaml` or `~/.kube/prd.yaml`.
 - **Datastore**: kine (etcd replacement, suited for single-node control plane)
 - **CNI**: Cilium v1.19.2 (kube-proxy disabled, L2 LoadBalancer, Gateway API enabled)
 - **Storage CSI**: OpenEBS v4.4.0 LocalPV (uses SSD mounted at `/srv/storage/volume`)
+- **GPU**: AMD GPU Device Plugin (dev only, for ROCm workloads)
