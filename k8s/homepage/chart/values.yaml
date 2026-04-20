@@ -70,9 +70,6 @@ forgejo:
 openWebui:
   url: https://open-webui.dev.butaco.net
 
-lemonade:
-  url: https://lemonade.home.butaco.net
-
 meshCentral:
   url: https://meshcentral.dev.butaco.net
 

@@ -115,12 +115,6 @@
         href: {{ .Values.openWebui.url }}
         description: Local LLM WebUI
 
-    - Lemonade:
-        icon: mdi-chat
-        href: {{ .Values.lemonade.url }}
-        description: Local LLM Lemonade Client
-
-
 - Remote Management:
     - MeshCentral:
         icon: si-intel-#0071C5
