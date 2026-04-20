@@ -16,21 +16,24 @@ argocd/
 │   ├── root-apps.yaml        # Bootstrap App of Apps for dev
 │   └── apps/                 # ArgoCD Application manifests
 │       ├── argocd.yaml
-│       ├── cert-manager.yaml
 │       ├── cert-manager-config.yaml
-│       ├── gateway.yaml
+│       ├── cert-manager.yaml
+│       ├── comfyui.yaml
 │       ├── external-dns.yaml
-│       └── meshcentral.yaml
+│       ├── gateway.yaml
+│       ├── meshcentral.yaml
+│       ├── ollama.yaml
+│       └── open-webui.yaml
 └── prd/
     ├── helmfile.yaml         # Initial deployment config for prd
     ├── values.yaml           # server.ingress.hostname: argocd.prd.butaco.net
     ├── root-apps.yaml        # Bootstrap App of Apps for prd
     └── apps/                 # ArgoCD Application manifests
         ├── argocd.yaml
-        ├── cert-manager.yaml
         ├── cert-manager-config.yaml
-        ├── gateway.yaml
+        ├── cert-manager.yaml
         ├── external-dns.yaml
+        ├── gateway.yaml
         ├── homepage.yaml
         └── monitoring.yaml
 ```
@@ -88,8 +91,11 @@ The `argocd.yaml` Application uses multi-source:
 | argocd | argocd | dev, prd | none |
 | cert-manager | cert-manager | dev, prd | none |
 | cert-manager-config | cert-manager | dev, prd | yes (helm-secrets) |
-| gateway | gateway-system | dev, prd | none |
+| comfyui | comfyui | dev only | none |
 | external-dns | dns-homelab | dev, prd | yes (helm-secrets) |
+| gateway | gateway-system | dev, prd | none |
 | homepage | homepage | prd only | yes (helm-secrets) |
-| monitoring | monitoring | prd only | yes (helm-secrets) |
 | meshcentral | meshcentral | dev only | none |
+| monitoring | monitoring | prd only | yes (helm-secrets) |
+| ollama | ollama | dev only | none |
+| open-webui | open-webui | dev only | none |
