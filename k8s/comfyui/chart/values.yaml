@@ -9,7 +9,7 @@ resources:
     amd.com/gpu: "1"
 
 storage:
-  size: 50Gi
+  size: 100Gi
   storageClassName: openebs-hostpath
 
 nodeSelector:
