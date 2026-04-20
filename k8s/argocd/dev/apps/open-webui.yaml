@@ -14,7 +14,7 @@ spec:
           ollama:
             enabled: false
           ollamaUrls:
-            - http://gpuvm.home.butaco.net:11434
+            - http://ollama.ollama.svc.cluster.local:11434
           persistence:
             enabled: true
             size: 2Gi
