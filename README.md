@@ -9,11 +9,15 @@ homelab/
 ├── ansible/          # Ansible playbooks and roles (provisioning & configuration)
 ├── k0s/              # k0s Kubernetes cluster lifecycle management
 ├── k8s/              # Kubernetes workloads (Helmfile-based)
-│   ├── externalDNS/
-│   ├── forgejo/
-│   ├── homepage/
-│   ├── meshcentral/
-│   └── monitoring/
+│   ├── argocd/       # ArgoCD root apps and core components
+│   ├── cert-manager/ # cert-manager configuration
+│   ├── comfyui/      # ComfyUI deployment
+│   ├── externalDNS/  # ExternalDNS configuration
+│   ├── gateway/      # Gateway API (Cilium) setup
+│   ├── homepage/     # Homepage dashboard
+│   ├── meshcentral/  # MeshCentral deployment
+│   ├── monitoring/   # Prometheus, Grafana, Exporters, and Dashboards
+│   └── ollama/       # Ollama LLM server deployment
 └── tf/               # Terraform / Terragrunt (Proxmox VMs, LXC containers, cloud images)
     ├── cloudimage/
     ├── k8s/
@@ -26,7 +30,7 @@ homelab/
 
 Secrets are managed with [SOPS](https://github.com/getsops/sops) + [AGE](https://github.com/FiloSottile/age) encryption and exposed to tooling via [direnv](https://direnv.net/).
 
-- Encrypted secrets are committed as `*.enc.env` or `*.enc.yml` files.
+- Encrypted secrets are committed as `*.enc.env` or `*.enc.yaml` files.
 - Each component directory contains a `.envrc` that decrypts secrets at shell entry using `sops --decrypt`.
 - The `.sops.yaml` at the repository root defines encryption rules by file path pattern.
 
