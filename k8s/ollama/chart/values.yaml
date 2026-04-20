@@ -1,0 +1,22 @@
+image:
+  repository: ollama/ollama
+  tag: rocm
+
+resources:
+  limits:
+    amd.com/gpu: "1"
+  requests:
+    amd.com/gpu: "1"
+
+storage:
+  size: 100Gi
+  storageClassName: hostpathClass
+
+nodeSelector:
+  gpu: amd
+
+tolerations:
+  - key: gpu
+    operator: Equal
+    value: amd
+    effect: NoSchedule
