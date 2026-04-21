@@ -29,8 +29,6 @@ fi
 
 ENV_FILE="$SCRIPT_DIR/env/$ENV_TARGET.sh"
 SECRETS_FILE="$SCRIPT_DIR/secrets.$ENV_TARGET.enc.env"
-_ENV_TEMPLATE="$SCRIPT_DIR/k0sctl.$ENV_TARGET.tmpl.yaml"
-TEMPLATE_FILE="$( [[ -f "$_ENV_TEMPLATE" ]] && echo "$_ENV_TEMPLATE" || echo "$SCRIPT_DIR/k0sctl.tmpl.yaml" )"
 
 _ENV_HELMFILE="$SCRIPT_DIR/helmfile.$ENV_TARGET.yaml"
 HELMFILE_FILE="$( [[ -f "$_ENV_HELMFILE" ]] && echo "$_ENV_HELMFILE" || echo "$SCRIPT_DIR/helmfile.yaml" )"
@@ -58,4 +56,4 @@ set +a
 
 # ── dispatch ──────────────────────────────────────────────────────────────────
 
-run_main "$COMMAND" "$SCRIPT_DIR" "$TEMPLATE_FILE" "$KUBECONFIG_OUT" "$HELMFILE_FILE"
+run_main "$COMMAND" "$SCRIPT_DIR" "$KUBECONFIG_OUT" "$HELMFILE_FILE"

@@ -62,7 +62,7 @@ EOF
 
 preflight() {
     local cmd
-    for cmd in envsubst k0sctl helmfile helm kubectl cilium; do
+    for cmd in k0sctl helmfile helm kubectl cilium; do
         if ! command -v "$cmd" &>/dev/null; then
             log_error "required command '$cmd' not found in PATH"
             exit 1
@@ -72,27 +72,157 @@ preflight() {
 
 # ── k0sctl configuration ──────────────────────────────────────────────────────
 
+# Generates a worker host entry (standard or GPU).
+# Usage: _render_worker_host <address> [gpu]
+_render_worker_host() {
+    local addr="$1"
+    local kind="${2:-}"
+
+    cat <<EOF
+  - role: worker
+    ssh:
+      address: ${addr}
+      user: ${K0S_SSH_USER}
+      port: 22
+      keyPath: ~/.ssh/id_ed25519
+EOF
+
+    if [[ "$kind" == "gpu" ]]; then
+        cat <<EOF
+    installFlags:
+      - --labels=gpu=amd
+      - --taints=gpu=amd:NoSchedule
+EOF
+    fi
+
+    cat <<EOF
+    files:
+      - name: setup-ssd
+        src: ./hook/ssdsetup.sh
+        dstDir: /home/${K0S_SSH_USER}/k0sctl-hooks/
+        perm: 0755
+      - name: mirror-config
+        src: ./hook/mirror.sh
+        dstDir: /home/${K0S_SSH_USER}/k0sctl-hooks/
+        perm: 0755
+    hooks:
+      apply:
+        before:
+          - /home/${K0S_SSH_USER}/k0sctl-hooks/ssdsetup.sh
+          - /home/${K0S_SSH_USER}/k0sctl-hooks/mirror.sh
+EOF
+}
+
+# Builds the full k0sctl config from environment variables.
+# Supports multiple controllers and workers via comma-separated address lists.
+#   K0S_CONTROLLER_ADDRESSES — required, comma-separated controller IPs
+#   K0S_WORKER_ADDRESSES     — required, comma-separated worker IPs
+#   K0S_GPU_WORKER_ADDRESSES — optional, comma-separated GPU worker IPs
+#
+# Storage backend is selected automatically:
+#   1 controller  → kine  (embedded SQLite, suitable for homelab single-node control plane)
+#   2+ controllers → etcd (required for HA; controllers must be an odd number for quorum)
 generate_k0sctl_config() {
-    local template_file="$1"
-    local k0sctl_file="$2"
+    local k0sctl_file="$1"
+
+    validate_vars K0S_SSH_USER K0S_CONTROLLER_ADDRESSES K0S_WORKER_ADDRESSES K0S_LB_POOL
 
     log_info "Generating k0sctl configuration..."
-    validate_file_exists "$template_file" "Template file"
-    validate_vars K0S_SSH_USER K0S_CONTROLLER_ADDRESS K0S_WORKER_ADDRESS K0S_LB_POOL
-    envsubst < "$template_file" > "$k0sctl_file"
-    log_success "Configuration generated"
+
+    # Split address lists (trim spaces around commas)
+    IFS=',' read -ra ctrl_list   <<< "${K0S_CONTROLLER_ADDRESSES// /}"
+    IFS=',' read -ra worker_list <<< "${K0S_WORKER_ADDRESSES// /}"
+
+    local ctrl_count="${#ctrl_list[@]}"
+    local worker_count="${#worker_list[@]}"
+
+    # Determine storage backend
+    local storage_type storage_comment
+    if [[ "$ctrl_count" -gt 1 ]]; then
+        storage_type="etcd"
+        storage_comment="# HA setup: etcd required for multiple controllers"
+        log_info "Multiple controllers (${ctrl_count}) detected — using etcd storage backend"
+        if (( ctrl_count % 2 == 0 )); then
+            log_error "Controller count must be odd for etcd quorum (got ${ctrl_count})"
+            return 1
+        fi
+    else
+        storage_type="kine"
+        storage_comment="# Use kine instead of etcd for homelab single-controller setup"
+    fi
+
+    {
+        # ── header ──
+        cat <<EOF
+apiVersion: k0sctl.k0sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: ${K0S_CLUSTER_NAME}
+spec:
+  hosts:
+EOF
+
+        # ── controller hosts ──
+        for addr in "${ctrl_list[@]}"; do
+            cat <<EOF
+  - role: controller
+    ssh:
+      address: ${addr}
+      user: ${K0S_SSH_USER}
+      port: 22
+      keyPath: ~/.ssh/id_ed25519
+EOF
+        done
+
+        # ── standard worker hosts ──
+        for addr in "${worker_list[@]}"; do
+            _render_worker_host "$addr"
+        done
+
+        # ── GPU worker hosts (optional) ──
+        if [[ -n "${K0S_GPU_WORKER_ADDRESSES:-}" ]]; then
+            IFS=',' read -ra gpu_list <<< "${K0S_GPU_WORKER_ADDRESSES// /}"
+            for addr in "${gpu_list[@]}"; do
+                _render_worker_host "$addr" gpu
+            done
+        fi
+
+        # ── k0s config ──
+        cat <<EOF
+  k0s:
+    config:
+      spec:
+        storage:
+          type: ${storage_type} ${storage_comment}
+        network:
+          provider: custom # Set to custom to use Cilium
+          kubeProxy: # Disable kube-proxy since Cilium provides kube-proxy replacement
+            disabled: true
+          coreDNS:
+            replicaCount: 1
+  options:
+    wait:
+      enabled: false
+EOF
+    } > "$k0sctl_file"
+
+    local gpu_count=0
+    if [[ -n "${K0S_GPU_WORKER_ADDRESSES:-}" ]]; then
+        IFS=',' read -ra _gpu_list <<< "${K0S_GPU_WORKER_ADDRESSES// /}"
+        gpu_count="${#_gpu_list[@]}"
+    fi
+    log_success "Configuration generated — controllers: ${ctrl_count}, workers: ${worker_count}, gpu-workers: ${gpu_count}"
 }
 
 # ── kubeconfig ────────────────────────────────────────────────────────────────
 
 generate_kubeconfig() {
-    local template_file="$1"
-    local k0sctl_file="$2"
-    local kubeconfig_out="$3"
+    local k0sctl_file="$1"
+    local kubeconfig_out="$2"
 
     # k0sctl_file is populated by generate_k0sctl_config; skip if already done (e.g. via apply)
     if [[ ! -s "$k0sctl_file" ]]; then
-        generate_k0sctl_config "$template_file" "$k0sctl_file"
+        generate_k0sctl_config "$k0sctl_file"
     fi
 
     log_info "Fetching kubeconfig via k0sctl"
@@ -119,7 +249,7 @@ wait_for_cluster() {
     done
     log_success "API server is reachable"
 
-    log_info "Waiting for worker node to register..."
+    log_info "Waiting for at least one worker node to register..."
     until kubectl get nodes --no-headers 2>/dev/null | grep -qv "^$"; do
         if [[ "$elapsed" -ge "$timeout" ]]; then
             log_error "Timeout waiting for worker node"
@@ -156,9 +286,8 @@ gateway_api_apply() {
 run_main() {
     local command="$1"
     local base_dir="$2"
-    local template_file="$3"
-    local kubeconfig_out="$4"
-    local helmfile_file="$5"
+    local kubeconfig_out="$3"
+    local helmfile_file="$4"
 
     preflight
 
@@ -169,10 +298,10 @@ run_main() {
 
     case "$command" in
         apply)
-            generate_k0sctl_config "$template_file" "$k0sctl_file"
+            generate_k0sctl_config "$k0sctl_file"
             log_info "Running: k0sctl apply --config $k0sctl_file"
             k0sctl apply --config "$k0sctl_file"
-            generate_kubeconfig "$template_file" "$k0sctl_file" "$kubeconfig_out"
+            generate_kubeconfig "$k0sctl_file" "$kubeconfig_out"
             export KUBECONFIG="$kubeconfig_out"
             wait_for_cluster
             helmfile_apply "$helmfile_file"
@@ -181,12 +310,12 @@ run_main() {
             log_success "Cluster setup completed successfully!"
             ;;
         reset)
-            generate_k0sctl_config "$template_file" "$k0sctl_file"
+            generate_k0sctl_config "$k0sctl_file"
             log_info "Running: k0sctl reset --config $k0sctl_file"
             k0sctl reset --config "$k0sctl_file"
             ;;
         kubeconfig)
-            generate_kubeconfig "$template_file" "$k0sctl_file" "$kubeconfig_out"
+            generate_kubeconfig "$k0sctl_file" "$kubeconfig_out"
             ;;
         helmfile)
             export KUBECONFIG="$kubeconfig_out"
@@ -197,7 +326,7 @@ run_main() {
             gateway_api_apply
             ;;
         config)
-            generate_k0sctl_config "$template_file" "$k0sctl_file"
+            generate_k0sctl_config "$k0sctl_file"
             cat "$k0sctl_file"
             ;;
         *)
