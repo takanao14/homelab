@@ -3,4 +3,3 @@ name: external-dns
 description: ExternalDNS with PowerDNS provider for homelab
 type: application
 version: 0.1.0
-appVersion: "v0.20.0"

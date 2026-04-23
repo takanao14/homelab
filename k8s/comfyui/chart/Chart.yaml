@@ -3,4 +3,3 @@ name: comfyui
 description: ComfyUI with AMD GPU support
 type: application
 version: 0.1.0
-appVersion: "latest"

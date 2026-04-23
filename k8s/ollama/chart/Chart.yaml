@@ -3,4 +3,3 @@ name: ollama
 description: Ollama LLM server with AMD GPU support
 type: application
 version: 0.1.0
-appVersion: "rocm"
