@@ -1,8 +1,6 @@
 ---
 # renovate: datasource=gitea-releases depName=forgejo/runner registryUrl=https://code.forgejo.org
 forgejo_runner_version: "12.9.0"
-# renovate: datasource=github-releases depName=StackExchange/dnscontrol
-dnscontrol_version: "4.36.1"
 forgejo_runner_user: runner
 forgejo_runner_group: runner
 forgejo_runner_home: /var/lib/forgejo-runner
