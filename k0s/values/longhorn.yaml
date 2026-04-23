@@ -2,11 +2,11 @@ defaultSettings:
   # Store volume data on the SSD mounted by ssdsetup.sh
   defaultDataPath: /srv/storage/volume
   # Default replica count — increase to match the number of storage nodes for redundancy
-  defaultReplicaCount: 1
+  defaultReplicaCount: 2
 
 persistence:
   defaultClass: true
-  defaultClassReplicaCount: 1
+  defaultClassReplicaCount: 2
 
 longhornUI:
   service:
