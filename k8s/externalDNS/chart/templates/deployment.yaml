@@ -31,6 +31,9 @@ spec:
             - --domain-filter=$(DOMAIN_FILTER)
             - --log-level=debug
             - --interval=30s
+            {{- range .Values.serviceTypeFilter }}
+            - --service-type-filter={{ . }}
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           envFrom:
