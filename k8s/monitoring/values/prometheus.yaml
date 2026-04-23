@@ -32,28 +32,7 @@ kube-prometheus-stack:
       type: ClusterIP
 
   grafana:
-    defaultDashboardsTimezone: jst
-    sidecar:
-      dashboards:
-        enabled: true
-        label: grafana_dashboard
-        labelValue: "1"
-        searchNamespace: ALL
-    additionalDataSources:
-      - name: Loki
-        type: loki
-        url: http://loki:3100
-        access: proxy
-    persistence:
-      enabled: true
-      type: pvc
-      accessModes:
-        - ReadWriteOnce
-      size: 5Gi
-    initChownData:
-      enabled: false
-    service:
-      type: ClusterIP
+    enabled: false
 
   kubeControllerManager:
     enabled: false
@@ -61,9 +40,6 @@ kube-prometheus-stack:
     enabled: false
   kubeProxy:
     enabled: false
-
-grafana:
-  hostname: grafana.prd.butaco.net
 
 prometheus:
   hostname: prometheus.prd.butaco.net

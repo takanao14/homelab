@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/takanao14/homelab.git
+    targetRevision: HEAD
+    path: k8s/monitoring/charts/grafana
+    plugin:
+      name: helm-secrets
+      env:
+        - name: HELM_VALUES
+          value: "../../values/grafana.yaml,secrets://../../secrets.enc.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 3
+      backoff:
+        duration: 30s
+        factor: 2
+    syncOptions:
+      - CreateNamespace=true
