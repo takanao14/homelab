@@ -1,17 +1,28 @@
+{{- $storage := env "K0S_STORAGE_PROVIDER" | default "openebs" }}
+{{- $gpuEnabled := ne (env "K0S_GPU_WORKER_ADDRESSES") "" }}
+
 repositories:
+  {{- if eq $storage "openebs" }}
   - name: openebs
     url: https://openebs.github.io/openebs
+  {{- else if eq $storage "longhorn" }}
+  - name: longhorn
+    url: https://charts.longhorn.io
+  {{- end }}
+  {{- if $gpuEnabled }}
   - name: amd-gpu
     url: https://rocm.github.io/k8s-device-plugin
+  {{- end }}
 
 releases:
   - name: cilium
     namespace: kube-system
     chart: oci://quay.io/cilium/charts/cilium
-    version: 1.19.2
+    version: 1.19.3
     values:
       - values/cilium.yaml.gotmpl
 
+  {{- if eq $storage "openebs" }}
   - name: openebs
     namespace: openebs
     createNamespace: true
@@ -19,12 +30,23 @@ releases:
     version: 4.4.0
     values:
       - values/openebs.yaml
+  {{- else if eq $storage "longhorn" }}
+  - name: longhorn
+    namespace: longhorn-system
+    createNamespace: true
+    chart: longhorn/longhorn
+    version: 1.8.1
+    values:
+      - values/longhorn.yaml
+  {{- end }}
 
+  {{- if $gpuEnabled }}
   - name: amd-gpu-device-plugin
     namespace: kube-system
     chart: amd-gpu/amd-gpu
     values:
       - values/amd-device-plugin.yaml
+  {{- end }}
 
   - name: cilium-config
     namespace: kube-system

@@ -43,10 +43,23 @@ validate_vars() {
 # ── usage ─────────────────────────────────────────────────────────────────────
 
 usage() {
-    local script_name
+    local script_name env_dir available_envs env_hint
     script_name=$(basename "$0")
+
+    # Discover available environments dynamically from env/*.sh
+    env_dir="${SCRIPT_DIR:-$(cd "$(dirname "$0")" && pwd)}/env"
+    local available_envs="" f
+    for f in "$env_dir"/*.sh; do
+        [[ -f "$f" ]] || continue
+        available_envs+="${available_envs:+|}$(basename "$f" .sh)"
+    done
+    env_hint="${available_envs:-<env>}"
+
     cat <<EOF
-Usage: $script_name <dev|prd> <command>
+Usage: $script_name <${env_hint}> <command>
+
+  To add a new environment, create env/<name>.sh (and optionally
+  secrets.<name>.enc.env and helmfile.<name>.yaml.gotmpl).
 
 Commands:
   apply       Full cluster setup: k0sctl apply → kubeconfig → helmfile apply → gateway-api CRDs

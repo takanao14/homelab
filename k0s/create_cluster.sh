@@ -19,22 +19,22 @@ fi
 ENV_TARGET="$1"
 COMMAND="$2"
 
-if [[ "$ENV_TARGET" != dev && "$ENV_TARGET" != prd ]]; then
-    log_error "Invalid environment: '$ENV_TARGET' (must be dev or prd)"
-    usage
-    exit 2
-fi
-
 # ── paths ─────────────────────────────────────────────────────────────────────
 
 ENV_FILE="$SCRIPT_DIR/env/$ENV_TARGET.sh"
 SECRETS_FILE="$SCRIPT_DIR/secrets.$ENV_TARGET.enc.env"
 
-_ENV_HELMFILE="$SCRIPT_DIR/helmfile.$ENV_TARGET.yaml"
-HELMFILE_FILE="$( [[ -f "$_ENV_HELMFILE" ]] && echo "$_ENV_HELMFILE" || echo "$SCRIPT_DIR/helmfile.yaml" )"
+_ENV_HELMFILE="$SCRIPT_DIR/helmfile.$ENV_TARGET.yaml.gotmpl"
+HELMFILE_FILE="$( [[ -f "$_ENV_HELMFILE" ]] && echo "$_ENV_HELMFILE" || echo "$SCRIPT_DIR/helmfile.yaml.gotmpl" )"
 KUBECONFIG_OUT="$HOME/.kube/$ENV_TARGET.yaml"
 
-[[ -f "$ENV_FILE" ]] || { log_error "Environment file not found: $ENV_FILE"; exit 1; }
+# Validate environment by checking whether the env file exists.
+# To add a new environment, simply create env/<name>.sh — no code changes needed.
+if [[ ! -f "$ENV_FILE" ]]; then
+    log_error "Unknown environment: '$ENV_TARGET' (env file not found: $ENV_FILE)"
+    usage
+    exit 2
+fi
 
 # ── derive cluster name ───────────────────────────────────────────────────────
 
