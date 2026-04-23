@@ -58,7 +58,7 @@
   become: true
   become_user: postgres
   community.postgresql.postgresql_privs:
-    database: "{{ netbox_db_name }}"
+    login_db: "{{ netbox_db_name }}"
     roles: "{{ netbox_db_user }}"
     type: database
     privs: ALL
@@ -68,7 +68,7 @@
   become: true
   become_user: postgres
   community.postgresql.postgresql_privs:
-    database: "{{ netbox_db_name }}"
+    login_db: "{{ netbox_db_name }}"
     roles: "{{ netbox_db_user }}"
     type: schema
     objs: public
