@@ -7,6 +7,9 @@ sources:
   - ingress
   - gateway-httproute
 
+serviceTypeFilter:
+  - LoadBalancer
+
 resources:
   requests:
     cpu: 50m
