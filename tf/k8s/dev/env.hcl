@@ -3,8 +3,6 @@ locals {
     node_name        = "pve"
     config_datastore = "local-zfs"
     username         = get_env("TF_VM_USERNAME")
-    ipv4gw           = "192.168.20.1"
-    bridge           = "vnets001"
     scsi_hardware    = "virtio-scsi-single"
     qemu_guest_agent = true
     on_boot          = false

@@ -7,21 +7,24 @@ terraform {
 }
 
 locals {
-  env = read_terragrunt_config("${get_terragrunt_dir()}/env.hcl")
+  env    = read_terragrunt_config(find_in_parent_folders("env.hcl"))
   common = read_terragrunt_config(find_in_parent_folders("common.hcl"))
 
   base_vars = merge(local.env.locals.vm_defaults, {
     dns_servers = local.common.locals.dns_internal
     dns_domain  = local.common.locals.dns_domain
   })
+
 }
 
 inputs = {
   vms = {
-    "dev-k0s-cp1" = merge(local.base_vars, {
+    "k0s-cp1" = merge(local.base_vars, {
       cores  = 2
       memory = 4096
-      ipv4   = "192.168.20.11/24"
+      bridge = local.common.locals.prd.net30.bridge
+      ipv4gw = local.common.locals.prd.net30.ipv4gw
+      ipv4   = "192.168.30.11/24"
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 40
@@ -29,17 +32,19 @@ inputs = {
         })
       }
     })
-    "dev-k0s-worker1" = merge(local.base_vars, {
+    "k0s-worker1" = merge(local.base_vars, {
       cores  = 8
-      memory = 8192
-      ipv4   = "192.168.20.12/24"
+      memory = 24576
+      bridge = local.common.locals.prd.net30.bridge
+      ipv4gw = local.common.locals.prd.net30.ipv4gw
+      ipv4   = "192.168.30.12/24"
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 64
           file_id = local.env.locals.os_image
         })
         scsi1 = merge(local.env.locals.disk_defaults, {
-          size = 100
+          size = 300
         })
       }
     })
