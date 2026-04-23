@@ -1,4 +1,6 @@
 ---
+loki_endpoint: "http://loki.prd.butaco.net:3100"
+
 vector_config:
   sources:
     syslog_udp:
@@ -63,7 +65,7 @@ vector_config:
       type: loki
       inputs:
         - parse_syslog
-      endpoint: "http://loki.prd.butaco.net:3100"
+      endpoint: "{{ loki_endpoint }}"
       encoding:
         codec: json
       labels:

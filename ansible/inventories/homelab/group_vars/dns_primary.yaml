@@ -23,7 +23,7 @@ vector_config:
       type: loki
       inputs:
         - parse_journald
-      endpoint: "http://192.168.30.134:3100"
+      endpoint: "{{ loki_endpoint }}"
       encoding:
         codec: json
       labels:
