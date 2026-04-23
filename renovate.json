@@ -62,6 +62,13 @@
         "docker://(?<depName>catthehacker/ubuntu):(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": ["(^|/)k8s/.+\\.yaml$"],
+      "matchStrings": [
+        "repoURL: (?<registryUrl>https://[^\\n]+)\\n\\s+chart: (?<depName>[^\\n]+)\\n\\s+targetRevision: (?<currentValue>[^\\n]+)"
+      ],
+      "datasourceTemplate": "helm"
     }
   ]
 }
