@@ -1,4 +1,5 @@
 ---
+# renovate: datasource=github-releases depName=netbox-community/netbox
 netbox_version: "4.5.7"
 netbox_user: netbox
 netbox_group: netbox

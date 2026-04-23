@@ -203,7 +203,8 @@ EOF
         # ── k0s config ──
         cat <<EOF
   k0s:
-    config:
+${K0S_VERSION:+    version: ${K0S_VERSION}
+}    config:
       spec:
         storage:
           type: ${storage_type} ${storage_comment}

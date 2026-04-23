@@ -1,5 +1,4 @@
 ---
-netbox_version: "4.5.7"
 netbox_domain: "netbox-ui.home.butaco.net"
 netbox_port: 8080
 netbox_superuser_name: admin

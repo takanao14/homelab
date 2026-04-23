@@ -27,11 +27,39 @@
   "kubernetes": {
     "fileMatch": ["(^|/)k8s/.+\\.yaml$"]
   },
+  "helmfile": {
+    "fileMatch": ["(^|/)k0s/helmfile\\.yaml\\.gotmpl$"]
+  },
+  "ansible-galaxy": {
+    "fileMatch": ["(^|/)ansible/requirements\\.ya?ml$"]
+  },
   "regexManagers": [
     {
       "fileMatch": ["(^|/)ansible/.+\\.yaml$", "(^|/)ansible/.+\\.yml$"],
       "matchStrings": [
         "image:\\s*\"?(?<depName>[^\"]+):(?<currentValue>[^\"]+)\"?"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": ["(^|/)k0s/env/.+\\.sh$"],
+      "matchStrings": [
+        "K0S_VERSION=(?<currentValue>[^\\s]+)"
+      ],
+      "depNameTemplate": "k0sproject/k0s",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "loose"
+    },
+    {
+      "fileMatch": ["(^|/)ansible/.+\\.ya?ml$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?\\n\\w+: \"(?<currentValue>[^\"]+)\""
+      ]
+    },
+    {
+      "fileMatch": ["(^|/)ansible/roles/forgejo_runner/defaults/main\\.ya?ml$"],
+      "matchStrings": [
+        "docker://(?<depName>catthehacker/ubuntu):(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "docker"
     }
