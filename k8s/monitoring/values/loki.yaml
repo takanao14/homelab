@@ -52,8 +52,8 @@ loki:
   resultsCache:
     enabled: false
 
-monitoring:
-  serviceMonitor:
-    enabled: true
-    labels:
-      release: prometheus
+  monitoring:
+    serviceMonitor:
+      enabled: true
+      labels:
+        release: prometheus
