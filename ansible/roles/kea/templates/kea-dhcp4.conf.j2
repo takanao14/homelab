@@ -1,7 +1,9 @@
 {
   "Dhcp4": {
     "interfaces-config": {
-      "interfaces": ["eth0"]
+      "interfaces": ["eth0"],
+      "service-sockets-max-retries": 5,
+      "service-sockets-retry-wait-time": 5000
     },
     "control-socket": {
       "socket-type": "unix",
