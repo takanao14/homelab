@@ -43,12 +43,6 @@ loki:
   gateway:
     enabled: false
 
-  monitoring:
-    serviceMonitor:
-      enabled: true
-      labels:
-        release: prometheus
-
   test:
     enabled: false
   lokiCanary:
@@ -57,3 +51,9 @@ loki:
     enabled: false
   resultsCache:
     enabled: false
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+    labels:
+      release: prometheus
