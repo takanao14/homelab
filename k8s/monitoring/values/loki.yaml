@@ -29,8 +29,8 @@ loki:
       size: 20Gi
     service:
       type: LoadBalancer
-      loadBalancerIP: 192.168.30.134
       annotations:
+        io.cilium/lb-ipam-ips: 192.168.30.134
         external-dns.alpha.kubernetes.io/hostname: loki.prd.butaco.net
 
   backend:
