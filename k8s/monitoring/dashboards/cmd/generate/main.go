@@ -23,6 +23,9 @@ func main() {
 		"network-overview":    buildNetworkOverview,
 		"uptime":              buildUptime,
 		"kubernetes-overview": buildKubernetesOverview,
+		"monitoring-overview": buildMonitoringOverview,
+		"dns-logs":            buildDnsLogs,
+		"syslog":              buildSyslog,
 	}
 
 	outputDir := "generated"

@@ -1,0 +1,342 @@
+{
+  "uid": "dns-logs",
+  "title": "DNS Query Logs",
+  "tags": [
+    "dns",
+    "logs",
+    "infrastructure"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "fiscalYearStartMonth": 0,
+  "refresh": "30s",
+  "schemaVersion": 42,
+  "panels": [
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate({job=\"dns\", host=~\"$host\"}[5m]))",
+          "legendFormat": "queries/s"
+        }
+      ],
+      "title": "Query Rate",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_rcode=\"NXDOMAIN\" [5m]))",
+          "legendFormat": "nxdomain/s"
+        }
+      ],
+      "title": "NXDOMAIN Rate",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_policy__action!=\"\" | dnstap_policy__action!=\"PASSTHRU\" [5m]))",
+          "legendFormat": "blocked/s"
+        }
+      ],
+      "title": "Policy Block Rate",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_rcode=~\"$rcode\" | dns_qtype=~\"$qtype\" | network_query__ip != \"\" [1h])",
+          "legendFormat": "clients"
+        }
+      ],
+      "title": "Unique Clients",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (dns_qtype) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_qtype=~\"$qtype\" [5m]))",
+          "legendFormat": "{{dns_qtype}}"
+        }
+      ],
+      "title": "Query Rate by Type",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (dns_rcode) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_rcode=~\"$rcode\" [5m]))",
+          "legendFormat": "{{dns_rcode}}"
+        }
+      ],
+      "title": "Response Code Distribution",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"}[5m]))",
+          "legendFormat": "{{host}}"
+        }
+      ],
+      "title": "Query Rate by Host",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_rcode=\"NXDOMAIN\" [5m]))",
+          "legendFormat": "{{host}}"
+        }
+      ],
+      "title": "NXDOMAIN Rate by Host",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "logs",
+      "targets": [
+        {
+          "expr": "{job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_qtype=~\"$qtype\" | dns_rcode=~\"$rcode\"",
+          "maxLines": 500
+        }
+      ],
+      "title": "DNS Query Logs",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "repeatDirection": "h"
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "datasource",
+        "label": "Datasource",
+        "skipUrlSync": false,
+        "query": "loki",
+        "multi": false,
+        "allowCustomValue": true,
+        "includeAll": false,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "host",
+        "label": "Host",
+        "skipUrlSync": false,
+        "query": "label_values(host)",
+        "datasource": {
+          "type": "loki",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "qtype",
+        "label": "Query Type",
+        "skipUrlSync": false,
+        "query": "label_values({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_qtype!=\"\", dns_qtype)",
+        "datasource": {
+          "type": "loki",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "rcode",
+        "label": "Response Code",
+        "skipUrlSync": false,
+        "query": "label_values({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_rcode!=\"\", dns_rcode)",
+        "datasource": {
+          "type": "loki",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      }
+    ]
+  },
+  "annotations": {}
+}

@@ -1,0 +1,341 @@
+{
+  "uid": "syslog",
+  "title": "Syslog",
+  "tags": [
+    "syslog",
+    "network",
+    "logs",
+    "infrastructure"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "fiscalYearStartMonth": 0,
+  "refresh": "60s",
+  "schemaVersion": 42,
+  "panels": [
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate({host=~\"$host\", severity=~\"$severity\"}[5m]))",
+          "legendFormat": "logs/s"
+        }
+      ],
+      "title": "Log Rate",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({host=~\"$host\", severity=\"warning\"}[1h]))",
+          "legendFormat": "warnings"
+        }
+      ],
+      "title": "Warning Logs (1h)",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({host=~\"$host\"} | json | parse_error=\"true\" [1h]))",
+          "legendFormat": "errors"
+        }
+      ],
+      "title": "Parse Errors (1h)",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (host) (rate({host=~\"$host\", severity=~\"$severity\"}[5m]))",
+          "legendFormat": "{{host}}"
+        }
+      ],
+      "title": "Log Volume by Host",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (severity) (rate({host=~\"$host\", severity=~\".+\"}[5m]))",
+          "legendFormat": "{{severity}}"
+        }
+      ],
+      "title": "Log Volume by Severity",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (appname) (rate({host=~\"$host\", appname=~\"$appname\"}[5m]))",
+          "legendFormat": "{{appname}}"
+        }
+      ],
+      "title": "Log Volume by App",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (host) (rate({host=~\"$host\", severity=\"warning\"}[5m]))",
+          "legendFormat": "{{host}}"
+        }
+      ],
+      "title": "Warning Rate by Host",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "logs",
+      "targets": [
+        {
+          "expr": "{host=~\"$host\", severity=~\"$severity\"} | json | __error__=\"\" | appname=~\"$appname\" | line_format \"{{.host}} [{{.severity}}] {{.appname}}: {{.message}}\"",
+          "maxLines": 500
+        }
+      ],
+      "title": "Syslog",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "repeatDirection": "h"
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "datasource",
+        "label": "Datasource",
+        "skipUrlSync": false,
+        "query": "loki",
+        "multi": false,
+        "allowCustomValue": true,
+        "includeAll": false,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "host",
+        "label": "Host",
+        "skipUrlSync": false,
+        "query": "label_values(host)",
+        "datasource": {
+          "type": "loki",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "severity",
+        "label": "Severity",
+        "skipUrlSync": false,
+        "query": "label_values(severity)",
+        "datasource": {
+          "type": "loki",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "appname",
+        "label": "App",
+        "skipUrlSync": false,
+        "query": "label_values(appname)",
+        "datasource": {
+          "type": "loki",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      }
+    ]
+  },
+  "annotations": {}
+}
