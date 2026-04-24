@@ -71,6 +71,10 @@ kube-prometheus-stack:
   prometheus-node-exporter:
     prometheus:
       monitor:
+        relabelings:
+          - action: replace
+            sourceLabels: [__meta_kubernetes_pod_node_name]
+            targetLabel: node
         metricRelabelings:
           - targetLabel: cluster
             replacement: prd
