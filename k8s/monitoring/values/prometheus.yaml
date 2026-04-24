@@ -19,10 +19,6 @@ kube-prometheus-stack:
       enableRemoteWriteReceiver: true
       externalLabels:
         cluster: prd
-      scrapeConfigDefault:
-        metricRelabelings:
-          - targetLabel: cluster
-            replacement: prd
       retention: 30d
       resourceSpec:
         requests:
@@ -40,6 +36,38 @@ kube-prometheus-stack:
 
   grafana:
     enabled: false
+
+  kubelet:
+    serviceMonitor:
+      metricRelabelings:
+        - targetLabel: cluster
+          replacement: prd
+
+  kubeApiServer:
+    serviceMonitor:
+      metricRelabelings:
+        - targetLabel: cluster
+          replacement: prd
+
+  coreDns:
+    serviceMonitor:
+      metricRelabelings:
+        - targetLabel: cluster
+          replacement: prd
+
+  kube-state-metrics:
+    prometheus:
+      monitor:
+        metricRelabelings:
+          - targetLabel: cluster
+            replacement: prd
+
+  prometheus-node-exporter:
+    prometheus:
+      monitor:
+        metricRelabelings:
+          - targetLabel: cluster
+            replacement: prd
 
   kubeControllerManager:
     enabled: false
