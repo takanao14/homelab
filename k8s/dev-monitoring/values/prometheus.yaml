@@ -1,41 +1,30 @@
 kube-prometheus-stack:
   prometheus:
     prometheusSpec:
+      enableFeatures:
+        - agent
+      externalLabels:
+        cluster: dev
+      remoteWrite:
+        - url: https://prometheus.prd.butaco.net/api/v1/write
       serviceMonitorSelectorNilUsesHelmValues: false
       serviceMonitorSelector:
         matchLabels:
           release: prometheus
       serviceMonitorNamespaceSelector: {}
-      ruleSelectorNilUsesHelmValues: false
-      ruleSelector:
-        matchLabels:
-          release: prometheus
-      ruleSelectorNamespaceSelector: {}
       scrapeConfigSelectorNilUsesHelmValues: false
       scrapeConfigSelector:
         matchLabels:
           release: prometheus
       scrapeConfigNamespaceSelector: {}
-      enableFeatures:
-        - remote-write-receiver
-      externalLabels:
-        cluster: prd
-      retention: 30d
       resourceSpec:
         requests:
-          memory: 512Mi
-      storageSpec:
-        volumeClaimTemplate:
-          spec:
-            accessModes:
-              - ReadWriteOnce
-            resources:
-              requests:
-                storage: 10Gi
-    service:
-      type: ClusterIP
+          memory: 256Mi
 
   grafana:
+    enabled: false
+
+  alertmanager:
     enabled: false
 
   kubeControllerManager:
@@ -44,6 +33,3 @@ kube-prometheus-stack:
     enabled: false
   kubeProxy:
     enabled: false
-
-prometheus:
-  hostname: prometheus.prd.butaco.net
