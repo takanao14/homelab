@@ -16,8 +16,7 @@ kube-prometheus-stack:
         matchLabels:
           release: prometheus
       scrapeConfigNamespaceSelector: {}
-      enableFeatures:
-        - remote-write-receiver
+      enableRemoteWriteReceiver: true
       externalLabels:
         cluster: prd
       retention: 30d
