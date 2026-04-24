@@ -43,27 +43,6 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Multi(true).
 				IncludeAll(true),
 		).
-		WithVariable(
-			dashboard.NewQueryVariableBuilder("qtype").
-				Label("Query Type").
-				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(` + base + ` | json | __error__="" | dns_qtype!="", dns_qtype)`)}).
-				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
-				Sort(dashboard.VariableSortAlphabeticalAsc).
-				Multi(true).
-				IncludeAll(true),
-		).
-		WithVariable(
-			dashboard.NewQueryVariableBuilder("rcode").
-				Label("Response Code").
-				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(` + base + ` | json | __error__="" | dns_rcode!="", dns_rcode)`)}).
-				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
-				Sort(dashboard.VariableSortAlphabeticalAsc).
-				Multi(true).
-				IncludeAll(true),
-		).
-
 		// Row 1: Summary stats
 		WithPanel(
 			stat.NewPanelBuilder().
@@ -106,7 +85,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				Unit("short").
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`count_over_time(` + baseJSON + ` | dns_rcode=~"$rcode" | dns_qtype=~"$qtype" | network_query__ip != "" [1h])`).
+					Expr(`count_over_time(` + baseJSON + ` | network_query_ip != "" [1h])`).
 					LegendFormat("clients"),
 				),
 		).
@@ -119,7 +98,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("reqps").
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (dns_qtype) (rate(` + baseJSON + ` | dns_qtype=~"$qtype" [5m]))`).
+					Expr(`sum by (dns_qtype) (rate(` + baseJSON + `[5m]))`).
 					LegendFormat("{{dns_qtype}}"),
 				),
 		).
@@ -130,7 +109,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("reqps").
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (dns_rcode) (rate(` + baseJSON + ` | dns_rcode=~"$rcode" [5m]))`).
+					Expr(`sum by (dns_rcode) (rate(` + baseJSON + `[5m]))`).
 					LegendFormat("{{dns_rcode}}"),
 				),
 		).
@@ -166,7 +145,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(12).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(base + ` | json | __error__="" | dns_qtype=~"$qtype" | dns_rcode=~"$rcode"`).
+					Expr(baseJSON).
 					MaxLines(500),
 				),
 		).

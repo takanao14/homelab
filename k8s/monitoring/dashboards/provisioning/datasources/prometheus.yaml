@@ -4,3 +4,6 @@ datasources:
     type: prometheus
     url: ${PROMETHEUS_URL}
     isDefault: true
+  - name: Loki
+    type: loki
+    url: ${LOKI_URL}
