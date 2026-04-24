@@ -105,7 +105,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_rcode=~\"$rcode\" | dns_qtype=~\"$qtype\" | network_query__ip != \"\" [1h])",
+          "expr": "count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | network_query_ip != \"\" [1h])",
           "legendFormat": "clients"
         }
       ],
@@ -133,7 +133,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (dns_qtype) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_qtype=~\"$qtype\" [5m]))",
+          "expr": "sum by (dns_qtype) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\"[5m]))",
           "legendFormat": "{{dns_qtype}}"
         }
       ],
@@ -161,7 +161,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (dns_rcode) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_rcode=~\"$rcode\" [5m]))",
+          "expr": "sum by (dns_rcode) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\"[5m]))",
           "legendFormat": "{{dns_rcode}}"
         }
       ],
@@ -245,7 +245,7 @@
       "type": "logs",
       "targets": [
         {
-          "expr": "{job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_qtype=~\"$qtype\" | dns_rcode=~\"$rcode\"",
+          "expr": "{job=\"dns\", host=~\"$host\"} | json | __error__=\"\"",
           "maxLines": 500
         }
       ],
@@ -285,44 +285,6 @@
         "label": "Host",
         "skipUrlSync": false,
         "query": "label_values(host)",
-        "datasource": {
-          "type": "loki",
-          "uid": "$datasource"
-        },
-        "multi": true,
-        "allowCustomValue": true,
-        "refresh": 2,
-        "sort": 1,
-        "includeAll": true,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
-      },
-      {
-        "type": "query",
-        "name": "qtype",
-        "label": "Query Type",
-        "skipUrlSync": false,
-        "query": "label_values({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_qtype!=\"\", dns_qtype)",
-        "datasource": {
-          "type": "loki",
-          "uid": "$datasource"
-        },
-        "multi": true,
-        "allowCustomValue": true,
-        "refresh": 2,
-        "sort": 1,
-        "includeAll": true,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
-      },
-      {
-        "type": "query",
-        "name": "rcode",
-        "label": "Response Code",
-        "skipUrlSync": false,
-        "query": "label_values({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_rcode!=\"\", dns_rcode)",
         "datasource": {
           "type": "loki",
           "uid": "$datasource"
