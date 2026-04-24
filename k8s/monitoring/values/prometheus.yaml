@@ -42,6 +42,12 @@ kube-prometheus-stack:
       metricRelabelings:
         - targetLabel: cluster
           replacement: prd
+      cAdvisorMetricRelabelings:
+        - targetLabel: cluster
+          replacement: prd
+      probesMetricRelabelings:
+        - targetLabel: cluster
+          replacement: prd
 
   kubeApiServer:
     serviceMonitor:
