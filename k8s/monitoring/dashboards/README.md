@@ -6,11 +6,16 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 
 | Name | Description |
 |---|---|
-| `node-overview` | CPU, memory, temperature, disk I/O, network I/O (including ZFS ARC) |
+| `node-overview` | Bare-metal nodes: CPU, memory, temperature, disk I/O, network I/O, ZFS ARC |
+| `k8s-node-overview` | Kubernetes nodes: CPU, memory, disk, network (filtered by cluster/node) |
+| `kubernetes-overview` | Kubernetes cluster health, resource usage, pod lifecycle, network, PVC |
 | `proxmox-overview` | Proxmox VE cluster: VM/LXC counts, node and guest resources, storage |
-| `gpu-overview` | AMD RX 9060 XT: activity, VRAM, temperature, power |
-| `dns-overview` | dnsdist + pdns-auth: QPS, cache hit rate, latency, response codes |
-| `network-overview` | SNMP MIB-II: traffic, errors, discards, interface status |
+| `gpu-overview` | AMD RX 9060 XT: activity, VRAM, temperature, power, clock speed |
+| `dns-overview` | dnsdist + pdns-auth: QPS, cache hit rate, latency, response codes, drop rate |
+| `dns-logs` | DNS query logs via Loki: query rate, response codes, top domains, per-host breakdown |
+| `network-overview` | SNMP MIB-II (bgw1/c1200): traffic, errors, discards, interface status |
+| `monitoring-overview` | Prometheus and Loki self-monitoring: scrape targets, TSDB, ingestion rate |
+| `syslog` | Syslog log volume and error rate via Loki |
 | `uptime` | ICMP/DNS probe availability timeline |
 
 ## Structure
@@ -19,12 +24,17 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 .
 ├── cmd/generate/               # Dashboard definitions (Go)
 │   ├── main.go                 # Entrypoint and common functions
-│   ├── node.go                 # node-overview dashboard definition
-│   ├── proxmox.go              # proxmox-overview dashboard definition
-│   ├── gpu.go                  # gpu-overview dashboard definition
-│   ├── dns.go                  # dns-overview dashboard definition
-│   ├── network.go              # network-overview dashboard definition
-│   └── uptime.go               # uptime dashboard definition
+│   ├── node.go                 # node-overview
+│   ├── k8s_node.go             # k8s-node-overview
+│   ├── kubernetes.go           # kubernetes-overview
+│   ├── proxmox.go              # proxmox-overview
+│   ├── gpu.go                  # gpu-overview
+│   ├── dns.go                  # dns-overview
+│   ├── dns_logs.go             # dns-logs
+│   ├── network.go              # network-overview
+│   ├── monitoring.go           # monitoring-overview
+│   ├── syslog.go               # syslog
+│   └── uptime.go               # uptime
 ├── generated/                  # Generated JSON output (git-ignored)
 ├── provisioning/               # Local Grafana provisioning config
 │   ├── datasources/            # Prometheus datasource
