@@ -19,6 +19,10 @@ kube-prometheus-stack:
       enableRemoteWriteReceiver: true
       externalLabels:
         cluster: prd
+      serviceMonitor:
+        metricRelabelings:
+          - targetLabel: cluster
+            replacement: prd
       retention: 30d
       resourceSpec:
         requests:
