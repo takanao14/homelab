@@ -17,11 +17,24 @@
   "schemaVersion": 42,
   "panels": [
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Summary",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "stat",
       "targets": [
         {
-          "expr": "count by (instance) (ifOperStatus{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"} == 1)",
-          "legendFormat": "{{instance}}"
+          "expr": "label_replace(label_replace(count by (instance) (ifOperStatus{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"} == 1), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "legendFormat": "{{device}}"
         }
       ],
       "title": "Interfaces Up",
@@ -32,9 +45,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
+        "w": 6,
         "x": 0,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -48,11 +61,11 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum by (instance) (rate(ifHCInOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8)",
-          "legendFormat": "{{instance}}"
+          "expr": "label_replace(label_replace(count by (instance) (ifOperStatus{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"} != 1) or vector(0), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "legendFormat": "{{device}}"
         }
       ],
-      "title": "Total Traffic In",
+      "title": "Interfaces Down",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -60,14 +73,40 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 8,
-        "y": 0
+        "w": 6,
+        "x": 6,
+        "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "bps"
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
         },
         "overrides": []
       }
@@ -76,11 +115,15 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum by (instance) (rate(ifHCOutOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8)",
-          "legendFormat": "{{instance}}"
+          "expr": "label_replace(label_replace(sum by (instance) (rate(ifHCInOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "legendFormat": "{{device}} In"
+        },
+        {
+          "expr": "label_replace(label_replace(sum by (instance) (rate(ifHCOutOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "legendFormat": "{{device}} Out"
         }
       ],
-      "title": "Total Traffic Out",
+      "title": "Total Traffic",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -88,9 +131,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 16,
-        "y": 0
+        "w": 12,
+        "x": 12,
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -101,14 +144,33 @@
       }
     },
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Traffic",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(ifHCInOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8",
-          "legendFormat": "{{instance}} {{ifDescr}} {{ifAlias}}"
+          "expr": "label_replace(label_replace(sum by (instance) (rate(ifHCInOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "legendFormat": "{{device}} In",
+          "refId": "In"
+        },
+        {
+          "expr": "label_replace(label_replace(sum by (instance) (rate(ifHCOutOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "legendFormat": "{{device}} Out",
+          "refId": "Out"
         }
       ],
-      "title": "Traffic In (bps)",
+      "title": "Traffic (bps)",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -118,54 +180,64 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 4
+        "y": 6
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "Out"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
       }
     },
     {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "rate(ifHCOutOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8",
-          "legendFormat": "{{instance}} {{ifDescr}} {{ifAlias}}"
-        }
-      ],
-      "title": "Traffic Out (bps)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
+      "type": "row",
+      "collapsed": false,
+      "title": "Errors \u0026 Discards",
       "gridPos": {
-        "h": 8,
+        "h": 1,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 14
       },
-      "repeatDirection": "h",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bps"
-        },
-        "overrides": []
-      }
+      "id": 0,
+      "panels": []
     },
     {
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(ifInErrors{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m])",
-          "legendFormat": "{{instance}} {{ifDescr}} In"
+          "expr": "label_replace(label_replace(rate(ifInErrors{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "legendFormat": "{{device}} {{ifDescr}} In"
         },
         {
-          "expr": "rate(ifOutErrors{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m])",
-          "legendFormat": "{{instance}} {{ifDescr}} Out"
+          "expr": "label_replace(label_replace(rate(ifOutErrors{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "legendFormat": "{{device}} {{ifDescr}} Out"
         }
       ],
       "title": "Interface Errors",
@@ -178,9 +250,21 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 20
+        "y": 15
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "pps"
@@ -192,12 +276,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(ifInDiscards{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m])",
-          "legendFormat": "{{instance}} {{ifDescr}} In"
+          "expr": "label_replace(label_replace(rate(ifInDiscards{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "legendFormat": "{{device}} {{ifDescr}} In"
         },
         {
-          "expr": "rate(ifOutDiscards{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m])",
-          "legendFormat": "{{instance}} {{ifDescr}} Out"
+          "expr": "label_replace(label_replace(rate(ifOutDiscards{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "legendFormat": "{{device}} {{ifDescr}} Out"
         }
       ],
       "title": "Interface Discards",
@@ -210,9 +294,21 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 20
+        "y": 15
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "pps"
@@ -237,19 +333,13 @@
         "auto_count": 30
       },
       {
-        "type": "query",
+        "type": "custom",
         "name": "instance",
         "label": "Device",
         "skipUrlSync": false,
-        "query": "label_values(ifHCInOctets, instance)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "$datasource"
-        },
+        "query": "192.168.10.1,192.168.10.2",
         "multi": true,
         "allowCustomValue": true,
-        "refresh": 2,
-        "sort": 1,
         "includeAll": true,
         "auto": false,
         "auto_min": "10s",

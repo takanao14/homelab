@@ -20,8 +20,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count by (instance) (pve_up{id=~\"qemu/.*\", instance=~\"$instance(:.*)?\"} == 1) * on(instance) group_left(name) pve_node_info",
-          "legendFormat": "{{name}}"
+          "expr": "count by (node) ((pve_up{id=~\"qemu/.*\", instance=~\"$instance(:.*)?\"} == 1) * on(id, instance) group_left(node) pve_guest_info)",
+          "legendFormat": "{{node}}"
         }
       ],
       "title": "Running VMs",
@@ -48,11 +48,11 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count by (instance) (pve_up{id=~\"lxc/.*\", instance=~\"$instance(:.*)?\"} == 1) * on(instance) group_left(name) pve_node_info",
-          "legendFormat": "{{name}}"
+          "expr": "sum by (node) ((pve_up{id=~\"qemu/.*\", instance=~\"$instance(:.*)?\"} * on(id, instance) group_left(node) pve_guest_info) == bool 0)",
+          "legendFormat": "{{node}}"
         }
       ],
-      "title": "Running LXCs",
+      "title": "Stopped VMs",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -65,9 +65,35 @@
         "y": 0
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
         },
         "overrides": []
       }
@@ -76,11 +102,11 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "pve_cpu_usage_ratio{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * on(instance) group_left(name) pve_node_info",
-          "legendFormat": "{{name}}"
+          "expr": "count by (node) ((pve_up{id=~\"lxc/.*\", instance=~\"$instance(:.*)?\"} == 1) * on(id, instance) group_left(node) pve_guest_info)",
+          "legendFormat": "{{node}}"
         }
       ],
-      "title": "Node CPU Usage",
+      "title": "Running LXCs",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -95,8 +121,7 @@
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit",
-          "decimals": 1
+          "unit": "short"
         },
         "overrides": []
       }
@@ -105,11 +130,11 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "pve_memory_usage_bytes{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} / pve_memory_size_bytes{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * 100 * on(instance) group_left(name) pve_node_info",
-          "legendFormat": "{{name}}"
+          "expr": "sum by (node) ((pve_up{id=~\"lxc/.*\", instance=~\"$instance(:.*)?\"} * on(id, instance) group_left(node) pve_guest_info) == bool 0)",
+          "legendFormat": "{{node}}"
         }
       ],
-      "title": "Node Memory Usage",
+      "title": "Stopped LXCs",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -122,10 +147,153 @@
         "y": 0
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "pve_cpu_usage_ratio{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * on(id, instance) group_left(name) pve_node_info",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "title": "Node CPU Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 4
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 0.8,
+                "color": "yellow"
+              },
+              {
+                "value": 0.9,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "pve_memory_usage_bytes{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} / pve_memory_size_bytes{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * 100 * on(id, instance) group_left(name) pve_node_info",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "title": "Node Memory Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 4
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "decimals": 1
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "red"
+              }
+            ]
+          }
         },
         "overrides": []
       }
@@ -146,15 +314,45 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 24,
-        "x": 0,
+        "w": 12,
+        "x": 12,
         "y": 4
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "decimals": 1
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "red"
+              }
+            ]
+          }
         },
         "overrides": []
       }
@@ -163,7 +361,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "pve_cpu_usage_ratio{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * on(instance) group_left(name) pve_node_info",
+          "expr": "pve_cpu_usage_ratio{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * on(id, instance) group_left(name) pve_node_info",
           "legendFormat": "{{name}}"
         }
       ],
@@ -180,6 +378,18 @@
         "y": 8
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit"
@@ -191,11 +401,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "pve_memory_usage_bytes{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * on(instance) group_left(name) pve_node_info",
+          "expr": "pve_memory_usage_bytes{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * on(id, instance) group_left(name) pve_node_info",
           "legendFormat": "{{name}} Used"
         },
         {
-          "expr": "pve_memory_size_bytes{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * on(instance) group_left(name) pve_node_info",
+          "expr": "pve_memory_size_bytes{id=~\"node/.*\", instance=~\"$instance(:.*)?\"} * on(id, instance) group_left(name) pve_node_info",
           "legendFormat": "{{name}} Total"
         }
       ],
@@ -212,6 +422,18 @@
         "y": 16
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes"
@@ -223,11 +445,15 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "(label_replace((node_thermal_zone_temp{type=~\"x86_pkg_temp|cpu-thermal\", instance=~\"$instance(:.*)?\"}) or (node_hwmon_temp_celsius{chip=~\".*18_3\", sensor=\"temp3\", instance=~\"$instance(:.*)?\"}), \"addr\", \"$1\", \"instance\", \"(.*):9100\")) * on(addr) group_left(name) (label_replace(pve_node_info, \"addr\", \"$1\", \"instance\", \"(.*)\"))",
-          "legendFormat": "{{name}} CPU {{type}}{{chip}}"
+          "expr": "node_thermal_zone_temp{type=~\"x86_pkg_temp|cpu-thermal\"} * on(instance) group_left(nodename) node_uname_info * on(nodename) group_left(name) label_replace(pve_node_info, \"nodename\", \"$1\", \"name\", \"(.*)\")",
+          "legendFormat": "{{name}} CPU {{type}}"
         },
         {
-          "expr": "(label_replace(smartmon_temperature_celsius_raw_value{instance=~\"$instance(:.*)?\"}, \"addr\", \"$1\", \"instance\", \"(.*):9100\")) * on(addr) group_left(name) (label_replace(pve_node_info, \"addr\", \"$1\", \"instance\", \"(.*)\"))",
+          "expr": "node_hwmon_temp_celsius{chip=~\".*_0000:00:18_.*\", sensor=\"temp1\"} * on(instance) group_left(nodename) node_uname_info * on(nodename) group_left(name) label_replace(pve_node_info, \"nodename\", \"$1\", \"name\", \"(.*)\")",
+          "legendFormat": "{{name}} CPU Tctl"
+        },
+        {
+          "expr": "smartmon_temperature_celsius_raw_value * on(instance) group_left(nodename) node_uname_info * on(nodename) group_left(name) label_replace(pve_node_info, \"nodename\", \"$1\", \"name\", \"(.*)\")",
           "legendFormat": "{{name}} Disk {{device}}"
         }
       ],
@@ -244,6 +470,18 @@
         "y": 24
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "celsius"
@@ -272,6 +510,18 @@
         "y": 32
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit"
@@ -284,7 +534,11 @@
       "targets": [
         {
           "expr": "pve_memory_usage_bytes{id=~\"qemu/.*|lxc/.*\", instance=~\"$instance(:.*)?\"} * on(id, instance) group_left(name) pve_guest_info",
-          "legendFormat": "{{name}}"
+          "legendFormat": "{{name}} Used"
+        },
+        {
+          "expr": "pve_memory_size_bytes{id=~\"qemu/.*|lxc/.*\", instance=~\"$instance(:.*)?\"} * on(id, instance) group_left(name) pve_guest_info",
+          "legendFormat": "{{name}} Total"
         }
       ],
       "title": "Guest Memory Usage",
@@ -300,6 +554,18 @@
         "y": 40
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes"
@@ -332,6 +598,18 @@
         "y": 48
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes"

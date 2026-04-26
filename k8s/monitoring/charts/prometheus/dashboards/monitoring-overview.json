@@ -17,6 +17,19 @@
   "schemaVersion": 42,
   "panels": [
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Prometheus",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "stat",
       "targets": [
         {
@@ -34,7 +47,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -62,9 +75,22 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -89,7 +115,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "ceil(sum(increase(prometheus_notifications_dropped_total{cluster=~\"$cluster\",job=~\"$prometheus_job\"}[5m])))",
+          "expr": "ceil(sum(increase(prometheus_notifications_dropped_total{job=\"$prometheus_job\"}[5m])))",
           "legendFormat": "Dropped"
         }
       ],
@@ -103,9 +129,22 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -130,7 +169,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(prometheus_tsdb_wal_corruptions_total{cluster=~\"$cluster\",job=~\"$prometheus_job\"}) or vector(0)",
+          "expr": "sum(prometheus_tsdb_wal_corruptions_total{job=\"$prometheus_job\"}) or vector(0)",
           "legendFormat": "Corruptions"
         }
       ],
@@ -144,9 +183,22 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -168,10 +220,23 @@
       }
     },
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Loki",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(loki_ingester_memory_streams{job=\"loki\"})",
+          "expr": "sum(loki_ingester_memory_streams{job=\"$loki_job\"})",
           "legendFormat": "Streams"
         }
       ],
@@ -184,8 +249,8 @@
       "gridPos": {
         "h": 4,
         "w": 4,
-        "x": 16,
-        "y": 0
+        "x": 0,
+        "y": 6
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -199,7 +264,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(loki_ingester_chunk_utilization_sum{cluster=~\"$cluster\",job=~\"$loki_job\"}) / sum(loki_ingester_chunk_utilization_count{cluster=~\"$cluster\",job=~\"$loki_job\"})",
+          "expr": "sum(loki_ingester_chunk_utilization_sum{job=\"$loki_job\"}) / sum(loki_ingester_chunk_utilization_count{job=\"$loki_job\"})",
           "legendFormat": "Utilization"
         }
       ],
@@ -212,8 +277,8 @@
       "gridPos": {
         "h": 4,
         "w": 4,
-        "x": 20,
-        "y": 0
+        "x": 4,
+        "y": 6
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -224,11 +289,24 @@
       }
     },
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Prometheus Metrics",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(prometheus_tsdb_head_samples_appended_total{cluster=~\"$cluster\",job=~\"$prometheus_job\"}[5m])",
-          "legendFormat": "samples/s"
+          "expr": "rate(prometheus_tsdb_head_samples_appended_total{job=\"$prometheus_job\"}[5m])",
+          "legendFormat": "{{cluster}} samples/s"
         }
       ],
       "title": "Sample Ingestion Rate",
@@ -241,9 +319,21 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 4
+        "y": 11
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -255,12 +345,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "prometheus_tsdb_storage_blocks_bytes{cluster=~\"$cluster\",job=~\"$prometheus_job\"}",
-          "legendFormat": "Blocks"
+          "expr": "prometheus_tsdb_storage_blocks_bytes{job=\"$prometheus_job\"}",
+          "legendFormat": "{{cluster}} Blocks"
         },
         {
-          "expr": "prometheus_tsdb_head_chunks{cluster=~\"$cluster\",job=~\"$prometheus_job\"} * 1024",
-          "legendFormat": "Head (est.)"
+          "expr": "prometheus_tsdb_head_chunks{job=\"$prometheus_job\"} * 1024",
+          "legendFormat": "{{cluster}} Head (est.)"
         }
       ],
       "title": "TSDB Size",
@@ -273,9 +363,21 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 4
+        "y": 11
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes"
@@ -287,8 +389,48 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum by (le, slice) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{cluster=~\"$cluster\",job=~\"$prometheus_job\"}[5m])))",
-          "legendFormat": "{{slice}}"
+          "expr": "prometheus_tsdb_head_series{job=\"$prometheus_job\"}",
+          "legendFormat": "{{cluster}}"
+        }
+      ],
+      "title": "Active Series",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, slice) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{job=\"$prometheus_job\"}[5m])))",
+          "legendFormat": "{{cluster}} {{slice}}"
         }
       ],
       "title": "Query Duration p99",
@@ -300,10 +442,22 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 12
+        "x": 12,
+        "y": 19
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "s"
@@ -328,8 +482,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 12
+        "x": 0,
+        "y": 27
       },
       "repeatDirection": "h",
       "options": {
@@ -364,7 +518,72 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum(rate(loki_distributor_bytes_received_total{cluster=~\"$cluster\",job=~\"$loki_job\"}[5m]))",
+          "expr": "rate(prometheus_target_scrapes_exceeded_sample_limit_total{job=\"$prometheus_job\"}[5m])",
+          "legendFormat": "{{cluster}} sample limit exceeded"
+        },
+        {
+          "expr": "rate(prometheus_target_scrapes_sample_duplicate_timestamp_total{job=\"$prometheus_job\"}[5m])",
+          "legendFormat": "{{cluster}} duplicate timestamp"
+        },
+        {
+          "expr": "rate(prometheus_target_scrapes_sample_out_of_order_total{job=\"$prometheus_job\"}[5m])",
+          "legendFormat": "{{cluster}} out of order"
+        },
+        {
+          "expr": "rate(prometheus_target_scrapes_sample_out_of_bounds_total{job=\"$prometheus_job\"}[5m])",
+          "legendFormat": "{{cluster}} out of bounds"
+        }
+      ],
+      "title": "Scrape Errors",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 12,
+        "y": 27
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Loki Metrics",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(loki_distributor_bytes_received_total{job=\"$loki_job\"}[5m]))",
           "legendFormat": "bytes/s"
         }
       ],
@@ -378,9 +597,21 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 20
+        "y": 36
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "Bps"
@@ -392,7 +623,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum(rate(loki_distributor_lines_received_total{cluster=~\"$cluster\",job=~\"$loki_job\"}[5m]))",
+          "expr": "sum(rate(loki_distributor_lines_received_total{job=\"$loki_job\"}[5m]))",
           "legendFormat": "lines/s"
         }
       ],
@@ -406,9 +637,21 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 20
+        "y": 36
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -420,7 +663,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum by (le, route) (rate(loki_request_duration_seconds_bucket{cluster=~\"$cluster\",job=~\"$loki_job\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le, route) (rate(loki_request_duration_seconds_bucket{job=\"$loki_job\", route!~\"ready|/grpc\\\\..*|/frontendv2pb\\\\..*|/logproto\\\\..*\"}[5m])))",
           "legendFormat": "{{route}}"
         }
       ],
@@ -434,9 +677,21 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 28
+        "y": 44
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "s"
@@ -448,11 +703,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum(loki_ingester_memory_streams{cluster=~\"$cluster\",job=~\"$loki_job\"})",
+          "expr": "sum(loki_ingester_memory_streams{job=\"$loki_job\"})",
           "legendFormat": "Streams"
         }
       ],
-      "title": "Loki Active Streams",
+      "title": "Loki Active Streams over Time",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -462,9 +717,21 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 28
+        "y": 44
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -490,29 +757,10 @@
       },
       {
         "type": "query",
-        "name": "cluster",
-        "label": "Cluster",
-        "skipUrlSync": false,
-        "query": "label_values(kube_node_info, cluster)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "$datasource"
-        },
-        "multi": true,
-        "allowCustomValue": true,
-        "refresh": 2,
-        "sort": 1,
-        "includeAll": true,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
-      },
-      {
-        "type": "query",
         "name": "prometheus_job",
         "label": "Prometheus Job",
         "skipUrlSync": false,
-        "query": "label_values(prometheus_build_info{cluster=~\"$cluster\"}, job)",
+        "query": "label_values(prometheus_build_info, job)",
         "datasource": {
           "type": "prometheus",
           "uid": "$datasource"
@@ -531,7 +779,7 @@
         "name": "loki_job",
         "label": "Loki Job",
         "skipUrlSync": false,
-        "query": "label_values(loki_build_info{cluster=~\"$cluster\"}, job)",
+        "query": "label_values(loki_build_info, job)",
         "datasource": {
           "type": "prometheus",
           "uid": "$datasource"

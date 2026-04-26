@@ -18,11 +18,122 @@
   "schemaVersion": 42,
   "panels": [
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Summary",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})) * 100)",
+          "legendFormat": "{{nodename}}"
+        }
+      ],
+      "title": "CPU Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "(1 - node_memory_MemAvailable_bytes{cluster=~\"$cluster\"} / node_memory_MemTotal_bytes{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}) * 100",
+          "legendFormat": "{{nodename}}"
+        }
+      ],
+      "title": "Memory Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1
+        },
+        "overrides": []
+      }
+    },
+    {
       "type": "stat",
       "targets": [
         {
-          "expr": "sum by (node) (kubelet_running_pods{cluster=~\"$cluster\",node=~\"$node\"})",
-          "legendFormat": "{{node}}"
+          "expr": "sum by (nodename) (kubelet_running_pods{cluster=~\"$cluster\"} * on(node) group_left(nodename) (label_replace(node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}, \"node\", \"$1\", \"nodename\", \"(.*)\")))",
+          "legendFormat": "{{nodename}}"
         }
       ],
       "title": "Pods Running",
@@ -35,12 +146,13 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 0
+        "y": 7
       },
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "min": 0
         },
         "overrides": []
       }
@@ -49,8 +161,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count by (node) (node_cpu_seconds_total{cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"})",
-          "legendFormat": "{{node}}"
+          "expr": "count by (nodename) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+          "legendFormat": "{{nodename}}"
         }
       ],
       "title": "CPU Cores",
@@ -63,12 +175,13 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 0
+        "y": 7
       },
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "min": 0
         },
         "overrides": []
       }
@@ -77,8 +190,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "node_memory_MemTotal_bytes{cluster=~\"$cluster\",node=~\"$node\"}",
-          "legendFormat": "{{node}}"
+          "expr": "node_memory_MemTotal_bytes{cluster=~\"$cluster\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}}"
         }
       ],
       "title": "Memory Total",
@@ -91,12 +204,13 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 0
+        "y": 7
       },
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "min": 0
         },
         "overrides": []
       }
@@ -105,8 +219,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "time() - node_boot_time_seconds{cluster=~\"$cluster\",node=~\"$node\"}",
-          "legendFormat": "{{node}}"
+          "expr": "(time() - node_boot_time_seconds{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}}"
         }
       ],
       "title": "Uptime",
@@ -119,22 +233,65 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 0
+        "y": 7
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 3600,
+                "color": "yellow"
+              },
+              {
+                "value": 86400,
+                "color": "green"
+              }
+            ]
+          }
         },
         "overrides": []
       }
     },
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "CPU",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "timeseries",
       "targets": [
         {
-          "expr": "100 - (avg by (node) (rate(node_cpu_seconds_total{cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"}[5m])) * 100)",
-          "legendFormat": "{{node}}"
+          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})) * 100)",
+          "legendFormat": "{{nodename}}"
         }
       ],
       "title": "CPU Usage (%)",
@@ -147,9 +304,21 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 4
+        "y": 12
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent"
@@ -161,16 +330,16 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "node_load1{cluster=~\"$cluster\",node=~\"$node\"}",
-          "legendFormat": "{{node}} 1m"
+          "expr": "node_load1{cluster=~\"$cluster\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}} 1m"
         },
         {
-          "expr": "node_load5{cluster=~\"$cluster\",node=~\"$node\"}",
-          "legendFormat": "{{node}} 5m"
+          "expr": "node_load5{cluster=~\"$cluster\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}} 5m"
         },
         {
-          "expr": "node_load15{cluster=~\"$cluster\",node=~\"$node\"}",
-          "legendFormat": "{{node}} 15m"
+          "expr": "node_load15{cluster=~\"$cluster\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}} 15m"
         }
       ],
       "title": "Load Average",
@@ -183,26 +352,88 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 20
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* 5m$"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    4,
+                    4
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* 15m$"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    8,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          }
+        ]
       }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Memory",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "id": 0,
+      "panels": []
     },
     {
       "type": "timeseries",
       "targets": [
         {
-          "expr": "node_memory_MemTotal_bytes{cluster=~\"$cluster\",node=~\"$node\"} - node_memory_MemAvailable_bytes{cluster=~\"$cluster\",node=~\"$node\"}",
-          "legendFormat": "{{node}} Used"
+          "expr": "(node_memory_MemTotal_bytes{cluster=~\"$cluster\"} - node_memory_MemAvailable_bytes{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}} Used"
         },
         {
-          "expr": "node_memory_MemAvailable_bytes{cluster=~\"$cluster\",node=~\"$node\"}",
-          "legendFormat": "{{node}} Available"
+          "expr": "node_memory_MemAvailable_bytes{cluster=~\"$cluster\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}} Available"
         }
       ],
       "title": "Memory Usage",
@@ -215,9 +446,21 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 29
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes"
@@ -226,11 +469,24 @@
       }
     },
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Disk",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 37
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc((1 - node_filesystem_avail_bytes{cluster=~\"$cluster\",node=~\"$node\",fstype!=\"tmpfs\"} / node_filesystem_size_bytes{cluster=~\"$cluster\",node=~\"$node\",fstype!=\"tmpfs\"}) * 100)",
-          "legendFormat": "{{node}} {{mountpoint}}"
+          "expr": "sort_desc((1 - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\"} / node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}) * 100)",
+          "legendFormat": "{{nodename}} {{mountpoint}}"
         }
       ],
       "title": "Filesystem Usage (%)",
@@ -243,9 +499,29 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 28
+        "y": 38
       },
       "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -258,12 +534,56 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(node_disk_read_bytes_total{cluster=~\"$cluster\",node=~\"$node\",device!~\"dm-.*\"}[5m])",
-          "legendFormat": "{{node}} {{device}} Read"
+          "expr": "(node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\"} - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}} {{mountpoint}} Used"
         },
         {
-          "expr": "rate(node_disk_written_bytes_total{cluster=~\"$cluster\",node=~\"$node\",device!~\"dm-.*\"}[5m])",
-          "legendFormat": "{{node}} {{device}} Write"
+          "expr": "node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}} {{mountpoint}} Total"
+        }
+      ],
+      "title": "Disk Space Used",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 38
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(node_disk_read_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}} {{device}} Read"
+        },
+        {
+          "expr": "rate(node_disk_written_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}} {{device}} Write"
         }
       ],
       "title": "Disk I/O",
@@ -274,11 +594,23 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 28
+        "w": 24,
+        "x": 0,
+        "y": 46
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "Bps"
@@ -287,15 +619,30 @@
       }
     },
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Network",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 54
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(node_network_receive_bytes_total{cluster=~\"$cluster\",node=~\"$node\",device!=\"lo\"}[5m])",
-          "legendFormat": "{{node}} {{device}} Rx"
+          "expr": "sum by (nodename) (rate(node_network_receive_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*\"} [5m]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+          "legendFormat": "{{nodename}} Rx",
+          "refId": "Rx"
         },
         {
-          "expr": "rate(node_network_transmit_bytes_total{cluster=~\"$cluster\",node=~\"$node\",device!=\"lo\"}[5m])",
-          "legendFormat": "{{node}} {{device}} Tx"
+          "expr": "sum by (nodename) (rate(node_network_transmit_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+          "legendFormat": "{{nodename}} Tx",
+          "refId": "Tx"
         }
       ],
       "title": "Network I/O",
@@ -305,17 +652,42 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 8,
+        "h": 12,
         "w": 24,
         "x": 0,
-        "y": 36
+        "y": 55
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "Bps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "Tx"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
       }
     }
   ],
@@ -339,7 +711,7 @@
         "name": "cluster",
         "label": "Cluster",
         "skipUrlSync": false,
-        "query": "label_values(kube_node_info, cluster)",
+        "query": "label_values(node_uname_info, cluster)",
         "datasource": {
           "type": "prometheus",
           "uid": "$datasource"
@@ -358,7 +730,7 @@
         "name": "node",
         "label": "Node",
         "skipUrlSync": false,
-        "query": "label_values(kube_node_info{cluster=~\"$cluster\"}, node)",
+        "query": "label_values(node_uname_info{cluster=~\"$cluster\"}, nodename)",
         "datasource": {
           "type": "prometheus",
           "uid": "$datasource"

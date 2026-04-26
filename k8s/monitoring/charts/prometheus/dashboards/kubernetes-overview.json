@@ -17,6 +17,19 @@
   "schemaVersion": 42,
   "panels": [
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Cluster Health",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "stat",
       "targets": [
         {
@@ -32,9 +45,37 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
+        "w": 3,
         "x": 0,
-        "y": 0
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count(kube_node_info{cluster=~\"$cluster\"})",
+          "legendFormat": "Total"
+        }
+      ],
+      "title": "Nodes Total",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 3,
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -60,9 +101,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 4,
-        "y": 0
+        "w": 3,
+        "x": 6,
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -88,11 +129,24 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 8,
-        "y": 0
+        "w": 3,
+        "x": 9,
+        "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -131,7 +185,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -159,9 +213,22 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -200,9 +267,22 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -241,9 +321,22 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 4
+        "y": 5
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -282,9 +375,22 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 4
+        "y": 5
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -323,9 +429,22 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 4
+        "y": 5
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -364,9 +483,22 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 4
+        "y": 5
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -388,6 +520,19 @@
       }
     },
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Resource Usage",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "timeseries",
       "targets": [
         {
@@ -405,9 +550,21 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 10
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -433,15 +590,40 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 10
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes"
         },
         "overrides": []
       }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Resource Requests vs Actual",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 0,
+      "panels": []
     },
     {
       "type": "timeseries",
@@ -465,12 +647,24 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 16
+        "y": 19
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "none"
         },
         "overrides": []
       }
@@ -497,9 +691,21 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 16
+        "y": 19
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes"
@@ -549,7 +755,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 27
       },
       "repeatDirection": "h",
       "transformations": [
@@ -593,7 +799,7 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "short"
+                "value": "none"
               },
               {
                 "id": "decimals",
@@ -609,7 +815,7 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "short"
+                "value": "none"
               },
               {
                 "id": "decimals",
@@ -645,6 +851,19 @@
       }
     },
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Pod Health",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 37
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "timeseries",
       "targets": [
         {
@@ -662,9 +881,21 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 34
+        "y": 38
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -680,7 +911,7 @@
           "legendFormat": "{{namespace}}/{{pod}}/{{container}}"
         }
       ],
-      "title": "Container Restarts (1h)",
+      "title": "Top Restarting Containers (1h)",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -690,7 +921,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 34
+        "y": 38
       },
       "repeatDirection": "h",
       "options": {
@@ -722,60 +953,89 @@
       }
     },
     {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (namespace) (rate(container_network_receive_bytes_total{cluster=~\"$cluster\",namespace=~\"$namespace\",pod!=\"\"}[5m]))",
-          "legendFormat": "{{namespace}}"
-        }
-      ],
-      "title": "Network Receive by Namespace",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
+      "type": "row",
+      "collapsed": false,
+      "title": "Network",
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 1,
+        "w": 24,
         "x": 0,
-        "y": 42
+        "y": 46
       },
-      "repeatDirection": "h",
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps"
-        },
-        "overrides": []
-      }
+      "id": 0,
+      "panels": []
     },
     {
       "type": "timeseries",
       "targets": [
         {
+          "expr": "sum by (namespace) (rate(container_network_receive_bytes_total{cluster=~\"$cluster\",namespace=~\"$namespace\",pod!=\"\"}[5m]))",
+          "legendFormat": "{{namespace}} Rx",
+          "refId": "Rx"
+        },
+        {
           "expr": "sum by (namespace) (rate(container_network_transmit_bytes_total{cluster=~\"$cluster\",namespace=~\"$namespace\",pod!=\"\"}[5m]))",
-          "legendFormat": "{{namespace}}"
+          "legendFormat": "{{namespace}} Tx",
+          "refId": "Tx"
         }
       ],
-      "title": "Network Transmit by Namespace",
+      "title": "Network I/O by Namespace",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 42
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 47
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "Bps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "Tx"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
       }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Storage",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 59
+      },
+      "id": 0,
+      "panels": []
     },
     {
       "type": "bargauge",
@@ -795,7 +1055,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 50
+        "y": 60
       },
       "repeatDirection": "h",
       "options": {
@@ -844,7 +1104,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 50
+        "y": 60
       },
       "repeatDirection": "h",
       "options": {

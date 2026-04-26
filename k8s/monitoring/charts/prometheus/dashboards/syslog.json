@@ -151,7 +151,14 @@
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10,
+            "stacking": {
+              "mode": "normal"
+            },
+            "spanNulls": true
+          }
         },
         "overrides": []
       }
@@ -179,7 +186,14 @@
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10,
+            "stacking": {
+              "mode": "normal"
+            },
+            "spanNulls": true
+          }
         },
         "overrides": []
       }
@@ -207,7 +221,14 @@
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10,
+            "stacking": {
+              "mode": "normal"
+            },
+            "spanNulls": true
+          }
         },
         "overrides": []
       }
@@ -235,7 +256,14 @@
       "repeatDirection": "h",
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 10,
+            "stacking": {
+              "mode": "normal"
+            },
+            "spanNulls": true
+          }
         },
         "overrides": []
       }

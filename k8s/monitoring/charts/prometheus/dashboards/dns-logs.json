@@ -18,6 +18,19 @@
   "schemaVersion": 42,
   "panels": [
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Summary",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "stat",
       "targets": [
         {
@@ -35,7 +48,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -63,7 +76,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -91,7 +104,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -105,7 +118,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | network_query_ip != \"\" [1h])",
+          "expr": "count(sum by (network_query_ip) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | network_query_ip != \"\" [$__range])))",
           "legendFormat": "clients"
         }
       ],
@@ -119,7 +132,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -128,6 +141,19 @@
         },
         "overrides": []
       }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Query Trends",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 0,
+      "panels": []
     },
     {
       "type": "timeseries",
@@ -147,12 +173,30 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 4
+        "y": 6
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 10,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
         },
         "overrides": []
       }
@@ -175,15 +219,216 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 4
+        "y": 6
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 10,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NOERROR"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NXDOMAIN"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "SERVFAIL"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "REFUSED"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Top Domains",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "topk(10, sum by (dns_qname) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_qname != \"\" [5m])))",
+          "legendFormat": "{{dns_qname}}"
+        }
+      ],
+      "title": "Top Queried Domains",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 15
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
         },
         "overrides": []
       }
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "topk(10, sum by (dns_qname) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_qname != \"\" | dns_rcode=\"NXDOMAIN\" [5m])))",
+          "legendFormat": "{{dns_qname}}"
+        }
+      ],
+      "title": "Top NXDOMAIN Queries",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 15
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "By Host",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "id": 0,
+      "panels": []
     },
     {
       "type": "timeseries",
@@ -203,9 +448,21 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 12
+        "y": 26
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "reqps"
@@ -231,15 +488,80 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 12
+        "y": 26
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "reqps"
         },
         "overrides": []
       }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_rcode=\"SERVFAIL\" [5m]))",
+          "legendFormat": "{{host}}"
+        }
+      ],
+      "title": "SERVFAIL Rate by Host",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 34
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Logs",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "id": 0,
+      "panels": []
     },
     {
       "type": "logs",
@@ -259,7 +581,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 43
       },
       "repeatDirection": "h"
     }
@@ -284,7 +606,7 @@
         "name": "host",
         "label": "Host",
         "skipUrlSync": false,
-        "query": "label_values(host)",
+        "query": "label_values({job=\"dns\"}, host)",
         "datasource": {
           "type": "loki",
           "uid": "$datasource"

@@ -9,13 +9,26 @@
   "editable": true,
   "graphTooltip": 1,
   "time": {
-    "from": "now-1d",
+    "from": "now-1h",
     "to": "now"
   },
   "fiscalYearStartMonth": 0,
   "refresh": "30s",
   "schemaVersion": 42,
   "panels": [
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "dnsdist",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 0,
+      "panels": []
+    },
     {
       "type": "stat",
       "targets": [
@@ -32,9 +45,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
+        "w": 8,
         "x": 0,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -61,9 +74,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 6,
-        "y": 0
+        "w": 8,
+        "x": 8,
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -90,18 +103,61 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 0
+        "w": 8,
+        "x": 16,
+        "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "µs",
-          "decimals": 1
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 50000,
+                "color": "yellow"
+              },
+              {
+                "value": 150000,
+                "color": "red"
+              }
+            ]
+          }
         },
         "overrides": []
       }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "pdns-auth",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 0,
+      "panels": []
     },
     {
       "type": "stat",
@@ -119,9 +175,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 0
+        "w": 12,
+        "x": 0,
+        "y": 6
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -133,18 +189,90 @@
       }
     },
     {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "avg(pdns_auth_latency{job=\"scrapeConfig/monitoring/pdns-auth-external\"})",
+          "legendFormat": "Avg Latency"
+        }
+      ],
+      "title": "pdns-auth Avg Latency",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "µs",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 50000,
+                "color": "yellow"
+              },
+              {
+                "value": 150000,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "dnsdist Metrics",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])",
-          "legendFormat": "{{instance}} Queries"
+          "expr": "label_replace(label_replace(rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "legendFormat": "{{server}} Queries"
         },
         {
-          "expr": "rate(dnsdist_responses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])",
-          "legendFormat": "{{instance}} Responses"
+          "expr": "label_replace(label_replace(rate(dnsdist_responses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "legendFormat": "{{server}} Responses"
         }
       ],
-      "title": "dnsdist Query Rate",
+      "title": "dnsdist Query/Response Rate",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -154,9 +282,21 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 4
+        "y": 11
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "reqps"
@@ -168,16 +308,20 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(dnsdist_frontend_noerror{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])",
-          "legendFormat": "{{instance}} NOERROR"
+          "expr": "sum(rate(dnsdist_frontend_noerror{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]))",
+          "legendFormat": "NOERROR"
         },
         {
-          "expr": "rate(dnsdist_frontend_nxdomain{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])",
-          "legendFormat": "{{instance}} NXDOMAIN"
+          "expr": "sum(rate(dnsdist_frontend_nxdomain{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]))",
+          "legendFormat": "NXDOMAIN"
         },
         {
-          "expr": "rate(dnsdist_frontend_servfail{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])",
-          "legendFormat": "{{instance}} SERVFAIL"
+          "expr": "sum(rate(dnsdist_frontend_servfail{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]))",
+          "legendFormat": "SERVFAIL"
+        },
+        {
+          "expr": "sum(rate(dnsdist_frontend_refused{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]))",
+          "legendFormat": "REFUSED"
         }
       ],
       "title": "dnsdist Response Codes",
@@ -190,26 +334,105 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 19
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 10,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NOERROR"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NXDOMAIN"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "SERVFAIL"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "REFUSED"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       }
     },
     {
       "type": "timeseries",
       "targets": [
         {
-          "expr": "dnsdist_latency_avg100{job=\"scrapeConfig/monitoring/dnsdist-external\"}",
-          "legendFormat": "{{instance}} avg100"
+          "expr": "label_replace(label_replace(dnsdist_latency_avg100{job=\"scrapeConfig/monitoring/dnsdist-external\"}, \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "legendFormat": "{{server}} avg100"
         },
         {
-          "expr": "dnsdist_latency_avg1000{job=\"scrapeConfig/monitoring/dnsdist-external\"}",
-          "legendFormat": "{{instance}} avg1000"
+          "expr": "label_replace(label_replace(dnsdist_latency_avg1000{job=\"scrapeConfig/monitoring/dnsdist-external\"}, \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "legendFormat": "{{server}} avg1000"
         }
       ],
       "title": "dnsdist Latency",
@@ -222,29 +445,81 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 20
+        "y": 27
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "µs"
+          "unit": "µs",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 50000,
+                "color": "yellow"
+              },
+              {
+                "value": 150000,
+                "color": "red"
+              }
+            ]
+          }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*avg1000.*"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    4,
+                    4
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "fillOpacity",
+                "value": 10
+              }
+            ]
+          }
+        ]
       }
     },
     {
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])",
-          "legendFormat": "{{instance}} Hits"
-        },
-        {
-          "expr": "rate(dnsdist_cache_misses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])",
-          "legendFormat": "{{instance}} Misses"
+          "expr": "label_replace(label_replace(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]) / clamp_min(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]) + rate(dnsdist_cache_misses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), 1) * 100, \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "legendFormat": "{{server}}"
         }
       ],
-      "title": "dnsdist Cache",
+      "title": "dnsdist Cache Hit Rate",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -254,12 +529,24 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 20
+        "y": 27
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "percent"
         },
         "overrides": []
       }
@@ -268,12 +555,79 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(pdns_auth_udp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m])",
-          "legendFormat": "{{instance}} UDP"
+          "expr": "label_replace(label_replace(rate(dnsdist_acl_drops{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "legendFormat": "{{server}} ACL Drop"
         },
         {
-          "expr": "rate(pdns_auth_tcp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m])",
-          "legendFormat": "{{instance}} TCP"
+          "expr": "label_replace(label_replace(rate(dnsdist_rule_drops{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "legendFormat": "{{server}} Rule Drop"
+        },
+        {
+          "expr": "label_replace(label_replace(rate(dnsdist_dynamic_blocked{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "legendFormat": "{{server}} Dynamic Block"
+        }
+      ],
+      "title": "dnsdist Drop Rate",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 10,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "pdns-auth Metrics",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 43
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "label_replace(label_replace(rate(pdns_auth_udp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "legendFormat": "{{server}} UDP"
+        },
+        {
+          "expr": "label_replace(label_replace(rate(pdns_auth_tcp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "legendFormat": "{{server}} TCP"
         }
       ],
       "title": "pdns-auth Query Rate",
@@ -286,9 +640,21 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 28
+        "y": 44
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "reqps"
@@ -300,16 +666,20 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(pdns_auth_noerror_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m])",
-          "legendFormat": "{{instance}} NOERROR"
+          "expr": "sum(rate(pdns_auth_noerror_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]))",
+          "legendFormat": "NOERROR"
         },
         {
-          "expr": "rate(pdns_auth_nxdomain_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m])",
-          "legendFormat": "{{instance}} NXDOMAIN"
+          "expr": "sum(rate(pdns_auth_nxdomain_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]))",
+          "legendFormat": "NXDOMAIN"
         },
         {
-          "expr": "rate(pdns_auth_servfail_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m])",
-          "legendFormat": "{{instance}} SERVFAIL"
+          "expr": "sum(rate(pdns_auth_servfail_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]))",
+          "legendFormat": "SERVFAIL"
+        },
+        {
+          "expr": "sum(rate(pdns_auth_refused_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]))",
+          "legendFormat": "REFUSED"
         }
       ],
       "title": "pdns-auth Response Codes",
@@ -320,24 +690,103 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
-        "y": 36
+        "y": 52
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 10,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NOERROR"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NXDOMAIN"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "SERVFAIL"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "REFUSED"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       }
     },
     {
       "type": "timeseries",
       "targets": [
         {
-          "expr": "pdns_auth_latency{job=\"scrapeConfig/monitoring/pdns-auth-external\"}",
-          "legendFormat": "{{instance}}"
+          "expr": "label_replace(label_replace(pdns_auth_latency{job=\"scrapeConfig/monitoring/pdns-auth-external\"}, \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "legendFormat": "{{server}}"
         }
       ],
       "title": "pdns-auth Latency",
@@ -349,13 +798,99 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 36
+        "x": 0,
+        "y": 60
       },
       "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
       "fieldConfig": {
         "defaults": {
-          "unit": "µs"
+          "unit": "µs",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 50000,
+                "color": "yellow"
+              },
+              {
+                "value": 150000,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "label_replace(label_replace(pdns_auth_backend_latency{job=\"scrapeConfig/monitoring/pdns-auth-external\"}, \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "legendFormat": "{{server}}"
+        }
+      ],
+      "title": "pdns-auth Backend Latency",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 60
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "µs",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 50000,
+                "color": "yellow"
+              },
+              {
+                "value": 150000,
+                "color": "red"
+              }
+            ]
+          }
         },
         "overrides": []
       }
