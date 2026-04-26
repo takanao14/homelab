@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=dmachard/DNS-collector
-dnscollector_version: "2.2.1"
+dnscollector_version: "2.2.2"
 dnscollector_loki_url: "{{ loki_endpoint }}"
 dnscollector_dnsdist_socket: "/run/dnstap-dnsdist.sock"
 dnscollector_debug: false
