@@ -19,10 +19,6 @@ kube-prometheus-stack:
       enableRemoteWriteReceiver: true
       externalLabels:
         cluster: prd
-      serviceMonitor:
-        metricRelabelings:
-          - targetLabel: cluster
-            replacement: prd
       retention: 30d
       resourceSpec:
         requests:
@@ -35,6 +31,10 @@ kube-prometheus-stack:
             resources:
               requests:
                 storage: 10Gi
+    serviceMonitor:
+      metricRelabelings:
+        - targetLabel: cluster
+          replacement: prd
     service:
       type: ClusterIP
 
