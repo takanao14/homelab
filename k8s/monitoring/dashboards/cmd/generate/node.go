@@ -17,9 +17,15 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 	// (nodename) in the UI and hide $instance (IP:port) resolved from it.
 	// joinNodename copies nodename onto query results so legends show hostnames.
 	const (
-		instFilter   = `instance=~"$instance"`
-		joinNodename = `* on(instance) group_left(nodename) node_uname_info`
+		instFilter = `instance=~"$instance"`
+		// max by deduplicates node_uname_info if the same instance is scraped by multiple jobs.
+		joinNodename = `* on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)`
+		// normByCPU divides by the number of logical CPUs so load values are expressed
+		// as a fraction of total capacity (1.0 = fully loaded, >1.0 = overloaded).
+		normByCPU = `/ on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode="idle", ` + instFilter + `})`
 	)
+
+	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
 
 	d, err := dashboard.NewDashboardBuilder("Node Overview").
 		Uid("node-overview").
@@ -33,12 +39,13 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Label("Datasource").
 				Type("prometheus"),
 		).
-		// Exclude k0s-worker1 (Kubernetes node monitored via kube-state-metrics).
+		// Bare-metal nodes only: filtered by scrapeConfig job to exclude k8s/VM nodes.
+		// nodename!="gpuvm" is required to filter out stale data from when gpuvm was misconfigured.
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("node").
 				Label("Node").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(node_uname_info{nodename!="k0s-worker1"}, nodename)`)}).
+				Query(dashboard.StringOrMap{String: strPtr(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm"}, nodename)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -49,12 +56,13 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("instance").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(node_uname_info{nodename=~"$node"}, instance)`)}).
+				Query(dashboard.StringOrMap{String: strPtr(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm",nodename=~"$node"}, instance)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Multi(true).
 				IncludeAll(true).
 				Hide(dashboard.VariableHideHideVariable),
 		).
+		WithRow(dashboard.NewRowBuilder("Summary")).
 		WithPanel(
 			bargauge.NewPanelBuilder().
 				Title("CPU Usage").
@@ -81,36 +89,54 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
-				Title("Load Average (1m)").
+				Title("Load Average (1m) per CPU").
 				Datasource(ds).
-				Span(12).Height(8).
-				Unit("short").
+				Span(12).Height(4).
+				Unit("percentunit").
+				Orientation(common.VizOrientationAuto).
+				ColorMode(common.BigValueColorModeBackground).
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "green"},
+						{Value: float64Ptr(0.7), Color: "yellow"},
+						{Value: float64Ptr(1.0), Color: "red"},
+					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`node_load1{` + instFilter + `} ` + joinNodename).
+					Expr(`(node_load1{` + instFilter + `} ` + normByCPU + `) ` + joinNodename).
 					LegendFormat("{{nodename}}"),
-				).Decimals(2),
+				).Decimals(0),
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Uptime").
 				Datasource(ds).
-				Span(12).Height(8).
+				Span(12).Height(4).
 				Unit("s").
 				GraphMode(common.BigValueGraphModeNone).
 				Orientation(common.VizOrientationAuto).
 				ColorMode(common.BigValueColorModeBackground).
-				ColorScheme(dashboard.NewFieldColorBuilder().Mode(dashboard.FieldColorModeIdContinuousRdYlGr)).
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "red"},
+						{Value: float64Ptr(3600), Color: "yellow"},
+						{Value: float64Ptr(86400), Color: "green"},
+					}),
+				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(node_time_seconds{` + instFilter + `} - node_boot_time_seconds{` + instFilter + `}) ` + joinNodename).
+					Expr(`(time() - node_boot_time_seconds{` + instFilter + `}) ` + joinNodename).
 					LegendFormat("{{nodename}}"),
 				).Decimals(2),
 		).
+		WithRow(dashboard.NewRowBuilder("CPU")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("CPU Usage (%)").
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("percent").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + instFilter + `}[5m]) ` + joinNodename + `) * 100)`).
 					LegendFormat("{{nodename}}"),
@@ -118,49 +144,42 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().
-				Title("Load Average").
+				Title("Load Average per CPU (1m)").
 				Datasource(ds).
 				Span(24).Height(8).
-				Unit("short").
+				Unit("percentunit").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`node_load1{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} 1m"),
-				).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`node_load5{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} 5m"),
-				).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`node_load15{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} 15m"),
+					Expr(`(node_load1{` + instFilter + `} ` + normByCPU + `) ` + joinNodename).
+					LegendFormat("{{nodename}}"),
 				),
 		).
 		// Used = Total - Available (buffers/cache are included in Available).
+		WithRow(dashboard.NewRowBuilder("Memory")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Memory Used").
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("bytes").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(node_memory_MemTotal_bytes{` + instFilter + `} - node_memory_MemAvailable_bytes{` + instFilter + `}) ` + joinNodename).
-					LegendFormat("{{nodename}} Used"),
-				).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`node_memory_MemAvailable_bytes{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} Available"),
+					LegendFormat("{{nodename}}"),
 				),
 		).
+		WithRow(dashboard.NewRowBuilder("Temperature & Throttling")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Temperature").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("celsius").
-				// CPU temp: x86 Package (Intel), cpu-thermal (RPi), or k10temp chip (Ryzen)
+				Tooltip(tooltipAll).
+				// CPU temp: x86 Package (Intel), cpu-thermal (RPi), or k10temp Tctl (Ryzen, PCI device 0000:00:18.x)
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`((node_thermal_zone_temp{type=~"x86_pkg_temp|cpu-thermal", ` + instFilter + `}) or (node_hwmon_temp_celsius{chip=~".*18_3", sensor="temp3", ` + instFilter + `})) ` + joinNodename).
-					LegendFormat("{{nodename}} CPU {{type}}{{chip}}"),
+					Expr(`((label_replace(node_thermal_zone_temp{type=~"x86_pkg_temp|cpu-thermal", ` + instFilter + `}, "sensor", "$1", "type", "(.*)")) or (label_replace(node_hwmon_temp_celsius{chip=~".*_0000:00:18_.*", sensor="temp1", ` + instFilter + `}, "sensor", "cpu", "", ""))) ` + joinNodename).
+					LegendFormat("{{nodename}} CPU {{sensor}}"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(nvme_temperature_celsius{` + instFilter + `}) ` + joinNodename).
@@ -177,6 +196,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("ops").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(rate(node_cpu_package_throttles_total{` + instFilter + `}[5m])) ` + joinNodename).
 					LegendFormat("{{nodename}} Throttles"),
@@ -198,57 +218,125 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{nodename}} RPi Under Voltage Occurred"),
 				),
 		).
-		// Exclude dm-* (device mapper / LVM virtual devices) to avoid double-counting with physical devices.
+		// Exclude dm-*, loop*, and sr* to avoid double-counting or noise from virtual/optical devices.
+		WithRow(dashboard.NewRowBuilder("Disk")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Disk I/O").
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("Bps").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(node_disk_read_bytes_total{` + instFilter + `, device!~"dm-.*"}[5m]) ` + joinNodename).
+					Expr(`rate(node_disk_read_bytes_total{` + instFilter + `, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[5m]) ` + joinNodename).
 					LegendFormat("{{nodename}} Read {{device}}"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(node_disk_written_bytes_total{` + instFilter + `, device!~"dm-.*"}[5m]) ` + joinNodename).
+					Expr(`rate(node_disk_written_bytes_total{` + instFilter + `, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[5m]) ` + joinNodename).
 					LegendFormat("{{nodename}} Write {{device}}"),
 				),
 		).
+		WithRow(dashboard.NewRowBuilder("Network")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Network I/O").
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("Bps").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(node_network_receive_bytes_total{` + instFilter + `, device!="lo"}[5m]) ` + joinNodename).
+					RefId("Rx").
+					// Keep physical NICs and vmbr (Proxmox bridges); exclude per-VM/LXC virtual interfaces.
+					Expr(`rate(node_network_receive_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*"}[5m]) `+joinNodename).
 					LegendFormat("{{nodename}} Rx {{device}}"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(node_network_transmit_bytes_total{` + instFilter + `, device!="lo"}[5m]) ` + joinNodename).
+					RefId("Tx").
+					Expr(`rate(node_network_transmit_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*"}[5m]) `+joinNodename).
 					LegendFormat("{{nodename}} Tx {{device}}"),
+				).
+				OverrideByQuery("Tx", []dashboard.DynamicConfigValue{
+					{Id: "custom.transform", Value: "negative-Y"},
+				}),
+		).
+		WithPanel(
+			bargauge.NewPanelBuilder().
+				Title("Filesystem Usage").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("percent").
+				Orientation(common.VizOrientationHorizontal).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + instFilter + `,fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*"} / node_filesystem_size_bytes{` + instFilter + `,fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*"}) * 100) ` + joinNodename).
+					LegendFormat("{{nodename}} {{mountpoint}}"),
+				).
+				Decimals(1),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Disk Space Used").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("bytes").
+				Tooltip(tooltipAll).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`(node_filesystem_size_bytes{` + instFilter + `,fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*"} - node_filesystem_avail_bytes{` + instFilter + `,fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*"}) ` + joinNodename).
+					LegendFormat("{{nodename}} {{mountpoint}} Used"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`node_filesystem_size_bytes{` + instFilter + `,fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*"} ` + joinNodename).
+					LegendFormat("{{nodename}} {{mountpoint}} Total"),
 				),
 		).
-		// ZFS ARC metrics are only present on PVE hosts; other nodes will show no data.
-		// ARC Size pinned to ARC Max means memory is being used efficiently.
+		// ZFS ARC metrics: pve (has ZFS pools) shown as solid lines; other nodes
+		// that have the ZFS module loaded but no pools are shown as dashed lines.
+		WithRow(dashboard.NewRowBuilder("ZFS")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("ZFS ARC Size").
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("bytes").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`node_zfs_arc_size{` + instFilter + `} ` + joinNodename).
+					RefId("A").
+					Expr(`node_zfs_arc_size{`+instFilter+`} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{nodename="pve"})`).
 					LegendFormat("{{nodename}} ARC Size"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`node_zfs_arc_c_max{` + instFilter + `} ` + joinNodename).
+					RefId("B").
+					Expr(`node_zfs_arc_c_max{`+instFilter+`} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{nodename="pve"})`).
 					LegendFormat("{{nodename}} ARC Max"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`node_zfs_arc_c_min{` + instFilter + `} ` + joinNodename).
+					RefId("C").
+					Expr(`node_zfs_arc_c_min{`+instFilter+`} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{nodename="pve"})`).
 					LegendFormat("{{nodename}} ARC Min"),
-				),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("D").
+					Expr(`node_zfs_arc_size{`+instFilter+`} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{nodename!="pve"})`).
+					LegendFormat("{{nodename}} ARC Size"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("E").
+					Expr(`node_zfs_arc_c_max{`+instFilter+`} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{nodename!="pve"})`).
+					LegendFormat("{{nodename}} ARC Max"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("F").
+					Expr(`node_zfs_arc_c_min{`+instFilter+`} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{nodename!="pve"})`).
+					LegendFormat("{{nodename}} ARC Min"),
+				).
+				OverrideByQuery("D", []dashboard.DynamicConfigValue{
+					{Id: "custom.lineStyle", Value: map[string]interface{}{"fill": "dash", "dash": []int{8, 10}}},
+				}).
+				OverrideByQuery("E", []dashboard.DynamicConfigValue{
+					{Id: "custom.lineStyle", Value: map[string]interface{}{"fill": "dash", "dash": []int{8, 10}}},
+				}).
+				OverrideByQuery("F", []dashboard.DynamicConfigValue{
+					{Id: "custom.lineStyle", Value: map[string]interface{}{"fill": "dash", "dash": []int{8, 10}}},
+				}),
 		).
 		Build()
 

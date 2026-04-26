@@ -15,9 +15,11 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
 	const (
-		promJob = `job=~"$prometheus_job"`
-		lokiJob = `job=~"$loki_job"`
+		promJob = `job="$prometheus_job"`
+		lokiJob = `job="$loki_job"`
 	)
+
+	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
 
 	issueThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -54,8 +56,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc),
 		).
-
-		// Row 1: Health stats
+		WithRow(dashboard.NewRowBuilder("Prometheus")).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Scrape Targets Up").
@@ -74,6 +75,8 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(4).Height(4).
 				Unit("short").
 				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count(up == 0) or vector(0)`).
 					LegendFormat("Down"),
@@ -86,6 +89,8 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(4).Height(4).
 				Unit("short").
 				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`ceil(sum(increase(prometheus_notifications_dropped_total{` + promJob + `}[5m])))`).
 					LegendFormat("Dropped"),
@@ -98,11 +103,14 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(4).Height(4).
 				Unit("short").
 				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(prometheus_tsdb_wal_corruptions_total{` + promJob + `}) or vector(0)`).
 					LegendFormat("Corruptions"),
 				),
 		).
+		WithRow(dashboard.NewRowBuilder("Loki")).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Loki Active Streams").
@@ -110,8 +118,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(4).Height(4).
 				Unit("short").
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// Use job="loki" only to avoid double-counting from loki-headless.
-					Expr(`sum(loki_ingester_memory_streams{job="loki"})`).
+					Expr(`sum(loki_ingester_memory_streams{` + lokiJob + `})`).
 					LegendFormat("Streams"),
 				),
 		).
@@ -122,22 +129,21 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(4).Height(4).
 				Unit("percentunit").
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// chunk_utilization is a histogram; derive average from sum/count.
 					Expr(`sum(loki_ingester_chunk_utilization_sum{` + lokiJob + `}) / sum(loki_ingester_chunk_utilization_count{` + lokiJob + `})`).
 					LegendFormat("Utilization"),
 				),
 		).
-
-		// Row 2: Prometheus metrics
+		WithRow(dashboard.NewRowBuilder("Prometheus Metrics")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Sample Ingestion Rate").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`rate(prometheus_tsdb_head_samples_appended_total{` + promJob + `}[5m])`).
-					LegendFormat("samples/s"),
+					LegendFormat("{{cluster}} samples/s"),
 				),
 		).
 		WithPanel(
@@ -146,13 +152,26 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("bytes").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`prometheus_tsdb_storage_blocks_bytes{` + promJob + `}`).
-					LegendFormat("Blocks"),
+					LegendFormat("{{cluster}} Blocks"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`prometheus_tsdb_head_chunks{` + promJob + `} * 1024`).
-					LegendFormat("Head (est.)"),
+					LegendFormat("{{cluster}} Head (est.)"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Active Series").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("short").
+				Tooltip(tooltipAll).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`prometheus_tsdb_head_series{` + promJob + `}`).
+					LegendFormat("{{cluster}}"),
 				),
 		).
 		WithPanel(
@@ -161,9 +180,10 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`histogram_quantile(0.99, sum by (le, slice) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{` + promJob + `}[5m])))`).
-					LegendFormat("{{slice}}"),
+					LegendFormat("{{cluster}} {{slice}}"),
 				),
 		).
 		WithPanel(
@@ -179,14 +199,38 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				).
 				Decimals(3),
 		).
-
-		// Row 3: Loki metrics
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Scrape Errors").
+				Datasource(ds).
+				Span(24).Height(8).
+				Unit("short").
+				Tooltip(tooltipAll).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(prometheus_target_scrapes_exceeded_sample_limit_total{` + promJob + `}[5m])`).
+					LegendFormat("{{cluster}} sample limit exceeded"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(prometheus_target_scrapes_sample_duplicate_timestamp_total{` + promJob + `}[5m])`).
+					LegendFormat("{{cluster}} duplicate timestamp"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(prometheus_target_scrapes_sample_out_of_order_total{` + promJob + `}[5m])`).
+					LegendFormat("{{cluster}} out of order"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(prometheus_target_scrapes_sample_out_of_bounds_total{` + promJob + `}[5m])`).
+					LegendFormat("{{cluster}} out of bounds"),
+				),
+		).
+		WithRow(dashboard.NewRowBuilder("Loki Metrics")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Log Ingestion Rate").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("Bps").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(rate(loki_distributor_bytes_received_total{` + lokiJob + `}[5m]))`).
 					LegendFormat("bytes/s"),
@@ -198,6 +242,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(rate(loki_distributor_lines_received_total{` + lokiJob + `}[5m]))`).
 					LegendFormat("lines/s"),
@@ -209,17 +254,19 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`histogram_quantile(0.99, sum by (le, route) (rate(loki_request_duration_seconds_bucket{` + lokiJob + `}[5m])))`).
+					Expr(`histogram_quantile(0.99, sum by (le, route) (rate(loki_request_duration_seconds_bucket{` + lokiJob + `, route!~"ready|/grpc\\..*|/frontendv2pb\\..*|/logproto\\..*"}[5m])))`).
 					LegendFormat("{{route}}"),
 				),
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().
-				Title("Loki Active Streams").
+				Title("Loki Active Streams over Time").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(loki_ingester_memory_streams{` + lokiJob + `})`).
 					LegendFormat("Streams"),

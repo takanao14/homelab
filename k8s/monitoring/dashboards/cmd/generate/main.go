@@ -17,6 +17,7 @@ func main() {
 	// To add a new dashboard, just add an entry here.
 	dashboards := map[string]func() (*dashboard.Dashboard, error){
 		"node-overview":       buildNodeOverview,
+		"k8s-node-overview":   buildK8sNodeOverview,
 		"proxmox-overview":    buildProxmoxOverview,
 		"gpu-overview":        buildGpuOverview,
 		"dns-overview":        buildDnsOverview,
@@ -73,4 +74,8 @@ func strPtr(s string) *string {
 
 func float64Ptr(f float64) *float64 {
 	return &f
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }

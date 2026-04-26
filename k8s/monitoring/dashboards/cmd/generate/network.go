@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
 	"github.com/grafana/grafana-foundation-sdk/go/stat"
@@ -16,6 +17,20 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 	// Exclude virtual/management interfaces to show only physical ports.
 	const ifFilter = `ifDescr!~"Loopback.*|Null.*|bluetooth.*", instance=~"$instance"`
 
+	// mapDevice maps instance IPs to logical device names for better readability.
+	mapDevice := func(expr string) string {
+		return `label_replace(label_replace(` + expr + `, "device", "bgw1", "instance", "192.168.10.1.*"), "device", "c1200", "instance", "192.168.10.2.*")`
+	}
+
+	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
+
+	issueThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "green"},
+			{Value: float64Ptr(1), Color: "red"},
+		})
+
 	d, err := dashboard.NewDashboardBuilder("Network Overview").
 		Uid("network-overview").
 		Tags([]string{"network", "infrastructure"}).
@@ -29,83 +44,90 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Type("prometheus"),
 		).
 		WithVariable(
-			dashboard.NewQueryVariableBuilder("instance").
+			dashboard.NewCustomVariableBuilder("instance").
 				Label("Device").
-				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(ifHCInOctets, instance)`)}).
-				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
-				Sort(dashboard.VariableSortAlphabeticalAsc).
+				Values(dashboard.StringOrMap{String: strPtr("192.168.10.1,192.168.10.2")}).
 				Multi(true).
 				IncludeAll(true),
 		).
+		WithRow(dashboard.NewRowBuilder("Summary")).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Interfaces Up").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(6).Height(4).
 				Unit("short").
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count by (instance) (ifOperStatus{` + ifFilter + `} == 1)`).
-					LegendFormat("{{instance}}"),
+					Expr(mapDevice(`count by (instance) (ifOperStatus{` + ifFilter + `} == 1)`)).
+					LegendFormat("{{device}}"),
 				),
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
-				Title("Total Traffic In").
+				Title("Interfaces Down").
 				Datasource(ds).
-				Span(8).Height(4).
-				Unit("bps").
+				Span(6).Height(4).
+				Unit("short").
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (instance) (rate(ifHCInOctets{` + ifFilter + `}[5m]) * 8)`).
-					LegendFormat("{{instance}}"),
+					Expr(mapDevice(`count by (instance) (ifOperStatus{` + ifFilter + `} != 1) or vector(0)`)).
+					LegendFormat("{{device}}"),
 				),
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
-				Title("Total Traffic Out").
+				Title("Total Traffic").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(12).Height(4).
 				Unit("bps").
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (instance) (rate(ifHCOutOctets{` + ifFilter + `}[5m]) * 8)`).
-					LegendFormat("{{instance}}"),
+					Expr(mapDevice(`sum by (instance) (rate(ifHCInOctets{` + ifFilter + `}[5m]) * 8)`)).
+					LegendFormat("{{device}} In"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(mapDevice(`sum by (instance) (rate(ifHCOutOctets{` + ifFilter + `}[5m]) * 8)`)).
+					LegendFormat("{{device}} Out"),
 				),
 		).
+		WithRow(dashboard.NewRowBuilder("Traffic")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
-				Title("Traffic In (bps)").
+				Title("Traffic (bps)").
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("bps").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(ifHCInOctets{` + ifFilter + `}[5m]) * 8`).
-					LegendFormat("{{instance}} {{ifDescr}} {{ifAlias}}"),
-				),
-		).
-		WithPanel(
-			timeseries.NewPanelBuilder().
-				Title("Traffic Out (bps)").
-				Datasource(ds).
-				Span(24).Height(8).
-				Unit("bps").
+					RefId("In").
+					Expr(mapDevice(`sum by (instance) (rate(ifHCInOctets{`+ifFilter+`}[5m]) * 8)`)).
+					LegendFormat("{{device}} In"),
+				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(ifHCOutOctets{` + ifFilter + `}[5m]) * 8`).
-					LegendFormat("{{instance}} {{ifDescr}} {{ifAlias}}"),
-				),
+					RefId("Out").
+					Expr(mapDevice(`sum by (instance) (rate(ifHCOutOctets{`+ifFilter+`}[5m]) * 8)`)).
+					LegendFormat("{{device}} Out"),
+				).
+				OverrideByQuery("Out", []dashboard.DynamicConfigValue{
+					{Id: "custom.transform", Value: "negative-Y"},
+				}),
 		).
+		WithRow(dashboard.NewRowBuilder("Errors & Discards")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Interface Errors").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("pps").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(ifInErrors{` + ifFilter + `}[5m])`).
-					LegendFormat("{{instance}} {{ifDescr}} In"),
+					Expr(mapDevice(`rate(ifInErrors{` + ifFilter + `}[5m])`)).
+					LegendFormat("{{device}} {{ifDescr}} In"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(ifOutErrors{` + ifFilter + `}[5m])`).
-					LegendFormat("{{instance}} {{ifDescr}} Out"),
+					Expr(mapDevice(`rate(ifOutErrors{` + ifFilter + `}[5m])`)).
+					LegendFormat("{{device}} {{ifDescr}} Out"),
 				),
 		).
 		WithPanel(
@@ -114,13 +136,14 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("pps").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(ifInDiscards{` + ifFilter + `}[5m])`).
-					LegendFormat("{{instance}} {{ifDescr}} In"),
+					Expr(mapDevice(`rate(ifInDiscards{` + ifFilter + `}[5m])`)).
+					LegendFormat("{{device}} {{ifDescr}} In"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(ifOutDiscards{` + ifFilter + `}[5m])`).
-					LegendFormat("{{instance}} {{ifDescr}} Out"),
+					Expr(mapDevice(`rate(ifOutDiscards{` + ifFilter + `}[5m])`)).
+					LegendFormat("{{device}} {{ifDescr}} Out"),
 				),
 		).
 		Build()

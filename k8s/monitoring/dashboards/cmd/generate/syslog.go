@@ -116,6 +116,9 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				FillOpacity(10).
+				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (host) (rate(` + base + `[5m]))`).
 					LegendFormat("{{host}}"),
@@ -127,6 +130,9 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				FillOpacity(10).
+				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (severity) (rate({host=~"$host", severity=~".+"}[5m]))`).
 					LegendFormat("{{severity}}"),
@@ -140,6 +146,9 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				FillOpacity(10).
+				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (appname) (rate({host=~"$host", appname=~"$appname"}[5m]))`).
 					LegendFormat("{{appname}}"),
@@ -151,6 +160,9 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				FillOpacity(10).
+				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (host) (rate({host=~"$host", severity="warning"}[5m]))`).
 					LegendFormat("{{host}}"),

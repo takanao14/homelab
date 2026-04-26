@@ -1,0 +1,378 @@
+{
+  "uid": "k8s-node-overview",
+  "title": "K8s Node Overview",
+  "tags": [
+    "kubernetes",
+    "nodes",
+    "infrastructure"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "fiscalYearStartMonth": 0,
+  "refresh": "30s",
+  "schemaVersion": 42,
+  "panels": [
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum by (node) (kubelet_running_pods{cluster=~\"$cluster\",node=~\"$node\"})",
+          "legendFormat": "{{node}}"
+        }
+      ],
+      "title": "Pods Running",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count by (node) (node_cpu_seconds_total{cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"})",
+          "legendFormat": "{{node}}"
+        }
+      ],
+      "title": "CPU Cores",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "node_memory_MemTotal_bytes{cluster=~\"$cluster\",node=~\"$node\"}",
+          "legendFormat": "{{node}}"
+        }
+      ],
+      "title": "Memory Total",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "time() - node_boot_time_seconds{cluster=~\"$cluster\",node=~\"$node\"}",
+          "legendFormat": "{{node}}"
+        }
+      ],
+      "title": "Uptime",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "100 - (avg by (node) (rate(node_cpu_seconds_total{cluster=~\"$cluster\",node=~\"$node\",mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "{{node}}"
+        }
+      ],
+      "title": "CPU Usage (%)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "node_load1{cluster=~\"$cluster\",node=~\"$node\"}",
+          "legendFormat": "{{node}} 1m"
+        },
+        {
+          "expr": "node_load5{cluster=~\"$cluster\",node=~\"$node\"}",
+          "legendFormat": "{{node}} 5m"
+        },
+        {
+          "expr": "node_load15{cluster=~\"$cluster\",node=~\"$node\"}",
+          "legendFormat": "{{node}} 15m"
+        }
+      ],
+      "title": "Load Average",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "node_memory_MemTotal_bytes{cluster=~\"$cluster\",node=~\"$node\"} - node_memory_MemAvailable_bytes{cluster=~\"$cluster\",node=~\"$node\"}",
+          "legendFormat": "{{node}} Used"
+        },
+        {
+          "expr": "node_memory_MemAvailable_bytes{cluster=~\"$cluster\",node=~\"$node\"}",
+          "legendFormat": "{{node}} Available"
+        }
+      ],
+      "title": "Memory Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sort_desc((1 - node_filesystem_avail_bytes{cluster=~\"$cluster\",node=~\"$node\",fstype!=\"tmpfs\"} / node_filesystem_size_bytes{cluster=~\"$cluster\",node=~\"$node\",fstype!=\"tmpfs\"}) * 100)",
+          "legendFormat": "{{node}} {{mountpoint}}"
+        }
+      ],
+      "title": "Filesystem Usage (%)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 28
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(node_disk_read_bytes_total{cluster=~\"$cluster\",node=~\"$node\",device!~\"dm-.*\"}[5m])",
+          "legendFormat": "{{node}} {{device}} Read"
+        },
+        {
+          "expr": "rate(node_disk_written_bytes_total{cluster=~\"$cluster\",node=~\"$node\",device!~\"dm-.*\"}[5m])",
+          "legendFormat": "{{node}} {{device}} Write"
+        }
+      ],
+      "title": "Disk I/O",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 28
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(node_network_receive_bytes_total{cluster=~\"$cluster\",node=~\"$node\",device!=\"lo\"}[5m])",
+          "legendFormat": "{{node}} {{device}} Rx"
+        },
+        {
+          "expr": "rate(node_network_transmit_bytes_total{cluster=~\"$cluster\",node=~\"$node\",device!=\"lo\"}[5m])",
+          "legendFormat": "{{node}} {{device}} Tx"
+        }
+      ],
+      "title": "Network I/O",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "repeatDirection": "h",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "datasource",
+        "label": "Datasource",
+        "skipUrlSync": false,
+        "query": "prometheus",
+        "multi": false,
+        "allowCustomValue": true,
+        "includeAll": false,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "cluster",
+        "label": "Cluster",
+        "skipUrlSync": false,
+        "query": "label_values(kube_node_info, cluster)",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "node",
+        "label": "Node",
+        "skipUrlSync": false,
+        "query": "label_values(kube_node_info{cluster=~\"$cluster\"}, node)",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      }
+    ]
+  },
+  "annotations": {}
+}
