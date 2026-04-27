@@ -18,6 +18,7 @@ loki:
     auth_enabled: false
     limits_config:
       retention_period: 90d
+      max_query_series: 2000
     compactor:
       retention_enabled: true
       delete_request_store: filesystem
