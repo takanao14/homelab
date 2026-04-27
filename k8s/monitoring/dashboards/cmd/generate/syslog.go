@@ -15,6 +15,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 	dsType := "loki"
 	dsUID := "$datasource"
 	ds := common.DataSourceRef{Type: &dsType, Uid: &dsUID}
+	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
 
 	const (
 		// Syslog has no job label; filter by severity to exclude DNS query logs.
@@ -117,6 +118,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("short").
 				FillOpacity(10).
+				Tooltip(tooltipAll).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
@@ -130,6 +132,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Tooltip(tooltipAll).
 				FillOpacity(10).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
@@ -146,6 +149,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Tooltip(tooltipAll).
 				FillOpacity(10).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
@@ -160,6 +164,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Tooltip(tooltipAll).
 				FillOpacity(10).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
