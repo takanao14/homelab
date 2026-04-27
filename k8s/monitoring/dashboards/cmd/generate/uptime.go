@@ -14,6 +14,7 @@ import (
 // ScrapeConfig job label format: scrapeConfig/<namespace>/<name>.
 func buildUptime() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
+	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
 
 	const (
 		icmpJob   = `job="scrapeConfig/monitoring/icmp-network-devices"`
@@ -105,6 +106,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 				Mappings(probeValueMappings).
 				ShowValue(common.VisibilityModeNever).
 				MergeValues(true).
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`probe_success{` + icmpJob + `}`).
 					LegendFormat("{{instance}}"),
@@ -116,6 +118,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`probe_duration_seconds{` + icmpJob + `}`).
 					LegendFormat("{{instance}}"),
@@ -130,6 +133,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 				Mappings(probeValueMappings).
 				ShowValue(common.VisibilityModeNever).
 				MergeValues(true).
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`probe_success{` + dnsExtJob + `}`).
 					LegendFormat("{{instance}} External"),
@@ -145,6 +149,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
+				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`probe_dns_lookup_time_seconds{` + dnsExtJob + `}`).
 					LegendFormat("{{instance}} External"),
