@@ -121,12 +121,18 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Unit("reqps").
 				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(dnsdist_queries{` + dnsdist + `}[5m])`)).
+					Expr(mapDNS(`rate(dnsdist_queries{`+dnsdist+`}[5m])`)).
 					LegendFormat("{{server}} Queries"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(dnsdist_responses{` + dnsdist + `}[5m])`)).
+					Expr(mapDNS(`rate(dnsdist_responses{`+dnsdist+`}[5m])`)).
 					LegendFormat("{{server}} Responses"),
+				).
+				WithOverride(
+					dashboard.MatcherConfig{Id: "byRegexp", Options: ".*Responses"},
+					[]dashboard.DynamicConfigValue{
+						{Id: "custom.transform", Value: "negative-Y"},
+					},
 				),
 		).
 		WithPanel(
@@ -226,6 +232,18 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(mapDNS(`rate(dnsdist_dynamic_blocked{` + dnsdist + `}[5m])`)).
 					LegendFormat("{{server}} Dynamic Block"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("dnsdist Unanswered Queries").
+				Datasource(ds).
+				Span(24).Height(8).
+				Unit("reqps").
+				Tooltip(tooltipAll).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(mapDNS(`rate(dnsdist_queries{` + dnsdist + `}[5m]) - rate(dnsdist_responses{` + dnsdist + `}[5m])`)).
+					LegendFormat("{{server}}"),
 				),
 		).
 		WithRow(dashboard.NewRowBuilder("pdns-auth Metrics")).

@@ -23,6 +23,8 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		// normByCPU divides by the number of logical CPUs so load values are expressed
 		// as a fraction of total capacity (1.0 = fully loaded, >1.0 = overloaded).
 		normByCPU = `/ on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode="idle", ` + instFilter + `})`
+		// fsFilter excludes pseudo/boot filesystems that don't need capacity monitoring.
+		fsFilter = `fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*|/boot/efi|/boot/firmware"`
 	)
 
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
@@ -129,6 +131,26 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{nodename}}"),
 				).Decimals(2),
 		).
+		WithPanel(
+			bargauge.NewPanelBuilder().
+				Title("Filesystem Usage").
+				Datasource(ds).
+				Span(24).Height(8).
+				Unit("percent").
+				Orientation(common.VizOrientationVertical).
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "green"},
+						{Value: float64Ptr(80), Color: "yellow"},
+						{Value: float64Ptr(90), Color: "red"},
+					})).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + instFilter + `,` + fsFilter + `} / node_filesystem_size_bytes{` + instFilter + `,` + fsFilter + `}) * 100 ` + joinNodename + `)`).
+					LegendFormat("{{nodename}} {{mountpoint}}"),
+				).
+				Decimals(1),
+		).
 		WithRow(dashboard.NewRowBuilder("CPU")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -160,11 +182,23 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 			timeseries.NewPanelBuilder().
 				Title("Memory Used").
 				Datasource(ds).
-				Span(24).Height(8).
+				Span(12).Height(8).
 				Unit("bytes").
 				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(node_memory_MemTotal_bytes{` + instFilter + `} - node_memory_MemAvailable_bytes{` + instFilter + `}) ` + joinNodename).
+					LegendFormat("{{nodename}}"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Memory Usage").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("percent").
+				Tooltip(tooltipAll).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`(1 - node_memory_MemAvailable_bytes{` + instFilter + `} / node_memory_MemTotal_bytes{` + instFilter + `}) * 100 ` + joinNodename).
 					LegendFormat("{{nodename}}"),
 				),
 		).
@@ -219,23 +253,6 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				),
 		).
 		// Exclude dm-*, loop*, and sr* to avoid double-counting or noise from virtual/optical devices.
-		WithRow(dashboard.NewRowBuilder("Disk")).
-		WithPanel(
-			timeseries.NewPanelBuilder().
-				Title("Disk I/O").
-				Datasource(ds).
-				Span(24).Height(8).
-				Unit("Bps").
-				Tooltip(tooltipAll).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(node_disk_read_bytes_total{` + instFilter + `, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[5m]) ` + joinNodename).
-					LegendFormat("{{nodename}} Read {{device}}"),
-				).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(node_disk_written_bytes_total{` + instFilter + `, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[5m]) ` + joinNodename).
-					LegendFormat("{{nodename}} Write {{device}}"),
-				),
-		).
 		WithRow(dashboard.NewRowBuilder("Network")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -259,6 +276,23 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					{Id: "custom.transform", Value: "negative-Y"},
 				}),
 		).
+		WithRow(dashboard.NewRowBuilder("Disk")).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Disk I/O").
+				Datasource(ds).
+				Span(24).Height(8).
+				Unit("Bps").
+				Tooltip(tooltipAll).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(node_disk_read_bytes_total{` + instFilter + `, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[5m]) ` + joinNodename).
+					LegendFormat("{{nodename}} Read {{device}}"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(node_disk_written_bytes_total{` + instFilter + `, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[5m]) ` + joinNodename).
+					LegendFormat("{{nodename}} Write {{device}}"),
+				),
+		).
 		WithPanel(
 			bargauge.NewPanelBuilder().
 				Title("Filesystem Usage").
@@ -266,26 +300,29 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("percent").
 				Orientation(common.VizOrientationHorizontal).
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "green"},
+						{Value: float64Ptr(80), Color: "yellow"},
+						{Value: float64Ptr(90), Color: "red"},
+					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + instFilter + `,fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*"} / node_filesystem_size_bytes{` + instFilter + `,fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*"}) * 100) ` + joinNodename).
+					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + instFilter + `,` + fsFilter + `} / node_filesystem_size_bytes{` + instFilter + `,` + fsFilter + `}) * 100) ` + joinNodename).
 					LegendFormat("{{nodename}} {{mountpoint}}"),
 				).
 				Decimals(1),
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().
-				Title("Disk Space Used").
+				Title("Filesystem Usage Trend").
 				Datasource(ds).
 				Span(12).Height(8).
-				Unit("bytes").
+				Unit("percent").
 				Tooltip(tooltipAll).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(node_filesystem_size_bytes{` + instFilter + `,fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*"} - node_filesystem_avail_bytes{` + instFilter + `,fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*"}) ` + joinNodename).
-					LegendFormat("{{nodename}} {{mountpoint}} Used"),
-				).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`node_filesystem_size_bytes{` + instFilter + `,fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*"} ` + joinNodename).
-					LegendFormat("{{nodename}} {{mountpoint}} Total"),
+					Expr(`(1 - node_filesystem_avail_bytes{` + instFilter + `,` + fsFilter + `} / node_filesystem_size_bytes{` + instFilter + `,` + fsFilter + `}) * 100 ` + joinNodename).
+					LegendFormat("{{nodename}} {{mountpoint}}"),
 				),
 		).
 		// ZFS ARC metrics: pve (has ZFS pools) shown as solid lines; other nodes

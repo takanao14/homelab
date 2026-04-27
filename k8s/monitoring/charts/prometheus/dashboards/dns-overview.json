@@ -301,7 +301,20 @@
         "defaults": {
           "unit": "reqps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*Responses"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -606,6 +619,46 @@
       }
     },
     {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "label_replace(label_replace(rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]) - rate(dnsdist_responses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "legendFormat": "{{server}}"
+        }
+      ],
+      "title": "dnsdist Unanswered Queries",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 43
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
       "type": "row",
       "collapsed": false,
       "title": "pdns-auth Metrics",
@@ -613,7 +666,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 43
+        "y": 51
       },
       "id": 0,
       "panels": []
@@ -640,7 +693,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 52
       },
       "repeatDirection": "h",
       "options": {
@@ -692,7 +745,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 52
+        "y": 60
       },
       "repeatDirection": "h",
       "options": {
@@ -799,7 +852,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 60
+        "y": 68
       },
       "repeatDirection": "h",
       "options": {
@@ -856,7 +909,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 60
+        "y": 68
       },
       "repeatDirection": "h",
       "options": {

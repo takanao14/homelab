@@ -206,6 +206,72 @@
       }
     },
     {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sort_desc((1 - node_filesystem_avail_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / node_filesystem_size_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
+          "legendFormat": "{{nodename}} {{mountpoint}}"
+        }
+      ],
+      "title": "Filesystem Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "vertical"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
       "type": "row",
       "collapsed": false,
       "title": "CPU",
@@ -213,7 +279,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 13
+        "y": 21
       },
       "id": 0,
       "panels": []
@@ -236,7 +302,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 22
       },
       "repeatDirection": "h",
       "options": {
@@ -276,7 +342,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 30
       },
       "repeatDirection": "h",
       "options": {
@@ -306,7 +372,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 30
+        "y": 38
       },
       "id": 0,
       "panels": []
@@ -327,9 +393,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
+        "w": 12,
         "x": 0,
-        "y": 31
+        "y": 39
       },
       "repeatDirection": "h",
       "options": {
@@ -352,6 +418,46 @@
       }
     },
     {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "(1 - node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"}) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}}"
+        }
+      ],
+      "title": "Memory Usage",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 39
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
       "type": "row",
       "collapsed": false,
       "title": "Temperature \u0026 Throttling",
@@ -359,7 +465,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 47
       },
       "id": 0,
       "panels": []
@@ -390,7 +496,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 40
+        "y": 48
       },
       "repeatDirection": "h",
       "options": {
@@ -446,7 +552,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 40
+        "y": 48
       },
       "repeatDirection": "h",
       "options": {
@@ -471,69 +577,12 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Disk",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 48
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "rate(node_disk_read_bytes_total{instance=~\"$instance\", device=~\"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[5m]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} Read {{device}}"
-        },
-        {
-          "expr": "rate(node_disk_written_bytes_total{instance=~\"$instance\", device=~\"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[5m]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} Write {{device}}"
-        }
-      ],
-      "title": "Disk I/O",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 49
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps"
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
       "title": "Network",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 57
+        "y": 56
       },
       "id": 0,
       "panels": []
@@ -562,7 +611,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 58
+        "y": 57
       },
       "repeatDirection": "h",
       "options": {
@@ -598,10 +647,67 @@
       }
     },
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Disk",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 65
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(node_disk_read_bytes_total{instance=~\"$instance\", device=~\"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[5m]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} Read {{device}}"
+        },
+        {
+          "expr": "rate(node_disk_written_bytes_total{instance=~\"$instance\", device=~\"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[5m]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} Write {{device}}"
+        }
+      ],
+      "title": "Disk I/O",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 66
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      }
+    },
+    {
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc((1 - node_filesystem_avail_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*\"} / node_filesystem_size_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*\"}) * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "expr": "sort_desc((1 - node_filesystem_avail_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / node_filesystem_size_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "legendFormat": "{{nodename}} {{mountpoint}}"
         }
       ],
@@ -615,7 +721,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 66
+        "y": 74
       },
       "repeatDirection": "h",
       "options": {
@@ -641,7 +747,24 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "decimals": 1
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "red"
+              }
+            ]
+          }
         },
         "overrides": []
       }
@@ -650,15 +773,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "(node_filesystem_size_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*\"} - node_filesystem_avail_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{mountpoint}} Used"
-        },
-        {
-          "expr": "node_filesystem_size_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{mountpoint}} Total"
+          "expr": "(1 - node_filesystem_avail_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / node_filesystem_size_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} {{mountpoint}}"
         }
       ],
-      "title": "Disk Space Used",
+      "title": "Filesystem Usage Trend",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -668,7 +787,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 66
+        "y": 74
       },
       "repeatDirection": "h",
       "options": {
@@ -685,7 +804,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "percent"
         },
         "overrides": []
       }
@@ -698,7 +817,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 74
+        "y": 82
       },
       "id": 0,
       "panels": []
@@ -747,7 +866,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 75
+        "y": 83
       },
       "repeatDirection": "h",
       "options": {
