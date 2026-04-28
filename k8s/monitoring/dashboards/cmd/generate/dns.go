@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
@@ -22,7 +24,23 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 
 	// mapDNS maps instance IPs to logical ns1/ns2 names for better readability.
 	mapDNS := func(expr string) string {
-		return `label_replace(label_replace(` + expr + `, "server", "ns1", "instance", "192.168.10.242:.*"), "server", "ns2", "instance", "192.168.10.241:.*")`
+		replacements := []struct {
+			server   string
+			instance string
+		}{
+			{"old-ns1", "192.168.10.242:.*"},
+			{"old-ns2", "192.168.10.241:.*"},
+			{"dist1", "192.168.10.231:.*"},
+			{"dist2", "192.168.10.232:.*"},
+			{"ns1", "192.168.10.233:.*"},
+			{"ns2", "192.168.10.234:.*"},
+		}
+
+		for _, r := range replacements {
+			expr = fmt.Sprintf(`label_replace(%s, "server", "%s", "instance", "%s")`, expr, r.server, r.instance)
+		}
+
+		return expr
 	}
 
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)

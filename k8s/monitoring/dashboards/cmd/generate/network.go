@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
@@ -19,7 +21,19 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 
 	// mapDevice maps instance IPs to logical device names for better readability.
 	mapDevice := func(expr string) string {
-		return `label_replace(label_replace(` + expr + `, "device", "bgw1", "instance", "192.168.10.1.*"), "device", "c1200", "instance", "192.168.10.2.*")`
+		replacements := []struct {
+			device   string
+			instance string
+		}{
+			{"bgw1", "192.168.10.1.*"},
+			{"c1200", "192.168.10.2.*"},
+		}
+
+		for _, r := range replacements {
+			expr = fmt.Sprintf(`label_replace(%s, "device", "%s", "instance", "%s")`, expr, r.device, r.instance)
+		}
+
+		return expr
 	}
 
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
