@@ -11,9 +11,12 @@ spec:
   unsealConfig:
     kubernetes:
       secretNamespace: vault
-    # file ストレージの場合は raft 関連の引数を不要にするため、空のオプションを明示
-    options:
+    # 引数を明示的に指定することで、Raft 関連の引数が自動追加されるのを防ぐ
+    args:
       - --mode=k8s
+      - --k8s-secret-namespace=vault
+      - --k8s-secret-name=vault-unseal-keys
+      - --init
 
   config:
     storage:
@@ -58,7 +61,6 @@ spec:
             capabilities = ["list"]
           }
 
-  # 永続ストレージへの書き込み権限と、Probe の緩和
   vaultContainerSpec:
     securityContext:
       runAsUser: 100
@@ -76,7 +78,7 @@ spec:
 
   volumeClaimTemplates:
     - metadata:
-        name: vault-raft # 名前は互換性のために維持
+        name: vault-raft # 互換性のために名前を維持
       spec:
         accessModes: ["ReadWriteOnce"]
         resources:
