@@ -51,6 +51,10 @@ repoServer:
           value: /usr/local/bin/sops
         - name: SOPS_AGE_KEY_FILE
           value: /helm-secrets-private-keys/key.txt
+        - name: HELM_CACHE_HOME
+          value: /tmp/helm-cache
+        - name: HELM_CONFIG_HOME
+          value: /tmp/helm-config
         - name: PATH
           value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       volumeMounts:
