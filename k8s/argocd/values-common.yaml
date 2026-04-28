@@ -11,7 +11,8 @@ configs:
           args:
             - |
               if grep -q "^dependencies:" Chart.yaml 2>/dev/null; then
-                helm dependency update .
+                # Use /tmp only for dependency update to avoid permission issues
+                HELM_CONFIG_HOME=/tmp/helm-config HELM_CACHE_HOME=/tmp/helm-cache HELM_DATA_HOME=/tmp/helm-data helm dependency update .
               fi
         generate:
           command: [sh, -c]
@@ -46,8 +47,12 @@ repoServer:
       env:
         - name: HELM_SECRETS_BACKEND
           value: sops
+        - name: HELM_SECRETS_SOPS_PATH
+          value: /usr/local/bin/sops
         - name: SOPS_AGE_KEY_FILE
           value: /helm-secrets-private-keys/key.txt
+        - name: PATH
+          value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       volumeMounts:
         - mountPath: /home/argocd/cmp-server/plugins
           name: plugins
