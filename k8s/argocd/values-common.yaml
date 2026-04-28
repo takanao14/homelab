@@ -6,9 +6,6 @@ configs:
     plugins:
       helm-secrets:
         allowConcurrency: true
-        discover:
-          find:
-            glob: "**/secrets.enc.yaml"
         init:
           command: [sh, -c]
           args:
