@@ -16,7 +16,13 @@ configs:
         generate:
           command: [sh, -c]
           args:
-            - helm secrets template "$ARGOCD_APP_NAME" . --namespace "$ARGOCD_APP_NAMESPACE" $(echo "$ARGOCD_ENV_HELM_VALUES" | tr ',' '\n' | sed 's/^/-f /' | tr '\n' ' ')
+            - |
+              if [ -n "$ARGOCD_ENV_HELM_VALUES" ]; then
+                for v in $(echo "$ARGOCD_ENV_HELM_VALUES" | tr ',' ' '); do
+                  HELM_ARGS="$HELM_ARGS -f $v"
+                done
+              fi
+              helm secrets template "$ARGOCD_APP_NAME" . --namespace "$ARGOCD_APP_NAMESPACE" $HELM_ARGS
         lockRepo: false
 
 server:
@@ -36,7 +42,7 @@ repoServer:
       emptyDir: {}
     - name: argocd-cmp-cm
       configMap:
-        name: argocd-cmp-cm
+        name: argocd-cmp-cm-helm-secrets
     - name: tools
       emptyDir: {}
     - name: helm-plugins
@@ -53,6 +59,9 @@ repoServer:
           chmod +x /tools/sops
           export HELM_PLUGINS=/helm-plugins
           helm plugin install https://github.com/jkroepke/helm-secrets
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
       volumeMounts:
         - mountPath: /tools
           name: tools
@@ -72,6 +81,10 @@ repoServer:
           value: /helm-secrets-private-keys/key.txt
         - name: HELM_CACHE_HOME
           value: /tmp/helm-cache
+        - name: HELM_CONFIG_HOME
+          value: /tmp/helm-config
+        - name: HELM_DATA_HOME
+          value: /tmp/helm-data
         - name: HELM_PLUGINS
           value: /helm-plugins
         - name: PATH
