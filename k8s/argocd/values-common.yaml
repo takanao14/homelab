@@ -8,7 +8,7 @@ configs:
         allowConcurrency: true
         discover:
           find:
-            glob: "**/Chart.yaml"
+            glob: "**/secrets.enc.yaml"
         init:
           command: [sh, -c]
           args:
