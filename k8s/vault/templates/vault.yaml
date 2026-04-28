@@ -11,21 +11,19 @@ spec:
   unsealConfig:
     kubernetes:
       secretNamespace: vault
-    # サイドカーが Service ではなく自分自身 (localhost) をリーダーとして見るように強制
-    raftLeaderAddress: "http://127.0.0.1:8200"
+    # サイドカーが Service ではなく自分自身 (localhost) を直接見るように強制
+    leaderAddress: "http://127.0.0.1:8200"
 
   config:
     storage:
       raft:
         path: /vault/file
-        retry_join:
-          - leader_api_addr: "http://127.0.0.1:8200"
     listener:
       tcp:
         address: "0.0.0.0:8200"
         cluster_address: "0.0.0.0:8201"
         tls_disable: true
-    api_addr: "http://127.0.0.1:8200"
+    api_addr: "http://vault.vault:8200"
     cluster_addr: "http://127.0.0.1:8201"
     ui: true
 
@@ -61,7 +59,6 @@ spec:
             capabilities = ["list"]
           }
 
-  # Liveness Probe による再起動ループを防ぐため、初期化中（501）も許容する設定
   vaultContainerSpec:
     livenessProbe:
       httpGet:
@@ -71,7 +68,6 @@ spec:
       periodSeconds: 10
     readinessProbe:
       httpGet:
-        # 501 (uninitialized) を Ready とみなすためのフラグを追加
         path: /v1/sys/health?uninitcode=200
         port: 8200
       initialDelaySeconds: 5
