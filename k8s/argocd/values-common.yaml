@@ -51,6 +51,8 @@ repoServer:
           value: /usr/local/bin/sops
         - name: SOPS_AGE_KEY_FILE
           value: /helm-secrets-private-keys/key.txt
+        - name: HOME
+          value: /tmp
         - name: HELM_CACHE_HOME
           value: /tmp/helm-cache
         - name: HELM_CONFIG_HOME
