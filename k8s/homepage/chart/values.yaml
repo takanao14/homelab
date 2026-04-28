@@ -21,22 +21,28 @@ pdns:
     addr: ns1.home.butaco.net
     url: https://pdns1.home.butaco.net
     pveNode: node2
-    pveVmid: "100"
+    pveVmid: "108"
     pveType: lxc
   secondary:
     addr: ns2.home.butaco.net
     url: https://pdns2.home.butaco.net
+    pveNode: pve
+    pveVmid: "105"
+    pveType: lxc
 
 dnsdist:
   dnsdist1:
     addr: dist1.home.butaco.net
     url: https://dnsdist1.home.butaco.net
     pveNode: node2
-    pveVmid: "100"
+    pveVmid: "107"
     pveType: lxc
   dnsdist2:
     addr: dist2.home.butaco.net
     url: https://dnsdist2.home.butaco.net
+    pveNode: pve
+    pveVmid: "106"
+    pveType: lxc
 
 truenas:
   url: https://truenas-ui.home.butaco.net
