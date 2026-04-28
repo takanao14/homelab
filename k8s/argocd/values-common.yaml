@@ -74,8 +74,8 @@ repoServer:
           value: /tmp/helm-cache
         - name: HELM_PLUGINS
           value: /helm-plugins
-        - name: SOPS_BINARY_PATH
-          value: /tools/sops
+        - name: PATH
+          value: /tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       volumeMounts:
         - mountPath: /home/argocd/cmp-server/plugins
           name: plugins
