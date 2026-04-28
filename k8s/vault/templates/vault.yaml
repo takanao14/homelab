@@ -5,7 +5,7 @@ metadata:
   namespace: vault
 spec:
   size: 1
-  image: quay.io/openbao/openbao:2.1.1
+  image: hashicorp/vault:1.18.4
   bankVaultsImage: ghcr.io/bank-vaults/bank-vaults:v1.31.1
 
   unsealConfig:
