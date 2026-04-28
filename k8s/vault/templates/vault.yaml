@@ -11,12 +11,9 @@ spec:
   unsealConfig:
     kubernetes:
       secretNamespace: vault
-    # 引数を明示的に指定することで、Raft 関連の引数が自動追加されるのを防ぐ
-    args:
-      - --mode=k8s
-      - --k8s-secret-namespace=vault
-      - --k8s-secret-name=vault-unseal-keys
-      - --init
+    # オペレーターに再計算を促すための設定
+    caNamespaces:
+      - vault
 
   config:
     storage:
@@ -61,6 +58,20 @@ spec:
             capabilities = ["list"]
           }
 
+  # サイドカーの引数を強制的に上書き
+  sidecarContainers:
+    - name: bank-vaults
+      command:
+        - bank-vaults
+        - unseal
+        - --init
+        - --mode
+        - k8s
+        - --k8s-secret-namespace
+        - vault
+        - --k8s-secret-name
+        - vault-unseal-keys
+
   vaultContainerSpec:
     securityContext:
       runAsUser: 100
@@ -78,7 +89,7 @@ spec:
 
   volumeClaimTemplates:
     - metadata:
-        name: vault-raft # 互換性のために名前を維持
+        name: vault-raft
       spec:
         accessModes: ["ReadWriteOnce"]
         resources:
