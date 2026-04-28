@@ -19,8 +19,6 @@ icmp:
       name: "rpi3"
     - ip: "192.168.10.241"
       name: "rpi4"
-    - ip: "192.168.10.242"
-      name: "ns1"
     - ip: "192.168.10.253"
       name: "wifi-ap2"
     - ip: "192.168.10.254"
@@ -29,21 +27,19 @@ icmp:
       name: "node1-amt"
     - ip: "192.168.110.12"
       name: "node2-amt"
-    - ip: "192.168.20.22"
-      name: "gpuvm"
 
 # DNS external resolution probe (query google.com against each DNS server)
 dnsExternal:
   targets:
-    - ip: "192.168.10.241"
-      name: "ns2"
-    - ip: "192.168.10.242"
-      name: "ns1"
+    - ip: "192.168.10.231"
+      name: "dist1"
+    - ip: "192.168.10.232"
+      name: "dist2"
 
 # DNS internal resolution probe (query ns1.home.butaco.net against each DNS server)
 dnsInternal:
   targets:
-    - ip: "192.168.10.241"
-      name: "ns2"
-    - ip: "192.168.10.242"
-      name: "ns1"
+    - ip: "192.168.10.231"
+      name: "dist1"
+    - ip: "192.168.10.232"
+      name: "dist2"
