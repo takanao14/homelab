@@ -11,9 +11,6 @@ spec:
   unsealConfig:
     kubernetes:
       secretNamespace: vault
-    # オペレーターに再計算を促すための設定
-    caNamespaces:
-      - vault
 
   config:
     storage:
@@ -58,25 +55,7 @@ spec:
             capabilities = ["list"]
           }
 
-  # サイドカーの引数を強制的に上書き
-  sidecarContainers:
-    - name: bank-vaults
-      command:
-        - bank-vaults
-        - unseal
-        - --init
-        - --mode
-        - k8s
-        - --k8s-secret-namespace
-        - vault
-        - --k8s-secret-name
-        - vault-unseal-keys
-
   vaultContainerSpec:
-    securityContext:
-      runAsUser: 100
-      runAsGroup: 1000
-      fsGroup: 1000
     livenessProbe:
       httpGet:
         path: /v1/sys/health
