@@ -1,0 +1,65 @@
+apiVersion: vault.banzaicloud.com/v1alpha1
+kind: Vault
+metadata:
+  name: vault
+  namespace: vault
+spec:
+  size: 1
+  image: quay.io/openbao/openbao:2.1.1
+  bankVaultsImage: ghcr.io/bank-vaults/bank-vaults:1.32.1
+
+  unsealConfig:
+    kubernetes:
+      secretNamespace: vault
+
+  config:
+    storage:
+      raft:
+        path: /vault/file
+    listener:
+      tcp:
+        address: "0.0.0.0:8200"
+        tls_disable: true
+    api_addr: "http://vault.vault:8200"
+    ui: true
+
+  externalConfig:
+    auth:
+      - type: kubernetes
+        path: kubernetes
+        roles:
+          - name: eso-prd
+            bound_service_account_names: ["external-secrets"]
+            bound_service_account_namespaces: ["external-secrets"]
+            policies: ["eso-readonly"]
+            ttl: 24h
+          - name: eso-dev
+            bound_service_account_names: ["external-secrets"]
+            bound_service_account_namespaces: ["external-secrets"]
+            policies: ["eso-readonly"]
+            ttl: 24h
+
+    secretEngines:
+      - path: secret
+        type: kv
+        options:
+          version: "2"
+
+    policies:
+      - name: eso-readonly
+        rules: |
+          path "secret/data/*" {
+            capabilities = ["read"]
+          }
+          path "secret/metadata/*" {
+            capabilities = ["list"]
+          }
+
+  volumeClaimTemplates:
+    - metadata:
+        name: vault-raft
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi

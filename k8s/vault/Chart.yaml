@@ -1,0 +1,5 @@
+apiVersion: v2
+name: vault
+description: OpenBao instance managed by Bank-Vaults
+type: application
+version: 0.1.0
