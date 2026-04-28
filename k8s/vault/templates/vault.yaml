@@ -65,6 +65,8 @@ spec:
       periodSeconds: 5
       failureThreshold: 2
     volumeMounts:
+      - name: vault-config
+        mountPath: /vault/config
       - name: vault-raft
         mountPath: /vault/file
 
