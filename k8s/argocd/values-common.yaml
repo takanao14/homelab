@@ -46,18 +46,8 @@ repoServer:
       env:
         - name: HELM_SECRETS_BACKEND
           value: sops
-        - name: HELM_SECRETS_SOPS_PATH
-          value: /usr/local/bin/sops
         - name: SOPS_AGE_KEY_FILE
           value: /helm-secrets-private-keys/key.txt
-        - name: HELM_CACHE_HOME
-          value: /tmp/helm-cache
-        - name: HELM_CONFIG_HOME
-          value: /tmp/helm-config
-        - name: HELM_DATA_HOME
-          value: /tmp/helm-data
-        - name: PATH
-          value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       volumeMounts:
         - mountPath: /home/argocd/cmp-server/plugins
           name: plugins
