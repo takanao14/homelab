@@ -11,20 +11,19 @@ spec:
   unsealConfig:
     kubernetes:
       secretNamespace: vault
-    # サイドカーが Service ではなく自分自身 (localhost) を直接見るように強制
-    leaderAddress: "http://127.0.0.1:8200"
+    # file ストレージの場合は raft 関連の引数を不要にするため、空のオプションを明示
+    options:
+      - --mode=k8s
 
   config:
     storage:
-      raft:
+      file:
         path: /vault/file
     listener:
       tcp:
         address: "0.0.0.0:8200"
-        cluster_address: "0.0.0.0:8201"
         tls_disable: true
     api_addr: "http://vault.vault:8200"
-    cluster_addr: "http://127.0.0.1:8201"
     ui: true
 
   externalConfig:
@@ -59,23 +58,25 @@ spec:
             capabilities = ["list"]
           }
 
+  # 永続ストレージへの書き込み権限と、Probe の緩和
   vaultContainerSpec:
+    securityContext:
+      runAsUser: 100
+      runAsGroup: 1000
+      fsGroup: 1000
     livenessProbe:
       httpGet:
         path: /v1/sys/health
         port: 8200
-      initialDelaySeconds: 30
-      periodSeconds: 10
+      initialDelaySeconds: 60
     readinessProbe:
       httpGet:
         path: /v1/sys/health?uninitcode=200
         port: 8200
-      initialDelaySeconds: 5
-      periodSeconds: 5
 
   volumeClaimTemplates:
     - metadata:
-        name: vault-raft
+        name: vault-raft # 名前は互換性のために維持
       spec:
         accessModes: ["ReadWriteOnce"]
         resources:
