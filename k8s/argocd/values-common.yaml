@@ -16,7 +16,13 @@ configs:
         generate:
           command: [sh, -c]
           args:
-            - helm secrets template "$ARGOCD_APP_NAME" . --namespace "$ARGOCD_APP_NAMESPACE" $(echo "$ARGOCD_ENV_HELM_VALUES" | tr ',' '\n' | sed 's/^/-f /' | tr '\n' ' ')
+            - |
+              if [ -n "$ARGOCD_ENV_HELM_VALUES" ]; then
+                for v in $(echo "$ARGOCD_ENV_HELM_VALUES" | tr ',' ' '); do
+                  HELM_ARGS="$HELM_ARGS -f $v"
+                done
+              fi
+              helm secrets template "$ARGOCD_APP_NAME" . --namespace "$ARGOCD_APP_NAMESPACE" $HELM_ARGS
         lockRepo: false
 
 server:
@@ -46,6 +52,8 @@ repoServer:
       env:
         - name: HELM_SECRETS_BACKEND
           value: sops
+        - name: HELM_SECRETS_SOPS_PATH
+          value: /usr/local/bin/sops
         - name: SOPS_AGE_KEY_FILE
           value: /helm-secrets-private-keys/key.txt
         - name: HELM_CACHE_HOME
@@ -54,8 +62,6 @@ repoServer:
           value: /tmp/helm-config
         - name: HELM_DATA_HOME
           value: /tmp/helm-data
-        - name: HELM_PLUGINS
-          value: /home/argocd/.local/share/helm/plugins
         - name: PATH
           value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       volumeMounts:
