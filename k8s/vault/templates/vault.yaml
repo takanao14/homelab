@@ -20,8 +20,7 @@ spec:
       tcp:
         address: "0.0.0.0:8200"
         tls_disable: true
-    api_addr: "http://vault.vault:8200"
-    cluster_addr: "http://vault-0.vault:8201"
+    api_addr: "http://127.0.0.1:8200"
     ui: true
 
   externalConfig:
@@ -55,20 +54,6 @@ spec:
           path "secret/metadata/*" {
             capabilities = ["list"]
           }
-
-  vaultContainerSpec:
-    readinessProbe:
-      httpGet:
-        path: "/v1/sys/health?standbyok=true&perfstandbyok=true&drsecondarycode=299&sealedcode=200&uninitcode=200"
-        port: 8200
-        scheme: HTTP
-      periodSeconds: 5
-      failureThreshold: 2
-    volumeMounts:
-      - name: vault-config
-        mountPath: /vault/config
-      - name: vault-raft
-        mountPath: /vault/file
 
   volumeClaimTemplates:
     - metadata:
