@@ -56,6 +56,18 @@ spec:
             capabilities = ["list"]
           }
 
+  vaultContainerSpec:
+    readinessProbe:
+      httpGet:
+        path: "/v1/sys/health?standbyok=true&perfstandbyok=true&drsecondarycode=299&sealedcode=200&uninitcode=200"
+        port: 8200
+        scheme: HTTP
+      periodSeconds: 5
+      failureThreshold: 2
+    volumeMounts:
+      - name: vault-raft
+        mountPath: /vault/file
+
   volumeClaimTemplates:
     - metadata:
         name: vault-raft
