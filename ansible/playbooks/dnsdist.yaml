@@ -1,0 +1,14 @@
+---
+- name: Setup dnsdist
+  hosts: dnsdist
+  serial: 1
+  any_errors_fatal: true
+  roles:
+    - role: timezone
+      tags: timezone
+    - role: dnscollector
+      tags: dnscollector
+    - role: dnsdist
+      tags: dnsdist
+    - role: vector
+      tags: vector

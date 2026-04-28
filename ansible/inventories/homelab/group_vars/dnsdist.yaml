@@ -1,0 +1,28 @@
+---
+vector_config:
+  sources:
+    journald:
+      type: journald
+      include_units:
+        - dnsdist
+        - dnscollector
+        - ssh
+  transforms:
+    parse_journald:
+      type: remap
+      inputs:
+        - journald
+      source: |
+        .host = get_hostname!()
+        .unit = string(.SYSTEMD_UNIT) ?? "unknown"
+  sinks:
+    loki:
+      type: loki
+      inputs:
+        - parse_journald
+      endpoint: "{{ loki_endpoint }}"
+      encoding:
+        codec: json
+      labels:
+        host: !unsafe "{{ host }}"
+        unit: !unsafe "{{ unit }}"
