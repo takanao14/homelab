@@ -50,6 +50,14 @@ repoServer:
           value: /helm-secrets-private-keys/key.txt
         - name: HELM_CACHE_HOME
           value: /tmp/helm-cache
+        - name: HELM_CONFIG_HOME
+          value: /tmp/helm-config
+        - name: HELM_DATA_HOME
+          value: /tmp/helm-data
+        - name: HELM_PLUGINS
+          value: /home/argocd/.local/share/helm/plugins
+        - name: PATH
+          value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       volumeMounts:
         - mountPath: /home/argocd/cmp-server/plugins
           name: plugins
