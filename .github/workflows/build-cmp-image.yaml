@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
     steps:
       - name: Checkout
@@ -25,10 +25,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/argocd-helm-secrets-cmp
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,format=short
+
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
           context: docker/argocd-helm-secrets-cmp
           push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/argocd-helm-secrets-cmp:latest
+          tags: ${{ steps.meta.outputs.tags }}
+
+      - name: Update ArgoCD values
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Update image tag in values-common.yaml
+          # Looking for 'image: ghcr.io/.../argocd-helm-secrets-cmp:...'
+          sed -i "s|image: ghcr.io/${{ github.repository_owner }}/argocd-helm-secrets-cmp:.*|image: ghcr.io/${{ github.repository_owner }}/argocd-helm-secrets-cmp:sha-${{ steps.meta.outputs.version }}|" k8s/argocd/values-common.yaml
+
+      - name: Commit changes
+        if: github.ref == 'refs/heads/main'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update argocd-helm-secrets-cmp image tag to ${{ steps.meta.outputs.version }}"
+          file_pattern: 'k8s/argocd/values-common.yaml'
