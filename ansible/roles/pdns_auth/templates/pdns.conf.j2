@@ -15,21 +15,30 @@ loglevel=4
 {% if pdns_role == 'primary' %}
 local-address={{ pdns_primary_addr }}
 local-port={{ pdns_primary_port }}
+
+# Primary specific
 primary=yes
 secondary=no
-# Primary specific
 disable-axfr=no
 allow-axfr-ips={{ pdns_primary_allow_axfr_ips }}
 also-notify={{ pdns_primary_also_notify }}
+
 api-key={{ pdns_primary_api_key }}
 webserver-address={{ pdns_primary_addr }}
+
+# default SOA
+default-soa-content={{ pdns_default_soa_content }}
+
 {% else %}
 local-address={{ pdns_secondary_addr }}
 local-port={{ pdns_secondary_port }}
+
+# Secondary specific
 primary=no
 secondary=yes
-# Secondary specific
+autosecondary=yes
 disable-axfr=yes
+
 api-key={{ pdns_secondary_api_key }}
 webserver-address={{ pdns_secondary_addr }}
 {% endif %}

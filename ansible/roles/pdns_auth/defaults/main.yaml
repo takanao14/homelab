@@ -7,16 +7,7 @@ pdns_repo_key_path: "/etc/apt/keyrings/auth-50-pub.asc"
 pdns_repo_pin_path: "/etc/apt/preferences.d/auth-50"
 
 pdns_webserver_port: 8081
-pdns_webserver_allow_from: "192.168.10.0/24,192.168.20.0/24,192.168.30.0/24"
 
-pdns_primary_addr: "{{ primary_auth_server.split(':')[0] }}"
-pdns_primary_port: "{{ primary_auth_server.split(':')[1] }}"
-pdns_secondary_addr: "{{ secondary_auth_server.split(':')[0] }}"
-pdns_secondary_port: "{{ secondary_auth_server.split(':')[1] }}"
-
-pdns_primary_allow_axfr_ips: "192.168.10.0/24"
-pdns_primary_also_notify: "{{ secondary_auth_server }}"
-
-# Secrets - loaded via community.sops.sops from group_vars/all.sops.yaml
+# Secrets - loaded via community.sops.sops from group_vars/dns_{primary,secondary}.sops.yaml
 pdns_primary_api_key: "{{ PDNS_PRIMARY_API_KEY }}"
 pdns_secondary_api_key: "{{ PDNS_SECONDARY_API_KEY }}"

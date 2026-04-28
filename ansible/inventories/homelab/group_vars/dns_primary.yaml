@@ -1,2 +1,7 @@
 ---
 pdns_role: primary
+
+pdns_primary_allow_axfr_ips: "192.168.10.0/24"
+pdns_primary_also_notify: "{{ secondary_auth_server }}"
+pdns_primary_nameserver: "ns1.home.butaco.net"
+pdns_default_soa_content: "ns1.home.butaco.net. admin.butaco.net 0 600 300 604800 300"

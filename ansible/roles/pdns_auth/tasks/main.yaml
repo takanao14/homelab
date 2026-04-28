@@ -6,27 +6,28 @@
       - pdns_role in ['primary', 'secondary']
     fail_msg: "pdns_role must be either 'primary' or 'secondary'."
 
-- name: Validate required environment variables (shared)
+- name: Validate required variables (shared)
   ansible.builtin.assert:
     that:
       - pdns_primary_addr | length > 0
       - pdns_secondary_addr | length > 0
-    fail_msg: "Required shared environment variables for pdns_auth are missing. Check your .envrc.prd.dev."
+    fail_msg: "pdns_primary_addr and pdns_secondary_addr must be defined in inventory (group_vars/dns_auth.yaml)."
 
-- name: Validate required environment variables for primary role
+- name: Validate required variables for primary role
   ansible.builtin.assert:
     that:
       - pdns_primary_api_key | length > 0
       - pdns_primary_allow_axfr_ips | length > 0
       - pdns_primary_also_notify | length > 0
-    fail_msg: "Required primary environment variables for pdns_auth are missing. Check your .envrc.prd.dev."
+      - pdns_default_soa_content | length > 0
+    fail_msg: "Required primary variables are missing. Check group_vars/dns_primary.yaml and dns_primary.sops.yaml."
   when: pdns_role == 'primary'
 
-- name: Validate required environment variables for secondary role
+- name: Validate required variables for secondary role
   ansible.builtin.assert:
     that:
       - pdns_secondary_api_key | length > 0
-    fail_msg: "Required secondary environment variables for pdns_auth are missing. Check your .envrc.prd.dev."
+    fail_msg: "pdns_secondary_api_key must be defined in group_vars/dns_secondary.sops.yaml."
   when: pdns_role == 'secondary'
 
 - name: Ensure apt keyring directory exists
@@ -112,3 +113,26 @@
     enabled: true
     state: started
     daemon_reload: true
+
+- name: Get existing autoprimaries
+  ansible.builtin.uri:
+    url: "http://{{ pdns_secondary_addr }}:{{ pdns_webserver_port }}/api/v1/servers/localhost/autoprimaries"
+    method: GET
+    headers:
+      X-API-Key: "{{ pdns_secondary_api_key }}"
+  register: pdns_autoprimaries
+  changed_when: false
+  when: pdns_role == 'secondary'
+
+- name: Register autoprimary on secondary
+  ansible.builtin.uri:
+    url: "http://{{ pdns_secondary_addr }}:{{ pdns_webserver_port }}/api/v1/servers/localhost/autoprimaries"
+    method: POST
+    headers:
+      X-API-Key: "{{ pdns_secondary_api_key }}"
+    body: "{{ {'ip': pdns_primary_addr, 'nameserver': pdns_primary_nameserver, 'account': ''} | to_json }}"
+    body_format: json
+    status_code: 201
+  when:
+    - pdns_role == 'secondary'
+    - pdns_autoprimaries.json | selectattr('ip', 'equalto', pdns_primary_addr) | list | length == 0

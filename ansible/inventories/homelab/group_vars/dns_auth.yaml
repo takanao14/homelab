@@ -1,4 +1,11 @@
 ---
+pdns_primary_addr: "{{ primary_auth_server.split(':')[0] }}"
+pdns_primary_port: "{{ primary_auth_server.split(':')[1] }}"
+pdns_secondary_addr: "{{ secondary_auth_server.split(':')[0] }}"
+pdns_secondary_port: "{{ secondary_auth_server.split(':')[1] }}"
+
+pdns_webserver_allow_from: "192.168.10.0/24,192.168.20.0/24,192.168.30.0/24"
+
 vector_config:
   sources:
     journald:
