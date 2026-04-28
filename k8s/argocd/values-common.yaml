@@ -49,10 +49,10 @@ repoServer:
       command: [sh, -c]
       args:
         - |
-          curl -Lo /tools/sops https://github.com/getsops/sops/releases/download/v3.10.2/sops-v3.10.2.linux.amd64
+          wget -O /tools/sops https://github.com/getsops/sops/releases/download/v3.10.2/sops-v3.10.2.linux.amd64
           chmod +x /tools/sops
           export HELM_PLUGINS=/helm-plugins
-          helm plugin install https://github.com/jkroepke/helm-secrets --version v4.1.3
+          helm plugin install https://github.com/jkroepke/helm-secrets
       volumeMounts:
         - mountPath: /tools
           name: tools
