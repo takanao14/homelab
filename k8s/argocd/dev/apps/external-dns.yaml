@@ -13,7 +13,7 @@ spec:
       name: helm-secrets
       env:
         - name: HELM_VALUES
-          value: "../values-common.yaml,../dev/values.yaml,secrets.enc.yaml"
+          value: "../values-common.yaml,../dev/values.yaml,secrets://secrets.enc.yaml"
   destination:
     server: https://kubernetes.default.svc
     namespace: dns-homelab

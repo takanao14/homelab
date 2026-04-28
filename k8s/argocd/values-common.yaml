@@ -16,13 +16,7 @@ configs:
         generate:
           command: [sh, -c]
           args:
-            - |
-              if [ -n "$ARGOCD_ENV_HELM_VALUES" ]; then
-                for v in $(echo "$ARGOCD_ENV_HELM_VALUES" | tr ',' ' '); do
-                  HELM_ARGS="$HELM_ARGS -f $v"
-                done
-              fi
-              helm secrets template "$ARGOCD_APP_NAME" . --namespace "$ARGOCD_APP_NAMESPACE" $HELM_ARGS
+            - helm secrets template "$ARGOCD_APP_NAME" . --namespace "$ARGOCD_APP_NAMESPACE" $(echo "$ARGOCD_ENV_HELM_VALUES" | tr ',' '\n' | sed 's/^/-f /' | tr '\n' ' ')
         lockRepo: false
 
 server:
