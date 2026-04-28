@@ -264,11 +264,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
           "legendFormat": "{{server}} Queries"
         },
         {
-          "expr": "label_replace(label_replace(rate(dnsdist_responses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_responses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
           "legendFormat": "{{server}} Responses"
         }
       ],
@@ -440,11 +440,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(dnsdist_latency_avg100{job=\"scrapeConfig/monitoring/dnsdist-external\"}, \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(dnsdist_latency_avg100{job=\"scrapeConfig/monitoring/dnsdist-external\"}, \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
           "legendFormat": "{{server}} avg100"
         },
         {
-          "expr": "label_replace(label_replace(dnsdist_latency_avg1000{job=\"scrapeConfig/monitoring/dnsdist-external\"}, \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(dnsdist_latency_avg1000{job=\"scrapeConfig/monitoring/dnsdist-external\"}, \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
           "legendFormat": "{{server}} avg1000"
         }
       ],
@@ -528,7 +528,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]) / clamp_min(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]) + rate(dnsdist_cache_misses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), 1) * 100, \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]) / clamp_min(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]) + rate(dnsdist_cache_misses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), 1) * 100, \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
           "legendFormat": "{{server}}"
         }
       ],
@@ -568,15 +568,15 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(rate(dnsdist_acl_drops{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_acl_drops{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
           "legendFormat": "{{server}} ACL Drop"
         },
         {
-          "expr": "label_replace(label_replace(rate(dnsdist_rule_drops{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_rule_drops{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
           "legendFormat": "{{server}} Rule Drop"
         },
         {
-          "expr": "label_replace(label_replace(rate(dnsdist_dynamic_blocked{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_dynamic_blocked{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
           "legendFormat": "{{server}} Dynamic Block"
         }
       ],
@@ -622,7 +622,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]) - rate(dnsdist_responses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]) - rate(dnsdist_responses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
           "legendFormat": "{{server}}"
         }
       ],
@@ -675,11 +675,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(rate(pdns_auth_udp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(pdns_auth_udp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
           "legendFormat": "{{server}} UDP"
         },
         {
-          "expr": "label_replace(label_replace(rate(pdns_auth_tcp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]), \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(pdns_auth_tcp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
           "legendFormat": "{{server}} TCP"
         }
       ],
@@ -838,7 +838,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(pdns_auth_latency{job=\"scrapeConfig/monitoring/pdns-auth-external\"}, \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(pdns_auth_latency{job=\"scrapeConfig/monitoring/pdns-auth-external\"}, \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
           "legendFormat": "{{server}}"
         }
       ],
@@ -895,7 +895,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(pdns_auth_backend_latency{job=\"scrapeConfig/monitoring/pdns-auth-external\"}, \"server\", \"ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.241:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(pdns_auth_backend_latency{job=\"scrapeConfig/monitoring/pdns-auth-external\"}, \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
           "legendFormat": "{{server}}"
         }
       ],
