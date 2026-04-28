@@ -16,13 +16,7 @@ configs:
         generate:
           command: [sh, -c]
           args:
-            - |
-              if [ -n "$ARGOCD_ENV_HELM_VALUES" ]; then
-                for v in $(echo "$ARGOCD_ENV_HELM_VALUES" | tr ',' ' '); do
-                  HELM_ARGS="$HELM_ARGS -f $v"
-                done
-              fi
-              helm secrets template "$ARGOCD_APP_NAME" . --namespace "$ARGOCD_APP_NAMESPACE" $HELM_ARGS
+            - helm secrets template "$ARGOCD_APP_NAME" . --namespace "$ARGOCD_APP_NAMESPACE" $(echo "$ARGOCD_ENV_HELM_VALUES" | tr ',' '\n' | sed 's/^/-f /' | tr '\n' ' ')
         lockRepo: false
 
 server:
@@ -42,35 +36,10 @@ repoServer:
       emptyDir: {}
     - name: argocd-cmp-cm
       configMap:
-        name: argocd-cmp-cm-helm-secrets
-    - name: tools
-      emptyDir: {}
-    - name: helm-plugins
-      emptyDir: {}
-  # Install sops and helm-secrets into shared volumes at pod startup.
-  # Image tag must match the ArgoCD version (global.image.tag).
-  initContainers:
-    - name: install-tools
-      image: quay.io/argoproj/argocd:v3.3.8
-      command: [sh, -c]
-      args:
-        - |
-          wget -O /tools/sops https://github.com/getsops/sops/releases/download/v3.10.2/sops-v3.10.2.linux.amd64
-          chmod +x /tools/sops
-          export HELM_PLUGINS=/helm-plugins
-          helm plugin install https://github.com/jkroepke/helm-secrets
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 999
-      volumeMounts:
-        - mountPath: /tools
-          name: tools
-        - mountPath: /helm-plugins
-          name: helm-plugins
+        name: argocd-cmp-cm
   extraContainers:
     - name: helm-secrets-cmp
-      image: quay.io/argoproj/argocd:v3.3.8
-      command: [argocd-cmp-server]
+      image: ghcr.io/takanao14/argocd-helm-secrets-cmp:latest
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
@@ -81,14 +50,6 @@ repoServer:
           value: /helm-secrets-private-keys/key.txt
         - name: HELM_CACHE_HOME
           value: /tmp/helm-cache
-        - name: HELM_CONFIG_HOME
-          value: /tmp/helm-config
-        - name: HELM_DATA_HOME
-          value: /tmp/helm-data
-        - name: HELM_PLUGINS
-          value: /helm-plugins
-        - name: PATH
-          value: /tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       volumeMounts:
         - mountPath: /home/argocd/cmp-server/plugins
           name: plugins
@@ -99,7 +60,3 @@ repoServer:
         - mountPath: /home/argocd/cmp-server/config/plugin.yaml
           subPath: helm-secrets.yaml
           name: argocd-cmp-cm
-        - mountPath: /tools
-          name: tools
-        - mountPath: /helm-plugins
-          name: helm-plugins
