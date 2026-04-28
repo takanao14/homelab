@@ -34,7 +34,7 @@ Installs and configures [Caddy](https://caddyserver.com/) as an HTTPS reverse pr
 ```yaml
 caddy_upstreams:
   - hostname: ns1.home.butaco.net
-    backend: 192.168.10.242:8081
+    backend: 192.168.10.233:8081
 ```
 
 ## Secrets Setup

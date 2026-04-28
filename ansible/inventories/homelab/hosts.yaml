@@ -2,10 +2,14 @@ all:
   hosts:
     caddy01:
       ansible_host: 192.168.10.244
-    primary01:
-      ansible_host: 192.168.10.242
-    secondary01:
-      ansible_host: 192.168.10.241
+    ns1:
+      ansible_host: 192.168.10.233
+    ns2:
+      ansible_host: 192.168.10.234
+    dist1:
+      ansible_host: 192.168.10.231
+    dist2:
+      ansible_host: 192.168.10.232
     syslog01:
       ansible_host: 192.168.10.243
     forgejo01:
@@ -34,15 +38,22 @@ all:
       ansible_host: 192.168.30.11
     prd-worker1:
       ansible_host: 192.168.30.12
+
   children:
-    dns_servers:
+    dns:
       children:
-        dns_primary:
+        dns_auth:
+          children:
+            dns_primary:
+              hosts:
+                ns1: null
+            dns_secondary:
+              hosts:
+                ns2: null
+        dnsdist:
           hosts:
-            primary01: null
-        dns_secondary:
-          hosts:
-            secondary01: null
+            dist1: null
+            dist2: null
 
     syslog:
       hosts:
@@ -75,10 +86,13 @@ all:
     lxc:
       hosts:
         caddy01: null
-        primary01: null
         syslog01: null
         forgejo01: null
         netbox01: null
+        ns1: null
+        ns2: null
+        dist1: null
+        dist2: null
 
     proxmox:
       hosts:

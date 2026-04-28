@@ -2,7 +2,7 @@ kea_subnet4:
     - subnet: 192.168.110.0/24
       pool: 192.168.110.30 - 192.168.110.127
       routers: 192.168.110.1
-      dns_servers: 192.168.10.242,192.168.10.241
+      dns_servers: 192.168.10.231,192.168.10.232
       domain_name: home.butaco.net
       reservations:
         - hw_address: ENC[AES256_GCM,data:/KLeSqWr7/1t+CUyuw8ZjlU=,iv:1sl+AIsxvV1Blgqg8pAY8IazAL9Tiy3odvOi9ZOOmUM=,tag:57LdArDdgqkVmvTRU4DV7w==,type:str]
@@ -20,7 +20,7 @@ sops:
             MVo5Slh3M1V3MDVwZFNkeWVmRFdlQU0KpwaW3JMEqqmC5nBSofZUbXfHyP5dSHnf
             xXm4cp3OOhbgm7R8gzNwJOdh80eIi95QQPjWVOx/Nzh4OiJjf6Hrig==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-04-08T07:50:22Z"
-    mac: ENC[AES256_GCM,data:ERkVKA4XJO1HMERkFQLNuWNzgQ9C2vDua38VA23vN/dOZ/MM+AHBnGDExqv9KEhKZHbfA7ADke1sRj/AaaTVAVmX8KCGtTT5Eh3vwNc4NSyFO6gQJg8wM3Xa05swadjCn7khlDlA+VSTQT9N4ttTf9Kec9+vRqC+Z69fXub+0CA=,iv:idv4/4gju7R9irooY58wMmx9zY5wpSAbBbGERpZOzVo=,tag:8mtYllNRnd7llP68s2kEFw==,type:str]
+    lastmodified: "2026-04-28T01:07:35Z"
+    mac: ENC[AES256_GCM,data:8pgPqdwG5aYbAisELWUlHTmmfMrsSkjxFXvPgyhAFjMbJAPWsBwyzymDCb17qAsKt8zu7cCgcnJ1ycycWddcPK327i7bBk8VAhzYIBbf3FImS25XBqmkoSEeWHhJIx/hg0uqTxSm8+I7bVq/etf51I/uBh+W2OP0QCAA5npvy50=,iv:Qh7BFS9So37OuPJlNAFtzDrSLWsEWEH0EdnKymdJ7xA=,tag:GYKRIN94M69aXoHh9jfGrg==,type:str]
     encrypted_regex: hw_address
     version: 3.12.2

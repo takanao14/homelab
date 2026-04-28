@@ -1,3 +1,0 @@
----
-primary_auth_server: "192.168.10.242:1053"
-secondary_auth_server: "192.168.10.241:1053"
