@@ -37,9 +37,31 @@ repoServer:
     - name: argocd-cmp-cm
       configMap:
         name: argocd-cmp-cm
+    - name: tools
+      emptyDir: {}
+    - name: helm-plugins
+      emptyDir: {}
+  # Install sops and helm-secrets into shared volumes at pod startup.
+  # Image tag must match the ArgoCD version (global.image.tag).
+  initContainers:
+    - name: install-tools
+      image: quay.io/argoproj/argocd:v3.3.8
+      command: [sh, -c]
+      args:
+        - |
+          curl -Lo /tools/sops https://github.com/getsops/sops/releases/download/v3.10.2/sops-v3.10.2.linux.amd64
+          chmod +x /tools/sops
+          export HELM_PLUGINS=/helm-plugins
+          helm plugin install https://github.com/jkroepke/helm-secrets --version v4.1.3
+      volumeMounts:
+        - mountPath: /tools
+          name: tools
+        - mountPath: /helm-plugins
+          name: helm-plugins
   extraContainers:
     - name: helm-secrets-cmp
-      image: ghcr.io/takanao14/argocd-helm-secrets-cmp:latest
+      image: quay.io/argoproj/argocd:v3.3.8
+      command: [argocd-cmp-server]
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
@@ -50,6 +72,10 @@ repoServer:
           value: /helm-secrets-private-keys/key.txt
         - name: HELM_CACHE_HOME
           value: /tmp/helm-cache
+        - name: HELM_PLUGINS
+          value: /helm-plugins
+        - name: SOPS_BINARY_PATH
+          value: /tools/sops
       volumeMounts:
         - mountPath: /home/argocd/cmp-server/plugins
           name: plugins
@@ -60,3 +86,7 @@ repoServer:
         - mountPath: /home/argocd/cmp-server/config/plugin.yaml
           subPath: helm-secrets.yaml
           name: argocd-cmp-cm
+        - mountPath: /tools
+          name: tools
+        - mountPath: /helm-plugins
+          name: helm-plugins
