@@ -56,8 +56,6 @@ repoServer:
           value: /tmp/helm-config
         - name: HELM_DATA_HOME
           value: /tmp/helm-data
-        - name: HELM_PLUGINS
-          value: /usr/local/share/helm/plugins
         - name: PATH
           value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       volumeMounts:
