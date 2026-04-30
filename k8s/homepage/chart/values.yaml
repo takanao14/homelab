@@ -48,7 +48,6 @@ truenas:
   url: https://truenas-ui.home.butaco.net
   pveNode: node1
   pveVmid: "100"
-  key: ""
 
 netbox:
   url: https://netbox-ui.home.butaco.net
@@ -59,7 +58,6 @@ netbox:
 grafana:
   url: https://grafana.prd.butaco.net
   username: admin
-  password: ""
 
 prometheus:
   url: https://prometheus.prd.butaco.net
