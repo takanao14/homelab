@@ -42,3 +42,17 @@ spec:
       kind: Prometheus
       jsonPointers:
         - /spec/shards
+    - group: monitoring.coreos.com
+      kind: ServiceMonitor
+      jsonPointers:
+        - /spec/endpoints/0/relabelings
+        - /spec/endpoints/0/metricRelabelings
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      jsonPointers:
+        - /spec/parentRefs/0/group
+        - /spec/parentRefs/0/kind
+        - /spec/rules/0/backendRefs/0/group
+        - /spec/rules/0/backendRefs/0/kind
+        - /spec/rules/0/backendRefs/0/weight
+        - /spec/rules/0/matches
