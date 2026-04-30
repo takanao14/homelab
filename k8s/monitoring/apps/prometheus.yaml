@@ -33,26 +33,22 @@ spec:
     - group: admissionregistration.k8s.io
       kind: MutatingWebhookConfiguration
       jsonPointers:
-        - /webhooks/0/clientConfig/caBundle
+        - /webhooks
     - group: admissionregistration.k8s.io
       kind: ValidatingWebhookConfiguration
       jsonPointers:
-        - /webhooks/0/clientConfig/caBundle
+        - /webhooks
     - group: monitoring.coreos.com
       kind: Prometheus
       jsonPointers:
         - /spec/shards
+        - /spec/replicas
     - group: monitoring.coreos.com
       kind: ServiceMonitor
       jsonPointers:
-        - /spec/endpoints/0/relabelings
-        - /spec/endpoints/0/metricRelabelings
+        - /spec/endpoints
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       jsonPointers:
-        - /spec/parentRefs/0/group
-        - /spec/parentRefs/0/kind
-        - /spec/rules/0/backendRefs/0/group
-        - /spec/rules/0/backendRefs/0/kind
-        - /spec/rules/0/backendRefs/0/weight
-        - /spec/rules/0/matches
+        - /spec/parentRefs
+        - /spec/rules
