@@ -72,16 +72,16 @@ kube-prometheus-stack:
           - targetLabel: cluster
             replacement: prd
 
-  prometheus-node-exporter:
-    prometheus:
-      monitor:
-        relabelings:
-          - action: replace
-            sourceLabels: [__meta_kubernetes_pod_node_name]
-            targetLabel: node
-        metricRelabelings:
-          - targetLabel: cluster
-            replacement: prd
+  nodeExporter:
+    enabled: true
+    serviceMonitor:
+      relabelings:
+        - action: replace
+          sourceLabels: [__meta_kubernetes_pod_node_name]
+          targetLabel: node
+      metricRelabelings:
+        - targetLabel: cluster
+          replacement: prd
 
   kubeControllerManager:
     enabled: false
