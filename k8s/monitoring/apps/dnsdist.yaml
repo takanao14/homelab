@@ -11,11 +11,9 @@ spec:
     repoURL: https://github.com/takanao14/homelab.git
     targetRevision: HEAD
     path: k8s/monitoring/charts/dnsdist
-    plugin:
-      name: helm-secrets
-      env:
-        - name: HELM_VALUES
-          value: "../../values/dnsdist.yaml"
+    helm:
+      valueFiles:
+        - ../../values/dnsdist.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

@@ -4,16 +4,6 @@ creation_rules:
     encrypted_regex: "^hw_address$"
     age: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
 
-  # Global secrets and other sops.yaml files
+  # Ansible group_vars secrets
   - path_regex: .*\.sops\.yaml$
-    age: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
-
-  # For any .enc.env or other legacy formats if they still exist in other dirs
-  - path_regex: .*\.enc\.env$
-    age: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
-
-  - path_regex: .*\.enc\.yaml$
-    age: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
-
-  - path_regex: .*\.enc$
     age: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v

@@ -11,11 +11,9 @@ spec:
     repoURL: https://github.com/takanao14/homelab.git
     targetRevision: HEAD
     path: k8s/monitoring/charts/pdns-auth
-    plugin:
-      name: helm-secrets
-      env:
-        - name: HELM_VALUES
-          value: "../../values/pdns-auth.yaml"
+    helm:
+      valueFiles:
+        - ../../values/pdns-auth.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
