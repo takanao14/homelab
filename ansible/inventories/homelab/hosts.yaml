@@ -38,7 +38,8 @@ all:
       ansible_host: 192.168.30.11
     prd-worker1:
       ansible_host: 192.168.30.12
-
+    openbao1:
+      ansible_host: 192.168.40.30
   children:
     dns:
       children:
@@ -54,6 +55,10 @@ all:
           hosts:
             dist1: null
             dist2: null
+
+    openbao:
+      hosts:
+        openbao1: null
 
     syslog:
       hosts:

@@ -1,0 +1,29 @@
+---
+# renovate: datasource=github-releases depName=openbao/openbao
+openbao_version: "2.5.3"
+openbao_user: openbao
+openbao_group: openbao
+openbao_config_dir: /etc/openbao
+openbao_data_dir: /opt/openbao/data
+openbao_binary: /usr/bin/bao
+openbao_seal_key_path: "{{ openbao_config_dir }}/seal.key"
+
+openbao_api_port: 8200
+openbao_cluster_port: 8201
+openbao_api_addr: "https://{{ ansible_default_ipv4.address }}:{{ openbao_api_port }}"
+openbao_cluster_addr: "{{ 'http' if openbao_tls_disable else 'https' }}://{{ ansible_default_ipv4.address }}:{{ openbao_cluster_port }}"
+
+openbao_tls_disable: true
+openbao_tls_cert_file: "{{ openbao_config_dir }}/tls/cert.pem"
+openbao_tls_key_file: "{{ openbao_config_dir }}/tls/key.pem"
+
+# List of other cluster node API addresses for Raft auto-join
+# e.g. ["https://192.168.10.1:8200", "https://192.168.10.2:8200"]
+openbao_raft_retry_join: []
+
+# Static seal key ID (permanent identifier, update when rotating key)
+openbao_seal_key_id: "key-1"
+
+# Static seal key: 32 raw bytes, base64-encoded (set via group_vars with SOPS encryption)
+# Generate with: openssl rand -base64 32
+openbao_seal_key: ""

@@ -1,0 +1,30 @@
+ui = true
+
+storage "raft" {
+  path    = "{{ openbao_data_dir }}"
+  node_id = "{{ inventory_hostname }}"
+{% for node in openbao_raft_retry_join %}
+
+  retry_join {
+    leader_api_addr = "{{ node }}"
+  }
+{% endfor %}
+}
+
+listener "tcp" {
+  address = "0.0.0.0:{{ openbao_api_port }}"
+{% if openbao_tls_disable %}
+  tls_disable = true
+{% else %}
+  tls_cert_file = "{{ openbao_tls_cert_file }}"
+  tls_key_file  = "{{ openbao_tls_key_file }}"
+{% endif %}
+}
+
+seal "static" {
+  current_key_id = "{{ openbao_seal_key_id }}"
+  current_key    = "file://{{ openbao_seal_key_path }}"
+}
+
+api_addr     = "{{ openbao_api_addr }}"
+cluster_addr = "{{ openbao_cluster_addr }}"

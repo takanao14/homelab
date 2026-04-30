@@ -1,0 +1,74 @@
+---
+- name: Download repository configuration
+  # see https://openbao.org/downloads/
+  become: true
+  ansible.builtin.copy:
+    src: openbao.sources
+    dest: /etc/apt/sources.list.d/openbao.sources
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install openbao
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+    name: openbao
+    state: present
+  notify: restart openbao
+
+- name: Create data directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ openbao_data_dir }}"
+    state: directory
+    owner: "{{ openbao_user }}"
+    group: "{{ openbao_group }}"
+    mode: '0700'
+
+- name: Deploy openbao configuration
+  become: true
+  ansible.builtin.template:
+    src: openbao.hcl.j2
+    dest: "{{ openbao_config_dir }}/openbao.hcl"
+    owner: root
+    group: "{{ openbao_group }}"
+    mode: '0640'
+  notify: restart openbao
+
+- name: Deploy seal key
+  become: true
+  ansible.builtin.copy:
+    content: "{{ openbao_seal_key | b64decode }}"
+    dest: "{{ openbao_seal_key_path }}"
+    owner: "{{ openbao_user }}"
+    group: "{{ openbao_group }}"
+    mode: '0400'
+
+- name: Create systemd override directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/openbao.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy systemd override for CAP_IPC_LOCK
+  become: true
+  ansible.builtin.copy:
+    src: openbao-override.conf
+    dest: /etc/systemd/system/openbao.service.d/override.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart openbao
+
+- name: Ensure openbao is started and enabled
+  become: true
+  ansible.builtin.service:
+    name: openbao
+    state: started
+    enabled: true
