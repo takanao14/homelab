@@ -9,11 +9,10 @@ spec:
     repoURL: https://github.com/takanao14/homelab.git
     targetRevision: HEAD
     path: k8s/cert-manager
-    plugin:
-      name: helm-secrets
-      env:
-        - name: HELM_VALUES
-          value: "values.yaml,prd/values.yaml,secrets://secrets.enc.yaml"
+    helm:
+      valueFiles:
+        - values.yaml
+        - prd/values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager

@@ -1,6 +1,3 @@
-email: ""
+email: "admin@butaco.net"
 
 domain: ""
-
-cloudflare:
-  apiToken: ""
