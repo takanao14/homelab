@@ -1,3 +1,4 @@
+ansible_user: ENC[AES256_GCM,data:Btlbsg==,iv:jdJy1m3w+zKJRsimnWa2lRAutrakrKMgJ8/51hwSZYk=,tag:2RZx/ZnWu5bdaY1dmJCvFQ==,type:str]
 maintenance_user: ENC[AES256_GCM,data:6UXjCWOsDA==,iv:sB/XFYk1+okK5avPyF1wTBKHd0ajit3ytX0q8J1jRHc=,tag:8MHFvE5C8LrDVQw9TTZHLg==,type:str]
 maintenance_password_hash: ENC[AES256_GCM,data:EaIVWQT8Z1+VL5DsQs1zXn+qQzxZdUZNwLihXlMSfAKXo32H06GuVA3UHk2PJOVHS5xydnFyAIWSKhpBzhJytL15DIqRcBgksvepyTu4gZmq8zpyfeAsH3fwjsdDii2pmCV9DhPejBiH9w==,iv:QEC1Val3MlZf0GGb7x2HyZxjSW6zVc8wFU92yMx9GTM=,tag:TdDa9Y/ugptC6SGRIhYk1Q==,type:str]
 maintenance_ssh_key_path: ENC[AES256_GCM,data:tc0eywAfSq+HUaYlq/k8pJzZcwWe,iv:cRbk+/0mdm93xc88dIQtheRyA9hzkNMranNf6b/jNcs=,tag:AOMzobqI1/9dK6w7KfLbig==,type:str]
@@ -12,7 +13,7 @@ sops:
             NXNzb3BhUnhhcXBSNjBZV3BxT0c3K2MKEl//AYGo6IeUTgerA/qvztHY+wbCapX2
             a2Fs7WndIIE10+YW+ArFVsfCdTde4LEWJvVlarNLXdazDktgO6gSpg==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-04-15T03:11:39Z"
-    mac: ENC[AES256_GCM,data:jzeQe3xI3r9Rnmebfh7YIpyFvbaW4SVSDSMZ4JMqrAusnDd9PPwoZOpB6ulH0Pg3j3rObQPx2siylKFnn6/DIKJzvNPPIboJ/8gjfBJ0mfYCpOps64/GzwrXfJPSCp6+WFnNdTO+ulQs8Qlgd8v7dANcgeTlvRrAXlzAQASUrZ8=,iv:Z6qXfSjaE3Ua2jA8wwG57gMtowqzwew+DgUcKI3X2Vc=,tag:lzlgtgJq1g9JE8Zo5TfKFQ==,type:str]
+    lastmodified: "2026-04-29T10:50:57Z"
+    mac: ENC[AES256_GCM,data:EuV0DvlcxoKAt6LcSSBWAGvKatjBrIAUwb/3cxmZ+Y4gEXSeSn165G36QAEcyDa7eJWabN4YxB3snHWH8OeU9JWhLSwk3V9VbO8wCxci7fmZZKU7KG237A3TGkiCilR8D98D4c+415cR9G1U2gXQDugtLCeSZQjkIEcicRWwlPo=,iv:BUd0cnCihOrFsRlqfs5dIBxepu46RHUMux0HQQCkyfE=,tag:0ksMeNj9Gk69S7E0BDDIyw==,type:str]
     unencrypted_suffix: _unencrypted
     version: 3.12.2
