@@ -2,7 +2,7 @@
 {{- if and $val.node $val.url }}
 {{ $val.node }}:
   url: {{ $val.url }}
-  token: {{ "{{" }}PROXMOX_{{ $key | upper }}_TOKEN{{ "}}" }}
-  secret: {{ "{{" }}PROXMOX_{{ $key | upper }}_SECRET{{ "}}" }}
+  token: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ $key | upper }}_TOKEN{{ "}}" }}
+  secret: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ $key | upper }}_SECRET{{ "}}" }}
 {{- end }}
 {{- end }}

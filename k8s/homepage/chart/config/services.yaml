@@ -50,8 +50,8 @@
         widget:
           type: proxmox
           url: {{ $val.url }}
-          username: {{ "{{" }}PROXMOX_{{ $key | upper }}_TOKEN{{ "}}" }}
-          password: {{ "{{" }}PROXMOX_{{ $key | upper }}_SECRET{{ "}}" }}
+          username: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ $key | upper }}_TOKEN{{ "}}" }}
+          password: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ $key | upper }}_SECRET{{ "}}" }}
           node: {{ $val.node }}
     {{- end }}
     {{- end }}
@@ -66,7 +66,7 @@
         widget:
           type: truenas
           url: {{ .Values.truenas.url }}
-          key: {{ "{{" }}TRUENAS_KEY{{ "}}" }}
+          key: {{ "{{" }}HOMEPAGE_VAR_TRUENAS_KEY{{ "}}" }}
           nasType: scale
 
 - IPAM:
@@ -88,7 +88,7 @@
           version: 2
           url: {{ .Values.grafana.url }}
           username: {{ .Values.grafana.username }}
-          password: {{ "{{" }}GRAFANA_PASSWORD{{ "}}" }}
+          password: {{ "{{" }}HOMEPAGE_VAR_GRAFANA_PASSWORD{{ "}}" }}
 
     - Prometheus:
         icon: prometheus.png
