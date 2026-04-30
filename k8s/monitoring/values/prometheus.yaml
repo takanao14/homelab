@@ -83,12 +83,6 @@ kube-prometheus-stack:
           - targetLabel: cluster
             replacement: prd
 
-  prometheusOperator:
-    admissionWebhooks:
-      enabled: false
-      patch:
-        enabled: false
-
   kubeControllerManager:
     enabled: false
   kubeScheduler:
