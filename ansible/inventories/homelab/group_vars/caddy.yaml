@@ -15,3 +15,5 @@ caddy_upstreams:
     backend: 192.168.20.10:80
   - hostname: netbox-ui.home.butaco.net
     backend: 192.168.10.247:80
+  - hostname: openbao.home.butaco.net
+    backend: 192.168.40.30:8200
