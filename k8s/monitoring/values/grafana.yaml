@@ -1,7 +1,8 @@
 grafana:
   admin:
     existingSecret: grafana-admin
-    passwordKey: adminPassword
+    userKey: admin-user
+    passwordKey: admin-password
   sidecar:
     dashboards:
       enabled: true
