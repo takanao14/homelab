@@ -11,11 +11,9 @@ spec:
     repoURL: https://github.com/takanao14/homelab.git
     targetRevision: HEAD
     path: k8s/monitoring/charts/grafana
-    plugin:
-      name: helm-secrets
-      env:
-        - name: HELM_VALUES
-          value: "../../values/grafana.yaml,secrets://../../secrets.enc.yaml"
+    helm:
+      valueFiles:
+        - ../../values/grafana.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

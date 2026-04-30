@@ -3,25 +3,13 @@ prometheus-snmp-exporter:
     - --config.file=/etc/snmp_exporter/snmp.yml
     - --config.file=/etc/snmp-exporter-auth/snmp-auth.yaml
 
-  extraConfigmapMounts:
+  extraSecretMounts:
     - name: snmp-exporter-auth
       mountPath: /etc/snmp-exporter-auth
-      configMap: snmp-exporter-auth
+      secretName: snmp-exporter-auth
       readOnly: true
 
   extraManifests:
-    - |
-      apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: snmp-exporter-auth
-        namespace: monitoring
-      data:
-        snmp-auth.yaml: |
-          auths:
-            homelab_v2:
-              community: {{ .Values.snmp.community | quote }}
-              version: 2
     - |
       apiVersion: monitoring.coreos.com/v1
       kind: Probe
