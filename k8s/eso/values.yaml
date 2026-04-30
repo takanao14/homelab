@@ -1,0 +1,7 @@
+external-secrets:
+  installCRDs: true
+
+openbao:
+  server: "https://openbao.home.butaco.net"
+  path: "secret"
+  role: "k8s-eso"

@@ -1,0 +1,10 @@
+apiVersion: v2
+name: external-secrets
+description: External Secrets Operator with OpenBao ClusterSecretStore
+type: application
+version: 0.1.0
+dependencies:
+  # renovate: datasource=helm registryUrl=https://charts.external-secrets.io
+  - name: external-secrets
+    version: "0.14.4"
+    repository: https://charts.external-secrets.io
