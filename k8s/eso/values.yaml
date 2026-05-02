@@ -5,3 +5,4 @@ openbao:
   server: "https://openbao.home.butaco.net"
   path: "secret"
   role: "k8s-eso"
+  mountPath: "kubernetes"
