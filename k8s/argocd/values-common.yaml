@@ -3,8 +3,3 @@ server:
     - --insecure
   ingress:
     enabled: false
-
-repoServer:
-  volumes:
-    - name: plugins
-      emptyDir: {}
