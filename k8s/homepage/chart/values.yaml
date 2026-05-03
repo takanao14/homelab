@@ -12,9 +12,12 @@ proxmox:
   dev:
     url: https://pve.home.butaco.net:8006
     node: pve
-  prd2:
+  node2:
     url: https://node2.home.butaco.net:8006
     node: node2
+  node3:
+    url: https://node3.home.butaco.net:8006
+    node: node3
 
 pdns:
   primary:
