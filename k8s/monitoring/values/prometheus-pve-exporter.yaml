@@ -10,4 +10,6 @@ targets:
   - ip: "192.168.10.11"
     module: cluster_prd
   - ip: "192.168.10.12"
-    module: cluster_prd2
+    module: cluster_node2
+  - ip: "192.168.10.13"
+    module: cluster_node3
