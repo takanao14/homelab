@@ -1,0 +1,18 @@
+---
+- name: List enabled secrets engines
+  ansible.builtin.command:
+    cmd: "{{ openbao_binary }} secrets list -format=json"
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  register: secrets_engines
+  changed_when: false
+
+- name: Enable KV v2 secrets engine at secret/
+  ansible.builtin.command:
+    cmd: "{{ openbao_binary }} secrets enable -path=secret kv-v2"
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  when: "'secret/' not in (secrets_engines.stdout | from_json)"
+  changed_when: true

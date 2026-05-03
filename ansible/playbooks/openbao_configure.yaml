@@ -1,0 +1,23 @@
+---
+- name: Configure OpenBao for Kubernetes ESO integration
+  hosts: openbao
+  tasks:
+    - name: Configure KV v2 secrets engine
+      ansible.builtin.include_role:
+        name: openbao
+        tasks_from: configure_kv
+
+    - name: Configure Kubernetes auth method
+      ansible.builtin.include_role:
+        name: openbao
+        tasks_from: configure_k8s_auth
+
+    - name: Configure policies
+      ansible.builtin.include_role:
+        name: openbao
+        tasks_from: configure_policies
+
+    - name: Configure Kubernetes roles
+      ansible.builtin.include_role:
+        name: openbao
+        tasks_from: configure_roles

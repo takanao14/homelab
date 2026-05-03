@@ -1,0 +1,62 @@
+---
+# KV v2 stores secrets at secret/data/<path>, so policies must use that prefix.
+
+- name: Write policy for cert-manager namespace
+  ansible.builtin.command:
+    cmd: "{{ openbao_binary }} policy write k8s-cert-manager -"
+    stdin: |
+      path "secret/data/k8s/cert-manager/*" {
+        capabilities = ["read"]
+      }
+      path "secret/metadata/k8s/cert-manager/*" {
+        capabilities = ["read"]
+      }
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  changed_when: true
+
+- name: Write policy for dns-homelab namespace
+  ansible.builtin.command:
+    cmd: "{{ openbao_binary }} policy write k8s-dns-homelab -"
+    stdin: |
+      path "secret/data/k8s/dns-homelab/*" {
+        capabilities = ["read"]
+      }
+      path "secret/metadata/k8s/dns-homelab/*" {
+        capabilities = ["read"]
+      }
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  changed_when: true
+
+- name: Write policy for homepage namespace
+  ansible.builtin.command:
+    cmd: "{{ openbao_binary }} policy write k8s-homepage -"
+    stdin: |
+      path "secret/data/k8s/homepage/*" {
+        capabilities = ["read"]
+      }
+      path "secret/metadata/k8s/homepage/*" {
+        capabilities = ["read"]
+      }
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  changed_when: true
+
+- name: Write policy for monitoring namespace
+  ansible.builtin.command:
+    cmd: "{{ openbao_binary }} policy write k8s-monitoring -"
+    stdin: |
+      path "secret/data/k8s/monitoring/*" {
+        capabilities = ["read"]
+      }
+      path "secret/metadata/k8s/monitoring/*" {
+        capabilities = ["read"]
+      }
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  changed_when: true

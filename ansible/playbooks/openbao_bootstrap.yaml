@@ -1,0 +1,8 @@
+---
+- name: Bootstrap OpenBao admin token
+  hosts: openbao
+  tasks:
+    - name: Run bootstrap tasks
+      ansible.builtin.include_role:
+        name: openbao
+        tasks_from: bootstrap

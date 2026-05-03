@@ -27,3 +27,48 @@ openbao_seal_key_id: "key-1"
 # Static seal key: 32 raw bytes, base64-encoded (set via group_vars with SOPS encryption)
 # Generate with: openssl rand -base64 32
 openbao_seal_key: ""
+
+# Local API address used by bao CLI tasks running on the openbao host itself.
+# TLS is terminated by Caddy upstream, so the listener is plain HTTP.
+openbao_local_addr: "http://127.0.0.1:{{ openbao_api_port }}"
+
+# Tokens (set via group_vars with SOPS encryption)
+openbao_root_token: ""
+openbao_admin_token: ""
+
+# Kubernetes auth configuration
+# prd cluster (mount path: kubernetes)
+openbao_k8s_host: ""
+openbao_k8s_ca_cert: ""
+openbao_k8s_token_reviewer_jwt: ""
+
+# dev cluster (mount path: kubernetes-dev)
+openbao_k8s_dev_host: ""
+openbao_k8s_dev_ca_cert: ""
+openbao_k8s_dev_token_reviewer_jwt: ""
+
+# All clusters to configure (references vars above)
+openbao_k8s_clusters:
+  - mount_path: kubernetes
+    host: "{{ openbao_k8s_host }}"
+    ca_cert: "{{ openbao_k8s_ca_cert }}"
+    ca_cert_file: "{{ openbao_config_dir }}/k8s-prd-ca.pem"
+    token_reviewer_jwt: "{{ openbao_k8s_token_reviewer_jwt }}"
+    role: k8s-eso
+    policies: "k8s-cert-manager,k8s-dns-homelab,k8s-homepage,k8s-monitoring"
+  - mount_path: kubernetes-dev
+    host: "{{ openbao_k8s_dev_host }}"
+    ca_cert: "{{ openbao_k8s_dev_ca_cert }}"
+    ca_cert_file: "{{ openbao_config_dir }}/k8s-dev-ca.pem"
+    token_reviewer_jwt: "{{ openbao_k8s_dev_token_reviewer_jwt }}"
+    role: k8s-eso
+    policies: "k8s-cert-manager,k8s-dns-homelab,k8s-monitoring"
+
+# Secrets to write into OpenBao KV (set via group_vars with SOPS encryption)
+# Each entry requires: path (KV path) and data (key/value pairs)
+# Example:
+#   openbao_secrets:
+#     - path: secret/k8s/cert-manager/cloudflare
+#       data:
+#         api-token: "xxxx"
+openbao_secrets: []

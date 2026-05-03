@@ -1,0 +1,14 @@
+---
+- name: Write Kubernetes role for ESO
+  ansible.builtin.command:
+    cmd: >
+      {{ openbao_binary }} write auth/{{ item.mount_path }}/role/{{ item.role }}
+      bound_service_account_names=external-secrets
+      bound_service_account_namespaces=external-secrets
+      policies={{ item.policies }}
+      ttl=1h
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  loop: "{{ openbao_k8s_clusters }}"
+  changed_when: true

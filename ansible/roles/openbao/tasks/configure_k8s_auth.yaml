@@ -1,0 +1,42 @@
+---
+- name: List enabled auth methods
+  ansible.builtin.command:
+    cmd: "{{ openbao_binary }} auth list -format=json"
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  register: auth_methods
+  changed_when: false
+
+- name: Enable Kubernetes auth method
+  ansible.builtin.command:
+    cmd: "{{ openbao_binary }} auth enable -path={{ item.mount_path }} kubernetes"
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  loop: "{{ openbao_k8s_clusters }}"
+  when: "(item.mount_path + '/') not in (auth_methods.stdout | from_json)"
+  changed_when: true
+
+- name: Deploy Kubernetes CA certificate
+  become: true
+  ansible.builtin.copy:
+    content: "{{ item.ca_cert }}"
+    dest: "{{ item.ca_cert_file }}"
+    owner: "{{ openbao_user }}"
+    group: "{{ openbao_group }}"
+    mode: '0644'
+  loop: "{{ openbao_k8s_clusters }}"
+
+- name: Configure Kubernetes auth method
+  ansible.builtin.command:
+    cmd: >
+      {{ openbao_binary }} write auth/{{ item.mount_path }}/config
+      kubernetes_host="{{ item.host }}"
+      kubernetes_ca_cert=@{{ item.ca_cert_file }}
+      token_reviewer_jwt="{{ item.token_reviewer_jwt }}"
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  loop: "{{ openbao_k8s_clusters }}"
+  changed_when: true
