@@ -41,18 +41,18 @@
             siteMonitor: http://{{ .Values.dnsdist.dnsdist2.addr }}:8083/
 
 - HyperVisor:
-    {{- range $key, $val := .Values.proxmox }}
-    {{- if and $val.node $val.url }}
-    - Proxmox VE {{ $key | title }}:
+    {{- range .Values.proxmox }}
+    {{- if and .node .url }}
+    - Proxmox VE {{ .key | title }}:
         icon: proxmox.png
-        href: {{ $val.url }}
+        href: {{ .url }}
         description: Virtualization Platform
         widget:
           type: proxmox
-          url: {{ $val.url }}
-          username: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ $key | upper }}_TOKEN{{ "}}" }}
-          password: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ $key | upper }}_SECRET{{ "}}" }}
-          node: {{ $val.node }}
+          url: {{ .url }}
+          username: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ .key | upper }}_TOKEN{{ "}}" }}
+          password: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ .key | upper }}_SECRET{{ "}}" }}
+          node: {{ .node }}
     {{- end }}
     {{- end }}
 
