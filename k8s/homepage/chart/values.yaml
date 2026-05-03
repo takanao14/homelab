@@ -6,16 +6,16 @@ image:
   tag: v1.12.3
 
 proxmox:
-  prd:
+  - key: prd
     url: https://node1.home.butaco.net:8006
     node: node1
-  dev:
+  - key: dev
     url: https://pve.home.butaco.net:8006
     node: pve
-  node2:
+  - key: node2
     url: https://node2.home.butaco.net:8006
     node: node2
-  node3:
+  - key: node3
     url: https://node3.home.butaco.net:8006
     node: node3
 
