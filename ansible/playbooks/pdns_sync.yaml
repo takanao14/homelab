@@ -1,0 +1,52 @@
+---
+- name: Force zone transfer from primary to secondary
+  hosts: dns_primary
+  gather_facts: false
+  vars:
+    pdns_webserver_port: 8081
+  tasks:
+    - name: Get all zones from primary
+      ansible.builtin.uri:
+        url: "http://{{ pdns_primary_addr }}:{{ pdns_webserver_port }}/api/v1/servers/localhost/zones"
+        method: GET
+        headers:
+          X-API-Key: "{{ PDNS_PRIMARY_API_KEY }}"
+      register: pdns_zones
+      changed_when: false
+
+    - name: Send NOTIFY for each zone
+      ansible.builtin.uri:
+        url: "http://{{ pdns_primary_addr }}:{{ pdns_webserver_port }}/api/v1/servers/localhost/zones/{{ item.id }}/notify"
+        method: PUT
+        headers:
+          X-API-Key: "{{ PDNS_PRIMARY_API_KEY }}"
+        status_code: 200
+      loop: "{{ pdns_zones.json }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+- name: Trigger AXFR retrieve on secondary
+  hosts: dns_secondary
+  gather_facts: false
+  vars:
+    pdns_webserver_port: 8081
+  tasks:
+    - name: Get all zones on secondary
+      ansible.builtin.uri:
+        url: "http://{{ pdns_secondary_addr }}:{{ pdns_webserver_port }}/api/v1/servers/localhost/zones"
+        method: GET
+        headers:
+          X-API-Key: "{{ PDNS_SECONDARY_API_KEY }}"
+      register: pdns_secondary_zones
+      changed_when: false
+
+    - name: Trigger AXFR retrieve for each zone
+      ansible.builtin.uri:
+        url: "http://{{ pdns_secondary_addr }}:{{ pdns_webserver_port }}/api/v1/servers/localhost/zones/{{ item.id }}/axfr-retrieve"
+        method: PUT
+        headers:
+          X-API-Key: "{{ PDNS_SECONDARY_API_KEY }}"
+        status_code: 200
+      loop: "{{ pdns_secondary_zones.json }}"
+      loop_control:
+        label: "{{ item.name }}"
