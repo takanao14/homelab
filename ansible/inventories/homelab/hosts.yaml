@@ -26,6 +26,8 @@ all:
       ansible_host: 192.168.10.11
     node2:
       ansible_host: 192.168.10.12
+    node3:
+      ansible_host: 192.168.10.13
     rpi3:
       ansible_host: 192.168.10.240
     rpi4:
@@ -104,6 +106,7 @@ all:
         pve: null
         node1: null
         node2: null
+        node3: null
 
     node_exporter:
       children:
@@ -115,6 +118,7 @@ all:
         pve: null
         node1: null
         node2: null
+        node3: null
 
     blackbox_exporter:
       hosts:
