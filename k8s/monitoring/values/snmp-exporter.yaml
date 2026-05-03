@@ -27,7 +27,8 @@ prometheus-snmp-exporter:
         targets:
           staticConfig:
             relabelingConfigs:
-              - targetLabel: __param_auth
+              - action: replace
+                targetLabel: __param_auth
                 replacement: homelab_v2
             static:
               - "192.168.10.1"
