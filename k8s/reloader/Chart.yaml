@@ -1,0 +1,10 @@
+apiVersion: v2
+name: reloader
+description: Stakater Reloader - automatic rolling restarts on Secret/ConfigMap changes
+type: application
+version: 0.1.0
+dependencies:
+  # renovate: datasource=helm registryUrl=https://stakater.github.io/stakater-charts
+  - name: reloader
+    version: "2.2.11"
+    repository: https://stakater.github.io/stakater-charts

@@ -1,4 +1,6 @@
 grafana:
+  podAnnotations:
+    reloader.stakater.com/auto: "true"
   admin:
     existingSecret: grafana-admin
     userKey: admin-user
