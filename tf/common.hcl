@@ -25,7 +25,7 @@ locals {
     }
   }
 
-  prd2 = {
+  node2 = {
     net10 = {
       bridge = "vmbr0"
       ipv4gw = "192.168.10.1"
@@ -35,4 +35,16 @@ locals {
       ipv4gw = "192.168.40.1"
     }
   }
+
+  node3 = {
+    net10 = {
+      bridge = "vmbr0"
+      ipv4gw = "192.168.10.1"
+    }
+    net50 = {
+      bridge = "vnets50"
+      ipv4gw = "192.168.50.1"
+    }
+  }
+
 }

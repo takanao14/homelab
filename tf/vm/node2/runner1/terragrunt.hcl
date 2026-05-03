@@ -18,16 +18,16 @@ locals {
 
 inputs = {
   vms = {
-    "vpngw" = merge(local.base_vars, {
+    "runner1" = merge(local.base_vars, {
       cores   = 2
-      memory  = 1024
-      bridge  = local.common.locals.prd2.net10.bridge
-      ipv4    = "192.168.10.3/24"
-      ipv4gw  = local.common.locals.prd2.net10.ipv4gw
+      memory  = 4096
+      bridge  = local.common.locals.node2.net10.bridge
+      ipv4    = "192.168.10.246/24"
+      ipv4gw  = local.common.locals.node2.net10.ipv4gw
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
-          size    = 10
-          file_id = "local:iso/debian-13.img"
+          size    = 40
+          file_id = "local:iso/ubuntu-24.04-custom.img"
         })
       }
     })
