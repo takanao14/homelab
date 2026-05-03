@@ -14,7 +14,8 @@ spec:
     staticConfig:
       relabelingConfigs:
         {{- range .Values.targets }}
-        - sourceLabels: [__param_target]
+        - action: replace
+          sourceLabels: [__param_target]
           regex: {{ printf "%s(:[0-9]+)?" (.ip | replace "." "\\.") | quote }}
           targetLabel: __param_module
           replacement: {{ .module }}
