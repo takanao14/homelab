@@ -32,12 +32,15 @@ ansible/
 │       │   ├── netbox.sops.yaml
 │       │   ├── node_exporter.yaml
 │       │   ├── node_exporter_rpi.yaml
+│       │   ├── openbao.yaml
+│       │   ├── openbao.sops.yaml
 │       │   ├── proxmox.sops.yaml
 │       │   └── syslog.yaml
 │       └── host_vars/
 │           └── <hostname>.sops.yaml # SOPS-encrypted host-specific secrets (e.g. ansible_user)
 ├── playbooks/
 │   ├── pdns_auth.yaml
+│   ├── pdns_sync.yaml
 │   ├── dnsdist.yaml
 │   ├── caddy.yaml
 │   ├── dhcp.yaml
@@ -47,6 +50,10 @@ ansible/
 │   ├── node_exporter.yaml
 │   ├── blackbox_exporter.yaml
 │   ├── syslog.yaml
+│   ├── openbao.yaml
+│   ├── openbao_bootstrap.yaml
+│   ├── openbao_configure.yaml
+│   ├── openbao_seed_secrets.yaml
 │   ├── proxmox.yaml
 │   ├── maintenance_user.yaml
 │   ├── apt_upgrade.yaml
@@ -67,6 +74,7 @@ ansible/
     ├── netbox/
     ├── node_exporter/
     ├── blackbox_exporter/
+    ├── openbao/
     ├── apt_mirror/
     ├── unattended_upgrades/
     ├── maintenance_user/
@@ -131,8 +139,17 @@ ansible-playbook playbooks/forgejo.yaml
 # Forgejo Runner
 ansible-playbook playbooks/forgejo_runner.yaml
 
+# OpenBao
+ansible-playbook playbooks/openbao.yaml
+
 # Proxmox maintenance user setup
 ansible-playbook playbooks/proxmox.yaml
+
+# Maintenance user on LXC containers
+ansible-playbook playbooks/maintenance_user.yaml
+
+# Apt package upgrade (all hosts)
+ansible-playbook playbooks/apt_upgrade.yaml
 
 # Dry run
 ansible-playbook playbooks/pdns_auth.yaml --check
@@ -204,6 +221,66 @@ Configures rsyslog on Raspberry Pi 3.
 - **Role:** `rsyslog`
 - **Hosts:** `rpi3`
 
+### Blackbox Exporter (`playbooks/blackbox_exporter.yaml`)
+Installs Prometheus Blackbox Exporter for ICMP and DNS probe monitoring.
+- **Role:** `blackbox_exporter`
+- **Hosts:** `blackbox_exporter`
+
+### Apt Mirror (`playbooks/apt_mirror.yaml`)
+Replaces the default Ubuntu apt mirror URL with a local mirror on all Ubuntu hosts.
+- **Role:** `apt_mirror`
+- **Hosts:** `all`
+
+### Apt Upgrade (`playbooks/apt_upgrade.yaml`)
+Runs a full `dist-upgrade` across all hosts (except Proxmox), rebooting if required. Runs serially (one host at a time).
+- **Hosts:** `all:!proxmox`
+
+### Unattended Upgrades (`playbooks/unattended_upgrades.yaml`)
+Enables automatic security updates via `unattended-upgrades` on all non-Proxmox hosts.
+- **Role:** `unattended_upgrades`
+- **Hosts:** `all:!proxmox`
+
+### GPU VM — ROCm (`playbooks/gpuvm.yaml`)
+Sets up an AMD GPU VM with timezone and ROCm drivers.
+- **Roles:** `timezone`, `rocm`
+- **Hosts:** `gpuvm`
+
+### Lemonade (`playbooks/lemonade.yaml`)
+Deploys the Lemonade AI inference server with AMD ROCm backend on the GPU VM.
+- **Roles:** `timezone`, `rocm`, `lemonade`
+- **Hosts:** `gpuvm`
+
+### Maintenance User on LXC (`playbooks/maintenance_user.yaml`)
+Creates a maintenance user with sudo access on LXC containers.
+- **Role:** `maintenance_user`
+- **Hosts:** `lxc`
+
+### OpenBao (`playbooks/openbao.yaml`)
+Deploys the OpenBao secret management server.
+- **Role:** `openbao`
+- **Hosts:** `openbao`
+- **Config:** `group_vars/openbao.yaml`, `group_vars/openbao.sops.yaml`
+- **See also:** [roles/openbao/README.md](roles/openbao/README.md) for initialization and ESO integration steps.
+
+### OpenBao Bootstrap (`playbooks/openbao_bootstrap.yaml`)
+Creates a long-lived admin token from the root token. Run once after initial `bao operator init`.
+- **Role task:** `openbao/tasks/bootstrap.yaml`
+- **Hosts:** `openbao`
+
+### OpenBao Configure (`playbooks/openbao_configure.yaml`)
+Configures KV v2 secrets engine, Kubernetes auth method, policies, and roles for ESO integration.
+- **Role tasks:** `configure_kv`, `configure_k8s_auth`, `configure_policies`, `configure_roles`
+- **Hosts:** `openbao`
+
+### OpenBao Seed Secrets (`playbooks/openbao_seed_secrets.yaml`)
+Seeds application secrets into OpenBao KV from SOPS-encrypted variables.
+- **Role task:** `openbao/tasks/seed_secrets.yaml`
+- **Hosts:** `openbao`
+
+### PowerDNS Zone Sync (`playbooks/pdns_sync.yaml`)
+Forces a zone transfer from the primary PowerDNS server to the secondary by sending NOTIFY and triggering AXFR on the secondary.
+- **Hosts:** `dns_primary`, `dns_secondary`
+
 ## Secret Variables
 
 | Variable | Sops file | Description |
@@ -216,6 +293,14 @@ Configures rsyslog on Raspberry Pi 3.
 | `MAINTENANCE_USER` | `group_vars/proxmox.sops.yaml` | Proxmox maintenance username |
 | `MAINTENANCE_PASSWORD_HASH` | `group_vars/proxmox.sops.yaml` | Hashed password (`openssl passwd -6`) |
 | `SSH_KEY_PATH` | `group_vars/proxmox.sops.yaml` | Path to SSH public key file |
+| `netbox_db_password` | `group_vars/netbox.sops.yaml` | NetBox PostgreSQL password |
+| `netbox_secret_key` | `group_vars/netbox.sops.yaml` | NetBox Django secret key |
+| `netbox_superuser_password` | `group_vars/netbox.sops.yaml` | NetBox superuser password |
+| `openbao_seal_key` | `group_vars/openbao.sops.yaml` | OpenBao static seal key (base64-encoded 32 bytes) |
+| `openbao_root_token` | `group_vars/openbao.sops.yaml` | OpenBao root token (emergency backup) |
+| `openbao_admin_token` | `group_vars/openbao.sops.yaml` | OpenBao admin token for configuration |
+| `openbao_k8s_token_reviewer_jwt` | `group_vars/openbao.sops.yaml` | Kubernetes token reviewer ServiceAccount JWT |
+| `openbao_k8s_ca_cert` | `group_vars/openbao.sops.yaml` | PEM CA certificate of the Kubernetes cluster |
 
 ## Non-Secret Configuration
 
