@@ -31,14 +31,18 @@ All HTTP services are exposed via HTTPRoute referencing a shared Gateway (`share
 | Homepage | `www.prd.butaco.net` | - | HTTPRoute |
 | Grafana | `grafana.prd.butaco.net` | - | HTTPRoute |
 | Prometheus | `prometheus.prd.butaco.net` | - | HTTPRoute |
-| MeshCentral | - | `meshcentral.dev.butaco.net` | HTTPRoute |
 | Loki | LoadBalancer (cluster-external log ingestion) | - | LoadBalancer |
+| MeshCentral | - | `meshcentral.dev.butaco.net` | HTTPRoute |
+| ComfyUI | - | `comfyui.dev.butaco.net` | HTTPRoute |
+| Ollama | - | `ollama.dev.butaco.net` | HTTPRoute |
+| Open-WebUI | - | `open-webui.dev.butaco.net` | HTTPRoute |
 
 ### Secrets Management
 
-- Encrypted with SOPS + Age
-- Managed via ArgoCD helm-secrets CMP plugin
-- Private key stored as Kubernetes secret `helm-secrets-private-keys` in `argocd` namespace
+- All Kubernetes secrets are managed via [External Secrets Operator](https://external-secrets.io/) (ESO)
+- ESO fetches secrets from OpenBao KV v2 (Vault-compatible) using Kubernetes auth
+- `ClusterSecretStore` named `openbao` is configured by the `eso` chart
+- OpenBao is deployed and managed via Ansible (`ansible/roles/openbao`)
 
 ## Directory Structure
 
@@ -61,15 +65,20 @@ k8s/
 │       └── apps/                 # ArgoCD Application manifests
 ├── cert-manager/         # Wildcard certificate config (local Helm chart)
 │   ├── Chart.yaml
-│   ├── values.yaml           # Schema: email, domain, cloudflare.apiToken
-│   ├── secrets.enc.yaml      # Encrypted Cloudflare API token
+│   ├── values.yaml           # Schema: email, domain
 │   ├── dev/values.yaml       # domain: dev.butaco.net
 │   ├── prd/values.yaml       # domain: prd.butaco.net
 │   └── templates/
-│       ├── cluster-issuer.yaml    # letsencrypt-staging + letsencrypt-production
-│       ├── certificate.yaml       # Wildcard cert: *.{domain}
-│       ├── cloudflare-secret.yaml # Cloudflare API token secret
-│       └── reference-grant.yaml  # Allows gateway-system to reference TLS secret
+│       ├── cluster-issuer.yaml          # letsencrypt-staging + letsencrypt-production
+│       ├── certificate.yaml             # Wildcard cert: *.{domain}
+│       ├── cloudflare-external-secret.yaml  # ESO ExternalSecret for Cloudflare API token
+│       └── reference-grant.yaml         # Allows gateway-system to reference TLS secret
+├── eso/                  # External Secrets Operator + ClusterSecretStore (OpenBao)
+│   ├── Chart.yaml
+│   ├── values.yaml
+│   └── templates/
+│       ├── cluster-secret-store.yaml  # ClusterSecretStore pointing to OpenBao
+│       └── token-reviewer.yaml        # ServiceAccount for OpenBao Kubernetes auth
 ├── gateway/              # Cilium Gateway API (local Helm chart)
 │   ├── Chart.yaml
 │   ├── values.yaml           # Schema: domain
@@ -79,8 +88,10 @@ k8s/
 ├── externalDNS/          # external-dns with PowerDNS
 │   ├── chart/
 │   │   ├── values.yaml
-│   │   ├── secrets.enc.yaml
 │   │   └── templates/
+│   │       ├── deployment.yaml
+│   │       ├── rbac.yaml
+│   │       └── external-secret.yaml  # ESO ExternalSecret for PowerDNS API key
 │   ├── values-common.yaml
 │   ├── dev/values.yaml
 │   └── prd/values.yaml
@@ -88,7 +99,19 @@ k8s/
 │   ├── apps/             # ArgoCD Application manifests
 │   ├── charts/           # Local Helm charts (wrappers + HTTPRoutes)
 │   └── values/           # Values per component
-├── homepage/             # Homepage dashboard
+├── dev-monitoring/       # Prometheus agent mode (dev cluster → remote_write to prd)
+│   ├── charts/prometheus/    # kube-prometheus-stack wrapper (agent mode)
+│   └── values/prometheus.yaml
+├── reloader/             # Stakater Reloader (auto-restart on Secret/ConfigMap change)
+│   ├── Chart.yaml
+│   └── values.yaml
+├── comfyui/              # ComfyUI AI image generation (dev only, AMD GPU)
+│   ├── values.yaml
+│   └── chart/
+├── ollama/               # Ollama LLM server (dev only, AMD GPU)
+│   ├── values.yaml
+│   └── chart/
+├── homepage/             # Homepage dashboard (prd only)
 │   └── chart/
 └── meshcentral/          # MeshCentral remote management (dev only)
     └── chart/
@@ -99,11 +122,6 @@ k8s/
 ArgoCD is deployed first via helmfile, then manages everything else via the App of Apps pattern.
 
 ```bash
-# Register Age private key before deploying ArgoCD
-kubectl create secret generic helm-secrets-private-keys \
-  --from-file=key.txt=/path/to/age-private-key.txt \
-  -n argocd
-
 # Deploy ArgoCD (prd)
 cd k8s/argocd/prd
 helmfile apply
@@ -121,6 +139,7 @@ Wildcard certificate issued via Let's Encrypt production using Cloudflare DNS-01
 - Certificate: `*.prd.butaco.net` → Secret `wildcard-prd-butaco-net-tls` in `cert-manager` namespace
 - ReferenceGrant allows `gateway-system` to reference the TLS secret
 - `--dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53` is required to bypass internal DNS (PowerDNS) for ACME validation
+- Cloudflare API token is fetched from OpenBao via ESO (`k8s/cert-manager/cloudflare` → `api-token`)
 
 ## Gateway
 

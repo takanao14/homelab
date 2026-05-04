@@ -19,11 +19,14 @@ argocd/
 │       ├── cert-manager-config.yaml
 │       ├── cert-manager.yaml
 │       ├── comfyui.yaml
+│       ├── eso.yaml
 │       ├── external-dns.yaml
 │       ├── gateway.yaml
 │       ├── meshcentral.yaml
+│       ├── monitoring.yaml       # Prometheus agent mode (k8s/dev-monitoring)
 │       ├── ollama.yaml
-│       └── open-webui.yaml
+│       ├── open-webui.yaml
+│       └── reloader.yaml
 └── prd/
     ├── helmfile.yaml         # Initial deployment config for prd
     ├── values.yaml           # server.ingress.hostname: argocd.prd.butaco.net
@@ -32,10 +35,12 @@ argocd/
         ├── argocd.yaml
         ├── cert-manager-config.yaml
         ├── cert-manager.yaml
+        ├── eso.yaml
         ├── external-dns.yaml
         ├── gateway.yaml
         ├── homepage.yaml
-        └── monitoring.yaml
+        ├── monitoring.yaml       # Full monitoring stack (k8s/monitoring)
+        └── reloader.yaml
 ```
 
 ## Environments
@@ -52,11 +57,6 @@ argocd/
 ArgoCD is initially deployed using helmfile, and subsequently self-manages itself.
 
 ```bash
-# Register Age private key before deploying ArgoCD
-kubectl create secret generic helm-secrets-private-keys \
-  --from-file=key.txt=/path/to/age-private-key.txt \
-  -n argocd
-
 # prd environment
 cd k8s/argocd/prd
 helmfile apply
@@ -67,13 +67,9 @@ kubectl apply -f k8s/argocd/prd/root-apps.yaml
 
 A helmfile hook will interrupt the deployment if the context of the target cluster is incorrect.
 
-## helm-secrets Plugin (CMP)
+## Secrets Management
 
-A Config Management Plugin (CMP) defined in `values-common.yaml` allows SOPS-encrypted secrets to be managed in Git.
-
-- Encryption method: Age
-- Custom image: `ghcr.io/takanao14/argocd-helm-secrets-cmp:latest`
-- Private key is managed via a Kubernetes secret (`helm-secrets-private-keys`)
+All application secrets are managed via External Secrets Operator (ESO) backed by OpenBao — see `k8s/eso/` for the `ClusterSecretStore` configuration.
 
 ## HTTPRoute
 
@@ -90,12 +86,14 @@ The `argocd.yaml` Application uses multi-source:
 |-------------|-----------|-------------|---------|
 | argocd | argocd | dev, prd | none |
 | cert-manager | cert-manager | dev, prd | none |
-| cert-manager-config | cert-manager | dev, prd | yes (helm-secrets) |
+| cert-manager-config | cert-manager | dev, prd | yes (ESO → OpenBao) |
 | comfyui | comfyui | dev only | none |
-| external-dns | dns-homelab | dev, prd | yes (helm-secrets) |
+| external-secrets (eso) | external-secrets | dev, prd | none |
+| external-dns | dns-homelab | dev, prd | yes (ESO → OpenBao) |
 | gateway | gateway-system | dev, prd | none |
-| homepage | homepage | prd only | yes (helm-secrets) |
+| homepage | homepage | prd only | yes (ESO → OpenBao) |
 | meshcentral | meshcentral | dev only | none |
-| monitoring | monitoring | prd only | yes (helm-secrets) |
+| monitoring | monitoring | dev, prd | yes (ESO → OpenBao, prd only) |
 | ollama | ollama | dev only | none |
 | open-webui | open-webui | dev only | none |
+| reloader | reloader | dev, prd | none |

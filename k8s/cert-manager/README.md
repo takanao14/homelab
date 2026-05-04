@@ -11,17 +11,16 @@ Managed by ArgoCD with the helm-secrets plugin. Two ArgoCD Applications are used
 ```
 cert-manager/
 ├── Chart.yaml
-├── values.yaml               # Schema: email, domain, cloudflare.apiToken
-├── secrets.enc.yaml          # SOPS-encrypted Cloudflare API token
+├── values.yaml               # Schema: email, domain
 ├── dev/
 │   └── values.yaml           # domain: dev.butaco.net
 ├── prd/
 │   └── values.yaml           # domain: prd.butaco.net
 └── templates/
-    ├── cluster-issuer.yaml   # letsencrypt-staging + letsencrypt-production
-    ├── certificate.yaml      # Wildcard cert: *.{domain}
-    ├── cloudflare-secret.yaml
-    └── reference-grant.yaml  # Allows gateway-system to reference TLS secret
+    ├── cluster-issuer.yaml              # letsencrypt-staging + letsencrypt-production
+    ├── certificate.yaml                 # Wildcard cert: *.{domain}
+    ├── cloudflare-external-secret.yaml  # ESO ExternalSecret for Cloudflare API token
+    └── reference-grant.yaml             # Allows gateway-system to reference TLS secret
 ```
 
 ## How It Works
@@ -44,18 +43,20 @@ cert-manager/
 
 ## Secrets
 
-`secrets.enc.yaml` contains the Cloudflare API token encrypted with SOPS + Age.
+The Cloudflare API token is fetched from OpenBao via ESO. It is not stored in this repository.
+
+OpenBao KV path: `k8s/cert-manager/cloudflare`
+
+| Property | Description |
+|----------|-------------|
+| `api-token` | Cloudflare API token with `Zone:DNS:Edit` permission |
+
+To seed the secret into OpenBao:
 
 ```bash
-# Edit secrets
-sops edit k8s/cert-manager/secrets.enc.yaml
+# Via Ansible openbao_seed_secrets playbook, or manually:
+bao kv put secret/k8s/cert-manager/cloudflare api-token=<token>
 ```
-
-Required secret fields:
-
-| Field | Description |
-|-------|-------------|
-| `cloudflare.apiToken` | Cloudflare API token with `Zone:DNS:Edit` permission |
 
 ## Notes
 

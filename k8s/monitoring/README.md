@@ -12,6 +12,7 @@ Monitoring stack for the prd cluster. Managed by ArgoCD with the helm-secrets pl
 | `snmp-exporter` | `prometheus-snmp-exporter` | SNMP metrics polling |
 | `prometheus-pve-exporter` | local chart | Proxmox VE metrics |
 | `node-exporter-external` | local chart | Scrape external node-exporter instances |
+| `amd-gpu-external` | local chart | AMD GPU metrics (amd-metrics-exporter on GPU VM) |
 | `dnsdist` | local chart | dnsdist metrics (Endpoints + ServiceMonitor) |
 | `pdns-auth` | local chart | PowerDNS Authoritative metrics |
 
@@ -19,7 +20,6 @@ Monitoring stack for the prd cluster. Managed by ArgoCD with the helm-secrets pl
 
 ```
 monitoring/
-├── secrets.enc.yaml              # SOPS-encrypted secrets
 ├── apps/                         # ArgoCD Application manifests
 │   ├── prometheus.yaml
 │   ├── loki.yaml
@@ -27,6 +27,7 @@ monitoring/
 │   ├── snmp-exporter.yaml
 │   ├── prometheus-pve-exporter.yaml
 │   ├── node-exporter-external.yaml
+│   ├── amd-gpu-external.yaml
 │   ├── dnsdist.yaml
 │   └── pdns-auth.yaml
 ├── values/                       # Helm values per component
@@ -36,6 +37,7 @@ monitoring/
 │   ├── snmp-exporter.yaml
 │   ├── prometheus-pve-exporter.yaml
 │   ├── node-exporter-external.yaml
+│   ├── amd-gpu-external.yaml
 │   ├── dnsdist.yaml
 │   ├── pdns-auth.yaml
 │   └── default-values.yaml      # Reference: upstream chart defaults
@@ -43,10 +45,11 @@ monitoring/
     ├── prometheus/               # Wrapper + HTTPRoutes for Grafana and Prometheus
     ├── loki/
     ├── node-exporter-external/
+    ├── amd-gpu-external/         # ScrapeConfig for AMD GPU metrics exporter
     ├── dnsdist/
     ├── pdns-auth/
     ├── snmp-exporter/
-    └── prometheus-pve-exporter/  # Checksum annotation for auto-restart on Secret change
+    └── prometheus-pve-exporter/  # Deployment + ESO ExternalSecret + Probe
 ```
 
 ## Access
@@ -63,23 +66,24 @@ Loki uses LoadBalancer intentionally to receive logs from nodes outside the clus
 
 ## Secrets
 
-```bash
-sops edit k8s/monitoring/secrets.enc.yaml
-```
+All secrets are fetched from OpenBao via ESO. They are not stored in this repository.
 
-| Variable | Used by | Description |
-|----------|---------|-------------|
-| `grafana.adminPassword` | prometheus | Grafana admin password |
-| `snmp.community` | snmp-exporter | SNMP community string |
-| `proxmox.prd.user` | prometheus-pve-exporter | Proxmox prd API username |
-| `proxmox.prd.tokenName` | prometheus-pve-exporter | Proxmox prd API token name |
-| `proxmox.prd.tokenValue` | prometheus-pve-exporter | Proxmox prd API token value |
-| `proxmox.dev.user` | prometheus-pve-exporter | Proxmox dev API username |
-| `proxmox.dev.tokenName` | prometheus-pve-exporter | Proxmox dev API token name |
-| `proxmox.dev.tokenValue` | prometheus-pve-exporter | Proxmox dev API token value |
-| `proxmox.prd2.user` | prometheus-pve-exporter | Proxmox prd2 API username |
-| `proxmox.prd2.tokenName` | prometheus-pve-exporter | Proxmox prd2 API token name |
-| `proxmox.prd2.tokenValue` | prometheus-pve-exporter | Proxmox prd2 API token value |
+| OpenBao path | Property | Used by | Description |
+|-------------|----------|---------|-------------|
+| `k8s/monitoring/grafana` | `adminPassword` | prometheus | Grafana admin password |
+| `k8s/monitoring/snmp-exporter` | `community` | snmp-exporter | SNMP community string |
+| `k8s/monitoring/pve-exporter` | `cluster-dev-user` | prometheus-pve-exporter | Proxmox dev API username |
+| `k8s/monitoring/pve-exporter` | `cluster-dev-token-name` | prometheus-pve-exporter | Proxmox dev API token name |
+| `k8s/monitoring/pve-exporter` | `cluster-dev-token-value` | prometheus-pve-exporter | Proxmox dev API token value |
+| `k8s/monitoring/pve-exporter` | `cluster-prd-user` | prometheus-pve-exporter | Proxmox prd API username |
+| `k8s/monitoring/pve-exporter` | `cluster-prd-token-name` | prometheus-pve-exporter | Proxmox prd API token name |
+| `k8s/monitoring/pve-exporter` | `cluster-prd-token-value` | prometheus-pve-exporter | Proxmox prd API token value |
+| `k8s/monitoring/pve-exporter` | `cluster-node2-user` | prometheus-pve-exporter | Proxmox node2 API username |
+| `k8s/monitoring/pve-exporter` | `cluster-node2-token-name` | prometheus-pve-exporter | Proxmox node2 API token name |
+| `k8s/monitoring/pve-exporter` | `cluster-node2-token-value` | prometheus-pve-exporter | Proxmox node2 API token value |
+| `k8s/monitoring/pve-exporter` | `cluster-node3-user` | prometheus-pve-exporter | Proxmox node3 API username |
+| `k8s/monitoring/pve-exporter` | `cluster-node3-token-name` | prometheus-pve-exporter | Proxmox node3 API token name |
+| `k8s/monitoring/pve-exporter` | `cluster-node3-token-value` | prometheus-pve-exporter | Proxmox node3 API token value |
 
 ## Notes
 

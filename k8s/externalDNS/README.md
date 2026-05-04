@@ -14,11 +14,10 @@ externalDNS/
 └── chart/                     # Local Helm chart
     ├── Chart.yaml
     ├── values.yaml
-    ├── secrets.enc.yaml        # SOPS-encrypted PowerDNS API key
     └── templates/
-        ├── deployment.yaml    # Checksum annotation for auto-restart on Secret change
-        ├── rbac.yaml          # Includes gateway.networking.k8s.io + namespaces permissions
-        └── secret.yaml
+        ├── deployment.yaml      # Checksum annotation for auto-restart on Secret change
+        ├── rbac.yaml            # Includes gateway.networking.k8s.io + namespaces permissions
+        └── external-secret.yaml # ESO ExternalSecret for PowerDNS API key
 ```
 
 ## Configuration
@@ -36,13 +35,19 @@ Source is set to `gateway-httproute`, so DNS records are created automatically w
 
 ## Secrets
 
-```bash
-sops edit k8s/externalDNS/chart/secrets.enc.yaml
-```
+The PowerDNS API key is fetched from OpenBao via ESO. It is not stored in this repository.
 
-| Field | Description |
-|-------|-------------|
-| `pdns.apiKey` | PowerDNS HTTP API key |
+OpenBao KV path: `k8s/dns-homelab/pdns`
+
+| Property | Description |
+|----------|-------------|
+| `api-key` | PowerDNS HTTP API key |
+
+To seed the secret into OpenBao:
+
+```bash
+bao kv put secret/k8s/dns-homelab/pdns api-key=<key>
+```
 
 ## Notes
 
