@@ -30,6 +30,8 @@ vector_config:
       endpoint: "{{ loki_endpoint }}"
       encoding:
         codec: json
+      healthcheck:
+        enabled: false
       labels:
         host: !unsafe "{{ host }}"
         unit: !unsafe "{{ unit }}"
