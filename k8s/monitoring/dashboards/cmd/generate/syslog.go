@@ -21,6 +21,8 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 		// Syslog has no job label; filter by severity to exclude DNS query logs.
 		base     = `{host=~"$host", severity=~"$severity"}`
 		baseJSON = `{host=~"$host", severity=~"$severity"} | json | __error__=""`
+		// baseApp additionally filters by the $appname variable for app-scoped panels.
+		baseApp = `{host=~"$host", severity=~"$severity"} | json | __error__="" | appname=~"$appname"`
 	)
 
 	issueThresholds := dashboard.NewThresholdsConfigBuilder().
@@ -74,6 +76,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 		).
 
 		// Row 1: Summary stats
+		WithRow(dashboard.NewRowBuilder("Summary")).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Log Rate").
@@ -105,12 +108,13 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Unit("short").
 				Thresholds(issueThresholds).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum(count_over_time({host=~"$host"} | json | parse_error="true" [1h]))`).
+					Expr(`sum(count_over_time({host=~"$host"} | json | __error__!="" [1h]))`).
 					LegendFormat("errors"),
 				),
 		).
 
 		// Row 2: Volume trends
+		WithRow(dashboard.NewRowBuilder("Volume Trends")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Log Volume by Host").
@@ -143,6 +147,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 		).
 
 		// Row 3: App breakdown + warnings
+		WithRow(dashboard.NewRowBuilder("App Breakdown")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Log Volume by App").
@@ -154,7 +159,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (appname) (rate({host=~"$host", appname=~"$appname"}[5m]))`).
+					Expr(`sum by (appname) (rate(` + baseApp + `[5m]))`).
 					LegendFormat("{{appname}}"),
 				),
 		).
@@ -175,13 +180,14 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 		).
 
 		// Row 4: Log browser
+		WithRow(dashboard.NewRowBuilder("Logs")).
 		WithPanel(
 			logs.NewPanelBuilder().
 				Title("Syslog").
 				Datasource(ds).
 				Span(24).Height(12).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(baseJSON + ` | appname=~"$appname" | line_format "{{.host}} [{{.severity}}] {{.appname}}: {{.message}}"`).
+					Expr(baseApp + ` | line_format "{{.host}} [{{.severity}}] {{.appname}}: {{.message}}"`).
 					MaxLines(500),
 				),
 		).
