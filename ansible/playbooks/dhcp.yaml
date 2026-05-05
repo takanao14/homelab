@@ -8,3 +8,5 @@
       tags: timezone
     - role: kea
       tags: kea
+    - role: vector
+      tags: vector
