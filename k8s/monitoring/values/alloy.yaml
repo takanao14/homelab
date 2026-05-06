@@ -1,0 +1,41 @@
+alloy:
+  controller:
+    type: deployment
+    replicas: 1
+
+  alloy:
+    configMap:
+      content: |-
+        otelcol.receiver.otlp "pve" {
+          http {
+            endpoint = "0.0.0.0:4318"
+          }
+
+          output {
+            metrics = [otelcol.exporter.prometheus.default.input]
+          }
+        }
+
+        otelcol.exporter.prometheus "default" {
+          forward_to = [prometheus.remote_write.prometheus.receiver]
+        }
+
+        prometheus.remote_write "prometheus" {
+          endpoint {
+            url = "http://prometheus-kube-prometheus-prometheus:9090/api/v1/write"
+          }
+        }
+
+    extraPorts:
+      - name: otlp-http
+        port: 4318
+        targetPort: 4318
+        protocol: TCP
+
+  service:
+    type: ClusterIP
+
+otlp:
+  hostname: alloy-otlp.prd.butaco.net
+
+hostname: alloy.prd.butaco.net
