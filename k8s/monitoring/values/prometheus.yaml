@@ -74,14 +74,19 @@ kube-prometheus-stack:
 
   nodeExporter:
     enabled: true
-    serviceMonitor:
-      relabelings:
-        - action: replace
-          sourceLabels: [__meta_kubernetes_pod_node_name]
-          targetLabel: node
-      metricRelabelings:
-        - targetLabel: cluster
-          replacement: prd
+
+  # The node-exporter ServiceMonitor is managed by the prometheus-node-exporter subchart.
+  # nodeExporter.serviceMonitor is ignored by kube-prometheus-stack v84+; use the subchart path instead.
+  prometheus-node-exporter:
+    prometheus:
+      monitor:
+        relabelings:
+          - action: replace
+            sourceLabels: [__meta_kubernetes_pod_node_name]
+            targetLabel: node
+        metricRelabelings:
+          - targetLabel: cluster
+            replacement: prd
 
   kubeControllerManager:
     enabled: false
