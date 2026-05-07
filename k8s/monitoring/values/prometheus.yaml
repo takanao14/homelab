@@ -33,7 +33,8 @@ kube-prometheus-stack:
                 storage: 10Gi
     serviceMonitor:
       metricRelabelings:
-        - targetLabel: cluster
+        - action: replace
+          targetLabel: cluster
           replacement: prd
     service:
       type: ClusterIP
@@ -44,32 +45,38 @@ kube-prometheus-stack:
   kubelet:
     serviceMonitor:
       metricRelabelings:
-        - targetLabel: cluster
+        - action: replace
+          targetLabel: cluster
           replacement: prd
       cAdvisorMetricRelabelings:
-        - targetLabel: cluster
+        - action: replace
+          targetLabel: cluster
           replacement: prd
       probesMetricRelabelings:
-        - targetLabel: cluster
+        - action: replace
+          targetLabel: cluster
           replacement: prd
 
   kubeApiServer:
     serviceMonitor:
       metricRelabelings:
-        - targetLabel: cluster
+        - action: replace
+          targetLabel: cluster
           replacement: prd
 
   coreDns:
     serviceMonitor:
       metricRelabelings:
-        - targetLabel: cluster
+        - action: replace
+          targetLabel: cluster
           replacement: prd
 
   kube-state-metrics:
     prometheus:
       monitor:
         metricRelabelings:
-          - targetLabel: cluster
+          - action: replace
+            targetLabel: cluster
             replacement: prd
 
   nodeExporter:
@@ -85,7 +92,8 @@ kube-prometheus-stack:
             sourceLabels: [__meta_kubernetes_pod_node_name]
             targetLabel: node
         metricRelabelings:
-          - targetLabel: cluster
+          - action: replace
+            targetLabel: cluster
             replacement: prd
 
   kubeControllerManager:
