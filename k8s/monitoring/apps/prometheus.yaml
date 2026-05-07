@@ -43,15 +43,6 @@ spec:
       jsonPointers:
         - /spec/shards
         - /spec/replicas
-    - group: monitoring.coreos.com
-      kind: ServiceMonitor
-      jsonPointers:
-        - /spec/endpoints/0/metricRelabelings
-        - /spec/endpoints/1/metricRelabelings
-        - /spec/endpoints/2/metricRelabelings
-        - /spec/endpoints/3/metricRelabelings
-        - /spec/endpoints/0/relabelings
-        - /spec/endpoints/1/relabelings
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       jsonPointers:
