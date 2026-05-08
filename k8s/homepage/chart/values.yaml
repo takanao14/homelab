@@ -66,10 +66,10 @@ prometheus:
   url: https://prometheus.prd.butaco.net
 
 prdArgo:
-  url: https://argocd.prd.butaco.net
+  url: https://argocd-ui.prd.butaco.net
 
 devArgo:
-  url: https://argocd.dev.butaco.net
+  url: https://argocd-ui.dev.butaco.net
 
 forgejo:
   url: https://forgejo.home.butaco.net/

@@ -1,3 +1,7 @@
 server:
   ingress:
-    hostname: argocd.prd.butaco.net
+    hostname: argocd-ui.prd.butaco.net
+  service:
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: argocd.prd.butaco.net
+    type: LoadBalancer
