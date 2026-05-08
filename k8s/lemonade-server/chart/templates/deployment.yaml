@@ -27,7 +27,7 @@ spec:
           resources: {{ toYaml .Values.resources | nindent 12 }}
           env:
             - name: LEMONADE_LLAMACPP
-              value: rocm
+              value: rocm-preview
           volumeMounts:
             - name: huggingface
               mountPath: /root/.cache/huggingface
