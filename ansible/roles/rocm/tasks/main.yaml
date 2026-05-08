@@ -1,5 +1,6 @@
 ---
 - name: Install prerequisites
+  # https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/prerequisites.html
   become: true
   ansible.builtin.apt:
     name:
@@ -9,20 +10,93 @@
     state: present
     update_cache: true
 
-- name: Download amdgpu-install package
-  become: true
-  ansible.builtin.get_url:
-    url: "https://repo.radeon.com/amdgpu-install/7.2.1/ubuntu/noble/amdgpu-install_7.2.1.70201-1_all.deb"
-    dest: /tmp/amdgpu-install.deb
-    mode: '0644'
-
-- name: Install amdgpu-install package
+- name: Install optional packages
   become: true
   ansible.builtin.apt:
-    deb: /tmp/amdgpu-install.deb
+    name:
+      - environment-modules
     state: present
+    update_cache: true
 
-- name: Install HWE kernel and headers
+- name: Add user to render and video groups
+  become: true
+  ansible.builtin.user:
+    name: "{{ ansible_facts['env']['USER'] }}"
+    groups:
+      - render
+      - video
+    append: true
+
+- name: Download amdgpu-insecure-instinct-udev-rules
+  ansible.builtin.get_url:
+    url: "https://repo.radeon.com/amdgpu/30.30.3/ubuntu/pool/main/a/amdgpu-insecure-instinct-udev-rules/{{ rocm_udev_rules }}"
+    dest: "/tmp/{{ rocm_udev_rules }}"
+
+- name: Grant GPU access to all users on the system
+  become: true
+  ansible.builtin.apt:
+    deb: "/tmp/{{ rocm_udev_rules }}"
+    state: present
+    update_cache: true
+
+- name: Ensure apt keyrings directory exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+    recurse: true
+
+- name: Download ROCm GPG key
+  become: true
+  ansible.builtin.get_url:
+    url: https://repo.radeon.com/rocm/rocm.gpg.key
+    dest: /tmp/rocm.gpg.key
+    mode: '0644'
+
+- name: Add ROCm GPG key to keyring
+  become: true
+  ansible.builtin.command:
+    cmd: gpg --dearmor -o /etc/apt/keyrings/rocm.gpg /tmp/rocm.gpg.key
+    creates: /etc/apt/keyrings/rocm.gpg
+
+- name: Add ROCm repository to sources list
+  become: true
+  ansible.builtin.copy:
+    src: rocm.list
+    dest: /etc/apt/sources.list.d/rocm.list
+    mode: '0644'
+    owner: root
+    group: root
+
+- name: Add ROCm apt preferences pin
+  become: true
+  ansible.builtin.copy:
+    src: rocm-pin-600
+    dest: /etc/apt/preferences.d/rocm-pin-600
+    mode: '0644'
+    owner: root
+    group: root
+
+- name: Register AMD GPU kernel-mode driver repository
+  become: true
+  ansible.builtin.copy:
+    src: amdgpu.list
+    dest: /etc/apt/sources.list.d/amdgpu.list
+    mode: '0644'
+    owner: root
+    group: root
+
+- name: Install AMD GPU kernel driver
+  become: true
+  ansible.builtin.apt:
+    name: amdgpu-dkms
+    state: present
+    update_cache: true
+
+- name: Install Ubuntu HWE kernel and headers
   become: true
   ansible.builtin.apt:
     name:
@@ -30,7 +104,7 @@
       - linux-headers-generic-hwe-24.04
     state: present
 
-- name: Reboot to apply HWE kernel
+- name: Reboot to apply Ubuntu HWE kernel
   become: true
   ansible.builtin.reboot:
     reboot_timeout: 300
@@ -48,25 +122,15 @@
     state: present
     update_cache: true
 
-- name: Install amdgpu-dkms and ROCm
+- name: Install ROCm
   become: true
   ansible.builtin.apt:
     name:
-      - amdgpu-dkms
       - rocm
     state: present
     update_cache: true
   async: 3600
   poll: 30
-
-- name: Add user to render and video groups
-  become: true
-  ansible.builtin.user:
-    name: "{{ ansible_facts['env']['USER'] }}"
-    groups:
-      - render
-      - video
-    append: true
 
 - name: Configure ROCm library path
   become: true
@@ -85,7 +149,7 @@
     cmd: ldconfig
   changed_when: false
 
-- name: Reboot to apply GPU driver
+- name: Reboot to apply AMD GPU driver
   become: true
   ansible.builtin.reboot:
     reboot_timeout: 300
@@ -94,7 +158,7 @@
 - name: Add device-metrics-exporter apt repository
   become: true
   ansible.builtin.apt_repository:
-    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/device-metrics-exporter/apt/1.4.0 noble main"
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/device-metrics-exporter/apt/{{ rocm_device_metrics_exporter_version }} noble main"
     filename: device-metrics-exporter
     state: present
 

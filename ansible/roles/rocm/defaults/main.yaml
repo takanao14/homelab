@@ -1,0 +1,3 @@
+---
+rocm_udev_rules: amdgpu-insecure-instinct-udev-rules_30.30.3.0-2327507.24.04_all.deb
+rocm_device_metrics_exporter_version: "1.4.0"
