@@ -18,7 +18,6 @@ func main() {
 	dashboards := map[string]func() (*dashboard.Dashboard, error){
 		"node-overview":         buildNodeOverview,
 		"k8s-node-overview":     buildK8sNodeOverview,
-		"proxmox-overview":      buildProxmoxOverview,
 		"proxmox-otlp-overview": buildProxmoxOtlpOverview,
 		"gpu-overview":          buildGpuOverview,
 		"dns-overview":          buildDnsOverview,
