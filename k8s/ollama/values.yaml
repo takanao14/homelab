@@ -1,1 +1,2 @@
 hostname: ollama.dev.butaco.net
+numCtx: 65536
