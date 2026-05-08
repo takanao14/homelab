@@ -6,24 +6,31 @@ Infrastructure-as-code for a personal homelab environment.
 
 ```
 homelab/
-├── ansible/          # Ansible playbooks and roles (provisioning & configuration)
-├── k0s/              # k0s Kubernetes cluster lifecycle management
-├── k8s/              # Kubernetes workloads (Helmfile-based)
-│   ├── argocd/       # ArgoCD root apps and core components
-│   ├── cert-manager/ # cert-manager configuration
-│   ├── comfyui/      # ComfyUI deployment
-│   ├── externalDNS/  # ExternalDNS configuration
-│   ├── gateway/      # Gateway API (Cilium) setup
-│   ├── homepage/     # Homepage dashboard
-│   ├── meshcentral/  # MeshCentral deployment
-│   ├── monitoring/   # Prometheus, Grafana, Exporters, and Dashboards
-│   └── ollama/       # Ollama LLM server deployment
-└── tf/               # Terraform / Terragrunt (Proxmox VMs, LXC containers, cloud images)
-    ├── cloudimage/
-    ├── k8s/
-    ├── lxc/
-    ├── modules/
-    └── vm/
+├── ansible/           # Ansible playbooks and roles (server provisioning & configuration)
+│   ├── playbooks/     # Top-level playbooks (gpuvm, netbox, openbao, forgejo, etc.)
+│   ├── roles/         # Reusable roles (rocm, lemonade, caddy, dnsdist, vector, etc.)
+│   └── inventories/   # Inventory and group_vars per environment
+├── k0s/               # k0s cluster bootstrap — Helmfile for core in-cluster components
+├── k8s/               # ArgoCD-managed workloads
+│   ├── argocd/        # ArgoCD root apps and ApplicationSets
+│   ├── cert-manager/  # cert-manager + wildcard certificate issuers
+│   ├── comfyui/       # ComfyUI (Stable Diffusion) deployment
+│   ├── dev-monitoring/# Lightweight monitoring stack for the dev cluster
+│   ├── eso/           # External Secrets Operator + ClusterSecretStore (OpenBao)
+│   ├── externalDNS/   # ExternalDNS (PowerDNS provider)
+│   ├── gateway/       # Gateway API (Cilium) setup
+│   ├── homepage/      # Homepage dashboard
+│   ├── lemonade-server/ # Lemonade LLM server (ROCm / AMD GPU)
+│   ├── meshcentral/   # MeshCentral remote management
+│   ├── monitoring/    # Prometheus, Grafana, exporters, and dashboards
+│   ├── ollama/        # Ollama LLM server deployment
+│   └── reloader/      # Stakater Reloader (auto-restart on ConfigMap/Secret changes)
+└── tf/                # Terraform / Terragrunt (Proxmox VMs, LXC containers, cloud images)
+    ├── cloudimage/    # OS image management
+    ├── k8s/           # VM definitions for k0s cluster nodes
+    ├── lxc/           # LXC container definitions
+    ├── modules/       # Shared Terraform modules
+    └── vm/            # General-purpose VM definitions
 ```
 
 ## Secret Management
