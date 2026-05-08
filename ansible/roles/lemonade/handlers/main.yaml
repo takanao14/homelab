@@ -1,6 +1,0 @@
----
-- name: restart lemonade
-  become: true
-  ansible.builtin.service:
-    name: lemonade-server
-    state: restarted
