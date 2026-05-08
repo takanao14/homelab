@@ -2,7 +2,7 @@ replicaCount: 0
 
 image:
   repository: ollama/ollama
-  tag: rocm
+  tag: 0.23.2-rocm
 
 resources:
   limits:
