@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lemonade-server
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: lemonade-server
+  template:
+    metadata:
+      labels:
+        app: lemonade-server
+    spec:
+      nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
+      tolerations: {{ toYaml .Values.tolerations | nindent 8 }}
+      securityContext:
+        supplementalGroups: [44]
+      containers:
+        - name: lemonade-server
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          ports:
+            - containerPort: 13305
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: LEMONADE_LLAMACPP
+              value: rocm
+          volumeMounts:
+            - name: huggingface
+              mountPath: /root/.cache/huggingface
+            - name: llama
+              mountPath: /opt/lemonade/llama
+            - name: recipe
+              mountPath: /root/.cache/lemonade
+            - name: kfd
+              mountPath: /dev/kfd
+            - name: dri
+              mountPath: /dev/dri
+          securityContext:
+            seccompProfile:
+              type: Unconfined
+      volumes:
+        - name: huggingface
+          persistentVolumeClaim:
+            claimName: lemonade-huggingface
+        - name: llama
+          persistentVolumeClaim:
+            claimName: lemonade-llama
+        - name: recipe
+          persistentVolumeClaim:
+            claimName: lemonade-recipe
+        - name: kfd
+          hostPath:
+            path: /dev/kfd
+        - name: dri
+          hostPath:
+            path: /dev/dri

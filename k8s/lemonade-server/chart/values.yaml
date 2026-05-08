@@ -1,0 +1,31 @@
+replicaCount: 0
+
+image:
+  repository: ghcr.io/lemonade-sdk/lemonade-server
+  tag: v10.3.0
+
+resources:
+  limits:
+    amd.com/gpu: "1"
+  requests:
+    amd.com/gpu: "1"
+
+storage:
+  storageClassName: openebs-hostpath
+  huggingface:
+    size: 90Gi
+  llama:
+    size: 5Gi
+  recipe:
+    size: 5Gi
+
+nodeSelector:
+  gpu: amd
+
+tolerations:
+  - key: gpu
+    operator: Equal
+    value: amd
+    effect: NoSchedule
+
+hostname: lemonade.dev.butaco.net
