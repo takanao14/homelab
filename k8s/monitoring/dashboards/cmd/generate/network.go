@@ -37,6 +37,19 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 	}
 
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
+	legend := common.NewVizLegendOptionsBuilder().
+		ShowLegend(true).
+		DisplayMode(common.LegendDisplayModeList).
+		Placement(common.LegendPlacementBottom)
+
+	zeroLineThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "transparent"},
+			{Value: float64Ptr(0), Color: "white"},
+		})
+	zeroLineStyle := common.NewGraphThresholdsStyleConfigBuilder().
+		Mode(common.GraphThresholdsStyleModeLine)
 
 	issueThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -113,6 +126,9 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("bps").
 				Tooltip(tooltipAll).
+				Legend(legend).
+				Thresholds(zeroLineThresholds).
+				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("In").
 					Expr(mapDevice(`sum by (instance) (rate(ifHCInOctets{`+ifFilter+`}[5m]) * 8)`)).
@@ -135,6 +151,7 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("pps").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(mapDevice(`rate(ifInErrors{` + ifFilter + `}[5m])`)).
 					LegendFormat("{{device}} {{ifDescr}} In"),
@@ -151,6 +168,7 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("pps").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(mapDevice(`rate(ifInDiscards{` + ifFilter + `}[5m])`)).
 					LegendFormat("{{device}} {{ifDescr}} In"),

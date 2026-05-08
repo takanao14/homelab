@@ -28,6 +28,19 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 	)
 
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
+	legend := common.NewVizLegendOptionsBuilder().
+		ShowLegend(true).
+		DisplayMode(common.LegendDisplayModeList).
+		Placement(common.LegendPlacementBottom)
+
+	zeroLineThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "transparent"},
+			{Value: float64Ptr(0), Color: "white"},
+		})
+	zeroLineStyle := common.NewGraphThresholdsStyleConfigBuilder().
+		Mode(common.GraphThresholdsStyleModeLine)
 
 	d, err := dashboard.NewDashboardBuilder("Node Overview").
 		Uid("node-overview").
@@ -159,6 +172,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("percent").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + instFilter + `}[5m]) ` + joinNodename + `) * 100)`).
 					LegendFormat("{{nodename}}"),
@@ -171,6 +185,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("percentunit").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(node_load1{` + instFilter + `} ` + normByCPU + `) ` + joinNodename).
 					LegendFormat("{{nodename}}"),
@@ -185,6 +200,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("bytes").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(node_memory_MemTotal_bytes{` + instFilter + `} - node_memory_MemAvailable_bytes{` + instFilter + `}) ` + joinNodename).
 					LegendFormat("{{nodename}}"),
@@ -197,6 +213,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("percent").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(1 - node_memory_MemAvailable_bytes{` + instFilter + `} / node_memory_MemTotal_bytes{` + instFilter + `}) * 100 ` + joinNodename).
 					LegendFormat("{{nodename}}"),
@@ -210,6 +227,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("celsius").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				// CPU temp: x86 Package (Intel), cpu-thermal (RPi), or k10temp Tctl (Ryzen, PCI device 0000:00:18.x)
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`((label_replace(node_thermal_zone_temp{type=~"x86_pkg_temp|cpu-thermal", ` + instFilter + `}, "sensor", "$1", "type", "(.*)")) or (label_replace(node_hwmon_temp_celsius{chip=~".*_0000:00:18_.*", sensor="temp1", ` + instFilter + `}, "sensor", "cpu", "", ""))) ` + joinNodename).
@@ -231,6 +249,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("ops").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(rate(node_cpu_package_throttles_total{` + instFilter + `}[5m])) ` + joinNodename).
 					LegendFormat("{{nodename}} Throttles"),
@@ -261,6 +280,9 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("Bps").
 				Tooltip(tooltipAll).
+				Legend(legend).
+				Thresholds(zeroLineThresholds).
+				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Rx").
 					// Keep physical NICs and vmbr (Proxmox bridges); exclude per-VM/LXC virtual interfaces.
@@ -284,14 +306,21 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("Bps").
 				Tooltip(tooltipAll).
+				Legend(legend).
+				Thresholds(zeroLineThresholds).
+				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(node_disk_read_bytes_total{` + instFilter + `, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[5m]) ` + joinNodename).
+					Expr(`rate(node_disk_read_bytes_total{`+instFilter+`, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[5m]) `+joinNodename).
 					LegendFormat("{{nodename}} Read {{device}}"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(node_disk_written_bytes_total{` + instFilter + `, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[5m]) ` + joinNodename).
+					RefId("Write").
+					Expr(`rate(node_disk_written_bytes_total{`+instFilter+`, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[5m]) `+joinNodename).
 					LegendFormat("{{nodename}} Write {{device}}"),
-				),
+				).
+				OverrideByQuery("Write", []dashboard.DynamicConfigValue{
+					{Id: "custom.transform", Value: "negative-Y"},
+				}),
 		).
 		WithPanel(
 			bargauge.NewPanelBuilder().
@@ -320,6 +349,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("percent").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(1 - node_filesystem_avail_bytes{` + instFilter + `,` + fsFilter + `} / node_filesystem_size_bytes{` + instFilter + `,` + fsFilter + `}) * 100 ` + joinNodename).
 					LegendFormat("{{nodename}} {{mountpoint}}"),
@@ -335,6 +365,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("bytes").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("A").
 					Expr(`node_zfs_arc_size{`+instFilter+`} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{nodename="pve"})`).
@@ -366,13 +397,13 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{nodename}} ARC Min"),
 				).
 				OverrideByQuery("D", []dashboard.DynamicConfigValue{
-					{Id: "custom.lineStyle", Value: map[string]interface{}{"fill": "dash", "dash": []int{8, 10}}},
+					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
 				}).
 				OverrideByQuery("E", []dashboard.DynamicConfigValue{
-					{Id: "custom.lineStyle", Value: map[string]interface{}{"fill": "dash", "dash": []int{8, 10}}},
+					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
 				}).
 				OverrideByQuery("F", []dashboard.DynamicConfigValue{
-					{Id: "custom.lineStyle", Value: map[string]interface{}{"fill": "dash", "dash": []int{8, 10}}},
+					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
 				}),
 		).
 		Build()

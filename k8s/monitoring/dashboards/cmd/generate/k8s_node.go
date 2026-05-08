@@ -21,6 +21,19 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 	joinNode := `* on(instance) group_left(nodename) (node_uname_info{` + clusterFilter + `, ` + nodeFilter + `})`
 
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
+	legend := common.NewVizLegendOptionsBuilder().
+		ShowLegend(true).
+		DisplayMode(common.LegendDisplayModeList).
+		Placement(common.LegendPlacementBottom)
+
+	zeroLineThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "transparent"},
+			{Value: float64Ptr(0), Color: "white"},
+		})
+	zeroLineStyle := common.NewGraphThresholdsStyleConfigBuilder().
+		Mode(common.GraphThresholdsStyleModeLine)
 
 	d, err := dashboard.NewDashboardBuilder("K8s Node Overview").
 		Uid("k8s-node-overview").
@@ -149,6 +162,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("percent").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + clusterFilter + `}[5m]) ` + joinNode + `) * 100)`).
 					LegendFormat("{{nodename}}"),
@@ -161,6 +175,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("short").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`node_load1{`+clusterFilter+`} `+joinNode).
 					LegendFormat("{{nodename}} 1m"),
@@ -175,10 +190,10 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				).
 				// 5m/15m as dashed to distinguish from 1m (solid) without adding noise.
 				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* 5m$"}, []dashboard.DynamicConfigValue{
-					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{4, 4}}},
+					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
 				}).
 				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* 15m$"}, []dashboard.DynamicConfigValue{
-					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 10}}},
+					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
 				}),
 		).
 		WithRow(dashboard.NewRowBuilder("Memory")).
@@ -189,6 +204,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("bytes").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(node_memory_MemTotal_bytes{` + clusterFilter + `} - node_memory_MemAvailable_bytes{` + clusterFilter + `}) ` + joinNode).
 					LegendFormat("{{nodename}} Used"),
@@ -218,14 +234,18 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("bytes").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(node_filesystem_size_bytes{` + clusterFilter + `, fstype=~"ext[234]|xfs|btrfs|zfs|vfat"} - node_filesystem_avail_bytes{` + clusterFilter + `, fstype=~"ext[234]|xfs|btrfs|zfs|vfat"}) ` + joinNode).
+					Expr(`(node_filesystem_size_bytes{`+clusterFilter+`, fstype=~"ext[234]|xfs|btrfs|zfs|vfat"} - node_filesystem_avail_bytes{`+clusterFilter+`, fstype=~"ext[234]|xfs|btrfs|zfs|vfat"}) `+joinNode).
 					LegendFormat("{{nodename}} {{mountpoint}} Used"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`node_filesystem_size_bytes{` + clusterFilter + `, fstype=~"ext[234]|xfs|btrfs|zfs|vfat"} ` + joinNode).
+					Expr(`node_filesystem_size_bytes{`+clusterFilter+`, fstype=~"ext[234]|xfs|btrfs|zfs|vfat"} `+joinNode).
 					LegendFormat("{{nodename}} {{mountpoint}} Total"),
-				),
+				).
+				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* Total$"}, []dashboard.DynamicConfigValue{
+					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
+				}),
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -234,15 +254,23 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("Bps").
 				Tooltip(tooltipAll).
+				Legend(legend).
+				Thresholds(zeroLineThresholds).
+				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("Read").
 					// Exclude dm-*, loop*, and sr* to avoid double-counting or noise from virtual/optical devices.
-					Expr(`rate(node_disk_read_bytes_total{` + clusterFilter + `, device!~"dm-.*|loop.*|sr.*"}[5m]) ` + joinNode).
+					Expr(`rate(node_disk_read_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[5m]) `+joinNode).
 					LegendFormat("{{nodename}} {{device}} Read"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(node_disk_written_bytes_total{` + clusterFilter + `, device!~"dm-.*|loop.*|sr.*"}[5m]) ` + joinNode).
+					RefId("Write").
+					Expr(`rate(node_disk_written_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[5m]) `+joinNode).
 					LegendFormat("{{nodename}} {{device}} Write"),
-				),
+				).
+				OverrideByQuery("Write", []dashboard.DynamicConfigValue{
+					{Id: "custom.transform", Value: "negative-Y"},
+				}),
 		).
 		WithRow(dashboard.NewRowBuilder("Network")).
 		WithPanel(
@@ -252,6 +280,9 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(12).
 				Unit("Bps").
 				Tooltip(tooltipAll).
+				Legend(legend).
+				Thresholds(zeroLineThresholds).
+				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Rx").
 					Expr(`sum by (nodename) (rate(node_network_receive_bytes_total{`+clusterFilter+`, device!~"lo|veth.*|docker.*|br-.*"} [5m]) `+joinNode+`)`).

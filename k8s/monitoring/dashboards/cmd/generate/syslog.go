@@ -16,6 +16,10 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 	dsUID := "$datasource"
 	ds := common.DataSourceRef{Type: &dsType, Uid: &dsUID}
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
+	legend := common.NewVizLegendOptionsBuilder().
+		ShowLegend(true).
+		DisplayMode(common.LegendDisplayModeList).
+		Placement(common.LegendPlacementBottom)
 
 	const (
 		// Syslog has no job label; filter by severity to exclude DNS query logs.
@@ -123,6 +127,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Unit("short").
 				FillOpacity(10).
 				Tooltip(tooltipAll).
+				Legend(legend).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
@@ -137,6 +142,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("short").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				FillOpacity(10).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
@@ -155,6 +161,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("short").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				FillOpacity(10).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
@@ -170,6 +177,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("short").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				FillOpacity(10).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).

@@ -265,11 +265,13 @@
       "targets": [
         {
           "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
-          "legendFormat": "{{server}} Queries"
+          "legendFormat": "{{server}} Queries",
+          "refId": "Queries"
         },
         {
           "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_responses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\")",
-          "legendFormat": "{{server}} Responses"
+          "legendFormat": "{{server}} Responses",
+          "refId": "Responses"
         }
       ],
       "title": "dnsdist Query/Response Rate",
@@ -289,7 +291,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -299,13 +301,31 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "transparent"
+              },
+              {
+                "value": 0,
+                "color": "white"
+              }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          }
         },
         "overrides": [
           {
             "matcher": {
-              "id": "byRegexp",
-              "options": ".*Responses"
+              "id": "byFrameRefID",
+              "options": "Responses"
             },
             "properties": [
               {
@@ -354,7 +374,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -465,7 +485,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -505,8 +525,8 @@
                 "id": "custom.lineStyle",
                 "value": {
                   "dash": [
-                    4,
-                    4
+                    8,
+                    8
                   ],
                   "fill": "dash"
                 }
@@ -549,7 +569,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -597,7 +617,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -643,7 +663,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -700,7 +720,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -752,7 +772,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -859,7 +879,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -916,7 +936,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {

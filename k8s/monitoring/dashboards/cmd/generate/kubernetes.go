@@ -21,6 +21,19 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 	)
 
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
+	legend := common.NewVizLegendOptionsBuilder().
+		ShowLegend(true).
+		DisplayMode(common.LegendDisplayModeList).
+		Placement(common.LegendPlacementBottom)
+
+	zeroLineThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "transparent"},
+			{Value: float64Ptr(0), Color: "white"},
+		})
+	zeroLineStyle := common.NewGraphThresholdsStyleConfigBuilder().
+		Mode(common.GraphThresholdsStyleModeLine)
 
 	issueThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -216,6 +229,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("short").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// container="" excludes pause containers; pod="" excludes node-level cgroup rollups.
 					Expr(`sum by (namespace) (rate(container_cpu_usage_seconds_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[5m]))`).
@@ -229,6 +243,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("bytes").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum by (namespace) (container_memory_working_set_bytes{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""})`).
 					LegendFormat("{{namespace}}"),
@@ -242,6 +257,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("none").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(kube_pod_container_resource_requests{` + clusterFilter + `,resource="cpu",` + nsFilter + `})`).
 					LegendFormat("Requested"),
@@ -258,6 +274,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("bytes").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(kube_pod_container_resource_requests{` + clusterFilter + `,resource="memory",` + nsFilter + `})`).
 					LegendFormat("Requested"),
@@ -338,6 +355,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("short").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count by (phase) (kube_pod_status_phase{` + clusterFilter + `,` + nsFilter + `} == 1)`).
 					LegendFormat("{{phase}}"),
@@ -365,6 +383,9 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(12).
 				Unit("Bps").
 				Tooltip(tooltipAll).
+				Legend(legend).
+				Thresholds(zeroLineThresholds).
+				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Rx").
 					// pod!="" excludes node-level aggregates.

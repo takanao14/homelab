@@ -20,6 +20,10 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 	)
 
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
+	legend := common.NewVizLegendOptionsBuilder().
+		ShowLegend(true).
+		DisplayMode(common.LegendDisplayModeList).
+		Placement(common.LegendPlacementBottom)
 
 	issueThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -141,6 +145,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("short").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`rate(prometheus_tsdb_head_samples_appended_total{` + promJob + `}[5m])`).
 					LegendFormat("{{cluster}} samples/s"),
@@ -153,6 +158,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("bytes").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`prometheus_tsdb_storage_blocks_bytes{` + promJob + `}`).
 					LegendFormat("{{cluster}} Blocks"),
@@ -169,6 +175,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("short").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`prometheus_tsdb_head_series{` + promJob + `}`).
 					LegendFormat("{{cluster}}"),
@@ -181,6 +188,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("s").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`histogram_quantile(0.99, sum by (le, slice) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{` + promJob + `}[5m])))`).
 					LegendFormat("{{cluster}} {{slice}}"),
@@ -206,6 +214,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("short").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`rate(prometheus_target_scrapes_exceeded_sample_limit_total{` + promJob + `}[5m])`).
 					LegendFormat("{{cluster}} sample limit exceeded"),
@@ -231,6 +240,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("Bps").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(rate(loki_distributor_bytes_received_total{` + lokiJob + `}[5m]))`).
 					LegendFormat("bytes/s"),
@@ -243,6 +253,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("short").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(rate(loki_distributor_lines_received_total{` + lokiJob + `}[5m]))`).
 					LegendFormat("lines/s"),
@@ -255,6 +266,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("s").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`histogram_quantile(0.99, sum by (le, route) (rate(loki_request_duration_seconds_bucket{` + lokiJob + `, route!~"ready|/grpc\\..*|/frontendv2pb\\..*|/logproto\\..*"}[5m])))`).
 					LegendFormat("{{route}}"),
@@ -267,6 +279,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("short").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(loki_ingester_memory_streams{` + lokiJob + `})`).
 					LegendFormat("Streams"),

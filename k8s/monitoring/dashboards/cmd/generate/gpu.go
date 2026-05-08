@@ -16,6 +16,10 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 	const gpuFilter = `job="scrapeConfig/monitoring/amd-gpu-external"`
 
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
+	legend := common.NewVizLegendOptionsBuilder().
+		ShowLegend(true).
+		DisplayMode(common.LegendDisplayModeList).
+		Placement(common.LegendPlacementBottom)
 
 	gfxThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -129,6 +133,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("percent").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`amd_gpu_gfx_activity{` + gpuFilter + `}`).
 					LegendFormat("GFX"),
@@ -150,6 +155,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("bytes").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`amd_gpu_used_vram{` + gpuFilter + `} * 1024 * 1024`).
 					LegendFormat("Used"),
@@ -167,6 +173,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("bytes").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`amd_gpu_used_gtt{` + gpuFilter + `} * 1024 * 1024`).
 					LegendFormat("Used"),
@@ -184,6 +191,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("celsius").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`amd_gpu_edge_temperature{` + gpuFilter + `}`).
 					LegendFormat("Edge"),
@@ -204,6 +212,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("watt").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`amd_gpu_power_usage{` + gpuFilter + `}`).
 					LegendFormat("Current"),
@@ -221,6 +230,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("hertz").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`amd_gpu_clock{` + gpuFilter + `, clock_type="GPU_CLOCK_TYPE_SYSTEM"} * 1000 * 1000`).
 					LegendFormat("GPU Core"),

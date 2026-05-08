@@ -44,6 +44,20 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 	}
 
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
+	legend := common.NewVizLegendOptionsBuilder().
+		ShowLegend(true).
+		DisplayMode(common.LegendDisplayModeList).
+		Placement(common.LegendPlacementBottom)
+
+	// zeroLine draws a solid reference line at y=0 for bidirectional rate panels.
+	zeroLineThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "transparent"},
+			{Value: float64Ptr(0), Color: "white"},
+		})
+	zeroLineStyle := common.NewGraphThresholdsStyleConfigBuilder().
+		Mode(common.GraphThresholdsStyleModeLine)
 
 	// Latency thresholds in microseconds (50ms = warning, 150ms = critical).
 	latencyThresholds := dashboard.NewThresholdsConfigBuilder().
@@ -138,20 +152,22 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("reqps").
 				Tooltip(tooltipAll).
+				Legend(legend).
+				Thresholds(zeroLineThresholds).
+				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("Queries").
 					Expr(mapDNS(`rate(dnsdist_queries{`+dnsdist+`}[5m])`)).
 					LegendFormat("{{server}} Queries"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("Responses").
 					Expr(mapDNS(`rate(dnsdist_responses{`+dnsdist+`}[5m])`)).
 					LegendFormat("{{server}} Responses"),
 				).
-				WithOverride(
-					dashboard.MatcherConfig{Id: "byRegexp", Options: ".*Responses"},
-					[]dashboard.DynamicConfigValue{
-						{Id: "custom.transform", Value: "negative-Y"},
-					},
-				),
+				OverrideByQuery("Responses", []dashboard.DynamicConfigValue{
+					{Id: "custom.transform", Value: "negative-Y"},
+				}),
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -160,6 +176,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("reqps").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				FillOpacity(10).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -199,6 +216,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("µs").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				Thresholds(latencyThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(mapDNS(`dnsdist_latency_avg100{`+dnsdist+`}`)).
@@ -213,7 +231,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 					Id:      "byRegexp",
 					Options: ".*avg1000.*",
 				}, []dashboard.DynamicConfigValue{
-					{Id: "custom.lineStyle", Value: map[string]any{"dash": []int{4, 4}, "fill": "dash"}},
+					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
 					{Id: "drawStyle", Value: "line"},
 					{Id: "fillOpacity", Value: 10},
 				}),
@@ -225,6 +243,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("percent").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(mapDNS(`rate(dnsdist_cache_hits{` + dnsdist + `}[5m]) / clamp_min(rate(dnsdist_cache_hits{` + dnsdist + `}[5m]) + rate(dnsdist_cache_misses{` + dnsdist + `}[5m]), 1) * 100`)).
 					LegendFormat("{{server}}"),
@@ -237,6 +256,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("reqps").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				FillOpacity(10).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -259,6 +279,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("reqps").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(mapDNS(`rate(dnsdist_queries{` + dnsdist + `}[5m]) - rate(dnsdist_responses{` + dnsdist + `}[5m])`)).
 					LegendFormat("{{server}}"),
@@ -272,6 +293,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("reqps").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(mapDNS(`rate(pdns_auth_udp_queries{` + pdns + `}[5m])`)).
 					LegendFormat("{{server}} UDP"),
@@ -288,6 +310,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("reqps").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				FillOpacity(10).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -327,6 +350,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("µs").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				Thresholds(latencyThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(mapDNS(`pdns_auth_latency{` + pdns + `}`)).
@@ -340,6 +364,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("µs").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				Thresholds(latencyThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(mapDNS(`pdns_auth_backend_latency{` + pdns + `}`)).

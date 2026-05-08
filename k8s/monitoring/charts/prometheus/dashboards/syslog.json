@@ -19,6 +19,19 @@
   "schemaVersion": 42,
   "panels": [
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Summary",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "stat",
       "targets": [
         {
@@ -36,7 +49,7 @@
         "h": 4,
         "w": 8,
         "x": 0,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -64,7 +77,7 @@
         "h": 4,
         "w": 8,
         "x": 8,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -91,7 +104,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(count_over_time({host=~\"$host\"} | json | parse_error=\"true\" [1h]))",
+          "expr": "sum(count_over_time({host=~\"$host\"} | json | __error__!=\"\" [1h]))",
           "legendFormat": "errors"
         }
       ],
@@ -105,7 +118,7 @@
         "h": 4,
         "w": 8,
         "x": 16,
-        "y": 0
+        "y": 1
       },
       "repeatDirection": "h",
       "fieldConfig": {
@@ -129,6 +142,19 @@
       }
     },
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Volume Trends",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "timeseries",
       "targets": [
         {
@@ -146,14 +172,14 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 4
+        "y": 6
       },
       "repeatDirection": "h",
       "options": {
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -193,14 +219,14 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 4
+        "y": 6
       },
       "repeatDirection": "h",
       "options": {
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -223,10 +249,23 @@
       }
     },
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "App Breakdown",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (appname) (rate({host=~\"$host\", appname=~\"$appname\"}[5m]))",
+          "expr": "sum by (appname) (rate({host=~\"$host\", severity=~\"$severity\"} | json | __error__=\"\" | appname=~\"$appname\"[5m]))",
           "legendFormat": "{{appname}}"
         }
       ],
@@ -240,14 +279,14 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 12
+        "y": 15
       },
       "repeatDirection": "h",
       "options": {
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -287,14 +326,14 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 12
+        "y": 15
       },
       "repeatDirection": "h",
       "options": {
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -317,6 +356,19 @@
       }
     },
     {
+      "type": "row",
+      "collapsed": false,
+      "title": "Logs",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "logs",
       "targets": [
         {
@@ -334,7 +386,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 24
       },
       "repeatDirection": "h"
     }

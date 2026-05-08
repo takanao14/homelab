@@ -16,17 +16,18 @@ func main() {
 	// The name becomes the output filename (e.g. "node-overview" → generated/node-overview.json).
 	// To add a new dashboard, just add an entry here.
 	dashboards := map[string]func() (*dashboard.Dashboard, error){
-		"node-overview":       buildNodeOverview,
-		"k8s-node-overview":   buildK8sNodeOverview,
-		"proxmox-overview":    buildProxmoxOverview,
-		"gpu-overview":        buildGpuOverview,
-		"dns-overview":        buildDnsOverview,
-		"network-overview":    buildNetworkOverview,
-		"uptime":              buildUptime,
-		"kubernetes-overview": buildKubernetesOverview,
-		"monitoring-overview": buildMonitoringOverview,
-		"dns-logs":            buildDnsLogs,
-		"syslog":              buildSyslog,
+		"node-overview":         buildNodeOverview,
+		"k8s-node-overview":     buildK8sNodeOverview,
+		"proxmox-overview":      buildProxmoxOverview,
+		"proxmox-otlp-overview": buildProxmoxOtlpOverview,
+		"gpu-overview":          buildGpuOverview,
+		"dns-overview":          buildDnsOverview,
+		"network-overview":      buildNetworkOverview,
+		"uptime":                buildUptime,
+		"kubernetes-overview":   buildKubernetesOverview,
+		"monitoring-overview":   buildMonitoringOverview,
+		"dns-logs":              buildDnsLogs,
+		"syslog":                buildSyslog,
 	}
 
 	outputDir := "generated"

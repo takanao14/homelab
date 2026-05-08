@@ -23,6 +23,10 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 	)
 
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
+	legend := common.NewVizLegendOptionsBuilder().
+		ShowLegend(true).
+		DisplayMode(common.LegendDisplayModeList).
+		Placement(common.LegendPlacementBottom)
 
 	d, err := dashboard.NewDashboardBuilder("DNS Query Logs").
 		Uid("dns-logs").
@@ -101,6 +105,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("reqps").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				FillOpacity(10).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
@@ -115,6 +120,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("reqps").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				FillOpacity(10).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
@@ -168,6 +174,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("reqps").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (host) (rate(` + base + `[5m]))`).
 					LegendFormat("{{host}}"),
@@ -180,6 +187,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("reqps").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (host) (rate(` + baseJSON + ` | dns_rcode="NXDOMAIN" [5m]))`).
 					LegendFormat("{{host}}"),
@@ -192,6 +200,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("reqps").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (host) (rate(` + baseJSON + ` | dns_rcode="SERVFAIL" [5m]))`).
 					LegendFormat("{{host}}"),

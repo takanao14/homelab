@@ -311,7 +311,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -359,7 +359,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -382,8 +382,8 @@
                 "id": "custom.lineStyle",
                 "value": {
                   "dash": [
-                    4,
-                    4
+                    8,
+                    8
                   ],
                   "fill": "dash"
                 }
@@ -400,10 +400,10 @@
                 "id": "custom.lineStyle",
                 "value": {
                   "dash": [
-                    8,
-                    10
+                    2,
+                    4
                   ],
-                  "fill": "dash"
+                  "fill": "dot"
                 }
               }
             ]
@@ -453,7 +453,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -559,7 +559,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -571,7 +571,26 @@
         "defaults": {
           "unit": "bytes"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* Total$"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    2,
+                    4
+                  ],
+                  "fill": "dot"
+                }
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -579,11 +598,13 @@
       "targets": [
         {
           "expr": "rate(node_disk_read_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
-          "legendFormat": "{{nodename}} {{device}} Read"
+          "legendFormat": "{{nodename}} {{device}} Read",
+          "refId": "Read"
         },
         {
           "expr": "rate(node_disk_written_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
-          "legendFormat": "{{nodename}} {{device}} Write"
+          "legendFormat": "{{nodename}} {{device}} Write",
+          "refId": "Write"
         }
       ],
       "title": "Disk I/O",
@@ -603,7 +624,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -613,9 +634,40 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "Bps"
+          "unit": "Bps",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "transparent"
+              },
+              {
+                "value": 0,
+                "color": "white"
+              }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "Write"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -662,7 +714,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false,
+          "showLegend": true,
           "calcs": []
         },
         "tooltip": {
@@ -672,7 +724,25 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "Bps"
+          "unit": "Bps",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "transparent"
+              },
+              {
+                "value": 0,
+                "color": "white"
+              }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          }
         },
         "overrides": [
           {

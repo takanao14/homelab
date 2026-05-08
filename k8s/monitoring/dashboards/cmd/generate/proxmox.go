@@ -37,6 +37,10 @@ func buildProxmoxOverview() (*dashboard.Dashboard, error) {
 	)
 
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
+	legend := common.NewVizLegendOptionsBuilder().
+		ShowLegend(true).
+		DisplayMode(common.LegendDisplayModeList).
+		Placement(common.LegendPlacementBottom)
 
 	cpuThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -199,6 +203,7 @@ func buildProxmoxOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("percentunit").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`pve_cpu_usage_ratio{id=~"node/.*", ` + instFilter + `} ` + joinNodeID).
 					LegendFormat("{{name}}"),
@@ -211,6 +216,7 @@ func buildProxmoxOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("bytes").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`pve_memory_usage_bytes{id=~"node/.*", ` + instFilter + `} ` + joinNodeID).
 					LegendFormat("{{name}} Used"),
@@ -227,6 +233,7 @@ func buildProxmoxOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("celsius").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// Intel: x86_pkg_temp / RPi: cpu-thermal
 					Expr(`node_thermal_zone_temp{type=~"x86_pkg_temp|cpu-thermal"} ` + joinNodeExporter).
@@ -251,6 +258,7 @@ func buildProxmoxOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("percentunit").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`pve_cpu_usage_ratio{id=~"qemu/.*|lxc/.*", ` + instFilter + `} ` + joinGuest).
 					LegendFormat("{{name}}"),
@@ -263,6 +271,7 @@ func buildProxmoxOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("bytes").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`pve_memory_usage_bytes{id=~"qemu/.*|lxc/.*", ` + instFilter + `} ` + joinGuest).
 					LegendFormat("{{name}} Used"),
@@ -281,6 +290,7 @@ func buildProxmoxOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("bytes").
 				Tooltip(tooltipAll).
+				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`pve_disk_usage_bytes{id=~"storage/.*", ` + instFilter + `} ` + joinStorage).
 					LegendFormat("{{node}}/{{storage}} Used"),
