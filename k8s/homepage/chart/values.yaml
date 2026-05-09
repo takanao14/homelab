@@ -77,7 +77,7 @@ forgejo:
 openWebui:
   url: https://open-webui.dev.butaco.net
 
-lemonade-server:
+lemonadeServer:
   url: https://lemonade.dev.butaco.net
 
 comfyUI:

@@ -123,7 +123,7 @@
 
     - Lemonade Server:
         icon: sh-lemonade-ai
-        href: {{ .Values.lemonade-server.url }}
+        href: {{ .Values.lemonadeServer.url }}
         description: Local LLM WebUI
 
     - ComfyUI:
