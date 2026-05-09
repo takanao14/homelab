@@ -115,10 +115,15 @@
         href: {{ .Values.devArgo.url }}
         description: Continuous Delivery
 
-- Application:
+- AI App:
     - Open WebUI:
         icon: open-webui.png
         href: {{ .Values.openWebui.url }}
+        description: Local LLM WebUI
+
+    - Lemonade Server:
+        icon: sh-lemonade-ai
+        href: {{ .Values.lemonade-server.url }}
         description: Local LLM WebUI
 
     - ComfyUI:
