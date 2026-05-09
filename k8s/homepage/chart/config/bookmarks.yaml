@@ -1,6 +1,98 @@
 ---
 # https://gethomepage.dev/latest/configs/bookmarks/
 
+- DNS:
+  - PowerDNS Authoritative:
+    - abbr: PA
+      href: https://doc.powerdns.com/authoritative/
+  - dnsdist:
+    - abbr: DD
+      href: https://dnsdist.org/
+  - dnscollector:
+    - abbr: DC
+      href: https://github.com/dmachard/DNS-collector/
+
+- HyperVisor:
+  - Proxmox VE:
+    - abbr: PM
+      href: https://pve.proxmox.com/pve-docs/
+
+- Storage:
+  - TrueNAS:
+    - abbr: TN
+      href: https://www.truenas.com/docs/
+
+- IPAN:
+  - NetBox:
+    - abbr: NB
+      href: https://netboxlabs.com/docs/netbox/?focus=community
+
+- Monitoring:
+  - Prometheus:
+    - abbr: PR
+      href: https://prometheus.io/
+  - Grafana:
+    - abbr: GF
+      href: https://grafana.com/ja/oss/grafana/
+  - Loki:
+    - abbr: LO
+      href: https://grafana.com/ja/oss/loki/
+  - Alloy:
+    - abbr: AL
+      href: https://grafana.com/ja/oss/alloy-opentelemetry-collector/
+  - Vector:
+    - abbr: VE
+      href: https://vector.dev/
+
+- Develop:
+  - Forgejo:
+    - abbr: FO
+      href: https://forgejo.org/
+
+- CI/CD:
+  - ArgoCD:
+    - abbr: AC
+      href: https://argo-cd.readthedocs.io/en/stable/
+
+- AI:
+  - Open WebUI:
+    - abbr: OW
+      href: https://github.com/open-webui/open-webui
+  - Lemonade Server:
+    - abbr: LS
+      href: https://lemonade-server.ai/
+  - ComfyUI:
+    - abbr: CU
+      href: https://www.comfy.org/
+  - Ollama:
+    - abbr: OL
+      href: https://ollama.com/
+
+- Admin:
+  - MeshCentral:
+    - abbr: MC
+      href: https://github.com/Ylianst/MeshCentral/
+
+- Devices:
+    - IX2106:
+      - abbr: IX
+        href: https://jpn.nec.com/univerge/ix/download.html?
+    - Catalyst 1200:
+      - abbr: C1
+        href: https://www.cisco.com/c/ja_jp/support/switches/catalyst-1200-series-switches/series.html
+    - Wifi-AP:
+      - abbr: WA
+        href: https://www.buffalo.jp/product/detail/software/wnr-5400xe6.html
+    - ASUS PRIME B550M-A:
+      - abbr: AP
+        href: https://www.asus.com/jp/motherboards-components/motherboards/prime/prime-b550m-a/
+    - ASUS TUF Gaming B550-PLUS:
+      - abbr: AT
+        href: https://www.asus.com/jp/motherboards-components/motherboards/tuf-gaming/tuf-gaming-b550-plus/
+    - HP drivers:
+      - abbr: HD
+        href: https://support.hp.com/jp-ja/drivers
+
 - Homepage:
   - Homepage:
     - abbr: HP
@@ -8,7 +100,7 @@
 
   - Dashboard Icons:
     - abbr: DI
-      href: https://github.com/homarr-labs/dashboard-icons
+      href: https://github.com/homarr-labs/dashboard-icons/
 
   - Material Design Icons:
     - abbr: MD
