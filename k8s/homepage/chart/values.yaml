@@ -54,9 +54,9 @@ truenas:
 
 seaweedfs:
   master:
-    url: seaweedfs-master.dev.butaco.net
+    url: https://seaweedfs-master.dev.butaco.net
   filer:
-    url: seaweedfs-filer.dev.butaco.net
+    url: https://seaweedfs-filer.dev.butaco.net
 
 netbox:
   url: https://netbox-ui.home.butaco.net
