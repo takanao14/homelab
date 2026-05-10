@@ -69,6 +69,16 @@
           key: {{ "{{" }}HOMEPAGE_VAR_TRUENAS_KEY{{ "}}" }}
           nasType: scale
 
+    - SeaweedFS-Master:
+        icon: sh-seaweedfs
+        href: {{ .Values.seaweedfs.master.url }}
+        description: SeaweedFS Storage System
+
+    - SeaweedFS-Master:
+        icon: sh-seaweedfs
+        href: {{ .Values.seaweedfs.filer.url }}
+        description: SeaweedFS Storage File
+
 - Infra:
     - NetBox:
         icon: netbox.png

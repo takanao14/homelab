@@ -52,6 +52,12 @@ truenas:
   pveNode: node1
   pveVmid: "100"
 
+seaweedfs:
+  master:
+    url: seaweedfs-master.dev.butaco.net
+  filer:
+    url: seaweedfs-filer.dev.butaco.net
+
 netbox:
   url: https://netbox-ui.home.butaco.net
   pveNode: node2
