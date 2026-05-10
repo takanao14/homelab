@@ -12,5 +12,5 @@ spec:
     - {{ .Values.hostname }}
   rules:
     - backendRefs:
-        - name: seaweedfs-filer
+        - name: seaweedfs-s3
           port: 8333

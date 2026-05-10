@@ -27,6 +27,12 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: seaweedfs
+  ignoreDifferences:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      jsonPointers:
+        - /spec/parentRefs
+        - /spec/rules
   syncPolicy:
     automated:
       prune: true
