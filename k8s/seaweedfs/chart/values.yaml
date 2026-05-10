@@ -1,1 +1,3 @@
 hostname: ""
+hostnameMaster: ""
+hostnameFiler: ""

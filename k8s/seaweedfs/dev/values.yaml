@@ -1,1 +1,3 @@
 hostname: s3.dev.butaco.net
+hostnameMaster: seaweedfs-master.dev.butaco.net
+hostnameFiler: seaweedfs-filer.dev.butaco.net
