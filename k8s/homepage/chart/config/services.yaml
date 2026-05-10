@@ -69,7 +69,7 @@
           key: {{ "{{" }}HOMEPAGE_VAR_TRUENAS_KEY{{ "}}" }}
           nasType: scale
 
-- IPAM:
+- Infra:
     - NetBox:
         icon: netbox.png
         href: {{ .Values.netbox.url }}
@@ -77,6 +77,13 @@
         proxmoxNode: {{ .Values.netbox.pveNode }}
         proxmoxVMID: {{ .Values.netbox.pveVmid }}
         proxmoxType: {{ .Values.netbox.pveType }}
+
+    - OpenBAO:
+        icon: openbao.png
+        href: {{ .Values.openbao.url }}
+        description: Secret Management
+        proxmoxNode: {{ .Values.openbao.pveNode }}
+        proxmoxVMID: {{ .Values.openbao.pveVmid }}
 
 - Monitoring:
     - Grafana:

@@ -58,6 +58,11 @@ netbox:
   pveVmid: "106"
   pveType: lxc
 
+openbao:
+  url: https://openbao.home.butaco.net/
+  pveNode: node2
+  pveVmid: "100"
+
 grafana:
   url: https://grafana.prd.butaco.net
   username: admin
