@@ -1,0 +1,34 @@
+# Single-node configuration - disable pod anti-affinity
+master:
+  replicas: 1
+  affinity: ""
+  data:
+    type: "persistentVolumeClaim"
+    storageClass: "openebs-hostpath"
+    size: "1Gi"
+
+volume:
+  replicas: 1
+  affinity: ""
+  dataDirs:
+    - name: data1
+      type: "persistentVolumeClaim"
+      storageClass: "openebs-hostpath"
+      size: "100Gi"
+      maxVolumes: 0
+
+filer:
+  replicas: 1
+  affinity: ""
+  data:
+    type: "persistentVolumeClaim"
+    storageClass: "openebs-hostpath"
+    size: "1Gi"
+  s3:
+    enabled: true
+    port: 8333
+    enableAuth: true
+    existingConfigSecret: seaweedfs-s3-secret
+
+# Used by local chart (httproute + external-secret)
+hostname: ""
