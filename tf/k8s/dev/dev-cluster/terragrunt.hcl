@@ -43,7 +43,7 @@ inputs = {
           file_id = local.env.locals.os_image
         })
         scsi1 = merge(local.env.locals.disk_defaults, {
-          size = 100
+          size = 200
         })
       }
     })
