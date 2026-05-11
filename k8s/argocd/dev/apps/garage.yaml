@@ -25,6 +25,10 @@ spec:
       jsonPointers:
         - /spec/parentRefs
         - /spec/rules
+    - group: apps
+      kind: StatefulSet
+      jsonPointers:
+        - /spec/volumeClaimTemplates
   syncPolicy:
     automated:
       prune: true
