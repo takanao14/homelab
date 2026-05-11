@@ -30,7 +30,7 @@ Deploys [NetBox](https://github.com/netbox-community/netbox) IPAM/DCIM on Debian
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `netbox_version` | `4.5.9` | NetBox version to install |
+| `netbox_version` | `4.6.0` | NetBox version to install |
 | `netbox_user` | `netbox` | System user |
 | `netbox_group` | `netbox` | System group |
 | `netbox_home` | `/opt/netbox` | Symlink path to the active NetBox installation |

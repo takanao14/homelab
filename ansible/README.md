@@ -60,7 +60,6 @@ ansible/
 │   ├── apt_mirror.yaml
 │   ├── unattended_upgrades.yaml
 │   ├── gpuvm.yaml
-│   ├── lemonade.yaml
 │   └── rpi3.yaml
 └── roles/
     ├── pdns_auth/
@@ -78,7 +77,6 @@ ansible/
     ├── apt_mirror/
     ├── unattended_upgrades/
     ├── maintenance_user/
-    ├── lemonade/
     ├── rocm/
     ├── timezone/
     └── rsyslog/
@@ -157,129 +155,31 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 
 ## Playbooks
 
-### PowerDNS Authoritative Server (`playbooks/pdns_auth.yaml`)
-Deploys PowerDNS Authoritative Server with SQLite backend.
-- **Role:** `pdns_auth`
-- **Hosts:** `dns_primary` (ns1), `dns_secondary` (ns2)
-- **Config:** `group_vars/dns_auth.yaml`, `group_vars/dns_primary.yaml`, `group_vars/dns_secondary.yaml`
-
-### dnsdist (`playbooks/dnsdist.yaml`)
-Deploys dnsdist as a DNS load balancer / front-end.
-- **Role:** `dnsdist`
-- **Hosts:** `dnsdist` (dist1, dist2)
-- **Config:** `group_vars/dnsdist.yaml`
-
-### DHCP (`playbooks/dhcp.yaml`)
-Deploys Kea DHCPv4 server.
-- **Role:** `kea`
-- **Hosts:** `dhcp`
-- **Config:** `group_vars/dhcp.sops.yaml` (define subnets, pools, and reservations via `kea_subnet4`)
-
-### Caddy (`playbooks/caddy.yaml`)
-Deploys Caddy as a reverse proxy.
-- **Role:** `caddy`
-- **Hosts:** `caddy`
-- **Config:** `group_vars/caddy.yaml`
-
-### Syslog (`playbooks/syslog.yaml`)
-Deploys Vector as a syslog aggregator (UDP 514), parses RFC 3164/5424 and non-standard formats, and forwards to Loki.
-- **Role:** `vector`
-- **Hosts:** `syslog`
-- **Config:** `group_vars/syslog.yaml` (define sources, transforms, and sinks via `vector_config`)
-
-### Node Exporter (`playbooks/node_exporter.yaml`)
-Installs `prometheus-node-exporter` for metrics collection.
-- **Role:** `node_exporter`
-- **Hosts:** `node_exporter` group (includes `node_exporter_rpi` subgroup for Raspberry Pi hosts)
-- **Config:**
-  - `group_vars/node_exporter.yaml` (`node_exporter_base_args`: common args for all hosts)
-  - `group_vars/node_exporter_rpi.yaml` (`node_exporter_rpi_args`: RPi-specific args)
-
-### Forgejo (`playbooks/forgejo.yaml`)
-Deploys Forgejo self-hosted Git service.
-- **Role:** `forgejo`
-- **Hosts:** `forgejo`
-
-### Forgejo Runner (`playbooks/forgejo_runner.yaml`)
-Deploys Forgejo Actions Runner.
-- **Role:** `forgejo_runner`
-- **Hosts:** `forgejo_runner`
-
-### NetBox (`playbooks/netbox.yaml`)
-Deploys NetBox IPAM/DCIM.
-- **Role:** `netbox`
-- **Hosts:** `netbox`
-- **Config:** `group_vars/netbox.yaml`
-
-### Proxmox Configuration (`playbooks/proxmox.yaml`)
-Creates a maintenance user on Proxmox VE hosts with sudo and Proxmox Administrator privileges.
-- **Hosts:** `proxmox`
-- **Secrets required:** `MAINTENANCE_USER`, `MAINTENANCE_PASSWORD_HASH`, `SSH_KEY_PATH`
-
-### Raspberry Pi 3 (`playbooks/rpi3.yaml`)
-Configures rsyslog on Raspberry Pi 3.
-- **Role:** `rsyslog`
-- **Hosts:** `rpi3`
-
-### Blackbox Exporter (`playbooks/blackbox_exporter.yaml`)
-Installs Prometheus Blackbox Exporter for ICMP and DNS probe monitoring.
-- **Role:** `blackbox_exporter`
-- **Hosts:** `blackbox_exporter`
-
-### Apt Mirror (`playbooks/apt_mirror.yaml`)
-Replaces the default Ubuntu apt mirror URL with a local mirror on all Ubuntu hosts.
-- **Role:** `apt_mirror`
-- **Hosts:** `all`
-
-### Apt Upgrade (`playbooks/apt_upgrade.yaml`)
-Runs a full `dist-upgrade` across all hosts (except Proxmox), rebooting if required. Runs serially (one host at a time).
-- **Hosts:** `all:!proxmox`
-
-### Unattended Upgrades (`playbooks/unattended_upgrades.yaml`)
-Enables automatic security updates via `unattended-upgrades` on all non-Proxmox hosts.
-- **Role:** `unattended_upgrades`
-- **Hosts:** `all:!proxmox`
-
-### GPU VM — ROCm (`playbooks/gpuvm.yaml`)
-Sets up an AMD GPU VM with timezone and ROCm drivers.
-- **Roles:** `timezone`, `rocm`
-- **Hosts:** `gpuvm`
-
-### Lemonade (`playbooks/lemonade.yaml`)
-Deploys the Lemonade AI inference server with AMD ROCm backend on the GPU VM.
-- **Roles:** `timezone`, `rocm`, `lemonade`
-- **Hosts:** `gpuvm`
-
-### Maintenance User on LXC (`playbooks/maintenance_user.yaml`)
-Creates a maintenance user with sudo access on LXC containers.
-- **Role:** `maintenance_user`
-- **Hosts:** `lxc`
-
-### OpenBao (`playbooks/openbao.yaml`)
-Deploys the OpenBao secret management server.
-- **Role:** `openbao`
-- **Hosts:** `openbao`
-- **Config:** `group_vars/openbao.yaml`, `group_vars/openbao.sops.yaml`
-- **See also:** [roles/openbao/README.md](roles/openbao/README.md) for initialization and ESO integration steps.
-
-### OpenBao Bootstrap (`playbooks/openbao_bootstrap.yaml`)
-Creates a long-lived admin token from the root token. Run once after initial `bao operator init`.
-- **Role task:** `openbao/tasks/bootstrap.yaml`
-- **Hosts:** `openbao`
-
-### OpenBao Configure (`playbooks/openbao_configure.yaml`)
-Configures KV v2 secrets engine, Kubernetes auth method, policies, and roles for ESO integration.
-- **Role tasks:** `configure_kv`, `configure_k8s_auth`, `configure_policies`, `configure_roles`
-- **Hosts:** `openbao`
-
-### OpenBao Seed Secrets (`playbooks/openbao_seed_secrets.yaml`)
-Seeds application secrets into OpenBao KV from SOPS-encrypted variables.
-- **Role task:** `openbao/tasks/seed_secrets.yaml`
-- **Hosts:** `openbao`
-
-### PowerDNS Zone Sync (`playbooks/pdns_sync.yaml`)
-Forces a zone transfer from the primary PowerDNS server to the secondary by sending NOTIFY and triggering AXFR on the secondary.
-- **Hosts:** `dns_primary`, `dns_secondary`
+| Playbook | Hosts |
+|----------|-------|
+| `pdns_auth.yaml` | `dns_primary`, `dns_secondary` |
+| `pdns_sync.yaml` | `dns_primary`, `dns_secondary` |
+| `dnsdist.yaml` | `dnsdist` |
+| `dhcp.yaml` | `dhcp` |
+| `caddy.yaml` | `caddy` |
+| `syslog.yaml` | `syslog` |
+| `node_exporter.yaml` | `node_exporter` |
+| `blackbox_exporter.yaml` | `blackbox_exporter` |
+| `forgejo.yaml` | `forgejo` |
+| `forgejo_runner.yaml` | `forgejo_runner` |
+| `netbox.yaml` | `netbox` |
+| `openbao.yaml` | `openbao` |
+| `openbao_bootstrap.yaml` | `openbao` |
+| `openbao_configure.yaml` | `openbao` |
+| `openbao_seed_secrets.yaml` | `openbao` |
+| `garage_init.yaml` | `localhost` |
+| `proxmox.yaml` | `proxmox` |
+| `maintenance_user.yaml` | `lxc` |
+| `apt_upgrade.yaml` | `all:!proxmox` |
+| `apt_mirror.yaml` | `all` |
+| `unattended_upgrades.yaml` | `all:!proxmox` |
+| `gpuvm.yaml` | `gpuvm` |
+| `rpi3.yaml` | `rpi3` |
 
 ## Secret Variables
 

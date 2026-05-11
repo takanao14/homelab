@@ -23,7 +23,7 @@ Installs and configures a [Forgejo Actions Runner](https://code.forgejo.org/forg
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `forgejo_runner_version` | `12.8.0` | Runner version to install |
+| `forgejo_runner_version` | `12.10.1` | Runner version to install |
 | `forgejo_runner_user` | `runner` | System user |
 | `forgejo_runner_group` | `runner` | System group |
 | `forgejo_runner_home` | `/var/lib/forgejo-runner` | Home directory |

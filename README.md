@@ -18,6 +18,7 @@ homelab/
 │   ├── dev-monitoring/# Lightweight monitoring stack for the dev cluster
 │   ├── eso/           # External Secrets Operator + ClusterSecretStore (OpenBao)
 │   ├── externalDNS/   # ExternalDNS (PowerDNS provider)
+│   ├── garage/        # Garage S3-compatible object storage (dev cluster)
 │   ├── gateway/       # Gateway API (Cilium) setup
 │   ├── homepage/      # Homepage dashboard
 │   ├── lemonade-server/ # Lemonade LLM server (ROCm / AMD GPU)

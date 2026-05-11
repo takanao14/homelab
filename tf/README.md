@@ -36,23 +36,23 @@ tf/
 ├── vm/
 │   ├── dev/
 │   │   ├── env.hcl                 # dev VM defaults (node: pve, storage: local-zfs)
-│   │   ├── gpuvm/                  # GPU VM (8c/32GB, 200GB+300GB, PCIe passthrough: radeon)
-│   │   ├── guibox/                 # GUI box VM (XRDP)
-│   │   ├── testvm/                 # Test VMs x2 (testvm1: Ubuntu 4c/8GB, testvm2: Rocky 4c/8GB)
-│   │   └── toolbox/                # Toolbox VM
+│   │   ├── gpuvm/
+│   │   ├── guibox/
+│   │   ├── testvm/
+│   │   └── toolbox/
 │   └── node2/
 │       ├── env.hcl                 # node2 VM defaults (node: node2, storage: local-lvm)
-│       ├── openbao/                # OpenBao secret management VM (1c/1GB, 16GB)
-│       ├── runner1/                # Forgejo runner VM (2c/4GB, 40GB)
-│       └── vpngw/                  # VPN gateway VM (2c/1GB, 10GB, Debian)
+│       ├── openbao/
+│       ├── runner1/
+│       └── vpngw/
 ├── k8s/
 │   ├── dev/
 │   │   ├── env.hcl                 # dev k8s defaults (node: pve, storage: local-zfs)
-│   │   ├── dev-cluster/            # dev k8s: cp1 (2c/4GB) + worker1 (8c/8GB, 64GB+100GB)
-│   │   └── sandbox/                # sandbox k8s: cp1 + workers 1-3 (all 2c/4GB, 40GB+40GB)
+│   │   ├── dev-cluster/
+│   │   └── sandbox/
 │   └── prd/
 │       ├── env.hcl                 # prd k8s defaults (node: node1, storage: data-nvme)
-│       └── prd-cluster/            # prd k8s: cp1 (2c/4GB) + worker1 (8c/24GB, 64GB+300GB)
+│       └── prd-cluster/
 └── lxc/
     ├── dev/
     │   └── env.hcl                 # dev LXC defaults (node: pve, storage: local-zfs)

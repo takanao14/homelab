@@ -21,7 +21,9 @@ argocd/
 │       ├── comfyui.yaml
 │       ├── eso.yaml
 │       ├── external-dns.yaml
+│       ├── garage.yaml
 │       ├── gateway.yaml
+│       ├── lemonade-server.yaml
 │       ├── meshcentral.yaml
 │       ├── monitoring.yaml       # Prometheus agent mode (k8s/dev-monitoring)
 │       ├── ollama.yaml
@@ -82,18 +84,20 @@ The `argocd.yaml` Application uses multi-source:
 
 ## Apps
 
-| Application | Namespace | Environment | Secrets |
-|-------------|-----------|-------------|---------|
-| argocd | argocd | dev, prd | none |
-| cert-manager | cert-manager | dev, prd | none |
-| cert-manager-config | cert-manager | dev, prd | yes (ESO → OpenBao) |
-| comfyui | comfyui | dev only | none |
-| external-secrets (eso) | external-secrets | dev, prd | none |
-| external-dns | dns-homelab | dev, prd | yes (ESO → OpenBao) |
-| gateway | gateway-system | dev, prd | none |
-| homepage | homepage | prd only | yes (ESO → OpenBao) |
-| meshcentral | meshcentral | dev only | none |
-| monitoring | monitoring | dev, prd | yes (ESO → OpenBao, prd only) |
-| ollama | ollama | dev only | none |
-| open-webui | open-webui | dev only | none |
-| reloader | reloader | dev, prd | none |
+| Application | Namespace | Environment |
+|-------------|-----------|-------------|
+| argocd | argocd | dev, prd |
+| cert-manager | cert-manager | dev, prd |
+| cert-manager-config | cert-manager | dev, prd |
+| comfyui | comfyui | dev only |
+| external-secrets (eso) | external-secrets | dev, prd |
+| external-dns | dns-homelab | dev, prd |
+| garage | garage | dev only |
+| gateway | gateway-system | dev, prd |
+| homepage | homepage | prd only |
+| lemonade-server | lemonade-server | dev only |
+| meshcentral | meshcentral | dev only |
+| monitoring | monitoring | dev, prd |
+| ollama | ollama | dev only |
+| open-webui | open-webui | dev only |
+| reloader | reloader | dev, prd |

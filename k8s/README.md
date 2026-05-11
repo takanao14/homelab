@@ -23,20 +23,6 @@ Kubernetes manifests and Helm charts for homelab clusters managed via ArgoCD Git
 
 All HTTP services are exposed via HTTPRoute referencing a shared Gateway (`shared-gateway` in `gateway-system` namespace). TLS is terminated at the Gateway using a wildcard certificate.
 
-### Service Access
-
-| Service | URL (prd) | URL (dev) | Method |
-|---------|-----------|-----------|--------|
-| ArgoCD | `argocd.prd.butaco.net` | `argocd.dev.butaco.net` | HTTPRoute |
-| Homepage | `www.prd.butaco.net` | - | HTTPRoute |
-| Grafana | `grafana.prd.butaco.net` | - | HTTPRoute |
-| Prometheus | `prometheus.prd.butaco.net` | - | HTTPRoute |
-| Loki | LoadBalancer (cluster-external log ingestion) | - | LoadBalancer |
-| MeshCentral | - | `meshcentral.dev.butaco.net` | HTTPRoute |
-| ComfyUI | - | `comfyui.dev.butaco.net` | HTTPRoute |
-| Ollama | - | `ollama.dev.butaco.net` | HTTPRoute |
-| Open-WebUI | - | `open-webui.dev.butaco.net` | HTTPRoute |
-
 ### Secrets Management
 
 - All Kubernetes secrets are managed via [External Secrets Operator](https://external-secrets.io/) (ESO)
@@ -108,6 +94,11 @@ k8s/
 ├── comfyui/              # ComfyUI AI image generation (dev only, AMD GPU)
 │   ├── values.yaml
 │   └── chart/
+├── garage/               # Garage S3-compatible object storage (dev only)
+│   └── chart/
+├── lemonade-server/      # Lemonade LLM inference server (dev only, AMD GPU)
+│   ├── values.yaml
+│   └── chart/
 ├── ollama/               # Ollama LLM server (dev only, AMD GPU)
 │   ├── values.yaml
 │   └── chart/
@@ -131,20 +122,3 @@ kubectl apply -f k8s/argocd/prd/root-apps.yaml
 ```
 
 After `root-apps.yaml` is applied, ArgoCD syncs all applications automatically.
-
-## cert-manager
-
-Wildcard certificate issued via Let's Encrypt production using Cloudflare DNS-01 challenge.
-
-- Certificate: `*.prd.butaco.net` → Secret `wildcard-prd-butaco-net-tls` in `cert-manager` namespace
-- ReferenceGrant allows `gateway-system` to reference the TLS secret
-- `--dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53` is required to bypass internal DNS (PowerDNS) for ACME validation
-- Cloudflare API token is fetched from OpenBao via ESO (`k8s/cert-manager/cloudflare` → `api-token`)
-
-## Gateway
-
-`shared-gateway` in `gateway-system` exposes:
-- Port 443 (HTTPS) with wildcard TLS certificate
-- Port 80 (HTTP) — available for non-TLS use if needed
-
-Each service creates an HTTPRoute in its own namespace pointing to `shared-gateway`.

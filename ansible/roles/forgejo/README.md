@@ -25,7 +25,7 @@ Installs and configures [Forgejo](https://forgejo.org/) self-hosted Git service 
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `forgejo_version` | `14.0.3` | Forgejo version to install |
+| `forgejo_version` | `15.0.1` | Forgejo version to install |
 | `forgejo_user` | `git` | System user |
 | `forgejo_group` | `git` | System group |
 | `forgejo_home` | `/var/lib/forgejo` | Home and data directory |
