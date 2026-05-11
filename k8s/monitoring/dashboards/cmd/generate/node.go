@@ -78,6 +78,38 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Hide(dashboard.VariableHideHideVariable),
 		).
 		WithRow(dashboard.NewRowBuilder("Summary")).
+		// up{job=...} is always recorded by Prometheus for every configured scrape
+		// target, returning 0 when the target is unreachable. Joining with
+		// last_over_time(node_uname_info[1d]) resolves nodenames even while a node
+		// is down (as long as it was seen within the last day).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Node Exporter Status").
+				Datasource(ds).
+				Span(24).Height(4).
+				GraphMode(common.BigValueGraphModeNone).
+				Orientation(common.VizOrientationAuto).
+				ColorMode(common.BigValueColorModeBackground).
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "red"},
+						{Value: float64Ptr(1), Color: "green"},
+					})).
+				Mappings([]dashboard.ValueMapping{
+					{ValueMap: &dashboard.ValueMap{
+						Type: dashboard.MappingTypeValueToText,
+						Options: map[string]dashboard.ValueMappingResult{
+							"0": {Text: strPtr("DOWN"), Color: strPtr("red")},
+							"1": {Text: strPtr("UP"), Color: strPtr("green")},
+						},
+					}},
+				}).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`up{job="scrapeConfig/monitoring/node-exporter-external"} * on(instance) group_left(nodename) last_over_time(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm"}[1d])`).
+					LegendFormat("{{nodename}}"),
+				),
+		).
 		WithPanel(
 			bargauge.NewPanelBuilder().
 				Title("CPU Usage").
