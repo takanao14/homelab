@@ -1,0 +1,16 @@
+image:
+  repository: dxflrs/garage
+  tag: v1.0.0
+
+storage:
+  data:
+    size: 100Gi
+    storageClassName: openebs-hostpath
+  meta:
+    size: 1Gi
+    storageClassName: openebs-hostpath
+
+s3Region: us-east-1
+
+hostname: ""
+webLoadBalancerIP: ""

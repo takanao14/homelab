@@ -1,0 +1,2 @@
+hostname: s3.dev.butaco.net
+webLoadBalancerIP: "192.168.20.250"
