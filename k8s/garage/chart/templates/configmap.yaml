@@ -9,6 +9,7 @@ data:
     data_dir = "/data"
     db_engine = "lmdb"
     replication_factor = 1
+    consistency_mode = "consistent"
     rpc_bind_addr = "[::]:3901"
 
     [s3_api]
