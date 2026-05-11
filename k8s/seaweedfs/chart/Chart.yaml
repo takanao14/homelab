@@ -1,5 +1,0 @@
-apiVersion: v2
-name: seaweedfs-routes
-description: SeaweedFS HTTPRoute and S3 credentials ExternalSecret
-type: application
-version: 0.1.0
