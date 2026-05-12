@@ -20,27 +20,27 @@ inputs = {
   vms = {
     "testvm1" = merge(local.base_vars, {
       cores  = 4
-      memory = 8192
+      memory = 4096
       bridge = local.common.locals.dev.net20.bridge
-      ipv4   = "192.168.20.22/24"
+      ipv4   = "192.168.20.31/24"
       ipv4gw = local.common.locals.dev.net20.ipv4gw
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
-          size    = 100
+          size    = 40
           file_id = "local:iso/ubuntu-24.04-custom.img"
         })
       }
     })
     "testvm2" = merge(local.base_vars, {
       cores  = 4
-      memory = 8192
+      memory = 4096
       bridge = local.common.locals.dev.net20.bridge
-      ipv4   = "192.168.20.23/24"
+      ipv4   = "192.168.20.32/24"
       ipv4gw = local.common.locals.dev.net20.ipv4gw
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
-          size    = 100
-          file_id = "local:iso/rocky-9-custom.img"
+          size    = 40
+          file_id = "local:iso/rocky-10-custom.img"
         })
       }
     })
