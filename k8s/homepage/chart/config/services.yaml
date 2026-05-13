@@ -3,7 +3,7 @@
 
 - DNS:
     - Authoritative:
-        - PowerDNS auth1:
+        - PowerDNS origin:
             icon: powerdns.png
             href: {{ .Values.pdns.primary.url }}
             description: Primary Authoritative DNS ({{ .Values.pdns.primary.addr }}:53)
@@ -12,14 +12,23 @@
             proxmoxType: {{ .Values.pdns.primary.pveType }}
             siteMonitor: http://{{ .Values.pdns.primary.addr }}:8081/
 
+        - PowerDNS auth1:
+            icon: powerdns.png
+            href: {{ .Values.pdns.secondary1.url }}
+            description: Secondary1 Authoritative DNS ({{ .Values.pdns.secondary1.addr }}:53)
+            proxmoxNode: {{ .Values.pdns.secondary1.pveNode }}
+            proxmoxVMID: {{ .Values.pdns.secondary1.pveVmid }}
+            proxmoxType: {{ .Values.pdns.secondary1.pveType }}
+            siteMonitor: http://{{ .Values.pdns.secondary1.addr }}:8081/
+
         - PowerDNS auth2:
             icon: powerdns.png
-            href: {{ .Values.pdns.secondary.url }}
-            description: Secondary Authoritative DNS ({{ .Values.pdns.secondary.addr }}:53)
-            proxmoxNode: {{ .Values.pdns.secondary.pveNode }}
-            proxmoxVMID: {{ .Values.pdns.secondary.pveVmid }}
-            proxmoxType: {{ .Values.pdns.secondary.pveType }}
-            siteMonitor: http://{{ .Values.pdns.secondary.addr }}:8081/
+            href: {{ .Values.pdns.secondary2.url }}
+            description: Secondary2 Authoritative DNS ({{ .Values.pdns.secondary2.addr }}:53)
+            proxmoxNode: {{ .Values.pdns.secondary2.pveNode }}
+            proxmoxVMID: {{ .Values.pdns.secondary2.pveVmid }}
+            proxmoxType: {{ .Values.pdns.secondary2.pveType }}
+            siteMonitor: http://{{ .Values.pdns.secondary2.addr }}:8081/
 
     - DNS Balancer:
         - dnsdist1:

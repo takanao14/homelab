@@ -5,6 +5,8 @@ caddy_upstreams:
     backend: 192.168.10.233:8081
   - hostname: pdns2.home.butaco.net
     backend: 192.168.10.234:8081
+  - hostname: pdns3.home.butaco.net
+    backend: 192.168.10.235:8081
   - hostname: dnsdist1.home.butaco.net
     backend: 192.168.10.231:8083
   - hostname: dnsdist2.home.butaco.net

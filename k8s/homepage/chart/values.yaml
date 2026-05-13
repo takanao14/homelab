@@ -26,11 +26,17 @@ pdns:
     pveNode: node2
     pveVmid: "108"
     pveType: lxc
-  secondary:
+  secondary1:
     addr: ns2.home.butaco.net
     url: https://pdns2.home.butaco.net
     pveNode: node3
     pveVmid: "100"
+    pveType: lxc
+  secondary2:
+    addr: ns3.home.butaco.net
+    url: https://pdns3.home.butaco.net
+    pveNode: node2
+    pveVmid: "109"
     pveType: lxc
 
 dnsdist:
