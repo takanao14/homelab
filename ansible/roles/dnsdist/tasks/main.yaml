@@ -10,7 +10,7 @@
   ansible.builtin.assert:
     that:
       - primary_auth_server | length > 0
-      - secondary_auth_server | length > 0
+      - secondary_auth_servers | length > 0
       - dnsdist_web_password | length > 0
       - dnsdist_web_api_key | length > 0
       - dnsdist_console_key | length > 0
@@ -33,6 +33,7 @@
     url: "{{ dnsdist_repo_key_url }}"
     dest: "{{ dnsdist_repo_key_path }}"
     mode: "0644"
+    validate_certs: "{{ dnsdist_repo_validate_certs }}"
 
 - name: Configure dnsdist apt pinning
   become: true

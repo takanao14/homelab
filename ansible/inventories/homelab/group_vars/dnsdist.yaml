@@ -1,4 +1,18 @@
 ---
+# Temporarily disabled due to expired certificate on repo.powerdns.com
+dnsdist_repo_validate_certs: false
+
+dnsdist_default_servers:
+  - name: local-forwarder
+    address: "192.168.10.1:53"
+    checkName: "google.com."
+  - name: google-dns
+    address: "8.8.8.8:53"
+    checkName: "google.com."
+  - name: cloudflare-dns
+    address: "1.1.1.1:53"
+    checkName: "cloudflare.com."
+
 vector_config:
   sources:
     journald:

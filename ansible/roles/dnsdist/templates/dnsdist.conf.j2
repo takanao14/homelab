@@ -5,7 +5,7 @@
 newServer({
     address="{{ backend.address }}",
     pool="{{ backend.pool }}",
-    name="{{ backend.name }}",
+    name="{{ backend.name | default(backend.address) }}",
     checkName="{{ backend.checkName }}",
     checkType="{{ backend.checkType }}",
 })
@@ -16,7 +16,7 @@ newServer({
 newServer({
     address="{{ backend.address }}",
     pool="{{ backend.pool }}",
-    name="{{ backend.name }}",
+    name="{{ backend.name | default(backend.address) }}",
     checkName="{{ backend.checkName }}",
     checkType="{{ backend.checkType }}",
 })
