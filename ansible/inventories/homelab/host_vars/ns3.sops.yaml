@@ -1,0 +1,16 @@
+PDNS_SECONDARY_API_KEY: ENC[AES256_GCM,data:9nNLZ4URo2FPd7uAAtgMULtBhV1DbmdmpET9ao6hLTE=,iv:jzvTY7mzv89Y2aXeBECiUcrTBkbm7VMBEDGDIQN9HZE=,tag:SzqlaB+LvragKz1iEkHdiQ==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBicnhzYUNha2czOURmR1RE
+            SVdRaktFSUk5RFgyZUVZbGZGWHZzQVJQRXdJClZhUkg0eE5qSDZVZUM5bWdjY29V
+            b3kyRldhNFFTdjBjKzMwMEVGWXp2SzgKLS0tIFpWNktHU0hrLzZKSTBLZ291dFVi
+            bFNnTVIwdUk2c3dmWjZxM2xVSmhQQTQKkKsqN/TqB7C6JiOb8eF3kbQN/RRBIN5t
+            vGbRFt0k98w/Rc61X23GQ1VaIW5ShUft0WXbVfTwWoBCYtu1wfCuiw==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
+    lastmodified: "2026-05-13T05:39:30Z"
+    mac: ENC[AES256_GCM,data:mdaLNrqerLQFVK1A5yba7L/BeybZWfFS6r5ApP0rGNVznGVhnxj1PO/RA/SIEHSt58nFJQoWVB6xdMCH+O7uqpK9o6+iFyFvEzBxRx1vy4UTBU7DjeUPafufWm9lSkCNDHNndVYeBx/yJOd662NfePZpNmwAWwfmCzHItzoLSP4=,iv:0AVyAhpbKVCv+MKFFdeJOqItXArYz3C1SnRhqMYEgHI=,tag:HwxdOwsSd3Ixjj0n7LTuIg==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.13.0

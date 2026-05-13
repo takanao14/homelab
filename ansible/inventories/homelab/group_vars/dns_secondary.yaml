@@ -1,2 +1,10 @@
 ---
 pdns_role: secondary
+pdns_secondary_addr: "{{ ansible_host }}"
+pdns_secondary_port: >-
+  {{ secondary_auth_servers
+     | selectattr('address', 'match', '^' + ansible_host + ':')
+     | map(attribute='address')
+     | first
+     | split(':')
+     | last }}

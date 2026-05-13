@@ -1,3 +1,7 @@
 ---
 primary_auth_server: "192.168.10.233:53"
-secondary_auth_server: "192.168.10.234:53"
+secondary_auth_servers:
+  - name: ns2
+    address: "192.168.10.234:53"
+  - name: ns3
+    address: "192.168.10.235:53"

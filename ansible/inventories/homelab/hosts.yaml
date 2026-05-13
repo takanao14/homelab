@@ -6,6 +6,8 @@ all:
       ansible_host: 192.168.10.233
     ns2:
       ansible_host: 192.168.10.234
+    ns3:
+      ansible_host: 192.168.10.235
     dist1:
       ansible_host: 192.168.10.231
     dist2:
@@ -53,6 +55,7 @@ all:
             dns_secondary:
               hosts:
                 ns2: null
+                ns3: null
         dnsdist:
           hosts:
             dist1: null
@@ -98,6 +101,7 @@ all:
         netbox01: null
         ns1: null
         ns2: null
+        ns3: null
         dist1: null
         dist2: null
 

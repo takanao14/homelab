@@ -10,8 +10,7 @@
   ansible.builtin.assert:
     that:
       - pdns_primary_addr | length > 0
-      - pdns_secondary_addr | length > 0
-    fail_msg: "pdns_primary_addr and pdns_secondary_addr must be defined in inventory (group_vars/dns_auth.yaml)."
+    fail_msg: "pdns_primary_addr must be defined in inventory (group_vars/dns_auth.yaml)."
 
 - name: Validate required variables for primary role
   ansible.builtin.assert:
@@ -20,14 +19,15 @@
       - pdns_primary_allow_axfr_ips | length > 0
       - pdns_primary_also_notify | length > 0
       - pdns_default_soa_content | length > 0
-    fail_msg: "Required primary variables are missing. Check group_vars/dns_primary.yaml and dns_primary.sops.yaml."
+    fail_msg: "Required primary variables are missing. Check group_vars/dns_primary.yaml and host_vars/ns1.sops.yaml."
   when: pdns_role == 'primary'
 
 - name: Validate required variables for secondary role
   ansible.builtin.assert:
     that:
       - pdns_secondary_api_key | length > 0
-    fail_msg: "pdns_secondary_api_key must be defined in group_vars/dns_secondary.sops.yaml."
+      - pdns_secondary_addr | length > 0
+    fail_msg: "pdns_secondary_api_key must be defined in host_vars/<hostname>.sops.yaml, pdns_secondary_addr in group_vars/dns_secondary.yaml."
   when: pdns_role == 'secondary'
 
 - name: Ensure apt keyring directory exists
@@ -113,6 +113,9 @@
     enabled: true
     state: started
     daemon_reload: true
+
+- name: Flush handlers to ensure pdns is restarted before API calls
+  ansible.builtin.meta: flush_handlers
 
 - name: Get existing autoprimaries
   ansible.builtin.uri:
