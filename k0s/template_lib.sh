@@ -279,6 +279,8 @@ wait_for_cluster() {
 
 helmfile_apply() {
     local helmfile_file="$1"
+    local base_dir
+    base_dir="$(dirname "$helmfile_file")"
     log_info "Using KUBECONFIG: ${KUBECONFIG:-unknown}"
 
     # Phase 1: install Cilium first so its CRDs exist before other releases are diffed.
@@ -288,7 +290,12 @@ helmfile_apply() {
     log_info "Running: helmfile apply (phase 1: cilium)"
     helmfile -f "$helmfile_file" -l name=cilium apply
 
-    # Phase 2: apply everything; cilium-config's presync hook waits for CRDs if needed.
+    # Wait for Cilium CRDs to be fully established before running the diff for
+    # CRD-dependent releases in phase 2 — helm-diff queries the live API and will
+    # fail if the CRDs aren't registered yet even when the helm release is installed.
+    "$base_dir/scripts/wait-cilium-crds.sh"
+
+    # Phase 2: apply everything; CRDs are guaranteed to exist at this point.
     log_info "Running: helmfile apply (phase 2: all releases)"
     helmfile -f "$helmfile_file" apply
 }
