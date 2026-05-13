@@ -67,6 +67,7 @@ Commands:
   kubeconfig  Fetch kubeconfig to \$HOME/.kube/<env>.yaml
   helmfile    Apply helmfile only (requires kubeconfig to exist)
   gateway-api Apply Gateway API CRDs only (requires kubeconfig to exist)
+  smoke-test  Run smoke tests: L2LB reachability + PVC read/write (requires kubeconfig to exist)
   config      Print generated k0sctl config to stdout
 EOF
 }
@@ -354,6 +355,10 @@ run_main() {
         gateway-api)
             export KUBECONFIG="$kubeconfig_out"
             gateway_api_apply
+            ;;
+        smoke-test)
+            export KUBECONFIG="$kubeconfig_out"
+            "$base_dir/tests/smoke-test.sh"
             ;;
         config)
             generate_k0sctl_config "$k0sctl_file"

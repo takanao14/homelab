@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netpol-server
+  namespace: smoke-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netpol-server
+  template:
+    metadata:
+      labels:
+        app: netpol-server
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:stable-alpine
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netpol-server
+  namespace: smoke-test
+spec:
+  type: ClusterIP
+  selector:
+    app: netpol-server
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: smoke-netpol
+  namespace: smoke-test
+spec:
+  podSelector:
+    matchLabels:
+      app: netpol-server
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              role: client-allowed
+      ports:
+        - port: 80

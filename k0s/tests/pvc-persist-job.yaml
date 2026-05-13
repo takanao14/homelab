@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: smoke-pvc-persist
+  namespace: smoke-test
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: verify
+          image: busybox:stable
+          command: ["sh", "-c", "cat /data/test.txt"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: smoke-pvc
