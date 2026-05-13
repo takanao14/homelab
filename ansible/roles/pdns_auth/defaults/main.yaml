@@ -5,6 +5,7 @@ pdns_repo_channel: "auth-50"
 pdns_repo_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc"
 pdns_repo_key_path: "/etc/apt/keyrings/auth-50-pub.asc"
 pdns_repo_pin_path: "/etc/apt/preferences.d/auth-50"
+pdns_repo_validate_certs: true
 
 pdns_webserver_port: 8081
 

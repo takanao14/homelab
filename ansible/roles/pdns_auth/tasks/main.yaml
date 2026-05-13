@@ -43,6 +43,7 @@
     url: "{{ pdns_repo_key_url }}"
     dest: "{{ pdns_repo_key_path }}"
     mode: "0644"
+    validate_certs: "{{ pdns_repo_validate_certs }}"
 
 - name: Configure pdns apt pinning
   become: true
