@@ -2,8 +2,6 @@
 - name: Force zone transfer from primary to secondary
   hosts: dns_primary
   gather_facts: false
-  vars:
-    pdns_webserver_port: 8081
   tasks:
     - name: Get all zones from primary
       ansible.builtin.uri:
@@ -28,8 +26,7 @@
 - name: Trigger AXFR retrieve on secondary
   hosts: dns_secondary
   gather_facts: false
-  vars:
-    pdns_webserver_port: 8081
+  serial: 1
   tasks:
     - name: Get all zones on secondary
       ansible.builtin.uri:
