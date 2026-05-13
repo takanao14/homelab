@@ -105,7 +105,7 @@ Edit the encrypted files directly:
 
 ```bash
 # Group-level secrets (e.g. PowerDNS primary API key)
-sops edit inventories/homelab/group_vars/dns_primary.sops.yaml
+sops edit inventories/homelab/group_vars/ns1.sops.yaml
 
 # Host-specific secrets (e.g. SSH user)
 sops edit inventories/homelab/host_vars/ns1.sops.yaml
