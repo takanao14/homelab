@@ -39,5 +39,18 @@ inputs = {
         })
       }
     })
+    "ns3" = merge(local.env.locals.container_defaults, {
+      cores       = 1
+      memory      = 512
+      bridge      = local.common.locals.node2.net10.bridge
+      ipv4        = "192.168.10.235/24"
+      ipv4gw      = local.common.locals.node2.net10.ipv4gw
+      dns_servers = local.common.locals.dns_external
+      disks = {
+        disk0 = merge(local.env.locals.disk_defaults, {
+          size = 4
+        })
+      }
+    })
   }
 }
