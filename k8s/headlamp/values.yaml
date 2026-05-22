@@ -1,0 +1,4 @@
+headlamp:
+  httpRoute:
+    hostnames:
+      - headlamp.prd.butaco.net

@@ -1,0 +1,11 @@
+apiVersion: v2
+name: headlamp
+description: Wrapper chart for Headlamp Kubernetes UI
+type: application
+version: 0.1.0
+
+dependencies:
+  # renovate: datasource=helm registryUrl=https://kubernetes-sigs.github.io/headlamp/
+  - name: headlamp
+    version: "0.42.0"
+    repository: https://kubernetes-sigs.github.io/headlamp/
