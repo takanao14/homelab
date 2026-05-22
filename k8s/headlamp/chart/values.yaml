@@ -1,4 +1,16 @@
 headlamp:
+  config:
+    extraArgs:
+      - "-kubeconfig=/headlamp/kubeconfig"
+  volumeMounts:
+    - name: dev-kubeconfig
+      mountPath: /headlamp/kubeconfig
+      subPath: kubeconfig
+      readOnly: true
+  volumes:
+    - name: dev-kubeconfig
+      secret:
+        secretName: headlamp-dev-kubeconfig
   httpRoute:
     enabled: true
     parentRefs:
