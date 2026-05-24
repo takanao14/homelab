@@ -59,7 +59,7 @@ truenas:
   pveVmid: "100"
 
 garageui:
-  url: https://garage.prd.butaco.net
+  url: https://garage.dev.butaco.net
 
 netbox:
   url: https://netbox-ui.home.butaco.net
