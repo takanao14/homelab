@@ -94,6 +94,10 @@
         proxmoxNode: {{ .Values.openbao.pveNode }}
         proxmoxVMID: {{ .Values.openbao.pveVmid }}
 
+    - Garage UI:
+        icon: garage.png
+        href: {{ .Values.garageui.url }}
+
 - Monitoring:
     - Grafana:
         icon: grafana.png
