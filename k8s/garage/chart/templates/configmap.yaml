@@ -24,3 +24,6 @@ data:
 
     [admin]
     api_bind_addr = "[::]:3903"
+    {{- if .Values.webui.enabled }}
+    admin_token = "$GARAGE_ADMIN_TOKEN"
+    {{- end }}

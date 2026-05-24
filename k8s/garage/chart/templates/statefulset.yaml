@@ -42,6 +42,13 @@ spec:
                 secretKeyRef:
                   name: garage-secret
                   key: secret-key
+            {{- if .Values.webui.enabled }}
+            - name: GARAGE_ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: garage-webui-secret
+                  key: admin-token
+            {{- end }}
           volumeMounts:
             - name: config
               mountPath: /etc/garage.toml
