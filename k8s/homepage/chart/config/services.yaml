@@ -114,6 +114,11 @@
           type: prometheus
           url: {{ .Values.prometheus.url }}
 
+    - HeadLamp:
+        icon: headlamp.png
+        href: {{ .Values.headlamp.url }}
+        description: k8s cluster UI
+
 - Develop:
     - forgejo:
         icon: forgejo.png

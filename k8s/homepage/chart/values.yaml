@@ -76,6 +76,9 @@ grafana:
 prometheus:
   url: https://prometheus.prd.butaco.net
 
+headlamp:
+  url: https://headlamp.prd.butaco.net
+
 prdArgo:
   url: https://argocd-ui.prd.butaco.net
 
