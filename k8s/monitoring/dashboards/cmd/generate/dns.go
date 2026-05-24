@@ -11,9 +11,10 @@ import (
 )
 
 // buildDnsOverview defines the DNS infrastructure dashboard.
-// Two-server setup (192.168.10.241/242).
-//   - ns1: 192.168.10.242 (primary)
-//   - ns2: 192.168.10.241 (secondary)
+//   - dist1/dist2: 192.168.10.231/232 (dnsdist)
+//   - ns1: 192.168.10.233 (primary)
+//   - ns2: 192.168.10.234 (secondary)
+//   - ns3: 192.168.10.235 (secondary)
 func buildDnsOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
@@ -34,6 +35,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 			{"dist2", "192.168.10.232:.*"},
 			{"ns1", "192.168.10.233:.*"},
 			{"ns2", "192.168.10.234:.*"},
+			{"ns3", "192.168.10.235:.*"},
 		}
 
 		for _, r := range replacements {

@@ -27,6 +27,7 @@ func main() {
 		"monitoring-overview":   buildMonitoringOverview,
 		"dns-logs":              buildDnsLogs,
 		"syslog":                buildSyslog,
+		"service-logs":          buildServiceLogs,
 	}
 
 	outputDir := "generated"
