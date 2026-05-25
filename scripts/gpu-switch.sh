@@ -6,7 +6,6 @@ GPU_WORKLOADS=(
   "ollama/ollama"
   "comfyui/comfyui"
   "lemonade-server/lemonade-server"
-  "vllm/vllm"
 )
 
 usage() {
