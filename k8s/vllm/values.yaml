@@ -1,3 +1,0 @@
-hostname: vllm.dev.butaco.net
-model: Qwen/Qwen2.5-14B-Instruct-AWQ
-maxModelLen: 16384
