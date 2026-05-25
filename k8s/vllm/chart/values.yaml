@@ -1,8 +1,8 @@
 replicaCount: 0
 
 image:
-  repository: vllm/vllm-rocm
-  tag: latest
+  repository: vllm/vllm-openai-rocm
+  tag: v0.21.0
 
 # Model to serve (HuggingFace model ID)
 model: Qwen/Qwen2.5-7B-Instruct
