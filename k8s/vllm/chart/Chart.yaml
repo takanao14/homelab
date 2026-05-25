@@ -1,0 +1,5 @@
+apiVersion: v2
+name: vllm
+description: vLLM OpenAI-compatible inference server with AMD GPU support
+type: application
+version: 0.1.0
