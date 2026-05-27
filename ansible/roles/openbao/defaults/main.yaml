@@ -72,3 +72,13 @@ openbao_k8s_clusters:
 #       data:
 #         api-token: "xxxx"
 openbao_secrets: []
+
+# Userpass auth users (set via group_vars with SOPS encryption)
+# Each entry requires: username, password, policies (comma-separated)
+# Available policies: kv-admin (full CRUD on secret/), kv-read (read-only on secret/)
+# Example:
+#   openbao_userpass_users:
+#     - username: alice
+#       password: "xxxx"
+#       policies: "kv-admin"
+openbao_userpass_users: []

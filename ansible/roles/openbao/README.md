@@ -19,14 +19,18 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_seal_key` | Static seal key: 32 raw bytes, base64-encoded. Generate with `openssl rand -base64 32` |
 | `openbao_root_token` | Root token from `operator init`. Stored as emergency backup; not used in day-to-day operations. |
 | `openbao_admin_token` | Admin token created by `openbao_bootstrap.yaml`. Used by `openbao_configure.yaml`. |
-| `openbao_k8s_token_reviewer_jwt` | JWT of the `openbao-token-reviewer` ServiceAccount in the Kubernetes cluster. Used to configure Kubernetes auth. |
-| `openbao_k8s_ca_cert` | PEM-encoded CA certificate of the Kubernetes cluster. Deployed to `openbao_k8s_ca_cert_file`. |
+| `openbao_k8s_token_reviewer_jwt` | JWT of the `openbao-token-reviewer` ServiceAccount in the prd cluster. Used to configure the `kubernetes/` auth method. |
+| `openbao_k8s_ca_cert` | PEM-encoded CA certificate of the prd cluster. |
+| `openbao_k8s_dev_token_reviewer_jwt` | JWT of the `openbao-token-reviewer` ServiceAccount in the dev cluster. Used to configure the `kubernetes-dev/` auth method. |
+| `openbao_k8s_dev_ca_cert` | PEM-encoded CA certificate of the dev cluster. |
+| `openbao_secrets` | List of KV secrets to write. Each entry requires `path` and `data` (key/value pairs). |
+| `openbao_userpass_users` | List of userpass users. Each entry requires `username`, `password`, and `policies`. |
 
 ### Non-secret variables (in `defaults/main.yaml`)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `openbao_version` | `2.5.3` | OpenBao version to install |
+| `openbao_version` | `2.5.4` | OpenBao version to install |
 | `openbao_user` | `openbao` | System user (created by package) |
 | `openbao_group` | `openbao` | System group (created by package) |
 | `openbao_config_dir` | `/etc/openbao` | Config directory |
@@ -43,8 +47,9 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_raft_retry_join` | `[]` | List of other cluster node API addresses for Raft auto-join |
 | `openbao_seal_key_id` | `key-1` | Permanent identifier for the static seal key (update when rotating) |
 | `openbao_local_addr` | `http://127.0.0.1:8200` | API address used by `bao` CLI tasks running on the openbao host. Plain HTTP because TLS is terminated by Caddy upstream. |
-| `openbao_k8s_host` | `""` | Kubernetes API server URL reachable from the openbao host (e.g. `https://192.168.30.11:6443`) |
-| `openbao_k8s_ca_cert_file` | `/etc/openbao/k8s-ca.pem` | Path where the Kubernetes CA certificate is deployed on the openbao host |
+| `openbao_k8s_host` | `""` | prd cluster API server URL (e.g. `https://192.168.30.11:6443`) |
+| `openbao_k8s_dev_host` | `""` | dev cluster API server URL (e.g. `https://192.168.20.11:6443`) |
+| `openbao_k8s_clusters` | see defaults | List of Kubernetes clusters to configure auth for. Each entry defines `mount_path`, `host`, `ca_cert`, `ca_cert_file`, `token_reviewer_jwt`, `role`, and `policies`. |
 
 ## Post-install initialization
 
@@ -64,6 +69,13 @@ bao token revoke <root_token>
 
 After initialization, run the following playbooks in order to set up OpenBao for use with External Secrets Operator.
 
+OpenBao manages two Kubernetes clusters:
+
+| Auth mount | Cluster | ESO ArgoCD app |
+|---|---|---|
+| `kubernetes/` | prd (`192.168.30.11`) | `k8s/argocd/prd/apps/eso.yaml` |
+| `kubernetes-dev/` | dev (`192.168.20.11`) | `k8s/argocd/dev/apps/eso.yaml` (overrides `mountPath`) |
+
 ### 1. Bootstrap admin token (run once)
 
 Add the root token to `group_vars/openbao.sops.yaml`:
@@ -81,13 +93,16 @@ ansible-playbook playbooks/openbao_bootstrap.yaml
 
 Copy the `openbao_admin_token` value from the output into `group_vars/openbao.sops.yaml`.
 
-### 2. Apply Kubernetes token reviewer manifest
+### 2. Apply Kubernetes token reviewer manifest (both clusters)
+
+Run on each cluster to create the `openbao-token-reviewer` ServiceAccount:
 
 ```bash
+kubectl create namespace external-secrets --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -f k8s/eso/templates/token-reviewer.yaml
 ```
 
-Retrieve and store the JWT and CA cert:
+Retrieve the JWT and CA cert from each cluster:
 
 ```bash
 # JWT
@@ -99,20 +114,19 @@ kubectl get secret openbao-token-reviewer -n external-secrets \
   -o jsonpath='{.data.ca\.crt}' | base64 -d
 ```
 
-Add both values to `group_vars/openbao.sops.yaml`:
+Add all values to `group_vars/openbao.sops.yaml`:
 
 ```yaml
-openbao_k8s_token_reviewer_jwt: "eyJ..."
+openbao_k8s_token_reviewer_jwt: "eyJ..."   # prd cluster
 openbao_k8s_ca_cert: |
   -----BEGIN CERTIFICATE-----
   ...
   -----END CERTIFICATE-----
-```
-
-Also set `openbao_k8s_host` in `group_vars/openbao.yaml`:
-
-```yaml
-openbao_k8s_host: "https://192.168.30.11:6443"
+openbao_k8s_dev_token_reviewer_jwt: "eyJ..."   # dev cluster
+openbao_k8s_dev_ca_cert: |
+  -----BEGIN CERTIFICATE-----
+  ...
+  -----END CERTIFICATE-----
 ```
 
 ### 3. Configure OpenBao
@@ -121,15 +135,48 @@ openbao_k8s_host: "https://192.168.30.11:6443"
 ansible-playbook playbooks/openbao_configure.yaml
 ```
 
-This enables KV v2, configures Kubernetes auth, and creates policies and roles.
+This enables KV v2, configures Kubernetes auth for both clusters, and creates policies and roles.
 
 ### 4. Install ESO via ArgoCD
 
-Push the changes to git. ArgoCD will sync `k8s/argocd/prd/apps/eso.yaml` and install ESO.
-Verify the `ClusterSecretStore` becomes `Ready`:
+Push the changes to git. ArgoCD will sync both ESO apps and install ESO on each cluster.
+Verify the `ClusterSecretStore` becomes `Ready` on each cluster:
 
 ```bash
 kubectl get clustersecretstore openbao
+```
+
+## Userpass auth
+
+To add human operators or application accounts, add entries to `openbao_userpass_users` in `group_vars/openbao.sops.yaml`:
+
+```yaml
+openbao_userpass_users:
+  - username: alice
+    password: "xxxx"
+    policies: "kv-admin"
+  - username: ci-reader
+    password: "xxxx"
+    policies: "kv-read"
+```
+
+Available policies:
+
+| Policy | Capabilities |
+|--------|-------------|
+| `kv-admin` | create, read, update, delete, list on `secret/*` |
+| `kv-read` | read, list on `secret/data/*` and `secret/metadata/*` |
+
+Run the playbook to apply:
+
+```bash
+ansible-playbook playbooks/openbao_configure_userpass.yaml
+```
+
+Login with the bao CLI:
+
+```bash
+bao login -method=userpass username=alice
 ```
 
 ## Expanding to a 3-node Raft cluster
