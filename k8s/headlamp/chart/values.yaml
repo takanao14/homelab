@@ -2,6 +2,7 @@ headlamp:
   config:
     extraArgs:
       - "-kubeconfig=/headlamp/dev-kubeconfig:/headlamp/prd-kubeconfig"
+      - "-in-cluster=false"
   volumeMounts:
     - name: dev-kubeconfig
       mountPath: /headlamp/dev-kubeconfig
