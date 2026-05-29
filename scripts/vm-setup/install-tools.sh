@@ -131,6 +131,7 @@ update_package_cache() {
     case "$OS_ID" in
         ubuntu) sudo apt-get update -qq ;;
         rocky)  sudo dnf makecache --refresh -q ;;
+        *) log_error "Unsupported OS: ${OS_ID}"; exit 1 ;;
     esac
 }
 
@@ -138,6 +139,7 @@ install_packages() {
     case "$OS_ID" in
         ubuntu) sudo apt-get install -y "$@" ;;
         rocky)  sudo dnf install -y "$@" ;;
+        *) log_error "Unsupported OS: ${OS_ID}"; exit 1 ;;
     esac
 }
 
@@ -200,8 +202,6 @@ install_kubectl() {
             install_packages ca-certificates curl gnupg apt-transport-https
             sudo mkdir -p -m 755 /etc/apt/keyrings
             add_apt_repository "kubernetes" \
-                "https://pkgs.k8s.io/core:/stable:/v1.35/deb/Release.key" \
-                "deb [signed-by=/usr/share/keyrings/kubernetes-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.35/deb/ /"
                 "https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/deb/Release.key" \
                 "deb [signed-by=/usr/share/keyrings/kubernetes-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/deb/ /"
             update_package_cache
