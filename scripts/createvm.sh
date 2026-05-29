@@ -4,6 +4,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${SCRIPT_DIR}/../tf"
 
+ENV_FILE="${HOME}/.env"
+if [[ -f "$ENV_FILE" ]]; then
+  set -a; source "$ENV_FILE"; set +a
+fi
+
 usage() {
   cat <<EOF
 Usage: $(basename "$0") <name> <ip> [node] [cores] [memory_mb] [disk_gb] [image]
@@ -64,18 +69,16 @@ case "$SUBNET" in
   *) echo "Error: unrecognized subnet ${SUBNET}.0/24" >&2; exit 1 ;;
 esac
 
-SECRETS_FILE="${TF_DIR}/.env/secrets.${NODE}.enc.env"
-if [[ -f "$SECRETS_FILE" ]] && command -v sops &>/dev/null; then
-  set -a
-  # shellcheck disable=SC1090
-  source <(sops --decrypt "$SECRETS_FILE")
-  set +a
-fi
+NODE_UPPER="${NODE^^}"
+_node_var() { local var="${1}_${NODE_UPPER}"; echo "${!var:-}"; }
 
-if [[ -z "${TF_VM_USERNAME:-}" ]]; then
+TF_VM_USERNAME="$(_node_var TF_VM_USERNAME)"
+TF_VM_PASSWORD="$(_node_var TF_VM_PASSWORD)"
+
+if [[ -z "$TF_VM_USERNAME" ]]; then
   TF_VM_USERNAME="$USER"
-  export TF_VM_USERNAME
 fi
+export TF_VM_USERNAME
 
 if [[ -z "${TF_VM_SSH_PUBLIC_KEY:-}" ]]; then
   DEFAULT_PUBKEY="${HOME}/.ssh/id_ed25519.pub"
@@ -84,11 +87,11 @@ if [[ -z "${TF_VM_SSH_PUBLIC_KEY:-}" ]]; then
   export TF_VM_SSH_PUBLIC_KEY
 fi
 
-if [[ -z "${TF_VM_PASSWORD:-}" ]]; then
-  read -rsp "Proxmox password: " TF_VM_PASSWORD
+if [[ -z "$TF_VM_PASSWORD" ]]; then
+  read -rsp "Proxmox password for ${NODE}: " TF_VM_PASSWORD
   echo ""
-  export TF_VM_PASSWORD
 fi
+export TF_VM_PASSWORD
 
 OUT_DIR="${TF_DIR}/vm/${NODE}/${VM_NAME}"
 

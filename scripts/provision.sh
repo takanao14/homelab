@@ -3,6 +3,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+ENV_FILE="${HOME}/.env"
+if [[ -f "$ENV_FILE" ]]; then
+  set -a; source "$ENV_FILE"; set +a
+fi
+
 usage() {
   cat <<EOF
 Usage: $(basename "$0") <ip> <username>
@@ -52,13 +57,13 @@ scp -o StrictHostKeyChecking=accept-new "$INSTALL_SCRIPT" "${USERNAME}@${IP}:/tm
 echo "Running tool installation..."
 ssh $SSH_OPTS "${USERNAME}@${IP}" "bash /tmp/install-tools.sh"
 
-OPENBAO_ADDR="${OPENBAO_ADDR:-}"
-OPENBAO_USERNAME="${OPENBAO_USERNAME:-}"
-OPENBAO_PASSWORD="${OPENBAO_PASSWORD:-}"
+OPENBAO_ADDR="${OPENBAO_ADDR:-https://bao.prd.butaco.net}"
+OPENBAO_USERNAME="${OPENBAO_USERNAME:-homelab}"
 
-if [[ -n "$OPENBAO_ADDR" && -n "$OPENBAO_USERNAME" && -n "$OPENBAO_PASSWORD" ]]; then
-  echo "Retrieving kubeconfig from OpenBao..."
-  ssh $SSH_OPTS "${USERNAME}@${IP}" bash -s <<EOF
+read -rsp "OpenBao password for ${OPENBAO_USERNAME}: " OPENBAO_PASSWORD; echo
+
+echo "Retrieving kubeconfig from OpenBao..."
+ssh $SSH_OPTS "${USERNAME}@${IP}" bash -s <<EOF
 set -euo pipefail
 export BAO_ADDR="${OPENBAO_ADDR}"
 BAO_TOKEN=\$(bao login -method=userpass username="${OPENBAO_USERNAME}" password="${OPENBAO_PASSWORD}" -token-only)
@@ -68,8 +73,7 @@ bao kv get -field=kubeconfig secret/kubeconfig/dev > ~/.kube/dev-homelab.yaml
 bao kv get -field=kubeconfig secret/kubeconfig/prd > ~/.kube/prd-homelab.yaml
 chmod 600 ~/.kube/dev-homelab.yaml ~/.kube/prd-homelab.yaml
 EOF
-  echo "Kubeconfig retrieved."
-fi
+echo "Kubeconfig retrieved."
 
 echo ""
 echo "=== Provisioning complete ==="
