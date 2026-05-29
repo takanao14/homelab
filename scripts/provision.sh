@@ -20,7 +20,6 @@ EOF
 
 IP="$1"
 USERNAME="${2:-$USER}"
-SSH_KEY="${HOME}/.ssh/id_ed25519"
 INSTALL_SCRIPT="${SCRIPT_DIR}/vm-setup/install-tools.sh"
 
 SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=5 -o BatchMode=yes"
@@ -34,12 +33,9 @@ done
 echo ""
 echo "SSH is ready."
 
-# Copy SSH key pair to VM
-if [[ -f "${SSH_KEY}" ]]; then
-  scp -o StrictHostKeyChecking=no "${SSH_KEY}"     "${USERNAME}@${IP}:~/.ssh/id_ed25519"
-  scp -o StrictHostKeyChecking=no "${SSH_KEY}.pub" "${USERNAME}@${IP}:~/.ssh/id_ed25519.pub"
-  ssh $SSH_OPTS "${USERNAME}@${IP}" "chmod 600 ~/.ssh/id_ed25519"
-fi
+# Generate SSH key pair on VM if not present
+ssh $SSH_OPTS "${USERNAME}@${IP}" \
+  "[[ -f ~/.ssh/id_ed25519 ]] || ssh-keygen -t ed25519 -N '' -f ~/.ssh/id_ed25519 -q -C '${USERNAME}@${IP}'"
 
 # Copy and run tool installation
 echo "Copying install-tools.sh..."
