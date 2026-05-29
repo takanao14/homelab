@@ -33,6 +33,7 @@ readonly BIN_ARCH="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
 readonly OS_ID="${ID}"
 
 log_info() { echo "[INFO] $*"; }
+log_error() { echo "[ERROR] $*" >&2; }
 
 mkdir -p "$BIN_DIR" "$VERSION_CACHE_DIR"
 export PATH="${BIN_DIR}:${PATH}"
