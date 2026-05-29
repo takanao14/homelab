@@ -32,7 +32,7 @@ case "$1" in
     scale_all_down
     echo "All GPU workloads stopped."
     ;;
-  ollama|comfyui|lemonade-server|vllm)
+  ollama|comfyui|lemonade-server)
     scale_all_down
     kubectl scale deployment "$1" -n "$1" --replicas=1
     echo "$1 started, others stopped."
