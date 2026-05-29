@@ -22,7 +22,7 @@ IP="$1"
 USERNAME="${2:-$USER}"
 INSTALL_SCRIPT="${SCRIPT_DIR}/vm-setup/install-tools.sh"
 
-SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=5 -o BatchMode=yes"
+SSH_OPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=yes"
 
 # Wait for SSH to become available
 echo "Waiting for SSH on ${IP}..."
@@ -39,7 +39,7 @@ ssh $SSH_OPTS "${USERNAME}@${IP}" \
 
 # Copy and run tool installation
 echo "Copying install-tools.sh..."
-scp -o StrictHostKeyChecking=no "$INSTALL_SCRIPT" "${USERNAME}@${IP}:/tmp/install-tools.sh"
+scp -o StrictHostKeyChecking=accept-new "$INSTALL_SCRIPT" "${USERNAME}@${IP}:/tmp/install-tools.sh"
 
 echo "Running tool installation..."
 ssh $SSH_OPTS "${USERNAME}@${IP}" "bash /tmp/install-tools.sh"
