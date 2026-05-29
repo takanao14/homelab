@@ -8,13 +8,13 @@ usage() {
   cat <<EOF
 Usage: $(basename "$0") <name> <ip> [node] [cores] [memory_mb] [disk_gb] [image]
 
-  name      VM name
+  name      VM name (alphanumeric and hyphens only)
   ip        IPv4 address without prefix (e.g. 192.168.20.50)
-  node      Proxmox node: dev | node2  (default: dev)
-  cores     vCPUs                      (default: 2)
-  memory    Memory in MB               (default: 2048)
-  disk      Disk size in GB            (default: 40)
-  image     OS image: ubuntu | rocky   (default: ubuntu)
+  node      Proxmox node: dev | prd | node2 | node3  (default: dev)
+  cores     vCPUs                      (default: 4)
+  memory    Memory in MB               (default: 8192)
+  disk      Disk size in GB            (default: 80)
+  image     OS image: ubuntu24 | ubuntu24-xrdp | rocky10 | rocky9-xrdp  (default: ubuntu24)
 
 Required env vars: TF_VM_USERNAME, TF_VM_PASSWORD, TF_VM_SSH_PUBLIC_KEY
 
@@ -28,6 +28,12 @@ EOF
 [[ $# -lt 2 ]] && usage
 
 VM_NAME="$1"
+
+if [[ ! "$VM_NAME" =~ ^[a-zA-Z0-9-]+$ ]]; then
+  echo "Error: VM name must contain only alphanumeric characters and hyphens" >&2
+  exit 1
+fi
+
 IP="$2"
 NODE="${3:-dev}"
 CORES="${4:-4}"
