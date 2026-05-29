@@ -21,6 +21,8 @@ readonly SOPS_VERSION="${SOPS_VERSION:-3.13.1}"
 readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.5.1}"
 # renovate: datasource=github-releases depName=cilium/cilium-cli
 readonly CILIUM_VERSION="${CILIUM_VERSION:-0.19.4}"
+# renovate: datasource=github-releases depName=kubernetes/kubernetes
+readonly KUBECTL_VERSION="${KUBECTL_VERSION:-1.35}"
 
 readonly BIN_DIR="$HOME/.local/bin"
 readonly VERSION_CACHE_DIR="$HOME/.local/share/tool-versions"
