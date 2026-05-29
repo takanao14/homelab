@@ -48,23 +48,60 @@ fi
 # Helpers
 # ============================================================================
 
+verify_sha256() {
+    local file="$1"
+    local checksum_url="$2"
+    local checksum_name="${3:-$(basename "$file")}"
+
+    local sum_file
+    sum_file="$(mktemp)"
+    trap "rm -f '${sum_file}'" RETURN
+
+    curl -fsSL "$checksum_url" -o "$sum_file"
+
+    local expected actual
+    if grep -qF "$checksum_name" "$sum_file"; then
+        expected="$(grep -F "$checksum_name" "$sum_file" | awk '{print $1}')"
+    else
+        expected="$(awk '{print $1}' "$sum_file")"
+    fi
+
+    actual="$(sha256sum "$file" | awk '{print $1}')"
+
+    if [[ "$expected" != "$actual" ]]; then
+        log_error "Checksum mismatch for ${checksum_name}"
+        log_error "  expected: ${expected}"
+        log_error "  actual:   ${actual}"
+        exit 1
+    fi
+    log_info "Checksum OK: ${checksum_name}"
+}
+
 install_binary() {
     local name="$1"
     local url="$2"
     local output_file="$3"
+    local checksum_url="${4:-}"
 
     log_info "Installing ${name}..."
     local tmp_dir
     tmp_dir=$(mktemp -d)
     trap "rm -rf '${tmp_dir}'" RETURN
 
+    local archive_name
+    archive_name="$(basename "$url")"
+
     if [[ "$url" == *.tar.gz ]]; then
-        curl -fsSL "$url" | tar xz -C "$tmp_dir"
-        install -m 0755 "$tmp_dir/${name}" "$output_file" 2>/dev/null || \
-            install -m 0755 "$tmp_dir/${name##*/}" "$output_file"
+        local archive="${tmp_dir}/${archive_name}"
+        curl -fsSL "$url" -o "$archive"
+        [[ -n "$checksum_url" ]] && verify_sha256 "$archive" "$checksum_url" "$archive_name"
+        tar xz -C "$tmp_dir" -f "$archive"
+        install -m 0755 "$tmp_dir/${name}" "$output_file"
     else
-        curl -fsSL "$url" -o "$output_file"
-        chmod 0755 "$output_file"
+        local bin="${tmp_dir}/${archive_name}"
+        curl -fsSL "$url" -o "$bin"
+        [[ -n "$checksum_url" ]] && verify_sha256 "$bin" "$checksum_url" "$archive_name"
+        install -m 0755 "$bin" "$output_file"
     fi
 }
 
@@ -165,14 +202,16 @@ install_kubectl() {
             add_apt_repository "kubernetes" \
                 "https://pkgs.k8s.io/core:/stable:/v1.35/deb/Release.key" \
                 "deb [signed-by=/usr/share/keyrings/kubernetes-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.35/deb/ /"
+                "https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/deb/Release.key" \
+                "deb [signed-by=/usr/share/keyrings/kubernetes-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/deb/ /"
             update_package_cache
             install_packages kubectl
             ;;
         rocky)
             install_packages ca-certificates curl gnupg
             add_dnf_repository "kubernetes" \
-                "https://pkgs.k8s.io/core:/stable:/v1.35/rpm/" \
-                "https://pkgs.k8s.io/core:/stable:/v1.35/rpm/repodata/repomd.xml.key"
+                "https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/rpm/" \
+                "https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/rpm/repodata/repomd.xml.key"
             update_package_cache
             install_packages kubectl
             ;;
@@ -182,7 +221,8 @@ install_kubectl() {
 install_terragrunt() {
     install_binary "terragrunt" \
         "https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_linux_${BIN_ARCH}" \
-        "$BIN_DIR/terragrunt"
+        "$BIN_DIR/terragrunt" \
+        "https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/SHA256SUMS"
 }
 
 install_opentofu() {
@@ -191,8 +231,12 @@ install_opentofu() {
     local tmp_dir
     tmp_dir="$(mktemp -d)"
     trap "rm -rf '${tmp_dir}'" RETURN
-    curl -fsSL "https://github.com/opentofu/opentofu/releases/download/v${OPENTOFU_VERSION}/tofu_${OPENTOFU_VERSION}_linux_${BIN_ARCH}.zip" \
+    local zip_name="tofu_${OPENTOFU_VERSION}_linux_${BIN_ARCH}.zip"
+    curl -fsSL "https://github.com/opentofu/opentofu/releases/download/v${OPENTOFU_VERSION}/${zip_name}" \
         -o "${tmp_dir}/tofu.zip"
+    verify_sha256 "${tmp_dir}/tofu.zip" \
+        "https://github.com/opentofu/opentofu/releases/download/v${OPENTOFU_VERSION}/tofu_${OPENTOFU_VERSION}_SHA256SUMS" \
+        "$zip_name"
     unzip -q "${tmp_dir}/tofu.zip" tofu -d "${tmp_dir}"
     install -m 0755 "${tmp_dir}/tofu" "$BIN_DIR/tofu"
 }
@@ -202,18 +246,21 @@ install_openbao() {
     local tmp_dir
     tmp_dir="$(mktemp -d)"
     trap "rm -rf '${tmp_dir}'" RETURN
+    local checksum_url="https://github.com/openbao/openbao/releases/download/v${OPENBAO_VERSION}/openbao_${OPENBAO_VERSION}_SHA256SUMS"
     case "$OS_ID" in
         ubuntu)
-            local deb_file="${tmp_dir}/openbao.deb"
-            curl -fsSL "https://github.com/openbao/openbao/releases/download/v${OPENBAO_VERSION}/openbao_${OPENBAO_VERSION}_linux_${BIN_ARCH}.deb" \
-                -o "${deb_file}"
-            sudo dpkg -i "${deb_file}"
+            local pkg_name="openbao_${OPENBAO_VERSION}_linux_${BIN_ARCH}.deb"
+            curl -fsSL "https://github.com/openbao/openbao/releases/download/v${OPENBAO_VERSION}/${pkg_name}" \
+                -o "${tmp_dir}/${pkg_name}"
+            verify_sha256 "${tmp_dir}/${pkg_name}" "$checksum_url" "$pkg_name"
+            sudo dpkg -i "${tmp_dir}/${pkg_name}"
             ;;
         rocky)
-            local rpm_file="${tmp_dir}/openbao.rpm"
-            curl -fsSL "https://github.com/openbao/openbao/releases/download/v${OPENBAO_VERSION}/openbao_${OPENBAO_VERSION}_linux_${BIN_ARCH}.rpm" \
-                -o "${rpm_file}"
-            sudo rpm -i "${rpm_file}"
+            local pkg_name="openbao_${OPENBAO_VERSION}_linux_${BIN_ARCH}.rpm"
+            curl -fsSL "https://github.com/openbao/openbao/releases/download/v${OPENBAO_VERSION}/${pkg_name}" \
+                -o "${tmp_dir}/${pkg_name}"
+            verify_sha256 "${tmp_dir}/${pkg_name}" "$checksum_url" "$pkg_name"
+            sudo rpm -i "${tmp_dir}/${pkg_name}"
             ;;
     esac
 }
@@ -223,15 +270,20 @@ install_helm() {
     local tmp_dir
     tmp_dir="$(mktemp -d)"
     trap "rm -rf '${tmp_dir}'" RETURN
-    curl -fsSL "https://get.helm.sh/helm-v${HELM_VERSION}-linux-${BIN_ARCH}.tar.gz" \
-        | tar xz -C "$tmp_dir"
+    local archive_name="helm-v${HELM_VERSION}-linux-${BIN_ARCH}.tar.gz"
+    curl -fsSL "https://get.helm.sh/${archive_name}" -o "${tmp_dir}/${archive_name}"
+    verify_sha256 "${tmp_dir}/${archive_name}" \
+        "https://get.helm.sh/${archive_name}.sha256sum" \
+        "$archive_name"
+    tar xz -C "$tmp_dir" -f "${tmp_dir}/${archive_name}"
     install -m 0755 "$tmp_dir/linux-${BIN_ARCH}/helm" "$BIN_DIR/helm"
 }
 
 install_k9s() {
     install_binary "k9s" \
         "https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/k9s_Linux_${BIN_ARCH}.tar.gz" \
-        "$BIN_DIR/k9s"
+        "$BIN_DIR/k9s" \
+        "https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/checksums.txt"
 }
 
 install_kubie() {
@@ -245,8 +297,13 @@ install_age() {
     local tmp_dir
     tmp_dir="$(mktemp -d)"
     trap "rm -rf '${tmp_dir}'" RETURN
-    curl -fsSL "https://github.com/FiloSottile/age/releases/download/v${AGE_VERSION}/age-v${AGE_VERSION}-linux-${BIN_ARCH}.tar.gz" \
-        | tar xz -C "$tmp_dir"
+    local archive_name="age-v${AGE_VERSION}-linux-${BIN_ARCH}.tar.gz"
+    curl -fsSL "https://github.com/FiloSottile/age/releases/download/v${AGE_VERSION}/${archive_name}" \
+        -o "${tmp_dir}/${archive_name}"
+    verify_sha256 "${tmp_dir}/${archive_name}" \
+        "https://github.com/FiloSottile/age/releases/download/v${AGE_VERSION}/SHA256SUMS" \
+        "$archive_name"
+    tar xz -C "$tmp_dir" -f "${tmp_dir}/${archive_name}"
     install -m 0755 "$tmp_dir/age/age"        "$BIN_DIR/age"
     install -m 0755 "$tmp_dir/age/age-keygen" "$BIN_DIR/age-keygen"
 }
@@ -257,17 +314,20 @@ install_sops() {
     local tmp_dir
     tmp_dir="$(mktemp -d)"
     trap "rm -rf '${tmp_dir}'" RETURN
+    local checksum_url="https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops_${SOPS_VERSION}_checksums.txt"
     case "$OS_ID" in
         ubuntu)
-            local deb_file="${tmp_dir}/sops.deb"
-            curl -fsSL "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops_${SOPS_VERSION}_${BIN_ARCH}.deb" \
-                -o "${deb_file}"
-            sudo dpkg -i "${deb_file}"
+            local pkg_name="sops_${SOPS_VERSION}_${BIN_ARCH}.deb"
+            curl -fsSL "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/${pkg_name}" \
+                -o "${tmp_dir}/${pkg_name}"
+            verify_sha256 "${tmp_dir}/${pkg_name}" "$checksum_url" "$pkg_name"
+            sudo dpkg -i "${tmp_dir}/${pkg_name}"
             ;;
         rocky)
             install_binary "sops" \
                 "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.${BIN_ARCH}" \
-                "$BIN_DIR/sops"
+                "$BIN_DIR/sops" \
+                "$checksum_url"
             ;;
     esac
 }
@@ -275,13 +335,15 @@ install_sops() {
 install_helmfile() {
     install_binary "helmfile" \
         "https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_${BIN_ARCH}.tar.gz" \
-        "$BIN_DIR/helmfile"
+        "$BIN_DIR/helmfile" \
+        "https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/checksums.txt"
 }
 
 install_cilium() {
     install_binary "cilium" \
         "https://github.com/cilium/cilium-cli/releases/download/v${CILIUM_VERSION}/cilium-linux-${BIN_ARCH}.tar.gz" \
-        "$BIN_DIR/cilium"
+        "$BIN_DIR/cilium" \
+        "https://github.com/cilium/cilium-cli/releases/download/v${CILIUM_VERSION}/cilium-linux-${BIN_ARCH}.tar.gz.sha256sum"
 }
 
 install_helm_diff_plugin() {
@@ -290,7 +352,7 @@ install_helm_diff_plugin() {
         return
     fi
     log_info "Installing helm-diff plugin..."
-    helm plugin install --verify=false https://github.com/databus23/helm-diff
+    helm plugin install https://github.com/databus23/helm-diff
 }
 
 # ============================================================================
