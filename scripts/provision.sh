@@ -52,10 +52,24 @@ scp -o StrictHostKeyChecking=accept-new "$INSTALL_SCRIPT" "${USERNAME}@${IP}:/tm
 echo "Running tool installation..."
 ssh $SSH_OPTS "${USERNAME}@${IP}" "bash /tmp/install-tools.sh"
 
-# TODO: OpenBao credential setup
-# - bao login via AppRole (role_id + secret_id)
-# - retrieve kubeconfig -> ~/.kube/config
-# - retrieve API keys   -> ~/.config/...
+OPENBAO_ADDR="${OPENBAO_ADDR:-}"
+OPENBAO_USERNAME="${OPENBAO_USERNAME:-}"
+OPENBAO_PASSWORD="${OPENBAO_PASSWORD:-}"
+
+if [[ -n "$OPENBAO_ADDR" && -n "$OPENBAO_USERNAME" && -n "$OPENBAO_PASSWORD" ]]; then
+  echo "Retrieving kubeconfig from OpenBao..."
+  ssh $SSH_OPTS "${USERNAME}@${IP}" bash -s <<EOF
+set -euo pipefail
+export BAO_ADDR="${OPENBAO_ADDR}"
+BAO_TOKEN=\$(bao login -method=userpass username="${OPENBAO_USERNAME}" password="${OPENBAO_PASSWORD}" -token-only)
+export BAO_TOKEN
+mkdir -p ~/.kube
+bao kv get -field=kubeconfig secret/kubeconfig/dev > ~/.kube/dev-homelab.yaml
+bao kv get -field=kubeconfig secret/kubeconfig/prd > ~/.kube/prd-homelab.yaml
+chmod 600 ~/.kube/dev-homelab.yaml ~/.kube/prd-homelab.yaml
+EOF
+  echo "Kubeconfig retrieved."
+fi
 
 echo ""
 echo "=== Provisioning complete ==="

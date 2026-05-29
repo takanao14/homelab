@@ -25,6 +25,7 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_k8s_dev_ca_cert` | PEM-encoded CA certificate of the dev cluster. |
 | `openbao_secrets` | List of KV secrets to write. Each entry requires `path` and `data` (key/value pairs). |
 | `openbao_userpass_users` | List of userpass users. Each entry requires `username`, `password`, and `policies`. |
+| `openbao_kubeconfigs` | List of kubeconfig files to seed. Each entry requires `name` (cluster name) and `path` (file path on the Ansible control node). |
 
 ### Non-secret variables (in `defaults/main.yaml`)
 
@@ -145,6 +146,51 @@ Verify the `ClusterSecretStore` becomes `Ready` on each cluster:
 ```bash
 kubectl get clustersecretstore openbao
 ```
+
+## KV Path Conventions
+
+All secrets are stored under the `secret/` KV v2 mount. Two top-level namespaces are used:
+
+### `secret/k8s/{app}/{secret}`
+
+Secrets consumed by Kubernetes applications via ESO. Scoped per application; not shared across consumers.
+
+```
+secret/k8s/cert-manager/cloudflare   # Cloudflare API token
+secret/k8s/headlamp/admin-token      # Headlamp login token
+secret/k8s/monitoring/grafana        # Grafana credentials
+```
+
+### `secret/kubeconfig/{cluster}`
+
+Kubeconfig files for accessing Kubernetes clusters. Shared across multiple consumers (ESO for Headlamp, VM provisioning via `bao` CLI, etc.).
+
+```
+secret/kubeconfig/dev   # dev cluster kubeconfig
+secret/kubeconfig/prd   # prd cluster kubeconfig
+```
+
+The distinction: `k8s/` is for secrets **used by** apps running in Kubernetes; `kubeconfig/` is for credentials **to access** Kubernetes clusters.
+
+## Seeding Kubeconfigs
+
+Configure `openbao_kubeconfigs` in `group_vars/openbao.sops.yaml`:
+
+```yaml
+openbao_kubeconfigs:
+  - name: dev
+    path: ~/.kube/dev.yaml
+  - name: prd
+    path: ~/.kube/prd.yaml
+```
+
+Run the dedicated playbook:
+
+```bash
+ansible-playbook playbooks/openbao_seed_kubeconfig.yaml
+```
+
+The playbook runs `bao kv put` from the Ansible control node directly against the OpenBao API (`openbao_api_addr`). No files are copied to the OpenBao host.
 
 ## Userpass auth
 

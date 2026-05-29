@@ -86,6 +86,12 @@
       path "secret/metadata/k8s/headlamp/*" {
         capabilities = ["read"]
       }
+      path "secret/data/kubeconfig/*" {
+        capabilities = ["read"]
+      }
+      path "secret/metadata/kubeconfig/*" {
+        capabilities = ["read"]
+      }
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
