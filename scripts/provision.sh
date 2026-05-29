@@ -24,9 +24,17 @@ INSTALL_SCRIPT="${SCRIPT_DIR}/vm-setup/install-tools.sh"
 
 SSH_OPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=yes"
 
-# Wait for SSH to become available
+# Wait for SSH to become available (max 5 min)
 echo "Waiting for SSH on ${IP}..."
+max_attempts=60
+attempts=0
 until ssh $SSH_OPTS "${USERNAME}@${IP}" "true" 2>/dev/null; do
+  (( attempts++ ))
+  if (( attempts >= max_attempts )); then
+    echo ""
+    echo "Error: timed out waiting for SSH on ${IP}" >&2
+    exit 1
+  fi
   printf "."
   sleep 5
 done
