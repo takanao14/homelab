@@ -25,7 +25,7 @@ EOF
 
 IP="$1"
 USERNAME="${2:-$USER}"
-INSTALL_SCRIPT="${SCRIPT_DIR}/vm-setup/install-tools.sh"
+INSTALL_SCRIPT="${SCRIPT_DIR}/install-tools.sh"
 KUBECONFIG_SCRIPT="${SCRIPT_DIR}/get-kubeconfig.sh"
 
 SSH_OPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=yes"
