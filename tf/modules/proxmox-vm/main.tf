@@ -77,6 +77,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
 
   initialization {
     datastore_id = each.value.config_datastore
+    interface    = each.value.config_interface
 
     ip_config {
       ipv4 {

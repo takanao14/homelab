@@ -3,6 +3,7 @@ variable "vms" {
   type = map(object({
     node_name        = string
     config_datastore = string
+    config_interface = optional(string)
     cores            = number
     memory           = number
     qemu_guest_agent = bool
