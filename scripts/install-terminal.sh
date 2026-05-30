@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO="takanao14/dotfiles"
-FILE=".chezmoiscripts/run_onchange_linux1_tool.sh"
+FILE=".chezmoiscripts/run_onchange_linux2_terminal.sh"
 
 SHA=$(curl -fsSL "https://api.github.com/repos/${REPO}/commits/main" \
       | grep -m1 '"sha"' | grep -o '[a-f0-9]\{40\}')

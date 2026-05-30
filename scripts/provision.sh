@@ -26,6 +26,8 @@ EOF
 IP="$1"
 USERNAME="${2:-$USER}"
 INSTALL_SCRIPT="${SCRIPT_DIR}/install-tools.sh"
+TERMINAL_SCRIPT="${SCRIPT_DIR}/install-terminal.sh"
+FONTS_SCRIPT="${SCRIPT_DIR}/install-fonts.sh"
 KUBECONFIG_SCRIPT="${SCRIPT_DIR}/get-kubeconfig.sh"
 
 SSH_OPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=yes"
@@ -64,6 +66,12 @@ ssh $SSH_OPTS "${USERNAME}@${IP}" \
 # Copy and run tool installation
 echo "Running tool installation..."
 run_remote "$INSTALL_SCRIPT"
+
+echo "Running terminal installation..."
+run_remote "$TERMINAL_SCRIPT"
+
+echo "Running font installation..."
+run_remote "$FONTS_SCRIPT"
 
 OPENBAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
 BAO_USERNAME="${BAO_USERNAME:-homelab}"
