@@ -6,7 +6,7 @@ readonly TERRAGRUNT_VERSION="${TERRAGRUNT_VERSION:-1.0.6}"
 # renovate: datasource=github-releases depName=openbao/openbao
 readonly OPENBAO_VERSION="${OPENBAO_VERSION:-2.5.4}"
 # renovate: datasource=github-releases depName=opentofu/opentofu
-readonly OPENTOFU_VERSION="${OPENTOFU_VERSION:-1.12.0}"
+readonly OPENTOFU_VERSION="${OPENTOFU_VERSION:-1.12.1}"
 # renovate: datasource=github-releases depName=helm/helm
 readonly HELM_VERSION="${HELM_VERSION:-4.2.0}"
 # renovate: datasource=github-releases depName=derailed/k9s
