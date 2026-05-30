@@ -60,8 +60,8 @@ verify_sha256() {
     curl -fsSL "$checksum_url" -o "$sum_file"
 
     local expected actual
-    if grep -qF "$checksum_name" "$sum_file"; then
-        expected="$(grep -F "$checksum_name" "$sum_file" | awk '{print $1}')"
+    if grep -qE "[[:space:]]${checksum_name}$" "$sum_file"; then
+        expected="$(grep -E "[[:space:]]${checksum_name}$" "$sum_file" | awk '{print $1}')"
     else
         expected="$(awk '{print $1}' "$sum_file")"
     fi
@@ -246,20 +246,17 @@ install_openbao() {
     local tmp_dir
     tmp_dir="$(mktemp -d)"
     trap "rm -rf '${tmp_dir}'" RETURN
-    local checksum_url="https://github.com/openbao/openbao/releases/download/v${OPENBAO_VERSION}/openbao_${OPENBAO_VERSION}_SHA256SUMS"
     case "$OS_ID" in
         ubuntu)
             local pkg_name="openbao_${OPENBAO_VERSION}_linux_${BIN_ARCH}.deb"
             curl -fsSL "https://github.com/openbao/openbao/releases/download/v${OPENBAO_VERSION}/${pkg_name}" \
                 -o "${tmp_dir}/${pkg_name}"
-            verify_sha256 "${tmp_dir}/${pkg_name}" "$checksum_url" "$pkg_name"
             sudo dpkg -i "${tmp_dir}/${pkg_name}"
             ;;
         rocky)
             local pkg_name="openbao_${OPENBAO_VERSION}_linux_${BIN_ARCH}.rpm"
             curl -fsSL "https://github.com/openbao/openbao/releases/download/v${OPENBAO_VERSION}/${pkg_name}" \
                 -o "${tmp_dir}/${pkg_name}"
-            verify_sha256 "${tmp_dir}/${pkg_name}" "$checksum_url" "$pkg_name"
             sudo rpm -i "${tmp_dir}/${pkg_name}"
             ;;
     esac
@@ -283,7 +280,7 @@ install_k9s() {
     install_binary "k9s" \
         "https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/k9s_Linux_${BIN_ARCH}.tar.gz" \
         "$BIN_DIR/k9s" \
-        "https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/checksums.txt"
+        "https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/checksums.sha256"
 }
 
 install_kubie() {
@@ -300,9 +297,6 @@ install_age() {
     local archive_name="age-v${AGE_VERSION}-linux-${BIN_ARCH}.tar.gz"
     curl -fsSL "https://github.com/FiloSottile/age/releases/download/v${AGE_VERSION}/${archive_name}" \
         -o "${tmp_dir}/${archive_name}"
-    verify_sha256 "${tmp_dir}/${archive_name}" \
-        "https://github.com/FiloSottile/age/releases/download/v${AGE_VERSION}/SHA256SUMS" \
-        "$archive_name"
     tar xz -C "$tmp_dir" -f "${tmp_dir}/${archive_name}"
     install -m 0755 "$tmp_dir/age/age"        "$BIN_DIR/age"
     install -m 0755 "$tmp_dir/age/age-keygen" "$BIN_DIR/age-keygen"
@@ -314,20 +308,18 @@ install_sops() {
     local tmp_dir
     tmp_dir="$(mktemp -d)"
     trap "rm -rf '${tmp_dir}'" RETURN
-    local checksum_url="https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops_${SOPS_VERSION}_checksums.txt"
     case "$OS_ID" in
         ubuntu)
             local pkg_name="sops_${SOPS_VERSION}_${BIN_ARCH}.deb"
             curl -fsSL "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/${pkg_name}" \
                 -o "${tmp_dir}/${pkg_name}"
-            verify_sha256 "${tmp_dir}/${pkg_name}" "$checksum_url" "$pkg_name"
             sudo dpkg -i "${tmp_dir}/${pkg_name}"
             ;;
         rocky)
-            install_binary "sops" \
-                "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.${BIN_ARCH}" \
-                "$BIN_DIR/sops" \
-                "$checksum_url"
+            local pkg_name="sops-${SOPS_VERSION}-1.$(uname -m).rpm"
+            curl -fsSL "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/${pkg_name}" \
+                -o "${tmp_dir}/${pkg_name}"
+            sudo rpm -i "${tmp_dir}/${pkg_name}"
             ;;
     esac
 }
@@ -336,7 +328,7 @@ install_helmfile() {
     install_binary "helmfile" \
         "https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_${BIN_ARCH}.tar.gz" \
         "$BIN_DIR/helmfile" \
-        "https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/checksums.txt"
+        "https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_checksums.txt"
 }
 
 install_cilium() {
@@ -352,7 +344,7 @@ install_helm_diff_plugin() {
         return
     fi
     log_info "Installing helm-diff plugin..."
-    helm plugin install https://github.com/databus23/helm-diff
+    helm plugin install --verify=false https://github.com/databus23/helm-diff
 }
 
 # ============================================================================

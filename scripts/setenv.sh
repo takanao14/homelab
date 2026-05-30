@@ -9,7 +9,7 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 1
 fi
 
-BAO_ADDR="${OPENBAO_ADDR:-https://bao.prd.butaco.net}"
+BAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
 export BAO_ADDR
 
 if ! command -v bao &>/dev/null; then
@@ -19,7 +19,7 @@ fi
 
 BAO_USERNAME="${BAO_USERNAME:-admin}"
 read -rsp "OpenBao password for ${BAO_USERNAME}: " _bao_pass; echo
-BAO_TOKEN=$(bao login -method=userpass username="${BAO_USERNAME}" password="${_bao_pass}" -token-only)
+BAO_TOKEN=$(bao login -token-only -method=userpass username="${BAO_USERNAME}" password="${_bao_pass}")
 export BAO_TOKEN
 
 echo "Writing secrets to OpenBao..."

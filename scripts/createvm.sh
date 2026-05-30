@@ -87,18 +87,18 @@ if [[ -z "${TF_VM_SSH_PUBLIC_KEY:-}" ]]; then
   export TF_VM_SSH_PUBLIC_KEY
 fi
 
-if [[ -z "$TF_VM_PASSWORD" ]]; then
-  read -rsp "Proxmox password for ${NODE}: " TF_VM_PASSWORD
-  echo ""
-fi
-export TF_VM_PASSWORD
-
 OUT_DIR="${TF_DIR}/vm/${NODE}/${VM_NAME}"
 
 if [[ -d "$OUT_DIR" ]]; then
   echo "Error: ${OUT_DIR} already exists" >&2
   exit 1
 fi
+
+if [[ -z "$TF_VM_PASSWORD" ]]; then
+  read -rsp "VM password (${NODE}): " TF_VM_PASSWORD
+  echo ""
+fi
+export TF_VM_PASSWORD
 
 mkdir -p "$OUT_DIR"
 
@@ -153,4 +153,28 @@ if [[ "${confirm,,}" != "y" ]]; then
   exit 0
 fi
 
-(cd "$OUT_DIR" && terragrunt apply)
+direnv exec "$OUT_DIR" bash -c "cd '$OUT_DIR' && terragrunt apply"
+
+echo ""
+echo -n "Waiting for SSH on ${IP} ..."
+TIMEOUT=300
+ELAPSED=0
+while true; do
+  set +e
+  ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -o BatchMode=yes \
+      -i "${HOME}/.ssh/id_ed25519" "${TF_VM_USERNAME}@${IP}" true 2>/dev/null
+  SSH_EXIT=$?
+  set -e
+  if [[ $SSH_EXIT -eq 0 ]]; then
+    break
+  fi
+  if [[ $ELAPSED -ge $TIMEOUT ]]; then
+    echo ""
+    echo "Error: SSH on ${IP} did not become ready within ${TIMEOUT}s" >&2
+    exit 1
+  fi
+  printf '.'
+  sleep 5
+  ELAPSED=$((ELAPSED + 5))
+done
+echo " ready (${ELAPSED}s)"

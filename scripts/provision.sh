@@ -26,15 +26,26 @@ EOF
 IP="$1"
 USERNAME="${2:-$USER}"
 INSTALL_SCRIPT="${SCRIPT_DIR}/vm-setup/install-tools.sh"
+KUBECONFIG_SCRIPT="${SCRIPT_DIR}/get-kubeconfig.sh"
 
 SSH_OPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=yes"
+
+# Copy a script to the VM and execute it remotely.
+# Any extra args are forwarded as `KEY=VALUE` env assignments. Remaining stdin
+# (e.g. a piped secret) is passed through to the remote process.
+run_remote() {
+  local script="$1"; shift
+  local base; base="$(basename "$script")"
+  scp $SSH_OPTS "$script" "${USERNAME}@${IP}:/tmp/${base}"
+  ssh $SSH_OPTS "${USERNAME}@${IP}" "$* bash /tmp/${base}"
+}
 
 # Wait for SSH to become available (max 5 min)
 echo "Waiting for SSH on ${IP}..."
 max_attempts=60
 attempts=0
 until ssh $SSH_OPTS "${USERNAME}@${IP}" "true" 2>/dev/null; do
-  (( attempts++ ))
+  attempts=$(( attempts + 1 ))
   if (( attempts >= max_attempts )); then
     echo ""
     echo "Error: timed out waiting for SSH on ${IP}" >&2
@@ -51,29 +62,18 @@ ssh $SSH_OPTS "${USERNAME}@${IP}" \
   "[[ -f ~/.ssh/id_ed25519 ]] || ssh-keygen -t ed25519 -N '' -f ~/.ssh/id_ed25519 -q -C '${USERNAME}@${IP}'"
 
 # Copy and run tool installation
-echo "Copying install-tools.sh..."
-scp -o StrictHostKeyChecking=accept-new "$INSTALL_SCRIPT" "${USERNAME}@${IP}:/tmp/install-tools.sh"
-
 echo "Running tool installation..."
-ssh $SSH_OPTS "${USERNAME}@${IP}" "bash /tmp/install-tools.sh"
+run_remote "$INSTALL_SCRIPT"
 
-OPENBAO_ADDR="${OPENBAO_ADDR:-https://bao.prd.butaco.net}"
-OPENBAO_USERNAME="${OPENBAO_USERNAME:-homelab}"
+OPENBAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
+BAO_USERNAME="${BAO_USERNAME:-homelab}"
 
-read -rsp "OpenBao password for ${OPENBAO_USERNAME}: " OPENBAO_PASSWORD; echo
+read -rsp "OpenBao password for ${BAO_USERNAME}: " OPENBAO_PASSWORD; echo
 
+# Run get-kubeconfig.sh on the VM, feeding the password via stdin
 echo "Retrieving kubeconfig from OpenBao..."
-ssh $SSH_OPTS "${USERNAME}@${IP}" bash -s <<EOF
-set -euo pipefail
-export BAO_ADDR="${OPENBAO_ADDR}"
-BAO_TOKEN=\$(bao login -method=userpass username="${OPENBAO_USERNAME}" password="${OPENBAO_PASSWORD}" -token-only)
-export BAO_TOKEN
-mkdir -p ~/.kube
-bao kv get -field=kubeconfig secret/kubeconfig/dev > ~/.kube/dev-homelab.yaml
-bao kv get -field=kubeconfig secret/kubeconfig/prd > ~/.kube/prd-homelab.yaml
-chmod 600 ~/.kube/dev-homelab.yaml ~/.kube/prd-homelab.yaml
-EOF
-echo "Kubeconfig retrieved."
+printf '%s\n' "$OPENBAO_PASSWORD" | \
+  run_remote "$KUBECONFIG_SCRIPT" "OPENBAO_ADDR='${OPENBAO_ADDR}' BAO_USERNAME='${BAO_USERNAME}'"
 
 echo ""
 echo "=== Provisioning complete ==="
