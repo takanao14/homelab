@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # renovate: datasource=github-releases depName=gruntwork-io/terragrunt
-readonly TERRAGRUNT_VERSION="${TERRAGRUNT_VERSION:-1.0.5}"
+readonly TERRAGRUNT_VERSION="${TERRAGRUNT_VERSION:-1.0.6}"
 # renovate: datasource=github-releases depName=openbao/openbao
 readonly OPENBAO_VERSION="${OPENBAO_VERSION:-2.5.4}"
 # renovate: datasource=github-releases depName=opentofu/opentofu
