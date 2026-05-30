@@ -22,7 +22,7 @@ readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.5.2}"
 # renovate: datasource=github-releases depName=cilium/cilium-cli
 readonly CILIUM_VERSION="${CILIUM_VERSION:-0.19.4}"
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-readonly KUBECTL_VERSION="${KUBECTL_VERSION:-1.35}"
+readonly KUBECTL_VERSION="${KUBECTL_VERSION:-v1.36.1}"
 
 readonly BIN_DIR="$HOME/.local/bin"
 readonly VERSION_CACHE_DIR="$HOME/.local/share/tool-versions"
