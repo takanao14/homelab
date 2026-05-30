@@ -12,7 +12,7 @@ readonly HELM_VERSION="${HELM_VERSION:-4.2.0}"
 # renovate: datasource=github-releases depName=derailed/k9s
 readonly K9S_VERSION="${K9S_VERSION:-0.50.18}"
 # renovate: datasource=github-releases depName=sbstp/kubie
-readonly KUBIE_VERSION="${KUBIE_VERSION:-0.27.0}"
+readonly KUBIE_VERSION="${KUBIE_VERSION:-0.28.0}"
 # renovate: datasource=github-releases depName=FiloSottile/age
 readonly AGE_VERSION="${AGE_VERSION:-1.3.1}"
 # renovate: datasource=github-releases depName=getsops/sops
