@@ -18,7 +18,7 @@ readonly AGE_VERSION="${AGE_VERSION:-1.3.1}"
 # renovate: datasource=github-releases depName=getsops/sops
 readonly SOPS_VERSION="${SOPS_VERSION:-3.13.1}"
 # renovate: datasource=github-releases depName=helmfile/helmfile
-readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.5.1}"
+readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.5.2}"
 # renovate: datasource=github-releases depName=cilium/cilium-cli
 readonly CILIUM_VERSION="${CILIUM_VERSION:-0.19.4}"
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
