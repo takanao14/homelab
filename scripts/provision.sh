@@ -77,6 +77,20 @@ run_remote "$TERMINAL_SCRIPT"
 echo "Running font installation..."
 run_remote "$FONTS_SCRIPT"
 
+echo "Configuring kitty font..."
+ssh $SSH_OPTS "${USERNAME}@${IP}" "
+  mkdir -p ~/.config/kitty
+  cat >> ~/.config/kitty/kitty.conf <<'EOF'
+
+# font
+font_family      UDEV Gothic NFLG
+bold_font        UDEV Gothic NFLG Bold
+italic_font      UDEV Gothic NFLG Italic
+bold_italic_font UDEV Gothic NFLG Bold Italic
+font_size 12.0
+EOF
+"
+
 OPENBAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
 BAO_USERNAME="${BAO_USERNAME:-homelab}"
 
