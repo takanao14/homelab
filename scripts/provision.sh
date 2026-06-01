@@ -77,6 +77,15 @@ run_remote "$TERMINAL_SCRIPT"
 echo "Running font installation..."
 run_remote "$FONTS_SCRIPT"
 
+echo "Setting up kitty desktop integration..."
+ssh $SSH_OPTS "${USERNAME}@${IP}" "
+  mkdir -p ~/.local/share/applications
+  cp ~/.local/kitty.app/share/applications/kitty.desktop ~/.local/share/applications/
+  cp ~/.local/kitty.app/share/applications/kitty-open.desktop ~/.local/share/applications/
+  sed -i \"s|Icon=kitty|Icon=\$(readlink -f ~)/.local/kitty.app/share/icons/hicolor/256x256/apps/kitty.png|g\" ~/.local/share/applications/kitty*.desktop
+  sed -i \"s|Exec=kitty|Exec=\$(readlink -f ~)/.local/kitty.app/bin/kitty|g\" ~/.local/share/applications/kitty*.desktop
+"
+
 echo "Configuring kitty font..."
 ssh $SSH_OPTS "${USERNAME}@${IP}" "
   mkdir -p ~/.config/kitty
