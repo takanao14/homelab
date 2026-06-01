@@ -59,9 +59,11 @@ done
 echo ""
 echo "SSH is ready."
 
-# Generate SSH key pair on VM if not present
-ssh $SSH_OPTS "${USERNAME}@${IP}" \
-  "[[ -f ~/.ssh/id_ed25519 ]] || ssh-keygen -t ed25519 -N '' -f ~/.ssh/id_ed25519 -q -C '${USERNAME}@${IP}'"
+# Wait for cloud-init to finish
+echo "Waiting for cloud-init to complete..."
+ssh $SSH_OPTS "${USERNAME}@${IP}" "cloud-init status --wait" 2>/dev/null || true
+echo "cloud-init complete."
+
 
 # Copy and run tool installation
 echo "Running tool installation..."
@@ -105,5 +107,6 @@ echo ""
 echo "=== Provisioning complete ==="
 echo "Connect: ssh ${USERNAME}@${IP}"
 echo ""
-echo "=== VM public key (register where needed e.g. GitHub) ==="
-ssh $SSH_OPTS "${USERNAME}@${IP}" "cat ~/.ssh/id_ed25519.pub"
+echo "=== Next step: generate SSH key on the VM ==="
+echo "  ssh ${USERNAME}@${IP}"
+echo "  ssh-keygen -t ed25519 -C '${USERNAME}@${IP}'"
