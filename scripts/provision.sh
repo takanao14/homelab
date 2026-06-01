@@ -67,6 +67,10 @@ ssh $SSH_OPTS "${USERNAME}@${IP}" \
 echo "Running tool installation..."
 run_remote "$INSTALL_SCRIPT"
 
+echo "Ensuring \$HOME/.local/bin is in PATH..."
+ssh $SSH_OPTS "${USERNAME}@${IP}" \
+  "grep -qF '\$HOME/.local/bin' ~/.bashrc || echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc"
+
 echo "Running terminal installation..."
 run_remote "$TERMINAL_SCRIPT"
 
