@@ -49,21 +49,11 @@ esac
 NODE_UPPER="${NODE^^}"
 _node_var() { local var="${1}_${NODE_UPPER}"; echo "${!var:-}"; }
 
-TF_VM_USERNAME="$(_node_var TF_VM_USERNAME)"
-TF_VM_PASSWORD="$(_node_var TF_VM_PASSWORD)"
-
-if [[ -z "$TF_VM_USERNAME" ]]; then
-  TF_VM_USERNAME="$USER"
-fi
+TF_VM_USERNAME="${TF_VM_USERNAME:-dummy}"
 export TF_VM_USERNAME
 
-if [[ -z "${TF_VM_SSH_PUBLIC_KEY:-}" ]]; then
-  DEFAULT_PUBKEY="${HOME}/.ssh/id_ed25519.pub"
-  if [[ -f "$DEFAULT_PUBKEY" ]]; then
-    TF_VM_SSH_PUBLIC_KEY="$(cat "$DEFAULT_PUBKEY")"
-    export TF_VM_SSH_PUBLIC_KEY
-  fi
-fi
+TF_VM_SSH_PUBLIC_KEY="${TF_VM_SSH_PUBLIC_KEY:-dummy}"
+export TF_VM_SSH_PUBLIC_KEY
 
 OUT_DIR="${TF_DIR}/vm/${NODE}/${VM_NAME}"
 
@@ -72,10 +62,7 @@ if [[ ! -d "$OUT_DIR" ]]; then
   exit 1
 fi
 
-if [[ -z "$TF_VM_PASSWORD" ]]; then
-  read -rsp "VM password (${NODE}): " TF_VM_PASSWORD
-  echo ""
-fi
+TF_VM_PASSWORD="${TF_VM_PASSWORD:-dummy}"
 export TF_VM_PASSWORD
 
 echo ""
@@ -84,12 +71,6 @@ echo "---"
 cat "${OUT_DIR}/terragrunt.hcl"
 echo "---"
 echo ""
-
-read -r -p "Destroy? (y/N) " confirm
-if [[ "${confirm,,}" != "y" ]]; then
-  echo "Aborted."
-  exit 0
-fi
 
 direnv exec "$OUT_DIR" bash -c "cd '$OUT_DIR' && terragrunt init -upgrade && terragrunt destroy"
 
