@@ -156,6 +156,9 @@ fi
 direnv exec "$OUT_DIR" bash -c "cd '$OUT_DIR' && terragrunt apply"
 
 echo ""
+echo "Removing ${IP} from known_hosts..."
+ssh-keygen -R "${IP}" 2>/dev/null || true
+
 echo -n "Waiting for SSH on ${IP} ..."
 TIMEOUT=300
 ELAPSED=0
