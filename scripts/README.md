@@ -46,10 +46,18 @@ Destroys a VM created by `createvm.sh` and removes its Terragrunt directory.
 
 ### `provision.sh`
 
-Provisions an existing VM: waits for SSH, generates an SSH keypair on the VM,
-installs tooling (`vm-setup/install-tools.sh`), and retrieves kubeconfigs
-(`get-kubeconfig.sh`). Scripts are copied to `/tmp` and run remotely via the
-`run_remote` helper; the OpenBao password is passed over stdin.
+Provisions an existing VM over SSH in order:
+
+1. Waits for SSH and cloud-init to finish
+2. Installs the CLI toolchain (`scripts/install-tools.sh`)
+3. Adds `~/.local/bin` to `PATH` and arranges for `~/.env` to be sourced in `~/.bashrc`
+4. Installs terminal and fonts (`scripts/install-terminal.sh`, `scripts/install-fonts.sh`)
+5. Configures kitty font
+6. Fetches env secrets from OpenBao into `~/.env` (`scripts/getenv.sh`)
+7. Retrieves kubeconfigs from OpenBao into `~/.kube/` (`scripts/get-kubeconfig.sh`)
+
+Scripts are copied to `/tmp` and run remotely via the `run_remote` helper. The
+OpenBao password is entered once and reused across steps.
 
 ```bash
 ./provision.sh <ip> [username]
@@ -83,15 +91,6 @@ Pushes the contents of `~/.env` back into `secret/provision/env`. Defaults to th
 ./setenv.sh
 ```
 
-### `get-kubeconfig.sh`
-
-Retrieves the `dev`/`prd` kubeconfigs from OpenBao into `~/.kube/`.
-
-```bash
-./get-kubeconfig.sh                       # local, interactive
-BAO_PASSWORD=xxx ./get-kubeconfig.sh      # non-interactive
-```
-
 ## Kubernetes
 
 ### `gpu-switch.sh`
@@ -103,7 +102,7 @@ deployments. Only runs against the `dev-homelab` kube context.
 ./gpu-switch.sh <ollama|comfyui|lemonade-server|off>
 ```
 
-## `vm-setup/`
+## `scripts/`
 
 ### `install-tools.sh`
 
@@ -111,3 +110,20 @@ Installs the homelab CLI toolchain (kubectl, helm, terragrunt, opentofu,
 openbao, sops, age, k9s, kubie, helmfile, cilium, HashiCorp tools …) on Ubuntu
 or Rocky. Versions are pinned at the top of the file and managed by Renovate.
 Waits for cloud-init to finish before touching the package manager.
+
+### `install-terminal.sh`
+
+Installs kitty terminal emulator.
+
+### `install-fonts.sh`
+
+Installs UDEV Gothic NFLG fonts.
+
+### `get-kubeconfig.sh`
+
+Retrieves the `dev`/`prd` kubeconfigs from OpenBao into `~/.kube/`.
+
+```bash
+./scripts/get-kubeconfig.sh                       # local, interactive
+BAO_PASSWORD=xxx ./scripts/get-kubeconfig.sh      # non-interactive
+```
