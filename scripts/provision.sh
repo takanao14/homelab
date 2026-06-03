@@ -25,10 +25,11 @@ EOF
 
 IP="$1"
 USERNAME="${2:-$USER}"
-INSTALL_SCRIPT="${SCRIPT_DIR}/install-tools.sh"
-TERMINAL_SCRIPT="${SCRIPT_DIR}/install-terminal.sh"
-FONTS_SCRIPT="${SCRIPT_DIR}/install-fonts.sh"
-KUBECONFIG_SCRIPT="${SCRIPT_DIR}/get-kubeconfig.sh"
+INSTALL_SCRIPT="${SCRIPT_DIR}/scripts/install-tools.sh"
+TERMINAL_SCRIPT="${SCRIPT_DIR}/scripts/install-terminal.sh"
+FONTS_SCRIPT="${SCRIPT_DIR}/scripts/install-fonts.sh"
+KUBECONFIG_SCRIPT="${SCRIPT_DIR}/scripts/get-kubeconfig.sh"
+GETENV_SCRIPT="${SCRIPT_DIR}/getenv.sh"
 
 SSH_OPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=yes"
 
@@ -73,6 +74,10 @@ echo "Ensuring \$HOME/.local/bin is in PATH..."
 ssh $SSH_OPTS "${USERNAME}@${IP}" \
   "grep -qF '\$HOME/.local/bin' ~/.bashrc || echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc"
 
+echo "Ensuring ~/.env is sourced in ~/.bashrc..."
+ssh $SSH_OPTS "${USERNAME}@${IP}" \
+  "grep -qF '.env' ~/.bashrc || echo '[[ -f \"\$HOME/.env\" ]] && set -a && source \"\$HOME/.env\" && set +a' >> ~/.bashrc"
+
 echo "Running terminal installation..."
 run_remote "$TERMINAL_SCRIPT"
 
@@ -97,6 +102,11 @@ OPENBAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
 BAO_USERNAME="${BAO_USERNAME:-homelab}"
 
 read -rsp "OpenBao password for ${BAO_USERNAME}: " OPENBAO_PASSWORD; echo
+
+# Run getenv.sh on the VM to populate ~/.env from OpenBao secrets
+echo "Fetching env secrets from OpenBao..."
+printf '%s\n' "$OPENBAO_PASSWORD" | \
+  run_remote "$GETENV_SCRIPT" "OPENBAO_ADDR='${OPENBAO_ADDR}' BAO_USERNAME='${BAO_USERNAME}'"
 
 # Run get-kubeconfig.sh on the VM, feeding the password via stdin
 echo "Retrieving kubeconfig from OpenBao..."
