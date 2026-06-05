@@ -16,7 +16,7 @@ Manages VMs, LXC containers, and cloud images on Proxmox using Terragrunt + Terr
 tf/
 ├── root.hcl                        # Terragrunt root config (generates provider / backend)
 ├── common.hcl                      # Shared locals (DNS servers, domain, networks per env)
-├── provider.tf                     # Proxmox provider definition (bpg/proxmox ~> 0.105)
+├── provider.tf                     # Proxmox provider definition (bpg/proxmox ~> 0.108)
 ├── .env/
 │   ├── secrets.env.sample          # Secret template
 │   ├── secrets.dev.enc.env         # SOPS-encrypted dev secrets (committed)
@@ -26,9 +26,10 @@ tf/
 ├── modules/
 │   ├── proxmox-vm/                 # Proxmox VM module
 │   ├── proxmox-container/          # Proxmox LXC container module
-│   └── proxmox-cloudimage/         # Cloud image download module
-├── cloudimage/
-│   ├── images.hcl                  # Image definitions (Ubuntu 24.04, Rocky 9, Debian 13)
+│   ├── proxmox-cloudimage/         # Cloud image download module
+│   └── proxmox-image-upload/       # Custom image (Packer .img) upload module
+├── customimage/
+│   ├── images.hcl                  # Image definitions (Packer-built .img files)
 │   ├── dev/terragrunt.hcl          # dev: upload to pve node
 │   ├── prd/terragrunt.hcl          # prd: upload to node1
 │   ├── node2/terragrunt.hcl        # node2: upload to node2
@@ -130,7 +131,7 @@ terragrunt apply -target='proxmox_virtual_environment_file.image["ubuntu-24.04-c
 ## Architecture
 
 - **Backend**: Local state (`terraform.tfstate` per component directory)
-- **Provider**: bpg/proxmox ~> 0.105
+- **Provider**: bpg/proxmox ~> 0.108
 - **Environment separation**: dev / prd / node2 / node3 (per Proxmox node)
 - **Networking**: Configured via `common.hcl` per environment (e.g. `vmbr0`, `vnets001`)
 - **Storage**: dev=local-zfs (pve), prd=data-nvme (node1), node2=local-lvm, node3=local-lvm
