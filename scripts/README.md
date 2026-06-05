@@ -106,10 +106,23 @@ deployments. Only runs against the `dev-homelab` kube context.
 
 ### `install-tools.sh`
 
-Installs the homelab CLI toolchain (kubectl, helm, terragrunt, opentofu,
+Thin wrapper that fetches the dotfiles CLI-toolchain installer
+(`takanao14/dotfiles`, pinned to the latest `main` commit) and runs it. It
+installs the homelab CLI toolchain (kubectl, helm, terragrunt, opentofu,
 openbao, sops, age, k9s, kubie, helmfile, cilium, HashiCorp tools …) on Ubuntu
-or Rocky. Versions are pinned at the top of the file and managed by Renovate.
-Waits for cloud-init to finish before touching the package manager.
+or Rocky; tool versions are pinned and managed by Renovate in dotfiles.
+
+The install mode selects where the tools land:
+
+| Mode | Target | Sudo |
+|------|--------|------|
+| `local` (default) | `$HOME/.local/bin` (per-user) | no |
+| `global` | `/usr/local/bin` (system-wide, for shared / golden-image VMs) | yes |
+
+```bash
+./scripts/install-tools.sh            # local (per-user)
+./scripts/install-tools.sh global     # system-wide
+```
 
 ### `install-terminal.sh`
 
