@@ -104,6 +104,29 @@ cd tf/lxc/node2
 terragrunt run-all apply
 ```
 
+### Uploading custom images
+
+The `customimage/<env>` components upload Packer-built `.img` files to a
+Proxmox datastore. The bpg/proxmox provider buffers each upload in client
+memory, so applying all images at the default parallelism (10) can exhaust
+RAM on the machine running Terragrunt. Force serial uploads so only one
+image is held in memory at a time:
+
+```bash
+cd tf/customimage/dev
+TF_CLI_ARGS_apply="-parallelism=1" terragrunt apply
+```
+
+Use the `TF_CLI_ARGS_apply` environment variable rather than a trailing
+`-parallelism=1` flag — depending on the Terragrunt version the flag is not
+always forwarded to the underlying tofu/terraform invocation.
+
+To upload a single image instead of all of them, target its instance key:
+
+```bash
+terragrunt apply -target='proxmox_virtual_environment_file.image["ubuntu-24.04-custom"]'
+```
+
 ## Architecture
 
 - **Backend**: Local state (`terraform.tfstate` per component directory)
