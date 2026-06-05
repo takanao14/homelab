@@ -73,17 +73,58 @@ source "qemu" "ubuntu24_xrdp" {
 build {
   sources = ["source.qemu.ubuntu24_xrdp"]
 
-  # Install packages and clean up
+  # Install base packages: guest agent, desktop/XRDP, container runtime,
+  # virtualization and GUI tools (Chrome, VS Code, Wireshark, HashiCorp).
   provisioner "shell" {
     scripts = [
       "scripts/ubuntu/qemu-ga.sh",
       "scripts/ubuntu/xrdp.sh",
       "scripts/ubuntu/container.sh",
-      "scripts/ubuntu/k8s.sh",
       "scripts/ubuntu/vm.sh",
-      "scripts/ubuntu/tools.sh",
-      "scripts/ubuntu/cleanup.sh"
+      "scripts/ubuntu/tools.sh"
     ]
+    execute_command = "chmod +x {{ .Path }}; sudo -S bash -c '{{ .Vars }} {{ .Path }}'"
+  }
+
+  # Bake the CLI toolchain (kubectl, helm, terragrunt, opentofu, k9s, …)
+  # system-wide via the shared homelab wrapper -- the single source of truth
+  # also used by scripts/provision.sh. Global mode self-elevates with sudo and
+  # installs into /usr/local/bin.
+  provisioner "shell" {
+    script          = "../scripts/scripts/install-tools.sh"
+    execute_command = "bash '{{ .Path }}' global"
+  }
+
+  # Bake the UDEV Gothic NF font system-wide via the shared homelab wrapper.
+  # TOOL_FORCE_GUI_INSTALL=1 skips the live-GUI check (xrdp is not running yet
+  # during the build).
+  provisioner "shell" {
+    script          = "../scripts/scripts/install-fonts.sh"
+    execute_command = "TOOL_FORCE_GUI_INSTALL=1 bash '{{ .Path }}' global"
+  }
+
+  # Install the kitty terminal system-wide (into /usr/local/kitty.app).
+  provisioner "shell" {
+    script          = "../scripts/scripts/install-terminal.sh"
+    execute_command = "TOOL_FORCE_GUI_INSTALL=1 bash '{{ .Path }}' global"
+  }
+
+  # Default kitty config for all users (UDEV Gothic font); kitty reads
+  # /etc/xdg/kitty/kitty.conf via XDG_CONFIG_DIRS.
+  provisioner "file" {
+    source      = "files/kitty.conf"
+    destination = "/tmp/kitty.conf"
+  }
+  provisioner "shell" {
+    inline = [
+      "sudo install -D -m 0644 /tmp/kitty.conf /etc/xdg/kitty/kitty.conf",
+      "rm -f /tmp/kitty.conf",
+    ]
+  }
+
+  # Clean up last: purges caches, cloud-init data and the build user.
+  provisioner "shell" {
+    script          = "scripts/ubuntu/cleanup.sh"
     execute_command = "chmod +x {{ .Path }}; sudo -S bash -c '{{ .Vars }} {{ .Path }}'"
   }
 

@@ -126,11 +126,33 @@ The install mode selects where the tools land:
 
 ### `install-terminal.sh`
 
-Installs kitty terminal emulator.
+Installs the kitty terminal emulator. Like `install-tools.sh`, the install mode
+selects where kitty lands:
+
+| Mode | Target | Sudo |
+|------|--------|------|
+| `local` (default) | `$HOME/.local/kitty.app` (per-user) | no |
+| `global` | `/usr/local/kitty.app` (system-wide, for shared / golden-image VMs) | yes |
+
+```bash
+./scripts/install-terminal.sh            # local (per-user)
+./scripts/install-terminal.sh global     # system-wide
+```
 
 ### `install-fonts.sh`
 
-Installs UDEV Gothic NFLG fonts.
+Installs the UDEV Gothic NF font. Like `install-tools.sh`, the install mode
+selects where the font lands:
+
+| Mode | Target | Sudo |
+|------|--------|------|
+| `local` (default) | `$HOME/.local/share/fonts` (per-user) | no |
+| `global` | `/usr/local/share/fonts` (system-wide, for shared / golden-image VMs) | yes |
+
+```bash
+./scripts/install-fonts.sh            # local (per-user)
+./scripts/install-fonts.sh global     # system-wide
+```
 
 ### `get-kubeconfig.sh`
 

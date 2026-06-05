@@ -158,11 +158,14 @@ centralized in `tf/customimage/images.hcl`.
 This repository uses [Renovate](https://docs.renovatebot.com/) to automatically
 track and update dependency versions, configured in the root `renovate.json`.
 
-**Tracked dependencies:**
-- Kubernetes minor version in `scripts/*/k8s.sh` repository URLs (via `github-tags`)
+The XRDP images bake the CLI toolchain (kubectl, helm, terragrunt, opentofu,
+k9s, …) system-wide via `../scripts/scripts/install-tools.sh global`, the single
+source of truth shared with `scripts/provision.sh`. Those tool versions are
+pinned and Renovate-managed in the `takanao14/dotfiles` installer, not here.
 
 **Not tracked (always installed as latest):**
-- APT/DNF packages (kubectl, helm, terraform, packer, vault, VS Code, etc.)
+- APT/DNF packages installed by the Packer scripts (terraform, packer, vault,
+  Chrome, VS Code, Wireshark, Podman, etc.)
 
 ## Customization
 
