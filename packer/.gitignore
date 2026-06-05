@@ -1,0 +1,6 @@
+# Packer build artifacts
+output-*/
+packer_cache/
+
+# Generated images
+images/*.img
