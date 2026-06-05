@@ -78,6 +78,10 @@ echo "Ensuring ~/.env is sourced in ~/.bashrc..."
 ssh $SSH_OPTS "${USERNAME}@${IP}" \
   "grep -qF '.env' ~/.bashrc || echo '[[ -f \"\$HOME/.env\" ]] && set -a && source \"\$HOME/.env\" && set +a' >> ~/.bashrc"
 
+echo "Ensuring ~/.bash_profile sources ~/.bashrc..."
+ssh $SSH_OPTS "${USERNAME}@${IP}" \
+  "grep -qF '.bashrc' ~/.bash_profile 2>/dev/null || echo '[[ -f \"\$HOME/.bashrc\" ]] && source \"\$HOME/.bashrc\"' >> ~/.bash_profile"
+
 echo "Running terminal installation..."
 run_remote "$TERMINAL_SCRIPT"
 
