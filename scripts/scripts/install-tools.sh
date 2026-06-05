@@ -22,9 +22,9 @@ case "$MODE" in
       bash)
     ;;
   global)
-    # sudo VAR=val sets the env for the elevated bash (a plain prefix would be
-    # stripped by sudo's env reset).
-    RUNNER=(sudo
+    # `sudo env VAR=val` survives sudo's env reset and does not depend on the
+    # sudoers `setenv` option (a bare `sudo VAR=val` can be rejected).
+    RUNNER=(sudo env
       "TOOL_BIN_DIR=/usr/local/bin"
       "TOOL_VERSION_CACHE_DIR=/usr/local/share/tool-versions"
       bash)
