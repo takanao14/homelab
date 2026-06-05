@@ -69,6 +69,15 @@
         "repoURL: (?<registryUrl>https://[^\\n]+)\\n\\s+chart: (?<depName>[^\\n]+)\\n\\s+targetRevision: (?<currentValue>[^\\n]+)"
       ],
       "datasourceTemplate": "helm"
+    },
+    {
+      "fileMatch": ["(^|/)packer/scripts/.+/k8s\\.sh$"],
+      "matchStrings": [
+        "pkgs\\.k8s\\.io/core:/stable:/(?<currentValue>v[\\d.]+)/"
+      ],
+      "depNameTemplate": "kubernetes/kubernetes",
+      "datasourceTemplate": "github-tags",
+      "versioningTemplate": "semver"
     }
   ]
 }

@@ -10,6 +10,7 @@ homelab/
 │   ├── playbooks/     # Top-level playbooks (gpuvm, netbox, openbao, forgejo, etc.)
 │   ├── roles/         # Reusable roles (rocm, lemonade, caddy, dnsdist, vector, etc.)
 │   └── inventories/   # Inventory and group_vars per environment
+├── packer/            # Packer templates building custom Proxmox cloud images
 ├── k0s/               # k0s cluster bootstrap — Helmfile for core in-cluster components
 ├── k8s/               # ArgoCD-managed workloads
 │   ├── argocd/        # ArgoCD root apps and ApplicationSets
@@ -27,7 +28,8 @@ homelab/
 │   ├── ollama/        # Ollama LLM server deployment
 │   └── reloader/      # Stakater Reloader (auto-restart on ConfigMap/Secret changes)
 └── tf/                # Terraform / Terragrunt (Proxmox VMs, LXC containers, cloud images)
-    ├── cloudimage/    # OS image management
+    ├── cloudimage/    # Stock cloud image download (proxmox_download_file)
+    ├── customimage/   # Upload of Packer-built custom images (proxmox_virtual_environment_file)
     ├── k8s/           # VM definitions for k0s cluster nodes
     ├── lxc/           # LXC container definitions
     ├── modules/       # Shared Terraform modules
