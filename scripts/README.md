@@ -57,7 +57,9 @@ Provisions an existing VM over SSH in order:
 6. Fetches env secrets from OpenBao into `~/.env` (`scripts/getenv.sh`)
 7. Retrieves kubeconfigs from OpenBao into `~/.kube/` (`scripts/get-kubeconfig.sh`)
 
-Scripts are copied to `/tmp` and run remotely via the `run_remote` helper. The
+Scripts are copied to `/tmp` and run remotely via the `run_remote` helper; the
+vendored installers (`scripts/vendor/`) are copied to `/tmp/vendor/` so the
+`install-*.sh` wrappers run local copies instead of downloading from GitHub. The
 OpenBao password is entered once and reused across steps.
 
 ```bash
@@ -111,11 +113,11 @@ deployments. Only runs against the `dev-homelab` kube context.
 
 ### `install-tools.sh`
 
-Thin wrapper that fetches the dotfiles CLI-toolchain installer
-(`takanao14/dotfiles`, pinned to the latest `main` commit) and runs it. It
-installs the homelab CLI toolchain (kubectl, helm, terragrunt, opentofu,
-openbao, sops, age, k9s, kubie, helmfile, cilium, HashiCorp tools …) on Ubuntu
-or Rocky; tool versions are pinned and managed by Renovate in dotfiles.
+Thin wrapper that runs the **vendored** dotfiles CLI-toolchain installer
+(`vendor/run_onchange_linux1_tool.sh`, see [`vendor/`](#vendor)). It installs the
+homelab CLI toolchain (kubectl, helm, terragrunt, opentofu, openbao, sops, age,
+k9s, kubie, helmfile, cilium, HashiCorp tools …) on Ubuntu or Rocky; tool
+versions are pinned and managed by Renovate in dotfiles.
 
 The install mode selects where the tools land:
 
@@ -167,4 +169,21 @@ files are replaced only after both kubeconfigs are fetched successfully.
 ```bash
 ./scripts/get-kubeconfig.sh                       # local, interactive
 BAO_PASSWORD=xxx ./scripts/get-kubeconfig.sh      # non-interactive
+```
+
+### `vendor/`
+
+Local copies of the dotfiles installer scripts that `install-tools.sh`,
+`install-terminal.sh`, and `install-fonts.sh` run. Vendoring them means
+provisioning no longer fetches them from GitHub at runtime, so it does not depend
+on the GitHub API rate limit or `raw.githubusercontent.com` being reachable. The
+pinned source commit is recorded in `vendor/REVISION`.
+
+Do not edit the `run_onchange_*.sh` files by hand — they are kept in sync with
+`takanao14/dotfiles` by `vendor/sync.sh`:
+
+```bash
+./scripts/vendor/sync.sh           # refresh to the latest dotfiles main
+REF=<sha|tag> ./scripts/vendor/sync.sh   # pin to a specific ref
+./scripts/vendor/sync.sh --check   # CI: fail if the vendored copies have drifted
 ```

@@ -163,6 +163,11 @@ k9s, …) system-wide via `../scripts/scripts/install-tools.sh global`, the sing
 source of truth shared with `scripts/provision.sh`. Those tool versions are
 pinned and Renovate-managed in the `takanao14/dotfiles` installer, not here.
 
+The wrappers run the **vendored** installer copies in
+`../scripts/scripts/vendor/` (uploaded to the guest by a `file` provisioner and
+selected via `VENDOR_DIR`), so the build does not fetch them from GitHub at
+runtime. Refresh those copies with `../scripts/scripts/vendor/sync.sh`.
+
 **Not tracked (always installed as latest):**
 - APT/DNF packages installed by the Packer scripts (terraform, packer, vault,
   Chrome, VS Code, Wireshark, Podman, etc.)

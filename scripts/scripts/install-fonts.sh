@@ -46,11 +46,17 @@ ENVS=(
 
 RUNNER=("${PRIV[@]}" "${ENVS[@]}" bash)
 
-REPO="takanao14/dotfiles"
-FILE=".chezmoiscripts/run_onchange_linux3_fonts.sh"
-
-# Capture the API response first; piping curl directly into `grep -m1` makes
-# grep close the pipe early, so curl dies with "(23) write error" under pipefail.
-commits_json=$(curl -fsSL "https://api.github.com/repos/${REPO}/commits/main")
-SHA=$(grep -m1 '"sha"' <<<"$commits_json" | grep -o '[a-f0-9]\{40\}')
-curl -fsSL "https://raw.githubusercontent.com/${REPO}/${SHA}/${FILE}" | "${RUNNER[@]}"
+# Run the vendored copy of the dotfiles installer (see vendor/), not a fresh
+# download from GitHub, so provisioning does not depend on the GitHub API rate
+# limit or raw.githubusercontent.com being reachable. Refresh it with vendor/sync.sh.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# VENDOR_DIR lets callers that upload the wrapper and the vendored files to
+# separate locations (e.g. the Packer shell provisioner) point at the copies.
+VENDOR_DIR="${VENDOR_DIR:-${SCRIPT_DIR}/vendor}"
+INSTALLER="${VENDOR_DIR}/run_onchange_linux3_fonts.sh"
+if [[ ! -f "$INSTALLER" ]]; then
+  echo "Error: vendored installer not found: $INSTALLER" >&2
+  echo "Run vendor/sync.sh to populate it." >&2
+  exit 1
+fi
+"${RUNNER[@]}" "$INSTALLER"

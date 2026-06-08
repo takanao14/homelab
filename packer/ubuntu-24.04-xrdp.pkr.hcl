@@ -86,13 +86,21 @@ build {
     execute_command = "chmod +x {{ .Path }}; sudo -S bash -c '{{ .Vars }} {{ .Path }}'"
   }
 
+  # Upload the vendored dotfiles installers next to where the wrappers run, so
+  # install-*.sh use local copies instead of fetching them from GitHub during
+  # the build. VENDOR_DIR points each wrapper at this directory.
+  provisioner "file" {
+    source      = "../scripts/scripts/vendor"
+    destination = "/tmp"
+  }
+
   # Bake the CLI toolchain (kubectl, helm, terragrunt, opentofu, k9s, …)
   # system-wide via the shared homelab wrapper -- the single source of truth
   # also used by scripts/provision.sh. Global mode self-elevates with sudo and
   # installs into /usr/local/bin.
   provisioner "shell" {
     script          = "../scripts/scripts/install-tools.sh"
-    execute_command = "bash '{{ .Path }}' global"
+    execute_command = "VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
   }
 
   # Bake the UDEV Gothic NF font system-wide via the shared homelab wrapper.
@@ -100,13 +108,13 @@ build {
   # during the build).
   provisioner "shell" {
     script          = "../scripts/scripts/install-fonts.sh"
-    execute_command = "TOOL_FORCE_GUI_INSTALL=1 bash '{{ .Path }}' global"
+    execute_command = "TOOL_FORCE_GUI_INSTALL=1 VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
   }
 
   # Install the kitty terminal system-wide (into /usr/local/kitty.app).
   provisioner "shell" {
     script          = "../scripts/scripts/install-terminal.sh"
-    execute_command = "TOOL_FORCE_GUI_INSTALL=1 bash '{{ .Path }}' global"
+    execute_command = "TOOL_FORCE_GUI_INSTALL=1 VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
   }
 
   # Default kitty config for all users (UDEV Gothic font); kitty reads

@@ -33,6 +33,7 @@ TERMINAL_SCRIPT="${SCRIPT_DIR}/scripts/install-terminal.sh"
 FONTS_SCRIPT="${SCRIPT_DIR}/scripts/install-fonts.sh"
 KUBECONFIG_SCRIPT="${SCRIPT_DIR}/scripts/get-kubeconfig.sh"
 GETENV_SCRIPT="${SCRIPT_DIR}/getenv.sh"
+VENDOR_DIR="${SCRIPT_DIR}/scripts/vendor"
 
 SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=yes)
 
@@ -73,6 +74,13 @@ echo "Waiting for cloud-init to complete..."
 ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "cloud-init status --wait" 2>/dev/null || true
 echo "cloud-init complete."
 
+
+# Copy the vendored installers next to where the wrappers land (/tmp). The
+# install-*.sh wrappers run /tmp/vendor/run_onchange_*.sh instead of fetching
+# from GitHub, so the VM never depends on the GitHub API rate limit at this point.
+echo "Copying vendored installers..."
+ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "mkdir -p /tmp/vendor"
+scp "${SSH_OPTS[@]}" "${VENDOR_DIR}"/run_onchange_*.sh "${USERNAME}@${IP}:/tmp/vendor/"
 
 # Copy and run tool installation
 echo "Running tool installation..."
