@@ -5,7 +5,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ENV_FILE="${HOME}/.env"
 if [[ -f "$ENV_FILE" ]]; then
-  set -a; source "$ENV_FILE"; set +a
+  set -a
+  # shellcheck source=/dev/null
+  source "$ENV_FILE"
+  set +a
 fi
 
 usage() {
