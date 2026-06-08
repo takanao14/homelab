@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="${HOME}/.env"
 
 BAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
