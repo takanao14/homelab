@@ -18,19 +18,20 @@ create a Proxmox VM. After apply, it waits until SSH on the VM becomes ready.
 ./createvm.sh myvm 192.168.20.50 dev 4 4096 80 rocky10
 ```
 
-| Arg    | Default      | Notes |
-|--------|--------------|-------|
-| name   | (required)   | Alphanumeric and hyphens only |
-| ip     | (required)   | IPv4 without prefix; subnet selects the bridge/gateway |
-| node   | `dev`        | `dev` \| `prd` \| `node2` \| `node3` |
-| cores  | `4`          | vCPUs |
-| memory | `8192`       | MB |
-| disk   | `80`         | GB |
-| image  | `ubuntu24`   | `ubuntu24` \| `ubuntu24-xrdp` \| `ubuntu26` \| `rocky10` \| `rocky9-xrdp` |
+| Arg    | Default      | Notes                                                      |
+|--------|--------------|------------------------------------------------------------|
+| name   | (required)   | Alphanumeric and hyphens only                              |
+| ip     | (required)   | IPv4 without prefix; subnet selects the bridge/gateway     |
+| node   | `dev`        | `dev` \| `node2` \| `node3`                                |
+| cores  | `4`          | vCPUs                                                      |
+| memory | `8192`       | MB                                                         |
+| disk   | `80`         | GB                                                         |
+| image  | `ubuntu24`   | `ubuntu24` \| `ubuntu24-xrdp` \| `rocky10` \| `rocky9-xrdp` |
 
 Required env vars (read from `~/.env`): `TF_VM_USERNAME`, `TF_VM_PASSWORD`,
-`TF_VM_SSH_PUBLIC_KEY` (per-node overrides like `TF_VM_PASSWORD_DEV` are
-supported; falls back to a prompt / `~/.ssh/id_ed25519.pub`).
+`TF_VM_SSH_PUBLIC_KEY` (per-node overrides like `TF_VM_PASSWORD_DEV` and
+`TF_VM_SSH_PUBLIC_KEY_NODE2` are supported; falls back to a prompt /
+`~/.ssh/id_ed25519.pub`).
 
 ### `removevm.sh`
 
@@ -40,7 +41,7 @@ Destroys a VM created by `createvm.sh` and removes its Terragrunt directory.
 ./removevm.sh <name> [node] [--keep]
 
 ./removevm.sh myvm
-./removevm.sh myvm prd
+./removevm.sh myvm node2
 ./removevm.sh myvm dev --keep   # keep the directory after destroy
 ```
 
@@ -77,6 +78,9 @@ Common env vars: `OPENBAO_ADDR` (default `https://openbao.home.butaco.net`),
 ### `getenv.sh`
 
 Fetches `secret/provision/env` from OpenBao and writes it to `~/.env`.
+Updates are written via a temporary file and moved into place only after a
+successful fetch. Values are shell-quoted so the generated file can be safely
+sourced by Bash.
 
 ```bash
 ./getenv.sh
@@ -85,7 +89,8 @@ Fetches `secret/provision/env` from OpenBao and writes it to `~/.env`.
 ### `setenv.sh`
 
 Pushes the contents of `~/.env` back into `secret/provision/env`. Defaults to the
-`admin` OpenBao user.
+`admin` OpenBao user. The file is sourced to preserve shell-quoted values from
+`getenv.sh`, so keep it limited to trusted variable assignments.
 
 ```bash
 ./setenv.sh
@@ -156,7 +161,8 @@ selects where the font lands:
 
 ### `get-kubeconfig.sh`
 
-Retrieves the `dev`/`prd` kubeconfigs from OpenBao into `~/.kube/`.
+Retrieves the `dev`/`prd` kubeconfigs from OpenBao into `~/.kube/`. Existing
+files are replaced only after both kubeconfigs are fetched successfully.
 
 ```bash
 ./scripts/get-kubeconfig.sh                       # local, interactive
