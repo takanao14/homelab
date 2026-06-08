@@ -14,40 +14,53 @@ usage() {
 Usage: $(basename "$0") <name> [node] [--keep]
 
   name      VM name
-  node      Proxmox node: dev | prd | node2 | node3  (default: dev)
+  node      Proxmox node: dev | node2 | node3 (default: dev)
   --keep    Keep the terragrunt directory after destroy
 
 Example:
   $(basename "$0") myvm
-  $(basename "$0") myvm prd
+  $(basename "$0") myvm node2
   $(basename "$0") myvm dev --keep
 EOF
   exit 1
 }
 
-[[ $# -lt 1 ]] && usage
+[[ $# -lt 1 || $# -gt 3 ]] && usage
 
 VM_NAME="$1"
-NODE="${2:-dev}"
+NODE="dev"
 KEEP=false
+NODE_SET=false
 
-for arg in "$@"; do
-  [[ "$arg" == "--keep" ]] && KEEP=true
-done
-
-# Strip --keep from positional args for NODE resolution
-if [[ "${2:-}" == "--keep" ]]; then
-  NODE="dev"
+if [[ ! "$VM_NAME" =~ ^[a-zA-Z0-9-]+$ ]]; then
+  echo "Error: VM name must contain only alphanumeric characters and hyphens" >&2
+  exit 1
 fi
 
-case "$NODE" in
-  dev|prd|node2|node3) ;;
-  --keep) NODE="dev" ;;
-  *) echo "Error: node must be 'dev' or 'prd' or 'node2' or 'node3'" >&2; exit 1 ;;
-esac
+shift
+for arg in "$@"; do
+  case "$arg" in
+    --keep)
+      KEEP=true
+      ;;
+    dev|node2|node3)
+      if [[ "$NODE_SET" == true ]]; then
+        echo "Error: node can only be specified once" >&2
+        exit 1
+      fi
+      NODE="$arg"
+      NODE_SET=true
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
 
-NODE_UPPER="${NODE^^}"
-_node_var() { local var="${1}_${NODE_UPPER}"; echo "${!var:-}"; }
+case "$NODE" in
+  dev|node2|node3) ;;
+  *) echo "Error: node must be 'dev' or 'node2' or 'node3'" >&2; exit 1 ;;
+esac
 
 TF_VM_USERNAME="${TF_VM_USERNAME:-dummy}"
 export TF_VM_USERNAME
@@ -59,6 +72,11 @@ OUT_DIR="${TF_DIR}/vm/${NODE}/${VM_NAME}"
 
 if [[ ! -d "$OUT_DIR" ]]; then
   echo "Error: ${OUT_DIR} does not exist" >&2
+  exit 1
+fi
+
+if [[ ! -f "${OUT_DIR}/terragrunt.hcl" ]]; then
+  echo "Error: ${OUT_DIR}/terragrunt.hcl does not exist" >&2
   exit 1
 fi
 
