@@ -43,6 +43,10 @@ run_remote() {
   ssh $SSH_OPTS "${USERNAME}@${IP}" "$* bash /tmp/${base}"
 }
 
+shell_quote() {
+  printf "%q" "$1"
+}
+
 # Wait for SSH to become available (max 5 min)
 echo "Waiting for SSH on ${IP}..."
 max_attempts=60
@@ -89,33 +93,58 @@ echo "Running font installation..."
 run_remote "$FONTS_SCRIPT"
 
 echo "Configuring kitty font..."
-ssh $SSH_OPTS "${USERNAME}@${IP}" "
-  mkdir -p ~/.config/kitty
-  cat >> ~/.config/kitty/kitty.conf <<'EOF'
+ssh $SSH_OPTS "${USERNAME}@${IP}" 'bash -s' <<'REMOTE'
+set -euo pipefail
 
-# font
+conf="${HOME}/.config/kitty/kitty.conf"
+tmp="$(mktemp)"
+cleanup() {
+  rm -f "$tmp"
+}
+trap cleanup EXIT
+
+mkdir -p "$(dirname "$conf")"
+if [[ -f "$conf" ]]; then
+  awk '
+    $0 == "# BEGIN homelab font" { skip = 1; next }
+    $0 == "# END homelab font" { skip = 0; next }
+    !skip { print }
+  ' "$conf" > "$tmp"
+else
+  : > "$tmp"
+fi
+
+cat >> "$tmp" <<'EOF'
+
+# BEGIN homelab font
 font_family      UDEV Gothic NFLG
 bold_font        UDEV Gothic NFLG Bold
 italic_font      UDEV Gothic NFLG Italic
 bold_italic_font UDEV Gothic NFLG Bold Italic
 font_size 12.0
+# END homelab font
 EOF
-"
+
+mv "$tmp" "$conf"
+trap - EXIT
+REMOTE
 
 OPENBAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
 BAO_USERNAME="${BAO_USERNAME:-homelab}"
+OPENBAO_ADDR_REMOTE="$(shell_quote "$OPENBAO_ADDR")"
+BAO_USERNAME_REMOTE="$(shell_quote "$BAO_USERNAME")"
 
 read -rsp "OpenBao password for ${BAO_USERNAME}: " OPENBAO_PASSWORD; echo
 
 # Run getenv.sh on the VM to populate ~/.env from OpenBao secrets
 echo "Fetching env secrets from OpenBao..."
 printf '%s\n' "$OPENBAO_PASSWORD" | \
-  run_remote "$GETENV_SCRIPT" "OPENBAO_ADDR='${OPENBAO_ADDR}' BAO_USERNAME='${BAO_USERNAME}'"
+  run_remote "$GETENV_SCRIPT" "OPENBAO_ADDR=${OPENBAO_ADDR_REMOTE}" "BAO_USERNAME=${BAO_USERNAME_REMOTE}"
 
 # Run get-kubeconfig.sh on the VM, feeding the password via stdin
 echo "Retrieving kubeconfig from OpenBao..."
 printf '%s\n' "$OPENBAO_PASSWORD" | \
-  run_remote "$KUBECONFIG_SCRIPT" "OPENBAO_ADDR='${OPENBAO_ADDR}' BAO_USERNAME='${BAO_USERNAME}'"
+  run_remote "$KUBECONFIG_SCRIPT" "OPENBAO_ADDR=${OPENBAO_ADDR_REMOTE}" "BAO_USERNAME=${BAO_USERNAME_REMOTE}"
 
 echo ""
 echo "=== Provisioning complete ==="
