@@ -94,6 +94,10 @@ echo "Ensuring ~/.env is sourced in ~/.bashrc..."
 ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" \
   "grep -qF '.env' ~/.bashrc || echo '[[ -f \"\$HOME/.env\" ]] && set -a && source \"\$HOME/.env\" && set +a' >> ~/.bashrc"
 
+echo "Ensuring direnv hook is enabled in ~/.bashrc..."
+ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" \
+  "grep -qF 'direnv hook bash' ~/.bashrc || echo 'command -v direnv >/dev/null 2>&1 && eval \"\$(direnv hook bash)\"' >> ~/.bashrc"
+
 echo "Ensuring ~/.bash_profile sources ~/.bashrc..."
 ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" \
   "grep -qF '.bashrc' ~/.bash_profile 2>/dev/null || echo '[[ -f \"\$HOME/.bashrc\" ]] && source \"\$HOME/.bashrc\"' >> ~/.bash_profile"
