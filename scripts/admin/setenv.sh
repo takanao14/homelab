@@ -24,13 +24,27 @@ export BAO_TOKEN
 
 echo "Writing secrets to OpenBao..."
 
-# Build key=value args from .env, skipping comments and empty lines
+# Build key=value args from .env, skipping comments and empty lines.
 kv_args=()
+keys=()
 while IFS= read -r line; do
   [[ "$line" =~ ^[[:space:]]*# ]] && continue
   [[ -z "${line// }" ]] && continue
-  kv_args+=("$line")
+  if [[ "$line" =~ ^[[:space:]]*(export[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*)= ]]; then
+    keys+=("${BASH_REMATCH[2]}")
+  else
+    echo "Error: unsupported .env line: ${line}" >&2
+    exit 1
+  fi
 done < "$ENV_FILE"
+
+set -a
+source "$ENV_FILE"
+set +a
+
+for key in "${keys[@]}"; do
+  kv_args+=("${key}=${!key-}")
+done
 
 bao kv put secret/provision/env "${kv_args[@]}"
 echo "  secret/provision/env (${#kv_args[@]} keys)"
