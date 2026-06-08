@@ -15,7 +15,7 @@ Usage: $(basename "$0") <name> <ip> [node] [cores] [memory_mb] [disk_gb] [image]
 
   name      VM name (alphanumeric and hyphens only)
   ip        IPv4 address without prefix (e.g. 192.168.20.50)
-  node      Proxmox node: dev | prd | node2 | node3  (default: dev)
+  node      Proxmox node: dev | node2 | node3 (default: dev)
   cores     vCPUs                      (default: 4)
   memory    Memory in MB               (default: 8192)
   disk      Disk size in GB            (default: 80)
@@ -25,12 +25,12 @@ Required env vars: TF_VM_USERNAME, TF_VM_PASSWORD, TF_VM_SSH_PUBLIC_KEY
 
 Example:
   $(basename "$0") myvm 192.168.20.50
-  $(basename "$0") myvm 192.168.20.50 dev 4 4096 80 rocky
+  $(basename "$0") myvm 192.168.20.50 dev 4 4096 80 rocky10
 EOF
   exit 1
 }
 
-[[ $# -lt 2 ]] && usage
+[[ $# -lt 2 || $# -gt 7 ]] && usage
 
 VM_NAME="$1"
 
@@ -47,33 +47,66 @@ DISK="${6:-80}"
 IMAGE="${7:-ubuntu24}"
 
 case "$NODE" in
-  dev|prd|node2|node3) ;;
-  *) echo "Error: node must be 'dev' or 'prd' or 'node2' or 'node3'" >&2; exit 1 ;;
+  dev|node2|node3) ;;
+  *) echo "Error: node must be 'dev' or 'node2' or 'node3'" >&2; exit 1 ;;
 esac
+
+if [[ ! "$IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+  echo "Error: IP must be an IPv4 address without prefix" >&2
+  exit 1
+fi
+
+IFS=. read -r octet1 octet2 octet3 octet4 <<<"$IP"
+for octet in "$octet1" "$octet2" "$octet3" "$octet4"; do
+  if (( 10#$octet > 255 )); then
+    echo "Error: IP octet out of range: ${IP}" >&2
+    exit 1
+  fi
+done
+
+for value_name in CORES MEMORY DISK; do
+  value="${!value_name}"
+  if [[ ! "$value" =~ ^[1-9][0-9]*$ ]]; then
+    echo "Error: ${value_name,,} must be a positive integer" >&2
+    exit 1
+  fi
+done
 
 case "$IMAGE" in
   ubuntu24) FILE_ID="local:iso/ubuntu-24.04-custom.img" ;;
   ubuntu24-xrdp) FILE_ID="local:iso/ubuntu-24.04-xrdp.img" ;;
   rocky10)  FILE_ID="local:iso/rocky-10-custom.img" ;;
   rocky9-xrdp)  FILE_ID="local:iso/rocky-9-xrdp.img" ;;
-  *) echo "Error: image must be 'ubuntu' or 'rocky'" >&2; exit 1 ;;
+  *) echo "Error: image must be 'ubuntu24', 'ubuntu24-xrdp', 'rocky10', or 'rocky9-xrdp'" >&2; exit 1 ;;
 esac
 
 SUBNET=$(echo "$IP" | cut -d. -f1-3)
 case "$SUBNET" in
   192.168.10) NET_REF="local.common.locals.${NODE}.net10" ;;
   192.168.20) NET_REF="local.common.locals.dev.net20" ;;
-  192.168.30) NET_REF="local.common.locals.prd.net30" ;;
   192.168.40) NET_REF="local.common.locals.node2.net40" ;;
   192.168.50) NET_REF="local.common.locals.node3.net50" ;;
   *) echo "Error: unrecognized subnet ${SUBNET}.0/24" >&2; exit 1 ;;
 esac
 
+case "${NODE}:${SUBNET}" in
+  dev:192.168.10|dev:192.168.20|node2:192.168.10|node2:192.168.40|node3:192.168.10|node3:192.168.50) ;;
+  *) echo "Error: subnet ${SUBNET}.0/24 is not available on node '${NODE}'" >&2; exit 1 ;;
+esac
+
 NODE_UPPER="${NODE^^}"
 _node_var() { local var="${1}_${NODE_UPPER}"; echo "${!var:-}"; }
 
+TF_VM_USERNAME_DEFAULT="${TF_VM_USERNAME:-}"
+TF_VM_PASSWORD_DEFAULT="${TF_VM_PASSWORD:-}"
+TF_VM_SSH_PUBLIC_KEY_DEFAULT="${TF_VM_SSH_PUBLIC_KEY:-}"
+
 TF_VM_USERNAME="$(_node_var TF_VM_USERNAME)"
+TF_VM_USERNAME="${TF_VM_USERNAME:-$TF_VM_USERNAME_DEFAULT}"
 TF_VM_PASSWORD="$(_node_var TF_VM_PASSWORD)"
+TF_VM_PASSWORD="${TF_VM_PASSWORD:-$TF_VM_PASSWORD_DEFAULT}"
+TF_VM_SSH_PUBLIC_KEY_NODE="$(_node_var TF_VM_SSH_PUBLIC_KEY)"
+TF_VM_SSH_PUBLIC_KEY="${TF_VM_SSH_PUBLIC_KEY_NODE:-$TF_VM_SSH_PUBLIC_KEY_DEFAULT}"
 
 if [[ -z "$TF_VM_USERNAME" ]]; then
   TF_VM_USERNAME="$USER"
