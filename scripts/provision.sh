@@ -34,7 +34,7 @@ FONTS_SCRIPT="${SCRIPT_DIR}/scripts/install-fonts.sh"
 KUBECONFIG_SCRIPT="${SCRIPT_DIR}/scripts/get-kubeconfig.sh"
 GETENV_SCRIPT="${SCRIPT_DIR}/getenv.sh"
 
-SSH_OPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=yes"
+SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=yes)
 
 # Copy a script to the VM and execute it remotely.
 # Any extra args are forwarded as `KEY=VALUE` env assignments. Remaining stdin
@@ -42,8 +42,9 @@ SSH_OPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=y
 run_remote() {
   local script="$1"; shift
   local base; base="$(basename "$script")"
-  scp $SSH_OPTS "$script" "${USERNAME}@${IP}:/tmp/${base}"
-  ssh $SSH_OPTS "${USERNAME}@${IP}" "$* bash /tmp/${base}"
+  scp "${SSH_OPTS[@]}" "$script" "${USERNAME}@${IP}:/tmp/${base}"
+  # shellcheck disable=SC2029
+  ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "$* bash /tmp/${base}"
 }
 
 shell_quote() {
@@ -54,7 +55,7 @@ shell_quote() {
 echo "Waiting for SSH on ${IP}..."
 max_attempts=60
 attempts=0
-until ssh $SSH_OPTS "${USERNAME}@${IP}" "true" 2>/dev/null; do
+until ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "true" 2>/dev/null; do
   attempts=$(( attempts + 1 ))
   if (( attempts >= max_attempts )); then
     echo ""
@@ -69,7 +70,7 @@ echo "SSH is ready."
 
 # Wait for cloud-init to finish
 echo "Waiting for cloud-init to complete..."
-ssh $SSH_OPTS "${USERNAME}@${IP}" "cloud-init status --wait" 2>/dev/null || true
+ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "cloud-init status --wait" 2>/dev/null || true
 echo "cloud-init complete."
 
 
@@ -78,15 +79,15 @@ echo "Running tool installation..."
 run_remote "$INSTALL_SCRIPT"
 
 echo "Ensuring \$HOME/.local/bin is in PATH..."
-ssh $SSH_OPTS "${USERNAME}@${IP}" \
+ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" \
   "grep -qF '\$HOME/.local/bin' ~/.bashrc || echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc"
 
 echo "Ensuring ~/.env is sourced in ~/.bashrc..."
-ssh $SSH_OPTS "${USERNAME}@${IP}" \
+ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" \
   "grep -qF '.env' ~/.bashrc || echo '[[ -f \"\$HOME/.env\" ]] && set -a && source \"\$HOME/.env\" && set +a' >> ~/.bashrc"
 
 echo "Ensuring ~/.bash_profile sources ~/.bashrc..."
-ssh $SSH_OPTS "${USERNAME}@${IP}" \
+ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" \
   "grep -qF '.bashrc' ~/.bash_profile 2>/dev/null || echo '[[ -f \"\$HOME/.bashrc\" ]] && source \"\$HOME/.bashrc\"' >> ~/.bash_profile"
 
 echo "Running terminal installation..."
@@ -96,7 +97,7 @@ echo "Running font installation..."
 run_remote "$FONTS_SCRIPT"
 
 echo "Configuring kitty font..."
-ssh $SSH_OPTS "${USERNAME}@${IP}" 'bash -s' <<'REMOTE'
+ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" 'bash -s' <<'REMOTE'
 set -euo pipefail
 
 conf="${HOME}/.config/kitty/kitty.conf"
