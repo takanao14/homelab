@@ -3,7 +3,7 @@ namespace: homepage
 
 image:
   repository: ghcr.io/gethomepage/homepage
-  tag: v1.13.1
+  tag: v1.13.2
 
 proxmox:
   - key: prd
