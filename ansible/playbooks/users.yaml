@@ -1,0 +1,7 @@
+---
+- name: Create user accounts on shared VMs
+  hosts: shared_vms
+  any_errors_fatal: false
+  roles:
+    - role: users
+      tags: users

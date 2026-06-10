@@ -127,3 +127,9 @@ all:
     blackbox_exporter:
       hosts:
         rpi4: null
+
+    # Shared VMs that receive bulk user accounts (see playbooks/users.yaml).
+    # Add target VM hostnames here (they must also exist under all.hosts).
+    shared_vms:
+      hosts: {}
+        # devvm01: null

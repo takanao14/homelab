@@ -1,0 +1,14 @@
+---
+# Defaults for the users role.
+
+# List of accounts to create. Provide real values (with passwords) via a
+# SOPS-encrypted group_vars file. Each item: { name: <str>, password: <plaintext> }
+# An optional per-item `shell` overrides users_default_shell.
+users_accounts: []
+
+# Login shell and home directory for created accounts.
+users_default_shell: /bin/bash
+users_create_home: true
+
+# Password hashing scheme used when creating accounts (computed on the control node).
+users_password_scheme: sha512

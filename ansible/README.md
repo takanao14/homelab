@@ -146,6 +146,9 @@ ansible-playbook playbooks/proxmox.yaml
 # Maintenance user on LXC containers
 ansible-playbook playbooks/maintenance_user.yaml
 
+# Bulk user accounts on shared VMs
+ansible-playbook playbooks/users.yaml
+
 # Apt package upgrade (all hosts)
 ansible-playbook playbooks/apt_upgrade.yaml
 
@@ -175,6 +178,7 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `garage_init.yaml` | `localhost` |
 | `proxmox.yaml` | `proxmox` |
 | `maintenance_user.yaml` | `lxc` |
+| `users.yaml` | `shared_vms` |
 | `apt_upgrade.yaml` | `all:!proxmox` |
 | `apt_mirror.yaml` | `all` |
 | `unattended_upgrades.yaml` | `all:!proxmox` |
@@ -201,6 +205,7 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `openbao_admin_token` | `group_vars/openbao.sops.yaml` | OpenBao admin token for configuration |
 | `openbao_k8s_token_reviewer_jwt` | `group_vars/openbao.sops.yaml` | Kubernetes token reviewer ServiceAccount JWT |
 | `openbao_k8s_ca_cert` | `group_vars/openbao.sops.yaml` | PEM CA certificate of the Kubernetes cluster |
+| `users_accounts` | `group_vars/shared_vms.sops.yaml` | List of `{name, password}` accounts created by `users.yaml` (plaintext passwords) |
 
 ## Non-Secret Configuration
 

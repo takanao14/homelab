@@ -1,0 +1,35 @@
+---
+- name: Validate users_accounts
+  ansible.builtin.assert:
+    that:
+      - users_accounts | length > 0
+      - users_accounts | map(attribute='name') | list | length ==
+        (users_accounts | map(attribute='name') | unique | list | length)
+    fail_msg: "users_accounts is empty or contains duplicate names. Define it in group_vars."
+
+- name: Ensure sudo is installed (Debian/Ubuntu)
+  become: true
+  ansible.builtin.apt:
+    name: sudo
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Create user accounts
+  become: true
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    password: "{{ item.password | password_hash(users_password_scheme) }}"
+    # Only set the password when the account is created; existing users keep theirs.
+    update_password: on_create
+    shell: "{{ item.shell | default(users_default_shell) }}"
+    # sudo on Debian/Ubuntu, wheel on RHEL-family; password sudo (no NOPASSWD).
+    groups: "{{ ['sudo'] if ansible_facts['os_family'] == 'Debian' else ['wheel'] }}"
+    append: true
+    create_home: "{{ users_create_home }}"
+    state: present
+  loop: "{{ users_accounts }}"
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
