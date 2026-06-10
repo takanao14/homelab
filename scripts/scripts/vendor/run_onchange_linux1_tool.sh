@@ -13,7 +13,7 @@ readonly ZELLIJ_VERSION="${ZELLIJ_VERSION:-0.44.3}"
 # renovate: datasource=github-releases depName=sbstp/kubie
 readonly KUBIE_VERSION="${KUBIE_VERSION:-0.28.0}"
 # renovate: datasource=github-releases depName=derailed/k9s
-readonly K9S_VERSION="${K9S_VERSION:-0.50.18}"
+readonly K9S_VERSION="${K9S_VERSION:-0.51.0}"
 # renovate: datasource=github-releases depName=helmfile/helmfile
 readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.5.2}"
 # renovate: datasource=github-releases depName=k0sproject/k0sctl
@@ -44,6 +44,8 @@ readonly SHELDON_VERSION="${SHELDON_VERSION:-0.8.5}"
 readonly DIRENV_VERSION="${DIRENV_VERSION:-2.37.1}"
 # renovate: datasource=github-releases depName=kubernetes-sigs/krew
 readonly KREW_VERSION="${KREW_VERSION:-0.5.0}"
+# renovate: datasource=github-releases depName=DNSControl/dnscontrol
+readonly DNSCONTROL_VERSION="${DNSCONTROL_VERSION:-4.41.0}"
 
 # Install location. Defaults to a per-user prefix. Set TOOL_BIN_DIR (and
 # TOOL_VERSION_CACHE_DIR) to a system-wide path such as /usr/local/bin to make
@@ -492,6 +494,18 @@ install_sops() {
     esac
 }
 
+# ============================================================================
+# DNS Tools
+# ============================================================================
+
+install_dnscontrol() {
+    local archive_name="dnscontrol_${DNSCONTROL_VERSION}_linux_${BIN_ARCH}.tar.gz"
+    install_binary "dnscontrol" \
+        "https://github.com/DNSControl/dnscontrol/releases/download/v${DNSCONTROL_VERSION}/${archive_name}" \
+        "$BIN_DIR/dnscontrol" \
+        "https://github.com/DNSControl/dnscontrol/releases/download/v${DNSCONTROL_VERSION}/checksums.txt"
+}
+
 install_helm_diff_plugin() {
     # helm plugins live under HELM_DATA_HOME (per-user by default). For a
     # shared install, set TOOL_HELM_DATA_HOME to a system-wide path; users must
@@ -546,6 +560,7 @@ main() {
     install_if_needed "k0sctl"   "$K0SCTL_VERSION"   install_k0sctl
     install_if_needed "sops"     "$SOPS_VERSION"     install_sops
     install_if_needed "cilium"   "$CILIUM_VERSION"   install_cilium
+    install_if_needed "dnscontrol" "$DNSCONTROL_VERSION" install_dnscontrol
 
     log_info "=== Installation completed ==="
 }
