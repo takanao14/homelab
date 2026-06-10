@@ -555,12 +555,35 @@ ensure_pipx() {
     esac
 }
 
+# ansible-core needs a controller Python >= 3.12 and ansible-lint >= 3.10, but
+# Rocky 9 ships python3 == 3.9. Resolve (and on Rocky install from AppStream) a
+# 3.12 interpreter to hand pipx via --python. Ubuntu 24.04 already ships 3.12.
+PIPX_PYTHON=""
+resolve_pipx_python() {
+    [[ -n "$PIPX_PYTHON" ]] && return
+    case "$OS_ID" in
+        rocky)
+            command -v python3.12 &>/dev/null || install_packages python3.12 python3.12-pip
+            PIPX_PYTHON="python3.12"
+            ;;
+        ubuntu|debian)
+            if command -v python3.12 &>/dev/null; then
+                PIPX_PYTHON="python3.12"
+            else
+                PIPX_PYTHON="python3"
+            fi
+            ;;
+    esac
+}
+
 # Route pipx so app symlinks land in BIN_DIR (already on PATH) and venvs live in
 # PIPX_HOME_DIR. --force makes the install idempotent and lets a version bump
-# reinstall over an existing venv.
+# reinstall over an existing venv; --python pins the venv to a 3.12 interpreter.
 pipx_install() {
     ensure_pipx
-    PIPX_HOME="$PIPX_HOME_DIR" PIPX_BIN_DIR="$BIN_DIR" pipx install --force "$1"
+    resolve_pipx_python
+    PIPX_HOME="$PIPX_HOME_DIR" PIPX_BIN_DIR="$BIN_DIR" \
+        pipx install --force --python "$PIPX_PYTHON" "$1"
 }
 
 install_ansible() {
