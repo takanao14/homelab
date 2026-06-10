@@ -31,8 +31,9 @@ USERNAME="${2:-$USER}"
 INSTALL_SCRIPT="${SCRIPT_DIR}/scripts/install-tools.sh"
 TERMINAL_SCRIPT="${SCRIPT_DIR}/scripts/install-terminal.sh"
 FONTS_SCRIPT="${SCRIPT_DIR}/scripts/install-fonts.sh"
-KUBECONFIG_SCRIPT="${SCRIPT_DIR}/scripts/get-kubeconfig.sh"
+KUBECONFIG_SCRIPT="${SCRIPT_DIR}/get-kubeconfig.sh"
 GETENV_SCRIPT="${SCRIPT_DIR}/getenv.sh"
+OPENBAO_AUTH_SCRIPT="${SCRIPT_DIR}/lib/openbao-auth.sh"
 VENDOR_DIR="${SCRIPT_DIR}/scripts/vendor"
 
 SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=yes)
@@ -50,6 +51,28 @@ run_remote() {
 
 shell_quote() {
   printf "%q" "$1"
+}
+
+run_openbao_remote() {
+  local script="$1"
+  local openbao_addr_remote
+  local bao_username_remote
+
+  openbao_addr_remote="$(shell_quote "$OPENBAO_ADDR")"
+  bao_username_remote="$(shell_quote "$BAO_USERNAME")"
+
+  if [[ -n "${BAO_TOKEN:-}" ]]; then
+    printf '%s\n' "$BAO_TOKEN" | \
+      run_remote "$script" \
+        "OPENBAO_ADDR=${openbao_addr_remote}" \
+        "BAO_USERNAME=${bao_username_remote}" \
+        "BAO_TOKEN_STDIN=1"
+  else
+    printf '%s\n' "$OPENBAO_PASSWORD" | \
+      run_remote "$script" \
+        "OPENBAO_ADDR=${openbao_addr_remote}" \
+        "BAO_USERNAME=${bao_username_remote}"
+  fi
 }
 
 # Wait for SSH to become available (max 5 min)
@@ -81,6 +104,10 @@ echo "cloud-init complete."
 echo "Copying vendored installers..."
 ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "mkdir -p /tmp/vendor"
 scp "${SSH_OPTS[@]}" "${VENDOR_DIR}"/run_onchange_*.sh "${USERNAME}@${IP}:/tmp/vendor/"
+
+echo "Copying OpenBao auth helper..."
+ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "mkdir -p /tmp/lib"
+scp "${SSH_OPTS[@]}" "$OPENBAO_AUTH_SCRIPT" "${USERNAME}@${IP}:/tmp/lib/"
 
 # Copy and run tool installation
 echo "Running tool installation..."
@@ -147,20 +174,18 @@ REMOTE
 
 OPENBAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
 BAO_USERNAME="${BAO_USERNAME:-homelab}"
-OPENBAO_ADDR_REMOTE="$(shell_quote "$OPENBAO_ADDR")"
-BAO_USERNAME_REMOTE="$(shell_quote "$BAO_USERNAME")"
 
-read -rsp "OpenBao password for ${BAO_USERNAME}: " OPENBAO_PASSWORD; echo
+if [[ -z "${BAO_TOKEN:-}" ]]; then
+  read -rsp "OpenBao password for ${BAO_USERNAME}: " OPENBAO_PASSWORD; echo
+fi
 
 # Run getenv.sh on the VM to populate ~/.env from OpenBao secrets
 echo "Fetching env secrets from OpenBao..."
-printf '%s\n' "$OPENBAO_PASSWORD" | \
-  run_remote "$GETENV_SCRIPT" "OPENBAO_ADDR=${OPENBAO_ADDR_REMOTE}" "BAO_USERNAME=${BAO_USERNAME_REMOTE}"
+run_openbao_remote "$GETENV_SCRIPT"
 
-# Run get-kubeconfig.sh on the VM, feeding the password via stdin
+# Run get-kubeconfig.sh on the VM using the same OpenBao credentials
 echo "Retrieving kubeconfig from OpenBao..."
-printf '%s\n' "$OPENBAO_PASSWORD" | \
-  run_remote "$KUBECONFIG_SCRIPT" "OPENBAO_ADDR=${OPENBAO_ADDR_REMOTE}" "BAO_USERNAME=${BAO_USERNAME_REMOTE}"
+run_openbao_remote "$KUBECONFIG_SCRIPT"
 
 echo ""
 echo "=== Provisioning complete ==="

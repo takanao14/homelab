@@ -55,12 +55,14 @@ Provisions an existing VM over SSH in order:
 4. Installs terminal and fonts (`scripts/install-terminal.sh`, `scripts/install-fonts.sh`)
 5. Configures kitty font
 6. Fetches env secrets from OpenBao into `~/.env` (`scripts/getenv.sh`)
-7. Retrieves kubeconfigs from OpenBao into `~/.kube/` (`scripts/get-kubeconfig.sh`)
+7. Retrieves kubeconfigs from OpenBao into `~/.kube/` (`get-kubeconfig.sh`)
 
 Scripts are copied to `/tmp` and run remotely via the `run_remote` helper; the
 vendored installers (`scripts/vendor/`) are copied to `/tmp/vendor/` so the
 `install-*.sh` wrappers run local copies instead of downloading from GitHub. The
-OpenBao password is entered once and reused across steps.
+OpenBao credentials are reused across steps. When `BAO_TOKEN` is set, it is
+forwarded to the remote scripts over stdin; otherwise the password is entered
+once and reused.
 
 ```bash
 ./provision.sh <ip> [username]
@@ -70,32 +72,37 @@ OpenBao password is entered once and reused across steps.
 
 ## Secrets / environment
 
-These three scripts share the same OpenBao auth pattern and can run **locally or
-remotely** (over ssh). The password is resolved in order: `BAO_PASSWORD` env var
-→ interactive prompt (TTY) → stdin (non-interactive).
+These OpenBao scripts share the same auth pattern and can run **locally or
+remotely** (over ssh). Authentication is resolved in order: `BAO_TOKEN` env var
+→ `BAO_PASSWORD` env var → interactive prompt (TTY) → stdin (non-interactive).
+When `BAO_TOKEN` is set, userpass login is skipped and the token is used as-is.
+An invalid or insufficient token fails the requested operation; unset
+`BAO_TOKEN` to use password authentication instead.
 
 Common env vars: `OPENBAO_ADDR` (default `https://openbao.home.butaco.net`),
-`BAO_USERNAME`.
+`BAO_USERNAME`, `BAO_TOKEN`, `BAO_PASSWORD`.
 
 ### `getenv.sh`
 
 Fetches `secret/provision/env` from OpenBao and writes it to `~/.env`.
 Updates are written via a temporary file and moved into place only after a
-successful fetch. Values are shell-quoted so the generated file can be safely
-sourced by Bash.
+successful fetch. Values are double-quoted so `$VAR` and `${VAR}` references
+expand when sourced by Bash. Command substitutions are rejected.
 
 ```bash
 ./getenv.sh
+BAO_TOKEN=xxx ./getenv.sh
 ```
 
 ### `setenv.sh`
 
 Pushes the contents of `~/.env` back into `secret/provision/env`. Defaults to the
-`admin` OpenBao user. The file is sourced to preserve shell-quoted values from
-`getenv.sh`, so keep it limited to trusted variable assignments.
+`admin` OpenBao user. Values are parsed without sourcing the file, so shell
+variables such as `$HOME` remain literal and command substitutions are not run.
 
 ```bash
-./setenv.sh
+./admin/setenv.sh
+BAO_TOKEN=xxx ./admin/setenv.sh
 ```
 
 ## Kubernetes
@@ -167,8 +174,21 @@ Retrieves the `dev`/`prd` kubeconfigs from OpenBao into `~/.kube/`. Existing
 files are replaced only after both kubeconfigs are fetched successfully.
 
 ```bash
-./scripts/get-kubeconfig.sh                       # local, interactive
-BAO_PASSWORD=xxx ./scripts/get-kubeconfig.sh      # non-interactive
+./get-kubeconfig.sh                       # local, interactive
+BAO_TOKEN=xxx ./get-kubeconfig.sh         # token auth
+BAO_PASSWORD=xxx ./get-kubeconfig.sh      # non-interactive
+```
+
+### `set-kubeconfig.sh`
+
+Stores `~/.kube/dev.yaml` and `~/.kube/prd.yaml` in OpenBao at
+`secret/kubeconfig/dev` and `secret/kubeconfig/prd`. Defaults to the `admin`
+OpenBao user and validates both files before writing either secret.
+
+```bash
+./admin/set-kubeconfig.sh
+BAO_TOKEN=xxx ./admin/set-kubeconfig.sh
+BAO_PASSWORD=xxx ./admin/set-kubeconfig.sh
 ```
 
 ### `vendor/`
