@@ -49,7 +49,7 @@ The dev kubeconfig is stored in OpenBao at `secret/kubeconfig/dev` and synced vi
 ### 1. Store kubeconfigs in OpenBao
 
 ```bash
-./scripts/set-kubeconfig.sh
+./scripts/admin/set-kubeconfig.sh
 ```
 
 This stores `~/.kube/dev.yaml` and `~/.kube/prd.yaml` in OpenBao.
