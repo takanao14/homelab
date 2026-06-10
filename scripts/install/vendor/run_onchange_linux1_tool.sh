@@ -15,7 +15,7 @@ readonly KUBIE_VERSION="${KUBIE_VERSION:-0.28.0}"
 # renovate: datasource=github-releases depName=derailed/k9s
 readonly K9S_VERSION="${K9S_VERSION:-0.51.0}"
 # renovate: datasource=github-releases depName=helmfile/helmfile
-readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.5.2}"
+readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.5.3}"
 # renovate: datasource=github-releases depName=k0sproject/k0sctl
 readonly K0SCTL_VERSION="${K0SCTL_VERSION:-0.30.1}"
 # renovate: datasource=github-releases depName=getsops/sops
@@ -47,7 +47,7 @@ readonly KREW_VERSION="${KREW_VERSION:-0.5.0}"
 # renovate: datasource=github-releases depName=DNSControl/dnscontrol
 readonly DNSCONTROL_VERSION="${DNSCONTROL_VERSION:-4.41.0}"
 # renovate: datasource=pypi depName=ansible-core
-readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.20.5}"
+readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.21.0}"
 # renovate: datasource=pypi depName=ansible-lint
 readonly ANSIBLE_LINT_VERSION="${ANSIBLE_LINT_VERSION:-26.4.0}"
 
