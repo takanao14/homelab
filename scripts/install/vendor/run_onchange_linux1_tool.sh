@@ -487,26 +487,17 @@ install_cilium() {
 
 install_sops() {
     log_info "Installing sops..."
+    # sops only publishes checksums for the raw binaries (the .deb/.rpm packages
+    # are absent from checksums.txt), so install the verified linux binary into
+    # BIN_DIR on every distro. Only the age dependency differs per OS.
     case "$OS_ID" in
-        ubuntu|debian)
-            install_packages age
-            local deb_file pkg_name
-            make_tmp_file deb_file .deb
-            pkg_name="sops_${SOPS_VERSION}_${BIN_ARCH}.deb"
-            curl -fsSL "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/${pkg_name}" -o "$deb_file"
-            verify_sha256 "$deb_file" \
-                "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.checksums.txt" \
-                "$pkg_name"
-            sudo dpkg -i "$deb_file"
-            ;;
-        rocky)
-            install_if_needed "age" "$AGE_VERSION" install_age
-            install_binary "sops" \
-                "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.${BIN_ARCH}" \
-                "$BIN_DIR/sops" \
-                "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.checksums.txt"
-            ;;
+        ubuntu|debian) install_packages age ;;
+        rocky)         install_if_needed "age" "$AGE_VERSION" install_age ;;
     esac
+    install_binary "sops" \
+        "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.${BIN_ARCH}" \
+        "$BIN_DIR/sops" \
+        "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.checksums.txt"
 }
 
 # ============================================================================
