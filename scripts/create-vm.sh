@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Generate a Terragrunt config under tf/vm/<node>/<name>/ and apply it to create
+# a Proxmox VM, then wait until SSH on the VM becomes ready.
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${SCRIPT_DIR}/../tf"
 

@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Shared OpenBao auth helper sourced by the secrets/ scripts. Resolves a token in
+# order: BAO_TOKEN env -> stdin (BAO_TOKEN_STDIN=1) -> BAO_PASSWORD env ->
+# interactive prompt or stdin password via userpass login.
+
 openbao_authenticate() {
   if [[ -n "${BAO_TOKEN:-}" ]]; then
     export BAO_TOKEN

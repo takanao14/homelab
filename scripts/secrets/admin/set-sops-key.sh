@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../../lib/openbao-auth.sh"
 
 # Store the local SOPS age private key in OpenBao at secret/sops/age.
+# Runs both locally and remotely (over ssh).
 
 BAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
 export BAO_ADDR

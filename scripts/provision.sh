@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Provision an existing VM over SSH: install the CLI toolchain, terminal and
+# fonts, wire up the shell init files, then fetch secrets (env and kubeconfig)
+# from OpenBao.
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ENV_FILE="${HOME}/.env"
@@ -28,11 +32,11 @@ EOF
 
 IP="$1"
 USERNAME="${2:-$USER}"
-INSTALL_SCRIPT="${SCRIPT_DIR}/install/install-tools.sh"
-TERMINAL_SCRIPT="${SCRIPT_DIR}/install/install-terminal.sh"
-FONTS_SCRIPT="${SCRIPT_DIR}/install/install-fonts.sh"
+INSTALL_SCRIPT="${SCRIPT_DIR}/install/tools.sh"
+TERMINAL_SCRIPT="${SCRIPT_DIR}/install/terminal.sh"
+FONTS_SCRIPT="${SCRIPT_DIR}/install/fonts.sh"
 KUBECONFIG_SCRIPT="${SCRIPT_DIR}/secrets/get-kubeconfig.sh"
-GETENV_SCRIPT="${SCRIPT_DIR}/secrets/getenv.sh"
+GETENV_SCRIPT="${SCRIPT_DIR}/secrets/get-env.sh"
 OPENBAO_AUTH_SCRIPT="${SCRIPT_DIR}/lib/openbao-auth.sh"
 VENDOR_DIR="${SCRIPT_DIR}/install/vendor"
 
@@ -42,7 +46,7 @@ SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=y
 # SCRIPT_DIR is mirrored under /tmp, so a script resolves its siblings the same
 # way it does locally (e.g. install/* finds install/vendor, secrets/* finds
 # ../lib). Any extra args are forwarded as `KEY=VALUE` env assignments. Remaining
-# stdin (e.g. a piped secret) is passed through to the remote process.
+# stdin (e.g. a piped credential) is passed through to the remote process.
 run_remote() {
   local script="$1"; shift
   local rel="${script#"${SCRIPT_DIR}/"}"
@@ -104,9 +108,9 @@ echo "cloud-init complete."
 
 
 # Copy the vendored installers next to where the wrappers land (/tmp/install).
-# The install-*.sh wrappers run install/vendor/run_onchange_*.sh instead of
-# fetching from GitHub, so the VM never depends on the GitHub API rate limit at
-# this point.
+# The install/*.sh wrappers (tools.sh, terminal.sh, fonts.sh) run
+# install/vendor/run_onchange_*.sh instead of fetching from GitHub, so the VM
+# never depends on the GitHub API rate limit at this point.
 echo "Copying vendored installers..."
 ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "mkdir -p /tmp/install/vendor"
 scp "${SSH_OPTS[@]}" "${VENDOR_DIR}"/run_onchange_*.sh "${USERNAME}@${IP}:/tmp/install/vendor/"
@@ -185,11 +189,11 @@ if [[ -z "${BAO_TOKEN:-}" ]]; then
   read -rsp "OpenBao password for ${BAO_USERNAME}: " OPENBAO_PASSWORD; echo
 fi
 
-# Run getenv.sh on the VM to populate ~/.env from OpenBao secrets
+# Run get-env.sh on the VM to populate ~/.env from OpenBao secrets
 echo "Fetching env secrets from OpenBao..."
 run_openbao_remote "$GETENV_SCRIPT"
 
-# Run get-kubeconfig.sh on the VM using the same OpenBao credentials
+# Run get-kubeconfig.sh on the VM to populate ~/.kube from OpenBao secrets
 echo "Retrieving kubeconfig from OpenBao..."
 run_openbao_remote "$KUBECONFIG_SCRIPT"
 

@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Sync the vendored dotfiles installer scripts into this directory.
 #
-# The install wrappers (install-tools.sh, install-terminal.sh, install-fonts.sh)
+# The install wrappers (tools.sh, terminal.sh, fonts.sh under install/)
 # run these vendored copies instead of fetching them from GitHub at provision
 # time, so provisioning does not depend on GitHub API rate limits or network
 # reachability of raw.githubusercontent.com. This script is the only place that

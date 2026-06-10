@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# namespace/deployment pairs for all GPU workloads
+# Switch which single GPU workload runs on the dev-homelab cluster by scaling
+# deployments. Only runs against the dev-homelab kube context.
+
+# Namespace/deployment pairs for all GPU workloads
 GPU_WORKLOADS=(
   "ollama/ollama"
   "comfyui/comfyui"

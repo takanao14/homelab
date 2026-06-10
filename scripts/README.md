@@ -7,30 +7,30 @@ sync, and GPU workload switching.
 
 ```
 scripts/
-├── createvm.sh / removevm.sh / provision.sh  # VM lifecycle (run directly)
+├── create-vm.sh / remove-vm.sh / provision.sh  # VM lifecycle (run directly)
 ├── gpu-switch.sh                             # k8s GPU workload switch
 ├── lib/openbao-auth.sh                       # shared OpenBao auth helper
 ├── install/                                  # CLI toolchain installers (shared with packer/)
-│   ├── install-tools.sh / install-terminal.sh / install-fonts.sh
+│   ├── tools.sh / terminal.sh / fonts.sh
 │   └── vendor/                               # vendored dotfiles installers
 └── secrets/                                  # OpenBao secret sync
-    ├── getenv.sh / get-kubeconfig.sh / get-sops-key.sh   # retrieve
-    └── admin/setenv.sh / set-kubeconfig.sh / set-sops-key.sh  # store (privileged)
+    ├── get-env.sh / get-kubeconfig.sh / get-sops-key.sh   # retrieve
+    └── admin/set-env.sh / set-kubeconfig.sh / set-sops-key.sh  # store (privileged)
 ```
 
 ## VM lifecycle
 
-### `createvm.sh`
+### `create-vm.sh`
 
 Generates a Terragrunt config under `tf/vm/<node>/<name>/` and applies it to
 create a Proxmox VM. After apply, it waits until SSH on the VM becomes ready.
 
 ```bash
-./createvm.sh <name> <ip> [node] [cores] [memory_mb] [disk_gb] [image]
+./create-vm.sh <name> <ip> [node] [cores] [memory_mb] [disk_gb] [image]
 
 # Examples
-./createvm.sh myvm 192.168.20.50
-./createvm.sh myvm 192.168.20.50 dev 4 4096 80 rocky10
+./create-vm.sh myvm 192.168.20.50
+./create-vm.sh myvm 192.168.20.50 dev 4 4096 80 rocky10
 ```
 
 | Arg    | Default      | Notes                                                      |
@@ -48,16 +48,16 @@ Required env vars (read from `~/.env`): `TF_VM_USERNAME`, `TF_VM_PASSWORD`,
 `TF_VM_SSH_PUBLIC_KEY_NODE2` are supported; falls back to a prompt /
 `~/.ssh/id_ed25519.pub`).
 
-### `removevm.sh`
+### `remove-vm.sh`
 
-Destroys a VM created by `createvm.sh` and removes its Terragrunt directory.
+Destroys a VM created by `create-vm.sh` and removes its Terragrunt directory.
 
 ```bash
-./removevm.sh <name> [node] [--keep]
+./remove-vm.sh <name> [node] [--keep]
 
-./removevm.sh myvm
-./removevm.sh myvm node2
-./removevm.sh myvm dev --keep   # keep the directory after destroy
+./remove-vm.sh myvm
+./remove-vm.sh myvm node2
+./remove-vm.sh myvm dev --keep   # keep the directory after destroy
 ```
 
 ### `provision.sh`
@@ -65,11 +65,11 @@ Destroys a VM created by `createvm.sh` and removes its Terragrunt directory.
 Provisions an existing VM over SSH in order:
 
 1. Waits for SSH and cloud-init to finish
-2. Installs the CLI toolchain (`install/install-tools.sh`)
+2. Installs the CLI toolchain (`install/tools.sh`)
 3. Adds `~/.local/bin` to `PATH` and arranges for `~/.env` to be sourced in `~/.bashrc`
-4. Installs terminal and fonts (`install/install-terminal.sh`, `install/install-fonts.sh`)
+4. Installs terminal and fonts (`install/terminal.sh`, `install/fonts.sh`)
 5. Configures kitty font
-6. Fetches env secrets from OpenBao into `~/.env` (`secrets/getenv.sh`)
+6. Fetches env secrets from OpenBao into `~/.env` (`secrets/get-env.sh`)
 7. Retrieves kubeconfigs from OpenBao into `~/.kube/` (`secrets/get-kubeconfig.sh`)
 
 Scripts are copied to `/tmp` and run remotely via the `run_remote` helper, which
@@ -99,7 +99,7 @@ An invalid or insufficient token fails the requested operation; unset
 Common env vars: `OPENBAO_ADDR` (default `https://openbao.home.butaco.net`),
 `BAO_USERNAME`, `BAO_TOKEN`, `BAO_PASSWORD`.
 
-### `getenv.sh`
+### `get-env.sh`
 
 Fetches `secret/provision/env` from OpenBao and writes it to `~/.env`.
 Updates are written via a temporary file and moved into place only after a
@@ -107,19 +107,19 @@ successful fetch. Values are double-quoted so `$VAR` and `${VAR}` references
 expand when sourced by Bash. Command substitutions are rejected.
 
 ```bash
-./secrets/getenv.sh
-BAO_TOKEN=xxx ./secrets/getenv.sh
+./secrets/get-env.sh
+BAO_TOKEN=xxx ./secrets/get-env.sh
 ```
 
-### `setenv.sh`
+### `set-env.sh`
 
 Pushes the contents of `~/.env` back into `secret/provision/env`. Defaults to the
 `admin` OpenBao user. Values are parsed without sourcing the file, so shell
 variables such as `$HOME` remain literal and command substitutions are not run.
 
 ```bash
-./secrets/admin/setenv.sh
-BAO_TOKEN=xxx ./secrets/admin/setenv.sh
+./secrets/admin/set-env.sh
+BAO_TOKEN=xxx ./secrets/admin/set-env.sh
 ```
 
 ### `get-kubeconfig.sh`
@@ -186,7 +186,7 @@ deployments. Only runs against the `dev-homelab` kube context.
 
 ## `install/`
 
-### `install-tools.sh`
+### `tools.sh`
 
 Thin wrapper that runs the **vendored** dotfiles CLI-toolchain installer
 (`vendor/run_onchange_linux1_tool.sh`, see [`vendor/`](#vendor)). It installs the
@@ -202,13 +202,13 @@ The install mode selects where the tools land:
 | `global` | `/usr/local/bin` (system-wide, for shared / golden-image VMs) | yes |
 
 ```bash
-./install/install-tools.sh            # local (per-user)
-./install/install-tools.sh global     # system-wide
+./install/tools.sh            # local (per-user)
+./install/tools.sh global     # system-wide
 ```
 
-### `install-terminal.sh`
+### `terminal.sh`
 
-Installs the kitty terminal emulator. Like `install-tools.sh`, the install mode
+Installs the kitty terminal emulator. Like `tools.sh`, the install mode
 selects where kitty lands:
 
 | Mode | Target | Sudo |
@@ -217,13 +217,13 @@ selects where kitty lands:
 | `global` | `/usr/local/kitty.app` (system-wide, for shared / golden-image VMs) | yes |
 
 ```bash
-./install/install-terminal.sh            # local (per-user)
-./install/install-terminal.sh global     # system-wide
+./install/terminal.sh            # local (per-user)
+./install/terminal.sh global     # system-wide
 ```
 
-### `install-fonts.sh`
+### `fonts.sh`
 
-Installs the UDEV Gothic NF font. Like `install-tools.sh`, the install mode
+Installs the UDEV Gothic NF font. Like `tools.sh`, the install mode
 selects where the font lands:
 
 | Mode | Target | Sudo |
@@ -232,14 +232,14 @@ selects where the font lands:
 | `global` | `/usr/local/share/fonts` (system-wide, for shared / golden-image VMs) | yes |
 
 ```bash
-./install/install-fonts.sh            # local (per-user)
-./install/install-fonts.sh global     # system-wide
+./install/fonts.sh            # local (per-user)
+./install/fonts.sh global     # system-wide
 ```
 
 ### `vendor/`
 
-Local copies of the dotfiles installer scripts that `install-tools.sh`,
-`install-terminal.sh`, and `install-fonts.sh` run. Vendoring them means
+Local copies of the dotfiles installer scripts that `tools.sh`,
+`terminal.sh`, and `fonts.sh` run. Vendoring them means
 provisioning no longer fetches them from GitHub at runtime, so it does not depend
 on the GitHub API rate limit or `raw.githubusercontent.com` being reachable. The
 pinned source commit is recorded in `vendor/REVISION`.

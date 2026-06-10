@@ -14,7 +14,7 @@ set -euo pipefail
 # check (needed when baking into a golden image where xrdp is not yet running,
 # e.g. during a Packer build).
 #
-# Usage: install-fonts.sh [local|global]
+# Usage: fonts.sh [local|global]
 
 MODE="${1:-local}"
 

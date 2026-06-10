@@ -5,6 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/../../lib/openbao-auth.sh"
 
+# Push the contents of ~/.env back into secret/provision/env (admin user).
+# Runs both locally and remotely (over ssh).
+
 ENV_FILE="${HOME}/.env"
 
 if [[ ! -f "$ENV_FILE" ]]; then
