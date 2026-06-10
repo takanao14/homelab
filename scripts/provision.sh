@@ -32,30 +32,40 @@ EOF
 
 IP="$1"
 USERNAME="${2:-$USER}"
-INSTALL_SCRIPT="${SCRIPT_DIR}/install/tools.sh"
-TERMINAL_SCRIPT="${SCRIPT_DIR}/install/terminal.sh"
-FONTS_SCRIPT="${SCRIPT_DIR}/install/fonts.sh"
-KUBECONFIG_SCRIPT="${SCRIPT_DIR}/secrets/get-kubeconfig.sh"
-GETENV_SCRIPT="${SCRIPT_DIR}/secrets/get-env.sh"
-OPENBAO_AUTH_SCRIPT="${SCRIPT_DIR}/lib/openbao-auth.sh"
-VENDOR_DIR="${SCRIPT_DIR}/install/vendor"
 
 SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=yes)
+# All provisioning scripts are staged under this single directory so they can be
+# removed in one shot when provisioning finishes.
+REMOTE_ROOT="/tmp/homelab-provision"
 
-# Copy a script to the VM and execute it remotely. The script's path relative to
-# SCRIPT_DIR is mirrored under /tmp, so a script resolves its siblings the same
-# way it does locally (e.g. install/* finds install/vendor, secrets/* finds
-# ../lib). Any extra args are forwarded as `KEY=VALUE` env assignments. Remaining
-# stdin (e.g. a piped credential) is passed through to the remote process.
-run_remote() {
-  local script="$1"; shift
-  local rel="${script#"${SCRIPT_DIR}/"}"
-  local remote="/tmp/${rel}"
-  # shellcheck disable=SC2029  # dirname must expand client-side to build the path
-  ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "mkdir -p $(dirname "$remote")"
-  scp "${SSH_OPTS[@]}" "$script" "${USERNAME}@${IP}:${remote}"
+# Stage every script a remote step needs under REMOTE_ROOT in a single
+# round-trip, preserving each script's path relative to SCRIPT_DIR so it resolves
+# its siblings the same way it does locally (install/* finds install/vendor,
+# secrets/* finds ../lib). This phase handles no credentials. secrets/ ships only
+# the get-* readers; the privileged admin/set-* scripts are never copied to a
+# provisioned VM.
+stage_scripts() {
+  echo "Staging provisioning scripts on ${IP}..."
+  # shellcheck disable=SC2029  # REMOTE_ROOT is a client-side constant, expanded here by design
+  ssh "${SSH_OPTS[@]}" -n "${USERNAME}@${IP}" "rm -rf ${REMOTE_ROOT} && mkdir -p ${REMOTE_ROOT}"
+  # --no-xattrs keeps macOS bsdtar from embedding extended attributes (e.g.
+  # com.apple.provenance), which GNU tar on the Linux VM would warn about on
+  # extract. Both bsdtar and GNU tar accept the flag.
   # shellcheck disable=SC2029
-  ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "$* bash ${remote}"
+  tar --no-xattrs -C "$SCRIPT_DIR" -cf - \
+        install lib \
+        secrets/get-env.sh secrets/get-kubeconfig.sh \
+    | ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "tar -C ${REMOTE_ROOT} -xf -"
+}
+
+# Execute a staged script on the VM. `rel` is its path relative to SCRIPT_DIR.
+# Extra args are forwarded as `KEY=VALUE` env assignments. This is a single ssh,
+# so any piped stdin (e.g. a credential) reaches the script intact -- there is no
+# sibling ssh to consume it first.
+run_remote() {
+  local rel="$1"; shift
+  # shellcheck disable=SC2029  # remote path and env assignments expand client-side by design
+  ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "$* bash ${REMOTE_ROOT}/${rel}"
 }
 
 shell_quote() {
@@ -63,7 +73,7 @@ shell_quote() {
 }
 
 run_openbao_remote() {
-  local script="$1"
+  local rel="$1"
   local openbao_addr_remote
   local bao_username_remote
 
@@ -72,13 +82,13 @@ run_openbao_remote() {
 
   if [[ -n "${BAO_TOKEN:-}" ]]; then
     printf '%s\n' "$BAO_TOKEN" | \
-      run_remote "$script" \
+      run_remote "$rel" \
         "OPENBAO_ADDR=${openbao_addr_remote}" \
         "BAO_USERNAME=${bao_username_remote}" \
         "BAO_TOKEN_STDIN=1"
   else
     printf '%s\n' "$OPENBAO_PASSWORD" | \
-      run_remote "$script" \
+      run_remote "$rel" \
         "OPENBAO_ADDR=${openbao_addr_remote}" \
         "BAO_USERNAME=${bao_username_remote}"
   fi
@@ -107,21 +117,17 @@ ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "cloud-init status --wait" 2>/dev/null 
 echo "cloud-init complete."
 
 
-# Copy the vendored installers next to where the wrappers land (/tmp/install).
-# The install/*.sh wrappers (tools.sh, terminal.sh, fonts.sh) run
+# Remove the staged scripts from the VM when provisioning finishes (including on
+# error), so no auth helper or script copies linger under /tmp.
+trap 'ssh "${SSH_OPTS[@]}" -n "${USERNAME}@${IP}" "rm -rf ${REMOTE_ROOT}" 2>/dev/null || true' EXIT
+
+# Stage all scripts in one round-trip. The install/*.sh wrappers run the bundled
 # install/vendor/run_onchange_*.sh instead of fetching from GitHub, so the VM
 # never depends on the GitHub API rate limit at this point.
-echo "Copying vendored installers..."
-ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "mkdir -p /tmp/install/vendor"
-scp "${SSH_OPTS[@]}" "${VENDOR_DIR}"/run_onchange_*.sh "${USERNAME}@${IP}:/tmp/install/vendor/"
+stage_scripts
 
-echo "Copying OpenBao auth helper..."
-ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "mkdir -p /tmp/lib"
-scp "${SSH_OPTS[@]}" "$OPENBAO_AUTH_SCRIPT" "${USERNAME}@${IP}:/tmp/lib/"
-
-# Copy and run tool installation
 echo "Running tool installation..."
-run_remote "$INSTALL_SCRIPT"
+run_remote "install/tools.sh"
 
 echo "Ensuring \$HOME/.local/bin is in PATH..."
 ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" \
@@ -140,10 +146,10 @@ ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" \
   "grep -qF '.bashrc' ~/.bash_profile 2>/dev/null || echo '[[ -f \"\$HOME/.bashrc\" ]] && source \"\$HOME/.bashrc\"' >> ~/.bash_profile"
 
 echo "Running terminal installation..."
-run_remote "$TERMINAL_SCRIPT"
+run_remote "install/terminal.sh"
 
 echo "Running font installation..."
-run_remote "$FONTS_SCRIPT"
+run_remote "install/fonts.sh"
 
 echo "Configuring kitty font..."
 ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" 'bash -s' <<'REMOTE'
@@ -191,11 +197,11 @@ fi
 
 # Run get-env.sh on the VM to populate ~/.env from OpenBao secrets
 echo "Fetching env secrets from OpenBao..."
-run_openbao_remote "$GETENV_SCRIPT"
+run_openbao_remote "secrets/get-env.sh"
 
 # Run get-kubeconfig.sh on the VM to populate ~/.kube from OpenBao secrets
 echo "Retrieving kubeconfig from OpenBao..."
-run_openbao_remote "$KUBECONFIG_SCRIPT"
+run_openbao_remote "secrets/get-kubeconfig.sh"
 
 echo ""
 echo "=== Provisioning complete ==="
