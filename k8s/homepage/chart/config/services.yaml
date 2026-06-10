@@ -176,8 +176,3 @@
         icon: mdi-access-point-network
         href: http://{{ .Values.network.wifiAp1 }}/
         description: wifi-ap1
-
-    - WiFi-AP2:
-        icon: mdi-access-point-network
-        href: http://{{ .Values.network.wifiAp2 }}/
-        description: wifi-ap2
