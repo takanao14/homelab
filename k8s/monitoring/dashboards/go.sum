@@ -6,3 +6,5 @@ github.com/grafana/grafana-foundation-sdk/go v0.0.15 h1:XAzhJbLtFvDEIvqz+Rq3kpQ2
 github.com/grafana/grafana-foundation-sdk/go v0.0.15/go.mod h1:48EA8jF85SrReYflLa39Sk34b6NpxwJPBwjF3TJgRpE=
 github.com/grafana/grafana-foundation-sdk/go v0.0.16 h1:SLcU8K/YVCToj7/a+7NT/AosaH0mAJlZQjbZ1WX6X/E=
 github.com/grafana/grafana-foundation-sdk/go v0.0.16/go.mod h1:48EA8jF85SrReYflLa39Sk34b6NpxwJPBwjF3TJgRpE=
+github.com/grafana/grafana-foundation-sdk/go v0.0.17 h1:QQB0iO3btQHEip3m+0gF/lgEfoFr8ZRoQ/flfzgAr/8=
+github.com/grafana/grafana-foundation-sdk/go v0.0.17/go.mod h1:48EA8jF85SrReYflLa39Sk34b6NpxwJPBwjF3TJgRpE=
