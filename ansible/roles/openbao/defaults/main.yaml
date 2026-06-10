@@ -82,13 +82,3 @@ openbao_secrets: []
 #       password: "xxxx"
 #       policies: "kv-admin"
 openbao_userpass_users: []
-
-# Kubeconfig files to seed into OpenBao KV at secret/kubeconfig/<name>
-# Each entry requires: name (cluster name) and path (kubeconfig path on the Ansible control node)
-# Example:
-#   openbao_kubeconfigs:
-#     - name: dev
-#       path: "~/.kube/dev-homelab.yaml"
-#     - name: prd
-#       path: "~/.kube/prd-homelab.yaml"
-openbao_kubeconfigs: []

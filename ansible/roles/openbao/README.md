@@ -25,7 +25,6 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_k8s_dev_ca_cert` | PEM-encoded CA certificate of the dev cluster. |
 | `openbao_secrets` | List of KV secrets to write. Each entry requires `path` and `data` (key/value pairs). |
 | `openbao_userpass_users` | List of userpass users. Each entry requires `username`, `password`, and `policies`. |
-| `openbao_kubeconfigs` | List of kubeconfig files to seed. Each entry requires `name` (cluster name) and `path` (file path on the Ansible control node). |
 
 ### Non-secret variables (in `defaults/main.yaml`)
 
@@ -171,26 +170,6 @@ secret/kubeconfig/prd   # prd cluster kubeconfig
 ```
 
 The distinction: `k8s/` is for secrets **used by** apps running in Kubernetes; `kubeconfig/` is for credentials **to access** Kubernetes clusters.
-
-## Seeding Kubeconfigs
-
-Configure `openbao_kubeconfigs` in `group_vars/openbao.sops.yaml`:
-
-```yaml
-openbao_kubeconfigs:
-  - name: dev
-    path: ~/.kube/dev.yaml
-  - name: prd
-    path: ~/.kube/prd.yaml
-```
-
-Run the dedicated playbook:
-
-```bash
-ansible-playbook playbooks/openbao_seed_kubeconfig.yaml
-```
-
-The playbook runs `bao kv put` from the Ansible control node directly against the OpenBao API (`openbao_api_addr`). No files are copied to the OpenBao host.
 
 ## Userpass auth
 
