@@ -46,25 +46,15 @@ kubectl delete secret headlamp-token -n headlamp
 Headlamp supports multi-cluster by mounting a kubeconfig file as a volume.
 The dev kubeconfig is stored in OpenBao at `secret/kubeconfig/dev` and synced via ESO.
 
-### 1. Configure openbao_kubeconfigs
-
-Add entries to `openbao_kubeconfigs` in `ansible/inventories/homelab/group_vars/openbao.sops.yaml`:
-
-```yaml
-openbao_kubeconfigs:
-  - name: dev
-    path: ~/.kube/dev.yaml
-  - name: prd
-    path: ~/.kube/prd.yaml
-```
-
-### 2. Run the Ansible playbook
+### 1. Store kubeconfigs in OpenBao
 
 ```bash
-ansible-playbook playbooks/openbao_seed_kubeconfig.yaml
+./scripts/set-kubeconfig.sh
 ```
 
-### 3. Sync and verify
+This stores `~/.kube/dev.yaml` and `~/.kube/prd.yaml` in OpenBao.
+
+### 2. Sync and verify
 
 Push the changes and let ArgoCD sync. Headlamp will mount the dev kubeconfig at
 `/headlamp/kubeconfig` and expose it as a selectable cluster in the UI.
