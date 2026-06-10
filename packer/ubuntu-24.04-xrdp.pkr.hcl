@@ -90,7 +90,7 @@ build {
   # install-*.sh use local copies instead of fetching them from GitHub during
   # the build. VENDOR_DIR points each wrapper at this directory.
   provisioner "file" {
-    source      = "../scripts/scripts/vendor"
+    source      = "../scripts/install/vendor"
     destination = "/tmp"
   }
 
@@ -99,7 +99,7 @@ build {
   # also used by scripts/provision.sh. Global mode self-elevates with sudo and
   # installs into /usr/local/bin.
   provisioner "shell" {
-    script          = "../scripts/scripts/install-tools.sh"
+    script          = "../scripts/install/install-tools.sh"
     execute_command = "VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
   }
 
@@ -107,13 +107,13 @@ build {
   # TOOL_FORCE_GUI_INSTALL=1 skips the live-GUI check (xrdp is not running yet
   # during the build).
   provisioner "shell" {
-    script          = "../scripts/scripts/install-fonts.sh"
+    script          = "../scripts/install/install-fonts.sh"
     execute_command = "TOOL_FORCE_GUI_INSTALL=1 VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
   }
 
   # Install the kitty terminal system-wide (into /usr/local/kitty.app).
   provisioner "shell" {
-    script          = "../scripts/scripts/install-terminal.sh"
+    script          = "../scripts/install/install-terminal.sh"
     execute_command = "TOOL_FORCE_GUI_INSTALL=1 VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
   }
 

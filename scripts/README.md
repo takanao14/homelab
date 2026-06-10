@@ -3,6 +3,21 @@
 Helper scripts for managing the homelab: VM lifecycle, provisioning, secret
 sync, and GPU workload switching.
 
+## Layout
+
+```
+scripts/
+├── createvm.sh / removevm.sh / provision.sh  # VM lifecycle (run directly)
+├── gpu-switch.sh                             # k8s GPU workload switch
+├── lib/openbao-auth.sh                       # shared OpenBao auth helper
+├── install/                                  # CLI toolchain installers (shared with packer/)
+│   ├── install-tools.sh / install-terminal.sh / install-fonts.sh
+│   └── vendor/                               # vendored dotfiles installers
+└── secrets/                                  # OpenBao secret sync
+    ├── getenv.sh / get-kubeconfig.sh / get-sops-key.sh   # retrieve
+    └── admin/setenv.sh / set-kubeconfig.sh / set-sops-key.sh  # store (privileged)
+```
+
 ## VM lifecycle
 
 ### `createvm.sh`
@@ -50,16 +65,18 @@ Destroys a VM created by `createvm.sh` and removes its Terragrunt directory.
 Provisions an existing VM over SSH in order:
 
 1. Waits for SSH and cloud-init to finish
-2. Installs the CLI toolchain (`scripts/install-tools.sh`)
+2. Installs the CLI toolchain (`install/install-tools.sh`)
 3. Adds `~/.local/bin` to `PATH` and arranges for `~/.env` to be sourced in `~/.bashrc`
-4. Installs terminal and fonts (`scripts/install-terminal.sh`, `scripts/install-fonts.sh`)
+4. Installs terminal and fonts (`install/install-terminal.sh`, `install/install-fonts.sh`)
 5. Configures kitty font
-6. Fetches env secrets from OpenBao into `~/.env` (`scripts/getenv.sh`)
-7. Retrieves kubeconfigs from OpenBao into `~/.kube/` (`get-kubeconfig.sh`)
+6. Fetches env secrets from OpenBao into `~/.env` (`secrets/getenv.sh`)
+7. Retrieves kubeconfigs from OpenBao into `~/.kube/` (`secrets/get-kubeconfig.sh`)
 
-Scripts are copied to `/tmp` and run remotely via the `run_remote` helper; the
-vendored installers (`scripts/vendor/`) are copied to `/tmp/vendor/` so the
-`install-*.sh` wrappers run local copies instead of downloading from GitHub. The
+Scripts are copied to `/tmp` and run remotely via the `run_remote` helper, which
+mirrors each script's path relative to `scripts/` under `/tmp` so it resolves its
+siblings the same way as locally. The vendored installers (`install/vendor/`) are
+copied to `/tmp/install/vendor/` so the `install-*.sh` wrappers run local copies
+instead of downloading from GitHub. The
 OpenBao credentials are reused across steps. When `BAO_TOKEN` is set, it is
 forwarded to the remote scripts over stdin; otherwise the password is entered
 once and reused.
@@ -90,8 +107,8 @@ successful fetch. Values are double-quoted so `$VAR` and `${VAR}` references
 expand when sourced by Bash. Command substitutions are rejected.
 
 ```bash
-./getenv.sh
-BAO_TOKEN=xxx ./getenv.sh
+./secrets/getenv.sh
+BAO_TOKEN=xxx ./secrets/getenv.sh
 ```
 
 ### `setenv.sh`
@@ -101,8 +118,59 @@ Pushes the contents of `~/.env` back into `secret/provision/env`. Defaults to th
 variables such as `$HOME` remain literal and command substitutions are not run.
 
 ```bash
-./admin/setenv.sh
-BAO_TOKEN=xxx ./admin/setenv.sh
+./secrets/admin/setenv.sh
+BAO_TOKEN=xxx ./secrets/admin/setenv.sh
+```
+
+### `get-kubeconfig.sh`
+
+Retrieves the `dev`/`prd` kubeconfigs from OpenBao into `~/.kube/`. Existing
+files are replaced only after both kubeconfigs are fetched successfully.
+
+```bash
+./secrets/get-kubeconfig.sh                       # local, interactive
+BAO_TOKEN=xxx ./secrets/get-kubeconfig.sh         # token auth
+BAO_PASSWORD=xxx ./secrets/get-kubeconfig.sh      # non-interactive
+```
+
+### `set-kubeconfig.sh`
+
+Stores `~/.kube/dev.yaml` and `~/.kube/prd.yaml` in OpenBao at
+`secret/kubeconfig/dev` and `secret/kubeconfig/prd`. Defaults to the `admin`
+OpenBao user and validates both files before writing either secret.
+
+```bash
+./secrets/admin/set-kubeconfig.sh
+BAO_TOKEN=xxx ./secrets/admin/set-kubeconfig.sh
+BAO_PASSWORD=xxx ./secrets/admin/set-kubeconfig.sh
+```
+
+### `get-sops-key.sh`
+
+Retrieves the SOPS age private key from OpenBao (`secret/sops/age`) into
+`~/.config/sops/age/keys.txt` (override with `SOPS_AGE_KEY_FILE`). The file is
+written via a temporary file and moved into place only after the value is
+fetched and validated as an age private key. This is the bootstrap key used to
+decrypt the repo's `*.sops.yaml` and `*.enc.env` files; it is intentionally
+**not** part of the default `provision.sh` flow, so run it explicitly only where
+SOPS decryption is needed.
+
+```bash
+./secrets/get-sops-key.sh                       # local, interactive
+BAO_TOKEN=xxx ./secrets/get-sops-key.sh         # token auth
+BAO_PASSWORD=xxx ./secrets/get-sops-key.sh      # non-interactive
+```
+
+### `set-sops-key.sh`
+
+Stores `~/.config/sops/age/keys.txt` (override with `SOPS_AGE_KEY_FILE`) in
+OpenBao at `secret/sops/age`. Defaults to the `admin` OpenBao user and validates
+the file before writing.
+
+```bash
+./secrets/admin/set-sops-key.sh
+BAO_TOKEN=xxx ./secrets/admin/set-sops-key.sh
+BAO_PASSWORD=xxx ./secrets/admin/set-sops-key.sh
 ```
 
 ## Kubernetes
@@ -116,7 +184,7 @@ deployments. Only runs against the `dev-homelab` kube context.
 ./gpu-switch.sh <ollama|comfyui|lemonade-server|off>
 ```
 
-## `scripts/`
+## `install/`
 
 ### `install-tools.sh`
 
@@ -134,8 +202,8 @@ The install mode selects where the tools land:
 | `global` | `/usr/local/bin` (system-wide, for shared / golden-image VMs) | yes |
 
 ```bash
-./scripts/install-tools.sh            # local (per-user)
-./scripts/install-tools.sh global     # system-wide
+./install/install-tools.sh            # local (per-user)
+./install/install-tools.sh global     # system-wide
 ```
 
 ### `install-terminal.sh`
@@ -149,8 +217,8 @@ selects where kitty lands:
 | `global` | `/usr/local/kitty.app` (system-wide, for shared / golden-image VMs) | yes |
 
 ```bash
-./scripts/install-terminal.sh            # local (per-user)
-./scripts/install-terminal.sh global     # system-wide
+./install/install-terminal.sh            # local (per-user)
+./install/install-terminal.sh global     # system-wide
 ```
 
 ### `install-fonts.sh`
@@ -164,31 +232,8 @@ selects where the font lands:
 | `global` | `/usr/local/share/fonts` (system-wide, for shared / golden-image VMs) | yes |
 
 ```bash
-./scripts/install-fonts.sh            # local (per-user)
-./scripts/install-fonts.sh global     # system-wide
-```
-
-### `get-kubeconfig.sh`
-
-Retrieves the `dev`/`prd` kubeconfigs from OpenBao into `~/.kube/`. Existing
-files are replaced only after both kubeconfigs are fetched successfully.
-
-```bash
-./get-kubeconfig.sh                       # local, interactive
-BAO_TOKEN=xxx ./get-kubeconfig.sh         # token auth
-BAO_PASSWORD=xxx ./get-kubeconfig.sh      # non-interactive
-```
-
-### `set-kubeconfig.sh`
-
-Stores `~/.kube/dev.yaml` and `~/.kube/prd.yaml` in OpenBao at
-`secret/kubeconfig/dev` and `secret/kubeconfig/prd`. Defaults to the `admin`
-OpenBao user and validates both files before writing either secret.
-
-```bash
-./admin/set-kubeconfig.sh
-BAO_TOKEN=xxx ./admin/set-kubeconfig.sh
-BAO_PASSWORD=xxx ./admin/set-kubeconfig.sh
+./install/install-fonts.sh            # local (per-user)
+./install/install-fonts.sh global     # system-wide
 ```
 
 ### `vendor/`
@@ -203,7 +248,7 @@ Do not edit the `run_onchange_*.sh` files by hand — they are kept in sync with
 `takanao14/dotfiles` by `vendor/sync.sh`:
 
 ```bash
-./scripts/vendor/sync.sh           # refresh to the latest dotfiles main
-REF=<sha|tag> ./scripts/vendor/sync.sh   # pin to a specific ref
-./scripts/vendor/sync.sh --check   # CI: fail if the vendored copies have drifted
+./install/vendor/sync.sh           # refresh to the latest dotfiles main
+REF=<sha|tag> ./install/vendor/sync.sh   # pin to a specific ref
+./install/vendor/sync.sh --check   # CI: fail if the vendored copies have drifted
 ```

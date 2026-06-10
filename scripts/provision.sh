@@ -28,25 +28,30 @@ EOF
 
 IP="$1"
 USERNAME="${2:-$USER}"
-INSTALL_SCRIPT="${SCRIPT_DIR}/scripts/install-tools.sh"
-TERMINAL_SCRIPT="${SCRIPT_DIR}/scripts/install-terminal.sh"
-FONTS_SCRIPT="${SCRIPT_DIR}/scripts/install-fonts.sh"
-KUBECONFIG_SCRIPT="${SCRIPT_DIR}/get-kubeconfig.sh"
-GETENV_SCRIPT="${SCRIPT_DIR}/getenv.sh"
+INSTALL_SCRIPT="${SCRIPT_DIR}/install/install-tools.sh"
+TERMINAL_SCRIPT="${SCRIPT_DIR}/install/install-terminal.sh"
+FONTS_SCRIPT="${SCRIPT_DIR}/install/install-fonts.sh"
+KUBECONFIG_SCRIPT="${SCRIPT_DIR}/secrets/get-kubeconfig.sh"
+GETENV_SCRIPT="${SCRIPT_DIR}/secrets/getenv.sh"
 OPENBAO_AUTH_SCRIPT="${SCRIPT_DIR}/lib/openbao-auth.sh"
-VENDOR_DIR="${SCRIPT_DIR}/scripts/vendor"
+VENDOR_DIR="${SCRIPT_DIR}/install/vendor"
 
 SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=yes)
 
-# Copy a script to the VM and execute it remotely.
-# Any extra args are forwarded as `KEY=VALUE` env assignments. Remaining stdin
-# (e.g. a piped secret) is passed through to the remote process.
+# Copy a script to the VM and execute it remotely. The script's path relative to
+# SCRIPT_DIR is mirrored under /tmp, so a script resolves its siblings the same
+# way it does locally (e.g. install/* finds install/vendor, secrets/* finds
+# ../lib). Any extra args are forwarded as `KEY=VALUE` env assignments. Remaining
+# stdin (e.g. a piped secret) is passed through to the remote process.
 run_remote() {
   local script="$1"; shift
-  local base; base="$(basename "$script")"
-  scp "${SSH_OPTS[@]}" "$script" "${USERNAME}@${IP}:/tmp/${base}"
+  local rel="${script#"${SCRIPT_DIR}/"}"
+  local remote="/tmp/${rel}"
+  # shellcheck disable=SC2029  # dirname must expand client-side to build the path
+  ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "mkdir -p $(dirname "$remote")"
+  scp "${SSH_OPTS[@]}" "$script" "${USERNAME}@${IP}:${remote}"
   # shellcheck disable=SC2029
-  ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "$* bash /tmp/${base}"
+  ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "$* bash ${remote}"
 }
 
 shell_quote() {
@@ -98,12 +103,13 @@ ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "cloud-init status --wait" 2>/dev/null 
 echo "cloud-init complete."
 
 
-# Copy the vendored installers next to where the wrappers land (/tmp). The
-# install-*.sh wrappers run /tmp/vendor/run_onchange_*.sh instead of fetching
-# from GitHub, so the VM never depends on the GitHub API rate limit at this point.
+# Copy the vendored installers next to where the wrappers land (/tmp/install).
+# The install-*.sh wrappers run install/vendor/run_onchange_*.sh instead of
+# fetching from GitHub, so the VM never depends on the GitHub API rate limit at
+# this point.
 echo "Copying vendored installers..."
-ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "mkdir -p /tmp/vendor"
-scp "${SSH_OPTS[@]}" "${VENDOR_DIR}"/run_onchange_*.sh "${USERNAME}@${IP}:/tmp/vendor/"
+ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "mkdir -p /tmp/install/vendor"
+scp "${SSH_OPTS[@]}" "${VENDOR_DIR}"/run_onchange_*.sh "${USERNAME}@${IP}:/tmp/install/vendor/"
 
 echo "Copying OpenBao auth helper..."
 ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "mkdir -p /tmp/lib"

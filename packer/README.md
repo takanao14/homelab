@@ -159,14 +159,14 @@ This repository uses [Renovate](https://docs.renovatebot.com/) to automatically
 track and update dependency versions, configured in the root `renovate.json`.
 
 The XRDP images bake the CLI toolchain (kubectl, helm, terragrunt, opentofu,
-k9s, …) system-wide via `../scripts/scripts/install-tools.sh global`, the single
+k9s, …) system-wide via `../scripts/install/install-tools.sh global`, the single
 source of truth shared with `scripts/provision.sh`. Those tool versions are
 pinned and Renovate-managed in the `takanao14/dotfiles` installer, not here.
 
 The wrappers run the **vendored** installer copies in
-`../scripts/scripts/vendor/` (uploaded to the guest by a `file` provisioner and
+`../scripts/install/vendor/` (uploaded to the guest by a `file` provisioner and
 selected via `VENDOR_DIR`), so the build does not fetch them from GitHub at
-runtime. Refresh those copies with `../scripts/scripts/vendor/sync.sh`.
+runtime. Refresh those copies with `../scripts/install/vendor/sync.sh`.
 
 **Not tracked (always installed as latest):**
 - APT/DNF packages installed by the Packer scripts (terraform, packer, vault,
