@@ -113,10 +113,10 @@ install_base_dependencies() {
     update_package_cache
     case "$OS_ID" in
         ubuntu|debian)
-            install_packages ca-certificates curl coreutils file findutils git gnupg gzip tar unzip xz-utils
+            install_packages ca-certificates curl coreutils file findutils git gnupg gzip make tar unzip xz-utils
             ;;
         rocky)
-            install_packages ca-certificates curl coreutils file findutils git gnupg2 gzip tar unzip xz
+            install_packages ca-certificates curl coreutils file findutils git gnupg2 gzip make tar unzip xz
             ;;
         *)
             log_error "Unsupported OS: ${OS_ID}"
