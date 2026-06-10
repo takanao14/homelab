@@ -72,14 +72,19 @@ Provisions an existing VM over SSH in order:
 6. Fetches env secrets from OpenBao into `~/.env` (`secrets/get-env.sh`)
 7. Retrieves kubeconfigs from OpenBao into `~/.kube/` (`secrets/get-kubeconfig.sh`)
 
-Scripts are copied to `/tmp` and run remotely via the `run_remote` helper, which
-mirrors each script's path relative to `scripts/` under `/tmp` so it resolves its
-siblings the same way as locally. The vendored installers (`install/vendor/`) are
-copied to `/tmp/install/vendor/` so the `install-*.sh` wrappers run local copies
-instead of downloading from GitHub. The
-OpenBao credentials are reused across steps. When `BAO_TOKEN` is set, it is
-forwarded to the remote scripts over stdin; otherwise the password is entered
-once and reused.
+All scripts are staged once under `/tmp/homelab-provision/` in a single
+`tar`-over-`ssh` step (`stage_scripts`), preserving each script's path relative
+to `scripts/` so it resolves its siblings the same way as locally (e.g.
+`install/tools.sh` finds `install/vendor/`). Because the vendored installers ride
+along, the `install/*.sh` wrappers run those local copies instead of downloading
+from GitHub. Only the `secrets/get-*` readers are staged; the privileged
+`admin/set-*` scripts are never copied to the VM. The staged directory is removed
+on exit (success or failure) via a `trap`.
+
+Each step then runs through the `run_remote` helper, which is a single `ssh`
+invocation, so a piped credential reaches the script intact. The OpenBao
+credential is reused across steps: when `BAO_TOKEN` is set it is forwarded to the
+remote scripts over stdin; otherwise the password is entered once and reused.
 
 ```bash
 ./provision.sh <ip> [username]
