@@ -290,11 +290,18 @@ install_fzf() {
 }
 
 install_zellij() {
-    local archive_name="zellij-${ARCH}-unknown-linux-musl.tar.gz"
-    install_binary "zellij" \
-        "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/${archive_name}" \
-        "$BIN_DIR/zellij" \
-        "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/${archive_name%.tar.gz}.sha256sum"
+    log_info "Installing zellij ${ZELLIJ_VERSION}..."
+    # zellij publishes the checksum of the *extracted* binary, not the tarball,
+    # so the generic install_binary (which verifies the archive) can't be used.
+    # Extract first, then verify the binary against the .sha256sum.
+    local tmp_dir base url
+    make_tmp_dir tmp_dir
+    base="zellij-${ARCH}-unknown-linux-musl"
+    url="https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}"
+    curl -fsSL "${url}/${base}.tar.gz" -o "${tmp_dir}/${base}.tar.gz"
+    tar xz -C "$tmp_dir" -f "${tmp_dir}/${base}.tar.gz"
+    verify_sha256 "${tmp_dir}/zellij" "${url}/${base}.sha256sum" "zellij"
+    install -m 0755 "${tmp_dir}/zellij" "$BIN_DIR/zellij"
 }
 
 # ============================================================================
