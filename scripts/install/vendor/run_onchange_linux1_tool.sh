@@ -47,7 +47,7 @@ readonly KREW_VERSION="${KREW_VERSION:-0.5.0}"
 # renovate: datasource=github-releases depName=DNSControl/dnscontrol
 readonly DNSCONTROL_VERSION="${DNSCONTROL_VERSION:-4.41.0}"
 # renovate: datasource=pypi depName=ansible-core
-readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.21.0}"
+readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.20.5}"
 # renovate: datasource=pypi depName=ansible-lint
 readonly ANSIBLE_LINT_VERSION="${ANSIBLE_LINT_VERSION:-26.4.0}"
 
