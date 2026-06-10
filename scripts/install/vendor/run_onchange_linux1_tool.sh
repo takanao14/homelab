@@ -46,6 +46,10 @@ readonly DIRENV_VERSION="${DIRENV_VERSION:-2.37.1}"
 readonly KREW_VERSION="${KREW_VERSION:-0.5.0}"
 # renovate: datasource=github-releases depName=DNSControl/dnscontrol
 readonly DNSCONTROL_VERSION="${DNSCONTROL_VERSION:-4.41.0}"
+# renovate: datasource=pypi depName=ansible-core
+readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.21.0}"
+# renovate: datasource=pypi depName=ansible-lint
+readonly ANSIBLE_LINT_VERSION="${ANSIBLE_LINT_VERSION:-26.4.0}"
 
 # Install location. Defaults to a per-user prefix. Set TOOL_BIN_DIR (and
 # TOOL_VERSION_CACHE_DIR) to a system-wide path such as /usr/local/bin to make
@@ -58,6 +62,10 @@ readonly VERSION_CACHE_DIR="${TOOL_VERSION_CACHE_DIR:-$HOME/.local/share/tool-ve
 # running this via chezmoi / provision.sh on a baked image does not shadow a
 # current baseline with a duplicate in $HOME/.local.
 readonly SYSTEM_CACHE_DIR="/usr/local/share/tool-versions"
+# pipx-managed Python tools (ansible, ansible-lint). Venvs live next to the
+# version cache (per-user $HOME/.local/share, or /usr/local/share when this runs
+# as a system-wide baseline); app symlinks go into BIN_DIR like every other tool.
+readonly PIPX_HOME_DIR="$(dirname "$VERSION_CACHE_DIR")/pipx"
 readonly ARCH="$(uname -m)"
 readonly BIN_ARCH="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
 
@@ -525,6 +533,47 @@ install_helm_diff_plugin() {
 }
 
 # ============================================================================
+# Python Tools (pipx)
+# ============================================================================
+
+# Bootstrap pipx once; ansible / ansible-lint are then installed into isolated
+# venvs. ansible-lint in particular is not reliably packaged by the distros, and
+# upstream Ansible recommends pip/pipx, so we avoid apt/dnf for these.
+ensure_pipx() {
+    command -v pipx &>/dev/null && return
+    log_info "Installing pipx..."
+    update_package_cache
+    case "$OS_ID" in
+        ubuntu|debian)
+            install_packages python3 python3-pip pipx
+            ;;
+        rocky)
+            install_packages epel-release
+            update_package_cache
+            install_packages python3 python3-pip pipx
+            ;;
+    esac
+}
+
+# Route pipx so app symlinks land in BIN_DIR (already on PATH) and venvs live in
+# PIPX_HOME_DIR. --force makes the install idempotent and lets a version bump
+# reinstall over an existing venv.
+pipx_install() {
+    ensure_pipx
+    PIPX_HOME="$PIPX_HOME_DIR" PIPX_BIN_DIR="$BIN_DIR" pipx install --force "$1"
+}
+
+install_ansible() {
+    log_info "Installing ansible-core ${ANSIBLE_CORE_VERSION}..."
+    pipx_install "ansible-core==${ANSIBLE_CORE_VERSION}"
+}
+
+install_ansible_lint() {
+    log_info "Installing ansible-lint ${ANSIBLE_LINT_VERSION}..."
+    pipx_install "ansible-lint==${ANSIBLE_LINT_VERSION}"
+}
+
+# ============================================================================
 # Main
 # ============================================================================
 
@@ -561,6 +610,9 @@ main() {
     install_if_needed "sops"     "$SOPS_VERSION"     install_sops
     install_if_needed "cilium"   "$CILIUM_VERSION"   install_cilium
     install_if_needed "dnscontrol" "$DNSCONTROL_VERSION" install_dnscontrol
+
+    install_if_needed "ansible"      "$ANSIBLE_CORE_VERSION" install_ansible
+    install_if_needed "ansible-lint" "$ANSIBLE_LINT_VERSION" install_ansible_lint
 
     log_info "=== Installation completed ==="
 }
