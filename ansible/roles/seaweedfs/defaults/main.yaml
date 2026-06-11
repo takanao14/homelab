@@ -1,0 +1,37 @@
+---
+# renovate: datasource=github-releases depName=seaweedfs/seaweedfs
+seaweedfs_version: "4.32"
+
+seaweedfs_user: seaweedfs
+seaweedfs_group: seaweedfs
+
+seaweedfs_binary: /usr/local/bin/weed
+seaweedfs_download_dir: /opt/seaweedfs
+seaweedfs_data_dir: /var/lib/seaweedfs
+seaweedfs_config_dir: /etc/seaweedfs
+seaweedfs_s3_config: "{{ seaweedfs_config_dir }}/s3.json"
+
+# Address advertised to clients, and the interface the services bind to.
+seaweedfs_ip: "{{ ansible_default_ipv4.address }}"
+seaweedfs_bind_ip: "0.0.0.0"
+
+# Master port (used by the admin UI to reach the cluster).
+seaweedfs_master_port: 9333
+# S3 gateway port (the only port clients need for the Terraform backend).
+seaweedfs_s3_port: 8333
+
+# S3 identity (access key / secret key). Set via group_vars/seaweedfs.sops.yaml.
+seaweedfs_s3_identity_name: terraform
+seaweedfs_s3_access_key: ""
+seaweedfs_s3_secret_key: ""
+
+# Admin web UI (weed admin), deployed as a separate systemd service.
+seaweedfs_admin_enabled: true
+seaweedfs_admin_port: 23646
+seaweedfs_admin_data_dir: /var/lib/seaweedfs-admin
+seaweedfs_admin_env_file: "{{ seaweedfs_config_dir }}/admin.env"
+seaweedfs_admin_user: admin
+# Admin UI password. Passed via the WEED_ADMIN_PASSWORD env var (not the command
+# line) so it does not appear in the process arguments. If empty, the admin UI
+# runs WITHOUT authentication. Set via group_vars/seaweedfs.sops.yaml.
+seaweedfs_admin_password: ""

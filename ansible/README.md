@@ -35,6 +35,8 @@ ansible/
 │       │   ├── openbao.yaml
 │       │   ├── openbao.sops.yaml
 │       │   ├── proxmox.sops.yaml
+│       │   ├── seaweedfs.yaml
+│       │   ├── seaweedfs.sops.yaml
 │       │   └── syslog.yaml
 │       └── host_vars/
 │           └── <hostname>.sops.yaml # SOPS-encrypted host-specific secrets (e.g. ansible_user)
@@ -47,6 +49,7 @@ ansible/
 │   ├── forgejo.yaml
 │   ├── forgejo_runner.yaml
 │   ├── netbox.yaml
+│   ├── seaweedfs.yaml
 │   ├── node_exporter.yaml
 │   ├── blackbox_exporter.yaml
 │   ├── syslog.yaml
@@ -71,6 +74,7 @@ ansible/
     ├── forgejo/
     ├── forgejo_runner/
     ├── netbox/
+    ├── seaweedfs/
     ├── node_exporter/
     ├── blackbox_exporter/
     ├── openbao/
@@ -131,6 +135,9 @@ ansible-playbook playbooks/syslog.yaml
 # Node Exporter
 ansible-playbook playbooks/node_exporter.yaml
 
+# SeaweedFS (standalone object storage for Terraform state)
+ansible-playbook playbooks/seaweedfs.yaml
+
 # Forgejo
 ansible-playbook playbooks/forgejo.yaml
 
@@ -171,6 +178,7 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `forgejo.yaml` | `forgejo` |
 | `forgejo_runner.yaml` | `forgejo_runner` |
 | `netbox.yaml` | `netbox` |
+| `seaweedfs.yaml` | `seaweedfs` |
 | `openbao.yaml` | `openbao` |
 | `openbao_bootstrap.yaml` | `openbao` |
 | `openbao_configure.yaml` | `openbao` |
@@ -205,6 +213,9 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `openbao_admin_token` | `group_vars/openbao.sops.yaml` | OpenBao admin token for configuration |
 | `openbao_k8s_token_reviewer_jwt` | `group_vars/openbao.sops.yaml` | Kubernetes token reviewer ServiceAccount JWT |
 | `openbao_k8s_ca_cert` | `group_vars/openbao.sops.yaml` | PEM CA certificate of the Kubernetes cluster |
+| `seaweedfs_s3_access_key` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS S3 access key for the Terraform identity |
+| `seaweedfs_s3_secret_key` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS S3 secret key for the Terraform identity |
+| `seaweedfs_admin_password` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS admin UI password (empty = auth disabled) |
 | `users_accounts` | `group_vars/shared_vms.sops.yaml` | List of `{name, password}` accounts created by `users.yaml` (plaintext passwords) |
 
 ## Non-Secret Configuration

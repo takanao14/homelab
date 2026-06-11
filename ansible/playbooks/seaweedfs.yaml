@@ -1,0 +1,8 @@
+---
+- name: Setup SeaweedFS
+  hosts: seaweedfs
+  roles:
+    - role: timezone
+      tags: timezone
+    - role: seaweedfs
+      tags: seaweedfs

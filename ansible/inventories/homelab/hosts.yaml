@@ -65,6 +65,13 @@ all:
       hosts:
         openbao1: null
 
+    # Standalone SeaweedFS for the Terraform state backend. Placement (host) is
+    # still under review; add the target LXC/VM hostname here once decided (it
+    # must also exist under all.hosts).
+    seaweedfs:
+      hosts: {}
+        # seaweedfs01: null
+
     syslog:
       hosts:
         syslog01: null

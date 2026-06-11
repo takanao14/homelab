@@ -1,0 +1,26 @@
+[Unit]
+Description=SeaweedFS (all-in-one server with S3 gateway)
+Documentation=https://github.com/seaweedfs/seaweedfs/wiki
+Wants=network-online.target
+After=network-online.target
+AssertFileIsExecutable={{ seaweedfs_binary }}
+
+[Service]
+Type=simple
+User={{ seaweedfs_user }}
+Group={{ seaweedfs_group }}
+WorkingDirectory={{ seaweedfs_data_dir }}
+ExecStart={{ seaweedfs_binary }} server \
+  -dir={{ seaweedfs_data_dir }} \
+  -ip={{ seaweedfs_ip }} \
+  -ip.bind={{ seaweedfs_bind_ip }} \
+  -filer \
+  -s3 \
+  -s3.port={{ seaweedfs_s3_port }} \
+  -s3.config={{ seaweedfs_s3_config }}
+Restart=always
+RestartSec=2s
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

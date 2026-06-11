@@ -1,0 +1,23 @@
+[Unit]
+Description=SeaweedFS Admin UI
+Documentation=https://github.com/seaweedfs/seaweedfs/wiki/Admin-UI
+Wants=network-online.target
+After=network-online.target seaweedfs.service
+Requires=seaweedfs.service
+AssertFileIsExecutable={{ seaweedfs_binary }}
+
+[Service]
+Type=simple
+User={{ seaweedfs_user }}
+Group={{ seaweedfs_group }}
+WorkingDirectory={{ seaweedfs_admin_data_dir }}
+EnvironmentFile={{ seaweedfs_admin_env_file }}
+ExecStart={{ seaweedfs_binary }} admin \
+  -master=127.0.0.1:{{ seaweedfs_master_port }} \
+  -port={{ seaweedfs_admin_port }} \
+  -dataDir={{ seaweedfs_admin_data_dir }}
+Restart=always
+RestartSec=2s
+
+[Install]
+WantedBy=multi-user.target

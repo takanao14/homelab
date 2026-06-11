@@ -1,0 +1,10 @@
+---
+# Non-secret SeaweedFS configuration. The S3 access/secret key live in
+# seaweedfs.sops.yaml.
+#
+# The role only stands the server up. Creating the Terraform state bucket and
+# enabling versioning is a post-install step, deferred until the migration
+# target is decided (see roles/seaweedfs/README.md).
+#
+# Override the advertised address here if the host has multiple interfaces:
+# seaweedfs_ip: "192.168.x.y"
