@@ -48,7 +48,7 @@
 
     - name: Add maintenance SSH authorized key
       become: true
-      ansible.builtin.authorized_key:
+      ansible.posix.authorized_key:
         user: "{{ maintenance_user }}"
         state: present
         key: "{{ _maintenance_ssh_key_resolved }}"
