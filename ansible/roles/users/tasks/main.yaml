@@ -24,8 +24,12 @@
     # Only set the password when the account is created; existing users keep theirs.
     update_password: on_create
     shell: "{{ item.shell | default(users_default_shell) }}"
-    # sudo on Debian/Ubuntu, wheel on RHEL-family; password sudo (no NOPASSWD).
-    groups: "{{ ['sudo'] if ansible_facts['os_family'] == 'Debian' else ['wheel'] }}"
+    # Grant the admin group (sudo on Debian/Ubuntu, wheel on RHEL-family) only to
+    # accounts that opt in with `sudo: true`; others are created without it.
+    # Additive (append) so existing supplementary group memberships are preserved.
+    groups: >-
+      {{ ((['sudo'] if ansible_facts['os_family'] == 'Debian' else ['wheel'])
+          if (item.sudo | default(false) | bool) else []) }}
     append: true
     create_home: "{{ users_create_home }}"
     state: present

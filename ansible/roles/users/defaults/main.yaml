@@ -3,7 +3,9 @@
 
 # List of accounts to create. Provide real values (with passwords) via a
 # SOPS-encrypted group_vars file. Each item: { name: <str>, password: <plaintext> }
-# An optional per-item `shell` overrides users_default_shell.
+# Optional per-item keys:
+#   shell: <str>  overrides users_default_shell
+#   sudo:  <bool> grant the admin group (sudo/wheel); defaults to false
 users_accounts: []
 
 # Login shell and home directory for created accounts.
