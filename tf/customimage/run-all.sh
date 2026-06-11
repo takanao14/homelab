@@ -1,0 +1,1 @@
+../cloudimage/run-all.sh
