@@ -12,7 +12,7 @@ seaweedfs_config_dir: /etc/seaweedfs
 seaweedfs_s3_config: "{{ seaweedfs_config_dir }}/s3.json"
 
 # Address advertised to clients, and the interface the services bind to.
-seaweedfs_ip: "{{ ansible_default_ipv4.address }}"
+seaweedfs_ip: "{{ ansible_facts['default_ipv4']['address'] }}"
 seaweedfs_bind_ip: "0.0.0.0"
 
 # Master port (used by the admin UI to reach the cluster).
