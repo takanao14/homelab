@@ -6,6 +6,10 @@
 # Optional per-item keys:
 #   shell: <str>  overrides users_default_shell
 #   sudo:  <bool> grant the admin group (sudo/wheel); defaults to false
+#   state: enabled | disabled  defaults to enabled. `disabled` expires the account
+#          (blocks ALL logins incl. SSH key auth, SFTP and tunneling), locks the
+#          password, sets a nologin shell, and revokes sudo, while keeping the
+#          account and home directory so it can be re-enabled later (reversible).
 users_accounts: []
 
 # Login shell and home directory for created accounts.
