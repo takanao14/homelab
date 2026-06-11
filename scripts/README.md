@@ -62,7 +62,7 @@ Destroys a VM created by `create-vm.sh` and removes its Terragrunt directory.
 
 ### `provision.sh`
 
-Provisions an existing VM over SSH in order:
+Provisions a VM in order (over SSH by default, or in place with `--local`):
 
 1. Waits for SSH and cloud-init to finish
 2. Installs the CLI toolchain (`install/tools.sh`)
@@ -87,10 +87,20 @@ credential is reused across steps: when `BAO_TOKEN` is set it is forwarded to th
 remote scripts over stdin; otherwise the password is entered once and reused.
 
 ```bash
-./provision.sh <ip> [username]
+./provision.sh <ip> [username]      # remote: push to the VM at <ip> over SSH
+./provision.sh --local [username]    # local: provision this machine directly
 
 ./provision.sh 192.168.20.50 myuser
+./provision.sh --local               # run on the target Linux box as that user
 ```
+
+In `--local` mode there is no SSH hop: the SSH-wait, the `tar`-over-`ssh`
+staging, and the `/tmp` cleanup `trap` are skipped, and each step runs the real
+script under `scripts/` (resolving its siblings the same way) or executes the
+shell snippet directly. It must run **on the target Linux box** as the user being
+provisioned (no `su`), so `[username]` is optional and, if given, must match
+`$USER`. Supported distributions are Ubuntu, Debian, and Rocky Linux. The
+install steps stay in per-user (`local`) mode, landing tools under `$HOME/.local`.
 
 ## Secrets / environment
 
