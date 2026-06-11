@@ -8,6 +8,7 @@ Manages VMs, LXC containers, and cloud images on Proxmox using Terragrunt + Terr
 |------|---------|
 | `terraform` | Infrastructure provisioning |
 | `terragrunt` | DRY configuration and state management |
+| `direnv` | Per-directory environment loading (`.envrc`) |
 | `sops` | Secret decryption |
 
 ## Directory Structure
@@ -16,7 +17,7 @@ Manages VMs, LXC containers, and cloud images on Proxmox using Terragrunt + Terr
 tf/
 ├── root.hcl                        # Terragrunt root config (generates provider / backend)
 ├── common.hcl                      # Shared locals (DNS servers, domain, networks per env)
-├── provider.tf                     # Proxmox provider definition (bpg/proxmox ~> 0.108)
+├── provider.tf                     # Proxmox provider definition (bpg/proxmox ~> 0.109)
 ├── .env/
 │   ├── secrets.env.sample          # Secret template
 │   ├── secrets.dev.enc.env         # SOPS-encrypted dev secrets (committed)
@@ -26,26 +27,37 @@ tf/
 ├── modules/
 │   ├── proxmox-vm/                 # Proxmox VM module
 │   ├── proxmox-container/          # Proxmox LXC container module
-│   ├── proxmox-cloudimage/         # Cloud image download module
+│   ├── proxmox-cloudimage/         # Stock cloud image download module
 │   └── proxmox-image-upload/       # Custom image (Packer .img) upload module
+├── cloudimage/
+│   ├── images.hcl                  # Stock cloud image definitions (download URLs)
+│   ├── run-all.sh                  # Upload images to all nodes (serial, per-node creds)
+│   ├── dev/terragrunt.hcl          # dev:   download to pve
+│   ├── prd/terragrunt.hcl          # prd:   download to node1
+│   ├── node2/terragrunt.hcl        # node2: download to node2
+│   └── node3/terragrunt.hcl        # node3: download to node3
 ├── customimage/
-│   ├── images.hcl                  # Image definitions (Packer-built .img files)
-│   ├── dev/terragrunt.hcl          # dev: upload to pve node
-│   ├── prd/terragrunt.hcl          # prd: upload to node1
+│   ├── images.hcl                  # Custom image definitions (Packer-built .img files)
+│   ├── run-all.sh                  # -> ../cloudimage/run-all.sh (symlink, shared)
+│   ├── dev/terragrunt.hcl          # dev:   upload to pve
+│   ├── prd/terragrunt.hcl          # prd:   upload to node1
 │   ├── node2/terragrunt.hcl        # node2: upload to node2
 │   └── node3/terragrunt.hcl        # node3: upload to node3
 ├── vm/
 │   ├── dev/
 │   │   ├── env.hcl                 # dev VM defaults (node: pve, storage: local-zfs)
-│   │   ├── gpuvm/
-│   │   ├── guibox/
-│   │   ├── testvm/
-│   │   └── toolbox/
-│   └── node2/
-│       ├── env.hcl                 # node2 VM defaults (node: node2, storage: local-lvm)
-│       ├── openbao/
-│       ├── runner1/
-│       └── vpngw/
+│   │   ├── gpuvm/                  # GPU passthrough VM (Ollama)
+│   │   ├── guibox/                 # GUI / xrdp VM
+│   │   ├── sample/                 # Sample / scratch VM
+│   │   └── toolbox/                # Toolbox VM
+│   ├── node2/
+│   │   ├── env.hcl                 # node2 VM defaults (node: node2, storage: local-lvm)
+│   │   ├── openbao/                # OpenBAO VM
+│   │   ├── runner1/                # CI runner VM
+│   │   └── vpngw/                  # VPN gateway VM
+│   └── node3/
+│       ├── env.hcl                 # node3 VM defaults (node: node3, storage: local-lvm)
+│       └── toolbox/                # Toolbox VM
 ├── k8s/
 │   ├── dev/
 │   │   ├── env.hcl                 # dev k8s defaults (node: pve, storage: local-zfs)
@@ -66,7 +78,8 @@ tf/
     │   └── syslog/                 # Syslog container
     └── node3/
         ├── env.hcl                 # node3 LXC defaults (node: node3, storage: local-lvm)
-        └── dnsserver/              # DNS container
+        ├── dnsserver/              # DNS container
+        └── seaweedfs/              # SeaweedFS container
 ```
 
 ## Environment Variables
@@ -80,7 +93,8 @@ tf/
 | `PROXMOX_VE_USERNAME` | Proxmox API username |
 | `PROXMOX_VE_PASSWORD` | Proxmox API password |
 
-Secrets are managed with SOPS:
+Secrets are managed with SOPS and loaded per directory via `direnv` (each
+component's `.envrc` decrypts the secrets file for its target node):
 
 ```bash
 sops edit tf/.env/secrets.dev.enc.env
@@ -105,33 +119,48 @@ cd tf/lxc/node2
 terragrunt run-all apply
 ```
 
-### Uploading custom images
+### Uploading images to all nodes
 
-The `customimage/<env>` components upload Packer-built `.img` files to a
-Proxmox datastore. The bpg/proxmox provider buffers each upload in client
-memory, so applying all images at the default parallelism (10) can exhaust
-RAM on the machine running Terragrunt. Force serial uploads so only one
-image is held in memory at a time:
+`cloudimage/` downloads stock cloud images and `customimage/` uploads
+Packer-built `.img` files. Both target every Proxmox node, but each node uses
+its own credentials (loaded from its `.envrc` via SOPS), so `terragrunt
+run-all` cannot be used across nodes — it would reuse a single node's
+credentials. Use the `run-all.sh` helper in each directory instead, which runs
+`direnv exec <node>` per node to load the right environment:
 
 ```bash
-cd tf/customimage/dev
-TF_CLI_ARGS_apply="-parallelism=1" terragrunt apply
+cd tf/cloudimage     # or tf/customimage (symlinked to the same script)
+./run-all.sh plan
+./run-all.sh apply   # auto-approved
 ```
 
-Use the `TF_CLI_ARGS_apply` environment variable rather than a trailing
-`-parallelism=1` flag — depending on the Terragrunt version the flag is not
-always forwarded to the underlying tofu/terraform invocation.
+The bpg/proxmox provider buffers each upload in client memory, so running them
+in parallel can exhaust RAM on the machine running Terragrunt. `run-all.sh`
+therefore pins terraform's parallelism to `1` by default (one image in memory
+at a time) and runs nodes serially. Override when memory allows:
+
+```bash
+PARALLELISM=4 ./run-all.sh apply   # relax terraform parallelism per node
+PARALLEL=1   ./run-all.sh apply    # run nodes in parallel
+```
+
+> The script issues `terragrunt run -- <command> -parallelism=1`. The explicit
+> `run --` form is required because Terragrunt 1.0 parses a trailing
+> `-parallelism` flag itself and never forwards it to tofu/terraform, leaving
+> uploads at the default parallelism of 10.
 
 To upload a single image instead of all of them, target its instance key:
 
 ```bash
+cd tf/customimage/node2
 terragrunt apply -target='proxmox_virtual_environment_file.image["ubuntu-24.04-custom"]'
 ```
 
 ## Architecture
 
 - **Backend**: Local state (`terraform.tfstate` per component directory)
-- **Provider**: bpg/proxmox ~> 0.108
+- **Provider**: bpg/proxmox ~> 0.109
 - **Environment separation**: dev / prd / node2 / node3 (per Proxmox node)
 - **Networking**: Configured via `common.hcl` per environment (e.g. `vmbr0`, `vnets001`)
 - **Storage**: dev=local-zfs (pve), prd=data-nvme (node1), node2=local-lvm, node3=local-lvm
+```
