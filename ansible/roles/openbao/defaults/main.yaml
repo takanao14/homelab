@@ -10,8 +10,8 @@ openbao_seal_key_path: "{{ openbao_config_dir }}/seal.key"
 
 openbao_api_port: 8200
 openbao_cluster_port: 8201
-openbao_api_addr: "https://{{ ansible_default_ipv4.address }}:{{ openbao_api_port }}"
-openbao_cluster_addr: "{{ 'http' if openbao_tls_disable else 'https' }}://{{ ansible_default_ipv4.address }}:{{ openbao_cluster_port }}"
+openbao_api_addr: "https://{{ ansible_facts['default_ipv4']['address'] }}:{{ openbao_api_port }}"
+openbao_cluster_addr: "{{ 'http' if openbao_tls_disable else 'https' }}://{{ ansible_facts['default_ipv4']['address'] }}:{{ openbao_cluster_port }}"
 
 openbao_tls_disable: true
 openbao_tls_cert_file: "{{ openbao_config_dir }}/tls/cert.pem"
