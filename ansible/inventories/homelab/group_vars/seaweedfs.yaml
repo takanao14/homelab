@@ -8,3 +8,4 @@
 #
 # Override the advertised address here if the host has multiple interfaces:
 # seaweedfs_ip: "192.168.x.y"
+seaweedfs_ip: "{{ ansible_facts['default_ipv4']['address'] }}"
