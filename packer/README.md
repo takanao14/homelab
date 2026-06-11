@@ -158,10 +158,12 @@ centralized in `tf/customimage/images.hcl`.
 This repository uses [Renovate](https://docs.renovatebot.com/) to automatically
 track and update dependency versions, configured in the root `renovate.json`.
 
-The XRDP images bake the CLI toolchain (kubectl, helm, terragrunt, opentofu,
-k9s, …) system-wide via `../scripts/install/tools.sh global`, the single
-source of truth shared with `scripts/provision.sh`. Those tool versions are
-pinned and Renovate-managed in the `takanao14/dotfiles` installer, not here.
+The XRDP images first install system-package prerequisites via
+`../scripts/install/packages.sh global`, then bake the CLI toolchain (kubectl,
+helm, terragrunt, opentofu, k9s, …) system-wide via
+`../scripts/install/tools.sh global`. These wrappers are the single source of
+truth shared with `scripts/provision.sh`; pinned tool versions are
+Renovate-managed in the `takanao14/dotfiles` installers, not here.
 
 The wrappers run the **vendored** installer copies in
 `../scripts/install/vendor/` (uploaded to the guest by a `file` provisioner and
@@ -169,8 +171,8 @@ selected via `VENDOR_DIR`), so the build does not fetch them from GitHub at
 runtime. Refresh those copies with `../scripts/install/vendor/sync.sh`.
 
 **Not tracked (always installed as latest):**
-- APT/DNF packages installed by the Packer scripts (terraform, packer, vault,
-  Chrome, VS Code, Wireshark, Podman, etc.)
+- Unpinned APT/DNF packages installed by the shared package installer or Packer
+  scripts (terraform, packer, vault, Chrome, VS Code, Wireshark, Podman, etc.)
 
 ## Customization
 

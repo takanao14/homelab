@@ -94,6 +94,13 @@ build {
     destination = "/tmp"
   }
 
+  # Install the system-package prerequisites before the unprivileged tool and
+  # font installers consume them.
+  provisioner "shell" {
+    script          = "../scripts/install/packages.sh"
+    execute_command = "VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
+  }
+
   # Bake the CLI toolchain (kubectl, helm, terragrunt, opentofu, k9s, …)
   # system-wide via the shared homelab wrapper -- the single source of truth
   # also used by scripts/provision.sh. Global mode self-elevates with sudo and

@@ -65,12 +65,14 @@ Destroys a VM created by `create-vm.sh` and removes its Terragrunt directory.
 Provisions a VM in order (over SSH by default, or in place with `--local`):
 
 1. Waits for SSH and cloud-init to finish
-2. Installs the CLI toolchain (`install/tools.sh`)
-3. Adds `~/.local/bin` to `PATH` and arranges for `~/.env` to be sourced in `~/.bashrc`
-4. Installs terminal and fonts (`install/terminal.sh`, `install/fonts.sh`)
-5. Configures kitty font
-6. Fetches env secrets from OpenBao into `~/.env` (`secrets/get-env.sh`)
-7. Retrieves kubeconfigs from OpenBao into `~/.kube/` (`secrets/get-kubeconfig.sh`)
+2. Installs system-package prerequisites (`install/packages.sh`), or verifies
+   them without sudo in `--local` mode
+3. Installs the CLI toolchain (`install/tools.sh`)
+4. Adds `~/.local/bin` to `PATH` and arranges for `~/.env` to be sourced in `~/.bashrc`
+5. Installs terminal and fonts (`install/terminal.sh`, `install/fonts.sh`)
+6. Configures kitty font
+7. Fetches env secrets from OpenBao into `~/.env` (`secrets/get-env.sh`)
+8. Retrieves kubeconfigs from OpenBao into `~/.kube/` (`secrets/get-kubeconfig.sh`)
 
 All scripts are staged once under `/tmp/homelab-provision/` in a single
 `tar`-over-`ssh` step (`stage_scripts`), preserving each script's path relative
@@ -100,7 +102,10 @@ script under `scripts/` (resolving its siblings the same way) or executes the
 shell snippet directly. It must run **on the target Linux box** as the user being
 provisioned (no `su`), so `[username]` is optional and, if given, must match
 `$USER`. Supported distributions are Ubuntu, Debian, and Rocky Linux. The
-install steps stay in per-user (`local`) mode, landing tools under `$HOME/.local`.
+system-package step runs with `TOOL_SKIP_SYSTEM_PACKAGES=1`, so it never invokes
+sudo and fails fast when the required packages were not baked into the image.
+The remaining install steps stay in per-user (`local`) mode, landing tools under
+`$HOME/.local`.
 
 ## Secrets / environment
 
@@ -201,6 +206,23 @@ deployments. Only runs against the `dev-homelab` kube context.
 
 ## `install/`
 
+### `packages.sh`
+
+Thin wrapper that runs the **vendored** dotfiles system-package installer
+(`vendor/run_onchange_linux0_package.sh`, see [`vendor/`](#vendor)). It owns the
+privileged package-manager operations and must run before `tools.sh` and
+`fonts.sh`.
+
+Set `TOOL_SKIP_SYSTEM_PACKAGES=1` to perform a no-sudo preflight instead of
+installing packages. This is used by `provision.sh --local`, where a golden image
+is expected to provide the prerequisites already.
+
+```bash
+./install/packages.sh                              # install packages via sudo
+TOOL_SKIP_SYSTEM_PACKAGES=1 ./install/packages.sh  # no-sudo preflight
+./install/packages.sh global                       # system-wide version cache
+```
+
 ### `tools.sh`
 
 Thin wrapper that runs the **vendored** dotfiles CLI-toolchain installer
@@ -253,7 +275,7 @@ selects where the font lands:
 
 ### `vendor/`
 
-Local copies of the dotfiles installer scripts that `tools.sh`,
+Local copies of the dotfiles installer scripts that `packages.sh`, `tools.sh`,
 `terminal.sh`, and `fonts.sh` run. Vendoring them means
 provisioning no longer fetches them from GitHub at runtime, so it does not depend
 on the GitHub API rate limit or `raw.githubusercontent.com` being reachable. The

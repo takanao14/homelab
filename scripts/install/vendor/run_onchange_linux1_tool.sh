@@ -3,9 +3,6 @@ set -euo pipefail
 
 [[ "$(uname)" == "Linux" ]] || exit 0
 
-. /etc/os-release
-readonly OS_ID="${ID}"
-
 # renovate: datasource=github-releases depName=junegunn/fzf
 readonly FZF_VERSION="${FZF_VERSION:-0.73.1}"
 # renovate: datasource=github-releases depName=zellij-org/zellij
@@ -24,16 +21,12 @@ readonly SOPS_VERSION="${SOPS_VERSION:-3.13.1}"
 readonly TERRAGRUNT_VERSION="${TERRAGRUNT_VERSION:-1.0.7}"
 # renovate: datasource=github-releases depName=opentofu/opentofu
 readonly OPENTOFU_VERSION="${OPENTOFU_VERSION:-1.12.1}"
-# renovate: datasource=github-releases depName=openbao/openbao
-readonly OPENBAO_VERSION="${OPENBAO_VERSION:-2.5.4}"
 # renovate: datasource=github-releases depName=helm/helm
 readonly HELM_VERSION="${HELM_VERSION:-4.2.0}"
 # renovate: datasource=github-releases depName=FiloSottile/age
 readonly AGE_VERSION="${AGE_VERSION:-1.3.1}"
 # renovate: datasource=github-releases depName=cilium/cilium-cli
 readonly CILIUM_VERSION="${CILIUM_VERSION:-0.19.4}"
-# renovate: datasource=github-releases depName=kubernetes/kubernetes
-readonly KUBECTL_VERSION="${KUBECTL_VERSION:-1.36}"
 # renovate: datasource=github-releases depName=eza-community/eza
 readonly EZA_VERSION="${EZA_VERSION:-0.23.4}"
 # renovate: datasource=github-releases depName=starship/starship
@@ -67,14 +60,18 @@ readonly SYSTEM_CACHE_DIR="/usr/local/share/tool-versions"
 # pipx-managed Python tools (ansible, ansible-lint). Venvs live next to the
 # version cache (per-user $HOME/.local/share, or /usr/local/share when this runs
 # as a system-wide baseline); app symlinks go into BIN_DIR like every other tool.
-readonly PIPX_HOME_DIR="$(dirname "$VERSION_CACHE_DIR")/pipx"
+PIPX_HOME_DIR="$(dirname "$VERSION_CACHE_DIR")/pipx"
+readonly PIPX_HOME_DIR
 # AWS CLI v2 installs its own self-contained tree here and symlinks `aws` into
 # BIN_DIR. Deriving from BIN_DIR's parent matches AWS's own default of
 # /usr/local/aws-cli for a system-wide (BIN_DIR=/usr/local/bin) install, and
 # mirrors it under $HOME (~/.local/aws-cli) for a per-user install.
-readonly AWS_CLI_INSTALL_DIR="$(dirname "$BIN_DIR")/aws-cli"
-readonly ARCH="$(uname -m)"
-readonly BIN_ARCH="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
+AWS_CLI_INSTALL_DIR="$(dirname "$BIN_DIR")/aws-cli"
+readonly AWS_CLI_INSTALL_DIR
+ARCH="$(uname -m)"
+readonly ARCH
+BIN_ARCH="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
+readonly BIN_ARCH
 
 mkdir -p "$BIN_DIR" "$VERSION_CACHE_DIR"
 export PATH="${BIN_DIR}:${PATH}"
@@ -107,37 +104,25 @@ trap cleanup_tmp_paths EXIT
 # Helpers
 # ============================================================================
 
-update_package_cache() {
-    case "$OS_ID" in
-        ubuntu|debian) sudo apt-get update -qq ;;
-        rocky)  sudo dnf makecache --refresh -q ;;
-        *) log_error "Unsupported OS: ${OS_ID}"; exit 1 ;;
-    esac
-}
-
-install_packages() {
-    case "$OS_ID" in
-        ubuntu|debian) sudo apt-get install -y "$@" ;;
-        rocky)  sudo dnf install -y "$@" ;;
-        *) log_error "Unsupported OS: ${OS_ID}"; exit 1 ;;
-    esac
-}
-
-install_base_dependencies() {
-    log_info "Installing baseline dependencies..."
-    update_package_cache
-    case "$OS_ID" in
-        ubuntu|debian)
-            install_packages ca-certificates curl coreutils file findutils git gnupg gzip make tar unzip xz-utils
-            ;;
-        rocky)
-            install_packages ca-certificates curl coreutils file findutils git gnupg2 gzip make tar unzip xz
-            ;;
-        *)
-            log_error "Unsupported OS: ${OS_ID}"
-            exit 1
-            ;;
-    esac
+# This script is unprivileged by design: it never calls sudo. The OS packages it
+# depends on (curl, unzip, gnupg, pipx, a >=3.12 python, ...) are provided by
+# run_onchange_linux0_package.sh, which chezmoi runs first. Verify they exist and
+# fail fast with a clear pointer rather than failing deep inside an install.
+local_preflight() {
+    local missing=() cmd
+    for cmd in curl tar gzip unzip gpg git sha256sum awk install mktemp pipx; do
+        command -v "$cmd" &>/dev/null || missing+=("$cmd")
+    done
+    if ! command -v python3.12 &>/dev/null && \
+       ! { command -v python3 &>/dev/null && \
+           python3 -c 'import sys; raise SystemExit(0 if sys.version_info[:2] >= (3, 12) else 1)' 2>/dev/null; }; then
+        missing+=("python>=3.12")
+    fi
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        log_error "Missing prerequisites: ${missing[*]}"
+        log_error "Run run_onchange_linux0_package.sh first (it installs the OS packages these tools need)."
+        exit 1
+    fi
 }
 
 make_tmp_dir() {
@@ -156,31 +141,6 @@ make_tmp_file() {
     fi
     TMP_PATHS+=("$path")
     printf -v "$__var_name" '%s' "$path"
-}
-
-add_apt_repository() {
-    local repo_name="$1" gpg_url="$2" repo_line="$3"
-    # Optional 4th arg overrides the keyring path so we can match the upstream
-    # project's official name (keep it in sync with the signed-by= in repo_line).
-    local keyring_path="${4:-/usr/share/keyrings/${repo_name}-keyring.gpg}"
-    log_info "Adding ${repo_name} repository..."
-    curl -fsSL "$gpg_url" | gpg --dearmor | sudo tee "$keyring_path" > /dev/null
-    sudo chmod 644 "$keyring_path"
-    echo "$repo_line" | sudo tee "/etc/apt/sources.list.d/${repo_name}.list" > /dev/null
-    sudo chmod 644 "/etc/apt/sources.list.d/${repo_name}.list"
-}
-
-add_dnf_repository() {
-    local repo_name="$1" repo_url="$2" gpgkey_url="$3"
-    log_info "Adding ${repo_name} repository..."
-    sudo tee "/etc/yum.repos.d/${repo_name}.repo" > /dev/null <<EOF
-[${repo_name}]
-name=${repo_name}
-baseurl=${repo_url}
-enabled=1
-gpgcheck=1
-gpgkey=${gpgkey_url}
-EOF
 }
 
 verify_sha256() {
@@ -315,28 +275,6 @@ install_zellij() {
 # HashiCorp Tools
 # ============================================================================
 
-install_hashicorp_tools() {
-    log_info "Installing HashiCorp tools (Terraform, Packer, Vault)..."
-    update_package_cache
-    case "$OS_ID" in
-        ubuntu|debian)
-            install_packages gnupg software-properties-common
-            . /etc/os-release
-            local codename="${VERSION_CODENAME:-${UBUNTU_CODENAME:-$(lsb_release -cs)}}"
-            add_apt_repository "hashicorp" \
-                "https://apt.releases.hashicorp.com/gpg" \
-                "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com ${codename} main" \
-                "/usr/share/keyrings/hashicorp-archive-keyring.gpg"
-            ;;
-        rocky)
-            install_packages yum-utils
-            sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
-            ;;
-    esac
-    update_package_cache
-    install_packages terraform packer vault
-}
-
 install_terragrunt() {
     local archive_name="terragrunt_linux_${BIN_ARCH}"
     install_binary "terragrunt" \
@@ -347,7 +285,6 @@ install_terragrunt() {
 
 install_opentofu() {
     log_info "Installing opentofu..."
-    install_packages unzip
     local tmp_dir zip_name
     make_tmp_dir tmp_dir
     zip_name="tofu_${OPENTOFU_VERSION}_linux_${BIN_ARCH}.zip"
@@ -360,52 +297,9 @@ install_opentofu() {
     install -m 0755 "${tmp_dir}/tofu" "$BIN_DIR/tofu"
 }
 
-install_openbao() {
-    log_info "Installing openbao..."
-    local tmp_dir
-    make_tmp_dir tmp_dir
-    case "$OS_ID" in
-        ubuntu|debian)
-            local pkg_name="openbao_${OPENBAO_VERSION}_linux_${BIN_ARCH}.deb"
-            curl -fsSL "https://github.com/openbao/openbao/releases/download/v${OPENBAO_VERSION}/${pkg_name}" \
-                -o "${tmp_dir}/${pkg_name}"
-            sudo dpkg -i "${tmp_dir}/${pkg_name}"
-            ;;
-        rocky)
-            local pkg_name="openbao_${OPENBAO_VERSION}_linux_${BIN_ARCH}.rpm"
-            curl -fsSL "https://github.com/openbao/openbao/releases/download/v${OPENBAO_VERSION}/${pkg_name}" \
-                -o "${tmp_dir}/${pkg_name}"
-            sudo dnf install -y "${tmp_dir}/${pkg_name}"
-            ;;
-    esac
-}
-
 # ============================================================================
 # Kubernetes Tools
 # ============================================================================
-
-install_kubectl() {
-    log_info "Installing kubectl..."
-    update_package_cache
-    install_packages ca-certificates curl gnupg
-    case "$OS_ID" in
-        ubuntu|debian)
-            sudo apt-get install -y apt-transport-https
-            sudo mkdir -p -m 755 /etc/apt/keyrings
-            add_apt_repository "kubernetes" \
-                "https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/deb/Release.key" \
-                "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/deb/ /" \
-                "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
-            ;;
-        rocky)
-            add_dnf_repository "kubernetes" \
-                "https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/rpm/" \
-                "https://pkgs.k8s.io/core:/stable:/v${KUBECTL_VERSION}/rpm/repodata/repomd.xml.key"
-            ;;
-    esac
-    update_package_cache
-    install_packages kubectl
-}
 
 install_helm() {
     log_info "Installing helm ${HELM_VERSION}..."
@@ -496,11 +390,9 @@ install_sops() {
     log_info "Installing sops..."
     # sops only publishes checksums for the raw binaries (the .deb/.rpm packages
     # are absent from checksums.txt), so install the verified linux binary into
-    # BIN_DIR on every distro. Only the age dependency differs per OS.
-    case "$OS_ID" in
-        ubuntu|debian) install_packages age ;;
-        rocky)         install_if_needed "age" "$AGE_VERSION" install_age ;;
-    esac
+    # BIN_DIR on every distro. The age dependency is installed as a no-sudo
+    # binary on every distro too (no apt path), keeping this script sudo-free.
+    install_if_needed "age" "$AGE_VERSION" install_age
     install_binary "sops" \
         "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.${BIN_ARCH}" \
         "$BIN_DIR/sops" \
@@ -549,7 +441,6 @@ install_helm_diff_plugin() {
 # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 install_aws_cli() {
     log_info "Installing aws-cli ${AWS_CLI_VERSION}..."
-    install_packages unzip
     local tmp_dir gnupg_home url zip
     make_tmp_dir tmp_dir
     make_tmp_dir gnupg_home
@@ -602,44 +493,31 @@ AWS_CLI_PGP_KEY
 # Python Tools (pipx)
 # ============================================================================
 
-# Bootstrap pipx once; ansible / ansible-lint are then installed into isolated
-# venvs. ansible-lint in particular is not reliably packaged by the distros, and
-# upstream Ansible recommends pip/pipx, so we avoid apt/dnf for these.
+# ansible / ansible-lint install into isolated pipx venvs (upstream Ansible
+# recommends pip/pipx, and ansible-lint is not reliably packaged by the distros).
+# pipx itself is bootstrapped by run_onchange_linux0_package.sh; here we only
+# verify it is present (local_preflight already guards this) and never apt/dnf.
 ensure_pipx() {
     command -v pipx &>/dev/null && return
-    log_info "Installing pipx..."
-    update_package_cache
-    case "$OS_ID" in
-        ubuntu|debian)
-            install_packages python3 python3-pip pipx
-            ;;
-        rocky)
-            install_packages epel-release
-            update_package_cache
-            install_packages python3 python3-pip pipx
-            ;;
-    esac
+    log_error "pipx not found. Run run_onchange_linux0_package.sh first."
+    exit 1
 }
 
-# ansible-core needs a controller Python >= 3.12 and ansible-lint >= 3.10, but
-# Rocky 9 ships python3 == 3.9. Resolve (and on Rocky install from AppStream) a
-# 3.12 interpreter to hand pipx via --python. Ubuntu 24.04 already ships 3.12.
+# ansible-core needs a controller Python >= 3.12 (Rocky 9 ships 3.9; linux0
+# installs python3.12 there). Pick a >=3.12 interpreter to hand pipx via
+# --python; do not install one here (that is linux0's job).
 PIPX_PYTHON=""
 resolve_pipx_python() {
     [[ -n "$PIPX_PYTHON" ]] && return
-    case "$OS_ID" in
-        rocky)
-            command -v python3.12 &>/dev/null || install_packages python3.12 python3.12-pip
-            PIPX_PYTHON="python3.12"
-            ;;
-        ubuntu|debian)
-            if command -v python3.12 &>/dev/null; then
-                PIPX_PYTHON="python3.12"
-            else
-                PIPX_PYTHON="python3"
-            fi
-            ;;
-    esac
+    if command -v python3.12 &>/dev/null; then
+        PIPX_PYTHON="python3.12"
+    elif command -v python3 &>/dev/null && \
+         python3 -c 'import sys; raise SystemExit(0 if sys.version_info[:2] >= (3, 12) else 1)' 2>/dev/null; then
+        PIPX_PYTHON="python3"
+    else
+        log_error "No python>=3.12 found. Run run_onchange_linux0_package.sh first."
+        exit 1
+    fi
 }
 
 # Route pipx so app symlinks land in BIN_DIR (already on PATH) and venvs live in
@@ -669,7 +547,7 @@ install_ansible_lint() {
 main() {
     log_info "=== Linux Development Tools Installation ==="
 
-    install_base_dependencies
+    local_preflight
 
     install_if_needed "sheldon"  "$SHELDON_VERSION"  install_sheldon
     install_if_needed "starship" "$STARSHIP_VERSION" install_starship
@@ -679,15 +557,10 @@ main() {
     install_if_needed "fzf"    "$FZF_VERSION"    install_fzf
     install_if_needed "zellij" "$ZELLIJ_VERSION" install_zellij
 
-    if ! command -v terraform &>/dev/null || ! command -v packer &>/dev/null || ! command -v vault &>/dev/null; then
-        install_hashicorp_tools
-    fi
-
+    # terraform/packer/vault, kubectl and openbao (bao) are installed by
+    # run_onchange_linux0_package.sh (they require apt/dnf/dpkg).
     install_if_needed "terragrunt" "$TERRAGRUNT_VERSION" install_terragrunt
     install_if_needed "tofu"       "$OPENTOFU_VERSION"   install_opentofu
-    install_if_needed "bao"        "$OPENBAO_VERSION"    install_openbao
-
-    install_if_needed "kubectl" "$KUBECTL_VERSION" install_kubectl
 
     install_if_needed "helm"     "$HELM_VERSION"     install_helm
     install_helm_diff_plugin

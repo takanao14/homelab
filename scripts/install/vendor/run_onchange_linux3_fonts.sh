@@ -3,9 +3,6 @@ set -euo pipefail
 
 [[ "$(uname)" == "Linux" ]] || exit 0
 
-. /etc/os-release
-readonly OS_ID="${ID}"
-
 # renovate: datasource=github-releases depName=yuru7/udev-gothic
 readonly UDEV_GOTHIC_VERSION="${UDEV_GOTHIC_VERSION:-2.2.0}"
 # Install location. Defaults to a per-user prefix. Set TOOL_FONT_DIR to a
@@ -82,6 +79,10 @@ check_gui() {
     fi
 }
 
+# This script installs the font into a per-user (or TOOL_FONT_DIR) directory and
+# never calls sudo. The OS packages it needs (curl, unzip, fontconfig providing
+# fc-cache/fc-list) are installed by run_onchange_linux0_package.sh. Verify they
+# exist and fail fast with a clear pointer rather than calling apt/dnf here.
 check_dependencies() {
     local missing_deps=()
     for cmd in curl unzip fc-cache fc-list; do
@@ -90,12 +91,9 @@ check_dependencies() {
         fi
     done
     if [[ ${#missing_deps[@]} -gt 0 ]]; then
-        log_info "Installing missing dependencies: ${missing_deps[*]}"
-        case "$OS_ID" in
-            ubuntu|debian) sudo apt-get update -qq && sudo apt-get install -y fontconfig unzip curl ;;
-            rocky)  sudo dnf install -y fontconfig unzip curl ;;
-            *) log_error "Unsupported OS: ${OS_ID}"; return 1 ;;
-        esac
+        log_error "Missing dependencies: ${missing_deps[*]}"
+        log_error "Run run_onchange_linux0_package.sh first (it installs curl, unzip and fontconfig)."
+        exit 1
     fi
 }
 

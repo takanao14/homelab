@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Provision a VM: install the CLI toolchain, terminal and fonts, wire up the
-# shell init files, then fetch secrets (env and kubeconfig) from OpenBao.
+# Provision a VM: verify/install system packages, install the CLI toolchain,
+# terminal and fonts, wire up the shell init files, then fetch secrets (env and
+# kubeconfig) from OpenBao.
 #
 # Two modes:
 #   remote (default)  provision the VM at <ip> over SSH (push from this host)
@@ -231,6 +232,14 @@ fi
 echo "Waiting for cloud-init to complete..."
 run_shell "cloud-init status --wait" 2>/dev/null || true
 echo "cloud-init complete."
+
+if $LOCAL_MODE; then
+  echo "Verifying system package prerequisites (no sudo)..."
+  run_remote "install/packages.sh" "TOOL_SKIP_SYSTEM_PACKAGES=1"
+else
+  echo "Running system package installation..."
+  run_remote "install/packages.sh"
+fi
 
 echo "Running tool installation..."
 run_remote "install/tools.sh"

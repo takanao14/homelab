@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Sync the vendored dotfiles installer scripts into this directory.
 #
-# The install wrappers (tools.sh, terminal.sh, fonts.sh under install/)
+# The install wrappers (packages.sh, tools.sh, terminal.sh, fonts.sh under install/)
 # run these vendored copies instead of fetching them from GitHub at provision
 # time, so provisioning does not depend on GitHub API rate limits or network
 # reachability of raw.githubusercontent.com. This script is the only place that
@@ -20,6 +20,7 @@ REF="${REF:-main}"
 
 # Map: <vendored filename> -> <path within the dotfiles repo>
 declare -A FILES=(
+  ["run_onchange_linux0_package.sh"]=".chezmoiscripts/run_onchange_linux0_package.sh"
   ["run_onchange_linux1_tool.sh"]=".chezmoiscripts/run_onchange_linux1_tool.sh"
   ["run_onchange_linux2_terminal.sh"]=".chezmoiscripts/run_onchange_linux2_terminal.sh"
   ["run_onchange_linux3_fonts.sh"]=".chezmoiscripts/run_onchange_linux3_fonts.sh"
