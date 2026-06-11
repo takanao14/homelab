@@ -50,6 +50,8 @@ readonly DNSCONTROL_VERSION="${DNSCONTROL_VERSION:-4.41.0}"
 readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.21.0}"
 # renovate: datasource=pypi depName=ansible-lint
 readonly ANSIBLE_LINT_VERSION="${ANSIBLE_LINT_VERSION:-26.4.0}"
+# renovate: datasource=github-tags depName=aws/aws-cli
+readonly AWS_CLI_VERSION="${AWS_CLI_VERSION:-2.35.2}"
 
 # Install location. Defaults to a per-user prefix. Set TOOL_BIN_DIR (and
 # TOOL_VERSION_CACHE_DIR) to a system-wide path such as /usr/local/bin to make
@@ -66,6 +68,11 @@ readonly SYSTEM_CACHE_DIR="/usr/local/share/tool-versions"
 # version cache (per-user $HOME/.local/share, or /usr/local/share when this runs
 # as a system-wide baseline); app symlinks go into BIN_DIR like every other tool.
 readonly PIPX_HOME_DIR="$(dirname "$VERSION_CACHE_DIR")/pipx"
+# AWS CLI v2 installs its own self-contained tree here and symlinks `aws` into
+# BIN_DIR. Deriving from BIN_DIR's parent matches AWS's own default of
+# /usr/local/aws-cli for a system-wide (BIN_DIR=/usr/local/bin) install, and
+# mirrors it under $HOME (~/.local/aws-cli) for a per-user install.
+readonly AWS_CLI_INSTALL_DIR="$(dirname "$BIN_DIR")/aws-cli"
 readonly ARCH="$(uname -m)"
 readonly BIN_ARCH="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
 
@@ -531,6 +538,67 @@ install_helm_diff_plugin() {
 }
 
 # ============================================================================
+# AWS Tools
+# ============================================================================
+
+# AWS CLI v2 installer zips are signed only with the AWS CLI Team PGP key (AWS
+# publishes no sha256 file), so verify the .sig against this embedded key. The
+# key is imported into a throwaway keyring holding only it, so a good signature
+# already proves the zip came from AWS. The key currently expires 2026-07-07 --
+# if verification later fails with an expired-key error, refresh the block from
+# https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+install_aws_cli() {
+    log_info "Installing aws-cli ${AWS_CLI_VERSION}..."
+    install_packages unzip
+    local tmp_dir gnupg_home url zip
+    make_tmp_dir tmp_dir
+    make_tmp_dir gnupg_home
+    chmod 700 "$gnupg_home"
+    url="https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}-${AWS_CLI_VERSION}.zip"
+    zip="${tmp_dir}/awscliv2.zip"
+    curl -fsSL "$url"       -o "$zip"
+    curl -fsSL "${url}.sig" -o "${zip}.sig"
+    gpg --homedir "$gnupg_home" --batch --quiet --import <<'AWS_CLI_PGP_KEY'
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mQINBF2Cr7UBEADJZHcgusOJl7ENSyumXh85z0TRV0xJorM2B/JL0kHOyigQluUG
+ZMLhENaG0bYatdrKP+3H91lvK050pXwnO/R7fB/FSTouki4ciIx5OuLlnJZIxSzx
+PqGl0mkxImLNbGWoi6Lto0LYxqHN2iQtzlwTVmq9733zd3XfcXrZ3+LblHAgEt5G
+TfNxEKJ8soPLyWmwDH6HWCnjZ/aIQRBTIQ05uVeEoYxSh6wOai7ss/KveoSNBbYz
+gbdzoqI2Y8cgH2nbfgp3DSasaLZEdCSsIsK1u05CinE7k2qZ7KgKAUIcT/cR/grk
+C6VwsnDU0OUCideXcQ8WeHutqvgZH1JgKDbznoIzeQHJD238GEu+eKhRHcz8/jeG
+94zkcgJOz3KbZGYMiTh277Fvj9zzvZsbMBCedV1BTg3TqgvdX4bdkhf5cH+7NtWO
+lrFj6UwAsGukBTAOxC0l/dnSmZhJ7Z1KmEWilro/gOrjtOxqRQutlIqG22TaqoPG
+fYVN+en3Zwbt97kcgZDwqbuykNt64oZWc4XKCa3mprEGC3IbJTBFqglXmZ7l9ywG
+EEUJYOlb2XrSuPWml39beWdKM8kzr1OjnlOm6+lpTRCBfo0wa9F8YZRhHPAkwKkX
+XDeOGpWRj4ohOx0d2GWkyV5xyN14p2tQOCdOODmz80yUTgRpPVQUtOEhXQARAQAB
+tCFBV1MgQ0xJIFRlYW0gPGF3cy1jbGlAYW1hem9uLmNvbT6JAlQEEwEIAD4CGwMF
+CwkIBwIGFQoJCAsCBBYCAwECHgECF4AWIQT7Xbd/1cEYuAURraimMQrMRnJHXAUC
+aGveYQUJDMpiLAAKCRCmMQrMRnJHXKBYD/9Ab0qQdGiO5hObchG8xh8Rpb4Mjyf6
+0JrVo6m8GNjNj6BHkSc8fuTQJ/FaEhaQxj3pjZ3GXPrXjIIVChmICLlFuRXYzrXc
+Pw0lniybypsZEVai5kO0tCNBCCFuMN9RsmmRG8mf7lC4FSTbUDmxG/QlYK+0IV/l
+uJkzxWa+rySkdpm0JdqumjegNRgObdXHAQDWlubWQHWyZyIQ2B4U7AxqSpcdJp6I
+S4Zds4wVLd1WE5pquYQ8vS2cNlDm4QNg8wTj58e3lKN47hXHMIb6CHxRnb947oJa
+pg189LLPR5koh+EorNkA1wu5mAJtJvy5YMsppy2y/kIjp3lyY6AmPT1posgGk70Z
+CmToEZ5rbd7ARExtlh76A0cabMDFlEHDIK8RNUOSRr7L64+KxOUegKBfQHb9dADY
+qqiKqpCbKgvtWlds909Ms74JBgr2KwZCSY1HaOxnIr4CY43QRqAq5YHOay/mU+6w
+hhmdF18vpyK0vfkvvGresWtSXbag7Hkt3XjaEw76BzxQH21EBDqU8WJVjHgU6ru+
+DJTs+SxgJbaT3hb/vyjlw0lK+hFfhWKRwgOXH8vqducF95NRSUxtS4fpqxWVaw3Q
+V2OWSjbne99A5EPEySzryFTKbMGwaTlAwMCwYevt4YT6eb7NmFhTx0Fis4TalUs+
+j+c7Kg92pDx2uQ==
+=OBAt
+-----END PGP PUBLIC KEY BLOCK-----
+AWS_CLI_PGP_KEY
+    if ! gpg --homedir "$gnupg_home" --batch --verify "${zip}.sig" "$zip" 2>&1; then
+        log_error "AWS CLI signature verification failed"
+        exit 1
+    fi
+    unzip -q "$zip" -d "$tmp_dir"
+    # --update makes a re-run (version bump) overwrite the existing install tree.
+    "${tmp_dir}/aws/install" --bin-dir "$BIN_DIR" --install-dir "$AWS_CLI_INSTALL_DIR" --update
+}
+
+# ============================================================================
 # Python Tools (pipx)
 # ============================================================================
 
@@ -631,6 +699,8 @@ main() {
     install_if_needed "sops"     "$SOPS_VERSION"     install_sops
     install_if_needed "cilium"   "$CILIUM_VERSION"   install_cilium
     install_if_needed "dnscontrol" "$DNSCONTROL_VERSION" install_dnscontrol
+
+    install_if_needed "aws" "$AWS_CLI_VERSION" install_aws_cli
 
     install_if_needed "ansible"      "$ANSIBLE_CORE_VERSION" install_ansible
     install_if_needed "ansible-lint" "$ANSIBLE_LINT_VERSION" install_ansible_lint
