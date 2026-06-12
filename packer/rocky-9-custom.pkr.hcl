@@ -71,7 +71,7 @@ source "qemu" "rocky9_custom" {
 }
 
 build {
-  sources = ["source.qemu.rocky10_custom"]
+  sources = ["source.qemu.rocky9_custom"]
 
   # Install packages and clean up
   provisioner "shell" {
