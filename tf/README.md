@@ -47,9 +47,7 @@ tf/
 │   ├── dev/
 │   │   ├── env.hcl                 # dev VM defaults (node: pve, storage: local-zfs)
 │   │   ├── gpuvm/                  # GPU passthrough VM (Ollama)
-│   │   ├── guibox/                 # GUI / xrdp VM
-│   │   ├── sample/                 # Sample / scratch VM
-│   │   └── toolbox/                # Toolbox VM
+│   │   └── sample/                 # Sample / scratch VM
 │   ├── node2/
 │   │   ├── env.hcl                 # node2 VM defaults (node: node2, storage: local-lvm)
 │   │   ├── openbao/                # OpenBAO VM
@@ -61,8 +59,7 @@ tf/
 ├── k8s/
 │   ├── dev/
 │   │   ├── env.hcl                 # dev k8s defaults (node: pve, storage: local-zfs)
-│   │   ├── dev-cluster/
-│   │   └── sandbox/
+│   │   └── dev-cluster/
 │   └── prd/
 │       ├── env.hcl                 # prd k8s defaults (node: node1, storage: data-nvme)
 │       └── prd-cluster/
