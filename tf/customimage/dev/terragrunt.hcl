@@ -15,6 +15,7 @@ locals {
     "ubuntu-24.04-custom",
     "ubuntu-24.04-xrdp",
     "rocky-9-xrdp",
+    "rocky-9-custom",
     "rocky-10-custom",
     "debian-13-custom",
   ]
