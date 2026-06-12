@@ -25,7 +25,7 @@ Usage: $(basename "$0") <name> <ip> [node] [cores] [memory_mb] [disk_gb] [image]
   cores     vCPUs                      (default: 4)
   memory    Memory in MB               (default: 8192)
   disk      Disk size in GB            (default: 80)
-  image     OS image: ubuntu24 | ubuntu24-xrdp | rocky10 | rocky9-xrdp  (default: ubuntu24)
+  image     OS image: ubuntu24 | ubuntu24-xrdp | rocky10 | rocky9 | rocky9-xrdp | debian13  (default: ubuntu24)
 
 Required env vars: TF_VM_USERNAME, TF_VM_PASSWORD, TF_VM_SSH_PUBLIC_KEY
 
@@ -83,7 +83,9 @@ case "$IMAGE" in
   ubuntu24-xrdp) FILE_ID="local:iso/ubuntu-24.04-xrdp.img" ;;
   rocky10)  FILE_ID="local:iso/rocky-10-custom.img" ;;
   rocky9-xrdp)  FILE_ID="local:iso/rocky-9-xrdp.img" ;;
-  *) echo "Error: image must be 'ubuntu24', 'ubuntu24-xrdp', 'rocky10', or 'rocky9-xrdp'" >&2; exit 1 ;;
+  rocky9)  FILE_ID="local:iso/rocky-9-custom.img" ;;
+  debian13)  FILE_ID="local:iso/debian13-custom.img" ;;
+  *) echo "Error: image must be 'ubuntu24', 'ubuntu24-xrdp', 'rocky10', or 'rocky9' or 'rocky9-xrdp' or 'debian13'" >&2; exit 1 ;;
 esac
 
 SUBNET=$(echo "$IP" | cut -d. -f1-3)
