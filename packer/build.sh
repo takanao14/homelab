@@ -14,6 +14,7 @@ OPTIONS:
     ubuntu24       Build a basic Ubuntu 24.04 image with the QEMU Guest Agent and the timezone set to JST
     ubuntu24-xrdp  Build Ubuntu 24.04 image with XRDP service
     rocky10        Build a basic Rocky 10 Linux image with the timezone set to JST
+    rocky9         Build a basic Rocky 9 Linux image with the timezone set to JST
     rocky9-xrdp    Build Rocky 9 Linux image with XRDP service
     debian13       Build a basic Debian 13 image
     help           Display this help message
@@ -133,6 +134,12 @@ case "$BUILD_TARGET" in
             "rocky-10-custom.pkr.hcl" \
             "output-rocky-10-custom/rocky-10-custom.qcow2" \
             "images/rocky-10-custom.img"
+        ;;
+    rocky9)
+        build_image \
+            "rocky-9-custom.pkr.hcl" \
+            "output-rocky-9-custom/rocky-9-custom.qcow2" \
+            "images/rocky-9-custom.img"
         ;;
     rocky9-xrdp)
         build_image \
