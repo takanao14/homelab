@@ -18,6 +18,10 @@ locals {
       file_name    = "rocky-10-custom.img"
       content_type = "iso"
     }
+    "rocky-9-custom" = {
+      file_name    = "rocky-9-custom.img"
+      content_type = "iso"
+    }
     "debian-13-custom" = {
       file_name    = "debian-13-custom.img"
       content_type = "iso"
