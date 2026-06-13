@@ -10,5 +10,23 @@
       ],
       "actions": ["Admin", "Read", "Write", "List", "Tagging"]
     }
+{%- for identity in seaweedfs_s3_extra_identities %},
+    {
+      "name": "{{ identity.name }}",
+      "credentials": [
+        {
+          "accessKey": "{{ identity.access_key }}",
+          "secretKey": "{{ identity.secret_key }}"
+        }
+      ],
+      "actions": {{ identity.actions | to_json }}
+    }
+{%- endfor %}
+{%- if seaweedfs_public_buckets | length > 0 %},
+    {
+      "name": "anonymous",
+      "actions": [{% for bucket in seaweedfs_public_buckets %}"Read:{{ bucket }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+    }
+{%- endif %}
   ]
 }

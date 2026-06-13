@@ -16,7 +16,7 @@
     - "{{ playbook_dir }}/../inventories/homelab/group_vars/caddy.yaml"
   vars:
     homelab_private_path: "{{ lookup('env', 'HOMELAB_PRIVATE_PATH') | default(lookup('env', 'HOME') + '/homelab-private', true) }}"
-    dnsconfig_path: "{{ homelab_private_path }}/dns-record/home-zone/dnsconfig.js"
+    dnsconfig_path: "{{ homelab_private_path }}/dns-record/home-zone.js"
   tasks:
     - name: Check if homelab-private repository exists
       ansible.builtin.stat:

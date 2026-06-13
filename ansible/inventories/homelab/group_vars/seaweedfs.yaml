@@ -9,3 +9,13 @@
 # Override the advertised address here if the host has multiple interfaces:
 # seaweedfs_ip: "192.168.x.y"
 seaweedfs_ip: "{{ ansible_facts['default_ipv4']['address'] }}"
+
+# Public-download buckets (absorbed from Garage). Anonymous clients get Read-only
+# (no List) on these; served over HTTPS via the central Caddy at
+# https://s3.home.butaco.net/<bucket>/<file>. The buckets themselves must be
+# created out of band (see roles/seaweedfs/README.md).
+#   firmware     - router / PC firmware images (in use)
+#   cloud-images - custom image distribution (future; empty for now)
+seaweedfs_public_buckets:
+  - firmware
+  - cloud-images

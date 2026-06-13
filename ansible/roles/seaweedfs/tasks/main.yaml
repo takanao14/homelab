@@ -125,3 +125,51 @@
         name: seaweedfs-admin
         state: started
         enabled: true
+
+- name: Configure R2 -> SeaweedFS state backup
+  when: seaweedfs_backup_enabled | bool
+  block:
+    - name: Install rclone
+      become: true
+      ansible.builtin.apt:
+        name: rclone
+        state: present
+        update_cache: true
+
+    - name: Deploy rclone configuration
+      become: true
+      ansible.builtin.template:
+        src: rclone.conf.j2
+        dest: "{{ seaweedfs_backup_rclone_config }}"
+        owner: root
+        group: "{{ seaweedfs_group }}"
+        mode: '0640'
+      no_log: true
+
+    - name: Deploy backup service unit
+      become: true
+      ansible.builtin.template:
+        src: seaweedfs-backup.service.j2
+        dest: /etc/systemd/system/seaweedfs-backup.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload systemd
+
+    - name: Deploy backup timer unit
+      become: true
+      ansible.builtin.template:
+        src: seaweedfs-backup.timer.j2
+        dest: /etc/systemd/system/seaweedfs-backup.timer
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload systemd
+
+    - name: Ensure backup timer is started and enabled
+      become: true
+      ansible.builtin.systemd:
+        name: seaweedfs-backup.timer
+        state: started
+        enabled: true
+        daemon_reload: true

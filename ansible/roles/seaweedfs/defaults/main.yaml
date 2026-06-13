@@ -20,10 +20,30 @@ seaweedfs_master_port: 9333
 # S3 gateway port (the only port clients need for the Terraform backend).
 seaweedfs_s3_port: 8333
 
-# S3 identity (access key / secret key). Set via group_vars/seaweedfs.sops.yaml.
+# Volume sizing. The SeaweedFS default volume size limit (30 GB) does not fit a
+# small homelab disk: a new volume cannot be allocated for a new bucket
+# (collection), so writes fail with "No writable volumes". Use small volumes so
+# many fit the disk; max=0 auto-sizes the volume count to the free disk space.
+# Objects are chunked (~8 MB), so small volumes still hold large files.
+seaweedfs_volume_size_limit_mb: 1024
+seaweedfs_volume_max: 0
+
+# Default S3 identity (access key / secret key). Set via
+# group_vars/seaweedfs.sops.yaml. This identity has full (Admin) access and is
+# used by Terraform/rclone.
 seaweedfs_s3_identity_name: terraform
 seaweedfs_s3_access_key: ""
 seaweedfs_s3_secret_key: ""
+
+# Additional credentialed S3 identities beyond the default one above. Each item:
+#   { name: <str>, access_key: <str>, secret_key: <str>, actions: [<str>...] }
+# Action scoping follows SeaweedFS syntax, e.g. "Read:bucket", "Write:bucket".
+seaweedfs_s3_extra_identities: []
+
+# Buckets exposed to unauthenticated (anonymous) clients for HTTP download.
+# For each bucket an "anonymous" identity is granted Read:<bucket> only — no
+# List — so objects are fetchable by key but the bucket cannot be enumerated.
+seaweedfs_public_buckets: []
 
 # Admin web UI (weed admin), deployed as a separate systemd service.
 seaweedfs_admin_enabled: true
@@ -35,3 +55,23 @@ seaweedfs_admin_user: admin
 # line) so it does not appear in the process arguments. If empty, the admin UI
 # runs WITHOUT authentication. Set via group_vars/seaweedfs.sops.yaml.
 seaweedfs_admin_password: ""
+
+# --- Backup: mirror the R2 (primary) Terraform state bucket into SeaweedFS ----
+# R2 has no object versioning, so SeaweedFS keeps the versioned DR copy of the
+# state. A one-way `rclone sync` runs on a systemd timer. The destination bucket
+# must exist with versioning enabled (one-time post-install step; see README).
+seaweedfs_backup_enabled: true
+seaweedfs_backup_rclone_config: "{{ seaweedfs_config_dir }}/rclone.conf"
+
+# Source: Cloudflare R2 (primary state backend). Endpoint/keys are secret and
+# set via group_vars/seaweedfs.sops.yaml. A read-only R2 token is sufficient.
+seaweedfs_backup_r2_bucket: homelab-tfstate
+seaweedfs_backup_r2_endpoint: ""
+seaweedfs_backup_r2_access_key: ""
+seaweedfs_backup_r2_secret_key: ""
+
+# Destination: local SeaweedFS S3 gateway (reuses the terraform identity).
+seaweedfs_backup_dest_bucket: homelab-tfstate-backup
+
+# How often to sync (systemd OnCalendar). State is tiny, so frequent is cheap.
+seaweedfs_backup_schedule: "*:0/15"

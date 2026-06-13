@@ -94,9 +94,10 @@
         proxmoxNode: {{ .Values.openbao.pveNode }}
         proxmoxVMID: {{ .Values.openbao.pveVmid }}
 
-    - Garage UI:
-        icon: garage.png
-        href: {{ .Values.garageui.url }}
+    - SeaweedFS:
+        icon: seaweedfs.png
+        href: {{ .Values.seaweedfs.url }}
+        description: Object Storage
 
 - Monitoring:
     - Grafana:

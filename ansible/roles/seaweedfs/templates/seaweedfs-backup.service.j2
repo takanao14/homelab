@@ -1,0 +1,18 @@
+[Unit]
+# Managed by Ansible (seaweedfs role). Do not edit by hand.
+Description=Mirror the R2 Terraform state bucket into SeaweedFS (DR backup)
+Documentation=https://rclone.org/s3/
+After=seaweedfs.service network-online.target
+Requires=seaweedfs.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User={{ seaweedfs_user }}
+Group={{ seaweedfs_group }}
+# One-way sync: R2 (source of truth) -> SeaweedFS (versioned DR copy). The
+# destination bucket keeps version history that R2 itself cannot provide.
+ExecStart=/usr/bin/rclone sync \
+  --config {{ seaweedfs_backup_rclone_config }} \
+  r2:{{ seaweedfs_backup_r2_bucket }} \
+  seaweedfs:{{ seaweedfs_backup_dest_bucket }}

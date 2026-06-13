@@ -31,6 +31,9 @@ for a single-node homelab backend.
 | `seaweedfs_s3_access_key` | S3 access key for the Terraform identity |
 | `seaweedfs_s3_secret_key` | S3 secret key for the Terraform identity |
 | `seaweedfs_admin_password` | Admin UI password (empty = auth disabled) |
+| `seaweedfs_backup_r2_endpoint` | Cloudflare R2 S3 endpoint (`https://<account_id>.r2.cloudflarestorage.com`) |
+| `seaweedfs_backup_r2_access_key` | R2 access key (read-only on the state bucket is enough) |
+| `seaweedfs_backup_r2_secret_key` | R2 secret key |
 
 ### Non-secret variables (in `defaults/main.yaml`)
 
@@ -47,11 +50,20 @@ for a single-node homelab backend.
 | `seaweedfs_bind_ip` | `0.0.0.0` | Interface the services bind to |
 | `seaweedfs_master_port` | `9333` | Master port (used by the admin UI) |
 | `seaweedfs_s3_port` | `8333` | S3 gateway port |
-| `seaweedfs_s3_identity_name` | `terraform` | Name of the S3 identity in `s3.json` |
+| `seaweedfs_volume_size_limit_mb` | `1024` | Per-volume size limit (small so volumes fit a small disk) |
+| `seaweedfs_volume_max` | `0` | Max volumes per server (`0` = auto from free disk) |
+| `seaweedfs_s3_identity_name` | `terraform` | Name of the default (Admin) S3 identity in `s3.json` |
+| `seaweedfs_s3_extra_identities` | `[]` | Extra credentialed identities (`name`/`access_key`/`secret_key`/`actions`) |
+| `seaweedfs_public_buckets` | `[]` | Buckets exposed anonymously (Read-only, no List) for HTTP download |
 | `seaweedfs_admin_enabled` | `true` | Deploy the `weed admin` UI as a separate service |
 | `seaweedfs_admin_port` | `23646` | Admin UI HTTP port |
 | `seaweedfs_admin_data_dir` | `/var/lib/seaweedfs-admin` | Admin state directory |
 | `seaweedfs_admin_user` | `admin` | Admin UI username |
+| `seaweedfs_backup_enabled` | `true` | Deploy the R2 -> SeaweedFS state backup timer |
+| `seaweedfs_backup_r2_bucket` | `homelab-tfstate` | Source R2 bucket (primary state) |
+| `seaweedfs_backup_dest_bucket` | `homelab-tfstate-backup` | Destination SeaweedFS bucket (versioned) |
+| `seaweedfs_backup_schedule` | `*:0/15` | systemd `OnCalendar` sync interval |
+| `seaweedfs_backup_rclone_config` | `/etc/seaweedfs/rclone.conf` | rclone config path |
 
 ## Post-install: provisioning the Terraform state bucket
 
@@ -73,6 +85,60 @@ aws --endpoint-url "$ENDPOINT" s3api put-bucket-versioning \
 Then point `tf/root.hcl` at the S3 backend. As with any non-AWS S3 endpoint, set
 `skip_s3_checksum = true`, `skip_credentials_validation`, `skip_region_validation`,
 and `skip_requesting_account_id`, plus `use_lockfile = true` for native locking.
+
+## State backup (R2 -> SeaweedFS)
+
+The decided topology is **Cloudflare R2 as the primary** Terraform state backend
+with **SeaweedFS holding a DR copy**. R2 has no object versioning, so SeaweedFS
+also provides the version history: a one-way `rclone sync` (R2 -> SeaweedFS)
+runs on the `seaweedfs-backup.timer` systemd timer (default every 15 minutes),
+and the destination bucket is versioned so overwrites keep history.
+
+The role installs `rclone`, writes `/etc/seaweedfs/rclone.conf` (an `r2` and a
+`seaweedfs` remote), and enables the timer. It does **not** create the
+destination bucket. Create it once with versioning enabled, using the SeaweedFS
+S3 gateway (the `terraform` identity has `Admin`):
+
+```bash
+export AWS_ACCESS_KEY_ID=<seaweedfs_s3_access_key>
+export AWS_SECRET_ACCESS_KEY=<seaweedfs_s3_secret_key>
+ENDPOINT=http://<host>:8333
+
+aws --endpoint-url "$ENDPOINT" s3api create-bucket --bucket homelab-tfstate-backup
+aws --endpoint-url "$ENDPOINT" s3api put-bucket-versioning \
+  --bucket homelab-tfstate-backup \
+  --versioning-configuration Status=Enabled
+```
+
+Trigger a sync immediately and inspect it:
+
+```bash
+sudo systemctl start seaweedfs-backup.service   # run once now
+systemctl list-timers seaweedfs-backup.timer    # next scheduled run
+journalctl -u seaweedfs-backup.service          # logs
+```
+
+## Public download buckets
+
+Buckets listed in `seaweedfs_public_buckets` get an `anonymous` S3 identity with
+`Read:<bucket>` only (no `List`), so any client can fetch an object by key but
+cannot enumerate the bucket. This replaces Garage's public web serving. The
+buckets are fronted over HTTPS by the central Caddy:
+
+```
+https://s3.home.butaco.net/firmware/<file>      # -> SeaweedFS :8333, path-style
+```
+
+Direct (LAN, no TLS) access also works: `http://seaweedfs1.home.butaco.net:8333/firmware/<file>`.
+Create the buckets out of band (the role does not create buckets):
+
+```bash
+export AWS_ACCESS_KEY_ID=<seaweedfs_s3_access_key>
+export AWS_SECRET_ACCESS_KEY=<seaweedfs_s3_secret_key>
+ENDPOINT=http://seaweedfs1.home.butaco.net:8333
+aws --endpoint-url "$ENDPOINT" s3api create-bucket --bucket firmware
+aws --endpoint-url "$ENDPOINT" s3api create-bucket --bucket cloud-images
+```
 
 ## Single-node deployment
 

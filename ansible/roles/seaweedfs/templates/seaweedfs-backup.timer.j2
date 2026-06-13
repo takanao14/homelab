@@ -1,0 +1,11 @@
+[Unit]
+# Managed by Ansible (seaweedfs role). Do not edit by hand.
+Description=Periodic R2 -> SeaweedFS Terraform state backup
+
+[Timer]
+OnCalendar={{ seaweedfs_backup_schedule }}
+# Catch up a missed run (e.g. host was down) on next boot.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -14,6 +14,8 @@ ExecStart={{ seaweedfs_binary }} server \
   -dir={{ seaweedfs_data_dir }} \
   -ip={{ seaweedfs_ip }} \
   -ip.bind={{ seaweedfs_bind_ip }} \
+  -master.volumeSizeLimitMB={{ seaweedfs_volume_size_limit_mb }} \
+  -volume.max={{ seaweedfs_volume_max }} \
   -filer \
   -s3 \
   -s3.port={{ seaweedfs_s3_port }} \

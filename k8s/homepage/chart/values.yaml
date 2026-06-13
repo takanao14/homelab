@@ -58,8 +58,8 @@ truenas:
   pveNode: node1
   pveVmid: "100"
 
-garageui:
-  url: https://garage.dev.butaco.net
+seaweedfs:
+  url: https://seaweedfs-ui.home.butaco.net
 
 netbox:
   url: https://netbox-ui.home.butaco.net

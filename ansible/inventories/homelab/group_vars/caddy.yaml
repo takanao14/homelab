@@ -19,3 +19,7 @@ caddy_upstreams:
     backend: 192.168.10.247:80
   - hostname: openbao.home.butaco.net
     backend: 192.168.40.30:8200
+  - hostname: s3.home.butaco.net
+    backend: 192.168.50.31:8333
+  - hostname: seaweedfs-ui.home.butaco.net
+    backend: 192.168.50.31:23646

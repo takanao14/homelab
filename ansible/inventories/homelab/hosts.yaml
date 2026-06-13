@@ -44,6 +44,8 @@ all:
       ansible_host: 192.168.30.12
     openbao1:
       ansible_host: 192.168.40.30
+    seaweedfs1:
+      ansible_host: 192.168.50.31
   children:
     dns:
       children:
@@ -69,8 +71,8 @@ all:
     # still under review; add the target LXC/VM hostname here once decided (it
     # must also exist under all.hosts).
     seaweedfs:
-      hosts: {}
-        # seaweedfs01: null
+      hosts:
+        seaweedfs1: null
 
     syslog:
       hosts:
@@ -111,6 +113,7 @@ all:
         ns3: null
         dist1: null
         dist2: null
+        seaweedfs1: null
 
     proxmox:
       hosts:

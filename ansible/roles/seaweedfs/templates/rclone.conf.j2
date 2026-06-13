@@ -1,0 +1,21 @@
+# Managed by Ansible (seaweedfs role). Do not edit by hand.
+#
+# Two S3 remotes for the one-way state backup:
+#   r2        -> Cloudflare R2 (primary Terraform state backend, source)
+#   seaweedfs -> local SeaweedFS S3 gateway (DR backup, destination)
+
+[r2]
+type = s3
+provider = Cloudflare
+access_key_id = {{ seaweedfs_backup_r2_access_key }}
+secret_access_key = {{ seaweedfs_backup_r2_secret_key }}
+endpoint = {{ seaweedfs_backup_r2_endpoint }}
+region = auto
+
+[seaweedfs]
+type = s3
+provider = Other
+access_key_id = {{ seaweedfs_s3_access_key }}
+secret_access_key = {{ seaweedfs_s3_secret_key }}
+endpoint = http://127.0.0.1:{{ seaweedfs_s3_port }}
+region = us-east-1
