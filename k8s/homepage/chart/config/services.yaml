@@ -95,7 +95,7 @@
         proxmoxVMID: {{ .Values.openbao.pveVmid }}
 
     - SeaweedFS:
-        icon: seaweedfs.png
+        icon: sh-seaweedfs.png
         href: {{ .Values.seaweedfs.url }}
         description: Object Storage
 
