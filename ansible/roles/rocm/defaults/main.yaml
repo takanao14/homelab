@@ -1,3 +1,9 @@
 ---
-rocm_udev_rules: amdgpu-insecure-instinct-udev-rules_30.30.3.0-2327507.24.04_all.deb
+rocm_version: "7.2.4"
+rocm_package_state: latest
+rocm_ubuntu_codename: noble
+rocm_amdgpu_version: "30.30.4"
+rocm_amdgpu_package_state: present
+rocm_amdgpu_minimum_boot_free_mb: 300
+rocm_udev_rules: amdgpu-insecure-instinct-udev-rules_30.30.4.0-2341068.24.04_all.deb
 rocm_device_metrics_exporter_version: "1.4.0"

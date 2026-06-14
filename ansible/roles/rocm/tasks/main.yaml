@@ -5,6 +5,7 @@
   ansible.builtin.apt:
     name:
       - wget
+      - python3-debian
       - python3-setuptools
       - python3-wheel
     state: present
@@ -29,8 +30,9 @@
 
 - name: Download amdgpu-insecure-instinct-udev-rules
   ansible.builtin.get_url:
-    url: "https://repo.radeon.com/amdgpu/30.30.3/ubuntu/pool/main/a/amdgpu-insecure-instinct-udev-rules/{{ rocm_udev_rules }}"
+    url: "https://repo.radeon.com/amdgpu/{{ rocm_amdgpu_version }}/ubuntu/pool/main/a/amdgpu-insecure-instinct-udev-rules/{{ rocm_udev_rules }}"
     dest: "/tmp/{{ rocm_udev_rules }}"
+    mode: '0644'
 
 - name: Grant GPU access to all users on the system
   become: true
@@ -38,6 +40,7 @@
     deb: "/tmp/{{ rocm_udev_rules }}"
     state: present
     update_cache: true
+  when: not ansible_check_mode
 
 - name: Ensure apt keyrings directory exists
   become: true
@@ -62,15 +65,6 @@
     cmd: gpg --dearmor -o /etc/apt/keyrings/rocm.gpg /tmp/rocm.gpg.key
     creates: /etc/apt/keyrings/rocm.gpg
 
-- name: Add ROCm repository to sources list
-  become: true
-  ansible.builtin.copy:
-    src: rocm.list
-    dest: /etc/apt/sources.list.d/rocm.list
-    mode: '0644'
-    owner: root
-    group: root
-
 - name: Add ROCm apt preferences pin
   become: true
   ansible.builtin.copy:
@@ -80,21 +74,69 @@
     owner: root
     group: root
 
-- name: Register AMD GPU kernel-mode driver repository
+- name: Configure AMD Deb822 repositories
   become: true
-  ansible.builtin.copy:
-    src: amdgpu.list
-    dest: /etc/apt/sources.list.d/amdgpu.list
+  ansible.builtin.deb822_repository:
+    name: "{{ item.name }}"
+    types:
+      - deb
+    uris:
+      - "{{ item.uri }}"
+    suites:
+      - "{{ rocm_ubuntu_codename }}"
+    components:
+      - main
+    architectures:
+      - amd64
+    signed_by: /etc/apt/keyrings/rocm.gpg
+    state: present
     mode: '0644'
-    owner: root
-    group: root
+  loop:
+    - name: rocm
+      uri: "https://repo.radeon.com/rocm/apt/{{ rocm_version }}"
+    - name: rocm-graphics
+      uri: "https://repo.radeon.com/graphics/{{ rocm_version }}/ubuntu"
+    - name: amdgpu
+      uri: "https://repo.radeon.com/amdgpu/{{ rocm_amdgpu_version }}/ubuntu"
+    - name: device-metrics-exporter
+      uri: "https://repo.radeon.com/device-metrics-exporter/apt/{{ rocm_device_metrics_exporter_version }}"
+  register: rocm_deb822_repositories
+
+- name: Update apt cache after repository changes
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+  when:
+    - not ansible_check_mode
+    - rocm_deb822_repositories.changed
+
+- name: Read available boot partition space before AMD GPU driver upgrade
+  ansible.builtin.command:
+    argv:
+      - df
+      - --output=avail
+      - --block-size=1M
+      - /boot
+  register: rocm_boot_available
+  changed_when: false
+  when: rocm_amdgpu_package_state == 'latest'
+
+- name: Verify boot partition space before AMD GPU driver upgrade
+  ansible.builtin.assert:
+    that:
+      - rocm_boot_available.stdout_lines[-1] | int >= rocm_amdgpu_minimum_boot_free_mb
+    fail_msg: >-
+      /boot requires at least {{ rocm_amdgpu_minimum_boot_free_mb }} MB free before upgrading amdgpu-dkms;
+      only {{ rocm_boot_available.stdout_lines[-1] | int }} MB is available.
+  when: rocm_amdgpu_package_state == 'latest'
 
 - name: Install AMD GPU kernel driver
   become: true
   ansible.builtin.apt:
     name: amdgpu-dkms
-    state: present
+    state: "{{ rocm_amdgpu_package_state }}"
     update_cache: true
+  register: rocm_amdgpu_install
 
 - name: Install Ubuntu HWE kernel and headers
   become: true
@@ -103,12 +145,15 @@
       - linux-generic-hwe-24.04
       - linux-headers-generic-hwe-24.04
     state: present
+  register: rocm_hwe_install
 
 - name: Reboot to apply Ubuntu HWE kernel
   become: true
   ansible.builtin.reboot:
     reboot_timeout: 300
-  when: not ansible_check_mode
+  when:
+    - rocm_hwe_install.changed
+    - not ansible_check_mode
 
 - name: Gather facts after reboot
   ansible.builtin.setup:
@@ -127,7 +172,7 @@
   ansible.builtin.apt:
     name:
       - rocm
-    state: present
+    state: "{{ rocm_package_state }}"
     update_cache: true
   async: 3600
   poll: 30
@@ -153,14 +198,9 @@
   become: true
   ansible.builtin.reboot:
     reboot_timeout: 300
-  when: not ansible_check_mode
-
-- name: Add device-metrics-exporter apt repository
-  become: true
-  ansible.builtin.apt_repository:
-    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/device-metrics-exporter/apt/{{ rocm_device_metrics_exporter_version }} noble main"
-    filename: device-metrics-exporter
-    state: present
+  when:
+    - rocm_amdgpu_install.changed
+    - not ansible_check_mode
 
 - name: Install amdgpu-exporter
   become: true
@@ -182,3 +222,43 @@
     name: amd-metrics-exporter
     state: started
     enabled: true
+
+- name: Read installed ROCm package version
+  ansible.builtin.command:
+    argv:
+      - dpkg-query
+      - --show
+      - --showformat=${Version}
+      - rocm
+  register: rocm_installed_version
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Verify installed ROCm package version
+  ansible.builtin.assert:
+    that:
+      - rocm_installed_version.stdout == rocm_version or rocm_installed_version.stdout.startswith(rocm_version + '.')
+    fail_msg: "Installed ROCm {{ rocm_installed_version.stdout }} does not match requested {{ rocm_version }}."
+    success_msg: "ROCm {{ rocm_installed_version.stdout }} is installed."
+  when: not ansible_check_mode
+
+- name: Verify HIP compiler
+  ansible.builtin.command:
+    cmd: /opt/rocm/bin/hipcc --version
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Verify ROCm detects a GPU
+  ansible.builtin.command:
+    cmd: /opt/rocm/bin/rocminfo
+  register: rocm_info
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Assert ROCm detected a GPU agent
+  ansible.builtin.assert:
+    that:
+      - "'Device Type:             GPU' in rocm_info.stdout"
+    fail_msg: ROCm did not detect a GPU agent.
+    success_msg: ROCm detected a GPU agent.
+  when: not ansible_check_mode
