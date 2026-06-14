@@ -73,6 +73,10 @@ setup_rclone() {
     export RCLONE_CONFIG_SEAWEEDFS_SECRET_ACCESS_KEY="$SEAWEEDFS_S3_SECRET_KEY"
     export RCLONE_CONFIG_SEAWEEDFS_ENDPOINT="$SEAWEEDFS_S3_ENDPOINT"
     export RCLONE_CONFIG_SEAWEEDFS_REGION=us-east-1
+    # The imagebuilder identity is scoped to Read/Write/List on cloud-images and
+    # cannot create buckets. Without this, rclone attempts CreateBucket before
+    # upload and fails with 403. The bucket must already exist (admin-created).
+    export RCLONE_CONFIG_SEAWEEDFS_NO_CHECK_BUCKET=true
 }
 
 # Upload one image and its sidecar checksum.
