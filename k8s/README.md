@@ -94,8 +94,6 @@ k8s/
 ├── comfyui/              # ComfyUI AI image generation (dev only, AMD GPU)
 │   ├── values.yaml
 │   └── chart/
-├── garage/               # Garage S3-compatible object storage (dev only)
-│   └── chart/
 ├── lemonade-server/      # Lemonade LLM inference server (dev only, AMD GPU)
 │   ├── values.yaml
 │   └── chart/

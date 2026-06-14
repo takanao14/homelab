@@ -21,7 +21,6 @@ argocd/
 │       ├── comfyui.yaml
 │       ├── eso.yaml
 │       ├── external-dns.yaml
-│       ├── garage.yaml
 │       ├── gateway.yaml
 │       ├── lemonade-server.yaml
 │       ├── meshcentral.yaml
@@ -92,7 +91,6 @@ The `argocd.yaml` Application uses multi-source:
 | comfyui | comfyui | dev only |
 | external-secrets (eso) | external-secrets | dev, prd |
 | external-dns | dns-homelab | dev, prd |
-| garage | garage | dev only |
 | gateway | gateway-system | dev, prd |
 | homepage | homepage | prd only |
 | lemonade-server | lemonade-server | dev only |
