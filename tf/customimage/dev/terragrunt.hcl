@@ -4,6 +4,13 @@ include "root" {
 
 terraform {
   source = "${get_parent_terragrunt_dir()}/modules/proxmox-cloudimage"
+
+  # Image downloads are large; running them in parallel overwhelms the Proxmox
+  # node / S3 path and times out. Force serial downloads.
+  extra_arguments "serial_download" {
+    commands  = ["apply", "destroy"]
+    arguments = ["-parallelism=1"]
+  }
 }
 
 locals {
