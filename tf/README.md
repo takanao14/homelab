@@ -27,22 +27,21 @@ tf/
 ├── modules/
 │   ├── proxmox-vm/                 # Proxmox VM module
 │   ├── proxmox-container/          # Proxmox LXC container module
-│   ├── proxmox-cloudimage/         # Stock cloud image download module
-│   └── proxmox-image-upload/       # Custom image (Packer .img) upload module
+│   └── proxmox-cloudimage/         # Image download module (stock + custom, proxmox_download_file)
 ├── cloudimage/
 │   ├── images.hcl                  # Stock cloud image definitions (download URLs)
-│   ├── run-all.sh                  # Upload images to all nodes (serial, per-node creds)
+│   ├── run-all.sh                  # Download images to all nodes (serial, per-node creds)
 │   ├── dev/terragrunt.hcl          # dev:   download to pve
 │   ├── prd/terragrunt.hcl          # prd:   download to node1
 │   ├── node2/terragrunt.hcl        # node2: download to node2
 │   └── node3/terragrunt.hcl        # node3: download to node3
 ├── customimage/
-│   ├── images.hcl                  # Custom image definitions (Packer-built .img files)
+│   ├── images.hcl                  # Custom image definitions (SeaweedFS cloud-images URLs)
 │   ├── run-all.sh                  # -> ../cloudimage/run-all.sh (symlink, shared)
-│   ├── dev/terragrunt.hcl          # dev:   upload to pve
-│   ├── prd/terragrunt.hcl          # prd:   upload to node1
-│   ├── node2/terragrunt.hcl        # node2: upload to node2
-│   └── node3/terragrunt.hcl        # node3: upload to node3
+│   ├── dev/terragrunt.hcl          # dev:   download from S3 to pve
+│   ├── prd/terragrunt.hcl          # prd:   download from S3 to node1
+│   ├── node2/terragrunt.hcl        # node2: download from S3 to node2
+│   └── node3/terragrunt.hcl        # node3: download from S3 to node3
 ├── vm/
 │   ├── dev/
 │   │   ├── env.hcl                 # dev VM defaults (node: pve, storage: local-zfs)
@@ -116,14 +115,15 @@ cd tf/lxc/node2
 terragrunt run-all apply
 ```
 
-### Uploading images to all nodes
+### Distributing images to all nodes
 
-`cloudimage/` downloads stock cloud images and `customimage/` uploads
-Packer-built `.img` files. Both target every Proxmox node, but each node uses
-its own credentials (loaded from its `.envrc` via SOPS), so `terragrunt
-run-all` cannot be used across nodes — it would reuse a single node's
-credentials. Use the `run-all.sh` helper in each directory instead, which runs
-`direnv exec <node>` per node to load the right environment:
+`cloudimage/` downloads stock cloud images (public mirrors) and `customimage/`
+downloads Packer-built `.img` files from the SeaweedFS `cloud-images` bucket.
+Both target every Proxmox node, but each node uses its own credentials (loaded
+from its `.envrc` via SOPS), so `terragrunt run-all` cannot be used across nodes
+— it would reuse a single node's credentials. Use the `run-all.sh` helper in
+each directory instead, which runs `direnv exec <node>` per node to load the
+right environment:
 
 ```bash
 cd tf/cloudimage     # or tf/customimage (symlinked to the same script)
@@ -131,10 +131,13 @@ cd tf/cloudimage     # or tf/customimage (symlinked to the same script)
 ./run-all.sh apply   # auto-approved
 ```
 
-The bpg/proxmox provider buffers each upload in client memory, so running them
-in parallel can exhaust RAM on the machine running Terragrunt. `run-all.sh`
-therefore pins terraform's parallelism to `1` by default (one image in memory
-at a time) and runs nodes serially. Override when memory allows:
+Each Proxmox node fetches the image directly from the URL
+(`proxmox_download_file`). Running many large downloads at once can overwhelm the
+source (the single-node SeaweedFS LXC) and time out, so `run-all.sh` pins
+terraform's parallelism to `1` by default (one download at a time) and runs
+nodes serially. `customimage/` additionally enforces `-parallelism=1` via
+`extra_arguments` in its `terragrunt.hcl`, so even a plain `terragrunt apply`
+there is serial. Override when the source can take it:
 
 ```bash
 PARALLELISM=4 ./run-all.sh apply   # relax terraform parallelism per node
@@ -144,13 +147,13 @@ PARALLEL=1   ./run-all.sh apply    # run nodes in parallel
 > The script issues `terragrunt run -- <command> -parallelism=1`. The explicit
 > `run --` form is required because Terragrunt 1.0 parses a trailing
 > `-parallelism` flag itself and never forwards it to tofu/terraform, leaving
-> uploads at the default parallelism of 10.
+> downloads at the default parallelism of 10.
 
-To upload a single image instead of all of them, target its instance key:
+To deploy a single image instead of all of them, target its instance key:
 
 ```bash
 cd tf/customimage/node2
-terragrunt apply -target='proxmox_virtual_environment_file.image["ubuntu-24.04-custom"]'
+terragrunt apply -target='proxmox_download_file.image["ubuntu-24.04-custom"]'
 ```
 
 ## Architecture
