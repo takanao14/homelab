@@ -22,7 +22,10 @@ inputs = {
       dns_servers = local.common.locals.dns_internal
       disks = {
         disk0 = merge(local.env.locals.disk_defaults, {
-          size = 20
+          # Sized to hold the cloud-images bucket (custom Packer images) in
+          # addition to the tfstate backup. node3 local-lvm thin pool has ample
+          # free space. Disk can only grow, never shrink.
+          size = 100
         })
       }
     })
