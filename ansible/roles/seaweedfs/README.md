@@ -140,6 +140,21 @@ aws --endpoint-url "$ENDPOINT" s3api create-bucket --bucket firmware
 aws --endpoint-url "$ENDPOINT" s3api create-bucket --bucket cloud-images
 ```
 
+The `cloud-images` bucket distributes the custom Proxmox images built by Packer.
+`packer/push.sh` uploads each `<image>.img` and its `<image>.img.sha256`, and the
+Terragrunt stack in `tf/customimage` makes Proxmox download them from
+`https://s3.home.butaco.net/cloud-images/<file>` (pinned by the published sha256).
+The build host only needs **write** access; rather than reusing the Admin
+`terraform` identity, scope a dedicated upload key via `seaweedfs_s3_extra_identities`:
+
+```yaml
+seaweedfs_s3_extra_identities:
+  - name: imagebuilder
+    access_key: "{{ seaweedfs_imagebuilder_access_key }}"   # in seaweedfs.sops.yaml
+    secret_key: "{{ seaweedfs_imagebuilder_secret_key }}"
+    actions: ["Read:cloud-images", "Write:cloud-images", "List:cloud-images"]
+```
+
 ## Single-node deployment
 
 This role deploys SeaweedFS as a **single node, single process** (`weed server

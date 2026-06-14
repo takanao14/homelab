@@ -3,12 +3,12 @@ include "root" {
 }
 
 terraform {
-  source = "${get_parent_terragrunt_dir()}/modules/proxmox-image-upload"
+  source = "${get_parent_terragrunt_dir()}/modules/proxmox-cloudimage"
 }
 
 locals {
   images_common = read_terragrunt_config(find_in_parent_folders("images.hcl"))
-  images_dir    = "${get_parent_terragrunt_dir()}/../packer/images"
+  base_url      = local.images_common.locals.base_url
   node_name     = "pve"
   datastore_id  = "local"
   image_keys = [
@@ -24,10 +24,15 @@ locals {
 inputs = {
   images = {
     for name in local.image_keys : name => {
-      file_name    = "${local.images_dir}/${local.images_common.locals.image_definitions[name].file_name}"
+      url          = "${local.base_url}/${local.images_common.locals.image_definitions[name].file_name}"
+      file_name    = local.images_common.locals.image_definitions[name].file_name
       content_type = local.images_common.locals.image_definitions[name].content_type
-      node_name    = local.node_name
-      datastore_id = local.datastore_id
+      # Pin the sha256 published next to the object so a rebuilt image (same URL,
+      # new content) is re-downloaded. Fails fast if the image is not yet pushed.
+      checksum            = run_cmd("--terragrunt-quiet", "sh", "-c", "curl -fsS '${local.base_url}/${local.images_common.locals.image_definitions[name].file_name}.sha256' | tr -d '[:space:]'")
+      node_name           = local.node_name
+      datastore_id        = local.datastore_id
+      overwrite_unmanaged = true
     }
   }
 }

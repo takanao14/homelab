@@ -4,3 +4,4 @@ packer_cache/
 
 # Generated images
 images/*.img
+images/*.img.sha256

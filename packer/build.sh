@@ -84,6 +84,12 @@ build_image() {
         echo "Error: Destination file '${image_file}' not found after build"
         exit 1
     fi
+
+    # Record the sha256 digest (64 hex chars only) next to the image. push.sh
+    # uploads it alongside the image so Terraform can pin the checksum and
+    # detect rebuilds (see tf/customimage). Recompute on every build.
+    echo "Writing checksum for ${image_file}..."
+    sha256sum "${image_file}" | cut -d' ' -f1 > "${image_file}.sha256"
 }
 
 FORCE_OVERWRITE=false

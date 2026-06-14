@@ -1,5 +1,11 @@
 .idea
 .vscode
+# Local tfstate snapshots (Phase 0 backup target if pointed inside the repo).
+# tfstate may contain secrets and must never be committed.
+**/*.tfstate
+**/*.tfstate.backup
+*-tfstate-backups/
+tf/.state-backups/
 **/charts/*.tgz
 k8s/monitoring/dashboards/cmd/generate/generate
 **/Chart.lock

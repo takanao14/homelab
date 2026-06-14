@@ -1,8 +1,20 @@
 # Packer — Custom Cloud Images for Proxmox VE
 
 Packer templates that build cloud-init enabled custom VM images for the Proxmox
-VE homelab. Built images land in `images/` and are uploaded to Proxmox by the
-Terragrunt stack in [`../tf/customimage`](../tf/customimage).
+VE homelab.
+
+The build and the Proxmox registration are **decoupled** through S3 (SeaweedFS):
+
+1. `build.sh` builds the image into `images/` and writes a `.sha256` sidecar.
+2. `push.sh` uploads the image and its checksum to the SeaweedFS `cloud-images`
+   bucket (`https://s3.home.butaco.net/cloud-images/`).
+3. The Terragrunt stack in [`../tf/customimage`](../tf/customimage) makes each
+   Proxmox node **download** the image from that URL (`proxmox_download_file`),
+   pinned by the published sha256.
+
+This means the host running `terragrunt apply` no longer needs the image files
+locally — only network access to the bucket. Packer (which needs KVM/libguestfs)
+can run on a dedicated builder, separate from where images are registered.
 
 ## Project Overview
 
@@ -19,11 +31,19 @@ Terragrunt stack in [`../tf/customimage`](../tf/customimage).
 - Proxmox VE API access
 - Internet access for downloading base images and packages
 
+### Upload (push to S3)
+
+- `rclone`
+- SeaweedFS S3 credentials with write access to the `cloud-images` bucket,
+  exported as `SEAWEEDFS_S3_ENDPOINT` / `SEAWEEDFS_S3_ACCESS_KEY` /
+  `SEAWEEDFS_S3_SECRET_KEY` (inject via `.envrc` / sops — never hardcode).
+
 ### Deployment
 
-Image upload to Proxmox is handled by the Terragrunt stack in
-[`../tf/customimage`](../tf/customimage) (module `tf/modules/proxmox-image-upload`).
-See that directory for the per-environment (`dev`/`prd`/`node2`/`node3`) configs.
+Proxmox download of the pushed images is handled by the Terragrunt stack in
+[`../tf/customimage`](../tf/customimage) (module `tf/modules/proxmox-cloudimage`,
+shared with the stock-image stack `tf/cloudimage`). See that directory for the
+per-environment (`dev`/`prd`/`node2`/`node3`) configs.
 
 ## Directory Structure
 
@@ -37,6 +57,7 @@ See that directory for the per-environment (`dev`/`prd`/`node2`/`node3`) configs
 │   ├── rocky/          # Shell provisioners for Rocky Linux
 │   └── debian/         # Shell provisioners for Debian
 ├── build.sh            # Main build script
+├── push.sh             # Upload built images + checksums to SeaweedFS S3
 └── *.pkr.hcl           # Packer template files
 ```
 
@@ -47,6 +68,11 @@ See that directory for the per-environment (`dev`/`prd`/`node2`/`node3`) configs
 ```bash
 # Required: Set the default user password for cloud-init
 export PKR_VAR_user_password='your_secure_password'
+
+# Required for push.sh: SeaweedFS S3 credentials (write to cloud-images)
+export SEAWEEDFS_S3_ENDPOINT='https://s3.home.butaco.net'
+export SEAWEEDFS_S3_ACCESS_KEY='...'
+export SEAWEEDFS_S3_SECRET_KEY='...'
 
 # Optional: Proxmox credentials for Terragrunt deployment
 export PROXMOX_API_TOKEN=apiuser@pve!provider=...
@@ -74,7 +100,21 @@ export PROXMOX_VE_SSH_AGENT=true
 ./build.sh debian13
 ```
 
-### 3. Deploy Images to Proxmox (Optional)
+### 3. Push Images to S3
+
+```bash
+# Upload one target (image + .sha256) to the cloud-images bucket
+./push.sh ubuntu24
+
+# Or upload every image currently in images/
+./push.sh all
+```
+
+### 4. Deploy Images to Proxmox
+
+`terragrunt apply` makes each Proxmox node download the pushed images. The
+checksum is read from the bucket at plan time, so an image must be pushed
+(step 3) before it can be deployed.
 
 ```bash
 cd ../tf/customimage/prd
@@ -125,33 +165,39 @@ The `build.sh` script simplifies the build process:
 - `output-rocky-9-xrdp/`
 - `output-debian-13-custom/`
 
-**Final images:**
+**Final images (each with a `.sha256` sidecar):**
 - `images/ubuntu-24.04-custom.img`
 - `images/ubuntu-24.04-xrdp.img`
 - `images/rocky-10-custom.img`
 - `images/rocky-9-xrdp.img`
 - `images/debian-13-custom.img`
 
-## Image Deployment with Terragrunt
+## Image Distribution with S3 + Terragrunt
 
-After building images, deploy them to Proxmox VE using the Terragrunt stack in
+After building, push images to the SeaweedFS `cloud-images` bucket and then make
+Proxmox download them via the Terragrunt stack in
 [`../tf/customimage`](../tf/customimage):
 
 ```bash
-# Deploy to production environment
+# 1. Push built images + checksums to S3
+./push.sh all
+
+# 2. Deploy to production
 cd ../tf/customimage/prd
 terragrunt apply
 
-# Deploy to development environment
+# 3. Deploy to development
 cd ../tf/customimage/dev
 terragrunt apply
 ```
 
 Each environment directory (`dev`/`prd`/`node2`/`node3`) holds a
-`terragrunt.hcl` selecting which built images to upload and the target Proxmox
-node. The shared module `tf/modules/proxmox-image-upload` handles the upload
-(`proxmox_virtual_environment_file`) to the datastore. Image definitions are
-centralized in `tf/customimage/images.hcl`.
+`terragrunt.hcl` selecting which images to deploy and the target Proxmox node.
+The shared module `tf/modules/proxmox-cloudimage` issues the download
+(`proxmox_download_file`) from `https://s3.home.butaco.net/cloud-images/<file>`,
+pinned to the sha256 published next to each object so rebuilt images are
+re-downloaded. Image definitions (and the bucket base URL) are centralized in
+`tf/customimage/images.hcl`.
 
 ## Dependency Management
 
