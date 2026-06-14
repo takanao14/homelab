@@ -14,8 +14,11 @@ locals {
 inputs = {
   containers = {
     "seaweedfs1" = merge(local.env.locals.container_defaults, {
-      cores       = 2
-      memory      = 2048
+      # Bumped from 2C/2GB: the all-in-one process (master+volume+filer+s3)
+      # exhausted 2GB RAM and stalled when serving large (600MB+) cloud-images
+      # objects to concurrent clients. Matches the documented 4C/4GB target.
+      cores       = 4
+      memory      = 4096
       bridge      = local.common.locals.node3.net50.bridge
       ipv4        = "192.168.50.31/24"
       ipv4gw      = local.common.locals.node3.net50.ipv4gw
