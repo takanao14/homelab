@@ -35,6 +35,12 @@ seaweedfs_s3_identity_name: terraform
 seaweedfs_s3_access_key: ""
 seaweedfs_s3_secret_key: ""
 
+# Write-only identity used by packer/push.sh to upload custom images to the
+# cloud-images bucket. Wired into seaweedfs_s3_extra_identities (see
+# group_vars/seaweedfs.yaml); keys are set in group_vars/seaweedfs.sops.yaml.
+seaweedfs_imagebuilder_access_key: ""
+seaweedfs_imagebuilder_secret_key: ""
+
 # Additional credentialed S3 identities beyond the default one above. Each item:
 #   { name: <str>, access_key: <str>, secret_key: <str>, actions: [<str>...] }
 # Action scoping follows SeaweedFS syntax, e.g. "Read:bucket", "Write:bucket".
