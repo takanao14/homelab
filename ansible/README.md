@@ -183,7 +183,6 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `openbao_bootstrap.yaml` | `openbao` |
 | `openbao_configure.yaml` | `openbao` |
 | `openbao_seed_secrets.yaml` | `openbao` |
-| `garage_init.yaml` | `localhost` |
 | `proxmox.yaml` | `proxmox` |
 | `maintenance_user.yaml` | `lxc` |
 | `users.yaml` | `shared_vms` |
