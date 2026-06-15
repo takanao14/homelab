@@ -23,7 +23,7 @@ vector_config:
         - journald
       source: |
         .host = get_hostname!()
-        .unit = string(.SYSTEMD_UNIT) ?? "unknown"
+        .unit = string(._SYSTEMD_UNIT) ?? string(.SYSLOG_IDENTIFIER) ?? "unknown"
   sinks:
     loki:
       type: loki
