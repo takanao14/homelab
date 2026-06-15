@@ -224,6 +224,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Orientation(common.VizOrientationHorizontal).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + clusterFilter + `, fstype=~"ext[234]|xfs|btrfs|zfs|vfat"} / node_filesystem_size_bytes{` + clusterFilter + `, fstype=~"ext[234]|xfs|btrfs|zfs|vfat"}) ` + joinNode + ` * 100)`).
+					Instant().
 					LegendFormat("{{nodename}} {{mountpoint}}"),
 				).Decimals(1),
 		).

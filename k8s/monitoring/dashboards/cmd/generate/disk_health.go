@@ -39,13 +39,6 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		DisplayMode(common.LegendDisplayModeList).
 		Placement(common.LegendPlacementBottom)
 
-	// reduceLast renders one bar per series named by its legend (Values=false),
-	// reducing each series to its latest value. Without an explicit calc the
-	// bargauge defaults to an empty reducer and drops the per-bar label.
-	reduceLast := common.NewReduceDataOptionsBuilder().
-		Values(false).
-		Calcs([]string{"lastNotNull"})
-
 	// Any nonzero count of reallocated/pending/uncorrectable sectors is a strong
 	// failure precursor, so the threshold flips to red at 1.
 	precursorThresholds := dashboard.NewThresholdsConfigBuilder().
@@ -226,8 +219,6 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(8).Height(8).
 				Orientation(common.VizOrientationHorizontal).
-				ReduceOptions(reduceLast).
-				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(precursorThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(smartmon_reallocated_sector_ct_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
@@ -240,8 +231,6 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(8).Height(8).
 				Orientation(common.VizOrientationHorizontal).
-				ReduceOptions(reduceLast).
-				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(precursorThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(smartmon_current_pending_sector_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
@@ -254,8 +243,6 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(8).Height(8).
 				Orientation(common.VizOrientationHorizontal).
-				ReduceOptions(reduceLast).
-				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(precursorThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(smartmon_offline_uncorrectable_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
@@ -268,8 +255,6 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Orientation(common.VizOrientationHorizontal).
-				ReduceOptions(reduceLast).
-				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(precursorThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(smartmon_reported_uncorrect_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
@@ -282,8 +267,6 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Orientation(common.VizOrientationHorizontal).
-				ReduceOptions(reduceLast).
-				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(crcThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(smartmon_udma_crc_error_count_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
@@ -314,8 +297,12 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		// is covered by nvme_percentage_used_ratio in the NVMe row below. Referencing
 		// an attribute that no disk reports is harmless (it just yields no series).
 		WithRow(dashboard.NewRowBuilder("Wear & Lifetime")).
+		// Rendered as a stat (not bargauge): this metric usually has a single
+		// reporting disk. TextMode value_and_name forces the device name to show
+		// even for one series, which "auto" mode would otherwise hide. Each disk
+		// appears as its own colored tile (red <10, yellow <20, green).
 		WithPanel(
-			bargauge.NewPanelBuilder().
+			stat.NewPanelBuilder().
 				Title("SSD Life Remaining (vendor wear attr)").
 				Description("Normalized SSD wear (100 = new). Sourced from whichever vendor " +
 					"attribute a disk exposes (wear_leveling_count, media_wearout_indicator, " +
@@ -324,9 +311,9 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("percent").
-				Orientation(common.VizOrientationHorizontal).
-				ReduceOptions(reduceLast).
-				NamePlacement(common.BarGaugeNamePlacementTop).
+				GraphMode(common.BigValueGraphModeNone).
+				ColorMode(common.BigValueColorModeBackground).
+				TextMode(common.BigValueTextModeValueAndName).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
@@ -340,7 +327,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 						` or smartmon_media_wearout_indicator_value{` + instFilter + `}` +
 						` or smartmon_ssd_life_left_value{` + instFilter + `}` +
 						` or smartmon_percent_lifetime_remain_value{` + instFilter + `}` +
-						`) ` + joinNodename + ` ` + joinModel).Instant().
+						`) ` + joinNodename + ` ` + joinModel).
 					LegendFormat("{{nodename}} {{disk}} {{device_model}}"),
 				).Decimals(0),
 		).
@@ -369,8 +356,6 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(8).Height(8).
 				Unit("percent").
 				Orientation(common.VizOrientationHorizontal).
-				ReduceOptions(reduceLast).
-				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
@@ -379,7 +364,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 						{Value: float64Ptr(100), Color: "red"},
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(nvme_percentage_used_ratio{` + instFilter + `} * 100) ` + joinNodename + ` ` + joinNvmeModel).Instant().
+					Expr(`(nvme_percentage_used_ratio{` + instFilter + `} * 100) ` + joinNodename + ` ` + joinNvmeModel).
 					LegendFormat("{{nodename}} {{device}} {{model}}"),
 				).Decimals(1),
 		).
@@ -390,8 +375,6 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(8).Height(8).
 				Unit("percent").
 				Orientation(common.VizOrientationHorizontal).
-				ReduceOptions(reduceLast).
-				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
@@ -400,7 +383,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 						{Value: float64Ptr(20), Color: "green"},
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(nvme_available_spare_ratio{` + instFilter + `} * 100) ` + joinNodename + ` ` + joinNvmeModel).Instant().
+					Expr(`(nvme_available_spare_ratio{` + instFilter + `} * 100) ` + joinNodename + ` ` + joinNvmeModel).
 					LegendFormat("{{nodename}} {{device}} {{model}}"),
 				).Decimals(0),
 		).

@@ -349,7 +349,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "top",
+        "namePlacement": "auto",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -361,10 +361,7 @@
           "calcs": []
         },
         "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ]
+          "calcs": []
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -414,7 +411,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "top",
+        "namePlacement": "auto",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -426,10 +423,7 @@
           "calcs": []
         },
         "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ]
+          "calcs": []
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -479,7 +473,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "top",
+        "namePlacement": "auto",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -491,10 +485,7 @@
           "calcs": []
         },
         "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ]
+          "calcs": []
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -544,7 +535,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "top",
+        "namePlacement": "auto",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -556,10 +547,7 @@
           "calcs": []
         },
         "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ]
+          "calcs": []
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -609,7 +597,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "top",
+        "namePlacement": "auto",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -621,10 +609,7 @@
           "calcs": []
         },
         "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ]
+          "calcs": []
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -706,13 +691,11 @@
       "panels": []
     },
     {
-      "type": "bargauge",
+      "type": "stat",
       "targets": [
         {
           "expr": "(smartmon_wear_leveling_count_value{instance=~\"$instance\"} or smartmon_media_wearout_indicator_value{instance=~\"$instance\"} or smartmon_ssd_life_left_value{instance=~\"$instance\"} or smartmon_percent_lifetime_remain_value{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
-          "range": false
+          "legendFormat": "{{nodename}} {{disk}} {{device_model}}"
         }
       ],
       "title": "SSD Life Remaining (vendor wear attr)",
@@ -730,27 +713,17 @@
       },
       "repeatDirection": "h",
       "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "top",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
+        "graphMode": "none",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "value_and_name",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
           "calcs": []
         },
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
+        "percentChangeColorMode": "standard",
+        "orientation": ""
       },
       "fieldConfig": {
         "defaults": {
@@ -837,9 +810,7 @@
       "targets": [
         {
           "expr": "(nvme_percentage_used_ratio{instance=~\"$instance\"} * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{device}} {{model}}",
-          "range": false
+          "legendFormat": "{{nodename}} {{device}} {{model}}"
         }
       ],
       "title": "Endurance Used (%)",
@@ -858,7 +829,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "top",
+        "namePlacement": "auto",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -870,10 +841,7 @@
           "calcs": []
         },
         "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ]
+          "calcs": []
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -908,9 +876,7 @@
       "targets": [
         {
           "expr": "(nvme_available_spare_ratio{instance=~\"$instance\"} * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{device}} {{model}}",
-          "range": false
+          "legendFormat": "{{nodename}} {{device}} {{model}}"
         }
       ],
       "title": "Available Spare (%)",
@@ -929,7 +895,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "top",
+        "namePlacement": "auto",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -941,10 +907,7 @@
           "calcs": []
         },
         "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ]
+          "calcs": []
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"

@@ -21,6 +21,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 	const (
 		dnsdist = `job="scrapeConfig/monitoring/dnsdist-external"`
 		pdns    = `job="scrapeConfig/monitoring/pdns-auth-external"`
+		coredns = `job="coredns"`
 	)
 
 	// mapDNS maps instance IPs to logical ns1/ns2 names for better readability.
@@ -68,6 +69,28 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 			{Color: "green", Value: float64Ptr(0)},
 			{Color: "yellow", Value: float64Ptr(50000)},
 			{Color: "red", Value: float64Ptr(150000)},
+		})
+
+	corednsLatencyThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Color: "green", Value: float64Ptr(0)},
+			{Color: "yellow", Value: float64Ptr(0.05)},
+			{Color: "red", Value: float64Ptr(0.15)},
+		})
+
+	issueThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "green"},
+			{Value: float64Ptr(1), Color: "red"},
+		})
+
+	servfailThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "green"},
+			{Value: float64Ptr(0.001), Color: "red"},
 		})
 
 	d, err := dashboard.NewDashboardBuilder("DNS Overview").
@@ -371,6 +394,124 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(mapDNS(`pdns_auth_backend_latency{` + pdns + `}`)).
 					LegendFormat("{{server}}"),
+				),
+		).
+		WithRow(dashboard.NewRowBuilder("CoreDNS Summary")).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("CoreDNS QPS").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("reqps").
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(rate(coredns_dns_requests_total{` + coredns + `}[5m]))`).
+					Instant().
+					LegendFormat("QPS"),
+				).
+				Decimals(1),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("CoreDNS Targets Down").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("short").
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(up{` + coredns + `} == 0) or vector(0)`).
+					Instant().
+					LegendFormat("Down"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("CoreDNS SERVFAIL Rate").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("reqps").
+				Thresholds(servfailThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(rate(coredns_dns_responses_total{` + coredns + `,rcode="SERVFAIL"}[5m]))`).
+					Instant().
+					LegendFormat("SERVFAIL"),
+				).
+				Decimals(2),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("CoreDNS Request Latency p99").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("s").
+				Thresholds(corednsLatencyThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`histogram_quantile(0.99, sum by (le) (rate(coredns_dns_request_duration_seconds_bucket{` + coredns + `}[5m])))`).
+					Instant().
+					LegendFormat("p99"),
+				),
+		).
+		WithRow(dashboard.NewRowBuilder("CoreDNS Metrics")).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("CoreDNS QPS").
+				Description("CoreDNS requests per second, grouped by cluster.").
+				Datasource(ds).
+				Span(24).Height(8).
+				Unit("reqps").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum by (cluster) (rate(coredns_dns_requests_total{` + coredns + `}[5m]))`).
+					LegendFormat("{{cluster}}"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("CoreDNS SERVFAIL Rate").
+				Description("SERVFAIL responses per second from in-cluster CoreDNS, grouped by cluster.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("reqps").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum by (cluster) (rate(coredns_dns_responses_total{` + coredns + `,rcode="SERVFAIL"}[5m]))`).
+					LegendFormat("{{cluster}}"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("CoreDNS Cache Hit Rate").
+				Description("CoreDNS cache hit percentage, grouped by cluster.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("percent").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`100 * sum by (cluster) (rate(coredns_cache_hits_total{` + coredns + `}[5m])) / clamp_min(sum by (cluster) (rate(coredns_cache_requests_total{` + coredns + `}[5m])), 1e-9)`).
+					LegendFormat("{{cluster}}"),
+				).
+				Decimals(1),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("CoreDNS Request Latency p99").
+				Description("99th percentile CoreDNS request duration, grouped by cluster.").
+				Datasource(ds).
+				Span(24).Height(8).
+				Unit("s").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(coredns_dns_request_duration_seconds_bucket{` + coredns + `}[5m])))`).
+					LegendFormat("{{cluster}}"),
 				),
 		).
 		Build()

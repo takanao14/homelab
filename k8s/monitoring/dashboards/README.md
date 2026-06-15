@@ -15,7 +15,7 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 | `dns-overview` | dnsdist + pdns-auth: QPS, cache hit rate, latency, response codes, drop rate |
 | `dns-logs` | DNS query logs via Loki: query rate, response codes, top domains, per-host breakdown |
 | `network-overview` | SNMP MIB-II (bgw1/c1200): traffic, errors, discards, interface status |
-| `monitoring-overview` | Prometheus and Loki self-monitoring: scrape targets, TSDB, ingestion rate |
+| `monitoring-overview` | Prometheus, Alertmanager, and Loki self-monitoring: alerts, scrape targets, TSDB, ingestion rate |
 | `syslog` | Syslog log volume and error rate via Loki |
 | `uptime` | ICMP/DNS probe availability timeline |
 

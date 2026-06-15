@@ -192,6 +192,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + instFilter + `,` + fsFilter + `} / node_filesystem_size_bytes{` + instFilter + `,` + fsFilter + `}) * 100 ` + joinNodename + `)`).
+					Instant().
 					LegendFormat("{{nodename}} {{mountpoint}}"),
 				).
 				Decimals(1),
@@ -370,6 +371,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + instFilter + `,` + fsFilter + `} / node_filesystem_size_bytes{` + instFilter + `,` + fsFilter + `}) * 100) ` + joinNodename).
+					Instant().
 					LegendFormat("{{nodename}} {{mountpoint}}"),
 				).
 				Decimals(1),

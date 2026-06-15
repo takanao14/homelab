@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
 	"github.com/grafana/grafana-foundation-sdk/go/stat"
+	"github.com/grafana/grafana-foundation-sdk/go/table"
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
@@ -114,6 +115,62 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("Corruptions"),
 				),
 		).
+		WithRow(dashboard.NewRowBuilder("Alerting")).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Firing Alerts").
+				Description("Current Prometheus alerts in the firing state, including Watchdog alerts.").
+				Datasource(ds).
+				Span(4).Height(4).
+				Unit("short").
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`count(ALERTS{alertstate="firing"}) or vector(0)`).
+					LegendFormat("Firing"),
+				),
+		).
+		WithPanel(
+			table.NewPanelBuilder().
+				Title("Firing Alert Details").
+				Description("Current firing alerts and their Prometheus labels.").
+				Datasource(ds).
+				Span(20).Height(8).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`ALERTS{alertstate="firing"}`).
+					Instant().
+					Format(prometheus.PromQueryFormatTable),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Alertmanager Notification Failures").
+				Description("Failed Alertmanager notification requests grouped by integration and reason.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("reqps").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum by (integration, reason) (rate(alertmanager_notifications_failed_total[5m])) > 0`).
+					LegendFormat("{{integration}} {{reason}}"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Alertmanager Notification Latency p99").
+				Description("99th percentile Alertmanager notification latency grouped by integration.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("s").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`histogram_quantile(0.99, sum by (le, integration) (rate(alertmanager_notification_latency_seconds_bucket[5m]))) and on (integration) sum by (integration) (rate(alertmanager_notifications_total[5m])) > 0`).
+					LegendFormat("{{integration}}"),
+				),
+		).
 		WithRow(dashboard.NewRowBuilder("Loki")).
 		WithPanel(
 			stat.NewPanelBuilder().
@@ -203,6 +260,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Orientation(common.VizOrientationHorizontal).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(topk(10, avg by (job) (scrape_duration_seconds)))`).
+					Instant().
 					LegendFormat("{{job}}"),
 				).
 				Decimals(3),

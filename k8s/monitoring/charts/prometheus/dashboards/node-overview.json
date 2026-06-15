@@ -318,7 +318,9 @@
       "targets": [
         {
           "expr": "sort_desc((1 - node_filesystem_avail_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / node_filesystem_size_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
-          "legendFormat": "{{nodename}} {{mountpoint}}"
+          "instant": true,
+          "legendFormat": "{{nodename}} {{mountpoint}}",
+          "range": false
         }
       ],
       "title": "Filesystem Usage",
@@ -872,7 +874,9 @@
       "targets": [
         {
           "expr": "sort_desc((1 - node_filesystem_avail_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / node_filesystem_size_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{mountpoint}}"
+          "instant": true,
+          "legendFormat": "{{nodename}} {{mountpoint}}",
+          "range": false
         }
       ],
       "title": "Filesystem Usage",

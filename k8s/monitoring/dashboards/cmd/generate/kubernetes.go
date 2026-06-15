@@ -347,6 +347,46 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 					{Id: "unit", Value: "bytes"},
 				}),
 		).
+		WithRow(dashboard.NewRowBuilder("Container Runtime Health")).
+		WithPanel(
+			bargauge.NewPanelBuilder().
+				Title("Top CPU Throttled Containers (5m)").
+				Description("Percentage of CPU scheduling periods throttled in the last 5 minutes. Idle containers and zero values are excluded.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("percent").
+				Orientation(common.VizOrientationHorizontal).
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "green"},
+						{Value: float64Ptr(20), Color: "yellow"},
+						{Value: float64Ptr(50), Color: "red"},
+					})).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					// clamp_min avoids NaN when an idle container has no scheduling periods.
+					Expr(`sort_desc(topk(10, (100 * sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[5m])) / clamp_min(sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[5m])), 1e-9)) > 0)) or on() label_replace(vector(0), "cluster", "No throttling", "", "")`).
+					Instant().
+					LegendFormat("{{cluster}} {{namespace}}/{{pod}}/{{container}}"),
+				).
+				Decimals(1),
+		).
+		WithPanel(
+			bargauge.NewPanelBuilder().
+				Title("Container OOM Events (1h)").
+				Description("Containers with one or more cgroup OOM events in the last hour.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("short").
+				Orientation(common.VizOrientationHorizontal).
+				Thresholds(issueThresholds).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sort_desc(sum by (cluster, namespace, pod, container) (increase(container_oom_events_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[1h])) > 0) or on() label_replace(vector(0), "cluster", "No OOM events", "", "")`).
+					Instant().
+					LegendFormat("{{cluster}} {{namespace}}/{{pod}}/{{container}}"),
+				).
+				Decimals(0),
+		).
 		WithRow(dashboard.NewRowBuilder("Pod Health")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -370,7 +410,8 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Orientation(common.VizOrientationHorizontal).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// > 0 excludes containers with no restarts; sort_desc orders by count without topk's per-step instability.
-					Expr(`sort_desc(sum by (namespace, pod, container) (increase(kube_pod_container_status_restarts_total{` + clusterFilter + `,` + nsFilter + `}[1h])) > 0)`).
+					Expr(`sort_desc(sum by (namespace, pod, container) (increase(kube_pod_container_status_restarts_total{` + clusterFilter + `,` + nsFilter + `}[1h])) > 0) or on() label_replace(vector(0), "namespace", "No restarts", "", "")`).
+					Instant().
 					LegendFormat("{{namespace}}/{{pod}}/{{container}}"),
 				).
 				Decimals(0),
@@ -411,7 +452,8 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Orientation(common.VizOrientationHorizontal).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(kubelet_volume_stats_used_bytes{` + clusterFilter + `,` + nsFilter + `} / kubelet_volume_stats_capacity_bytes{` + clusterFilter + `,` + nsFilter + `} * 100)`).
-					LegendFormat("{{namespace}}/{{persistentvolumeclaim}}"),
+					Instant().
+					LegendFormat("{{cluster}} {{namespace}}/{{persistentvolumeclaim}}"),
 				).
 				Decimals(1),
 		).
@@ -427,6 +469,28 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{phase}}"),
 				).
 				Decimals(0),
+		).
+		WithPanel(
+			bargauge.NewPanelBuilder().
+				Title("PVC Inode Usage (%)").
+				Description("Percentage of filesystem inodes used by each PVC. Inode exhaustion can occur before disk capacity is full.").
+				Datasource(ds).
+				Span(24).Height(8).
+				Unit("percent").
+				Orientation(common.VizOrientationHorizontal).
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "green"},
+						{Value: float64Ptr(80), Color: "yellow"},
+						{Value: float64Ptr(90), Color: "red"},
+					})).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sort_desc(100 * (1 - kubelet_volume_stats_inodes_free{` + clusterFilter + `,` + nsFilter + `} / clamp_min(kubelet_volume_stats_inodes{` + clusterFilter + `,` + nsFilter + `}, 1)))`).
+					Instant().
+					LegendFormat("{{cluster}} {{namespace}}/{{persistentvolumeclaim}}"),
+				).
+				Decimals(1),
 		).
 		Build()
 

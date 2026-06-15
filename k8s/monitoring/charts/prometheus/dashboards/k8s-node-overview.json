@@ -528,7 +528,9 @@
       "targets": [
         {
           "expr": "sort_desc((1 - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\"} / node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}) * 100)",
-          "legendFormat": "{{nodename}} {{mountpoint}}"
+          "instant": true,
+          "legendFormat": "{{nodename}} {{mountpoint}}",
+          "range": false
         }
       ],
       "title": "Filesystem Usage (%)",

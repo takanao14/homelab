@@ -54,6 +54,22 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 			{Value: float64Ptr(100), Color: "red"},
 		})
 
+	// Junction (hotspot) temperature is expected to run hotter than edge temperature.
+	junctionTempThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "green"},
+			{Value: float64Ptr(95), Color: "yellow"},
+			{Value: float64Ptr(105), Color: "red"},
+		})
+
+	issueThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "green"},
+			{Value: float64Ptr(1), Color: "red"},
+		})
+
 	d, err := dashboard.NewDashboardBuilder("GPU Overview").
 		Uid("gpu-overview").
 		Tags([]string{"gpu", "infrastructure"}).
@@ -122,6 +138,55 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`amd_gpu_average_package_power{` + gpuFilter + `}`).
 					LegendFormat("Power"),
+				),
+		).
+		WithRow(dashboard.NewRowBuilder("GPU Health")).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("GPU Health Issues").
+				Description("Number of GPUs whose exporter health value is not healthy (1).").
+				Datasource(ds).
+				Span(8).Height(4).
+				Unit("short").
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`count(amd_gpu_health{` + gpuFilter + `} != 1) or vector(0)`).
+					Instant().
+					LegendFormat("Health Issues"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("ECC Uncorrectable Errors").
+				Description("Total uncorrectable GPU ECC errors reported by the exporter.").
+				Datasource(ds).
+				Span(8).Height(4).
+				Unit("short").
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(amd_gpu_ecc_uncorrect_total{` + gpuFilter + `}) or vector(0)`).
+					Instant().
+					LegendFormat("ECC Errors"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Temperature (Junction)").
+				Description("Current GPU hotspot temperature.").
+				Datasource(ds).
+				Span(8).Height(4).
+				Unit("celsius").
+				Thresholds(junctionTempThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`amd_gpu_junction_temperature{` + gpuFilter + `}`).
+					Instant().
+					LegendFormat("Junction Temp"),
 				),
 		).
 		WithRow(dashboard.NewRowBuilder("Metrics")).

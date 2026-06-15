@@ -925,12 +925,159 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Pod Health",
+      "title": "Container Runtime Health",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 37
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sort_desc(topk(10, (100 * sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[5m])) / clamp_min(sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[5m])), 1e-9)) \u003e 0)) or on() label_replace(vector(0), \"cluster\", \"No throttling\", \"\", \"\")",
+          "instant": true,
+          "legendFormat": "{{cluster}} {{namespace}}/{{pod}}/{{container}}",
+          "range": false
+        }
+      ],
+      "title": "Top CPU Throttled Containers (5m)",
+      "description": "Percentage of CPU scheduling periods throttled in the last 5 minutes. Idle containers and zero values are excluded.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 38
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 20,
+                "color": "yellow"
+              },
+              {
+                "value": 50,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sort_desc(sum by (cluster, namespace, pod, container) (increase(container_oom_events_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[1h])) \u003e 0) or on() label_replace(vector(0), \"cluster\", \"No OOM events\", \"\", \"\")",
+          "instant": true,
+          "legendFormat": "{{cluster}} {{namespace}}/{{pod}}/{{container}}",
+          "range": false
+        }
+      ],
+      "title": "Container OOM Events (1h)",
+      "description": "Containers with one or more cgroup OOM events in the last hour.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 38
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Pod Health",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 46
       },
       "id": 0,
       "panels": []
@@ -953,7 +1100,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 38
+        "y": 47
       },
       "repeatDirection": "h",
       "options": {
@@ -980,8 +1127,10 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc(sum by (namespace, pod, container) (increase(kube_pod_container_status_restarts_total{cluster=~\"$cluster\",namespace=~\"$namespace\"}[1h])) \u003e 0)",
-          "legendFormat": "{{namespace}}/{{pod}}/{{container}}"
+          "expr": "sort_desc(sum by (namespace, pod, container) (increase(kube_pod_container_status_restarts_total{cluster=~\"$cluster\",namespace=~\"$namespace\"}[1h])) \u003e 0) or on() label_replace(vector(0), \"namespace\", \"No restarts\", \"\", \"\")",
+          "instant": true,
+          "legendFormat": "{{namespace}}/{{pod}}/{{container}}",
+          "range": false
         }
       ],
       "title": "Top Restarting Containers (1h)",
@@ -994,7 +1143,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 38
+        "y": 47
       },
       "repeatDirection": "h",
       "options": {
@@ -1033,7 +1182,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 55
       },
       "id": 0,
       "panels": []
@@ -1062,7 +1211,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 47
+        "y": 56
       },
       "repeatDirection": "h",
       "options": {
@@ -1123,7 +1272,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 59
+        "y": 68
       },
       "id": 0,
       "panels": []
@@ -1133,7 +1282,9 @@
       "targets": [
         {
           "expr": "sort_desc(kubelet_volume_stats_used_bytes{cluster=~\"$cluster\",namespace=~\"$namespace\"} / kubelet_volume_stats_capacity_bytes{cluster=~\"$cluster\",namespace=~\"$namespace\"} * 100)",
-          "legendFormat": "{{namespace}}/{{persistentvolumeclaim}}"
+          "instant": true,
+          "legendFormat": "{{cluster}} {{namespace}}/{{persistentvolumeclaim}}",
+          "range": false
         }
       ],
       "title": "PVC Disk Usage (%)",
@@ -1146,7 +1297,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 60
+        "y": 69
       },
       "repeatDirection": "h",
       "options": {
@@ -1195,7 +1346,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 60
+        "y": 69
       },
       "repeatDirection": "h",
       "options": {
@@ -1222,6 +1373,75 @@
         "defaults": {
           "unit": "short",
           "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sort_desc(100 * (1 - kubelet_volume_stats_inodes_free{cluster=~\"$cluster\",namespace=~\"$namespace\"} / clamp_min(kubelet_volume_stats_inodes{cluster=~\"$cluster\",namespace=~\"$namespace\"}, 1)))",
+          "instant": true,
+          "legendFormat": "{{cluster}} {{namespace}}/{{persistentvolumeclaim}}",
+          "range": false
+        }
+      ],
+      "title": "PVC Inode Usage (%)",
+      "description": "Percentage of filesystem inodes used by each PVC. Inode exhaustion can occur before disk capacity is full.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 77
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "red"
+              }
+            ]
+          }
         },
         "overrides": []
       }

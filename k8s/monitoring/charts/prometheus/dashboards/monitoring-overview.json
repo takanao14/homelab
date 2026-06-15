@@ -235,12 +235,209 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Loki",
+      "title": "Alerting",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 5
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count(ALERTS{alertstate=\"firing\"}) or vector(0)",
+          "legendFormat": "Firing"
+        }
+      ],
+      "title": "Firing Alerts",
+      "description": "Current Prometheus alerts in the firing state, including Watchdog alerts.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 6
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "table",
+      "targets": [
+        {
+          "expr": "ALERTS{alertstate=\"firing\"}",
+          "format": "table",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "title": "Firing Alert Details",
+      "description": "Current firing alerts and their Prometheus labels.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 20,
+        "x": 4,
+        "y": 6
+      },
+      "repeatDirection": "h",
+      "options": {
+        "frameIndex": 0,
+        "showHeader": true,
+        "showTypeIcons": false,
+        "footer": {
+          "show": false,
+          "reducer": null,
+          "countRows": false
+        },
+        "cellHeight": "sm"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "inspect": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (integration, reason) (rate(alertmanager_notifications_failed_total[5m])) \u003e 0",
+          "legendFormat": "{{integration}} {{reason}}"
+        }
+      ],
+      "title": "Alertmanager Notification Failures",
+      "description": "Failed Alertmanager notification requests grouped by integration and reason.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, integration) (rate(alertmanager_notification_latency_seconds_bucket[5m]))) and on (integration) sum by (integration) (rate(alertmanager_notifications_total[5m])) \u003e 0",
+          "legendFormat": "{{integration}}"
+        }
+      ],
+      "title": "Alertmanager Notification Latency p99",
+      "description": "99th percentile Alertmanager notification latency grouped by integration.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Loki",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 22
       },
       "id": 0,
       "panels": []
@@ -263,7 +460,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 6
+        "y": 23
       },
       "repeatDirection": "h",
       "options": {
@@ -304,7 +501,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 6
+        "y": 23
       },
       "repeatDirection": "h",
       "options": {
@@ -335,7 +532,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 10
+        "y": 27
       },
       "id": 0,
       "panels": []
@@ -358,7 +555,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 11
+        "y": 28
       },
       "repeatDirection": "h",
       "options": {
@@ -403,7 +600,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 11
+        "y": 28
       },
       "repeatDirection": "h",
       "options": {
@@ -444,7 +641,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 19
+        "y": 36
       },
       "repeatDirection": "h",
       "options": {
@@ -485,7 +682,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 19
+        "y": 36
       },
       "repeatDirection": "h",
       "options": {
@@ -513,7 +710,9 @@
       "targets": [
         {
           "expr": "sort_desc(topk(10, avg by (job) (scrape_duration_seconds)))",
-          "legendFormat": "{{job}}"
+          "instant": true,
+          "legendFormat": "{{job}}",
+          "range": false
         }
       ],
       "title": "Slowest Scrape Targets",
@@ -526,7 +725,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 27
+        "y": 44
       },
       "repeatDirection": "h",
       "options": {
@@ -587,7 +786,7 @@
         "h": 8,
         "w": 24,
         "x": 12,
-        "y": 27
+        "y": 44
       },
       "repeatDirection": "h",
       "options": {
@@ -618,7 +817,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 35
+        "y": 52
       },
       "id": 0,
       "panels": []
@@ -641,7 +840,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 36
+        "y": 53
       },
       "repeatDirection": "h",
       "options": {
@@ -682,7 +881,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 36
+        "y": 53
       },
       "repeatDirection": "h",
       "options": {
@@ -723,7 +922,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 44
+        "y": 61
       },
       "repeatDirection": "h",
       "options": {
@@ -764,7 +963,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 44
+        "y": 61
       },
       "repeatDirection": "h",
       "options": {
