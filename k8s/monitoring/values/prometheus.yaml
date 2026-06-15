@@ -32,7 +32,11 @@ kube-prometheus-stack:
               requests:
                 storage: 10Gi
     serviceMonitor:
-      metricRelabelings:
+      # Use target relabelings (relabel_configs) so the cluster label is also
+      # applied to synthetic series such as up and scrape_*, which bypass
+      # metric_relabel_configs. This keeps prd consistent with dev (whose
+      # cluster label arrives via remote_write external labels).
+      relabelings:
         - action: replace
           targetLabel: cluster
           replacement: prd
@@ -44,29 +48,33 @@ kube-prometheus-stack:
 
   kubelet:
     serviceMonitor:
-      metricRelabelings:
+      # Target relabelings cover the up series for all three kubelet scrape
+      # endpoints (/metrics, /metrics/cadvisor, /metrics/probes). Without this
+      # the KubeletDown rule false-fires, because it joins kube_node_info
+      # (labeled cluster=prd) against up{job="kubelet"} (otherwise unlabeled).
+      relabelings:
         - action: replace
           targetLabel: cluster
           replacement: prd
-      cAdvisorMetricRelabelings:
+      cAdvisorRelabelings:
         - action: replace
           targetLabel: cluster
           replacement: prd
-      probesMetricRelabelings:
+      probesRelabelings:
         - action: replace
           targetLabel: cluster
           replacement: prd
 
   kubeApiServer:
     serviceMonitor:
-      metricRelabelings:
+      relabelings:
         - action: replace
           targetLabel: cluster
           replacement: prd
 
   coreDns:
     serviceMonitor:
-      metricRelabelings:
+      relabelings:
         - action: replace
           targetLabel: cluster
           replacement: prd
@@ -74,7 +82,7 @@ kube-prometheus-stack:
   kube-state-metrics:
     prometheus:
       monitor:
-        metricRelabelings:
+        relabelings:
           - action: replace
             targetLabel: cluster
             replacement: prd
@@ -91,7 +99,6 @@ kube-prometheus-stack:
           - action: replace
             sourceLabels: [__meta_kubernetes_pod_node_name]
             targetLabel: node
-        metricRelabelings:
           - action: replace
             targetLabel: cluster
             replacement: prd
