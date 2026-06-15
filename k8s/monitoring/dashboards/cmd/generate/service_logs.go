@@ -13,9 +13,7 @@ import (
 // Logs are JSON-encoded journald entries shipped via vector with labels: host, unit.
 // PRIORITY follows syslog convention: 0=emerg … 3=err, 4=warning, 5=notice, 6=info, 7=debug.
 func buildServiceLogs() (*dashboard.Dashboard, error) {
-	dsType := "loki"
-	dsUID := "$datasource"
-	ds := common.DataSourceRef{Type: &dsType, Uid: &dsUID}
+	ds := lokiDatasource()
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
 	legend := common.NewVizLegendOptionsBuilder().
 		ShowLegend(true).

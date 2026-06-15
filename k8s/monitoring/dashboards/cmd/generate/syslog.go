@@ -12,9 +12,7 @@ import (
 // buildSyslog defines the network device syslog dashboard backed by Loki.
 // Logs are JSON-parsed syslog entries with fields: host, severity, appname, message.
 func buildSyslog() (*dashboard.Dashboard, error) {
-	dsType := "loki"
-	dsUID := "$datasource"
-	ds := common.DataSourceRef{Type: &dsType, Uid: &dsUID}
+	ds := lokiDatasource()
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
 	legend := common.NewVizLegendOptionsBuilder().
 		ShowLegend(true).

@@ -70,6 +70,16 @@ func promDatasource() common.DataSourceRef {
 	}
 }
 
+// lokiDatasource is the Loki counterpart of promDatasource.
+func lokiDatasource() common.DataSourceRef {
+	dsType := "loki"
+	dsUID := "$datasource"
+	return common.DataSourceRef{
+		Type: &dsType,
+		Uid:  &dsUID,
+	}
+}
+
 func strPtr(s string) *string {
 	return &s
 }

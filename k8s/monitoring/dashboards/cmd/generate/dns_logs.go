@@ -13,9 +13,7 @@ import (
 // buildDnsLogs defines the DNS query log dashboard backed by Loki.
 // Logs are JSON from dnscollector/dnsdist; field names use dots which LogQL normalizes to underscores.
 func buildDnsLogs() (*dashboard.Dashboard, error) {
-	dsType := "loki"
-	dsUID := "$datasource"
-	ds := common.DataSourceRef{Type: &dsType, Uid: &dsUID}
+	ds := lokiDatasource()
 
 	const (
 		base     = `{job="dns", host=~"$host"}`
