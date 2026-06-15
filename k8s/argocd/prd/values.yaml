@@ -1,3 +1,9 @@
+global:
+  dnsConfig:
+    options:
+      - name: ndots
+        value: "2"
+
 server:
   ingress:
     hostname: argocd-ui.prd.butaco.net
