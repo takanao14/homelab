@@ -318,7 +318,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percent"
+          "unit": "percent",
+          "custom": {}
         },
         "overrides": []
       }
@@ -362,7 +363,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "custom": {}
         },
         "overrides": []
       }
@@ -406,7 +408,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "custom": {}
         },
         "overrides": []
       }
@@ -454,7 +457,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "celsius"
+          "unit": "celsius",
+          "custom": {}
         },
         "overrides": []
       }
@@ -498,7 +502,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "watt"
+          "unit": "watt",
+          "custom": {}
         },
         "overrides": []
       }
@@ -542,7 +547,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "hertz"
+          "unit": "hertz",
+          "custom": {}
         },
         "overrides": []
       }

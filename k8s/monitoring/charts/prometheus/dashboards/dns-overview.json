@@ -50,6 +50,19 @@
         "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "reqps",
@@ -79,6 +92,19 @@
         "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -180,6 +206,19 @@
         "y": 6
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "reqps",
@@ -512,7 +551,8 @@
                 "color": "red"
               }
             ]
-          }
+          },
+          "custom": {}
         },
         "overrides": [
           {
@@ -579,7 +619,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percent"
+          "unit": "percent",
+          "custom": {}
         },
         "overrides": []
       }
@@ -673,7 +714,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "custom": {}
         },
         "overrides": []
       }
@@ -730,7 +772,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "custom": {}
         },
         "overrides": []
       }
@@ -906,7 +949,8 @@
                 "color": "red"
               }
             ]
-          }
+          },
+          "custom": {}
         },
         "overrides": []
       }
@@ -963,7 +1007,8 @@
                 "color": "red"
               }
             ]
-          }
+          },
+          "custom": {}
         },
         "overrides": []
       }

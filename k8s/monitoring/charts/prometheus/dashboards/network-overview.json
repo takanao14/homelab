@@ -50,6 +50,19 @@
         "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -136,6 +149,19 @@
         "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bps"
@@ -285,7 +311,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "pps"
+          "unit": "pps",
+          "custom": {}
         },
         "overrides": []
       }
@@ -329,7 +356,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "pps"
+          "unit": "pps",
+          "custom": {}
         },
         "overrides": []
       }

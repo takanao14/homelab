@@ -287,6 +287,10 @@
                 "color": "green"
               }
             ]
+          },
+          "custom": {
+            "lineWidth": 0,
+            "fillOpacity": 70
           }
         },
         "overrides": []
@@ -327,7 +331,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "custom": {}
         },
         "overrides": []
       }
@@ -403,6 +408,10 @@
                 "color": "green"
               }
             ]
+          },
+          "custom": {
+            "lineWidth": 0,
+            "fillOpacity": 70
           }
         },
         "overrides": []
@@ -447,7 +456,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "custom": {}
         },
         "overrides": []
       }

@@ -101,7 +101,7 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[5m]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)) * 100)",
+          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)) * 100)",
           "legendFormat": "{{nodename}}"
         }
       ],
@@ -118,6 +118,26 @@
         "y": 5
       },
       "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": ""
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -147,6 +167,26 @@
         "y": 5
       },
       "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": ""
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -356,7 +396,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[5m]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)) * 100)",
+          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)) * 100)",
           "legendFormat": "{{nodename}}"
         }
       ],
@@ -387,7 +427,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percent"
+          "unit": "percent",
+          "custom": {}
         },
         "overrides": []
       }
@@ -427,7 +468,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit"
+          "unit": "percentunit",
+          "custom": {}
         },
         "overrides": []
       }
@@ -480,7 +522,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "custom": {}
         },
         "overrides": []
       }
@@ -520,7 +563,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percent"
+          "unit": "percent",
+          "custom": {}
         },
         "overrides": []
       }
@@ -581,7 +625,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "celsius"
+          "unit": "celsius",
+          "custom": {}
         },
         "overrides": []
       }
@@ -590,7 +635,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "(rate(node_cpu_package_throttles_total{instance=~\"$instance\"}[5m])) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "expr": "(rate(node_cpu_package_throttles_total{instance=~\"$instance\"}[$__rate_interval])) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "legendFormat": "{{nodename}} Throttles"
         },
         {
@@ -637,7 +682,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "ops"
+          "unit": "ops",
+          "custom": {}
         },
         "overrides": []
       }
@@ -659,12 +705,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(node_network_receive_bytes_total{instance=~\"$instance\", device!~\"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*\"}[5m]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "expr": "rate(node_network_receive_bytes_total{instance=~\"$instance\", device!~\"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "legendFormat": "{{nodename}} Rx {{device}}",
           "refId": "Rx"
         },
         {
-          "expr": "rate(node_network_transmit_bytes_total{instance=~\"$instance\", device!~\"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*\"}[5m]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "expr": "rate(node_network_transmit_bytes_total{instance=~\"$instance\", device!~\"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "legendFormat": "{{nodename}} Tx {{device}}",
           "refId": "Tx"
         }
@@ -749,11 +795,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(node_disk_read_bytes_total{instance=~\"$instance\", device=~\"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[5m]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "expr": "rate(node_disk_read_bytes_total{instance=~\"$instance\", device=~\"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "legendFormat": "{{nodename}} Read {{device}}"
         },
         {
-          "expr": "rate(node_disk_written_bytes_total{instance=~\"$instance\", device=~\"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[5m]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "expr": "rate(node_disk_written_bytes_total{instance=~\"$instance\", device=~\"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "legendFormat": "{{nodename}} Write {{device}}",
           "refId": "Write"
         }
@@ -922,7 +968,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percent"
+          "unit": "percent",
+          "custom": {}
         },
         "overrides": []
       }
@@ -1001,7 +1048,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "custom": {}
         },
         "overrides": [
           {

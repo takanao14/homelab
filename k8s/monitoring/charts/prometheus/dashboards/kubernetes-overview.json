@@ -50,6 +50,19 @@
         "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -78,6 +91,19 @@
         "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -106,6 +132,19 @@
         "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -188,6 +227,19 @@
         "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -567,7 +619,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "custom": {}
         },
         "overrides": []
       }
@@ -607,7 +660,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "custom": {}
         },
         "overrides": []
       }
@@ -664,7 +718,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "none"
+          "unit": "none",
+          "custom": {}
         },
         "overrides": []
       }
@@ -708,7 +763,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "custom": {}
         },
         "overrides": []
       }
@@ -718,30 +774,30 @@
       "targets": [
         {
           "expr": "sum by (cluster, namespace, pod, container) (kube_pod_container_resource_requests{cluster=~\"$cluster\",resource=\"cpu\",namespace=~\"$namespace\"})",
+          "format": "table",
           "instant": true,
           "range": false,
-          "format": "table",
           "refId": "A"
         },
         {
           "expr": "sum by (cluster, namespace, pod, container) (rate(container_cpu_usage_seconds_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[5m]))",
+          "format": "table",
           "instant": true,
           "range": false,
-          "format": "table",
           "refId": "B"
         },
         {
           "expr": "sum by (cluster, namespace, pod, container) (kube_pod_container_resource_requests{cluster=~\"$cluster\",resource=\"memory\",namespace=~\"$namespace\"})",
+          "format": "table",
           "instant": true,
           "range": false,
-          "format": "table",
           "refId": "C"
         },
         {
           "expr": "sum by (cluster, namespace, pod, container) (container_memory_working_set_bytes{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"})",
+          "format": "table",
           "instant": true,
           "range": false,
-          "format": "table",
           "refId": "D"
         }
       ],
@@ -788,8 +844,24 @@
           }
         }
       ],
+      "options": {
+        "frameIndex": 0,
+        "showHeader": true,
+        "showTypeIcons": false,
+        "footer": {
+          "show": false,
+          "reducer": null,
+          "countRows": false
+        },
+        "cellHeight": "sm"
+      },
       "fieldConfig": {
-        "defaults": {},
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "inspect": false
+          }
+        },
         "overrides": [
           {
             "matcher": {
@@ -898,7 +970,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "custom": {}
         },
         "overrides": []
       }

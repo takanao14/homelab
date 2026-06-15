@@ -51,6 +51,19 @@
         "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -79,6 +92,19 @@
         "y": 1
       },
       "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short"
@@ -371,7 +397,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit",
-          "min": 0
+          "min": 0,
+          "custom": {}
         },
         "overrides": []
       }
@@ -417,7 +444,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "custom": {}
         },
         "overrides": [
           {
@@ -482,7 +510,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "custom": {}
         },
         "overrides": [
           {
@@ -626,7 +655,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "celsius"
+          "unit": "celsius",
+          "custom": {}
         },
         "overrides": []
       }
@@ -672,7 +702,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "custom": {}
         },
         "overrides": [
           {
@@ -742,7 +773,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "custom": {}
         },
         "overrides": [
           {
@@ -819,7 +851,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "custom": {}
         },
         "overrides": []
       }
@@ -930,7 +963,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit"
+          "unit": "percentunit",
+          "custom": {}
         },
         "overrides": []
       }
@@ -976,7 +1010,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
+          "unit": "bytes",
+          "custom": {}
         },
         "overrides": [
           {
@@ -1190,7 +1225,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "min": 0
+          "min": 0,
+          "custom": {}
         },
         "overrides": []
       }
@@ -1231,7 +1267,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit",
-          "min": 0
+          "min": 0,
+          "custom": {}
         },
         "overrides": []
       }

@@ -117,7 +117,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("percent").
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + instFilter + `}[5m]) ` + joinNodename + `) * 100)`).
+					Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + instFilter + `}[$__rate_interval]) ` + joinNodename + `) * 100)`).
 					LegendFormat("{{nodename}}"),
 				).
 				Decimals(1),
@@ -206,7 +206,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + instFilter + `}[5m]) ` + joinNodename + `) * 100)`).
+					Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + instFilter + `}[$__rate_interval]) ` + joinNodename + `) * 100)`).
 					LegendFormat("{{nodename}}"),
 				),
 		).
@@ -283,7 +283,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(rate(node_cpu_package_throttles_total{` + instFilter + `}[5m])) ` + joinNodename).
+					Expr(`(rate(node_cpu_package_throttles_total{` + instFilter + `}[$__rate_interval])) ` + joinNodename).
 					LegendFormat("{{nodename}} Throttles"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -318,12 +318,12 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Rx").
 					// Keep physical NICs and vmbr (Proxmox bridges); exclude per-VM/LXC virtual interfaces.
-					Expr(`rate(node_network_receive_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*"}[5m]) `+joinNodename).
+					Expr(`rate(node_network_receive_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*"}[$__rate_interval]) `+joinNodename).
 					LegendFormat("{{nodename}} Rx {{device}}"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Tx").
-					Expr(`rate(node_network_transmit_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*"}[5m]) `+joinNodename).
+					Expr(`rate(node_network_transmit_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*"}[$__rate_interval]) `+joinNodename).
 					LegendFormat("{{nodename}} Tx {{device}}"),
 				).
 				OverrideByQuery("Tx", []dashboard.DynamicConfigValue{
@@ -342,12 +342,12 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Thresholds(zeroLineThresholds).
 				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(node_disk_read_bytes_total{`+instFilter+`, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[5m]) `+joinNodename).
+					Expr(`rate(node_disk_read_bytes_total{`+instFilter+`, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[$__rate_interval]) `+joinNodename).
 					LegendFormat("{{nodename}} Read {{device}}"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Write").
-					Expr(`rate(node_disk_written_bytes_total{`+instFilter+`, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[5m]) `+joinNodename).
+					Expr(`rate(node_disk_written_bytes_total{`+instFilter+`, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[$__rate_interval]) `+joinNodename).
 					LegendFormat("{{nodename}} Write {{device}}"),
 				).
 				OverrideByQuery("Write", []dashboard.DynamicConfigValue{
