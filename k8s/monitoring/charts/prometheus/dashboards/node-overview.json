@@ -813,7 +813,8 @@
           "calcs": []
         },
         "text": {
-          "titleSize": 11
+          "titleSize": 16,
+          "valueSize": 32
         },
         "percentChangeColorMode": "standard",
         "orientation": "auto"

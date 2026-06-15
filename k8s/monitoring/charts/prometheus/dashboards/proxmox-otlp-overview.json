@@ -48,7 +48,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
+        "w": 12,
         "x": 0,
         "y": 1
       },
@@ -92,8 +92,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 6,
+        "w": 12,
+        "x": 12,
         "y": 1
       },
       "repeatDirection": "h",
@@ -136,9 +136,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 1
+        "w": 12,
+        "x": 0,
+        "y": 5
       },
       "repeatDirection": "h",
       "options": {
@@ -199,9 +199,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 1
+        "w": 12,
+        "x": 12,
+        "y": 5
       },
       "repeatDirection": "h",
       "options": {
@@ -262,9 +262,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 12,
+        "w": 24,
         "x": 0,
-        "y": 5
+        "y": 9
       },
       "repeatDirection": "h",
       "options": {
@@ -325,9 +325,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 12,
-        "x": 12,
-        "y": 5
+        "w": 24,
+        "x": 0,
+        "y": 13
       },
       "repeatDirection": "h",
       "options": {
@@ -378,7 +378,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 17
       },
       "id": 0,
       "panels": []
@@ -401,7 +401,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 10
+        "y": 18
       },
       "repeatDirection": "h",
       "options": {
@@ -450,7 +450,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 26
       },
       "repeatDirection": "h",
       "options": {
@@ -517,7 +517,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 34
       },
       "repeatDirection": "h",
       "options": {
@@ -584,7 +584,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 34
+        "y": 42
       },
       "repeatDirection": "h",
       "options": {
@@ -663,7 +663,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 50
       },
       "repeatDirection": "h",
       "options": {
@@ -710,7 +710,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 58
       },
       "repeatDirection": "h",
       "options": {
@@ -782,7 +782,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 58
+        "y": 66
       },
       "repeatDirection": "h",
       "options": {
@@ -861,7 +861,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 66
+        "y": 74
       },
       "repeatDirection": "h",
       "options": {
@@ -893,7 +893,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 74
+        "y": 82
       },
       "id": 0,
       "panels": []
@@ -915,10 +915,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 6,
+        "h": 8,
         "w": 24,
         "x": 0,
-        "y": 75
+        "y": 83
       },
       "repeatDirection": "h",
       "options": {
@@ -978,7 +978,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 81
+        "y": 91
       },
       "repeatDirection": "h",
       "options": {
@@ -1027,7 +1027,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 89
+        "y": 99
       },
       "repeatDirection": "h",
       "options": {
@@ -1094,7 +1094,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 97
+        "y": 107
       },
       "repeatDirection": "h",
       "options": {
@@ -1171,7 +1171,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 105
+        "y": 115
       },
       "repeatDirection": "h",
       "options": {
@@ -1242,7 +1242,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 113
+        "y": 123
       },
       "repeatDirection": "h",
       "options": {
@@ -1285,7 +1285,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 121
+        "y": 131
       },
       "repeatDirection": "h",
       "options": {
