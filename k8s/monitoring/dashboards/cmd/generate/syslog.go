@@ -18,19 +18,31 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 
 	const (
 		// Syslog has no job label; filter by severity to exclude DNS query logs.
-		base     = `{host=~"$host", severity=~"$severity"}`
-		baseJSON = `{host=~"$host", severity=~"$severity"} | json | __error__=""`
+		base = `{host=~"$host", severity=~"$severity"}`
 		// baseApp additionally filters by the $appname variable for app-scoped panels.
 		baseApp = `{host=~"$host", severity=~"$severity"} | json | __error__="" | appname=~"$appname"`
+		// Severity ships as either RFC5424 numeric (0=emerg … 3=err, 4=warning, 6=info)
+		// or text depending on the device, so error/warning selectors match both forms.
+		// These KPI selectors intentionally ignore $severity so the counts stay meaningful
+		// regardless of the dropdown selection.
+		errSel  = `{host=~"$host", severity=~"emerg|alert|crit|err|error|[0-3]"}`
+		warnSel = `{host=~"$host", severity=~"warning|warn|4"}`
 	)
 
 	issueThresholds := issueThresholds()
+
+	warnThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "green"},
+			{Value: float64Ptr(1), Color: "yellow"},
+		})
 
 	d, err := dashboard.NewDashboardBuilder("Syslog").
 		Uid("syslog").
 		Tags([]string{"syslog", "network", "logs", "infrastructure"}).
 		Timezone("browser").
-		Time("now-6h", "now").
+		Time("now-3h", "now").
 		Refresh("60s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
@@ -73,22 +85,40 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Log Rate").
 				Datasource(ds).
-				Span(8).Height(4).
-				Unit("short").
+				Span(6).Height(4).
+				Unit("cps").
+				Min(0).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum(rate(` + base + `[5m]))`).
+					Expr(`sum(rate(` + base + `[$__rate_interval])) or vector(0)`).
+					Instant(true).
 					LegendFormat("logs/s"),
 				),
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
-				Title("Warning Logs (1h)").
+				Title("Errors (1h)").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(6).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum(count_over_time({host=~"$host", severity="warning"}[1h]))`).
+					Expr(`sum(count_over_time(` + errSel + ` [1h])) or vector(0)`).
+					Instant(true).
+					LegendFormat("errors"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Warnings (1h)").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(warnThresholds).
+				WithTarget(loki.NewDataqueryBuilder().
+					Expr(`sum(count_over_time(` + warnSel + ` [1h])) or vector(0)`).
+					Instant(true).
 					LegendFormat("warnings"),
 				),
 		).
@@ -96,11 +126,13 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Parse Errors (1h)").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(6).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum(count_over_time({host=~"$host"} | json | __error__!="" [1h]))`).
+					Expr(`sum(count_over_time({host=~"$host"} | json | __error__!="" [1h])) or vector(0)`).
+					Instant(true).
 					LegendFormat("errors"),
 				),
 		).
@@ -112,14 +144,15 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Title("Log Volume by Host").
 				Datasource(ds).
 				Span(12).Height(8).
-				Unit("short").
+				Unit("cps").
+				Min(0).
 				FillOpacity(10).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (host) (rate(` + base + `[5m]))`).
+					Expr(`sum by (host) (rate(` + base + `[$__rate_interval]))`).
 					LegendFormat("{{host}}"),
 				),
 		).
@@ -128,49 +161,82 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Title("Log Volume by Severity").
 				Datasource(ds).
 				Span(12).Height(8).
-				Unit("short").
+				Unit("cps").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				FillOpacity(10).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (severity) (rate({host=~"$host", severity=~".+"}[5m]))`).
+					// Always break down across all severities, independent of the $severity filter.
+					Expr(`sum by (severity) (rate({host=~"$host", severity=~".+"}[$__rate_interval]))`).
 					LegendFormat("{{severity}}"),
-				),
+				).
+				// Semantic coloring; covers both numeric and text severity values.
+				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: "/^(emerg|alert|crit|err|error|[0-3])$/"}, []dashboard.DynamicConfigValue{
+					{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "red"}},
+				}).
+				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: "/^(warning|warn|4)$/"}, []dashboard.DynamicConfigValue{
+					{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "yellow"}},
+				}).
+				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: "/^(notice|5)$/"}, []dashboard.DynamicConfigValue{
+					{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "blue"}},
+				}).
+				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: "/^(info|6)$/"}, []dashboard.DynamicConfigValue{
+					{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "green"}},
+				}),
 		).
 
-		// Row 3: App breakdown + warnings
+		// Row 3: App breakdown + errors/warnings by host
 		WithRow(dashboard.NewRowBuilder("App Breakdown")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Log Volume by App").
 				Datasource(ds).
 				Span(12).Height(8).
-				Unit("short").
+				Unit("cps").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				FillOpacity(10).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (appname) (rate(` + baseApp + `[5m]))`).
+					Expr(`sum by (appname) (rate(` + baseApp + `[$__rate_interval]))`).
 					LegendFormat("{{appname}}"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Error Rate by Host").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("cps").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				FillOpacity(10).
+				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				WithTarget(loki.NewDataqueryBuilder().
+					// "* 0" tail keeps every host series present even at zero error rate.
+					Expr(`sum by (host) (rate(` + errSel + `[$__rate_interval])) or sum by (host) (rate(` + base + `[$__rate_interval])) * 0`).
+					LegendFormat("{{host}}"),
 				),
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Warning Rate by Host").
 				Datasource(ds).
-				Span(12).Height(8).
-				Unit("short").
+				Span(24).Height(8).
+				Unit("cps").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				FillOpacity(10).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
-				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (host) (rate({host=~"$host", severity="warning"}[5m]))`).
+					Expr(`sum by (host) (rate(` + warnSel + `[$__rate_interval])) or sum by (host) (rate(` + base + `[$__rate_interval])) * 0`).
 					LegendFormat("{{host}}"),
 				),
 		).
@@ -182,6 +248,9 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Title("Syslog").
 				Datasource(ds).
 				Span(24).Height(12).
+				ShowTime(true).
+				EnableLogDetails(true).
+				SortOrder(common.LogsSortOrderDescending).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(baseApp + ` | line_format "{{.host}} [{{.severity}}] {{.appname}}: {{.message}}"`).
 					MaxLines(500),

@@ -73,6 +73,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("percent").
+				Min(0).
 				Thresholds(gfxThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
@@ -87,6 +88,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("percent").
+				Min(0).
 				Thresholds(vramThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
@@ -116,6 +118,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("watt").
+				Min(0).
 				Thresholds(powerThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
@@ -132,6 +135,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(8).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
@@ -148,6 +152,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(8).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).

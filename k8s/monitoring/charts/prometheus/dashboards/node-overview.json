@@ -33,7 +33,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "up{job=\"scrapeConfig/monitoring/node-exporter-external\"} * on(instance) group_left(nodename) last_over_time(node_uname_info{job=\"scrapeConfig/monitoring/node-exporter-external\",nodename!=\"gpuvm\"}[1d])",
+          "expr": "up{job=\"scrapeConfig/monitoring/node-exporter-external\", instance=~\"$instance\"} * on(instance) group_left(nodename) last_over_time(node_uname_info{job=\"scrapeConfig/monitoring/node-exporter-external\",nodename!=\"gpuvm\"}[1d])",
           "legendFormat": "{{nodename}}"
         }
       ],
@@ -102,7 +102,9 @@
       "targets": [
         {
           "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)) * 100)",
-          "legendFormat": "{{nodename}}"
+          "instant": true,
+          "legendFormat": "{{nodename}}",
+          "range": false
         }
       ],
       "title": "CPU Usage",
@@ -136,12 +138,31 @@
           "calcs": []
         },
         "maxVizHeight": 300,
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "decimals": 1
+          "decimals": 1,
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "red"
+              }
+            ]
+          }
         },
         "overrides": []
       }
@@ -151,7 +172,9 @@
       "targets": [
         {
           "expr": "(1 - node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * 100",
-          "legendFormat": "{{nodename}}"
+          "instant": true,
+          "legendFormat": "{{nodename}}",
+          "range": false
         }
       ],
       "title": "Memory Usage",
@@ -185,12 +208,31 @@
           "calcs": []
         },
         "maxVizHeight": 300,
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "decimals": 1
+          "decimals": 1,
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "red"
+              }
+            ]
+          }
         },
         "overrides": []
       }
@@ -233,6 +275,7 @@
         "defaults": {
           "unit": "percentunit",
           "decimals": 0,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -291,7 +334,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "s",
-          "decimals": 2,
+          "decimals": 0,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -323,7 +367,7 @@
           "range": false
         }
       ],
-      "title": "Filesystem Usage",
+      "title": "Filesystem Usage (Current)",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -360,6 +404,8 @@
         "defaults": {
           "unit": "percent",
           "decimals": 1,
+          "min": 0,
+          "max": 100,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -430,6 +476,25 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "red"
+              }
+            ]
+          },
           "custom": {}
         },
         "overrides": []
@@ -471,6 +536,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit",
+          "min": 0,
           "custom": {}
         },
         "overrides": []
@@ -525,6 +591,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
+          "min": 0,
           "custom": {}
         },
         "overrides": []
@@ -566,6 +633,25 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "red"
+              }
+            ]
+          },
           "custom": {}
         },
         "overrides": []
@@ -608,7 +694,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
         "y": 52
       },
@@ -639,25 +725,9 @@
         {
           "expr": "(rate(node_cpu_package_throttles_total{instance=~\"$instance\"}[$__rate_interval])) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "legendFormat": "{{nodename}} Throttles"
-        },
-        {
-          "expr": "(rpi_throttled_thermal_throttling{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} RPi Thermal Throttled"
-        },
-        {
-          "expr": "(rpi_throttled_occurred{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} RPi Thermal Throttled Occurred"
-        },
-        {
-          "expr": "(rpi_throttled_under_voltage{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} RPi Under Voltage"
-        },
-        {
-          "expr": "(rpi_throttled_under_voltage_occurred{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} RPi Under Voltage Occurred"
         }
       ],
-      "title": "CPU Throttling \u0026 Power Issues",
+      "title": "CPU Throttling Rate",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -666,8 +736,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 52
+        "x": 0,
+        "y": 60
       },
       "repeatDirection": "h",
       "options": {
@@ -685,7 +755,102 @@
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
+          "min": 0,
           "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "(rpi_throttled_thermal_throttling{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "instant": true,
+          "legendFormat": "{{nodename}} Thermal Throttled",
+          "range": false
+        },
+        {
+          "expr": "(rpi_throttled_occurred{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "instant": true,
+          "legendFormat": "{{nodename}} Thermal Throttled Since Boot",
+          "range": false
+        },
+        {
+          "expr": "(rpi_throttled_under_voltage{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "instant": true,
+          "legendFormat": "{{nodename}} Under Voltage",
+          "range": false
+        },
+        {
+          "expr": "(rpi_throttled_under_voltage_occurred{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "instant": true,
+          "legendFormat": "{{nodename}} Under Voltage Since Boot",
+          "range": false
+        }
+      ],
+      "title": "RPi Power \u0026 Thermal Status",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 60
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "text": {
+          "titleSize": 11
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 1,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "OK",
+                  "color": "green"
+                },
+                "1": {
+                  "text": "ISSUE",
+                  "color": "red"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
         },
         "overrides": []
       }
@@ -698,7 +863,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 60
+        "y": 68
       },
       "id": 0,
       "panels": []
@@ -707,12 +872,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(node_network_receive_bytes_total{instance=~\"$instance\", device!~\"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "expr": "rate(node_network_receive_bytes_total{instance=~\"$instance\", device!~\"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*|vnets.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "legendFormat": "{{nodename}} Rx {{device}}",
           "refId": "Rx"
         },
         {
-          "expr": "rate(node_network_transmit_bytes_total{instance=~\"$instance\", device!~\"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "expr": "rate(node_network_transmit_bytes_total{instance=~\"$instance\", device!~\"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*|vnets.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "legendFormat": "{{nodename}} Tx {{device}}",
           "refId": "Tx"
         }
@@ -727,7 +892,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 61
+        "y": 69
       },
       "repeatDirection": "h",
       "options": {
@@ -788,7 +953,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 69
+        "y": 77
       },
       "id": 0,
       "panels": []
@@ -816,7 +981,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 70
+        "y": 78
       },
       "repeatDirection": "h",
       "options": {
@@ -886,10 +1051,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 8,
+        "h": 10,
         "w": 12,
         "x": 0,
-        "y": 78
+        "y": 86
       },
       "repeatDirection": "h",
       "options": {
@@ -916,6 +1081,8 @@
         "defaults": {
           "unit": "percent",
           "decimals": 1,
+          "min": 0,
+          "max": 100,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -952,10 +1119,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 8,
+        "h": 10,
         "w": 12,
         "x": 12,
-        "y": 78
+        "y": 86
       },
       "repeatDirection": "h",
       "options": {
@@ -973,6 +1140,25 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "red"
+              }
+            ]
+          },
           "custom": {}
         },
         "overrides": []
@@ -986,7 +1172,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 86
+        "y": 96
       },
       "id": 0,
       "panels": []
@@ -1035,7 +1221,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 87
+        "y": 97
       },
       "repeatDirection": "h",
       "options": {
@@ -1053,6 +1239,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
+          "min": 0,
           "custom": {}
         },
         "overrides": [

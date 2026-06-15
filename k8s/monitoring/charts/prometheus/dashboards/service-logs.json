@@ -10,7 +10,7 @@
   "editable": true,
   "graphTooltip": 1,
   "time": {
-    "from": "now-6h",
+    "from": "now-3h",
     "to": "now"
   },
   "fiscalYearStartMonth": 0,
@@ -34,8 +34,9 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate({host=~\"$host\", unit=~\"$unit\"}[5m]))",
-          "legendFormat": "logs/s"
+          "expr": "sum(rate({host=~\"$host\", unit=~\"$unit\"}[$__rate_interval])) or vector(0)",
+          "legendFormat": "logs/s",
+          "instant": true
         }
       ],
       "title": "Log Rate",
@@ -62,11 +63,12 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "cps",
+          "min": 0
         },
         "overrides": []
       }
@@ -75,8 +77,9 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(count_over_time({host=~\"$host\", unit=~\"$unit\"} | json | __error__=\"\" | PRIORITY =~ \"[0-3]\" [1h]))",
-          "legendFormat": "errors"
+          "expr": "sum(count_over_time({host=~\"$host\", unit=~\"$unit\"} | json | __error__=\"\" | PRIORITY =~ \"[0-3]\" [1h])) or vector(0)",
+          "legendFormat": "errors",
+          "instant": true
         }
       ],
       "title": "Errors (1h)",
@@ -103,11 +106,12 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -129,8 +133,9 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(count_over_time({host=~\"$host\", unit=~\"$unit\"} | json | __error__=\"\" | PRIORITY = \"4\" [1h]))",
-          "legendFormat": "warnings"
+          "expr": "sum(count_over_time({host=~\"$host\", unit=~\"$unit\"} | json | __error__=\"\" | PRIORITY = \"4\" [1h])) or vector(0)",
+          "legendFormat": "warnings",
+          "instant": true
         }
       ],
       "title": "Warnings (1h)",
@@ -157,11 +162,12 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -196,7 +202,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({host=~\"$host\", unit=~\"$unit\"}[5m]))",
+          "expr": "sum by (host) (rate({host=~\"$host\", unit=~\"$unit\"}[$__rate_interval]))",
           "legendFormat": "{{host}}"
         }
       ],
@@ -227,7 +233,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "cps",
+          "min": 0,
           "custom": {
             "fillOpacity": 10,
             "stacking": {
@@ -243,7 +250,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"}[5m]))",
+          "expr": "sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"}[$__rate_interval]))",
           "legendFormat": "{{unit}}"
         }
       ],
@@ -274,7 +281,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "cps",
+          "min": 0,
           "custom": {
             "fillOpacity": 10,
             "stacking": {
@@ -303,7 +311,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"} | json | __error__=\"\" | PRIORITY =~ \"[0-3]\" [5m]))",
+          "expr": "sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"} | json | __error__=\"\" | PRIORITY =~ \"[0-3]\" [$__rate_interval])) or sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"}[$__rate_interval])) * 0",
           "legendFormat": "{{unit}}"
         }
       ],
@@ -334,7 +342,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "cps",
+          "min": 0,
           "custom": {
             "fillOpacity": 10,
             "spanNulls": true
@@ -347,7 +356,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"} | json | __error__=\"\" | PRIORITY = \"4\" [5m]))",
+          "expr": "sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"} | json | __error__=\"\" | PRIORITY = \"4\" [$__rate_interval])) or sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"}[$__rate_interval])) * 0",
           "legendFormat": "{{unit}}"
         }
       ],
@@ -378,7 +387,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "cps",
+          "min": 0,
           "custom": {
             "fillOpacity": 10,
             "spanNulls": true
@@ -404,7 +414,7 @@
       "type": "logs",
       "targets": [
         {
-          "expr": "{host=~\"$host\", unit=~\"$unit\"}",
+          "expr": "{host=~\"$host\", unit=~\"$unit\"} | json | __error__=\"\" | line_format \"{{.message}}\"",
           "maxLines": 500
         }
       ],
@@ -424,12 +434,12 @@
       "options": {
         "showLabels": false,
         "showCommonLabels": false,
-        "showTime": false,
+        "showTime": true,
         "showLogContextToggle": false,
         "wrapLogMessage": false,
         "prettifyLogMessage": false,
-        "enableLogDetails": false,
-        "sortOrder": "",
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
         "dedupStrategy": ""
       }
     }

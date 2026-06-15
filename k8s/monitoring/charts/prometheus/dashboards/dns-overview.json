@@ -9,7 +9,7 @@
   "editable": true,
   "graphTooltip": 1,
   "time": {
-    "from": "now-1h",
+    "from": "now-30d",
     "to": "now"
   },
   "fiscalYearStartMonth": 0,
@@ -33,7 +33,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]))",
+          "expr": "sum(rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]))",
           "legendFormat": "QPS"
         }
       ],
@@ -75,7 +75,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])) / clamp_min(sum(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]) + rate(dnsdist_cache_misses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m])), 1) * 100",
+          "expr": "sum(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval])) / clamp_min(sum(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]) + rate(dnsdist_cache_misses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval])), 1) * 100",
           "legendFormat": "Cache Hit Rate"
         }
       ],
@@ -175,7 +175,7 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "pdns-auth",
+      "title": "dnsdist Metrics",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -186,129 +186,15 @@
       "panels": []
     },
     {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "sum(rate(pdns_auth_udp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]))",
-          "legendFormat": "QPS"
-        }
-      ],
-      "title": "pdns-auth QPS",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 12,
-        "x": 0,
-        "y": 6
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": ""
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "decimals": 1
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "avg(pdns_auth_latency{job=\"scrapeConfig/monitoring/pdns-auth-external\"})",
-          "legendFormat": "Avg Latency"
-        }
-      ],
-      "title": "pdns-auth Avg Latency",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 12,
-        "x": 12,
-        "y": 6
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "background",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "µs",
-          "decimals": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": 0,
-                "color": "green"
-              },
-              {
-                "value": 50000,
-                "color": "yellow"
-              },
-              {
-                "value": 150000,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "dnsdist Metrics",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 10
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
           "legendFormat": "{{server}} Queries",
           "refId": "Queries"
         },
         {
-          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_responses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_responses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
           "legendFormat": "{{server}} Responses",
           "refId": "Responses"
         }
@@ -323,7 +209,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 6
       },
       "repeatDirection": "h",
       "options": {
@@ -380,19 +266,19 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum(rate(dnsdist_frontend_noerror{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]))",
+          "expr": "sum(rate(dnsdist_frontend_noerror{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]))",
           "legendFormat": "NOERROR"
         },
         {
-          "expr": "sum(rate(dnsdist_frontend_nxdomain{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]))",
+          "expr": "sum(rate(dnsdist_frontend_nxdomain{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]))",
           "legendFormat": "NXDOMAIN"
         },
         {
-          "expr": "sum(rate(dnsdist_frontend_servfail{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]))",
+          "expr": "sum(rate(dnsdist_frontend_servfail{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]))",
           "legendFormat": "SERVFAIL"
         },
         {
-          "expr": "sum(rate(dnsdist_frontend_refused{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]))",
+          "expr": "sum(rate(dnsdist_frontend_refused{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]))",
           "legendFormat": "REFUSED"
         }
       ],
@@ -406,7 +292,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 14
       },
       "repeatDirection": "h",
       "options": {
@@ -517,7 +403,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 27
+        "y": 22
       },
       "repeatDirection": "h",
       "options": {
@@ -588,7 +474,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]) / clamp_min(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]) + rate(dnsdist_cache_misses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), 1) * 100, \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]) / clamp_min(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]) + rate(dnsdist_cache_misses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]), 1) * 100, \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
           "legendFormat": "{{server}}"
         }
       ],
@@ -602,7 +488,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 27
+        "y": 22
       },
       "repeatDirection": "h",
       "options": {
@@ -629,15 +515,15 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_acl_drops{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_acl_drops{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
           "legendFormat": "{{server}} ACL Drop"
         },
         {
-          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_rule_drops{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_rule_drops{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
           "legendFormat": "{{server}} Rule Drop"
         },
         {
-          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_dynamic_blocked{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_dynamic_blocked{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
           "legendFormat": "{{server}} Dynamic Block"
         }
       ],
@@ -651,7 +537,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 35
+        "y": 30
       },
       "repeatDirection": "h",
       "options": {
@@ -683,7 +569,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]) - rate(dnsdist_responses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]) - rate(dnsdist_responses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
           "legendFormat": "{{server}}"
         }
       ],
@@ -697,7 +583,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 43
+        "y": 38
       },
       "repeatDirection": "h",
       "options": {
@@ -723,6 +609,120 @@
     {
       "type": "row",
       "collapsed": false,
+      "title": "pdns-auth",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 46
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(pdns_auth_udp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[$__rate_interval]))",
+          "legendFormat": "QPS"
+        }
+      ],
+      "title": "pdns-auth QPS",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 0,
+        "y": 47
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "decimals": 1
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "avg(pdns_auth_latency{job=\"scrapeConfig/monitoring/pdns-auth-external\"})",
+          "legendFormat": "Avg Latency"
+        }
+      ],
+      "title": "pdns-auth Avg Latency",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 47
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "µs",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 50000,
+                "color": "yellow"
+              },
+              {
+                "value": 150000,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
       "title": "pdns-auth Metrics",
       "gridPos": {
         "h": 1,
@@ -737,11 +737,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(pdns_auth_udp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(pdns_auth_udp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[$__rate_interval]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
           "legendFormat": "{{server}} UDP"
         },
         {
-          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(pdns_auth_tcp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(pdns_auth_tcp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[$__rate_interval]), \"server\", \"old-ns1\", \"instance\", \"192.168.10.242:.*\"), \"server\", \"old-ns2\", \"instance\", \"192.168.10.241:.*\"), \"server\", \"dist1\", \"instance\", \"192.168.10.231:.*\"), \"server\", \"dist2\", \"instance\", \"192.168.10.232:.*\"), \"server\", \"ns1\", \"instance\", \"192.168.10.233:.*\"), \"server\", \"ns2\", \"instance\", \"192.168.10.234:.*\"), \"server\", \"ns3\", \"instance\", \"192.168.10.235:.*\")",
           "legendFormat": "{{server}} TCP"
         }
       ],
@@ -782,19 +782,19 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum(rate(pdns_auth_noerror_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]))",
+          "expr": "sum(rate(pdns_auth_noerror_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[$__rate_interval]))",
           "legendFormat": "NOERROR"
         },
         {
-          "expr": "sum(rate(pdns_auth_nxdomain_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]))",
+          "expr": "sum(rate(pdns_auth_nxdomain_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[$__rate_interval]))",
           "legendFormat": "NXDOMAIN"
         },
         {
-          "expr": "sum(rate(pdns_auth_servfail_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]))",
+          "expr": "sum(rate(pdns_auth_servfail_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[$__rate_interval]))",
           "legendFormat": "SERVFAIL"
         },
         {
-          "expr": "sum(rate(pdns_auth_refused_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[5m]))",
+          "expr": "sum(rate(pdns_auth_refused_packets{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[$__rate_interval]))",
           "legendFormat": "REFUSED"
         }
       ],
@@ -1030,7 +1030,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate(coredns_dns_requests_total{job=\"coredns\"}[5m]))",
+          "expr": "sum(rate(coredns_dns_requests_total{job=\"coredns\"}[$__rate_interval]))",
           "instant": true,
           "legendFormat": "QPS",
           "range": false
@@ -1130,7 +1130,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate(coredns_dns_responses_total{job=\"coredns\",rcode=\"SERVFAIL\"}[5m]))",
+          "expr": "sum(rate(coredns_dns_responses_total{job=\"coredns\",rcode=\"SERVFAIL\"}[$__rate_interval]))",
           "instant": true,
           "legendFormat": "SERVFAIL",
           "range": false
@@ -1187,7 +1187,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(coredns_dns_request_duration_seconds_bucket{job=\"coredns\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(coredns_dns_request_duration_seconds_bucket{job=\"coredns\"}[$__rate_interval])))",
           "instant": true,
           "legendFormat": "p99",
           "range": false
@@ -1260,7 +1260,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (cluster) (rate(coredns_dns_requests_total{job=\"coredns\"}[5m]))",
+          "expr": "sum by (cluster) (rate(coredns_dns_requests_total{job=\"coredns\"}[$__rate_interval]))",
           "legendFormat": "{{cluster}}"
         }
       ],
@@ -1302,7 +1302,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (cluster) (rate(coredns_dns_responses_total{job=\"coredns\",rcode=\"SERVFAIL\"}[5m]))",
+          "expr": "sum by (cluster) (rate(coredns_dns_responses_total{job=\"coredns\",rcode=\"SERVFAIL\"}[$__rate_interval]))",
           "legendFormat": "{{cluster}}"
         }
       ],
@@ -1344,7 +1344,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "100 * sum by (cluster) (rate(coredns_cache_hits_total{job=\"coredns\"}[5m])) / clamp_min(sum by (cluster) (rate(coredns_cache_requests_total{job=\"coredns\"}[5m])), 1e-9)",
+          "expr": "100 * sum by (cluster) (rate(coredns_cache_hits_total{job=\"coredns\"}[$__rate_interval])) / clamp_min(sum by (cluster) (rate(coredns_cache_requests_total{job=\"coredns\"}[$__rate_interval])), 1e-9)",
           "legendFormat": "{{cluster}}"
         }
       ],
@@ -1387,7 +1387,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum by (cluster, le) (rate(coredns_dns_request_duration_seconds_bucket{job=\"coredns\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (cluster, le) (rate(coredns_dns_request_duration_seconds_bucket{job=\"coredns\"}[$__rate_interval])))",
           "legendFormat": "{{cluster}}"
         }
       ],

@@ -32,7 +32,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 		Uid("k8s-node-overview").
 		Tags([]string{"kubernetes", "nodes", "infrastructure"}).
 		Timezone("browser").
-		Time("now-1h", "now").
+		Time("now-1d", "now").
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
@@ -67,9 +67,11 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(6).
 				Unit("percent").
+				Min(0).
+				Max(100).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + clusterFilter + `}[5m]) ` + joinNode + `) * 100)`).
+					Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + clusterFilter + `}[$__rate_interval]) ` + joinNode + `) * 100)`).
 					LegendFormat("{{nodename}}"),
 				).Decimals(1),
 		).
@@ -79,6 +81,8 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(6).
 				Unit("percent").
+				Min(0).
+				Max(100).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// MemAvailable includes reclaimable cache, giving a more realistic usage figure than MemFree.
@@ -90,9 +94,10 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Pods Running").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(4).
 				Unit("short").
 				Min(0).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// Join 'node' from kubelet with 'nodename' from node_uname_info.
 					Expr(`sum by (nodename) (kubelet_running_pods{` + clusterFilter + `} * on(node) group_left(nodename) (label_replace(node_uname_info{` + clusterFilter + `, ` + nodeFilter + `}, "node", "$1", "nodename", "(.*)")))`).
@@ -103,9 +108,10 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("CPU Cores").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(4).
 				Unit("short").
 				Min(0).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count by (nodename) (node_cpu_seconds_total{mode="idle", ` + clusterFilter + `} ` + joinNode + `)`).
 					LegendFormat("{{nodename}}"),
@@ -115,9 +121,10 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Memory Total").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(4).
 				Unit("bytes").
 				Min(0).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`node_memory_MemTotal_bytes{` + clusterFilter + `} ` + joinNode).
 					LegendFormat("{{nodename}}"),
@@ -127,8 +134,9 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Uptime").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(4).
 				Unit("s").
+				Min(0).
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
@@ -152,10 +160,12 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("percent").
+				Min(0).
+				Max(100).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + clusterFilter + `}[5m]) ` + joinNode + `) * 100)`).
+					Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + clusterFilter + `}[$__rate_interval]) ` + joinNode + `) * 100)`).
 					LegendFormat("{{nodename}}"),
 				),
 		).
@@ -165,6 +175,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("short").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -194,6 +205,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("bytes").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -212,6 +224,8 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("percent").
+				Min(0).
+				Max(100).
 				Orientation(common.VizOrientationHorizontal).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + clusterFilter + `, ` + fsFilter + `} / node_filesystem_size_bytes{` + clusterFilter + `, ` + fsFilter + `}) ` + joinNode + ` * 100)`).
@@ -225,6 +239,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("bytes").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -252,12 +267,12 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Read").
 					// Exclude dm-*, loop*, and sr* to avoid double-counting or noise from virtual/optical devices.
-					Expr(`rate(node_disk_read_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[5m]) `+joinNode).
+					Expr(`rate(node_disk_read_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[$__rate_interval]) `+joinNode).
 					LegendFormat("{{nodename}} {{device}} Read"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Write").
-					Expr(`rate(node_disk_written_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[5m]) `+joinNode).
+					Expr(`rate(node_disk_written_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[$__rate_interval]) `+joinNode).
 					LegendFormat("{{nodename}} {{device}} Write"),
 				).
 				OverrideByQuery("Write", []dashboard.DynamicConfigValue{
@@ -277,12 +292,12 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Rx").
-					Expr(`sum by (nodename) (rate(node_network_receive_bytes_total{`+clusterFilter+`, device!~"lo|veth.*|docker.*|br-.*"} [5m]) `+joinNode+`)`).
+					Expr(`sum by (nodename) (rate(node_network_receive_bytes_total{`+clusterFilter+`, device!~"lo|veth.*|docker.*|br-.*"} [$__rate_interval]) `+joinNode+`)`).
 					LegendFormat("{{nodename}} Rx"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Tx").
-					Expr(`sum by (nodename) (rate(node_network_transmit_bytes_total{`+clusterFilter+`, device!~"lo|veth.*|docker.*|br-.*"}[5m]) `+joinNode+`)`).
+					Expr(`sum by (nodename) (rate(node_network_transmit_bytes_total{`+clusterFilter+`, device!~"lo|veth.*|docker.*|br-.*"}[$__rate_interval]) `+joinNode+`)`).
 					LegendFormat("{{nodename}} Tx"),
 				).
 				OverrideByQuery("Tx", []dashboard.DynamicConfigValue{

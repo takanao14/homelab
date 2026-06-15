@@ -34,8 +34,10 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count by (node) (proxmox_vm_cpu_percent{job=\"proxmox-ve\", node=~\"$node\", type=\"qemu\"})",
-          "legendFormat": "{{node}}"
+          "expr": "count by (node) (proxmox_vm_cpu_percent{job=\"proxmox-ve\", node=~\"$node\", type=\"qemu\"}) or on(node) count by (node) (proxmox_node_cpustat_cpu_percent{job=\"proxmox-ve\", node=~\"$node\"}) * 0",
+          "instant": true,
+          "legendFormat": "{{node}}",
+          "range": false
         }
       ],
       "title": "Running VMs",
@@ -62,11 +64,12 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "min": 0
         },
         "overrides": []
       }
@@ -75,8 +78,10 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count by (node) (proxmox_vm_cpu_percent{job=\"proxmox-ve\", node=~\"$node\", type=\"lxc\"})",
-          "legendFormat": "{{node}}"
+          "expr": "count by (node) (proxmox_vm_cpu_percent{job=\"proxmox-ve\", node=~\"$node\", type=\"lxc\"}) or on(node) count by (node) (proxmox_node_cpustat_cpu_percent{job=\"proxmox-ve\", node=~\"$node\"}) * 0",
+          "instant": true,
+          "legendFormat": "{{node}}",
+          "range": false
         }
       ],
       "title": "Running LXCs",
@@ -103,11 +108,12 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "min": 0
         },
         "overrides": []
       }
@@ -117,7 +123,9 @@
       "targets": [
         {
           "expr": "proxmox_node_cpustat_cpu_percent{job=\"proxmox-ve\", node=~\"$node\"}",
-          "legendFormat": "{{node}}"
+          "instant": true,
+          "legendFormat": "{{node}}",
+          "range": false
         }
       ],
       "title": "Node CPU Usage",
@@ -150,6 +158,8 @@
         "defaults": {
           "unit": "percentunit",
           "decimals": 1,
+          "min": 0,
+          "max": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -176,7 +186,9 @@
       "targets": [
         {
           "expr": "proxmox_node_memory_memused_bytes{job=\"proxmox-ve\", node=~\"$node\"} / proxmox_node_memory_memtotal_bytes{job=\"proxmox-ve\", node=~\"$node\"} * 100",
-          "legendFormat": "{{node}}"
+          "instant": true,
+          "legendFormat": "{{node}}",
+          "range": false
         }
       ],
       "title": "Node Memory Usage",
@@ -209,6 +221,8 @@
         "defaults": {
           "unit": "percent",
           "decimals": 1,
+          "min": 0,
+          "max": 100,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -235,7 +249,9 @@
       "targets": [
         {
           "expr": "proxmox_storage_used_bytes{job=\"proxmox-ve\", node=~\"$node\"} / proxmox_storage_total_bytes{job=\"proxmox-ve\", node=~\"$node\"} * 100",
-          "legendFormat": "{{node}}/{{storage}}"
+          "instant": true,
+          "legendFormat": "{{node}}/{{storage}}",
+          "range": false
         }
       ],
       "title": "Storage Usage",
@@ -268,6 +284,8 @@
         "defaults": {
           "unit": "percent",
           "decimals": 1,
+          "min": 0,
+          "max": 100,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -294,7 +312,9 @@
       "targets": [
         {
           "expr": "proxmox_node_blockstat_per_percent{job=\"proxmox-ve\", node=~\"$node\"}",
-          "legendFormat": "{{node}}"
+          "instant": true,
+          "legendFormat": "{{node}}",
+          "range": false
         }
       ],
       "title": "Node OS Disk Usage",
@@ -327,6 +347,8 @@
         "defaults": {
           "unit": "percent",
           "decimals": 1,
+          "min": 0,
+          "max": 100,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -398,6 +420,7 @@
         "defaults": {
           "unit": "percentunit",
           "min": 0,
+          "max": 1,
           "custom": {}
         },
         "overrides": []
@@ -445,6 +468,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
+          "min": 0,
           "custom": {}
         },
         "overrides": [
@@ -511,6 +535,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
+          "min": 0,
           "custom": {}
         },
         "overrides": [
@@ -616,16 +641,16 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "node_thermal_zone_temp{type=~\"x86_pkg_temp|cpu-thermal\"} * on(instance) group_left(nodename)\n  (node_uname_info * on(nodename) group_left()\n    label_replace(target_info{job=\"proxmox-ve\"}, \"nodename\", \"$1\", \"proxmox_node\", \"(.*)\"))",
+          "expr": "node_thermal_zone_temp{type=~\"x86_pkg_temp|cpu-thermal\"} * on(instance) group_left(nodename)\n  (node_uname_info * on(nodename) group_left()\n    label_replace(target_info{job=\"proxmox-ve\", proxmox_node=~\"$node\"}, \"nodename\", \"$1\", \"proxmox_node\", \"(.*)\"))",
           "legendFormat": "{{nodename}} CPU {{type}}"
         },
         {
-          "expr": "node_hwmon_temp_celsius{chip=~\".*_0000:00:18_.*\", sensor=\"temp1\"} * on(instance) group_left(nodename)\n  (node_uname_info * on(nodename) group_left()\n    label_replace(target_info{job=\"proxmox-ve\"}, \"nodename\", \"$1\", \"proxmox_node\", \"(.*)\"))",
+          "expr": "node_hwmon_temp_celsius{chip=~\".*_0000:00:18_.*\", sensor=\"temp1\"} * on(instance) group_left(nodename)\n  (node_uname_info * on(nodename) group_left()\n    label_replace(target_info{job=\"proxmox-ve\", proxmox_node=~\"$node\"}, \"nodename\", \"$1\", \"proxmox_node\", \"(.*)\"))",
           "legendFormat": "{{nodename}} CPU Tctl"
         },
         {
-          "expr": "smartmon_temperature_celsius_raw_value * on(instance) group_left(nodename)\n  (node_uname_info * on(nodename) group_left()\n    label_replace(target_info{job=\"proxmox-ve\"}, \"nodename\", \"$1\", \"proxmox_node\", \"(.*)\"))",
-          "legendFormat": "{{nodename}} Disk {{device}}"
+          "expr": "smartmon_temperature_celsius_raw_value * on(instance) group_left(nodename)\n  (node_uname_info * on(nodename) group_left()\n    label_replace(target_info{job=\"proxmox-ve\", proxmox_node=~\"$node\"}, \"nodename\", \"$1\", \"proxmox_node\", \"(.*)\"))",
+          "legendFormat": "{{nodename}} Disk {{disk}}"
         }
       ],
       "title": "Node Temperature",
@@ -703,6 +728,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
+          "min": 0,
           "custom": {}
         },
         "overrides": [
@@ -774,6 +800,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "custom": {}
         },
         "overrides": [
@@ -852,6 +879,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
+          "min": 0,
           "custom": {}
         },
         "overrides": []
@@ -875,7 +903,9 @@
       "targets": [
         {
           "expr": "proxmox_vm_uptime_seconds{job=\"proxmox-ve\", node=~\"$node\"}",
-          "legendFormat": "{{name}}"
+          "instant": true,
+          "legendFormat": "{{name}}",
+          "range": false
         }
       ],
       "title": "Guest Uptime",
@@ -907,6 +937,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "s",
+          "decimals": 0,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -964,6 +996,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit",
+          "min": 0,
+          "max": 1,
           "custom": {}
         },
         "overrides": []
@@ -1011,6 +1045,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
+          "min": 0,
           "custom": {}
         },
         "overrides": [
@@ -1226,6 +1261,7 @@
         "defaults": {
           "unit": "percent",
           "min": 0,
+          "max": 100,
           "custom": {}
         },
         "overrides": []
@@ -1266,8 +1302,9 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit",
+          "unit": "percent",
           "min": 0,
+          "max": 100,
           "custom": {}
         },
         "overrides": []

@@ -9,13 +9,183 @@
   "editable": true,
   "graphTooltip": 1,
   "time": {
-    "from": "now-1d",
+    "from": "now-30d",
     "to": "now"
   },
   "fiscalYearStartMonth": 0,
   "refresh": "60s",
   "schemaVersion": 42,
   "panels": [
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count(probe_success{job=\"scrapeConfig/monitoring/icmp-network-devices\"} == 0) or vector(0)",
+          "legendFormat": "down"
+        }
+      ],
+      "title": "ICMP Devices Down",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count(probe_success{job=~\"scrapeConfig/monitoring/dns-(external|internal)\"} == 0) or vector(0)",
+          "legendFormat": "down"
+        }
+      ],
+      "title": "DNS Devices Down",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "avg(avg_over_time(probe_success{job=\"scrapeConfig/monitoring/icmp-network-devices\"}[$__range])) * 100",
+          "legendFormat": "availability"
+        }
+      ],
+      "title": "ICMP Availability (range)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 99,
+                "color": "yellow"
+              },
+              {
+                "value": 99.9,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
     {
       "type": "stat",
       "targets": [
@@ -34,7 +204,7 @@
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 4
       },
       "repeatDirection": "h",
       "options": {
@@ -102,7 +272,7 @@
         "h": 4,
         "w": 12,
         "x": 0,
-        "y": 4
+        "y": 8
       },
       "repeatDirection": "h",
       "options": {
@@ -170,7 +340,7 @@
         "h": 4,
         "w": 12,
         "x": 12,
-        "y": 4
+        "y": 8
       },
       "repeatDirection": "h",
       "options": {
@@ -221,6 +391,152 @@
       }
     },
     {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "avg_over_time(probe_success{job=\"scrapeConfig/monitoring/icmp-network-devices\"}[$__range]) * 100",
+          "instant": true,
+          "legendFormat": "{{instance}}",
+          "range": false
+        }
+      ],
+      "title": "ICMP Availability by Device",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "values": true,
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 99,
+                "color": "yellow"
+              },
+              {
+                "value": 99.9,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "avg_over_time(probe_success{job=\"scrapeConfig/monitoring/dns-external\"}[$__range]) * 100",
+          "instant": true,
+          "legendFormat": "{{instance}} External",
+          "range": false
+        },
+        {
+          "expr": "avg_over_time(probe_success{job=\"scrapeConfig/monitoring/dns-internal\"}[$__range]) * 100",
+          "instant": true,
+          "legendFormat": "{{instance}} Internal",
+          "range": false
+        }
+      ],
+      "title": "DNS Availability by Device",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "values": true,
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 99,
+                "color": "yellow"
+              },
+              {
+                "value": 99.9,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
       "type": "state-timeline",
       "targets": [
         {
@@ -238,7 +554,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 20
       },
       "repeatDirection": "h",
       "options": {
@@ -314,7 +630,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 20
       },
       "repeatDirection": "h",
       "options": {
@@ -332,6 +648,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "s",
+          "min": 0,
           "custom": {}
         },
         "overrides": []
@@ -359,7 +676,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 16
+        "y": 28
       },
       "repeatDirection": "h",
       "options": {
@@ -439,7 +756,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 16
+        "y": 28
       },
       "repeatDirection": "h",
       "options": {
@@ -457,6 +774,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "s",
+          "min": 0,
           "custom": {}
         },
         "overrides": []

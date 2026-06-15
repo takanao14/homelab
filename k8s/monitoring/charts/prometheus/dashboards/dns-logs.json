@@ -10,7 +10,7 @@
   "editable": true,
   "graphTooltip": 1,
   "time": {
-    "from": "now-1h",
+    "from": "now-3h",
     "to": "now"
   },
   "fiscalYearStartMonth": 0,
@@ -34,7 +34,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate({job=\"dns\", host=~\"$host\"}[5m]))",
+          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__rate_interval]))",
           "legendFormat": "queries/s"
         }
       ],
@@ -66,7 +66,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "min": 0
         },
         "overrides": []
       }
@@ -75,7 +76,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_rcode=\"NXDOMAIN\" [5m]))",
+          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" [$__rate_interval]))",
           "legendFormat": "nxdomain/s"
         }
       ],
@@ -107,7 +108,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "min": 0
         },
         "overrides": []
       }
@@ -116,7 +118,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_policy__action!=\"\" | dnstap_policy__action!=\"PASSTHRU\" [5m]))",
+          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\" | dnstap_policy_action!=\"\" | dnstap_policy_action!=\"PASSTHRU\" [$__rate_interval])) or vector(0)",
           "legendFormat": "blocked/s"
         }
       ],
@@ -148,7 +150,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps"
+          "unit": "reqps",
+          "min": 0
         },
         "overrides": []
       }
@@ -157,7 +160,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(sum by (network_query_ip) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | network_query_ip != \"\" [$__range])))",
+          "expr": "count(sum by (network_query_ip) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\" | network_query_ip != \"\" [$__range])))",
           "legendFormat": "clients"
         }
       ],
@@ -189,7 +192,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "min": 0
         },
         "overrides": []
       }
@@ -211,7 +215,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (dns_qtype) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\"[5m]))",
+          "expr": "sum by (dns_qtype) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__rate_interval]))",
           "legendFormat": "{{dns_qtype}}"
         }
       ],
@@ -243,6 +247,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "reqps",
+          "min": 0,
           "custom": {
             "fillOpacity": 10,
             "stacking": {
@@ -257,7 +262,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (dns_rcode) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\"[5m]))",
+          "expr": "sum by (dns_rcode) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__rate_interval]))",
           "legendFormat": "{{dns_rcode}}"
         }
       ],
@@ -289,6 +294,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "reqps",
+          "min": 0,
           "custom": {
             "fillOpacity": 10,
             "stacking": {
@@ -377,11 +383,13 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "topk(10, sum by (dns_qname) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_qname != \"\" [5m])))",
-          "legendFormat": "{{dns_qname}}"
+          "expr": "sort_desc(topk(10, sum by (dns_qname) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\" | dns_qname != \"\" [5m]))))",
+          "legendFormat": "{{dns_qname}}",
+          "range": false,
+          "instant": true
         }
       ],
-      "title": "Top Queried Domains",
+      "title": "Top Queried Domains (Last 5m)",
       "transparent": false,
       "datasource": {
         "type": "loki",
@@ -409,6 +417,8 @@
           "calcs": []
         },
         "reduceOptions": {
+          "values": true,
+          "limit": 10,
           "calcs": []
         },
         "maxVizHeight": 300,
@@ -425,11 +435,13 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "topk(10, sum by (dns_qname) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_qname != \"\" | dns_rcode=\"NXDOMAIN\" [5m])))",
-          "legendFormat": "{{dns_qname}}"
+          "expr": "sort_desc(topk(10, sum by (dns_qname) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_qname != \"\" | dns_rcode=\"NXDOMAIN\" [5m]))))",
+          "legendFormat": "{{dns_qname}}",
+          "range": false,
+          "instant": true
         }
       ],
-      "title": "Top NXDOMAIN Queries",
+      "title": "Top NXDOMAIN Queries (Last 5m)",
       "transparent": false,
       "datasource": {
         "type": "loki",
@@ -457,6 +469,8 @@
           "calcs": []
         },
         "reduceOptions": {
+          "values": true,
+          "limit": 10,
           "calcs": []
         },
         "maxVizHeight": 300,
@@ -486,7 +500,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"}[5m]))",
+          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__rate_interval]))",
           "legendFormat": "{{host}}"
         }
       ],
@@ -527,7 +541,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_rcode=\"NXDOMAIN\" [5m]))",
+          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" [$__rate_interval]))",
           "legendFormat": "{{host}}"
         }
       ],
@@ -568,7 +582,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dns_rcode=\"SERVFAIL\" [5m]))",
+          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"SERVFAIL\" [$__rate_interval])) or sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__rate_interval])) * 0",
           "legendFormat": "{{host}}"
         }
       ],
@@ -600,6 +614,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "reqps",
+          "min": 0,
           "custom": {}
         },
         "overrides": []
@@ -622,7 +637,7 @@
       "type": "logs",
       "targets": [
         {
-          "expr": "{job=\"dns\", host=~\"$host\"} | json | __error__=\"\"",
+          "expr": "{job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | line_format \"{{.host}} {{.dnstap_operation}} {{.network_query_ip}} -\u003e {{.dns_qname}} {{.dns_qtype}} {{.dns_rcode}} policy={{.dnstap_policy_action}} latency={{.dnstap_latency_ms}}ms\"",
           "maxLines": 500
         }
       ],
@@ -642,13 +657,15 @@
       "options": {
         "showLabels": false,
         "showCommonLabels": false,
-        "showTime": false,
-        "showLogContextToggle": false,
+        "showTime": true,
+        "showLogContextToggle": true,
         "wrapLogMessage": false,
         "prettifyLogMessage": false,
-        "enableLogDetails": false,
-        "sortOrder": "",
-        "dedupStrategy": ""
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "",
+        "showControls": true,
+        "showFieldSelector": true
       }
     }
   ],

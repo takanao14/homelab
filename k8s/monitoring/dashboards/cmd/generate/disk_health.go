@@ -52,7 +52,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		Uid("disk-health").
 		Tags([]string{"disk", "smart", "infrastructure"}).
 		Timezone("browser").
-		Time("now-7d", "now").
+		Time("now-30d", "now").
 		Refresh("5m").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
@@ -91,6 +91,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
 				Thresholds(issueThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(sum(smartmon_device_smart_healthy{type="sat",` + instFilter + `} == bool 0) or vector(0)) + (sum(nvme_critical_warning{` + instFilter + `} > bool 0) or vector(0))`).
@@ -104,6 +105,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
@@ -121,6 +123,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
 				Thresholds(issueThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum((` +
@@ -142,6 +145,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
 				Thresholds(issueThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(nvme_critical_warning{` + instFilter + `} > bool 0)`).
@@ -161,6 +165,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				GraphMode(common.BigValueGraphModeNone).
 				Orientation(common.VizOrientationAuto).
 				ColorMode(common.BigValueColorModeBackground).
+				Text(common.NewVizTextDisplayOptionsBuilder().
+					TitleSize(11)).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
@@ -194,6 +200,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(8).Height(8).
 				Orientation(common.VizOrientationHorizontal).
+				Text(diskHealthLabelText()).
 				Thresholds(precursorThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(smartmon_reallocated_sector_ct_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
@@ -206,6 +213,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(8).Height(8).
 				Orientation(common.VizOrientationHorizontal).
+				Text(diskHealthLabelText()).
 				Thresholds(precursorThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(smartmon_current_pending_sector_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
@@ -218,6 +226,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(8).Height(8).
 				Orientation(common.VizOrientationHorizontal).
+				Text(diskHealthLabelText()).
 				Thresholds(precursorThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(smartmon_offline_uncorrectable_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
@@ -230,6 +239,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Orientation(common.VizOrientationHorizontal).
+				Text(diskHealthLabelText()).
 				Thresholds(precursorThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(smartmon_reported_uncorrect_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
@@ -242,6 +252,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Orientation(common.VizOrientationHorizontal).
+				Text(diskHealthLabelText()).
 				Thresholds(crcThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(smartmon_udma_crc_error_count_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
@@ -288,6 +299,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Unit("percent").
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
 				TextMode(common.BigValueTextModeValueAndName).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
@@ -314,8 +326,11 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Unit("h").
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeValue).
+				Orientation(common.VizOrientationHorizontal).
+				TextMode(common.BigValueTextModeValueAndName).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`smartmon_power_on_hours_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel).
+					Instant().
 					LegendFormat("{{nodename}} {{disk}} {{device_model}}"),
 				).Decimals(0),
 		).
@@ -331,6 +346,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(8).Height(8).
 				Unit("percent").
 				Orientation(common.VizOrientationHorizontal).
+				Text(diskHealthLabelText()).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
@@ -350,6 +366,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(8).Height(8).
 				Unit("percent").
 				Orientation(common.VizOrientationHorizontal).
+				Text(diskHealthLabelText()).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
@@ -370,6 +387,9 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(8).Height(8).
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				TextMode(common.BigValueTextModeValueAndName).
+				Text(diskHealthLabelText()).
 				Thresholds(issueThresholds()).
 				Mappings([]dashboard.ValueMapping{
 					{ValueMap: &dashboard.ValueMap{
@@ -392,6 +412,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Unit("bytes").
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeValue).
+				Orientation(common.VizOrientationAuto).
+				Text(diskHealthLabelText()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(nvme_data_units_written_total{` + instFilter + `} * 512000) ` + joinNodename + ` ` + joinNvmeModel).
 					LegendFormat("{{nodename}} {{device}} {{model}}"),
@@ -405,6 +427,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Unit("bytes").
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeValue).
+				Orientation(common.VizOrientationAuto).
+				Text(diskHealthLabelText()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(nvme_data_units_read_total{` + instFilter + `} * 512000) ` + joinNodename + ` ` + joinNvmeModel).
 					LegendFormat("{{nodename}} {{device}} {{model}}"),
@@ -418,6 +442,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Unit("h").
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeValue).
+				Orientation(common.VizOrientationAuto).
+				Text(diskHealthLabelText()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`nvme_power_on_hours_total{` + instFilter + `} ` + joinNodename + ` ` + joinNvmeModel).
 					LegendFormat("{{nodename}} {{device}} {{model}}"),
@@ -490,4 +516,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		return nil, err
 	}
 	return &d, nil
+}
+
+func diskHealthLabelText() *common.VizTextDisplayOptionsBuilder {
+	return common.NewVizTextDisplayOptionsBuilder().TitleSize(16)
 }

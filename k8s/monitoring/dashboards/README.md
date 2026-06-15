@@ -9,14 +9,15 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 | `node-overview` | Bare-metal nodes: CPU, memory, temperature, disk I/O, network I/O, ZFS ARC |
 | `k8s-node-overview` | Kubernetes nodes: CPU, memory, disk, network (filtered by cluster/node) |
 | `kubernetes-overview` | Kubernetes cluster health, resource usage, pod lifecycle, network, PVC |
-| `proxmox-overview` | Proxmox VE cluster: VM/LXC counts, node and guest resources, storage |
+| `proxmox-otlp-overview` | Proxmox VE cluster (native OTLP metrics): VM/LXC counts, node and guest resources, storage, network I/O, PSI pressure |
 | `gpu-overview` | AMD RX 9060 XT: activity, VRAM, temperature, power, clock speed |
 | `disk-health` | Physical disk S.M.A.R.T.: health flag, failure precursors, SSD wear, temperature |
 | `dns-overview` | dnsdist + pdns-auth: QPS, cache hit rate, latency, response codes, drop rate |
 | `dns-logs` | DNS query logs via Loki: query rate, response codes, top domains, per-host breakdown |
 | `network-overview` | SNMP MIB-II (bgw1/c1200): traffic, errors, discards, interface status |
 | `monitoring-overview` | Prometheus, Alertmanager, and Loki self-monitoring: alerts, scrape targets, TSDB, ingestion rate |
-| `syslog` | Syslog log volume and error rate via Loki |
+| `syslog` | Network device syslog volume and error rate via Loki |
+| `service-logs` | Generic journald service logs via Loki: volume, errors/warnings by unit |
 | `uptime` | ICMP/DNS probe availability timeline |
 
 ## Structure
@@ -24,11 +25,12 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 ```
 .
 ├── cmd/generate/               # Dashboard definitions (Go)
-│   ├── main.go                 # Entrypoint and common functions
+│   ├── main.go                 # Entrypoint (dashboard registry + JSON output)
+│   ├── helpers.go              # Shared house-style helpers (see Conventions)
 │   ├── node.go                 # node-overview
 │   ├── k8s_node.go             # k8s-node-overview
 │   ├── kubernetes.go           # kubernetes-overview
-│   ├── proxmox.go              # proxmox-overview
+│   ├── proxmox_otlp.go         # proxmox-otlp-overview
 │   ├── gpu.go                  # gpu-overview
 │   ├── disk_health.go          # disk-health
 │   ├── dns.go                  # dns-overview
@@ -36,6 +38,7 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 │   ├── network.go              # network-overview
 │   ├── monitoring.go           # monitoring-overview
 │   ├── syslog.go               # syslog
+│   ├── service_logs.go         # service-logs
 │   └── uptime.go               # uptime
 ├── generated/                  # Generated JSON output (git-ignored)
 ├── provisioning/               # Local Grafana provisioning config
@@ -47,6 +50,35 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 
 To add a new dashboard, create a new `.go` file in `cmd/generate/` (e.g., `new_dashboard.go`) and add an entry to the `dashboards` map in `cmd/generate/main.go`.
 The Helm template auto-discovers all JSON files in `charts/prometheus/dashboards/`, so no template changes are needed.
+
+## Conventions
+
+The foundation SDK is a DSL whose builders are **mutable, pointer-backed objects**.
+Shared helpers therefore keep reuse to two levels and no further:
+
+- **L0 — string constants.** PromQL fragments and label filters (e.g. `fsFilter`,
+  `joinNodename`) are declared as `const` within each builder.
+- **L1 — fragment factories.** Repeated style/config defaults live as functions in
+  `helpers.go` that **return a fresh builder on every call**: `defaultTooltip()`,
+  `defaultLegend()`, `zeroLineThresholds()`, `zeroLineStyle()`, `issueThresholds()`,
+  `promDatasource()` / `lokiDatasource()`, `promDatasourceVariable()` /
+  `lokiDatasourceVariable()`.
+
+We deliberately **do not introduce L2 panel factories** (helpers that assemble whole
+panels from parameters). They accrete arguments to absorb per-panel differences and
+obscure the SDK's main strength: each `build*` function reads as a declarative list of
+what panels a dashboard contains.
+
+Guidelines when adding helpers:
+
+- A helper must return a **new builder instance** each call — never a shared package
+  variable — to avoid aliasing bugs between panels.
+- Extract only **conventions** (decisions that should change everywhere at once, e.g.
+  legend placement, the green→red "any nonzero is an issue" threshold). Leave
+  incidental look-alike code inline.
+- Litmus test: *"If I change this helper, do I want every call site to change?"*
+  Yes → helper. "Depends on the panel" → keep it inline.
+- Name helpers by **intent, not shape** (`issueThresholds`, not `greenRedThresholds`).
 
 ## Development
 

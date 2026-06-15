@@ -9,7 +9,7 @@
   "editable": true,
   "graphTooltip": 1,
   "time": {
-    "from": "now-1h",
+    "from": "now-1d",
     "to": "now"
   },
   "fiscalYearStartMonth": 0,
@@ -45,7 +45,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
+        "w": 6,
         "x": 0,
         "y": 1
       },
@@ -61,11 +61,12 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "min": 0
         },
         "overrides": []
       }
@@ -86,8 +87,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 3,
+        "w": 6,
+        "x": 6,
         "y": 1
       },
       "repeatDirection": "h",
@@ -102,11 +103,12 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "min": 0
         },
         "overrides": []
       }
@@ -127,8 +129,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 6,
+        "w": 6,
+        "x": 12,
         "y": 1
       },
       "repeatDirection": "h",
@@ -143,11 +145,12 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "min": 0
         },
         "overrides": []
       }
@@ -168,8 +171,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 9,
+        "w": 6,
+        "x": 18,
         "y": 1
       },
       "repeatDirection": "h",
@@ -189,6 +192,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -210,7 +214,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(kube_deployment_status_replicas_available{cluster=~\"$cluster\"} == kube_deployment_spec_replicas{cluster=~\"$cluster\"}) or vector(0)",
+          "expr": "count(kube_deployment_status_replicas_available{cluster=~\"$cluster\",namespace=~\"$namespace\"} == kube_deployment_spec_replicas{cluster=~\"$cluster\",namespace=~\"$namespace\"}) or vector(0)",
           "legendFormat": "Healthy"
         }
       ],
@@ -222,9 +226,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 12,
-        "y": 1
+        "w": 8,
+        "x": 0,
+        "y": 5
       },
       "repeatDirection": "h",
       "options": {
@@ -238,11 +242,12 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "min": 0
         },
         "overrides": []
       }
@@ -251,7 +256,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(kube_deployment_status_replicas_available{cluster=~\"$cluster\"} \u003c kube_deployment_spec_replicas{cluster=~\"$cluster\"}) or vector(0)",
+          "expr": "count(kube_deployment_status_replicas_available{cluster=~\"$cluster\",namespace=~\"$namespace\"} \u003c kube_deployment_spec_replicas{cluster=~\"$cluster\",namespace=~\"$namespace\"}) or vector(0)",
           "legendFormat": "Degraded"
         }
       ],
@@ -263,9 +268,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 16,
-        "y": 1
+        "w": 8,
+        "x": 8,
+        "y": 5
       },
       "repeatDirection": "h",
       "options": {
@@ -284,6 +289,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -305,7 +311,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "ceil(sum(increase(kube_pod_container_status_restarts_total{cluster=~\"$cluster\",namespace=~\"$namespace\"}[1h])))",
+          "expr": "ceil(sum(increase(kube_pod_container_status_restarts_total{cluster=~\"$cluster\",namespace=~\"$namespace\"}[1h]))) or vector(0)",
           "legendFormat": "Restarts"
         }
       ],
@@ -317,9 +323,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 20,
-        "y": 1
+        "w": 8,
+        "x": 16,
+        "y": 5
       },
       "repeatDirection": "h",
       "options": {
@@ -338,6 +344,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -359,7 +366,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(kube_daemonset_status_number_ready{cluster=~\"$cluster\"} \u003c kube_daemonset_status_desired_number_scheduled{cluster=~\"$cluster\"}) or vector(0)",
+          "expr": "count(kube_daemonset_status_number_ready{cluster=~\"$cluster\",namespace=~\"$namespace\"} \u003c kube_daemonset_status_desired_number_scheduled{cluster=~\"$cluster\",namespace=~\"$namespace\"}) or vector(0)",
           "legendFormat": "Degraded"
         }
       ],
@@ -373,7 +380,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 5
+        "y": 9
       },
       "repeatDirection": "h",
       "options": {
@@ -392,6 +399,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -413,7 +421,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(kube_statefulset_status_replicas_ready{cluster=~\"$cluster\"} \u003c kube_statefulset_replicas{cluster=~\"$cluster\"}) or vector(0)",
+          "expr": "count(kube_statefulset_status_replicas_ready{cluster=~\"$cluster\",namespace=~\"$namespace\"} \u003c kube_statefulset_replicas{cluster=~\"$cluster\",namespace=~\"$namespace\"}) or vector(0)",
           "legendFormat": "Degraded"
         }
       ],
@@ -427,7 +435,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 5
+        "y": 9
       },
       "repeatDirection": "h",
       "options": {
@@ -446,6 +454,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -481,7 +490,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 5
+        "y": 9
       },
       "repeatDirection": "h",
       "options": {
@@ -500,6 +509,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -535,7 +545,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 5
+        "y": 9
       },
       "repeatDirection": "h",
       "options": {
@@ -554,6 +564,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -579,7 +590,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 13
       },
       "id": 0,
       "panels": []
@@ -588,8 +599,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (namespace) (rate(container_cpu_usage_seconds_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[5m]))",
-          "legendFormat": "{{namespace}}"
+          "expr": "sum by (cluster, namespace) (rate(container_cpu_usage_seconds_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{cluster}} {{namespace}}"
         }
       ],
       "title": "CPU Usage by Namespace",
@@ -602,7 +613,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 14
       },
       "repeatDirection": "h",
       "options": {
@@ -620,6 +631,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "custom": {}
         },
         "overrides": []
@@ -629,8 +641,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (namespace) (container_memory_working_set_bytes{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"})",
-          "legendFormat": "{{namespace}}"
+          "expr": "sum by (cluster, namespace) (container_memory_working_set_bytes{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"})",
+          "legendFormat": "{{cluster}} {{namespace}}"
         }
       ],
       "title": "Memory Usage by Namespace",
@@ -643,7 +655,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 14
       },
       "repeatDirection": "h",
       "options": {
@@ -661,6 +673,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
+          "min": 0,
           "custom": {}
         },
         "overrides": []
@@ -674,7 +687,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 22
       },
       "id": 0,
       "panels": []
@@ -687,7 +700,7 @@
           "legendFormat": "Requested"
         },
         {
-          "expr": "sum(rate(container_cpu_usage_seconds_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[5m]))",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[$__rate_interval]))",
           "legendFormat": "Actual"
         }
       ],
@@ -701,7 +714,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 19
+        "y": 23
       },
       "repeatDirection": "h",
       "options": {
@@ -719,6 +732,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "none",
+          "min": 0,
           "custom": {}
         },
         "overrides": []
@@ -746,7 +760,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 19
+        "y": 23
       },
       "repeatDirection": "h",
       "options": {
@@ -764,6 +778,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
+          "min": 0,
           "custom": {}
         },
         "overrides": []
@@ -780,7 +795,7 @@
           "refId": "A"
         },
         {
-          "expr": "sum by (cluster, namespace, pod, container) (rate(container_cpu_usage_seconds_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[5m]))",
+          "expr": "sum by (cluster, namespace, pod, container) (rate(container_cpu_usage_seconds_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[$__rate_interval]))",
           "format": "table",
           "instant": true,
           "range": false,
@@ -811,7 +826,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 31
       },
       "repeatDirection": "h",
       "transformations": [
@@ -930,7 +945,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 37
+        "y": 41
       },
       "id": 0,
       "panels": []
@@ -939,7 +954,7 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc(topk(10, (100 * sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[5m])) / clamp_min(sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[5m])), 1e-9)) \u003e 0)) or on() label_replace(vector(0), \"cluster\", \"No throttling\", \"\", \"\")",
+          "expr": "sort_desc(topk(10, (100 * sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[$__rate_interval])) / clamp_min(sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[$__rate_interval])), 1e-9)) \u003e 0)) or on() label_replace(vector(0), \"cluster\", \"No throttling\", \"\", \"\")",
           "instant": true,
           "legendFormat": "{{cluster}} {{namespace}}/{{pod}}/{{container}}",
           "range": false
@@ -956,7 +971,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 38
+        "y": 42
       },
       "repeatDirection": "h",
       "options": {
@@ -983,6 +998,8 @@
         "defaults": {
           "unit": "percent",
           "decimals": 1,
+          "min": 0,
+          "max": 100,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1025,7 +1042,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 38
+        "y": 42
       },
       "repeatDirection": "h",
       "options": {
@@ -1052,6 +1069,7 @@
         "defaults": {
           "unit": "short",
           "decimals": 0,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1077,7 +1095,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 50
       },
       "id": 0,
       "panels": []
@@ -1086,8 +1104,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "count by (phase) (kube_pod_status_phase{cluster=~\"$cluster\",namespace=~\"$namespace\"} == 1)",
-          "legendFormat": "{{phase}}"
+          "expr": "count by (cluster, phase) (kube_pod_status_phase{cluster=~\"$cluster\",namespace=~\"$namespace\"} == 1)",
+          "legendFormat": "{{cluster}} {{phase}}"
         }
       ],
       "title": "Pod Phase Count",
@@ -1100,7 +1118,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 47
+        "y": 51
       },
       "repeatDirection": "h",
       "options": {
@@ -1118,6 +1136,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "custom": {}
         },
         "overrides": []
@@ -1127,9 +1146,9 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc(sum by (namespace, pod, container) (increase(kube_pod_container_status_restarts_total{cluster=~\"$cluster\",namespace=~\"$namespace\"}[1h])) \u003e 0) or on() label_replace(vector(0), \"namespace\", \"No restarts\", \"\", \"\")",
+          "expr": "sort_desc(sum by (cluster, namespace, pod, container) (increase(kube_pod_container_status_restarts_total{cluster=~\"$cluster\",namespace=~\"$namespace\"}[1h])) \u003e 0) or on() label_replace(vector(0), \"cluster\", \"No restarts\", \"\", \"\")",
           "instant": true,
-          "legendFormat": "{{namespace}}/{{pod}}/{{container}}",
+          "legendFormat": "{{cluster}} {{namespace}}/{{pod}}/{{container}}",
           "range": false
         }
       ],
@@ -1143,7 +1162,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 47
+        "y": 51
       },
       "repeatDirection": "h",
       "options": {
@@ -1169,7 +1188,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "decimals": 0
+          "decimals": 0,
+          "min": 0
         },
         "overrides": []
       }
@@ -1182,7 +1202,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 55
+        "y": 59
       },
       "id": 0,
       "panels": []
@@ -1191,13 +1211,13 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (namespace) (rate(container_network_receive_bytes_total{cluster=~\"$cluster\",namespace=~\"$namespace\",pod!=\"\"}[5m]))",
-          "legendFormat": "{{namespace}} Rx",
+          "expr": "sum by (cluster, namespace) (rate(container_network_receive_bytes_total{cluster=~\"$cluster\",namespace=~\"$namespace\",pod!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{cluster}} {{namespace}} Rx",
           "refId": "Rx"
         },
         {
-          "expr": "sum by (namespace) (rate(container_network_transmit_bytes_total{cluster=~\"$cluster\",namespace=~\"$namespace\",pod!=\"\"}[5m]))",
-          "legendFormat": "{{namespace}} Tx",
+          "expr": "sum by (cluster, namespace) (rate(container_network_transmit_bytes_total{cluster=~\"$cluster\",namespace=~\"$namespace\",pod!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{cluster}} {{namespace}} Tx",
           "refId": "Tx"
         }
       ],
@@ -1211,7 +1231,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 56
+        "y": 60
       },
       "repeatDirection": "h",
       "options": {
@@ -1272,7 +1292,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 68
+        "y": 72
       },
       "id": 0,
       "panels": []
@@ -1297,108 +1317,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 69
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "decimals": 1
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "count by (phase) (kube_persistentvolumeclaim_status_phase{cluster=~\"$cluster\"} == 1)",
-          "legendFormat": "{{phase}}"
-        }
-      ],
-      "title": "PVC Status",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 69
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "decimals": 0
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "sort_desc(100 * (1 - kubelet_volume_stats_inodes_free{cluster=~\"$cluster\",namespace=~\"$namespace\"} / clamp_min(kubelet_volume_stats_inodes{cluster=~\"$cluster\",namespace=~\"$namespace\"}, 1)))",
-          "instant": true,
-          "legendFormat": "{{cluster}} {{namespace}}/{{persistentvolumeclaim}}",
-          "range": false
-        }
-      ],
-      "title": "PVC Inode Usage (%)",
-      "description": "Percentage of filesystem inodes used by each PVC. Inode exhaustion can occur before disk capacity is full.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 77
+        "y": 73
       },
       "repeatDirection": "h",
       "options": {
@@ -1425,6 +1344,112 @@
         "defaults": {
           "unit": "percent",
           "decimals": 1,
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "count by (cluster, phase) (kube_persistentvolumeclaim_status_phase{cluster=~\"$cluster\",namespace=~\"$namespace\"} == 1)",
+          "legendFormat": "{{cluster}} {{phase}}"
+        }
+      ],
+      "title": "PVC Status",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 73
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sort_desc(100 * (1 - kubelet_volume_stats_inodes_free{cluster=~\"$cluster\",namespace=~\"$namespace\"} / clamp_min(kubelet_volume_stats_inodes{cluster=~\"$cluster\",namespace=~\"$namespace\"}, 1)))",
+          "instant": true,
+          "legendFormat": "{{cluster}} {{namespace}}/{{persistentvolumeclaim}}",
+          "range": false
+        }
+      ],
+      "title": "PVC Inode Usage (%)",
+      "description": "Percentage of filesystem inodes used by each PVC. Inode exhaustion can occur before disk capacity is full.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 81
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "max": 100,
           "thresholds": {
             "mode": "absolute",
             "steps": [

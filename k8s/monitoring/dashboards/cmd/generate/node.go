@@ -95,7 +95,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					}},
 				}).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`up{job="scrapeConfig/monitoring/node-exporter-external"} * on(instance) group_left(nodename) last_over_time(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm"}[1d])`).
+					Expr(`up{job="scrapeConfig/monitoring/node-exporter-external", ` + instFilter + `} * on(instance) group_left(nodename) last_over_time(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm"}[1d])`).
 					LegendFormat("{{nodename}}"),
 				),
 		).
@@ -105,8 +105,13 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("percent").
+				Min(0).
+				Max(100).
+				Orientation(common.VizOrientationAuto).
+				Thresholds(capacityThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + instFilter + `}[$__rate_interval]) ` + joinNodename + `) * 100)`).
+					Instant().
 					LegendFormat("{{nodename}}"),
 				).
 				Decimals(1),
@@ -118,8 +123,13 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("percent").
+				Min(0).
+				Max(100).
+				Orientation(common.VizOrientationAuto).
+				Thresholds(capacityThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(1 - node_memory_MemAvailable_bytes{` + instFilter + `} / node_memory_MemTotal_bytes{` + instFilter + `}) ` + joinNodename + ` * 100`).
+					Instant().
 					LegendFormat("{{nodename}}"),
 				).Decimals(1),
 		).
@@ -129,6 +139,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(4).
 				Unit("percentunit").
+				Min(0).
 				Orientation(common.VizOrientationAuto).
 				ColorMode(common.BigValueColorModeBackground).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
@@ -149,6 +160,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(4).
 				Unit("s").
+				Min(0).
 				GraphMode(common.BigValueGraphModeNone).
 				Orientation(common.VizOrientationAuto).
 				ColorMode(common.BigValueColorModeBackground).
@@ -163,14 +175,16 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(time() - node_boot_time_seconds{` + instFilter + `}) ` + joinNodename).
 					LegendFormat("{{nodename}}"),
-				).Decimals(2),
+				).Decimals(0),
 		).
 		WithPanel(
 			bargauge.NewPanelBuilder().
-				Title("Filesystem Usage").
+				Title("Filesystem Usage (Current)").
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("percent").
+				Min(0).
+				Max(100).
 				Orientation(common.VizOrientationVertical).
 				Thresholds(capacityThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -187,6 +201,9 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("percent").
+				Min(0).
+				Max(100).
+				Thresholds(capacityThresholds()).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -200,6 +217,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("percentunit").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -215,6 +233,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("bytes").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -228,6 +247,9 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("percent").
+				Min(0).
+				Max(100).
+				Thresholds(capacityThresholds()).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -240,7 +262,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 			timeseries.NewPanelBuilder().
 				Title("Temperature").
 				Datasource(ds).
-				Span(12).Height(8).
+				Span(24).Height(8).
 				Unit("celsius").
 				Tooltip(tooltipAll).
 				Legend(legend).
@@ -260,31 +282,60 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().
-				Title("CPU Throttling & Power Issues").
+				Title("CPU Throttling Rate").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("ops").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(rate(node_cpu_package_throttles_total{` + instFilter + `}[$__rate_interval])) ` + joinNodename).
 					LegendFormat("{{nodename}} Throttles"),
-				).
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("RPi Power & Thermal Status").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("short").
+				Min(0).
+				Max(1).
+				GraphMode(common.BigValueGraphModeNone).
+				Orientation(common.VizOrientationAuto).
+				ColorMode(common.BigValueColorModeBackground).
+				Text(common.NewVizTextDisplayOptionsBuilder().
+					TitleSize(11)).
+				Thresholds(issueThresholds()).
+				Mappings([]dashboard.ValueMapping{
+					{ValueMap: &dashboard.ValueMap{
+						Type: dashboard.MappingTypeValueToText,
+						Options: map[string]dashboard.ValueMappingResult{
+							"0": {Text: strPtr("OK"), Color: strPtr("green")},
+							"1": {Text: strPtr("ISSUE"), Color: strPtr("red")},
+						},
+					}},
+				}).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(rpi_throttled_thermal_throttling{` + instFilter + `}) ` + joinNodename).
-					LegendFormat("{{nodename}} RPi Thermal Throttled"),
+					Instant().
+					LegendFormat("{{nodename}} Thermal Throttled"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(rpi_throttled_occurred{` + instFilter + `}) ` + joinNodename).
-					LegendFormat("{{nodename}} RPi Thermal Throttled Occurred"),
+					Instant().
+					LegendFormat("{{nodename}} Thermal Throttled Since Boot"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(rpi_throttled_under_voltage{` + instFilter + `}) ` + joinNodename).
-					LegendFormat("{{nodename}} RPi Under Voltage"),
+					Instant().
+					LegendFormat("{{nodename}} Under Voltage"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(rpi_throttled_under_voltage_occurred{` + instFilter + `}) ` + joinNodename).
-					LegendFormat("{{nodename}} RPi Under Voltage Occurred"),
+					Instant().
+					LegendFormat("{{nodename}} Under Voltage Since Boot"),
 				),
 		).
 		// Exclude dm-*, loop*, and sr* to avoid double-counting or noise from virtual/optical devices.
@@ -302,12 +353,12 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Rx").
 					// Keep physical NICs and vmbr (Proxmox bridges); exclude per-VM/LXC virtual interfaces.
-					Expr(`rate(node_network_receive_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*"}[$__rate_interval]) `+joinNodename).
+					Expr(`rate(node_network_receive_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*|vnets.*"}[$__rate_interval]) `+joinNodename).
 					LegendFormat("{{nodename}} Rx {{device}}"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Tx").
-					Expr(`rate(node_network_transmit_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*"}[$__rate_interval]) `+joinNodename).
+					Expr(`rate(node_network_transmit_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*|vnets.*"}[$__rate_interval]) `+joinNodename).
 					LegendFormat("{{nodename}} Tx {{device}}"),
 				).
 				OverrideByQuery("Tx", []dashboard.DynamicConfigValue{
@@ -342,8 +393,10 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 			bargauge.NewPanelBuilder().
 				Title("Filesystem Usage").
 				Datasource(ds).
-				Span(12).Height(8).
+				Span(12).Height(10).
 				Unit("percent").
+				Min(0).
+				Max(100).
 				Orientation(common.VizOrientationHorizontal).
 				Thresholds(capacityThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -357,8 +410,11 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 			timeseries.NewPanelBuilder().
 				Title("Filesystem Usage Trend").
 				Datasource(ds).
-				Span(12).Height(8).
+				Span(12).Height(10).
 				Unit("percent").
+				Min(0).
+				Max(100).
+				Thresholds(capacityThresholds()).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -375,6 +431,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("bytes").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().

@@ -66,6 +66,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -125,6 +126,7 @@
         "defaults": {
           "unit": "percent",
           "decimals": 1,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -241,6 +243,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "watt",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -315,6 +318,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -372,6 +376,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [

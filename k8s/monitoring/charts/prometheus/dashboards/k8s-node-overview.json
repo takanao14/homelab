@@ -10,7 +10,7 @@
   "editable": true,
   "graphTooltip": 1,
   "time": {
-    "from": "now-1h",
+    "from": "now-1d",
     "to": "now"
   },
   "fiscalYearStartMonth": 0,
@@ -34,7 +34,7 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})) * 100)",
+          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}[$__rate_interval]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})) * 100)",
           "legendFormat": "{{nodename}}"
         }
       ],
@@ -74,7 +74,9 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "decimals": 1
+          "decimals": 1,
+          "min": 0,
+          "max": 100
         },
         "overrides": []
       }
@@ -123,7 +125,9 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "decimals": 1
+          "decimals": 1,
+          "min": 0,
+          "max": 100
         },
         "overrides": []
       }
@@ -144,7 +148,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
+        "w": 12,
         "x": 0,
         "y": 7
       },
@@ -160,7 +164,7 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
@@ -186,8 +190,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 6,
+        "w": 12,
+        "x": 12,
         "y": 7
       },
       "repeatDirection": "h",
@@ -202,7 +206,7 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
@@ -228,9 +232,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 7
+        "w": 12,
+        "x": 0,
+        "y": 11
       },
       "repeatDirection": "h",
       "options": {
@@ -244,7 +248,7 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
@@ -270,9 +274,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 7
+        "w": 12,
+        "x": 12,
+        "y": 11
       },
       "repeatDirection": "h",
       "options": {
@@ -291,6 +295,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "s",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -320,7 +325,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 15
       },
       "id": 0,
       "panels": []
@@ -329,7 +334,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})) * 100)",
+          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}[$__rate_interval]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})) * 100)",
           "legendFormat": "{{nodename}}"
         }
       ],
@@ -343,7 +348,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 16
       },
       "repeatDirection": "h",
       "options": {
@@ -361,6 +366,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
+          "min": 0,
+          "max": 100,
           "custom": {}
         },
         "overrides": []
@@ -392,7 +399,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 24
       },
       "repeatDirection": "h",
       "options": {
@@ -410,6 +417,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "custom": {}
         },
         "overrides": [
@@ -460,7 +468,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 28
+        "y": 32
       },
       "id": 0,
       "panels": []
@@ -487,7 +495,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 29
+        "y": 33
       },
       "repeatDirection": "h",
       "options": {
@@ -505,6 +513,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
+          "min": 0,
           "custom": {}
         },
         "overrides": []
@@ -518,7 +527,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 37
+        "y": 41
       },
       "id": 0,
       "panels": []
@@ -527,7 +536,7 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc((1 - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\"} / node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}) * 100)",
+          "expr": "sort_desc((1 - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}) * 100)",
           "instant": true,
           "legendFormat": "{{nodename}} {{mountpoint}}",
           "range": false
@@ -543,7 +552,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 38
+        "y": 42
       },
       "repeatDirection": "h",
       "options": {
@@ -569,7 +578,9 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "decimals": 1
+          "decimals": 1,
+          "min": 0,
+          "max": 100
         },
         "overrides": []
       }
@@ -578,11 +589,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "(node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\"} - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "(node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} {{mountpoint}} Used"
         },
         {
-          "expr": "node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} {{mountpoint}} Total"
         }
       ],
@@ -596,7 +607,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 38
+        "y": 42
       },
       "repeatDirection": "h",
       "options": {
@@ -614,6 +625,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
+          "min": 0,
           "custom": {}
         },
         "overrides": [
@@ -642,12 +654,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(node_disk_read_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "rate(node_disk_read_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[$__rate_interval]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} {{device}} Read",
           "refId": "Read"
         },
         {
-          "expr": "rate(node_disk_written_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "rate(node_disk_written_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[$__rate_interval]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} {{device}} Write",
           "refId": "Write"
         }
@@ -662,7 +674,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 50
       },
       "repeatDirection": "h",
       "options": {
@@ -723,7 +735,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 54
+        "y": 58
       },
       "id": 0,
       "panels": []
@@ -732,12 +744,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (nodename) (rate(node_network_receive_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*\"} [5m]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+          "expr": "sum by (nodename) (rate(node_network_receive_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*\"} [$__rate_interval]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
           "legendFormat": "{{nodename}} Rx",
           "refId": "Rx"
         },
         {
-          "expr": "sum by (nodename) (rate(node_network_transmit_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*\"}[5m]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+          "expr": "sum by (nodename) (rate(node_network_transmit_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*\"}[$__rate_interval]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
           "legendFormat": "{{nodename}} Tx",
           "refId": "Tx"
         }
@@ -752,7 +764,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 55
+        "y": 59
       },
       "repeatDirection": "h",
       "options": {

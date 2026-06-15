@@ -79,8 +79,11 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("short").
+				Min(0).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count by (node) (proxmox_vm_cpu_percent{` + nodeFilter + `, type="qemu"})`).
+					Expr(`count by (node) (proxmox_vm_cpu_percent{` + nodeFilter + `, type="qemu"}) or on(node) count by (node) (proxmox_node_cpustat_cpu_percent{` + nodeFilter + `}) * 0`).
+					Instant().
 					LegendFormat("{{node}}"),
 				),
 		).
@@ -90,8 +93,11 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("short").
+				Min(0).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count by (node) (proxmox_vm_cpu_percent{` + nodeFilter + `, type="lxc"})`).
+					Expr(`count by (node) (proxmox_vm_cpu_percent{` + nodeFilter + `, type="lxc"}) or on(node) count by (node) (proxmox_node_cpustat_cpu_percent{` + nodeFilter + `}) * 0`).
+					Instant().
 					LegendFormat("{{node}}"),
 				),
 		).
@@ -101,12 +107,15 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("percentunit").
+				Min(0).
+				Max(1).
 				Decimals(1).
 				Thresholds(cpuThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`proxmox_node_cpustat_cpu_percent{` + nodeFilter + `}`).
+					Instant().
 					LegendFormat("{{node}}"),
 				),
 		).
@@ -116,12 +125,15 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("percent").
+				Min(0).
+				Max(100).
 				Decimals(1).
 				Thresholds(pctThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`proxmox_node_memory_memused_bytes{` + nodeFilter + `} / proxmox_node_memory_memtotal_bytes{` + nodeFilter + `} * 100`).
+					Instant().
 					LegendFormat("{{node}}"),
 				),
 		).
@@ -131,12 +143,15 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(4).
 				Unit("percent").
+				Min(0).
+				Max(100).
 				Decimals(1).
 				Thresholds(pctThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`proxmox_storage_used_bytes{` + nodeFilter + `} / proxmox_storage_total_bytes{` + nodeFilter + `} * 100`).
+					Instant().
 					LegendFormat("{{node}}/{{storage}}"),
 				),
 		).
@@ -148,12 +163,15 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(4).
 				Unit("percent").
+				Min(0).
+				Max(100).
 				Decimals(1).
 				Thresholds(pctThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`proxmox_node_blockstat_per_percent{` + nodeFilter + `}`).
+					Instant().
 					LegendFormat("{{node}}"),
 				),
 		).
@@ -167,6 +185,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("percentunit").
 				Min(0).
+				Max(1).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -180,6 +199,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("bytes").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -202,6 +222,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("bytes").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -257,21 +278,21 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 					// mapping proxmox_node → nodename. Then join temperature metrics on nodename.
 					Expr(`node_thermal_zone_temp{type=~"x86_pkg_temp|cpu-thermal"} * on(instance) group_left(nodename)
   (node_uname_info * on(nodename) group_left()
-    label_replace(target_info{` + job + `}, "nodename", "$1", "proxmox_node", "(.*)"))`).
+    label_replace(target_info{` + job + `, proxmox_node=~"$node"}, "nodename", "$1", "proxmox_node", "(.*)"))`).
 					LegendFormat("{{nodename}} CPU {{type}}"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// Ryzen: k10temp exposed as PCI device (0000:00:18.x), temp1=Tctl
 					Expr(`node_hwmon_temp_celsius{chip=~".*_0000:00:18_.*", sensor="temp1"} * on(instance) group_left(nodename)
   (node_uname_info * on(nodename) group_left()
-    label_replace(target_info{` + job + `}, "nodename", "$1", "proxmox_node", "(.*)"))`).
+    label_replace(target_info{` + job + `, proxmox_node=~"$node"}, "nodename", "$1", "proxmox_node", "(.*)"))`).
 					LegendFormat("{{nodename}} CPU Tctl"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`smartmon_temperature_celsius_raw_value * on(instance) group_left(nodename)
   (node_uname_info * on(nodename) group_left()
-    label_replace(target_info{` + job + `}, "nodename", "$1", "proxmox_node", "(.*)"))`).
-					LegendFormat("{{nodename}} Disk {{device}}"),
+    label_replace(target_info{` + job + `, proxmox_node=~"$node"}, "nodename", "$1", "proxmox_node", "(.*)"))`).
+					LegendFormat("{{nodename}} Disk {{disk}}"),
 				),
 		).
 		WithPanel(
@@ -280,6 +301,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("bytes").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -303,6 +325,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				// Values above 1.0 indicate saturation (more runnable tasks than CPUs).
 				Unit("short").
+				Min(0).
 				Tooltip(tooltipSingle).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -333,6 +356,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("bytes").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -350,6 +374,8 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(6).
 				GraphMode(common.BigValueGraphModeNone).
 				Unit("s").
+				Min(0).
+				Decimals(0).
 				// Show 0 as red to highlight recently restarted guests.
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
@@ -364,6 +390,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`proxmox_vm_uptime_seconds{` + nodeFilter + `}`).
+					Instant().
 					LegendFormat("{{name}}"),
 				),
 		).
@@ -373,6 +400,8 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("percentunit").
+				Min(0).
+				Max(1).
 				Tooltip(tooltipSingle).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -386,6 +415,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("bytes").
+				Min(0).
 				Tooltip(tooltipSingle).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -458,6 +488,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				// pressurecpusome_percent: % of time at least one task was stalled on CPU.
 				Unit("percent").
 				Min(0).
+				Max(100).
 				Tooltip(tooltipSingle).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -470,9 +501,10 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Title("Guest I/O Pressure (PSI some)").
 				Datasource(ds).
 				Span(24).Height(8).
-				// pressureiosome_ratio: fraction of time at least one task was stalled on I/O.
-				Unit("percentunit").
+				// Despite its metric suffix, pressureiosome_ratio is emitted on a 0-100 percent scale.
+				Unit("percent").
 				Min(0).
+				Max(100).
 				Tooltip(tooltipSingle).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().

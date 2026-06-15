@@ -10,7 +10,7 @@
   "editable": true,
   "graphTooltip": 1,
   "time": {
-    "from": "now-7d",
+    "from": "now-30d",
     "to": "now"
   },
   "fiscalYearStartMonth": 0,
@@ -62,7 +62,7 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
@@ -115,7 +115,7 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
@@ -164,7 +164,7 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
@@ -217,7 +217,7 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
@@ -272,6 +272,9 @@
         "showPercentChange": false,
         "reduceOptions": {
           "calcs": []
+        },
+        "text": {
+          "titleSize": 11
         },
         "percentChangeColorMode": "standard",
         "orientation": "auto"
@@ -363,6 +366,9 @@
         "reduceOptions": {
           "calcs": []
         },
+        "text": {
+          "titleSize": 16
+        },
         "maxVizHeight": 300,
         "orientation": "horizontal"
       },
@@ -424,6 +430,9 @@
         },
         "reduceOptions": {
           "calcs": []
+        },
+        "text": {
+          "titleSize": 16
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -487,6 +496,9 @@
         "reduceOptions": {
           "calcs": []
         },
+        "text": {
+          "titleSize": 16
+        },
         "maxVizHeight": 300,
         "orientation": "horizontal"
       },
@@ -549,6 +561,9 @@
         "reduceOptions": {
           "calcs": []
         },
+        "text": {
+          "titleSize": 16
+        },
         "maxVizHeight": 300,
         "orientation": "horizontal"
       },
@@ -610,6 +625,9 @@
         },
         "reduceOptions": {
           "calcs": []
+        },
+        "text": {
+          "titleSize": 16
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -723,7 +741,7 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
@@ -755,7 +773,9 @@
       "targets": [
         {
           "expr": "smartmon_power_on_hours_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info",
-          "legendFormat": "{{nodename}} {{disk}} {{device_model}}"
+          "instant": true,
+          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+          "range": false
         }
       ],
       "title": "Power On Hours",
@@ -775,14 +795,14 @@
         "graphMode": "none",
         "colorMode": "value",
         "justifyMode": "auto",
-        "textMode": "auto",
+        "textMode": "value_and_name",
         "wideLayout": true,
         "showPercentChange": false,
         "reduceOptions": {
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "horizontal"
       },
       "fieldConfig": {
         "defaults": {
@@ -842,6 +862,9 @@
         },
         "reduceOptions": {
           "calcs": []
+        },
+        "text": {
+          "titleSize": 16
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -909,6 +932,9 @@
         "reduceOptions": {
           "calcs": []
         },
+        "text": {
+          "titleSize": 16
+        },
         "maxVizHeight": 300,
         "orientation": "horizontal"
       },
@@ -962,14 +988,17 @@
         "graphMode": "none",
         "colorMode": "background",
         "justifyMode": "auto",
-        "textMode": "auto",
+        "textMode": "value_and_name",
         "wideLayout": true,
         "showPercentChange": false,
         "reduceOptions": {
           "calcs": []
         },
+        "text": {
+          "titleSize": 16
+        },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
@@ -1032,8 +1061,11 @@
         "reduceOptions": {
           "calcs": []
         },
+        "text": {
+          "titleSize": 16
+        },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
@@ -1074,8 +1106,11 @@
         "reduceOptions": {
           "calcs": []
         },
+        "text": {
+          "titleSize": 16
+        },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
@@ -1116,8 +1151,11 @@
         "reduceOptions": {
           "calcs": []
         },
+        "text": {
+          "titleSize": 16
+        },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {

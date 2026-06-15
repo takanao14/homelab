@@ -9,7 +9,7 @@
   "editable": true,
   "graphTooltip": 1,
   "time": {
-    "from": "now-1d",
+    "from": "now-30d",
     "to": "now"
   },
   "fiscalYearStartMonth": 0,
@@ -33,7 +33,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "label_replace(label_replace(count by (instance) (ifOperStatus{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"} == 1), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "expr": "label_replace(label_replace(count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
           "legendFormat": "{{device}}"
         }
       ],
@@ -61,11 +61,12 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "min": 0
         },
         "overrides": []
       }
@@ -74,7 +75,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "label_replace(label_replace(count by (instance) (ifOperStatus{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"} != 1) or vector(0), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "expr": "label_replace(label_replace(count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} != 1) or count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}) * 0, \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
           "legendFormat": "{{device}}"
         }
       ],
@@ -107,6 +108,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -128,11 +130,11 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "label_replace(label_replace(sum by (instance) (rate(ifHCInOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "expr": "label_replace(label_replace(sum by (instance) (rate(ifHCInOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
           "legendFormat": "{{device}} In"
         },
         {
-          "expr": "label_replace(label_replace(sum by (instance) (rate(ifHCOutOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "expr": "label_replace(label_replace(sum by (instance) (rate(ifHCOutOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
           "legendFormat": "{{device}} Out"
         }
       ],
@@ -160,11 +162,12 @@
           "calcs": []
         },
         "percentChangeColorMode": "standard",
-        "orientation": ""
+        "orientation": "auto"
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "bps"
+          "unit": "bps",
+          "min": 0
         },
         "overrides": []
       }
@@ -186,12 +189,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(sum by (instance) (rate(ifHCInOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "expr": "label_replace(label_replace(sum by (instance) (rate(ifHCInOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
           "legendFormat": "{{device}} In",
           "refId": "In"
         },
         {
-          "expr": "label_replace(label_replace(sum by (instance) (rate(ifHCOutOctets{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]) * 8), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "expr": "label_replace(label_replace(sum by (instance) (rate(ifHCOutOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
           "legendFormat": "{{device}} Out",
           "refId": "Out"
         }
@@ -276,11 +279,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(rate(ifInErrors{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "expr": "label_replace(label_replace(rate(ifInErrors{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
           "legendFormat": "{{device}} {{ifDescr}} In"
         },
         {
-          "expr": "label_replace(label_replace(rate(ifOutErrors{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "expr": "label_replace(label_replace(rate(ifOutErrors{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
           "legendFormat": "{{device}} {{ifDescr}} Out"
         }
       ],
@@ -312,6 +315,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "pps",
+          "min": 0,
           "custom": {}
         },
         "overrides": []
@@ -321,11 +325,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(label_replace(rate(ifInDiscards{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "expr": "label_replace(label_replace(rate(ifInDiscards{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
           "legendFormat": "{{device}} {{ifDescr}} In"
         },
         {
-          "expr": "label_replace(label_replace(rate(ifOutDiscards{ifDescr!~\"Loopback.*|Null.*|bluetooth.*\", instance=~\"$instance\"}[5m]), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
+          "expr": "label_replace(label_replace(rate(ifOutDiscards{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]), \"device\", \"bgw1\", \"instance\", \"192.168.10.1.*\"), \"device\", \"c1200\", \"instance\", \"192.168.10.2.*\")",
           "legendFormat": "{{device}} {{ifDescr}} Out"
         }
       ],
@@ -357,6 +361,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "pps",
+          "min": 0,
           "custom": {}
         },
         "overrides": []

@@ -29,7 +29,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 		Uid("monitoring-overview").
 		Tags([]string{"monitoring", "infrastructure"}).
 		Timezone("browser").
-		Time("now-1h", "now").
+		Time("now-1d", "now").
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
@@ -56,8 +56,10 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Scrape Targets Up").
 				Datasource(ds).
-				Span(4).Height(4).
+				Span(6).Height(4).
 				Unit("short").
+				Min(0).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count(up == 1)`).
 					LegendFormat("Up"),
@@ -67,8 +69,9 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Scrape Targets Down").
 				Datasource(ds).
-				Span(4).Height(4).
+				Span(6).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
@@ -81,13 +84,14 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Dropped Notifications (5m)").
 				Datasource(ds).
-				Span(4).Height(4).
+				Span(6).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`ceil(sum(increase(prometheus_notifications_dropped_total{` + promJob + `}[5m])))`).
+					Expr(`ceil(sum(increase(prometheus_notifications_dropped_total{` + promJob + `}[5m]))) or vector(0)`).
 					LegendFormat("Dropped"),
 				),
 		).
@@ -95,8 +99,9 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("WAL Corruptions").
 				Datasource(ds).
-				Span(4).Height(4).
+				Span(6).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
@@ -111,8 +116,9 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Title("Firing Alerts").
 				Description("Current Prometheus alerts in the firing state, including Watchdog alerts.").
 				Datasource(ds).
-				Span(4).Height(4).
+				Span(4).Height(8).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
@@ -140,10 +146,11 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("reqps").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (integration, reason) (rate(alertmanager_notifications_failed_total[5m])) > 0`).
+					Expr(`sum by (integration, reason) (rate(alertmanager_notifications_failed_total[$__rate_interval])) > 0 or on() vector(0)`).
 					LegendFormat("{{integration}} {{reason}}"),
 				),
 		).
@@ -154,10 +161,11 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`histogram_quantile(0.99, sum by (le, integration) (rate(alertmanager_notification_latency_seconds_bucket[5m]))) and on (integration) sum by (integration) (rate(alertmanager_notifications_total[5m])) > 0`).
+					Expr(`(histogram_quantile(0.99, sum by (le, integration) (rate(alertmanager_notification_latency_seconds_bucket[$__rate_interval]))) and on (integration) sum by (integration) (rate(alertmanager_notifications_total[$__rate_interval])) > 0) or on() vector(0)`).
 					LegendFormat("{{integration}}"),
 				),
 		).
@@ -168,6 +176,8 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(4).Height(4).
 				Unit("short").
+				Min(0).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(loki_ingester_memory_streams{` + lokiJob + `})`).
 					LegendFormat("Streams"),
@@ -179,6 +189,9 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(4).Height(4).
 				Unit("percentunit").
+				Min(0).
+				Max(1).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(loki_ingester_chunk_utilization_sum{` + lokiJob + `}) / sum(loki_ingester_chunk_utilization_count{` + lokiJob + `})`).
 					LegendFormat("Utilization"),
@@ -191,10 +204,11 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(prometheus_tsdb_head_samples_appended_total{` + promJob + `}[5m])`).
+					Expr(`rate(prometheus_tsdb_head_samples_appended_total{` + promJob + `}[$__rate_interval])`).
 					LegendFormat("{{cluster}} samples/s"),
 				),
 		).
@@ -204,6 +218,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("bytes").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -221,6 +236,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -234,10 +250,11 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`histogram_quantile(0.99, sum by (le, slice) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{` + promJob + `}[5m])))`).
+					Expr(`histogram_quantile(0.99, sum by (le, slice) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{` + promJob + `}[$__rate_interval])))`).
 					LegendFormat("{{cluster}} {{slice}}"),
 				),
 		).
@@ -245,8 +262,9 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 			bargauge.NewPanelBuilder().
 				Title("Slowest Scrape Targets").
 				Datasource(ds).
-				Span(12).Height(8).
+				Span(24).Height(10).
 				Unit("s").
+				Min(0).
 				Orientation(common.VizOrientationHorizontal).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(topk(10, avg by (job) (scrape_duration_seconds)))`).
@@ -261,22 +279,23 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("short").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(prometheus_target_scrapes_exceeded_sample_limit_total{` + promJob + `}[5m])`).
+					Expr(`rate(prometheus_target_scrapes_exceeded_sample_limit_total{` + promJob + `}[$__rate_interval])`).
 					LegendFormat("{{cluster}} sample limit exceeded"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(prometheus_target_scrapes_sample_duplicate_timestamp_total{` + promJob + `}[5m])`).
+					Expr(`rate(prometheus_target_scrapes_sample_duplicate_timestamp_total{` + promJob + `}[$__rate_interval])`).
 					LegendFormat("{{cluster}} duplicate timestamp"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(prometheus_target_scrapes_sample_out_of_order_total{` + promJob + `}[5m])`).
+					Expr(`rate(prometheus_target_scrapes_sample_out_of_order_total{` + promJob + `}[$__rate_interval])`).
 					LegendFormat("{{cluster}} out of order"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(prometheus_target_scrapes_sample_out_of_bounds_total{` + promJob + `}[5m])`).
+					Expr(`rate(prometheus_target_scrapes_sample_out_of_bounds_total{` + promJob + `}[$__rate_interval])`).
 					LegendFormat("{{cluster}} out of bounds"),
 				),
 		).
@@ -287,10 +306,11 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("Bps").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(loki_distributor_bytes_received_total{` + lokiJob + `}[5m]))`).
+					Expr(`sum(rate(loki_distributor_bytes_received_total{` + lokiJob + `}[$__rate_interval]))`).
 					LegendFormat("bytes/s"),
 				),
 		).
@@ -300,10 +320,11 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(loki_distributor_lines_received_total{` + lokiJob + `}[5m]))`).
+					Expr(`sum(rate(loki_distributor_lines_received_total{` + lokiJob + `}[$__rate_interval]))`).
 					LegendFormat("lines/s"),
 				),
 		).
@@ -313,10 +334,11 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`histogram_quantile(0.99, sum by (le, route) (rate(loki_request_duration_seconds_bucket{` + lokiJob + `, route!~"ready|/grpc\\..*|/frontendv2pb\\..*|/logproto\\..*"}[5m])))`).
+					Expr(`histogram_quantile(0.99, sum by (le, route) (rate(loki_request_duration_seconds_bucket{` + lokiJob + `, route!~"ready|/grpc\\..*|/frontendv2pb\\..*|/logproto\\..*"}[$__rate_interval]))) and on (route) sum by (route) (rate(loki_request_duration_seconds_count{` + lokiJob + `, route!~"ready|/grpc\\..*|/frontendv2pb\\..*|/logproto\\..*"}[$__rate_interval])) > 0`).
 					LegendFormat("{{route}}"),
 				),
 		).
@@ -326,6 +348,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().

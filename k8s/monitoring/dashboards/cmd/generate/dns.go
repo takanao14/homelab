@@ -83,7 +83,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		Uid("dns-overview").
 		Tags([]string{"dns", "infrastructure"}).
 		Timezone("browser").
-		Time("now-1h", "now").
+		Time("now-30d", "now").
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
@@ -97,7 +97,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(8).Height(4).
 				Unit("reqps").
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(dnsdist_queries{` + dnsdist + `}[5m]))`).
+					Expr(`sum(rate(dnsdist_queries{` + dnsdist + `}[$__rate_interval]))`).
 					LegendFormat("QPS"),
 				).Decimals(1),
 		).
@@ -109,7 +109,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(8).Height(4).
 				Unit("percent").
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(dnsdist_cache_hits{` + dnsdist + `}[5m])) / clamp_min(sum(rate(dnsdist_cache_hits{` + dnsdist + `}[5m]) + rate(dnsdist_cache_misses{` + dnsdist + `}[5m])), 1) * 100`).
+					Expr(`sum(rate(dnsdist_cache_hits{` + dnsdist + `}[$__rate_interval])) / clamp_min(sum(rate(dnsdist_cache_hits{` + dnsdist + `}[$__rate_interval]) + rate(dnsdist_cache_misses{` + dnsdist + `}[$__rate_interval])), 1) * 100`).
 					LegendFormat("Cache Hit Rate"),
 				).Decimals(2),
 		).
@@ -127,32 +127,6 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("Avg Latency"),
 				).Decimals(1),
 		).
-		WithRow(dashboard.NewRowBuilder("pdns-auth")).
-		WithPanel(
-			stat.NewPanelBuilder().
-				Title("pdns-auth QPS").
-				Datasource(ds).
-				Span(12).Height(4).
-				Unit("reqps").
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(pdns_auth_udp_queries{` + pdns + `}[5m]))`).
-					LegendFormat("QPS"),
-				).Decimals(1),
-		).
-		WithPanel(
-			stat.NewPanelBuilder().
-				Title("pdns-auth Avg Latency").
-				Datasource(ds).
-				Span(12).Height(4).
-				Unit("µs").
-				Thresholds(latencyThresholds).
-				ColorMode(common.BigValueColorModeBackground).
-				Orientation(common.VizOrientationAuto).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`avg(pdns_auth_latency{` + pdns + `})`).
-					LegendFormat("Avg Latency"),
-				).Decimals(1),
-		).
 		WithRow(dashboard.NewRowBuilder("dnsdist Metrics")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -166,12 +140,12 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Queries").
-					Expr(mapDNS(`rate(dnsdist_queries{`+dnsdist+`}[5m])`)).
+					Expr(mapDNS(`rate(dnsdist_queries{`+dnsdist+`}[$__rate_interval])`)).
 					LegendFormat("{{server}} Queries"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Responses").
-					Expr(mapDNS(`rate(dnsdist_responses{`+dnsdist+`}[5m])`)).
+					Expr(mapDNS(`rate(dnsdist_responses{`+dnsdist+`}[$__rate_interval])`)).
 					LegendFormat("{{server}} Responses"),
 				).
 				OverrideByQuery("Responses", []dashboard.DynamicConfigValue{
@@ -189,19 +163,19 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(dnsdist_frontend_noerror{`+dnsdist+`}[5m]))`).
+					Expr(`sum(rate(dnsdist_frontend_noerror{`+dnsdist+`}[$__rate_interval]))`).
 					LegendFormat("NOERROR"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(dnsdist_frontend_nxdomain{`+dnsdist+`}[5m]))`).
+					Expr(`sum(rate(dnsdist_frontend_nxdomain{`+dnsdist+`}[$__rate_interval]))`).
 					LegendFormat("NXDOMAIN"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(dnsdist_frontend_servfail{`+dnsdist+`}[5m]))`).
+					Expr(`sum(rate(dnsdist_frontend_servfail{`+dnsdist+`}[$__rate_interval]))`).
 					LegendFormat("SERVFAIL"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(dnsdist_frontend_refused{`+dnsdist+`}[5m]))`).
+					Expr(`sum(rate(dnsdist_frontend_refused{`+dnsdist+`}[$__rate_interval]))`).
 					LegendFormat("REFUSED"),
 				).
 				// Semantic coloring: OK=Green, Warning=Yellow, Error=Red, Refused=Orange
@@ -254,7 +228,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(dnsdist_cache_hits{` + dnsdist + `}[5m]) / clamp_min(rate(dnsdist_cache_hits{` + dnsdist + `}[5m]) + rate(dnsdist_cache_misses{` + dnsdist + `}[5m]), 1) * 100`)).
+					Expr(mapDNS(`rate(dnsdist_cache_hits{` + dnsdist + `}[$__rate_interval]) / clamp_min(rate(dnsdist_cache_hits{` + dnsdist + `}[$__rate_interval]) + rate(dnsdist_cache_misses{` + dnsdist + `}[$__rate_interval]), 1) * 100`)).
 					LegendFormat("{{server}}"),
 				),
 		).
@@ -269,15 +243,15 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(dnsdist_acl_drops{` + dnsdist + `}[5m])`)).
+					Expr(mapDNS(`rate(dnsdist_acl_drops{` + dnsdist + `}[$__rate_interval])`)).
 					LegendFormat("{{server}} ACL Drop"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(dnsdist_rule_drops{` + dnsdist + `}[5m])`)).
+					Expr(mapDNS(`rate(dnsdist_rule_drops{` + dnsdist + `}[$__rate_interval])`)).
 					LegendFormat("{{server}} Rule Drop"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(dnsdist_dynamic_blocked{` + dnsdist + `}[5m])`)).
+					Expr(mapDNS(`rate(dnsdist_dynamic_blocked{` + dnsdist + `}[$__rate_interval])`)).
 					LegendFormat("{{server}} Dynamic Block"),
 				),
 		).
@@ -290,9 +264,35 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(dnsdist_queries{` + dnsdist + `}[5m]) - rate(dnsdist_responses{` + dnsdist + `}[5m])`)).
+					Expr(mapDNS(`rate(dnsdist_queries{` + dnsdist + `}[$__rate_interval]) - rate(dnsdist_responses{` + dnsdist + `}[$__rate_interval])`)).
 					LegendFormat("{{server}}"),
 				),
+		).
+		WithRow(dashboard.NewRowBuilder("pdns-auth")).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("pdns-auth QPS").
+				Datasource(ds).
+				Span(12).Height(4).
+				Unit("reqps").
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(rate(pdns_auth_udp_queries{` + pdns + `}[$__rate_interval]))`).
+					LegendFormat("QPS"),
+				).Decimals(1),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("pdns-auth Avg Latency").
+				Datasource(ds).
+				Span(12).Height(4).
+				Unit("µs").
+				Thresholds(latencyThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`avg(pdns_auth_latency{` + pdns + `})`).
+					LegendFormat("Avg Latency"),
+				).Decimals(1),
 		).
 		WithRow(dashboard.NewRowBuilder("pdns-auth Metrics")).
 		WithPanel(
@@ -304,11 +304,11 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(pdns_auth_udp_queries{` + pdns + `}[5m])`)).
+					Expr(mapDNS(`rate(pdns_auth_udp_queries{` + pdns + `}[$__rate_interval])`)).
 					LegendFormat("{{server}} UDP"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(pdns_auth_tcp_queries{` + pdns + `}[5m])`)).
+					Expr(mapDNS(`rate(pdns_auth_tcp_queries{` + pdns + `}[$__rate_interval])`)).
 					LegendFormat("{{server}} TCP"),
 				),
 		).
@@ -323,19 +323,19 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(pdns_auth_noerror_packets{`+pdns+`}[5m]))`).
+					Expr(`sum(rate(pdns_auth_noerror_packets{`+pdns+`}[$__rate_interval]))`).
 					LegendFormat("NOERROR"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(pdns_auth_nxdomain_packets{`+pdns+`}[5m]))`).
+					Expr(`sum(rate(pdns_auth_nxdomain_packets{`+pdns+`}[$__rate_interval]))`).
 					LegendFormat("NXDOMAIN"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(pdns_auth_servfail_packets{`+pdns+`}[5m]))`).
+					Expr(`sum(rate(pdns_auth_servfail_packets{`+pdns+`}[$__rate_interval]))`).
 					LegendFormat("SERVFAIL"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(pdns_auth_refused_packets{`+pdns+`}[5m]))`).
+					Expr(`sum(rate(pdns_auth_refused_packets{`+pdns+`}[$__rate_interval]))`).
 					LegendFormat("REFUSED"),
 				).
 				// Semantic coloring: OK=Green, Warning=Yellow, Error=Red, Refused=Orange
@@ -388,7 +388,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				Unit("reqps").
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(coredns_dns_requests_total{` + coredns + `}[5m]))`).
+					Expr(`sum(rate(coredns_dns_requests_total{` + coredns + `}[$__rate_interval]))`).
 					Instant().
 					LegendFormat("QPS"),
 				).
@@ -419,7 +419,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(coredns_dns_responses_total{` + coredns + `,rcode="SERVFAIL"}[5m]))`).
+					Expr(`sum(rate(coredns_dns_responses_total{` + coredns + `,rcode="SERVFAIL"}[$__rate_interval]))`).
 					Instant().
 					LegendFormat("SERVFAIL"),
 				).
@@ -435,7 +435,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`histogram_quantile(0.99, sum by (le) (rate(coredns_dns_request_duration_seconds_bucket{` + coredns + `}[5m])))`).
+					Expr(`histogram_quantile(0.99, sum by (le) (rate(coredns_dns_request_duration_seconds_bucket{` + coredns + `}[$__rate_interval])))`).
 					Instant().
 					LegendFormat("p99"),
 				),
@@ -451,7 +451,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster) (rate(coredns_dns_requests_total{` + coredns + `}[5m]))`).
+					Expr(`sum by (cluster) (rate(coredns_dns_requests_total{` + coredns + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}}"),
 				),
 		).
@@ -465,7 +465,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster) (rate(coredns_dns_responses_total{` + coredns + `,rcode="SERVFAIL"}[5m]))`).
+					Expr(`sum by (cluster) (rate(coredns_dns_responses_total{` + coredns + `,rcode="SERVFAIL"}[$__rate_interval]))`).
 					LegendFormat("{{cluster}}"),
 				),
 		).
@@ -479,7 +479,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`100 * sum by (cluster) (rate(coredns_cache_hits_total{` + coredns + `}[5m])) / clamp_min(sum by (cluster) (rate(coredns_cache_requests_total{` + coredns + `}[5m])), 1e-9)`).
+					Expr(`100 * sum by (cluster) (rate(coredns_cache_hits_total{` + coredns + `}[$__rate_interval])) / clamp_min(sum by (cluster) (rate(coredns_cache_requests_total{` + coredns + `}[$__rate_interval])), 1e-9)`).
 					LegendFormat("{{cluster}}"),
 				).
 				Decimals(1),
@@ -494,7 +494,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(coredns_dns_request_duration_seconds_bucket{` + coredns + `}[5m])))`).
+					Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(coredns_dns_request_duration_seconds_bucket{` + coredns + `}[$__rate_interval])))`).
 					LegendFormat("{{cluster}}"),
 				),
 		).

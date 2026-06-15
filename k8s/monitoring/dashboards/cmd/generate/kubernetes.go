@@ -31,7 +31,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 		Uid("kubernetes-overview").
 		Tags([]string{"kubernetes", "infrastructure"}).
 		Timezone("browser").
-		Time("now-1h", "now").
+		Time("now-1d", "now").
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
@@ -62,8 +62,10 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Nodes Ready").
 				Datasource(ds).
-				Span(3).Height(4).
+				Span(6).Height(4).
 				Unit("short").
+				Min(0).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count(kube_node_status_condition{` + clusterFilter + `,condition="Ready",status="true"})`).
 					LegendFormat("Ready"),
@@ -73,8 +75,10 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Nodes Total").
 				Datasource(ds).
-				Span(3).Height(4).
+				Span(6).Height(4).
 				Unit("short").
+				Min(0).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count(kube_node_info{` + clusterFilter + `})`).
 					LegendFormat("Total"),
@@ -84,8 +88,10 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Pods Running").
 				Datasource(ds).
-				Span(3).Height(4).
+				Span(6).Height(4).
 				Unit("short").
+				Min(0).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// == 1 filters to the active phase only; other phases exist as 0-valued series.
 					Expr(`count(kube_pod_status_phase{` + clusterFilter + `,phase="Running",` + nsFilter + `} == 1) or vector(0)`).
@@ -96,8 +102,9 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Pods Not Running").
 				Datasource(ds).
-				Span(3).Height(4).
+				Span(6).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
@@ -111,10 +118,12 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Deployments Healthy").
 				Datasource(ds).
-				Span(4).Height(4).
+				Span(8).Height(4).
 				Unit("short").
+				Min(0).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count(kube_deployment_status_replicas_available{` + clusterFilter + `} == kube_deployment_spec_replicas{` + clusterFilter + `}) or vector(0)`).
+					Expr(`count(kube_deployment_status_replicas_available{` + clusterFilter + `,` + nsFilter + `} == kube_deployment_spec_replicas{` + clusterFilter + `,` + nsFilter + `}) or vector(0)`).
 					LegendFormat("Healthy"),
 				),
 		).
@@ -122,13 +131,14 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Deployments Degraded").
 				Datasource(ds).
-				Span(4).Height(4).
+				Span(8).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count(kube_deployment_status_replicas_available{` + clusterFilter + `} < kube_deployment_spec_replicas{` + clusterFilter + `}) or vector(0)`).
+					Expr(`count(kube_deployment_status_replicas_available{` + clusterFilter + `,` + nsFilter + `} < kube_deployment_spec_replicas{` + clusterFilter + `,` + nsFilter + `}) or vector(0)`).
 					LegendFormat("Degraded"),
 				),
 		).
@@ -136,13 +146,14 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Container Restarts (1h)").
 				Datasource(ds).
-				Span(4).Height(4).
+				Span(8).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`ceil(sum(increase(kube_pod_container_status_restarts_total{` + clusterFilter + `,` + nsFilter + `}[1h])))`).
+					Expr(`ceil(sum(increase(kube_pod_container_status_restarts_total{` + clusterFilter + `,` + nsFilter + `}[1h]))) or vector(0)`).
 					LegendFormat("Restarts"),
 				),
 		).
@@ -152,11 +163,12 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count(kube_daemonset_status_number_ready{` + clusterFilter + `} < kube_daemonset_status_desired_number_scheduled{` + clusterFilter + `}) or vector(0)`).
+					Expr(`count(kube_daemonset_status_number_ready{` + clusterFilter + `,` + nsFilter + `} < kube_daemonset_status_desired_number_scheduled{` + clusterFilter + `,` + nsFilter + `}) or vector(0)`).
 					LegendFormat("Degraded"),
 				),
 		).
@@ -166,11 +178,12 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count(kube_statefulset_status_replicas_ready{` + clusterFilter + `} < kube_statefulset_replicas{` + clusterFilter + `}) or vector(0)`).
+					Expr(`count(kube_statefulset_status_replicas_ready{` + clusterFilter + `,` + nsFilter + `} < kube_statefulset_replicas{` + clusterFilter + `,` + nsFilter + `}) or vector(0)`).
 					LegendFormat("Degraded"),
 				),
 		).
@@ -180,6 +193,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
@@ -195,6 +209,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
@@ -211,12 +226,13 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// container="" excludes pause containers; pod="" excludes node-level cgroup rollups.
-					Expr(`sum by (namespace) (rate(container_cpu_usage_seconds_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[5m]))`).
-					LegendFormat("{{namespace}}"),
+					Expr(`sum by (cluster, namespace) (rate(container_cpu_usage_seconds_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[$__rate_interval]))`).
+					LegendFormat("{{cluster}} {{namespace}}"),
 				),
 		).
 		WithPanel(
@@ -225,11 +241,12 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("bytes").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (namespace) (container_memory_working_set_bytes{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""})`).
-					LegendFormat("{{namespace}}"),
+					Expr(`sum by (cluster, namespace) (container_memory_working_set_bytes{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""})`).
+					LegendFormat("{{cluster}} {{namespace}}"),
 				),
 		).
 		WithRow(dashboard.NewRowBuilder("Resource Requests vs Actual")).
@@ -239,6 +256,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("none").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -246,7 +264,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("Requested"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(container_cpu_usage_seconds_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[5m]))`).
+					Expr(`sum(rate(container_cpu_usage_seconds_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[$__rate_interval]))`).
 					LegendFormat("Actual"),
 				),
 		).
@@ -256,6 +274,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("bytes").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -278,7 +297,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// container!="" excludes pause containers; pod!="" excludes node-level cgroup rollups.
-					Expr(`sum by (cluster, namespace, pod, container) (rate(container_cpu_usage_seconds_total{`+clusterFilter+`,`+nsFilter+`,container!="",pod!=""}[5m]))`).
+					Expr(`sum by (cluster, namespace, pod, container) (rate(container_cpu_usage_seconds_total{`+clusterFilter+`,`+nsFilter+`,container!="",pod!=""}[$__rate_interval]))`).
 					Instant().Format(prometheus.PromQueryFormatTable).RefId("B"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -338,6 +357,8 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("percent").
+				Min(0).
+				Max(100).
 				Orientation(common.VizOrientationHorizontal).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
@@ -348,7 +369,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// clamp_min avoids NaN when an idle container has no scheduling periods.
-					Expr(`sort_desc(topk(10, (100 * sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[5m])) / clamp_min(sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[5m])), 1e-9)) > 0)) or on() label_replace(vector(0), "cluster", "No throttling", "", "")`).
+					Expr(`sort_desc(topk(10, (100 * sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[$__rate_interval])) / clamp_min(sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[$__rate_interval])), 1e-9)) > 0)) or on() label_replace(vector(0), "cluster", "No throttling", "", "")`).
 					Instant().
 					LegendFormat("{{cluster}} {{namespace}}/{{pod}}/{{container}}"),
 				).
@@ -361,6 +382,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Min(0).
 				Orientation(common.VizOrientationHorizontal).
 				Thresholds(issueThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -377,11 +399,12 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count by (phase) (kube_pod_status_phase{` + clusterFilter + `,` + nsFilter + `} == 1)`).
-					LegendFormat("{{phase}}"),
+					Expr(`count by (cluster, phase) (kube_pod_status_phase{` + clusterFilter + `,` + nsFilter + `} == 1)`).
+					LegendFormat("{{cluster}} {{phase}}"),
 				),
 		).
 		WithPanel(
@@ -390,12 +413,13 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Min(0).
 				Orientation(common.VizOrientationHorizontal).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// > 0 excludes containers with no restarts; sort_desc orders by count without topk's per-step instability.
-					Expr(`sort_desc(sum by (namespace, pod, container) (increase(kube_pod_container_status_restarts_total{` + clusterFilter + `,` + nsFilter + `}[1h])) > 0) or on() label_replace(vector(0), "namespace", "No restarts", "", "")`).
+					Expr(`sort_desc(sum by (cluster, namespace, pod, container) (increase(kube_pod_container_status_restarts_total{` + clusterFilter + `,` + nsFilter + `}[1h])) > 0) or on() label_replace(vector(0), "cluster", "No restarts", "", "")`).
 					Instant().
-					LegendFormat("{{namespace}}/{{pod}}/{{container}}"),
+					LegendFormat("{{cluster}} {{namespace}}/{{pod}}/{{container}}"),
 				).
 				Decimals(0),
 		).
@@ -413,13 +437,13 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Rx").
 					// pod!="" excludes node-level aggregates.
-					Expr(`sum by (namespace) (rate(container_network_receive_bytes_total{`+clusterFilter+`,`+nsFilter+`,pod!=""}[5m]))`).
-					LegendFormat("{{namespace}} Rx"),
+					Expr(`sum by (cluster, namespace) (rate(container_network_receive_bytes_total{`+clusterFilter+`,`+nsFilter+`,pod!=""}[$__rate_interval]))`).
+					LegendFormat("{{cluster}} {{namespace}} Rx"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Tx").
-					Expr(`sum by (namespace) (rate(container_network_transmit_bytes_total{`+clusterFilter+`,`+nsFilter+`,pod!=""}[5m]))`).
-					LegendFormat("{{namespace}} Tx"),
+					Expr(`sum by (cluster, namespace) (rate(container_network_transmit_bytes_total{`+clusterFilter+`,`+nsFilter+`,pod!=""}[$__rate_interval]))`).
+					LegendFormat("{{cluster}} {{namespace}} Tx"),
 				).
 				OverrideByQuery("Tx", []dashboard.DynamicConfigValue{
 					{Id: "custom.transform", Value: "negative-Y"},
@@ -432,6 +456,8 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("percent").
+				Min(0).
+				Max(100).
 				Orientation(common.VizOrientationHorizontal).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(kubelet_volume_stats_used_bytes{` + clusterFilter + `,` + nsFilter + `} / kubelet_volume_stats_capacity_bytes{` + clusterFilter + `,` + nsFilter + `} * 100)`).
@@ -446,10 +472,11 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Min(0).
 				Orientation(common.VizOrientationHorizontal).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count by (phase) (kube_persistentvolumeclaim_status_phase{` + clusterFilter + `} == 1)`).
-					LegendFormat("{{phase}}"),
+					Expr(`count by (cluster, phase) (kube_persistentvolumeclaim_status_phase{` + clusterFilter + `,` + nsFilter + `} == 1)`).
+					LegendFormat("{{cluster}} {{phase}}"),
 				).
 				Decimals(0),
 		).
@@ -460,6 +487,8 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("percent").
+				Min(0).
+				Max(100).
 				Orientation(common.VizOrientationHorizontal).
 				Thresholds(capacityThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().

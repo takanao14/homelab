@@ -16,8 +16,10 @@ import (
 func buildNetworkOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
-	// Exclude virtual/management interfaces to show only physical ports.
-	const ifFilter = `ifDescr!~"Loopback.*|Null.*|bluetooth.*", instance=~"$instance"`
+	// Physical ports on the router and switch use GigaEthernetN/GigabitEthernetN.
+	// Match them explicitly to exclude loopbacks, tunnels, VLANs, port channels,
+	// subinterfaces, and vendor-internal interfaces.
+	const ifFilter = `ifDescr=~"GigaEthernet[0-9]+|GigabitEthernet[0-9]+", instance=~"$instance"`
 
 	// mapDevice maps instance IPs to logical device names for better readability.
 	mapDevice := func(expr string) string {
@@ -47,7 +49,7 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 		Uid("network-overview").
 		Tags([]string{"network", "infrastructure"}).
 		Timezone("browser").
-		Time("now-1d", "now").
+		Time("now-30d", "now").
 		Refresh("60s"). // SNMP scrapes are expensive; 60s is a reasonable interval.
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
@@ -67,6 +69,8 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("short").
+				Min(0).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(mapDevice(`count by (instance) (ifOperStatus{` + ifFilter + `} == 1)`)).
 					LegendFormat("{{device}}"),
@@ -78,11 +82,12 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("short").
+				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`count by (instance) (ifOperStatus{` + ifFilter + `} != 1) or vector(0)`)).
+					Expr(mapDevice(`count by (instance) (ifOperStatus{` + ifFilter + `} != 1) or count by (instance) (ifOperStatus{` + ifFilter + `}) * 0`)).
 					LegendFormat("{{device}}"),
 				),
 		).
@@ -92,12 +97,14 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(4).
 				Unit("bps").
+				Min(0).
+				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`sum by (instance) (rate(ifHCInOctets{` + ifFilter + `}[5m]) * 8)`)).
+					Expr(mapDevice(`sum by (instance) (rate(ifHCInOctets{` + ifFilter + `}[$__rate_interval]) * 8)`)).
 					LegendFormat("{{device}} In"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`sum by (instance) (rate(ifHCOutOctets{` + ifFilter + `}[5m]) * 8)`)).
+					Expr(mapDevice(`sum by (instance) (rate(ifHCOutOctets{` + ifFilter + `}[$__rate_interval]) * 8)`)).
 					LegendFormat("{{device}} Out"),
 				),
 		).
@@ -114,12 +121,12 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("In").
-					Expr(mapDevice(`sum by (instance) (rate(ifHCInOctets{`+ifFilter+`}[5m]) * 8)`)).
+					Expr(mapDevice(`sum by (instance) (rate(ifHCInOctets{`+ifFilter+`}[$__rate_interval]) * 8)`)).
 					LegendFormat("{{device}} In"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Out").
-					Expr(mapDevice(`sum by (instance) (rate(ifHCOutOctets{`+ifFilter+`}[5m]) * 8)`)).
+					Expr(mapDevice(`sum by (instance) (rate(ifHCOutOctets{`+ifFilter+`}[$__rate_interval]) * 8)`)).
 					LegendFormat("{{device}} Out"),
 				).
 				OverrideByQuery("Out", []dashboard.DynamicConfigValue{
@@ -133,14 +140,15 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("pps").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`rate(ifInErrors{` + ifFilter + `}[5m])`)).
+					Expr(mapDevice(`rate(ifInErrors{` + ifFilter + `}[$__rate_interval])`)).
 					LegendFormat("{{device}} {{ifDescr}} In"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`rate(ifOutErrors{` + ifFilter + `}[5m])`)).
+					Expr(mapDevice(`rate(ifOutErrors{` + ifFilter + `}[$__rate_interval])`)).
 					LegendFormat("{{device}} {{ifDescr}} Out"),
 				),
 		).
@@ -150,14 +158,15 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("pps").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`rate(ifInDiscards{` + ifFilter + `}[5m])`)).
+					Expr(mapDevice(`rate(ifInDiscards{` + ifFilter + `}[$__rate_interval])`)).
 					LegendFormat("{{device}} {{ifDescr}} In"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`rate(ifOutDiscards{` + ifFilter + `}[5m])`)).
+					Expr(mapDevice(`rate(ifOutDiscards{` + ifFilter + `}[$__rate_interval])`)).
 					LegendFormat("{{device}} {{ifDescr}} Out"),
 				),
 		).
