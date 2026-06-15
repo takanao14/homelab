@@ -283,6 +283,158 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					LegendFormat("{{nodename}} {{disk}}"),
 				).Decimals(0),
 		).
+		// NVMe drives don't expose the SATA SMART attributes; instead the nvme-cli
+		// exporter publishes nvme_* series keyed by `device` (e.g. nvme0n1).
+		// "Data Units Written/Read" follow the NVMe spec unit of 1000 x 512 bytes,
+		// so bytes = value * 512000 (a documented approximation, not exact host I/O).
+		WithRow(dashboard.NewRowBuilder("NVMe")).
+		WithPanel(
+			bargauge.NewPanelBuilder().
+				Title("Endurance Used (%)").
+				Datasource(ds).
+				Span(8).Height(8).
+				Unit("percent").
+				Orientation(common.VizOrientationHorizontal).
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "green"},
+						{Value: float64Ptr(80), Color: "yellow"},
+						{Value: float64Ptr(100), Color: "red"},
+					})).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`(nvme_percentage_used_ratio{` + instFilter + `} * 100) ` + joinNodename).
+					LegendFormat("{{nodename}} {{device}}"),
+				).Decimals(1),
+		).
+		WithPanel(
+			bargauge.NewPanelBuilder().
+				Title("Available Spare (%)").
+				Datasource(ds).
+				Span(8).Height(8).
+				Unit("percent").
+				Orientation(common.VizOrientationHorizontal).
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "red"},
+						{Value: float64Ptr(10), Color: "yellow"},
+						{Value: float64Ptr(20), Color: "green"},
+					})).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`(nvme_available_spare_ratio{` + instFilter + `} * 100) ` + joinNodename).
+					LegendFormat("{{nodename}} {{device}}"),
+				).Decimals(0),
+		).
+		// critical_warning is a bitfield; any nonzero bit indicates a fault.
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Critical Warning").
+				Datasource(ds).
+				Span(8).Height(8).
+				GraphMode(common.BigValueGraphModeNone).
+				ColorMode(common.BigValueColorModeBackground).
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "green"},
+						{Value: float64Ptr(1), Color: "red"},
+					})).
+				Mappings([]dashboard.ValueMapping{
+					{ValueMap: &dashboard.ValueMap{
+						Type: dashboard.MappingTypeValueToText,
+						Options: map[string]dashboard.ValueMappingResult{
+							"0": {Text: strPtr("OK"), Color: strPtr("green")},
+						},
+					}},
+				}).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`nvme_critical_warning{` + instFilter + `} ` + joinNodename).
+					LegendFormat("{{nodename}} {{device}}"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Total Data Written (TBW)").
+				Datasource(ds).
+				Span(8).Height(8).
+				Unit("bytes").
+				GraphMode(common.BigValueGraphModeNone).
+				ColorMode(common.BigValueColorModeValue).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`(nvme_data_units_written_total{` + instFilter + `} * 512000) ` + joinNodename).
+					LegendFormat("{{nodename}} {{device}}"),
+				).Decimals(1),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Total Data Read").
+				Datasource(ds).
+				Span(8).Height(8).
+				Unit("bytes").
+				GraphMode(common.BigValueGraphModeNone).
+				ColorMode(common.BigValueColorModeValue).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`(nvme_data_units_read_total{` + instFilter + `} * 512000) ` + joinNodename).
+					LegendFormat("{{nodename}} {{device}}"),
+				).Decimals(1),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Power On Hours").
+				Datasource(ds).
+				Span(8).Height(8).
+				Unit("h").
+				GraphMode(common.BigValueGraphModeNone).
+				ColorMode(common.BigValueColorModeValue).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`nvme_power_on_hours_total{` + instFilter + `} ` + joinNodename).
+					LegendFormat("{{nodename}} {{device}}"),
+				).Decimals(0),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Write / Read Throughput").
+				Datasource(ds).
+				Span(24).Height(8).
+				Unit("Bps").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("Write").
+					Expr(`(rate(nvme_data_units_written_total{`+instFilter+`}[$__rate_interval]) * 512000) `+joinNodename).
+					LegendFormat("{{nodename}} {{device}} Write"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("Read").
+					Expr(`(rate(nvme_data_units_read_total{`+instFilter+`}[$__rate_interval]) * 512000) `+joinNodename).
+					LegendFormat("{{nodename}} {{device}} Read"),
+				).
+				OverrideByQuery("Read", []dashboard.DynamicConfigValue{
+					{Id: "custom.transform", Value: "negative-Y"},
+				}),
+		).
+		// Media errors and error-log entries should stay flat; any growth is a fault.
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Media & Error-Log Entries").
+				Datasource(ds).
+				Span(24).Height(8).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`nvme_media_errors_total{` + instFilter + `} ` + joinNodename).
+					LegendFormat("{{nodename}} {{device}} media errors"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`nvme_num_err_log_entries_total{` + instFilter + `} ` + joinNodename).
+					LegendFormat("{{nodename}} {{device}} err-log entries"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`nvme_unsafe_shutdowns_total{` + instFilter + `} ` + joinNodename).
+					LegendFormat("{{nodename}} {{device}} unsafe shutdowns"),
+				),
+		).
 		WithRow(dashboard.NewRowBuilder("Temperature")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -294,7 +446,11 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`smartmon_temperature_celsius_raw_value{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} {{disk}}"),
+					LegendFormat("{{nodename}} {{disk}} (SATA)"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`nvme_temperature_celsius{` + instFilter + `} ` + joinNodename).
+					LegendFormat("{{nodename}} {{device}} (NVMe)"),
 				),
 		).
 		Build()

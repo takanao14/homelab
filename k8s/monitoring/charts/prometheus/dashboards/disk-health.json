@@ -734,7 +734,7 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Temperature",
+      "title": "NVMe",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -745,11 +745,458 @@
       "panels": []
     },
     {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "(nvme_percentage_used_ratio{instance=~\"$instance\"} * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} {{device}}"
+        }
+      ],
+      "title": "Endurance Used (%)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 44
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "yellow"
+              },
+              {
+                "value": 100,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "(nvme_available_spare_ratio{instance=~\"$instance\"} * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} {{device}}"
+        }
+      ],
+      "title": "Available Spare (%)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 44
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 10,
+                "color": "yellow"
+              },
+              {
+                "value": 20,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "nvme_critical_warning{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} {{device}}"
+        }
+      ],
+      "title": "Critical Warning",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 44
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "OK",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "(nvme_data_units_written_total{instance=~\"$instance\"} * 512000) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} {{device}}"
+        }
+      ],
+      "title": "Total Data Written (TBW)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 52
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "(nvme_data_units_read_total{instance=~\"$instance\"} * 512000) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} {{device}}"
+        }
+      ],
+      "title": "Total Data Read",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 52
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "nvme_power_on_hours_total{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} {{device}}"
+        }
+      ],
+      "title": "Power On Hours",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 52
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "(rate(nvme_data_units_written_total{instance=~\"$instance\"}[$__rate_interval]) * 512000) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} {{device}} Write",
+          "refId": "Write"
+        },
+        {
+          "expr": "(rate(nvme_data_units_read_total{instance=~\"$instance\"}[$__rate_interval]) * 512000) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} {{device}} Read",
+          "refId": "Read"
+        }
+      ],
+      "title": "Write / Read Throughput",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 60
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "Read"
+            },
+            "properties": [
+              {
+                "id": "custom.transform",
+                "value": "negative-Y"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "nvme_media_errors_total{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} {{device}} media errors"
+        },
+        {
+          "expr": "nvme_num_err_log_entries_total{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} {{device}} err-log entries"
+        },
+        {
+          "expr": "nvme_unsafe_shutdowns_total{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} {{device}} unsafe shutdowns"
+        }
+      ],
+      "title": "Media \u0026 Error-Log Entries",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 68
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Temperature",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 76
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
       "type": "timeseries",
       "targets": [
         {
           "expr": "smartmon_temperature_celsius_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{disk}}"
+          "legendFormat": "{{nodename}} {{disk}} (SATA)"
+        },
+        {
+          "expr": "nvme_temperature_celsius{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}} {{device}} (NVMe)"
         }
       ],
       "title": "Disk Temperature",
@@ -762,7 +1209,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 77
       },
       "repeatDirection": "h",
       "options": {
