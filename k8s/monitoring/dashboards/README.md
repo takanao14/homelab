@@ -11,6 +11,7 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 | `kubernetes-overview` | Kubernetes cluster health, resource usage, pod lifecycle, network, PVC |
 | `proxmox-overview` | Proxmox VE cluster: VM/LXC counts, node and guest resources, storage |
 | `gpu-overview` | AMD RX 9060 XT: activity, VRAM, temperature, power, clock speed |
+| `disk-health` | Physical disk S.M.A.R.T.: health flag, failure precursors, SSD wear, temperature |
 | `dns-overview` | dnsdist + pdns-auth: QPS, cache hit rate, latency, response codes, drop rate |
 | `dns-logs` | DNS query logs via Loki: query rate, response codes, top domains, per-host breakdown |
 | `network-overview` | SNMP MIB-II (bgw1/c1200): traffic, errors, discards, interface status |
@@ -29,6 +30,7 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 │   ├── kubernetes.go           # kubernetes-overview
 │   ├── proxmox.go              # proxmox-overview
 │   ├── gpu.go                  # gpu-overview
+│   ├── disk_health.go          # disk-health
 │   ├── dns.go                  # dns-overview
 │   ├── dns_logs.go             # dns-logs
 │   ├── network.go              # network-overview
