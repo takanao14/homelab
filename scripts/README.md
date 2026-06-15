@@ -209,18 +209,30 @@ deployments. Only runs against the `dev-homelab` kube context.
 ## Grafana MCP
 
 Scripts backing the Grafana MCP server registered in the repo-root `.mcp.json`.
-The server lets Claude Code query Grafana (PromQL/LogQL, dashboards, alerts)
-against `https://grafana.prd.butaco.net`.
+The server lets an MCP client (Claude Code, Codex, Cursor, …) query Grafana
+(PromQL/LogQL, dashboards, alerts) against `https://grafana.prd.butaco.net`.
 
 ### `grafana-mcp.sh`
 
-Launcher invoked by Claude Code over stdio (via `.mcp.json`). It selects a
-container runtime per OS — `docker` on macOS (OrbStack), `podman` on Linux —
-and runs the `mcp/grafana` image with `-i` (no TTY). Credentials are forwarded
-from the environment by name only (`-e GRAFANA_URL`, `-e
-GRAFANA_SERVICE_ACCOUNT_TOKEN`), which the repo-root `.envrc` injects from the
-SOPS-encrypted `.env/secrets.enc.env`. You normally don't run this by hand;
-Claude Code starts it.
+Launcher invoked by the MCP client over stdio. It selects a container runtime
+per OS — `docker` on macOS (OrbStack), `podman` on Linux — and runs the
+`mcp/grafana` image with `-i` (no TTY). You normally don't run this by hand; the
+client starts it.
+
+Credentials are **self-resolving**: if `GRAFANA_SERVICE_ACCOUNT_TOKEN` is already
+exported (e.g. Claude Code launched under direnv) it is used as-is; otherwise the
+script decrypts `.env/secrets.enc.env` via `sops` itself, deriving the repo root
+from its own path. This means the same launcher works from any client regardless
+of cwd or whether direnv has loaded — clients only need to point at this script,
+never embed the token. `GRAFANA_URL` defaults to the prd Grafana.
+
+Other clients just reference the absolute path, e.g. Codex (`~/.codex/config.toml`):
+
+```toml
+[mcp_servers.grafana]
+command = "/Users/takanao/homelab/scripts/grafana-mcp.sh"
+startup_timeout_ms = 60000   # first run pulls the mcp/grafana image
+```
 
 | Env var | Default | Notes |
 |---------|---------|-------|
