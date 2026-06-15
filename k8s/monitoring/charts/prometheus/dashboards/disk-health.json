@@ -34,7 +34,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(smartmon_device_smart_healthy{instance=~\"$instance\"} == bool 0)",
+          "expr": "(sum(smartmon_device_smart_healthy{type=\"sat\",instance=~\"$instance\"} == bool 0) or vector(0)) + (sum(nvme_critical_warning{instance=~\"$instance\"} \u003e bool 0) or vector(0))",
           "legendFormat": "Unhealthy"
         }
       ],
@@ -46,7 +46,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 1
       },
@@ -99,8 +99,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 6,
         "y": 1
       },
       "repeatDirection": "h",
@@ -136,7 +136,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(smartmon_wear_leveling_count_value{instance=~\"$instance\"} \u003c bool 10)",
+          "expr": "sum((smartmon_wear_leveling_count_value{instance=~\"$instance\"} or smartmon_media_wearout_indicator_value{instance=~\"$instance\"} or smartmon_ssd_life_left_value{instance=~\"$instance\"} or smartmon_percent_lifetime_remain_value{instance=~\"$instance\"}) \u003c bool 10)",
           "legendFormat": "Worn"
         }
       ],
@@ -148,8 +148,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 12,
         "y": 1
       },
       "repeatDirection": "h",
@@ -189,8 +189,65 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "smartmon_device_smart_healthy{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{disk}} ({{type}})"
+          "expr": "sum(nvme_critical_warning{instance=~\"$instance\"} \u003e bool 0)",
+          "legendFormat": "Warnings"
+        }
+      ],
+      "title": "NVMe Warnings",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "smartmon_device_smart_healthy{type=\"sat\",instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info",
+          "legendFormat": "{{nodename}} {{disk}} {{device_model}} (SATA)"
+        },
+        {
+          "expr": "(nvme_critical_warning{instance=~\"$instance\"} == bool 0) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+          "legendFormat": "{{nodename}} {{device}} {{model}} (NVMe)"
         }
       ],
       "title": "SMART Health",
@@ -270,8 +327,10 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc(smartmon_reallocated_sector_ct_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
-          "legendFormat": "{{nodename}} {{disk}}"
+          "expr": "sort_desc(smartmon_reallocated_sector_ct_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
+          "instant": true,
+          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+          "range": false
         }
       ],
       "title": "Reallocated Sectors",
@@ -290,7 +349,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "auto",
+        "namePlacement": "top",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -302,7 +361,10 @@
           "calcs": []
         },
         "reduceOptions": {
-          "calcs": []
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -330,8 +392,10 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc(smartmon_current_pending_sector_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
-          "legendFormat": "{{nodename}} {{disk}}"
+          "expr": "sort_desc(smartmon_current_pending_sector_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
+          "instant": true,
+          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+          "range": false
         }
       ],
       "title": "Current Pending Sectors",
@@ -350,7 +414,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "auto",
+        "namePlacement": "top",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -362,7 +426,10 @@
           "calcs": []
         },
         "reduceOptions": {
-          "calcs": []
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -390,8 +457,10 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc(smartmon_offline_uncorrectable_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
-          "legendFormat": "{{nodename}} {{disk}}"
+          "expr": "sort_desc(smartmon_offline_uncorrectable_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
+          "instant": true,
+          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+          "range": false
         }
       ],
       "title": "Offline Uncorrectable",
@@ -410,7 +479,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "auto",
+        "namePlacement": "top",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -422,7 +491,10 @@
           "calcs": []
         },
         "reduceOptions": {
-          "calcs": []
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -450,8 +522,10 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc(smartmon_reported_uncorrect_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
-          "legendFormat": "{{nodename}} {{disk}}"
+          "expr": "sort_desc(smartmon_reported_uncorrect_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
+          "instant": true,
+          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+          "range": false
         }
       ],
       "title": "Reported Uncorrectable",
@@ -470,7 +544,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "auto",
+        "namePlacement": "top",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -482,7 +556,10 @@
           "calcs": []
         },
         "reduceOptions": {
-          "calcs": []
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -510,8 +587,10 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc(smartmon_udma_crc_error_count_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
-          "legendFormat": "{{nodename}} {{disk}}"
+          "expr": "sort_desc(smartmon_udma_crc_error_count_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
+          "instant": true,
+          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+          "range": false
         }
       ],
       "title": "UDMA CRC Errors",
@@ -530,7 +609,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "auto",
+        "namePlacement": "top",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -542,7 +621,10 @@
           "calcs": []
         },
         "reduceOptions": {
-          "calcs": []
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -627,11 +709,14 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "smartmon_wear_leveling_count_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{disk}}"
+          "expr": "(smartmon_wear_leveling_count_value{instance=~\"$instance\"} or smartmon_media_wearout_indicator_value{instance=~\"$instance\"} or smartmon_ssd_life_left_value{instance=~\"$instance\"} or smartmon_percent_lifetime_remain_value{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info",
+          "instant": true,
+          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+          "range": false
         }
       ],
-      "title": "SSD Life Remaining (normalized)",
+      "title": "SSD Life Remaining (vendor wear attr)",
+      "description": "Normalized SSD wear (100 = new). Sourced from whichever vendor attribute a disk exposes (wear_leveling_count, media_wearout_indicator, ssd_life_left, percent_lifetime_remain). SSDs that expose none, plus all HDDs, do not appear; NVMe endurance is shown in the NVMe row.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -647,7 +732,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "auto",
+        "namePlacement": "top",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -659,7 +744,10 @@
           "calcs": []
         },
         "reduceOptions": {
-          "calcs": []
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -693,8 +781,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "smartmon_power_on_hours_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{disk}}"
+          "expr": "smartmon_power_on_hours_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info",
+          "legendFormat": "{{nodename}} {{disk}} {{device_model}}"
         }
       ],
       "title": "Power On Hours",
@@ -748,8 +836,10 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "(nvme_percentage_used_ratio{instance=~\"$instance\"} * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{device}}"
+          "expr": "(nvme_percentage_used_ratio{instance=~\"$instance\"} * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+          "instant": true,
+          "legendFormat": "{{nodename}} {{device}} {{model}}",
+          "range": false
         }
       ],
       "title": "Endurance Used (%)",
@@ -768,7 +858,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "auto",
+        "namePlacement": "top",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -780,7 +870,10 @@
           "calcs": []
         },
         "reduceOptions": {
-          "calcs": []
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -814,8 +907,10 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "(nvme_available_spare_ratio{instance=~\"$instance\"} * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{device}}"
+          "expr": "(nvme_available_spare_ratio{instance=~\"$instance\"} * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+          "instant": true,
+          "legendFormat": "{{nodename}} {{device}} {{model}}",
+          "range": false
         }
       ],
       "title": "Available Spare (%)",
@@ -834,7 +929,7 @@
       "options": {
         "displayMode": "gradient",
         "valueMode": "color",
-        "namePlacement": "auto",
+        "namePlacement": "top",
         "showUnfilled": true,
         "sizing": "auto",
         "minVizWidth": 8,
@@ -846,7 +941,10 @@
           "calcs": []
         },
         "reduceOptions": {
-          "calcs": []
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ]
         },
         "maxVizHeight": 300,
         "orientation": "horizontal"
@@ -880,8 +978,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "nvme_critical_warning{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{device}}"
+          "expr": "nvme_critical_warning{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+          "legendFormat": "{{nodename}} {{device}} {{model}}"
         }
       ],
       "title": "Critical Warning",
@@ -944,8 +1042,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "(nvme_data_units_written_total{instance=~\"$instance\"} * 512000) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{device}}"
+          "expr": "(nvme_data_units_written_total{instance=~\"$instance\"} * 512000) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+          "legendFormat": "{{nodename}} {{device}} {{model}}"
         }
       ],
       "title": "Total Data Written (TBW)",
@@ -986,8 +1084,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "(nvme_data_units_read_total{instance=~\"$instance\"} * 512000) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{device}}"
+          "expr": "(nvme_data_units_read_total{instance=~\"$instance\"} * 512000) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+          "legendFormat": "{{nodename}} {{device}} {{model}}"
         }
       ],
       "title": "Total Data Read",
@@ -1028,8 +1126,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "nvme_power_on_hours_total{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{device}}"
+          "expr": "nvme_power_on_hours_total{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+          "legendFormat": "{{nodename}} {{device}} {{model}}"
         }
       ],
       "title": "Power On Hours",
@@ -1191,12 +1289,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "smartmon_temperature_celsius_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{disk}} (SATA)"
+          "expr": "smartmon_temperature_celsius_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info",
+          "legendFormat": "{{nodename}} {{disk}} {{device_model}} (SATA)"
         },
         {
-          "expr": "nvme_temperature_celsius{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{device}} (NVMe)"
+          "expr": "nvme_temperature_celsius{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+          "legendFormat": "{{nodename}} {{device}} {{model}} (NVMe)"
         }
       ],
       "title": "Disk Temperature",

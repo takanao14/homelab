@@ -26,6 +26,11 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		// joinNodename copies nodename onto smartmon series so legends show hostnames.
 		// max by deduplicates node_uname_info if scraped by multiple jobs.
 		joinNodename = `* on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)`
+		// joinModel / joinNvmeModel copy the device model onto legends so each disk
+		// is identifiable beyond its /dev path. SATA models come from
+		// smartmon_device_info (label device_model), NVMe from nvme_device_info (model).
+		joinModel     = `* on(instance, disk) group_left(device_model) smartmon_device_info`
+		joinNvmeModel = `* on(instance, device) group_left(model) nvme_device_info`
 	)
 
 	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
@@ -33,6 +38,13 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		ShowLegend(true).
 		DisplayMode(common.LegendDisplayModeList).
 		Placement(common.LegendPlacementBottom)
+
+	// reduceLast renders one bar per series named by its legend (Values=false),
+	// reducing each series to its latest value. Without an explicit calc the
+	// bargauge defaults to an empty reducer and drops the per-bar label.
+	reduceLast := common.NewReduceDataOptionsBuilder().
+		Values(false).
+		Calcs([]string{"lastNotNull"})
 
 	// Any nonzero count of reallocated/pending/uncorrectable sectors is a strong
 	// failure precursor, so the threshold flips to red at 1.
@@ -85,13 +97,15 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Hide(dashboard.VariableHideHideVariable),
 		).
 		WithRow(dashboard.NewRowBuilder("Summary")).
-		// == bool 0 yields 1 per unhealthy disk; sum returns 0 (not "no data")
-		// while at least one disk is reporting, so the panel stays meaningful.
+		// Cross-type unhealthy rollup, sourced consistently with the SMART Health
+		// panel: SATA from the smartctl health flag, NVMe from critical_warning.
+		// `or vector(0)` keeps each side at 0 (not "no data") when a node filter
+		// selects only one disk type.
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Unhealthy Disks").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(6).Height(4).
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
@@ -101,7 +115,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 						{Value: float64Ptr(1), Color: "red"},
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(smartmon_device_smart_healthy{` + instFilter + `} == bool 0)`).
+					Expr(`(sum(smartmon_device_smart_healthy{type="sat",` + instFilter + `} == bool 0) or vector(0)) + (sum(nvme_critical_warning{` + instFilter + `} > bool 0) or vector(0))`).
 					LegendFormat("Unhealthy"),
 				),
 		).
@@ -109,7 +123,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Disks Monitored").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(6).Height(4).
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
@@ -126,7 +140,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("SSDs Worn (<10% life)").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(6).Height(4).
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
@@ -136,11 +150,41 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 						{Value: float64Ptr(1), Color: "red"},
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(smartmon_wear_leveling_count_value{` + instFilter + `} < bool 10)`).
+					Expr(`sum((` +
+						`smartmon_wear_leveling_count_value{` + instFilter + `}` +
+						` or smartmon_media_wearout_indicator_value{` + instFilter + `}` +
+						` or smartmon_ssd_life_left_value{` + instFilter + `}` +
+						` or smartmon_percent_lifetime_remain_value{` + instFilter + `}` +
+						`) < bool 10)`).
 					LegendFormat("Worn"),
 				),
 		).
-		// Per-disk health flag for both SATA and NVMe devices.
+		// NVMe counterpart to "SSDs Worn": critical_warning is a bitfield, so any
+		// nonzero bit (>0) on any NVMe device is surfaced here for parity with the
+		// SATA wear tile. The per-disk SMART Health panel below covers both types.
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("NVMe Warnings").
+				Datasource(ds).
+				Span(6).Height(4).
+				GraphMode(common.BigValueGraphModeNone).
+				ColorMode(common.BigValueColorModeBackground).
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "green"},
+						{Value: float64Ptr(1), Color: "red"},
+					})).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(nvme_critical_warning{` + instFilter + `} > bool 0)`).
+					LegendFormat("Warnings"),
+				),
+		).
+		// Per-disk health. SATA uses the smartctl overall-health flag. NVMe is
+		// sourced from nvme_critical_warning instead: the smartmon textfile script
+		// is ATA-centric and reports smart_available=0/enabled=0 for NVMe, so the
+		// nvme exporter's critical_warning byte is the authoritative health signal
+		// (== 0 means no warning bits set, i.e. OK).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("SMART Health").
@@ -165,8 +209,12 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					}},
 				}).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`smartmon_device_smart_healthy{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} {{disk}} ({{type}})"),
+					Expr(`smartmon_device_smart_healthy{type="sat",` + instFilter + `} ` + joinNodename + ` ` + joinModel).
+					LegendFormat("{{nodename}} {{disk}} {{device_model}} (SATA)"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`(nvme_critical_warning{` + instFilter + `} == bool 0) ` + joinNodename + ` ` + joinNvmeModel).
+					LegendFormat("{{nodename}} {{device}} {{model}} (NVMe)"),
 				),
 		).
 		// SATA-only failure precursors. These should sit flat at 0; any step up is
@@ -178,10 +226,12 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(8).Height(8).
 				Orientation(common.VizOrientationHorizontal).
+				ReduceOptions(reduceLast).
+				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(precursorThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sort_desc(smartmon_reallocated_sector_ct_raw_value{` + instFilter + `} ` + joinNodename + `)`).
-					LegendFormat("{{nodename}} {{disk}}"),
+					Expr(`sort_desc(smartmon_reallocated_sector_ct_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
+					LegendFormat("{{nodename}} {{disk}} {{device_model}}"),
 				),
 		).
 		WithPanel(
@@ -190,10 +240,12 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(8).Height(8).
 				Orientation(common.VizOrientationHorizontal).
+				ReduceOptions(reduceLast).
+				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(precursorThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sort_desc(smartmon_current_pending_sector_raw_value{` + instFilter + `} ` + joinNodename + `)`).
-					LegendFormat("{{nodename}} {{disk}}"),
+					Expr(`sort_desc(smartmon_current_pending_sector_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
+					LegendFormat("{{nodename}} {{disk}} {{device_model}}"),
 				),
 		).
 		WithPanel(
@@ -202,10 +254,12 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(8).Height(8).
 				Orientation(common.VizOrientationHorizontal).
+				ReduceOptions(reduceLast).
+				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(precursorThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sort_desc(smartmon_offline_uncorrectable_raw_value{` + instFilter + `} ` + joinNodename + `)`).
-					LegendFormat("{{nodename}} {{disk}}"),
+					Expr(`sort_desc(smartmon_offline_uncorrectable_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
+					LegendFormat("{{nodename}} {{disk}} {{device_model}}"),
 				),
 		).
 		WithPanel(
@@ -214,10 +268,12 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Orientation(common.VizOrientationHorizontal).
+				ReduceOptions(reduceLast).
+				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(precursorThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sort_desc(smartmon_reported_uncorrect_raw_value{` + instFilter + `} ` + joinNodename + `)`).
-					LegendFormat("{{nodename}} {{disk}}"),
+					Expr(`sort_desc(smartmon_reported_uncorrect_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
+					LegendFormat("{{nodename}} {{disk}} {{device_model}}"),
 				),
 		).
 		WithPanel(
@@ -226,10 +282,12 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Orientation(common.VizOrientationHorizontal).
+				ReduceOptions(reduceLast).
+				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(crcThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sort_desc(smartmon_udma_crc_error_count_raw_value{` + instFilter + `} ` + joinNodename + `)`).
-					LegendFormat("{{nodename}} {{disk}}"),
+					Expr(`sort_desc(smartmon_udma_crc_error_count_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel + `)`).Instant().
+					LegendFormat("{{nodename}} {{disk}} {{device_model}}"),
 				),
 		).
 		// Trend view so a precursor stepping off zero is visible historically.
@@ -249,15 +307,26 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					LegendFormat("{{nodename}} {{disk}} pending"),
 				),
 		).
-		// Wear leveling normalized value: 100 = new, decreasing toward 0 with use.
+		// Vendor-normalized SSD wear indicators. Each vendor exposes a different
+		// attribute, but all are normalized values where 100 = new and the number
+		// decreases toward 0 with use, so they can be unioned with `or`. Only SSDs
+		// that publish one of these appear here; HDDs have no wear concept and NVMe
+		// is covered by nvme_percentage_used_ratio in the NVMe row below. Referencing
+		// an attribute that no disk reports is harmless (it just yields no series).
 		WithRow(dashboard.NewRowBuilder("Wear & Lifetime")).
 		WithPanel(
 			bargauge.NewPanelBuilder().
-				Title("SSD Life Remaining (normalized)").
+				Title("SSD Life Remaining (vendor wear attr)").
+				Description("Normalized SSD wear (100 = new). Sourced from whichever vendor " +
+					"attribute a disk exposes (wear_leveling_count, media_wearout_indicator, " +
+					"ssd_life_left, percent_lifetime_remain). SSDs that expose none, plus all " +
+					"HDDs, do not appear; NVMe endurance is shown in the NVMe row.").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("percent").
 				Orientation(common.VizOrientationHorizontal).
+				ReduceOptions(reduceLast).
+				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
@@ -266,8 +335,13 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 						{Value: float64Ptr(20), Color: "green"},
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`smartmon_wear_leveling_count_value{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} {{disk}}"),
+					Expr(`(` +
+						`smartmon_wear_leveling_count_value{` + instFilter + `}` +
+						` or smartmon_media_wearout_indicator_value{` + instFilter + `}` +
+						` or smartmon_ssd_life_left_value{` + instFilter + `}` +
+						` or smartmon_percent_lifetime_remain_value{` + instFilter + `}` +
+						`) ` + joinNodename + ` ` + joinModel).Instant().
+					LegendFormat("{{nodename}} {{disk}} {{device_model}}"),
 				).Decimals(0),
 		).
 		WithPanel(
@@ -279,8 +353,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeValue).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`smartmon_power_on_hours_raw_value{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} {{disk}}"),
+					Expr(`smartmon_power_on_hours_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel).
+					LegendFormat("{{nodename}} {{disk}} {{device_model}}"),
 				).Decimals(0),
 		).
 		// NVMe drives don't expose the SATA SMART attributes; instead the nvme-cli
@@ -295,6 +369,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(8).Height(8).
 				Unit("percent").
 				Orientation(common.VizOrientationHorizontal).
+				ReduceOptions(reduceLast).
+				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
@@ -303,8 +379,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 						{Value: float64Ptr(100), Color: "red"},
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(nvme_percentage_used_ratio{` + instFilter + `} * 100) ` + joinNodename).
-					LegendFormat("{{nodename}} {{device}}"),
+					Expr(`(nvme_percentage_used_ratio{` + instFilter + `} * 100) ` + joinNodename + ` ` + joinNvmeModel).Instant().
+					LegendFormat("{{nodename}} {{device}} {{model}}"),
 				).Decimals(1),
 		).
 		WithPanel(
@@ -314,6 +390,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(8).Height(8).
 				Unit("percent").
 				Orientation(common.VizOrientationHorizontal).
+				ReduceOptions(reduceLast).
+				NamePlacement(common.BarGaugeNamePlacementTop).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
@@ -322,8 +400,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 						{Value: float64Ptr(20), Color: "green"},
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(nvme_available_spare_ratio{` + instFilter + `} * 100) ` + joinNodename).
-					LegendFormat("{{nodename}} {{device}}"),
+					Expr(`(nvme_available_spare_ratio{` + instFilter + `} * 100) ` + joinNodename + ` ` + joinNvmeModel).Instant().
+					LegendFormat("{{nodename}} {{device}} {{model}}"),
 				).Decimals(0),
 		).
 		// critical_warning is a bitfield; any nonzero bit indicates a fault.
@@ -349,8 +427,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					}},
 				}).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`nvme_critical_warning{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} {{device}}"),
+					Expr(`nvme_critical_warning{` + instFilter + `} ` + joinNodename + ` ` + joinNvmeModel).
+					LegendFormat("{{nodename}} {{device}} {{model}}"),
 				),
 		).
 		WithPanel(
@@ -362,8 +440,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeValue).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(nvme_data_units_written_total{` + instFilter + `} * 512000) ` + joinNodename).
-					LegendFormat("{{nodename}} {{device}}"),
+					Expr(`(nvme_data_units_written_total{` + instFilter + `} * 512000) ` + joinNodename + ` ` + joinNvmeModel).
+					LegendFormat("{{nodename}} {{device}} {{model}}"),
 				).Decimals(1),
 		).
 		WithPanel(
@@ -375,8 +453,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeValue).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(nvme_data_units_read_total{` + instFilter + `} * 512000) ` + joinNodename).
-					LegendFormat("{{nodename}} {{device}}"),
+					Expr(`(nvme_data_units_read_total{` + instFilter + `} * 512000) ` + joinNodename + ` ` + joinNvmeModel).
+					LegendFormat("{{nodename}} {{device}} {{model}}"),
 				).Decimals(1),
 		).
 		WithPanel(
@@ -388,8 +466,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeValue).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`nvme_power_on_hours_total{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} {{device}}"),
+					Expr(`nvme_power_on_hours_total{` + instFilter + `} ` + joinNodename + ` ` + joinNvmeModel).
+					LegendFormat("{{nodename}} {{device}} {{model}}"),
 				).Decimals(0),
 		).
 		WithPanel(
@@ -445,12 +523,12 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`smartmon_temperature_celsius_raw_value{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} {{disk}} (SATA)"),
+					Expr(`smartmon_temperature_celsius_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel).
+					LegendFormat("{{nodename}} {{disk}} {{device_model}} (SATA)"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`nvme_temperature_celsius{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} {{device}} (NVMe)"),
+					Expr(`nvme_temperature_celsius{` + instFilter + `} ` + joinNodename + ` ` + joinNvmeModel).
+					LegendFormat("{{nodename}} {{device}} {{model}} (NVMe)"),
 				),
 		).
 		Build()
