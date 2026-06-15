@@ -1,10 +1,6 @@
 kube-prometheus-stack:
   prometheus:
     prometheusSpec:
-      dnsConfig:
-        options:
-          - name: ndots
-            value: "2"
       serviceMonitorSelectorNilUsesHelmValues: false
       serviceMonitorSelector:
         matchLabels:
@@ -42,13 +38,6 @@ kube-prometheus-stack:
           replacement: prd
     service:
       type: ClusterIP
-
-  alertmanager:
-    alertmanagerSpec:
-      dnsConfig:
-        options:
-          - name: ndots
-            value: "2"
 
   grafana:
     enabled: false

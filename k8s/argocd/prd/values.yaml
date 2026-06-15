@@ -1,32 +1,4 @@
-controller:
-  dnsConfig:
-    options:
-      - name: ndots
-        value: "2"
-
-repoServer:
-  dnsConfig:
-    options:
-      - name: ndots
-        value: "2"
-
-applicationSet:
-  dnsConfig:
-    options:
-      - name: ndots
-        value: "2"
-
-redis:
-  dnsConfig:
-    options:
-      - name: ndots
-        value: "2"
-
 server:
-  dnsConfig:
-    options:
-      - name: ndots
-        value: "2"
   ingress:
     hostname: argocd-ui.prd.butaco.net
   service:
