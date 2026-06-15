@@ -77,7 +77,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Running VMs").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(4).
 				Unit("short").
 				Min(0).
 				Orientation(common.VizOrientationAuto).
@@ -91,7 +91,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Running LXCs").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(4).
 				Unit("short").
 				Min(0).
 				Orientation(common.VizOrientationAuto).
@@ -105,7 +105,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Node CPU Usage").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(4).
 				Unit("percentunit").
 				Min(0).
 				Max(1).
@@ -123,7 +123,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Node Memory Usage").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(4).
 				Unit("percent").
 				Min(0).
 				Max(100).
@@ -141,7 +141,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Storage Usage").
 				Datasource(ds).
-				Span(12).Height(4).
+				Span(24).Height(4).
 				Unit("percent").
 				Min(0).
 				Max(100).
@@ -161,7 +161,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				// No mount-point label is exposed; one value is emitted per node.
 				Title("Node OS Disk Usage").
 				Datasource(ds).
-				Span(12).Height(4).
+				Span(24).Height(4).
 				Unit("percent").
 				Min(0).
 				Max(100).
@@ -371,7 +371,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Guest Uptime").
 				Datasource(ds).
-				Span(24).Height(6).
+				Span(24).Height(8).
 				GraphMode(common.BigValueGraphModeNone).
 				Unit("s").
 				Min(0).

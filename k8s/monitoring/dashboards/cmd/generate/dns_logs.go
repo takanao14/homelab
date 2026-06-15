@@ -53,7 +53,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Unit("reqps").
 				Min(0).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum(rate(` + queryJSON + `[$__rate_interval]))`).
+					Expr(`sum(rate(` + queryJSON + `[5m]))`).
 					LegendFormat("queries/s"),
 				),
 		).
@@ -65,7 +65,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Unit("reqps").
 				Min(0).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum(rate(` + responseJSON + ` | dns_rcode="NXDOMAIN" [$__rate_interval]))`).
+					Expr(`sum(rate(` + responseJSON + ` | dns_rcode="NXDOMAIN" [5m]))`).
 					LegendFormat("nxdomain/s"),
 				),
 		).
@@ -78,7 +78,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Min(0).
 				WithTarget(loki.NewDataqueryBuilder().
 					// dnstap.policy-action reflects dnsdist policy decisions (NXDOMAIN, DROP, etc.)
-					Expr(`sum(rate(` + queryJSON + ` | dnstap_policy_action!="" | dnstap_policy_action!="PASSTHRU" [$__rate_interval])) or vector(0)`).
+					Expr(`sum(rate(` + queryJSON + ` | dnstap_policy_action!="" | dnstap_policy_action!="PASSTHRU" [5m])) or vector(0)`).
 					LegendFormat("blocked/s"),
 				),
 		).
@@ -108,7 +108,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (dns_qtype) (rate(` + queryJSON + `[$__rate_interval]))`).
+					Expr(`sum by (dns_qtype) (rate(` + queryJSON + `[5m]))`).
 					LegendFormat("{{dns_qtype}}"),
 				),
 		).
@@ -124,7 +124,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (dns_rcode) (rate(`+responseJSON+`[$__rate_interval]))`).
+					Expr(`sum by (dns_rcode) (rate(`+responseJSON+`[5m]))`).
 					LegendFormat("{{dns_rcode}}"),
 				).
 				// Semantic coloring consistent with DNS Overview dashboard.
@@ -186,7 +186,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (host) (rate(` + queryJSON + `[$__rate_interval]))`).
+					Expr(`sum by (host) (rate(` + queryJSON + `[5m]))`).
 					LegendFormat("{{host}}"),
 				),
 		).
@@ -199,7 +199,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (host) (rate(` + responseJSON + ` | dns_rcode="NXDOMAIN" [$__rate_interval]))`).
+					Expr(`sum by (host) (rate(` + responseJSON + ` | dns_rcode="NXDOMAIN" [5m]))`).
 					LegendFormat("{{host}}"),
 				),
 		).
@@ -213,7 +213,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (host) (rate(` + responseJSON + ` | dns_rcode="SERVFAIL" [$__rate_interval])) or sum by (host) (rate(` + responseJSON + `[$__rate_interval])) * 0`).
+					Expr(`sum by (host) (rate(` + responseJSON + ` | dns_rcode="SERVFAIL" [5m])) or sum by (host) (rate(` + responseJSON + `[5m])) * 0`).
 					LegendFormat("{{host}}"),
 				),
 		).

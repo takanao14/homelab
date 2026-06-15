@@ -34,7 +34,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate({host=~\"$host\", unit=~\"$unit\"}[$__rate_interval])) or vector(0)",
+          "expr": "sum(rate({host=~\"$host\", unit=~\"$unit\"}[5m])) or vector(0)",
           "legendFormat": "logs/s",
           "instant": true
         }
@@ -202,7 +202,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({host=~\"$host\", unit=~\"$unit\"}[$__rate_interval]))",
+          "expr": "sum by (host) (rate({host=~\"$host\", unit=~\"$unit\"}[5m]))",
           "legendFormat": "{{host}}"
         }
       ],
@@ -250,7 +250,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"}[$__rate_interval]))",
+          "expr": "sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"}[5m]))",
           "legendFormat": "{{unit}}"
         }
       ],
@@ -311,7 +311,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"} | json | __error__=\"\" | PRIORITY =~ \"[0-3]\" [$__rate_interval])) or sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"}[$__rate_interval])) * 0",
+          "expr": "sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"} | json | __error__=\"\" | PRIORITY =~ \"[0-3]\" [5m])) or sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"}[5m])) * 0",
           "legendFormat": "{{unit}}"
         }
       ],
@@ -356,7 +356,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"} | json | __error__=\"\" | PRIORITY = \"4\" [$__rate_interval])) or sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"}[$__rate_interval])) * 0",
+          "expr": "sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"} | json | __error__=\"\" | PRIORITY = \"4\" [5m])) or sum by (unit) (rate({host=~\"$host\", unit=~\"$unit\"}[5m])) * 0",
           "legendFormat": "{{unit}}"
         }
       ],

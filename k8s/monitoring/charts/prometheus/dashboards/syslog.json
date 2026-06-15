@@ -35,7 +35,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate({host=~\"$host\", severity=~\"$severity\"}[$__rate_interval])) or vector(0)",
+          "expr": "sum(rate({host=~\"$host\", severity=~\"$severity\"}[5m])) or vector(0)",
           "legendFormat": "logs/s",
           "instant": true
         }
@@ -259,7 +259,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({host=~\"$host\", severity=~\"$severity\"}[$__rate_interval]))",
+          "expr": "sum by (host) (rate({host=~\"$host\", severity=~\"$severity\"}[5m]))",
           "legendFormat": "{{host}}"
         }
       ],
@@ -307,7 +307,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (severity) (rate({host=~\"$host\", severity=~\".+\"}[$__rate_interval]))",
+          "expr": "sum by (severity) (rate({host=~\"$host\", severity=~\".+\"}[5m]))",
           "legendFormat": "{{severity}}"
         }
       ],
@@ -429,7 +429,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (appname) (rate({host=~\"$host\", severity=~\"$severity\"} | json | __error__=\"\" | appname=~\"$appname\"[$__rate_interval]))",
+          "expr": "sum by (appname) (rate({host=~\"$host\", severity=~\"$severity\"} | json | __error__=\"\" | appname=~\"$appname\"[5m]))",
           "legendFormat": "{{appname}}"
         }
       ],
@@ -477,7 +477,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({host=~\"$host\", severity=~\"emerg|alert|crit|err|error|[0-3]\"}[$__rate_interval])) or sum by (host) (rate({host=~\"$host\", severity=~\"$severity\"}[$__rate_interval])) * 0",
+          "expr": "sum by (host) (rate({host=~\"$host\", severity=~\"emerg|alert|crit|err|error|[0-3]\"}[5m])) or sum by (host) (rate({host=~\"$host\", severity=~\"$severity\"}[5m])) * 0",
           "legendFormat": "{{host}}"
         }
       ],
@@ -522,7 +522,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({host=~\"$host\", severity=~\"warning|warn|4\"}[$__rate_interval])) or sum by (host) (rate({host=~\"$host\", severity=~\"$severity\"}[$__rate_interval])) * 0",
+          "expr": "sum by (host) (rate({host=~\"$host\", severity=~\"warning|warn|4\"}[5m])) or sum by (host) (rate({host=~\"$host\", severity=~\"$severity\"}[5m])) * 0",
           "legendFormat": "{{host}}"
         }
       ],

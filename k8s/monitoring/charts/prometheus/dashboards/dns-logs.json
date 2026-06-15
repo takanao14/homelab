@@ -34,7 +34,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__rate_interval]))",
+          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[5m]))",
           "legendFormat": "queries/s"
         }
       ],
@@ -76,7 +76,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" [$__rate_interval]))",
+          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" [5m]))",
           "legendFormat": "nxdomain/s"
         }
       ],
@@ -118,7 +118,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\" | dnstap_policy_action!=\"\" | dnstap_policy_action!=\"PASSTHRU\" [$__rate_interval])) or vector(0)",
+          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\" | dnstap_policy_action!=\"\" | dnstap_policy_action!=\"PASSTHRU\" [5m])) or vector(0)",
           "legendFormat": "blocked/s"
         }
       ],
@@ -215,7 +215,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (dns_qtype) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__rate_interval]))",
+          "expr": "sum by (dns_qtype) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[5m]))",
           "legendFormat": "{{dns_qtype}}"
         }
       ],
@@ -262,7 +262,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (dns_rcode) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__rate_interval]))",
+          "expr": "sum by (dns_rcode) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[5m]))",
           "legendFormat": "{{dns_rcode}}"
         }
       ],
@@ -500,7 +500,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__rate_interval]))",
+          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[5m]))",
           "legendFormat": "{{host}}"
         }
       ],
@@ -541,7 +541,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" [$__rate_interval]))",
+          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" [5m]))",
           "legendFormat": "{{host}}"
         }
       ],
@@ -582,7 +582,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"SERVFAIL\" [$__rate_interval])) or sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__rate_interval])) * 0",
+          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"SERVFAIL\" [5m])) or sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[5m])) * 0",
           "legendFormat": "{{host}}"
         }
       ],

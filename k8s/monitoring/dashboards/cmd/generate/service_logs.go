@@ -74,7 +74,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 				Min(0).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum(rate(` + base + `[$__rate_interval])) or vector(0)`).
+					Expr(`sum(rate(` + base + `[5m])) or vector(0)`).
 					Instant(true).
 					LegendFormat("logs/s"),
 				),
@@ -127,7 +127,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (host) (rate(` + base + `[$__rate_interval]))`).
+					Expr(`sum by (host) (rate(` + base + `[5m]))`).
 					LegendFormat("{{host}}"),
 				),
 		).
@@ -144,7 +144,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (unit) (rate(` + base + `[$__rate_interval]))`).
+					Expr(`sum by (unit) (rate(` + base + `[5m]))`).
 					LegendFormat("{{unit}}"),
 				),
 		).
@@ -163,7 +163,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 				Legend(legend).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (unit) (rate(` + baseJSON + ` | PRIORITY =~ "[0-3]" [$__rate_interval])) or sum by (unit) (rate(` + base + `[$__rate_interval])) * 0`).
+					Expr(`sum by (unit) (rate(` + baseJSON + ` | PRIORITY =~ "[0-3]" [5m])) or sum by (unit) (rate(` + base + `[5m])) * 0`).
 					LegendFormat("{{unit}}"),
 				),
 		).
@@ -179,7 +179,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 				Legend(legend).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (unit) (rate(` + baseJSON + ` | PRIORITY = "4" [$__rate_interval])) or sum by (unit) (rate(` + base + `[$__rate_interval])) * 0`).
+					Expr(`sum by (unit) (rate(` + baseJSON + ` | PRIORITY = "4" [5m])) or sum by (unit) (rate(` + base + `[5m])) * 0`).
 					LegendFormat("{{unit}}"),
 				),
 		).

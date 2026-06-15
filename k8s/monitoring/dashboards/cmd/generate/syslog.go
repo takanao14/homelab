@@ -89,7 +89,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Unit("cps").
 				Min(0).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum(rate(` + base + `[$__rate_interval])) or vector(0)`).
+					Expr(`sum(rate(` + base + `[5m])) or vector(0)`).
 					Instant(true).
 					LegendFormat("logs/s"),
 				),
@@ -152,7 +152,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (host) (rate(` + base + `[$__rate_interval]))`).
+					Expr(`sum by (host) (rate(` + base + `[5m]))`).
 					LegendFormat("{{host}}"),
 				),
 		).
@@ -170,7 +170,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
 					// Always break down across all severities, independent of the $severity filter.
-					Expr(`sum by (severity) (rate({host=~"$host", severity=~".+"}[$__rate_interval]))`).
+					Expr(`sum by (severity) (rate({host=~"$host", severity=~".+"}[5m]))`).
 					LegendFormat("{{severity}}"),
 				).
 				// Semantic coloring; covers both numeric and text severity values.
@@ -203,7 +203,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (appname) (rate(` + baseApp + `[$__rate_interval]))`).
+					Expr(`sum by (appname) (rate(` + baseApp + `[5m]))`).
 					LegendFormat("{{appname}}"),
 				),
 		).
@@ -220,7 +220,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				WithTarget(loki.NewDataqueryBuilder().
 					// "* 0" tail keeps every host series present even at zero error rate.
-					Expr(`sum by (host) (rate(` + errSel + `[$__rate_interval])) or sum by (host) (rate(` + base + `[$__rate_interval])) * 0`).
+					Expr(`sum by (host) (rate(` + errSel + `[5m])) or sum by (host) (rate(` + base + `[5m])) * 0`).
 					LegendFormat("{{host}}"),
 				),
 		).
@@ -236,7 +236,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (host) (rate(` + warnSel + `[$__rate_interval])) or sum by (host) (rate(` + base + `[$__rate_interval])) * 0`).
+					Expr(`sum by (host) (rate(` + warnSel + `[5m])) or sum by (host) (rate(` + base + `[5m])) * 0`).
 					LegendFormat("{{host}}"),
 				),
 		).

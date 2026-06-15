@@ -306,7 +306,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Orientation(common.VizOrientationAuto).
 				ColorMode(common.BigValueColorModeBackground).
 				Text(common.NewVizTextDisplayOptionsBuilder().
-					TitleSize(11)).
+					TitleSize(16).ValueSize(32)).
 				Thresholds(issueThresholds()).
 				Mappings([]dashboard.ValueMapping{
 					{ValueMap: &dashboard.ValueMap{
