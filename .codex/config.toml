@@ -1,0 +1,3 @@
+[mcp_servers.grafana]
+command = "/bin/sh"
+args = ["-c", 'exec "$HOME/homelab/scripts/grafana-mcp.sh"']
