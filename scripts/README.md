@@ -9,6 +9,8 @@ sync, and GPU workload switching.
 scripts/
 ├── create-vm.sh / remove-vm.sh / provision.sh  # VM lifecycle (run directly)
 ├── gpu-switch.sh                             # k8s GPU workload switch
+├── grafana-mcp.sh                            # Grafana MCP server launcher (stdio)
+├── grafana-mcp-token.sh                      # issue Grafana MCP service-account token
 ├── lib/openbao-auth.sh                       # shared OpenBao auth helper
 ├── install/                                  # CLI toolchain installers (shared with packer/)
 │   ├── tools.sh / terminal.sh / fonts.sh
@@ -203,6 +205,58 @@ deployments. Only runs against the `dev-homelab` kube context.
 ```bash
 ./gpu-switch.sh <ollama|comfyui|lemonade-server|off>
 ```
+
+## Grafana MCP
+
+Scripts backing the Grafana MCP server registered in the repo-root `.mcp.json`.
+The server lets Claude Code query Grafana (PromQL/LogQL, dashboards, alerts)
+against `https://grafana.prd.butaco.net`.
+
+### `grafana-mcp.sh`
+
+Launcher invoked by Claude Code over stdio (via `.mcp.json`). It selects a
+container runtime per OS — `docker` on macOS (OrbStack), `podman` on Linux —
+and runs the `mcp/grafana` image with `-i` (no TTY). Credentials are forwarded
+from the environment by name only (`-e GRAFANA_URL`, `-e
+GRAFANA_SERVICE_ACCOUNT_TOKEN`), which the repo-root `.envrc` injects from the
+SOPS-encrypted `.env/secrets.enc.env`. You normally don't run this by hand;
+Claude Code starts it.
+
+| Env var | Default | Notes |
+|---------|---------|-------|
+| `GRAFANA_MCP_RUNTIME` | `docker` (macOS) / `podman` (Linux) | Force a runtime |
+| `GRAFANA_MCP_IMAGE`   | `mcp/grafana`                       | Override the image |
+
+### `grafana-mcp-token.sh`
+
+Idempotently creates the `mcp-grafana` service account (Editor role) and issues
+a token, printing it to stdout as a `export GRAFANA_SERVICE_ACCOUNT_TOKEN="..."`
+line (logs go to stderr). Admin auth is taken from `GRAFANA_ADMIN_USER` /
+`GRAFANA_ADMIN_PASSWORD`, or read from the in-cluster `grafana-admin` secret via
+`kubectl --context "${GRAFANA_KUBE_CONTEXT:-prd-homelab}"` so it never depends on
+the currently selected context. Requires `curl` and `jq` (and `kubectl` for the
+secret path).
+
+```bash
+# Print the token line
+./grafana-mcp-token.sh
+
+# Store it encrypted for the MCP server to consume
+./grafana-mcp-token.sh >> ../.env/secrets.enc.env
+sops --encrypt --in-place ../.env/secrets.enc.env
+direnv allow
+```
+
+| Env var | Default | Notes |
+|---------|---------|-------|
+| `GRAFANA_URL`           | `https://grafana.prd.butaco.net` | Target Grafana |
+| `GRAFANA_KUBE_CONTEXT`  | `prd-homelab`                    | Context for the admin secret |
+| `GRAFANA_MCP_SA_NAME`   | `mcp-grafana`                    | Service account name |
+| `GRAFANA_MCP_SA_ROLE`   | `Editor`                         | Service account role |
+| `GRAFANA_MCP_TOKEN_NAME`| `mcp-grafana-<timestamp>`        | Token name |
+
+Re-running issues a **new** token while reusing the existing service account;
+revoke unused tokens in the Grafana UI or via the API.
 
 ## `install/`
 
