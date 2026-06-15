@@ -49,18 +49,30 @@ kube-prometheus-stack:
   kubelet:
     serviceMonitor:
       # Target relabelings cover the up series for all three kubelet scrape
-      # endpoints (/metrics, /metrics/cadvisor, /metrics/probes). Without this
-      # the KubeletDown rule false-fires, because it joins kube_node_info
-      # (labeled cluster=prd) against up{job="kubelet"} (otherwise unlabeled).
+      # endpoints (/metrics, /metrics/cadvisor, /metrics/probes). Without the
+      # cluster label the KubeletDown rule false-fires, because it joins
+      # kube_node_info (labeled cluster=prd) against up{job="kubelet"}.
+      # NOTE: these keys override the chart defaults, so the default
+      # __metrics_path__ -> metrics_path relabeling must be repeated here;
+      # the KubeletDown rule selects up{...,metrics_path="/metrics"}.
       relabelings:
+        - action: replace
+          sourceLabels: [__metrics_path__]
+          targetLabel: metrics_path
         - action: replace
           targetLabel: cluster
           replacement: prd
       cAdvisorRelabelings:
         - action: replace
+          sourceLabels: [__metrics_path__]
+          targetLabel: metrics_path
+        - action: replace
           targetLabel: cluster
           replacement: prd
       probesRelabelings:
+        - action: replace
+          sourceLabels: [__metrics_path__]
+          targetLabel: metrics_path
         - action: replace
           targetLabel: cluster
           replacement: prd
