@@ -40,6 +40,11 @@ ansible-playbook playbooks/gpuvm.yaml --tags rocm --limit gpuvm01 \
 
 Update `rocm_amdgpu_version` and `rocm_udev_rules` together.
 
+Renovate tracks `rocm_version`, `rocm_amdgpu_version`, and
+`rocm_device_metrics_exporter_version` from the AMD repository indexes.
+AMD GPU driver updates are limited to the `30.30.x` release line and are not
+automerged. Update `rocm_udev_rules` manually in the corresponding driver PR.
+
 ## Dependencies
 
 None.

@@ -19,8 +19,41 @@
     {
       "matchPackageNames": ["ghcr.io/gethomepage/homepage"],
       "groupName": "homepage updates"
+    },
+    {
+      "matchDatasources": [
+        "custom.rocm",
+        "custom.amd-device-metrics-exporter"
+      ],
+      "extractVersion": "^(?<version>\\d+\\.\\d+(?:\\.\\d+)?)/$",
+      "versioning": "semver-coerced"
+    },
+    {
+      "matchDatasources": ["custom.amdgpu"],
+      "allowedVersions": "/^30\\.30\\./",
+      "extractVersion": "^(?<version>\\d+\\.\\d+(?:\\.\\d+)?)/$",
+      "versioning": "semver-coerced",
+      "automerge": false,
+      "prBodyNotes": [
+        "Update `rocm_udev_rules` to the matching package filename before merging.",
+        "Validate the ROCm userspace update before explicitly upgrading `amdgpu-dkms`."
+      ]
     }
   ],
+  "customDatasources": {
+    "rocm": {
+      "defaultRegistryUrlTemplate": "https://repo.radeon.com/rocm/apt/",
+      "format": "html"
+    },
+    "amdgpu": {
+      "defaultRegistryUrlTemplate": "https://repo.radeon.com/amdgpu/",
+      "format": "html"
+    },
+    "amd-device-metrics-exporter": {
+      "defaultRegistryUrlTemplate": "https://repo.radeon.com/device-metrics-exporter/apt/",
+      "format": "html"
+    }
+  },
   "helm-values": {
     "fileMatch": ["(^|/)values\\.yaml$"]
   },
@@ -33,8 +66,9 @@
   "ansible-galaxy": {
     "fileMatch": ["(^|/)ansible/requirements\\.ya?ml$"]
   },
-  "regexManagers": [
+  "customManagers": [
     {
+      "customType": "regex",
       "fileMatch": ["(^|/)ansible/.+\\.yaml$", "(^|/)ansible/.+\\.yml$"],
       "matchStrings": [
         "image:\\s*\"?(?<depName>[^\"]+):(?<currentValue>[^\"]+)\"?"
@@ -42,6 +76,7 @@
       "datasourceTemplate": "docker"
     },
     {
+      "customType": "regex",
       "fileMatch": ["(^|/)k0s/env/.+\\.sh$"],
       "matchStrings": [
         "K0S_VERSION=(?<currentValue>[^\\s]+)"
@@ -51,12 +86,14 @@
       "versioningTemplate": "loose"
     },
     {
+      "customType": "regex",
       "fileMatch": ["(^|/)ansible/.+\\.ya?ml$"],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?\\n\\w+: \"(?<currentValue>[^\"]+)\""
       ]
     },
     {
+      "customType": "regex",
       "fileMatch": ["(^|/)ansible/roles/forgejo_runner/defaults/main\\.ya?ml$"],
       "matchStrings": [
         "docker://(?<depName>catthehacker/ubuntu):(?<currentValue>[^\"]+)\""
@@ -64,6 +101,7 @@
       "datasourceTemplate": "docker"
     },
     {
+      "customType": "regex",
       "fileMatch": ["(^|/)k8s/.+\\.yaml$"],
       "matchStrings": [
         "repoURL: (?<registryUrl>https://[^\\n]+)\\n\\s+chart: (?<depName>[^\\n]+)\\n\\s+targetRevision: (?<currentValue>[^\\n]+)"
