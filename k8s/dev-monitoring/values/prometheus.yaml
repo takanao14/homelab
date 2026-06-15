@@ -42,6 +42,15 @@ kube-prometheus-stack:
         requests:
           memory: 256Mi
 
+  kubelet:
+    serviceMonitor:
+      # cAdvisor (/metrics/cadvisor) exposes samples with embedded timestamps.
+      # When honored, those timestamps regress between scrapes and the agent's
+      # WAL rejects them as out-of-order (hundreds/scrape dropped -> data loss,
+      # firing PrometheusOutOfOrderTimestamps). Disabling honorTimestamps makes
+      # Prometheus use the monotonic scrape time instead, which resolves it.
+      honorTimestamps: false
+
   grafana:
     enabled: false
 
