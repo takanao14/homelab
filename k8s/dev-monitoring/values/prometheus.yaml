@@ -7,6 +7,18 @@ kube-prometheus-stack:
         cluster: dev
       remoteWrite:
         - url: https://prometheus.prd.butaco.net/api/v1/write
+          # This Prometheus runs in agent mode: it never evaluates rules or
+          # sends notifications, so its prometheus_notifications_* self-metrics
+          # are always 0/meaningless. Dropping them prevents prd's stock
+          # "prometheus" alert group (PrometheusNotConnectedToAlertmanagers,
+          # PrometheusErrorSendingAlertsTo*, PrometheusNotificationQueueRunningFull)
+          # from false-firing against this agent. Remote-write health metrics
+          # (prometheus_remote_storage_*) are kept so the dev->prd pipeline
+          # stays monitored.
+          writeRelabelConfigs:
+            - sourceLabels: [__name__]
+              regex: prometheus_notifications_.*
+              action: drop
       serviceMonitorSelectorNilUsesHelmValues: false
       serviceMonitorSelector:
         matchLabels:
