@@ -47,9 +47,15 @@ kube-prometheus-stack:
       # cAdvisor (/metrics/cadvisor) exposes samples with embedded timestamps.
       # When honored, those timestamps regress between scrapes and the agent's
       # WAL rejects them as out-of-order (hundreds/scrape dropped -> data loss,
-      # firing PrometheusOutOfOrderTimestamps). Disabling honorTimestamps makes
-      # Prometheus use the monotonic scrape time instead, which resolves it.
+      # firing PrometheusOutOfOrderTimestamps). Using the monotonic scrape time
+      # instead resolves it.
+      # NOTE: both flags are required. The chart's kubelet ServiceMonitor forces
+      # honorTimestamps: true on the cAdvisor endpoint whenever
+      # trackTimestampsStaleness is true (its default), so honorTimestamps: false
+      # alone is silently overridden -- trackTimestampsStaleness must also be
+      # false for honorTimestamps to take effect.
       honorTimestamps: false
+      trackTimestampsStaleness: false
 
   grafana:
     enabled: false
