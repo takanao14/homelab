@@ -20,18 +20,10 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 		lokiJob = `job="$loki_job"`
 	)
 
-	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
-	legend := common.NewVizLegendOptionsBuilder().
-		ShowLegend(true).
-		DisplayMode(common.LegendDisplayModeList).
-		Placement(common.LegendPlacementBottom)
+	tooltipAll := defaultTooltip()
+	legend := defaultLegend()
 
-	issueThresholds := dashboard.NewThresholdsConfigBuilder().
-		Mode(dashboard.ThresholdsModeAbsolute).
-		Steps([]dashboard.Threshold{
-			{Value: nil, Color: "green"},
-			{Value: float64Ptr(1), Color: "red"},
-		})
+	issueThresholds := issueThresholds()
 
 	d, err := dashboard.NewDashboardBuilder("Monitoring Overview").
 		Uid("monitoring-overview").
@@ -41,9 +33,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
-			dashboard.NewDatasourceVariableBuilder("datasource").
-				Label("Datasource").
-				Type("prometheus"),
+			promDatasourceVariable(),
 		).
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("prometheus_job").

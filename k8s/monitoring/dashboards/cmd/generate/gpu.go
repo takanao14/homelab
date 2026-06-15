@@ -15,11 +15,8 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 
 	const gpuFilter = `job="scrapeConfig/monitoring/amd-gpu-external"`
 
-	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
-	legend := common.NewVizLegendOptionsBuilder().
-		ShowLegend(true).
-		DisplayMode(common.LegendDisplayModeList).
-		Placement(common.LegendPlacementBottom)
+	tooltipAll := defaultTooltip()
+	legend := defaultLegend()
 
 	gfxThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -29,13 +26,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 			{Value: float64Ptr(95), Color: "red"},
 		})
 
-	vramThresholds := dashboard.NewThresholdsConfigBuilder().
-		Mode(dashboard.ThresholdsModeAbsolute).
-		Steps([]dashboard.Threshold{
-			{Value: nil, Color: "green"},
-			{Value: float64Ptr(80), Color: "yellow"},
-			{Value: float64Ptr(90), Color: "red"},
-		})
+	vramThresholds := capacityThresholds()
 
 	powerThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -63,12 +54,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 			{Value: float64Ptr(105), Color: "red"},
 		})
 
-	issueThresholds := dashboard.NewThresholdsConfigBuilder().
-		Mode(dashboard.ThresholdsModeAbsolute).
-		Steps([]dashboard.Threshold{
-			{Value: nil, Color: "green"},
-			{Value: float64Ptr(1), Color: "red"},
-		})
+	issueThresholds := issueThresholds()
 
 	d, err := dashboard.NewDashboardBuilder("GPU Overview").
 		Uid("gpu-overview").
@@ -78,9 +64,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
-			dashboard.NewDatasourceVariableBuilder("datasource").
-				Label("Datasource").
-				Type("prometheus"),
+			promDatasourceVariable(),
 		).
 		WithRow(dashboard.NewRowBuilder("Summary")).
 		WithPanel(

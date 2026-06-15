@@ -46,21 +46,12 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		return expr
 	}
 
-	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
-	legend := common.NewVizLegendOptionsBuilder().
-		ShowLegend(true).
-		DisplayMode(common.LegendDisplayModeList).
-		Placement(common.LegendPlacementBottom)
+	tooltipAll := defaultTooltip()
+	legend := defaultLegend()
 
 	// zeroLine draws a solid reference line at y=0 for bidirectional rate panels.
-	zeroLineThresholds := dashboard.NewThresholdsConfigBuilder().
-		Mode(dashboard.ThresholdsModeAbsolute).
-		Steps([]dashboard.Threshold{
-			{Value: nil, Color: "transparent"},
-			{Value: float64Ptr(0), Color: "white"},
-		})
-	zeroLineStyle := common.NewGraphThresholdsStyleConfigBuilder().
-		Mode(common.GraphThresholdsStyleModeLine)
+	zeroLineThresholds := zeroLineThresholds()
+	zeroLineStyle := zeroLineStyle()
 
 	// Latency thresholds in microseconds (50ms = warning, 150ms = critical).
 	latencyThresholds := dashboard.NewThresholdsConfigBuilder().
@@ -79,12 +70,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 			{Color: "red", Value: float64Ptr(0.15)},
 		})
 
-	issueThresholds := dashboard.NewThresholdsConfigBuilder().
-		Mode(dashboard.ThresholdsModeAbsolute).
-		Steps([]dashboard.Threshold{
-			{Value: nil, Color: "green"},
-			{Value: float64Ptr(1), Color: "red"},
-		})
+	issueThresholds := issueThresholds()
 
 	servfailThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -101,9 +87,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
-			dashboard.NewDatasourceVariableBuilder("datasource").
-				Label("Datasource").
-				Type("prometheus"),
+			promDatasourceVariable(),
 		).
 		WithRow(dashboard.NewRowBuilder("dnsdist")).
 		WithPanel(

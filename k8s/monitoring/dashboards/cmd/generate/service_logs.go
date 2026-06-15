@@ -14,23 +14,15 @@ import (
 // PRIORITY follows syslog convention: 0=emerg … 3=err, 4=warning, 5=notice, 6=info, 7=debug.
 func buildServiceLogs() (*dashboard.Dashboard, error) {
 	ds := lokiDatasource()
-	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
-	legend := common.NewVizLegendOptionsBuilder().
-		ShowLegend(true).
-		DisplayMode(common.LegendDisplayModeList).
-		Placement(common.LegendPlacementBottom)
+	tooltipAll := defaultTooltip()
+	legend := defaultLegend()
 
 	const (
 		base     = `{host=~"$host", unit=~"$unit"}`
 		baseJSON = `{host=~"$host", unit=~"$unit"} | json | __error__=""`
 	)
 
-	errorThresholds := dashboard.NewThresholdsConfigBuilder().
-		Mode(dashboard.ThresholdsModeAbsolute).
-		Steps([]dashboard.Threshold{
-			{Value: nil, Color: "green"},
-			{Value: float64Ptr(1), Color: "red"},
-		})
+	errorThresholds := issueThresholds()
 
 	warnThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -47,9 +39,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 		Refresh("60s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
-			dashboard.NewDatasourceVariableBuilder("datasource").
-				Label("Datasource").
-				Type("loki"),
+			lokiDatasourceVariable(),
 		).
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("host").

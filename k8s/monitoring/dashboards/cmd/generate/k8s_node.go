@@ -15,25 +15,18 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 	const (
 		clusterFilter = `cluster=~"$cluster"`
 		nodeFilter    = `nodename=~"$node"`
+		// fsFilter excludes pseudo/boot filesystems consistent with node-overview.
+		fsFilter = `fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*|/boot/efi|/boot/firmware"`
 	)
 
 	// joinNode copies nodename onto query results so legends show hostnames.
 	joinNode := `* on(instance) group_left(nodename) (node_uname_info{` + clusterFilter + `, ` + nodeFilter + `})`
 
-	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
-	legend := common.NewVizLegendOptionsBuilder().
-		ShowLegend(true).
-		DisplayMode(common.LegendDisplayModeList).
-		Placement(common.LegendPlacementBottom)
+	tooltipAll := defaultTooltip()
+	legend := defaultLegend()
 
-	zeroLineThresholds := dashboard.NewThresholdsConfigBuilder().
-		Mode(dashboard.ThresholdsModeAbsolute).
-		Steps([]dashboard.Threshold{
-			{Value: nil, Color: "transparent"},
-			{Value: float64Ptr(0), Color: "white"},
-		})
-	zeroLineStyle := common.NewGraphThresholdsStyleConfigBuilder().
-		Mode(common.GraphThresholdsStyleModeLine)
+	zeroLineThresholds := zeroLineThresholds()
+	zeroLineStyle := zeroLineStyle()
 
 	d, err := dashboard.NewDashboardBuilder("K8s Node Overview").
 		Uid("k8s-node-overview").
@@ -43,9 +36,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
-			dashboard.NewDatasourceVariableBuilder("datasource").
-				Label("Datasource").
-				Type("prometheus"),
+			promDatasourceVariable(),
 		).
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("cluster").
@@ -223,7 +214,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Unit("percent").
 				Orientation(common.VizOrientationHorizontal).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + clusterFilter + `, fstype=~"ext[234]|xfs|btrfs|zfs|vfat"} / node_filesystem_size_bytes{` + clusterFilter + `, fstype=~"ext[234]|xfs|btrfs|zfs|vfat"}) ` + joinNode + ` * 100)`).
+					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + clusterFilter + `, ` + fsFilter + `} / node_filesystem_size_bytes{` + clusterFilter + `, ` + fsFilter + `}) ` + joinNode + ` * 100)`).
 					Instant().
 					LegendFormat("{{nodename}} {{mountpoint}}"),
 				).Decimals(1),
@@ -237,11 +228,11 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(node_filesystem_size_bytes{`+clusterFilter+`, fstype=~"ext[234]|xfs|btrfs|zfs|vfat"} - node_filesystem_avail_bytes{`+clusterFilter+`, fstype=~"ext[234]|xfs|btrfs|zfs|vfat"}) `+joinNode).
+					Expr(`(node_filesystem_size_bytes{`+clusterFilter+`, `+fsFilter+`} - node_filesystem_avail_bytes{`+clusterFilter+`, `+fsFilter+`}) `+joinNode).
 					LegendFormat("{{nodename}} {{mountpoint}} Used"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`node_filesystem_size_bytes{`+clusterFilter+`, fstype=~"ext[234]|xfs|btrfs|zfs|vfat"} `+joinNode).
+					Expr(`node_filesystem_size_bytes{`+clusterFilter+`, `+fsFilter+`} `+joinNode).
 					LegendFormat("{{nodename}} {{mountpoint}} Total"),
 				).
 				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* Total$"}, []dashboard.DynamicConfigValue{

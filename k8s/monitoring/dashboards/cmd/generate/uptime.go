@@ -14,11 +14,8 @@ import (
 // ScrapeConfig job label format: scrapeConfig/<namespace>/<name>.
 func buildUptime() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
-	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
-	legend := common.NewVizLegendOptionsBuilder().
-		ShowLegend(true).
-		DisplayMode(common.LegendDisplayModeList).
-		Placement(common.LegendPlacementBottom)
+	tooltipAll := defaultTooltip()
+	legend := defaultLegend()
 
 	const (
 		icmpJob   = `job="scrapeConfig/monitoring/icmp-network-devices"`
@@ -52,9 +49,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 		Refresh("60s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
-			dashboard.NewDatasourceVariableBuilder("datasource").
-				Label("Datasource").
-				Type("prometheus"),
+			promDatasourceVariable(),
 		).
 		WithPanel(
 			stat.NewPanelBuilder().

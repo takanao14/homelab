@@ -33,20 +33,12 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		joinNvmeModel = `* on(instance, device) group_left(model) nvme_device_info`
 	)
 
-	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
-	legend := common.NewVizLegendOptionsBuilder().
-		ShowLegend(true).
-		DisplayMode(common.LegendDisplayModeList).
-		Placement(common.LegendPlacementBottom)
+	tooltipAll := defaultTooltip()
+	legend := defaultLegend()
 
 	// Any nonzero count of reallocated/pending/uncorrectable sectors is a strong
 	// failure precursor, so the threshold flips to red at 1.
-	precursorThresholds := dashboard.NewThresholdsConfigBuilder().
-		Mode(dashboard.ThresholdsModeAbsolute).
-		Steps([]dashboard.Threshold{
-			{Value: nil, Color: "green"},
-			{Value: float64Ptr(1), Color: "red"},
-		})
+	precursorThresholds := issueThresholds()
 	// CRC errors usually indicate a cabling/connection issue rather than imminent
 	// media failure, so they warn (yellow) rather than alert (red).
 	crcThresholds := dashboard.NewThresholdsConfigBuilder().
@@ -64,9 +56,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		Refresh("5m").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
-			dashboard.NewDatasourceVariableBuilder("datasource").
-				Label("Datasource").
-				Type("prometheus"),
+			promDatasourceVariable(),
 		).
 		// Reuse the bare-metal node variable convention from node-overview:
 		// expose $node (nodename) and resolve it to the hidden $instance (IP:port).
@@ -101,12 +91,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
-				Thresholds(dashboard.NewThresholdsConfigBuilder().
-					Mode(dashboard.ThresholdsModeAbsolute).
-					Steps([]dashboard.Threshold{
-						{Value: nil, Color: "green"},
-						{Value: float64Ptr(1), Color: "red"},
-					})).
+				Thresholds(issueThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(sum(smartmon_device_smart_healthy{type="sat",` + instFilter + `} == bool 0) or vector(0)) + (sum(nvme_critical_warning{` + instFilter + `} > bool 0) or vector(0))`).
 					LegendFormat("Unhealthy"),
@@ -136,12 +121,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
-				Thresholds(dashboard.NewThresholdsConfigBuilder().
-					Mode(dashboard.ThresholdsModeAbsolute).
-					Steps([]dashboard.Threshold{
-						{Value: nil, Color: "green"},
-						{Value: float64Ptr(1), Color: "red"},
-					})).
+				Thresholds(issueThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum((` +
 						`smartmon_wear_leveling_count_value{` + instFilter + `}` +
@@ -162,12 +142,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
-				Thresholds(dashboard.NewThresholdsConfigBuilder().
-					Mode(dashboard.ThresholdsModeAbsolute).
-					Steps([]dashboard.Threshold{
-						{Value: nil, Color: "green"},
-						{Value: float64Ptr(1), Color: "red"},
-					})).
+				Thresholds(issueThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(nvme_critical_warning{` + instFilter + `} > bool 0)`).
 					LegendFormat("Warnings"),
@@ -395,12 +370,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Span(8).Height(8).
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
-				Thresholds(dashboard.NewThresholdsConfigBuilder().
-					Mode(dashboard.ThresholdsModeAbsolute).
-					Steps([]dashboard.Threshold{
-						{Value: nil, Color: "green"},
-						{Value: float64Ptr(1), Color: "red"},
-					})).
+				Thresholds(issueThresholds()).
 				Mappings([]dashboard.ValueMapping{
 					{ValueMap: &dashboard.ValueMap{
 						Type: dashboard.MappingTypeValueToText,

@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 )
 
@@ -57,37 +56,4 @@ func main() {
 		}
 		fmt.Printf("generated: %s\n", path)
 	}
-}
-
-// promDatasource returns a datasource ref using "$datasource" as the UID so that
-// all panels switch together when the user changes the datasource dropdown variable.
-func promDatasource() common.DataSourceRef {
-	dsType := "prometheus"
-	dsUID := "$datasource"
-	return common.DataSourceRef{
-		Type: &dsType,
-		Uid:  &dsUID,
-	}
-}
-
-// lokiDatasource is the Loki counterpart of promDatasource.
-func lokiDatasource() common.DataSourceRef {
-	dsType := "loki"
-	dsUID := "$datasource"
-	return common.DataSourceRef{
-		Type: &dsType,
-		Uid:  &dsUID,
-	}
-}
-
-func strPtr(s string) *string {
-	return &s
-}
-
-func float64Ptr(f float64) *float64 {
-	return &f
-}
-
-func boolPtr(b bool) *bool {
-	return &b
 }

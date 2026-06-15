@@ -20,11 +20,8 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 		baseJSON = `{job="dns", host=~"$host"} | json | __error__=""`
 	)
 
-	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
-	legend := common.NewVizLegendOptionsBuilder().
-		ShowLegend(true).
-		DisplayMode(common.LegendDisplayModeList).
-		Placement(common.LegendPlacementBottom)
+	tooltipAll := defaultTooltip()
+	legend := defaultLegend()
 
 	d, err := dashboard.NewDashboardBuilder("DNS Query Logs").
 		Uid("dns-logs").
@@ -34,9 +31,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
-			dashboard.NewDatasourceVariableBuilder("datasource").
-				Label("Datasource").
-				Type("loki"),
+			lokiDatasourceVariable(),
 		).
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("host").

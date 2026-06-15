@@ -31,22 +31,13 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 		nodeFilter = `job="proxmox-ve", node=~"$node"`
 	)
 
-	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
+	tooltipAll := defaultTooltip()
 	tooltipSingle := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeSingle)
-	legend := common.NewVizLegendOptionsBuilder().
-		ShowLegend(true).
-		DisplayMode(common.LegendDisplayModeList).
-		Placement(common.LegendPlacementBottom)
+	legend := defaultLegend()
 
 	// zeroLine draws a solid reference line at y=0 for bidirectional I/O panels.
-	zeroLineThresholds := dashboard.NewThresholdsConfigBuilder().
-		Mode(dashboard.ThresholdsModeAbsolute).
-		Steps([]dashboard.Threshold{
-			{Value: nil, Color: "transparent"},
-			{Value: float64Ptr(0), Color: "white"},
-		})
-	zeroLineStyle := common.NewGraphThresholdsStyleConfigBuilder().
-		Mode(common.GraphThresholdsStyleModeLine)
+	zeroLineThresholds := zeroLineThresholds()
+	zeroLineStyle := zeroLineStyle()
 
 	cpuThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -56,13 +47,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 			{Value: float64Ptr(0.9), Color: "red"},
 		})
 
-	pctThresholds := dashboard.NewThresholdsConfigBuilder().
-		Mode(dashboard.ThresholdsModeAbsolute).
-		Steps([]dashboard.Threshold{
-			{Value: nil, Color: "green"},
-			{Value: float64Ptr(80), Color: "yellow"},
-			{Value: float64Ptr(90), Color: "red"},
-		})
+	pctThresholds := capacityThresholds()
 
 	d, err := dashboard.NewDashboardBuilder("Proxmox Overview (OTLP)").
 		Uid("proxmox-otlp-overview").
@@ -72,9 +57,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
-			dashboard.NewDatasourceVariableBuilder("datasource").
-				Label("Datasource").
-				Type("prometheus"),
+			promDatasourceVariable(),
 		).
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("node").

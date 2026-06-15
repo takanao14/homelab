@@ -13,11 +13,8 @@ import (
 // Logs are JSON-parsed syslog entries with fields: host, severity, appname, message.
 func buildSyslog() (*dashboard.Dashboard, error) {
 	ds := lokiDatasource()
-	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
-	legend := common.NewVizLegendOptionsBuilder().
-		ShowLegend(true).
-		DisplayMode(common.LegendDisplayModeList).
-		Placement(common.LegendPlacementBottom)
+	tooltipAll := defaultTooltip()
+	legend := defaultLegend()
 
 	const (
 		// Syslog has no job label; filter by severity to exclude DNS query logs.
@@ -27,12 +24,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 		baseApp = `{host=~"$host", severity=~"$severity"} | json | __error__="" | appname=~"$appname"`
 	)
 
-	issueThresholds := dashboard.NewThresholdsConfigBuilder().
-		Mode(dashboard.ThresholdsModeAbsolute).
-		Steps([]dashboard.Threshold{
-			{Value: nil, Color: "green"},
-			{Value: float64Ptr(1), Color: "red"},
-		})
+	issueThresholds := issueThresholds()
 
 	d, err := dashboard.NewDashboardBuilder("Syslog").
 		Uid("syslog").
@@ -42,9 +34,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 		Refresh("60s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
-			dashboard.NewDatasourceVariableBuilder("datasource").
-				Label("Datasource").
-				Type("loki"),
+			lokiDatasourceVariable(),
 		).
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("host").

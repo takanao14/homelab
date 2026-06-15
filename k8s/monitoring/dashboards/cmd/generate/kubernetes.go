@@ -20,27 +20,12 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 		clusterFilter = `cluster=~"$cluster"`
 	)
 
-	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
-	legend := common.NewVizLegendOptionsBuilder().
-		ShowLegend(true).
-		DisplayMode(common.LegendDisplayModeList).
-		Placement(common.LegendPlacementBottom)
+	tooltipAll := defaultTooltip()
+	legend := defaultLegend()
 
-	zeroLineThresholds := dashboard.NewThresholdsConfigBuilder().
-		Mode(dashboard.ThresholdsModeAbsolute).
-		Steps([]dashboard.Threshold{
-			{Value: nil, Color: "transparent"},
-			{Value: float64Ptr(0), Color: "white"},
-		})
-	zeroLineStyle := common.NewGraphThresholdsStyleConfigBuilder().
-		Mode(common.GraphThresholdsStyleModeLine)
-
-	issueThresholds := dashboard.NewThresholdsConfigBuilder().
-		Mode(dashboard.ThresholdsModeAbsolute).
-		Steps([]dashboard.Threshold{
-			{Value: nil, Color: "green"},
-			{Value: float64Ptr(1), Color: "red"},
-		})
+	zeroLineThresholds := zeroLineThresholds()
+	zeroLineStyle := zeroLineStyle()
+	issueThresholds := issueThresholds()
 
 	d, err := dashboard.NewDashboardBuilder("Kubernetes Overview").
 		Uid("kubernetes-overview").
@@ -50,9 +35,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
-			dashboard.NewDatasourceVariableBuilder("datasource").
-				Label("Datasource").
-				Type("prometheus"),
+			promDatasourceVariable(),
 		).
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("cluster").
@@ -478,13 +461,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("percent").
 				Orientation(common.VizOrientationHorizontal).
-				Thresholds(dashboard.NewThresholdsConfigBuilder().
-					Mode(dashboard.ThresholdsModeAbsolute).
-					Steps([]dashboard.Threshold{
-						{Value: nil, Color: "green"},
-						{Value: float64Ptr(80), Color: "yellow"},
-						{Value: float64Ptr(90), Color: "red"},
-					})).
+				Thresholds(capacityThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(100 * (1 - kubelet_volume_stats_inodes_free{` + clusterFilter + `,` + nsFilter + `} / clamp_min(kubelet_volume_stats_inodes{` + clusterFilter + `,` + nsFilter + `}, 1)))`).
 					Instant().

@@ -27,20 +27,11 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		fsFilter = `fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*|/boot/efi|/boot/firmware"`
 	)
 
-	tooltipAll := common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
-	legend := common.NewVizLegendOptionsBuilder().
-		ShowLegend(true).
-		DisplayMode(common.LegendDisplayModeList).
-		Placement(common.LegendPlacementBottom)
+	tooltipAll := defaultTooltip()
+	legend := defaultLegend()
 
-	zeroLineThresholds := dashboard.NewThresholdsConfigBuilder().
-		Mode(dashboard.ThresholdsModeAbsolute).
-		Steps([]dashboard.Threshold{
-			{Value: nil, Color: "transparent"},
-			{Value: float64Ptr(0), Color: "white"},
-		})
-	zeroLineStyle := common.NewGraphThresholdsStyleConfigBuilder().
-		Mode(common.GraphThresholdsStyleModeLine)
+	zeroLineThresholds := zeroLineThresholds()
+	zeroLineStyle := zeroLineStyle()
 
 	d, err := dashboard.NewDashboardBuilder("Node Overview").
 		Uid("node-overview").
@@ -50,9 +41,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
-			dashboard.NewDatasourceVariableBuilder("datasource").
-				Label("Datasource").
-				Type("prometheus"),
+			promDatasourceVariable(),
 		).
 		// Bare-metal nodes only: filtered by scrapeConfig job to exclude k8s/VM nodes.
 		// nodename!="gpuvm" is required to filter out stale data from when gpuvm was misconfigured.
@@ -183,13 +172,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(8).
 				Unit("percent").
 				Orientation(common.VizOrientationVertical).
-				Thresholds(dashboard.NewThresholdsConfigBuilder().
-					Mode(dashboard.ThresholdsModeAbsolute).
-					Steps([]dashboard.Threshold{
-						{Value: nil, Color: "green"},
-						{Value: float64Ptr(80), Color: "yellow"},
-						{Value: float64Ptr(90), Color: "red"},
-					})).
+				Thresholds(capacityThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + instFilter + `,` + fsFilter + `} / node_filesystem_size_bytes{` + instFilter + `,` + fsFilter + `}) * 100 ` + joinNodename + `)`).
 					Instant().
@@ -362,13 +345,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("percent").
 				Orientation(common.VizOrientationHorizontal).
-				Thresholds(dashboard.NewThresholdsConfigBuilder().
-					Mode(dashboard.ThresholdsModeAbsolute).
-					Steps([]dashboard.Threshold{
-						{Value: nil, Color: "green"},
-						{Value: float64Ptr(80), Color: "yellow"},
-						{Value: float64Ptr(90), Color: "red"},
-					})).
+				Thresholds(capacityThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + instFilter + `,` + fsFilter + `} / node_filesystem_size_bytes{` + instFilter + `,` + fsFilter + `}) * 100) ` + joinNodename).
 					Instant().
