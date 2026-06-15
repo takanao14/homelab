@@ -1,16 +1,25 @@
 kube-prometheus-stack:
   prometheus:
+    # Deploy as a PrometheusAgent: scrape + remote_write only, with no local
+    # rule evaluation, alerting, or queryable storage. Alerting is centralized
+    # on the prd cluster, which evaluates rules against this cluster's
+    # remote-written data.
+    # IMPORTANT: agent mode MUST be enabled via this chart toggle (it renders a
+    # PrometheusAgent CRD). Setting prometheusSpec.enableFeatures: [agent] does
+    # NOT enable agent mode on a regular Prometheus CRD -- the flag is ignored
+    # and the instance runs as a full server, evaluating the default rules and
+    # firing alerts locally (e.g. PrometheusNotConnectedToAlertmanagers).
+    agentMode: true
     prometheusSpec:
-      enableFeatures:
-        - agent
       externalLabels:
         cluster: dev
       remoteWrite:
         - url: https://prometheus.prd.butaco.net/api/v1/write
-          # This Prometheus runs in agent mode: it never evaluates rules or
-          # sends notifications, so its prometheus_notifications_* self-metrics
-          # are always 0/meaningless. Dropping them prevents prd's stock
-          # "prometheus" alert group (PrometheusNotConnectedToAlertmanagers,
+          # In agent mode this Prometheus still scrapes its own /metrics, so it
+          # exposes prometheus_notifications_* self-metrics that are always
+          # 0/meaningless (an agent never connects to an Alertmanager). Dropping
+          # them before remote_write prevents prd's stock "prometheus" alert
+          # group (PrometheusNotConnectedToAlertmanagers,
           # PrometheusErrorSendingAlertsTo*, PrometheusNotificationQueueRunningFull)
           # from false-firing against this agent. Remote-write health metrics
           # (prometheus_remote_storage_*) are kept so the dev->prd pipeline
