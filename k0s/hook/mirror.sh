@@ -52,19 +52,16 @@ configure_registry() {
     local registry_file="$1"
     local certs_base_path="/etc/k0s/certs.d"
 
-    # Create registry configuration if not exists
-    if [ -f "$registry_file" ]; then
-        echo -e "${GREEN}✓${NC} Registry configuration already exists"
-    else
-        echo -e "${YELLOW}→${NC} Creating registry configuration..."
-        sudo tee "$registry_file" > /dev/null <<EOF
-version = 2
+    # k0s v1.36 ships containerd 2.x, which requires config version 3 and the
+    # containerd v2 CRI plugin namespace.
+    echo -e "${YELLOW}→${NC} Writing registry configuration..."
+    sudo tee "$registry_file" > /dev/null <<EOF
+version = 3
 
-[plugins."io.containerd.grpc.v1.cri".registry]
+[plugins."io.containerd.cri.v1.images".registry]
   config_path = "$certs_base_path"
 EOF
-        echo -e "${GREEN}✓${NC} Registry configured at $registry_file"
-    fi
+    echo -e "${GREEN}✓${NC} Registry configured at $registry_file"
 }
 
 configure_hosts() {
