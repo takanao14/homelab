@@ -9,6 +9,7 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 | `node-overview` | Bare-metal nodes: CPU, memory, temperature, disk I/O, network I/O, ZFS ARC |
 | `k8s-node-overview` | Kubernetes nodes: CPU, memory, disk, network (filtered by cluster/node) |
 | `kubernetes-overview` | Kubernetes cluster health, resource usage, pod lifecycle, network, PVC |
+| `k8s-control-plane` | Kubernetes control plane and DNS: API server, etcd/kine backend, CoreDNS, scheduling, capacity, jobs |
 | `proxmox-otlp-overview` | Proxmox VE cluster (native OTLP metrics): VM/LXC counts, node and guest resources, storage, network I/O, PSI pressure |
 | `gpu-overview` | AMD RX 9060 XT: activity, VRAM, temperature, power, clock speed |
 | `disk-health` | Physical disk S.M.A.R.T.: health flag, failure precursors, SSD wear, temperature |
@@ -30,6 +31,7 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 │   ├── node.go                 # node-overview
 │   ├── k8s_node.go             # k8s-node-overview
 │   ├── kubernetes.go           # kubernetes-overview
+│   ├── k8s_control_plane.go    # k8s-control-plane
 │   ├── proxmox_otlp.go         # proxmox-otlp-overview
 │   ├── gpu.go                  # gpu-overview
 │   ├── disk_health.go          # disk-health

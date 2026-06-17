@@ -24,6 +24,7 @@ func main() {
 		"network-overview":      buildNetworkOverview,
 		"uptime":                buildUptime,
 		"kubernetes-overview":   buildKubernetesOverview,
+		"k8s-control-plane":     buildK8sControlPlaneOverview,
 		"monitoring-overview":   buildMonitoringOverview,
 		"dns-logs":              buildDnsLogs,
 		"syslog":                buildSyslog,
