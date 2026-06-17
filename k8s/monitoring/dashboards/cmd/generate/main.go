@@ -30,6 +30,7 @@ func main() {
 		"syslog":                buildSyslog,
 		"service-logs":          buildServiceLogs,
 		"cert-manager-overview": buildCertManagerOverview,
+		"cilium-overview":       buildCiliumOverview,
 	}
 
 	outputDir := "generated"

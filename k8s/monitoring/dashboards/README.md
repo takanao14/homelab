@@ -20,6 +20,7 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 | `syslog` | Network device syslog volume and error rate via Loki |
 | `service-logs` | Generic journald service logs via Loki: volume, errors/warnings by unit |
 | `cert-manager-overview` | cert-manager certificates and ClusterIssuers: expiry countdown, ready state, sync errors |
+| `cilium-overview` | Cilium CNI: agent/operator health, packet drops, policy verdicts, BPF map pressure, endpoint state, Hubble flows |
 | `uptime` | ICMP/DNS probe availability timeline |
 
 ## Structure
