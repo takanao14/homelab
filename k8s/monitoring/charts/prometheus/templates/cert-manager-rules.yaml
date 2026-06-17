@@ -1,0 +1,55 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cert-manager-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    # cert-manager metrics from both clusters land here: dev is a Prometheus agent
+    # that remote_writes to this prd instance, so a single rule covers prd and dev
+    # (distinguished by the cluster label).
+    - name: cert-manager.rules
+      rules:
+        # ACME certs are 90-day and renew at 30 days remaining; under 21 days left
+        # means renewal has been failing for ~9+ days and needs attention.
+        - alert: CertManagerCertExpiringSoon
+          expr: |
+            certmanager_certificate_expiration_timestamp_seconds - time() < 86400 * 21
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Certificate {{ "{{" }} $labels.name {{ "}}" }} expiring soon ({{ "{{" }} $labels.cluster {{ "}}" }})'
+            description: '{{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.name {{ "}}" }} expires in {{ "{{" }} $value | humanizeDuration {{ "}}" }}'
+
+        - alert: CertManagerCertExpiringCritical
+          expr: |
+            certmanager_certificate_expiration_timestamp_seconds - time() < 86400 * 7
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Certificate {{ "{{" }} $labels.name {{ "}}" }} expires in <7d ({{ "{{" }} $labels.cluster {{ "}}" }})'
+            description: '{{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.name {{ "}}" }} expires in {{ "{{" }} $value | humanizeDuration {{ "}}" }}'
+
+        - alert: CertManagerCertNotReady
+          expr: |
+            certmanager_certificate_ready_status{condition="True"} != 1
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Certificate {{ "{{" }} $labels.name {{ "}}" }} not Ready ({{ "{{" }} $labels.cluster {{ "}}" }})'
+            description: '{{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.name {{ "}}" }} is not in the Ready state.'
+
+        - alert: CertManagerDown
+          expr: |
+            up{job=~".*cert-manager.*"} == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'cert-manager metrics target down ({{ "{{" }} $labels.cluster {{ "}}" }})'
+            description: 'cert-manager is not being scraped; certificate expiry can no longer be monitored.'

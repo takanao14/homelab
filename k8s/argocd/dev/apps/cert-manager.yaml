@@ -16,6 +16,13 @@ spec:
           extraArgs:
             - --dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53
             - --dns01-recursive-nameservers-only
+          prometheus:
+            enabled: true
+            servicemonitor:
+              enabled: true
+              # Must match the Prometheus serviceMonitorSelector (release: prometheus).
+              labels:
+                release: prometheus
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
