@@ -138,6 +138,12 @@ all:
         # host-level to monitor the control-plane node and kine DB disk.
         prd-cp1: null
         dev-cp1: null
+        # Stateful service guests: Proxmox OTLP does not expose in-guest
+        # filesystem usage, so monitor disk-fill / inode / memory here.
+        seaweedfs1: null
+        forgejo01: null
+        netbox01: null
+        openbao1: null
 
     blackbox_exporter:
       hosts:
