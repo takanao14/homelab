@@ -63,9 +63,35 @@ kube-prometheus-stack:
   alertmanager:
     enabled: false
 
+  # The k0s controller (192.168.20.11) is a dedicated control-plane node with no
+  # kubelet, so it is not discoverable as a Kubernetes Endpoint. Point the chart
+  # at the node IP directly; it renders a headless Service + manual Endpoints and
+  # a ServiceMonitor that scrapes the component's secure metrics port over HTTPS.
+  # The cluster label is added at remote_write time via externalLabels, so no
+  # per-ServiceMonitor relabeling is needed here. Requires the component to listen
+  # on a routable address (bind-address != 127.0.0.1); see k0s/template_lib.sh.
   kubeControllerManager:
-    enabled: false
+    enabled: true
+    endpoints:
+      - 192.168.20.11
+    service:
+      enabled: true
+      port: 10257
+      targetPort: 10257
+    serviceMonitor:
+      https: true
+      insecureSkipVerify: true
   kubeScheduler:
-    enabled: false
+    enabled: true
+    endpoints:
+      - 192.168.20.11
+    service:
+      enabled: true
+      port: 10259
+      targetPort: 10259
+    serviceMonitor:
+      https: true
+      insecureSkipVerify: true
+  # kube-proxy is disabled cluster-wide (Cilium kube-proxy replacement).
   kubeProxy:
     enabled: false
