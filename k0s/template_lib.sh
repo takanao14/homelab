@@ -209,6 +209,15 @@ ${K0S_VERSION:+    version: ${K0S_VERSION}
       spec:
         storage:
           type: ${storage_type} ${storage_comment}
+        # Expose the controller-manager/scheduler secure metrics ports on a
+        # routable address (default is 127.0.0.1) so Prometheus can scrape them
+        # from off-node. See k8s/monitoring/values/prometheus.yaml.
+        controllerManager:
+          extraArgs:
+            bind-address: 0.0.0.0
+        scheduler:
+          extraArgs:
+            bind-address: 0.0.0.0
         network:
           provider: custom # Set to custom to use Cilium
           kubeProxy: # Disable kube-proxy since Cilium provides kube-proxy replacement
