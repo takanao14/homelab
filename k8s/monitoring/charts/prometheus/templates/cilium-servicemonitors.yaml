@@ -1,0 +1,75 @@
+{{- /*
+ServiceMonitors for Cilium metrics. Defined here (not in the Cilium chart)
+because Cilium is installed via helmfile at cluster bootstrap, before the
+kube-prometheus-stack ServiceMonitor CRD exists. Cilium only exposes the metrics
+Services (prometheus.metricsService / hubble.metrics.enabled); scraping is wired
+up here. cluster=prd is injected to match the rest of the prd ServiceMonitors.
+*/ -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cilium-agent
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames: ["kube-system"]
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cilium-agent
+  endpoints:
+    - port: metrics
+      interval: 30s
+      relabelings:
+        - action: replace
+          sourceLabels: [__meta_kubernetes_pod_node_name]
+          targetLabel: node
+        - action: replace
+          targetLabel: cluster
+          replacement: prd
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cilium-operator
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames: ["kube-system"]
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cilium-operator
+  endpoints:
+    - port: metrics
+      interval: 30s
+      relabelings:
+        - action: replace
+          targetLabel: cluster
+          replacement: prd
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: hubble
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames: ["kube-system"]
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: hubble
+  endpoints:
+    - port: hubble-metrics
+      interval: 30s
+      relabelings:
+        - action: replace
+          sourceLabels: [__meta_kubernetes_pod_node_name]
+          targetLabel: node
+        - action: replace
+          targetLabel: cluster
+          replacement: prd

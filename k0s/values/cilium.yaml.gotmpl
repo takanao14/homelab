@@ -10,5 +10,28 @@ ingressController:
   loadbalancerMode: dedicated
 gatewayAPI:
   enabled: true
+# Expose Cilium metrics for Prometheus. metricsService creates the metrics
+# Services (cilium-agent:9962, cilium-operator:9963) without requiring the
+# ServiceMonitor CRD, so this stays bootstrap-safe (helmfile installs Cilium
+# before the kube-prometheus-stack CRDs exist). ServiceMonitors are defined in
+# the monitoring stack instead.
+prometheus:
+  enabled: true
+  metricsService: true
 operator:
   replicas: 1
+  prometheus:
+    enabled: true
+    metricsService: true
+hubble:
+  # Hubble is enabled by default; only its metrics need turning on. This exposes
+  # aggregated L3/L4 flow metrics (hubble-metrics:9965). L7/http is omitted as it
+  # requires Envoy L7 redirection.
+  metrics:
+    enabled:
+      - dns
+      - drop
+      - tcp
+      - flow
+      - icmp
+      - port-distribution
