@@ -1738,12 +1738,296 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Capacity",
+      "title": "Scheduler",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 95
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (cluster, result) (rate(scheduler_schedule_attempts_total{cluster=~\"$cluster\"}[5m]))",
+          "legendFormat": "{{cluster}} {{result}}"
+        }
+      ],
+      "title": "Scheduling Attempts by Result",
+      "description": "Rate of pod scheduling attempts by outcome. 'unschedulable' or 'error' indicate the scheduler cannot place pods.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 96
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (cluster, queue) (scheduler_pending_pods{cluster=~\"$cluster\"})",
+          "legendFormat": "{{cluster}} {{queue}}"
+        }
+      ],
+      "title": "Pending Pods by Queue",
+      "description": "Pods waiting to be scheduled, split by scheduler queue (active, backoff, unschedulable, gated). A sustained backlog signals scheduling problems.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 96
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (cluster, le) (rate(scheduler_scheduling_attempt_duration_seconds_bucket{cluster=~\"$cluster\"}[5m])))",
+          "legendFormat": "{{cluster}} p99"
+        }
+      ],
+      "title": "Scheduling Attempt Latency p99",
+      "description": "99th percentile end-to-end scheduling attempt duration.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 96
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Controller Manager",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 104
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (cluster) (workqueue_depth{cluster=~\"$cluster\",job=\"kube-controller-manager\"})",
+          "legendFormat": "{{cluster}}"
+        }
+      ],
+      "title": "Workqueue Depth",
+      "description": "Total controller-manager workqueue depth. A sustained rise means controllers are falling behind on reconciliation.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 105
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum by (cluster, le) (rate(workqueue_work_duration_seconds_bucket{cluster=~\"$cluster\",job=\"kube-controller-manager\"}[5m])))",
+          "legendFormat": "{{cluster}} p99"
+        }
+      ],
+      "title": "Workqueue Work Duration p99",
+      "description": "99th percentile time controllers spend processing a single workqueue item.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 105
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (cluster) (rate(workqueue_retries_total{cluster=~\"$cluster\",job=\"kube-controller-manager\"}[5m]))",
+          "legendFormat": "{{cluster}}"
+        }
+      ],
+      "title": "Workqueue Retries",
+      "description": "Rate of workqueue item retries. Elevated retries indicate controllers repeatedly failing to reconcile.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 105
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Capacity",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 113
       },
       "id": 0,
       "panels": []
@@ -1769,7 +2053,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 96
+        "y": 114
       },
       "repeatDirection": "h",
       "options": {
@@ -1840,7 +2124,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 96
+        "y": 114
       },
       "repeatDirection": "h",
       "options": {
@@ -1911,7 +2195,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 96
+        "y": 114
       },
       "repeatDirection": "h",
       "options": {

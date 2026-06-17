@@ -601,6 +601,98 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 					{Id: "decimals", Value: 0},
 				}),
 		).
+		WithRow(dashboard.NewRowBuilder("Scheduler")).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Scheduling Attempts by Result").
+				Description("Rate of pod scheduling attempts by outcome. 'unschedulable' or 'error' indicate the scheduler cannot place pods.").
+				Datasource(ds).
+				Span(8).Height(8).
+				Unit("reqps").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum by (cluster, result) (rate(scheduler_schedule_attempts_total{` + clusterFilter + `}[5m]))`).
+					LegendFormat("{{cluster}} {{result}}"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Pending Pods by Queue").
+				Description("Pods waiting to be scheduled, split by scheduler queue (active, backoff, unschedulable, gated). A sustained backlog signals scheduling problems.").
+				Datasource(ds).
+				Span(8).Height(8).
+				Unit("short").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum by (cluster, queue) (scheduler_pending_pods{` + clusterFilter + `})`).
+					LegendFormat("{{cluster}} {{queue}}"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Scheduling Attempt Latency p99").
+				Description("99th percentile end-to-end scheduling attempt duration.").
+				Datasource(ds).
+				Span(8).Height(8).
+				Unit("s").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(scheduler_scheduling_attempt_duration_seconds_bucket{` + clusterFilter + `}[5m])))`).
+					LegendFormat("{{cluster}} p99"),
+				),
+		).
+		WithRow(dashboard.NewRowBuilder("Controller Manager")).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Workqueue Depth").
+				Description("Total controller-manager workqueue depth. A sustained rise means controllers are falling behind on reconciliation.").
+				Datasource(ds).
+				Span(8).Height(8).
+				Unit("short").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum by (cluster) (workqueue_depth{` + clusterFilter + `,job="kube-controller-manager"})`).
+					LegendFormat("{{cluster}}"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Workqueue Work Duration p99").
+				Description("99th percentile time controllers spend processing a single workqueue item.").
+				Datasource(ds).
+				Span(8).Height(8).
+				Unit("s").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(workqueue_work_duration_seconds_bucket{` + clusterFilter + `,job="kube-controller-manager"}[5m])))`).
+					LegendFormat("{{cluster}} p99"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Workqueue Retries").
+				Description("Rate of workqueue item retries. Elevated retries indicate controllers repeatedly failing to reconcile.").
+				Datasource(ds).
+				Span(8).Height(8).
+				Unit("ops").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum by (cluster) (rate(workqueue_retries_total{` + clusterFilter + `,job="kube-controller-manager"}[5m]))`).
+					LegendFormat("{{cluster}}"),
+				),
+		).
 		WithRow(dashboard.NewRowBuilder("Capacity")).
 		WithPanel(
 			bargauge.NewPanelBuilder().

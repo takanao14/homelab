@@ -90,3 +90,4 @@ All secrets are fetched from OpenBao via ESO. They are not stored in this reposi
 - `serviceMonitorSelectorNilUsesHelmValues: false` — Prometheus discovers all ServiceMonitors cluster-wide
 - Target IPs for external exporters (blackbox, node-exporter, etc.) are hardcoded in `values/` files
 - `prometheus-pve-exporter` Deployment has a checksum annotation on its Secret for automatic restarts on credential changes
+- Future plan: move k0s controller-manager/scheduler scraping into an explicit local chart (`docs/plans/control-plane-metrics-chart.md`)
