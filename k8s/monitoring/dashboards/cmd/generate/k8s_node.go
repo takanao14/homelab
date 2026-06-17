@@ -98,6 +98,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Unit("short").
 				Min(0).
 				Orientation(common.VizOrientationAuto).
+				JustifyMode(common.BigValueJustifyModeCenter).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// Join 'node' from kubelet with 'nodename' from node_uname_info.
 					Expr(`sum by (nodename) (kubelet_running_pods{` + clusterFilter + `} * on(node) group_left(nodename) (label_replace(node_uname_info{` + clusterFilter + `, ` + nodeFilter + `}, "node", "$1", "nodename", "(.*)")))`).
@@ -105,7 +106,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				),
 		).
 		WithPanel(
-			stat.NewPanelBuilder().
+			bargauge.NewPanelBuilder().
 				Title("CPU Cores").
 				Datasource(ds).
 				Span(12).Height(4).
@@ -125,6 +126,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Unit("bytes").
 				Min(0).
 				Orientation(common.VizOrientationAuto).
+				JustifyMode(common.BigValueJustifyModeCenter).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`node_memory_MemTotal_bytes{` + clusterFilter + `} ` + joinNode).
 					LegendFormat("{{nodename}}"),
@@ -140,6 +142,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
+				JustifyMode(common.BigValueJustifyModeCenter).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{

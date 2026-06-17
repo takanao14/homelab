@@ -156,7 +156,7 @@
       "options": {
         "graphMode": "area",
         "colorMode": "value",
-        "justifyMode": "auto",
+        "justifyMode": "center",
         "textMode": "auto",
         "wideLayout": true,
         "showPercentChange": false,
@@ -175,7 +175,7 @@
       }
     },
     {
-      "type": "stat",
+      "type": "bargauge",
       "targets": [
         {
           "expr": "count by (nodename) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
@@ -196,16 +196,23 @@
       },
       "repeatDirection": "h",
       "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
         "reduceOptions": {
           "calcs": []
         },
-        "percentChangeColorMode": "standard",
+        "maxVizHeight": 300,
         "orientation": "auto"
       },
       "fieldConfig": {
@@ -240,7 +247,7 @@
       "options": {
         "graphMode": "area",
         "colorMode": "value",
-        "justifyMode": "auto",
+        "justifyMode": "center",
         "textMode": "auto",
         "wideLayout": true,
         "showPercentChange": false,
@@ -282,7 +289,7 @@
       "options": {
         "graphMode": "none",
         "colorMode": "background",
-        "justifyMode": "auto",
+        "justifyMode": "center",
         "textMode": "auto",
         "wideLayout": true,
         "showPercentChange": false,

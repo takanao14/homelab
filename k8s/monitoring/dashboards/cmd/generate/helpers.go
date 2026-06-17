@@ -69,6 +69,17 @@ func issueThresholds() *dashboard.ThresholdsConfigBuilder {
 		})
 }
 
+// watchdogAwareFiringAlertThresholds keeps the normal Watchdog alert green while
+// still marking any additional firing alert as an issue.
+func watchdogAwareFiringAlertThresholds() *dashboard.ThresholdsConfigBuilder {
+	return dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "green"},
+			{Value: float64Ptr(2), Color: "red"},
+		})
+}
+
 // capacityThresholds returns the standard utilization thresholds for percent-based
 // capacity panels: green below 80, yellow at 80, red at 90.
 func capacityThresholds() *dashboard.ThresholdsConfigBuilder {

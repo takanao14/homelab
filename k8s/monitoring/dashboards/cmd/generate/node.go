@@ -78,6 +78,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(4).
 				GraphMode(common.BigValueGraphModeNone).
 				Orientation(common.VizOrientationAuto).
+				JustifyMode(common.BigValueJustifyModeCenter).
 				ColorMode(common.BigValueColorModeBackground).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
@@ -137,10 +138,11 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Load Average (1m) per CPU").
 				Datasource(ds).
-				Span(12).Height(4).
+				Span(24).Height(4).
 				Unit("percentunit").
 				Min(0).
 				Orientation(common.VizOrientationAuto).
+				JustifyMode(common.BigValueJustifyModeCenter).
 				ColorMode(common.BigValueColorModeBackground).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
@@ -158,11 +160,12 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Uptime").
 				Datasource(ds).
-				Span(12).Height(4).
+				Span(24).Height(4).
 				Unit("s").
 				Min(0).
 				GraphMode(common.BigValueGraphModeNone).
 				Orientation(common.VizOrientationAuto).
+				JustifyMode(common.BigValueJustifyModeCenter).
 				ColorMode(common.BigValueColorModeBackground).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).

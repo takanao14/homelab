@@ -24,6 +24,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 	legend := defaultLegend()
 
 	issueThresholds := issueThresholds()
+	firingAlertThresholds := watchdogAwareFiringAlertThresholds()
 
 	d, err := dashboard.NewDashboardBuilder("Monitoring Overview").
 		Uid("monitoring-overview").
@@ -114,12 +115,12 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Firing Alerts").
-				Description("Current Prometheus alerts in the firing state, including Watchdog alerts.").
+				Description("Current Prometheus alerts in the firing state. Watchdog-only firing is expected and stays green.").
 				Datasource(ds).
 				Span(4).Height(8).
 				Unit("short").
 				Min(0).
-				Thresholds(issueThresholds).
+				Thresholds(firingAlertThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
