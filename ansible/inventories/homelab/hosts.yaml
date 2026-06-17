@@ -133,6 +133,11 @@ all:
         node1: null
         node2: null
         node3: null
+        # k0s controllers run kine (embedded SQLite) and have no kubelet, so they
+        # are not covered by the in-cluster node-exporter DaemonSet. Scrape them
+        # host-level to monitor the control-plane node and kine DB disk.
+        prd-cp1: null
+        dev-cp1: null
 
     blackbox_exporter:
       hosts:
