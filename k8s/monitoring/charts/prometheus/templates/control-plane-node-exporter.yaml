@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: control-plane-node-exporter
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  metricsPath: /metrics
+  scrapeInterval: 30s
+  # k0s controllers run kine (embedded SQLite) and have no kubelet, so they are
+  # not covered by the in-cluster node-exporter DaemonSet. Scrape them host-level
+  # with an explicit cluster label (per target) so they appear in the
+  # k8s-node-overview dashboard alongside the other cluster nodes. node-exporter
+  # is installed on these hosts via the ansible node_exporter role.
+  staticConfigs:
+    - targets: ["192.168.30.11:9100"]
+      labels:
+        cluster: prd
+    - targets: ["192.168.20.11:9100"]
+      labels:
+        cluster: dev
