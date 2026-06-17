@@ -19,6 +19,7 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 | `monitoring-overview` | Prometheus, Alertmanager, and Loki self-monitoring: alerts, scrape targets, TSDB, ingestion rate |
 | `syslog` | Network device syslog volume and error rate via Loki |
 | `service-logs` | Generic journald service logs via Loki: volume, errors/warnings by unit |
+| `cert-manager-overview` | cert-manager certificates and ClusterIssuers: expiry countdown, ready state, sync errors |
 | `uptime` | ICMP/DNS probe availability timeline |
 
 ## Structure

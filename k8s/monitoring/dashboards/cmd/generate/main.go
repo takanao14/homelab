@@ -29,6 +29,7 @@ func main() {
 		"dns-logs":              buildDnsLogs,
 		"syslog":                buildSyslog,
 		"service-logs":          buildServiceLogs,
+		"cert-manager-overview": buildCertManagerOverview,
 	}
 
 	outputDir := "generated"
