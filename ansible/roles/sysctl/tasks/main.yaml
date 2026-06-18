@@ -1,0 +1,13 @@
+---
+- name: Apply persistent sysctl settings
+  become: true
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: "{{ sysctl_conf_file }}"
+    sysctl_set: true
+    state: present
+    reload: true
+  loop: "{{ sysctl_settings | dict2items }}"
+  loop_control:
+    label: "{{ item.key }} = {{ item.value }}"

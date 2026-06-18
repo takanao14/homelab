@@ -1,0 +1,13 @@
+---
+# Persistent kernel parameters written to a sysctl.d drop-in and applied live.
+# Override `sysctl_settings` per group/host to extend the set (the whole dict is
+# replaced, not merged, so re-state any key you still want).
+sysctl_conf_file: /etc/sysctl.d/99-ansible.conf
+
+sysctl_settings:
+  # Lower from the Debian/Proxmox default of 60. On a hypervisor the default is
+  # too eager: it evicts live VM (anonymous) pages to grow the page cache even
+  # without real memory pressure, causing VM latency spikes on swap-in. 10 keeps
+  # swap as a safety valve under genuine pressure (avoiding OOM kills of qemu)
+  # while not swapping pre-emptively. Do not set 0 -> that risks OOM kills.
+  vm.swappiness: 10

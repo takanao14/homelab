@@ -1,0 +1,7 @@
+---
+# Kernel tuning for Proxmox hosts (consumed by the `sysctl` role).
+# This dict replaces the role default, so keep every key you want applied.
+sysctl_settings:
+  # Default 60 swaps out live VM pages too eagerly on a hypervisor; 10 only
+  # swaps under genuine memory pressure. See roles/sysctl/README.md.
+  vm.swappiness: 10

@@ -8,6 +8,9 @@
       maintenance_user_force: true
       tags: maintenance_user
 
+    - role: sysctl
+      tags: sysctl
+
   tasks:
     # Set access permissions for Proxmox GUI (Web UI)
     - name: Check if user exists in Proxmox
