@@ -250,7 +250,7 @@ run_shell \
 
 echo "Ensuring ~/.env is sourced in ~/.bashrc..."
 run_shell \
-  "grep -qF '.env' ~/.bashrc || echo '[[ -f \"\$HOME/.env\" ]] && set -a && source \"\$HOME/.env\" && set +a' >> ~/.bashrc"
+  "grep -qF 'source \"\$HOME/.env\"' ~/.bashrc || echo '[[ -f \"\$HOME/.env\" ]] && set -a && source \"\$HOME/.env\" && set +a' >> ~/.bashrc"
 
 echo "Ensuring direnv hook is enabled in ~/.bashrc..."
 run_shell \
