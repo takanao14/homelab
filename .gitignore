@@ -9,3 +9,4 @@ tf/.state-backups/
 **/charts/*.tgz
 k8s/monitoring/dashboards/cmd/generate/generate
 **/Chart.lock
+ansible/collections/
