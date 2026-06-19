@@ -27,6 +27,7 @@
     owner: root
     group: root
     mode: '0644'
+    validate: vector validate --no-environment %s
   notify: Restart vector
 
 - name: Ensure Vector is started and enabled

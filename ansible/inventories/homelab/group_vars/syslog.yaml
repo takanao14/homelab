@@ -10,11 +10,21 @@ vector_config:
       decoding:
         codec: bytes
 
+    syslog_tcp:
+      type: socket
+      address: "0.0.0.0:514"
+      mode: tcp
+      framing:
+        method: newline_delimited
+      decoding:
+        codec: bytes
+
   transforms:
     parse_syslog:
       type: remap
       inputs:
         - syslog_udp
+        - syslog_tcp
       source: |
         msg = string!(.message)
         .parse_error = false
@@ -70,6 +80,10 @@ vector_config:
         codec: json
       healthcheck:
         enabled: false
+      buffer:
+        type: disk
+        max_size: 268435488
+        when_full: block
       labels:
         host: !unsafe "{{ host }}"
         appname: !unsafe "{{ appname }}"
