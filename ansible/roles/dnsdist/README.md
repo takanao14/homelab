@@ -22,7 +22,7 @@ The `internal` pool is built dynamically from `secondary_auth_servers`, so addin
 
 ## Variables
 
-### Secrets (from SOPS-encrypted `group_vars/all.sops.yaml`)
+### Secrets (from SOPS-encrypted `group_vars/dnsdist.sops.yaml`)
 
 Loaded via `community.sops.sops` lookup.
 

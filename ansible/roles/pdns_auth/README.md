@@ -32,12 +32,12 @@ pdns_role: primary   # or secondary
 
 ### Secrets (from SOPS-encrypted files)
 
-Primary secret is loaded from `group_vars/dns_primary.sops.yaml`.
-Secondary secrets are per-host, loaded from `host_vars/<hostname>.sops.yaml`.
+Primary and secondary secrets are loaded from per-host
+`host_vars/<hostname>.sops.yaml` files.
 
 | Variable | Where | Description |
 |----------|-------|-------------|
-| `PDNS_PRIMARY_API_KEY` | `group_vars/dns_primary.sops.yaml` | API key for the primary PowerDNS server |
+| `PDNS_PRIMARY_API_KEY` | `host_vars/ns1.sops.yaml` | API key for the primary PowerDNS server |
 | `PDNS_SECONDARY_API_KEY` | `host_vars/<hostname>.sops.yaml` | API key for each secondary (unique per host) |
 
 These are mapped to `pdns_primary_api_key` / `pdns_secondary_api_key` in `defaults/main.yaml`.

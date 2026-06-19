@@ -6,8 +6,10 @@ Ansible playbooks and roles for provisioning and configuring homelab infrastruct
 
 ```
 ansible/
+├── .ansible-lint                    # Lint exclusions for generated/vendor files
 ├── ansible.cfg                      # Ansible configuration (SOPS plugin enabled)
-├── requirements.yaml                 # Ansible Galaxy collection dependencies
+├── requirements.yaml                # Ansible Galaxy collection dependencies
+├── collections/                     # Locally installed collections (gitignored)
 ├── inventories/
 │   └── homelab/
 │       ├── hosts.yaml               # Inventory (no secrets)
@@ -16,9 +18,7 @@ ansible/
 │       │   ├── dns.yaml             # Shared DNS variables (primary/secondary server addresses)
 │       │   ├── dns_auth.yaml        # pdns_auth group variables
 │       │   ├── dns_primary.yaml     # Primary-specific pdns_auth variables
-│       │   ├── dns_primary.sops.yaml
 │       │   ├── dns_secondary.yaml   # Secondary-specific pdns_auth variables
-│       │   ├── dns_secondary.sops.yaml
 │       │   ├── dnsdist.yaml
 │       │   ├── dnsdist.sops.yaml
 │       │   ├── caddy.yaml
@@ -39,7 +39,7 @@ ansible/
 │       │   ├── seaweedfs.sops.yaml
 │       │   └── syslog.yaml
 │       └── host_vars/
-│           └── <hostname>.sops.yaml # SOPS-encrypted host-specific secrets (e.g. ansible_user)
+│           └── <hostname>.sops.yaml # Host-specific secrets, including PowerDNS API keys
 ├── playbooks/
 │   ├── pdns_auth.yaml
 │   ├── pdns_sync.yaml
@@ -56,6 +56,7 @@ ansible/
 │   ├── openbao.yaml
 │   ├── openbao_bootstrap.yaml
 │   ├── openbao_configure.yaml
+│   ├── openbao_configure_userpass.yaml
 │   ├── openbao_seed_secrets.yaml
 │   ├── proxmox.yaml
 │   ├── maintenance_user.yaml
@@ -63,6 +64,7 @@ ansible/
 │   ├── apt_mirror.yaml
 │   ├── chrony.yaml
 │   ├── unattended_upgrades.yaml
+│   ├── users.yaml
 │   ├── gpuvm.yaml
 │   └── rpi3.yaml
 └── roles/
@@ -80,10 +82,13 @@ ansible/
     ├── blackbox_exporter/
     ├── openbao/
     ├── apt_mirror/
+    ├── chrony/
     ├── unattended_upgrades/
     ├── maintenance_user/
     ├── rocm/
+    ├── sysctl/
     ├── timezone/
+    ├── users/
     └── rsyslog/
 ```
 
@@ -122,10 +127,10 @@ Secrets are managed with SOPS and loaded natively by Ansible via the `community.
 Edit the encrypted files directly:
 
 ```bash
-# Group-level secrets (e.g. PowerDNS primary API key)
-sops edit inventories/homelab/group_vars/ns1.sops.yaml
+# Group-level secrets
+sops edit inventories/homelab/group_vars/dnsdist.sops.yaml
 
-# Host-specific secrets (e.g. SSH user)
+# Host-specific secrets (e.g. PowerDNS API key)
 sops edit inventories/homelab/host_vars/ns1.sops.yaml
 ```
 
@@ -199,6 +204,7 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `openbao.yaml` | `openbao` |
 | `openbao_bootstrap.yaml` | `openbao` |
 | `openbao_configure.yaml` | `openbao` |
+| `openbao_configure_userpass.yaml` | `openbao` |
 | `openbao_seed_secrets.yaml` | `openbao` |
 | `proxmox.yaml` | `proxmox` |
 | `maintenance_user.yaml` | `lxc` |
@@ -214,8 +220,8 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 
 | Variable | Sops file | Description |
 |----------|-----------|-------------|
-| `PDNS_PRIMARY_API_KEY` | `group_vars/dns_primary.sops.yaml` | PowerDNS primary API key |
-| `PDNS_SECONDARY_API_KEY` | `group_vars/dns_secondary.sops.yaml` | PowerDNS secondary API key |
+| `PDNS_PRIMARY_API_KEY` | `host_vars/ns1.sops.yaml` | PowerDNS primary API key |
+| `PDNS_SECONDARY_API_KEY` | `host_vars/ns2.sops.yaml`, `host_vars/ns3.sops.yaml` | Per-secondary PowerDNS API key |
 | `DNSDIST_WEB_PASSWORD` | `group_vars/dnsdist.sops.yaml` | dnsdist web UI password |
 | `DNSDIST_WEB_API_KEY` | `group_vars/dnsdist.sops.yaml` | dnsdist API key |
 | `DNSDIST_CONSOLE_KEY` | `group_vars/dnsdist.sops.yaml` | dnsdist console key |
@@ -233,7 +239,7 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `seaweedfs_s3_access_key` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS S3 access key for the Terraform identity |
 | `seaweedfs_s3_secret_key` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS S3 secret key for the Terraform identity |
 | `seaweedfs_admin_password` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS admin UI password (empty = auth disabled) |
-| `users_accounts` | `group_vars/shared_vms.sops.yaml` | List of `{name, password}` accounts created by `users.yaml` (plaintext passwords) |
+| `users_accounts` | `group_vars/shared_vms.sops.yaml` (create when enabling `shared_vms`) | List of `{name, password}` accounts created by `users.yaml` |
 
 ## Non-Secret Configuration
 

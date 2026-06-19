@@ -23,7 +23,7 @@ dnsdist_internal_domains:
   - "dev.butaco.net."
 dnsdist_internal_check_name: "ns1.home.butaco.net."
 
-# Secrets - loaded via community.sops.sops from group_vars/all.sops.yaml
+# Secrets - loaded via community.sops.sops from group_vars/dnsdist.sops.yaml
 dnsdist_web_password: "{{ DNSDIST_WEB_PASSWORD }}"
 dnsdist_web_api_key: "{{ DNSDIST_WEB_API_KEY }}"
 dnsdist_console_key: "{{ DNSDIST_CONSOLE_KEY }}"
