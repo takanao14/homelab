@@ -1,15 +1,15 @@
 ---
 # Defaults for maintenance_user role
-maintenance_user: >-
+maintenance_user: >- # noqa var-naming[no-role-prefix]
   {{ lookup('env', 'MAINTENANCE_USER')
      | default(lookup('vars', 'MAINTENANCE_USER', default='admin'), true) }}
-maintenance_password_hash: >-
+maintenance_password_hash: >- # noqa var-naming[no-role-prefix]
   {{ lookup('env', 'MAINTENANCE_PASSWORD_HASH')
      | default(lookup('vars', 'MAINTENANCE_PASSWORD_HASH', default=''), true) }}
-maintenance_ssh_key_path: >-
+maintenance_ssh_key_path: >- # noqa var-naming[no-role-prefix]
   {{ lookup('env', 'SSH_KEY_PATH')
      | default(lookup('vars', 'SSH_KEY_PATH', default=''), true) }}
-maintenance_ssh_key: ""
+maintenance_ssh_key: "" # noqa var-naming[no-role-prefix]
 # If maintenance_ssh_key is not provided, it will look up maintenance_ssh_key_path
 # with expanduser filter.
 

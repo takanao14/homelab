@@ -153,7 +153,7 @@
     owner: "{{ netbox_user }}"
     group: "{{ netbox_group }}"
     mode: '0640'
-  notify: restart netbox
+  notify: Restart netbox
   ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Run NetBox database migrations
@@ -161,8 +161,8 @@
   ansible.builtin.command:
     cmd: "{{ netbox_venv }}/bin/python netbox/manage.py migrate"
     chdir: "{{ netbox_home }}"
-  register: migrate_result
-  changed_when: "'No migrations to apply' not in migrate_result.stdout"
+  register: netbox_migrate_result
+  changed_when: "'No migrations to apply' not in netbox_migrate_result.stdout"
   when: not ansible_check_mode
 
 - name: Collect static files
@@ -203,7 +203,7 @@
     owner: "{{ netbox_user }}"
     group: "{{ netbox_group }}"
     mode: '0644'
-  notify: restart netbox
+  notify: Restart netbox
   ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Deploy netbox systemd unit
@@ -215,8 +215,8 @@
     group: root
     mode: '0644'
   notify:
-    - reload systemd
-    - restart netbox
+    - Reload systemd
+    - Restart netbox
 
 - name: Deploy netbox-rq systemd unit
   become: true
@@ -227,8 +227,8 @@
     group: root
     mode: '0644'
   notify:
-    - reload systemd
-    - restart netbox-rq
+    - Reload systemd
+    - Restart netbox-rq
 
 - name: Ensure netbox is started and enabled
   become: true
@@ -254,7 +254,7 @@
     owner: root
     group: root
     mode: '0644'
-  notify: restart nginx
+  notify: Restart nginx
 
 - name: Enable nginx site for netbox
   become: true
@@ -262,14 +262,14 @@
     src: /etc/nginx/sites-available/netbox
     dest: /etc/nginx/sites-enabled/netbox
     state: link
-  notify: restart nginx
+  notify: Restart nginx
 
 - name: Remove nginx default site
   become: true
   ansible.builtin.file:
     path: /etc/nginx/sites-enabled/default
     state: absent
-  notify: restart nginx
+  notify: Restart nginx
 
 - name: Ensure nginx is started and enabled
   become: true

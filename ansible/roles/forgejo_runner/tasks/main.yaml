@@ -87,7 +87,7 @@
     owner: root
     group: root
     mode: '0755'
-  notify: restart forgejo-runner
+  notify: Restart forgejo-runner
 
 - name: Deploy forgejo-runner config
   become: true
@@ -97,7 +97,7 @@
     owner: "{{ forgejo_runner_user }}"
     group: "{{ forgejo_runner_group }}"
     mode: '0640'
-  notify: restart forgejo-runner
+  notify: Restart forgejo-runner
 
 - name: Get runner registration token from Forgejo API
   ansible.builtin.uri:
@@ -106,7 +106,7 @@
     headers:
       Authorization: "token {{ forgejo_admin_token }}"
     status_code: 200
-  register: forgejo_registration
+  register: forgejo_runner_registration
   when: not (forgejo_runner_home + '/.runner') is file
 
 - name: Register forgejo-runner
@@ -117,7 +117,7 @@
       {{ forgejo_runner_binary }} register
       --no-interactive
       --instance {{ forgejo_runner_url }}
-      --token {{ forgejo_registration.json.token }}
+      --token {{ forgejo_runner_registration.json.token }}
       --name {{ forgejo_runner_name }}
       --labels {{ forgejo_runner_labels | join(',') }}
       --config {{ forgejo_runner_config }}
@@ -133,8 +133,8 @@
     group: root
     mode: '0644'
   notify:
-    - reload systemd
-    - restart forgejo-runner
+    - Reload systemd
+    - Restart forgejo-runner
 
 - name: Ensure forgejo-runner is started and enabled
   become: true

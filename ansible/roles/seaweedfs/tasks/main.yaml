@@ -42,7 +42,7 @@
     mode: '0644'
   register: seaweedfs_download
 
-- name: Install weed binary
+- name: Install weed binary  # noqa no-handler
   become: true
   ansible.builtin.unarchive:
     src: "{{ seaweedfs_download_dir }}/seaweedfs-{{ seaweedfs_version }}.tar.gz"
@@ -52,7 +52,7 @@
     group: root
     mode: '0755'
   when: seaweedfs_download.changed
-  notify: restart seaweedfs
+  notify: Restart seaweedfs
 
 - name: Deploy S3 identity configuration
   become: true
@@ -63,7 +63,7 @@
     group: "{{ seaweedfs_group }}"
     mode: '0640'
   no_log: true
-  notify: restart seaweedfs
+  notify: Restart seaweedfs
 
 - name: Deploy SeaweedFS systemd unit
   become: true
@@ -74,8 +74,8 @@
     group: root
     mode: '0644'
   notify:
-    - reload systemd
-    - restart seaweedfs
+    - Reload systemd
+    - Restart seaweedfs
 
 - name: Ensure seaweedfs is started and enabled
   become: true
@@ -105,7 +105,7 @@
         group: "{{ seaweedfs_group }}"
         mode: '0640'
       no_log: true
-      notify: restart seaweedfs-admin
+      notify: Restart seaweedfs-admin
 
     - name: Deploy SeaweedFS admin systemd unit
       become: true
@@ -116,8 +116,8 @@
         group: root
         mode: '0644'
       notify:
-        - reload systemd
-        - restart seaweedfs-admin
+        - Reload systemd
+        - Restart seaweedfs-admin
 
     - name: Ensure seaweedfs-admin is started and enabled
       become: true
@@ -154,7 +154,7 @@
         owner: root
         group: root
         mode: '0644'
-      notify: reload systemd
+      notify: Reload systemd
 
     - name: Deploy backup timer unit
       become: true
@@ -164,7 +164,7 @@
         owner: root
         group: root
         mode: '0644'
-      notify: reload systemd
+      notify: Reload systemd
 
     - name: Ensure backup timer is started and enabled
       become: true

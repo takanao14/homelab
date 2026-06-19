@@ -46,7 +46,7 @@
     owner: root
     group: root
     mode: '0755'
-  notify: restart forgejo
+  notify: Restart forgejo
 
 - name: Deploy forgejo app.ini
   become: true
@@ -56,7 +56,7 @@
     owner: "{{ forgejo_user }}"
     group: "{{ forgejo_group }}"
     mode: '0640'
-  notify: restart forgejo
+  notify: Restart forgejo
 
 - name: Deploy forgejo systemd unit
   become: true
@@ -67,8 +67,8 @@
     group: root
     mode: '0644'
   notify:
-    - reload systemd
-    - restart forgejo
+    - Reload systemd
+    - Restart forgejo
 
 - name: Ensure forgejo is started and enabled
   become: true

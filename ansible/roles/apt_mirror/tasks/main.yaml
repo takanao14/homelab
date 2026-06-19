@@ -7,12 +7,12 @@
 - name: Check DEB822 sources file existence
   ansible.builtin.stat:
     path: /etc/apt/sources.list.d/ubuntu.sources
-  register: deb822_sources
+  register: apt_mirror_deb822_sources
 
 - name: Check sources.list existence
   ansible.builtin.stat:
     path: /etc/apt/sources.list
-  register: legacy_sources
+  register: apt_mirror_legacy_sources
 
 # When DEB822 format (/etc/apt/sources.list.d/ubuntu.sources) exists
 - name: Replace mirror in DEB822 sources
@@ -21,7 +21,7 @@
     path: /etc/apt/sources.list.d/ubuntu.sources
     regexp: 'http://archive\.ubuntu\.com/ubuntu'
     replace: "{{ apt_mirror_url }}"
-  when: deb822_sources.stat.exists
+  when: apt_mirror_deb822_sources.stat.exists
   notify: Update apt cache
 
 # When legacy format (/etc/apt/sources.list) exists (security entries excluded)
@@ -31,5 +31,5 @@
     path: /etc/apt/sources.list
     regexp: 'http://archive\.ubuntu\.com/ubuntu(?=[ \t]+(?![\w.-]*security))'
     replace: "{{ apt_mirror_url }}"
-  when: legacy_sources.stat.exists
+  when: apt_mirror_legacy_sources.stat.exists
   notify: Update apt cache

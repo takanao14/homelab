@@ -1,2 +1,2 @@
 ---
-timezone: Asia/Tokyo
+timezone: Asia/Tokyo # noqa var-naming[no-role-prefix]

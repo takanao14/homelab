@@ -2,7 +2,9 @@
 - name: Download dnscollector binary
   become: true
   ansible.builtin.get_url:
-    url: "https://github.com/dmachard/DNS-collector/releases/download/v{{ dnscollector_version }}/DNS-collector_{{ dnscollector_version }}_linux_{{ dnscollector_arch }}.tar.gz"
+    url: >-
+      https://github.com/dmachard/DNS-collector/releases/download/v{{ dnscollector_version
+      }}/DNS-collector_{{ dnscollector_version }}_linux_{{ dnscollector_arch }}.tar.gz
     dest: "/tmp/dnscollector-{{ dnscollector_version }}-{{ dnscollector_arch }}.tar.gz"
     mode: "0644"
 
@@ -14,7 +16,7 @@
     remote_src: true
     include:
       - dnscollector
-  notify: restart dnscollector
+  notify: Restart dnscollector
 
 - name: Ensure dnscollector binary is executable
   become: true
@@ -41,7 +43,7 @@
     owner: root
     group: root
     mode: "0644"
-  notify: restart dnscollector
+  notify: Restart dnscollector
 
 - name: Deploy dnscollector systemd unit
   become: true
@@ -64,7 +66,7 @@
 
       [Install]
       WantedBy=multi-user.target
-  notify: restart dnscollector
+  notify: Restart dnscollector
 
 - name: Ensure dnscollector is enabled and started
   become: true

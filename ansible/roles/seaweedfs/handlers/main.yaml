@@ -1,16 +1,16 @@
 ---
-- name: reload systemd
+- name: Reload systemd
   become: true
   ansible.builtin.systemd:
     daemon_reload: true
 
-- name: restart seaweedfs
+- name: Restart seaweedfs
   become: true
   ansible.builtin.service:
     name: seaweedfs
     state: restarted
 
-- name: restart seaweedfs-admin
+- name: Restart seaweedfs-admin
   become: true
   ansible.builtin.service:
     name: seaweedfs-admin

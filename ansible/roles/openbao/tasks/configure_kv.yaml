@@ -5,7 +5,7 @@
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
-  register: token_lookup
+  register: openbao_token_lookup
   changed_when: false
   failed_when: false
 
@@ -15,7 +15,7 @@
       openbao_admin_token is invalid or expired (rc={{ token_lookup.rc }}).
       Run openbao_bootstrap.yaml to generate a new token, then update
       openbao_admin_token in group_vars/openbao.sops.yaml.
-  when: token_lookup.rc != 0
+  when: openbao_token_lookup.rc != 0
 
 - name: List enabled secrets engines
   ansible.builtin.command:
@@ -23,7 +23,7 @@
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
-  register: secrets_engines
+  register: openbao_secrets_engines
   changed_when: false
 
 - name: Enable KV v2 secrets engine at secret/
@@ -32,5 +32,5 @@
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
-  when: "'secret/' not in (secrets_engines.stdout | from_json)"
+  when: "'secret/' not in (openbao_secrets_engines.stdout | from_json)"
   changed_when: true

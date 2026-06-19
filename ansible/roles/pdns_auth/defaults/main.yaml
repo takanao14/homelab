@@ -1,14 +1,14 @@
 ---
-pdns_repo_base_url: "http://repo.powerdns.com/ubuntu"
-pdns_repo_release: "{{ ansible_facts['distribution_release'] | default('noble') }}"
-pdns_repo_channel: "auth-50"
-pdns_repo_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc"
-pdns_repo_key_path: "/etc/apt/keyrings/auth-50-pub.asc"
-pdns_repo_pin_path: "/etc/apt/preferences.d/auth-50"
-pdns_repo_validate_certs: true
+pdns_repo_base_url: "http://repo.powerdns.com/ubuntu" # noqa var-naming[no-role-prefix]
+pdns_repo_release: "{{ ansible_facts['distribution_release'] | default('noble') }}" # noqa var-naming[no-role-prefix]
+pdns_repo_channel: "auth-50" # noqa var-naming[no-role-prefix]
+pdns_repo_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc" # noqa var-naming[no-role-prefix]
+pdns_repo_key_path: "/etc/apt/keyrings/auth-50-pub.asc" # noqa var-naming[no-role-prefix]
+pdns_repo_pin_path: "/etc/apt/preferences.d/auth-50" # noqa var-naming[no-role-prefix]
+pdns_repo_validate_certs: true # noqa var-naming[no-role-prefix]
 
-pdns_webserver_port: 8081
+pdns_webserver_port: 8081 # noqa var-naming[no-role-prefix]
 
 # Secrets - loaded via community.sops.sops from group_vars/dns_{primary,secondary}.sops.yaml
-pdns_primary_api_key: "{{ PDNS_PRIMARY_API_KEY }}"
-pdns_secondary_api_key: "{{ PDNS_SECONDARY_API_KEY }}"
+pdns_primary_api_key: "{{ PDNS_PRIMARY_API_KEY }}" # noqa var-naming[no-role-prefix]
+pdns_secondary_api_key: "{{ PDNS_SECONDARY_API_KEY }}" # noqa var-naming[no-role-prefix]

@@ -23,7 +23,7 @@
     # --- Rocky / RHEL (dnf) ---
     # dnf rejects autoremove together with state=latest, so upgrade and
     # autoremove are run as separate tasks.
-    - name: Upgrade all packages
+    - name: Upgrade all packages  # noqa package-latest
       ansible.builtin.dnf:
         name: "*"
         state: latest

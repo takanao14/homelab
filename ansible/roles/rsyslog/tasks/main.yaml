@@ -14,7 +14,7 @@
     owner: root
     group: root
     mode: '0644'
-  notify: restart rsyslog
+  notify: Restart rsyslog
 
 - name: Ensure rsyslog is started and enabled
   become: true

@@ -1,5 +1,5 @@
 ---
-- name: restart blackbox_exporter
+- name: Restart blackbox_exporter
   become: true
   ansible.builtin.service:
     name: prometheus-blackbox-exporter

@@ -5,7 +5,7 @@
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
-  register: auth_methods
+  register: openbao_auth_methods
   changed_when: false
 
 - name: Enable userpass auth method
@@ -14,7 +14,7 @@
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
-  when: "'userpass/' not in (auth_methods.stdout | from_json)"
+  when: "'userpass/' not in (openbao_auth_methods.stdout | from_json)"
   changed_when: true
 
 - name: Write kv-admin policy

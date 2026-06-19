@@ -5,7 +5,7 @@
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
-  register: auth_methods
+  register: openbao_auth_methods
   changed_when: false
 
 - name: Enable Kubernetes auth method
@@ -15,7 +15,7 @@
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
   loop: "{{ openbao_k8s_clusters }}"
-  when: "(item.mount_path + '/') not in (auth_methods.stdout | from_json)"
+  when: "(item.mount_path + '/') not in (openbao_auth_methods.stdout | from_json)"
   changed_when: true
 
 - name: Deploy Kubernetes CA certificate

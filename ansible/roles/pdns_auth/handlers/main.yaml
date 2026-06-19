@@ -4,4 +4,3 @@
     name: pdns
     state: restarted
     daemon_reload: true
-

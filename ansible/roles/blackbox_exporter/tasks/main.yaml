@@ -16,7 +16,7 @@
     owner: root
     group: root
     mode: '0644'
-  notify: restart blackbox_exporter
+  notify: Restart blackbox_exporter
 
 # CAP_NET_RAW is required for ICMP.
 # setcap is used instead of AmbientCapabilities as it works more reliably.

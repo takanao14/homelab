@@ -4,6 +4,7 @@
     _maintenance_user_should_run: "{{ ansible_facts['virtualization_type'] == 'lxc' or maintenance_user_force | bool }}"
 
 - name: Setup maintenance user
+  when: _maintenance_user_should_run
   block:
     - name: Validate required environment variables
       ansible.builtin.assert:
@@ -42,7 +43,7 @@
 
     - name: Resolve SSH key from path
       ansible.builtin.set_fact:
-        _maintenance_ssh_key_resolved: >-
+        maintenance_user_ssh_key_resolved: >-
           {{ maintenance_ssh_key if (maintenance_ssh_key | length > 0)
              else (lookup('file', maintenance_ssh_key_path | expanduser, errors='ignore') | default('')) }}
 
@@ -51,6 +52,5 @@
       ansible.posix.authorized_key:
         user: "{{ maintenance_user }}"
         state: present
-        key: "{{ _maintenance_ssh_key_resolved }}"
-      when: _maintenance_ssh_key_resolved | length > 0
-  when: _maintenance_user_should_run
+        key: "{{ maintenance_user_ssh_key_resolved }}"
+      when: maintenance_user_ssh_key_resolved | length > 0

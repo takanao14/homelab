@@ -124,7 +124,7 @@
     method: GET
     headers:
       X-API-Key: "{{ pdns_secondary_api_key }}"
-  register: pdns_autoprimaries
+  register: pdns_auth_autoprimaries
   changed_when: false
   when: pdns_role == 'secondary'
 
@@ -139,4 +139,4 @@
     status_code: 201
   when:
     - pdns_role == 'secondary'
-    - pdns_autoprimaries.json | selectattr('ip', 'equalto', pdns_primary_addr) | list | length == 0
+    - pdns_auth_autoprimaries.json | selectattr('ip', 'equalto', pdns_primary_addr) | list | length == 0

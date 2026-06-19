@@ -32,7 +32,7 @@
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_root_token }}"
-  register: admin_policy_check
+  register: openbao_admin_policy_check
   changed_when: false
   failed_when: false
 
@@ -43,7 +43,7 @@
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_root_token }}"
-  when: admin_policy_check.rc != 0 or admin_policy_check.stdout != openbao_admin_policy
+  when: openbao_admin_policy_check.rc != 0 or openbao_admin_policy_check.stdout != openbao_admin_policy
   changed_when: true
 
 - name: Create admin token
@@ -57,11 +57,11 @@
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_root_token }}"
-  register: admin_token_result
+  register: openbao_admin_token_result
   changed_when: true
 
 - name: Show admin token
   ansible.builtin.debug:
     msg: >-
       Admin token created. Add the following to openbao.sops.yaml:
-      openbao_admin_token: "{{ (admin_token_result.stdout | from_json).auth.client_token }}"
+      openbao_admin_token: "{{ (openbao_admin_token_result.stdout | from_json).auth.client_token }}"

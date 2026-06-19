@@ -15,7 +15,7 @@
     update_cache: true
     name: openbao
     state: present
-  notify: restart openbao
+  notify: Restart openbao
 
 - name: Create data directory
   become: true
@@ -34,7 +34,7 @@
     owner: root
     group: "{{ openbao_group }}"
     mode: '0640'
-  notify: restart openbao
+  notify: Restart openbao
 
 - name: Deploy seal key
   become: true
@@ -63,8 +63,8 @@
     group: root
     mode: '0644'
   notify:
-    - reload systemd
-    - restart openbao
+    - Reload systemd
+    - Restart openbao
 
 - name: Ensure openbao is started and enabled
   become: true

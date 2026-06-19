@@ -1,5 +1,5 @@
 ---
-- name: restart kea-dhcp4
+- name: Restart kea-dhcp4
   become: true
   ansible.builtin.systemd:
     name: kea-dhcp4-server

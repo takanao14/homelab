@@ -32,7 +32,7 @@
     owner: root
     group: root
     mode: "0755"
-  notify: restart caddy
+  notify: Restart caddy
 
 - name: Set CAP_NET_BIND_SERVICE on Caddy binary
   become: true
@@ -50,7 +50,7 @@
     owner: "{{ caddy_user }}"
     group: "{{ caddy_group }}"
     mode: "0640"
-  notify: restart caddy
+  notify: Restart caddy
 
 - name: Deploy caddy environment file
   become: true
@@ -60,7 +60,7 @@
     owner: "{{ caddy_user }}"
     group: "{{ caddy_group }}"
     mode: "0640"
-  notify: restart caddy
+  notify: Restart caddy
 
 - name: Deploy caddy systemd unit
   become: true
@@ -85,7 +85,7 @@
 
       [Install]
       WantedBy=multi-user.target
-  notify: restart caddy
+  notify: Restart caddy
 
 - name: Ensure caddy is started and enabled
   become: true

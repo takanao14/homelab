@@ -1,10 +1,10 @@
 ---
-- name: reload systemd
+- name: Reload systemd
   become: true
   ansible.builtin.systemd:
     daemon_reload: true
 
-- name: restart forgejo-runner
+- name: Restart forgejo-runner
   become: true
   ansible.builtin.service:
     name: forgejo-runner

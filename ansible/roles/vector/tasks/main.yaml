@@ -27,7 +27,7 @@
     owner: root
     group: root
     mode: '0644'
-  notify: restart vector
+  notify: Restart vector
 
 - name: Ensure Vector is started and enabled
   become: true
