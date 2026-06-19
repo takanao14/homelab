@@ -106,6 +106,15 @@ Collections are installed under `ansible/collections/` so both Ansible and
 `ansible-lint` resolve the same pinned dependencies regardless of how the tools
 were installed.
 
+Run the project lint checks from this directory:
+
+```bash
+ansible-lint
+```
+
+The local Collection installation directory and SOPS-generated encrypted YAML
+files are excluded by `.ansible-lint`.
+
 ### 2. Set Up Secrets
 
 Secrets are managed with SOPS and loaded natively by Ansible via the `community.sops.sops` vars plugin.

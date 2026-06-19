@@ -1,0 +1,5 @@
+---
+exclude_paths:
+  - collections/
+  - inventories/homelab/group_vars/*.sops.yaml
+  - inventories/homelab/host_vars/*.sops.yaml
