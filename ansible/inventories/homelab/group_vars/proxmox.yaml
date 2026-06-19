@@ -12,3 +12,14 @@ sysctl_settings:
 # would be needless surgery on the hypervisor).
 chrony_install: false
 chrony_manage_timesyncd: false
+
+# Forward Proxmox host logs to the central Vector syslog aggregator.
+rsyslog_forward_host: "192.168.10.243"
+rsyslog_forward_port: 514
+rsyslog_forward_protocol: tcp
+rsyslog_journal_input: true
+rsyslog_ignore_previous_journal: true
+rsyslog_queue_size: 10000
+rsyslog_queue_high_watermark: 9000
+rsyslog_queue_low_watermark: 7000
+rsyslog_queue_max_disk_space: "256m"

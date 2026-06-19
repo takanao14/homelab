@@ -13,6 +13,9 @@
     - role: sysctl
       tags: sysctl
 
+    - role: rsyslog
+      tags: rsyslog
+
   tasks:
     # Set access permissions for Proxmox GUI (Web UI)
     - name: Get Proxmox users

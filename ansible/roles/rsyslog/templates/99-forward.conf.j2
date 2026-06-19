@@ -3,8 +3,66 @@
 template(name="ForwardRFC5424UTC" type="string"
   string="<%PRI%>1 %TIMESTAMP:::date-rfc3339% %HOSTNAME% %APP-NAME% %PROCID% %MSGID% %STRUCTURED-DATA% %MSG%\n")
 
+{% if rsyslog_journal_input %}
+## Read journald directly and forward through a dedicated ruleset, so journal
+## entries bypass the default local-file rules (imuxsock keeps writing local
+## files): no duplicate processing, and remote-forwarding failures stay
+## isolated from Proxmox services. Disk-assisted memory queue (LinkedList) keeps
+## steady-state I/O off the hypervisor disk and only spills to disk when backed
+## up; timeoutEnqueue="0" drops instead of blocking the producer when the queue
+## is full.
+##
+## NOTE: ruleset binding for imjournal is set on the input() object, NOT on the
+## module() statement (module-level `ruleset` is unsupported for imjournal). The
+## input() form requires rsyslog >= 8.2312.0, which Proxmox VE 9 ships. The
+## ruleset must be defined before the input() references it.
+module(
+  load="imjournal"
+  StateFile="imjournal-loki.state"
+  IgnorePreviousMessages="{{ 'on' if rsyslog_ignore_previous_journal else 'off' }}"
+)
+
+ruleset(name="ForwardJournalToLoki") {
+  action(
+    type="omfwd"
+    target="{{ rsyslog_forward_host }}"
+    port="{{ rsyslog_forward_port }}"
+    protocol="{{ rsyslog_forward_protocol }}"
+    template="ForwardRFC5424UTC"
+    action.resumeRetryCount="-1"
+    queue.type="LinkedList"
+    queue.size="{{ rsyslog_queue_size }}"
+    queue.highWatermark="{{ rsyslog_queue_high_watermark }}"
+    queue.lowWatermark="{{ rsyslog_queue_low_watermark }}"
+    queue.filename="loki_forward"
+    queue.maxDiskSpace="{{ rsyslog_queue_max_disk_space }}"
+    queue.saveOnShutdown="on"
+    queue.timeoutEnqueue="0"
+  )
+}
+
+input(
+  type="imjournal"
+  ruleset="ForwardJournalToLoki"
+)
+{% else %}
 {% if rsyslog_forward_protocol == "tcp" %}
-*.* action(type="omfwd" target="{{ rsyslog_forward_host }}" port="{{ rsyslog_forward_port }}" protocol="tcp" template="ForwardRFC5424UTC")
+*.* action(
+  type="omfwd"
+  target="{{ rsyslog_forward_host }}"
+  port="{{ rsyslog_forward_port }}"
+  protocol="tcp"
+  template="ForwardRFC5424UTC"
+  action.resumeRetryCount="-1"
+  queue.type="LinkedList"
+  queue.size="{{ rsyslog_queue_size }}"
+  queue.highWatermark="{{ rsyslog_queue_high_watermark }}"
+  queue.lowWatermark="{{ rsyslog_queue_low_watermark }}"
+  queue.filename="loki_forward"
+  queue.maxDiskSpace="{{ rsyslog_queue_max_disk_space }}"
+  queue.saveOnShutdown="on"
+)
 {% else %}
 *.* action(type="omfwd" target="{{ rsyslog_forward_host }}" port="{{ rsyslog_forward_port }}" protocol="udp" template="ForwardRFC5424UTC")
+{% endif %}
 {% endif %}

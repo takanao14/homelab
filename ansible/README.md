@@ -149,7 +149,7 @@ ansible-playbook playbooks/dnsdist.yaml
 ansible-playbook playbooks/dhcp.yaml
 
 # Syslog aggregator
-ansible-playbook playbooks/syslog.yaml
+ansible-playbook playbooks/vector.yaml
 
 # Node Exporter
 ansible-playbook playbooks/node_exporter.yaml
