@@ -12,17 +12,19 @@ readonly KUBIE_VERSION="${KUBIE_VERSION:-0.28.0}"
 # renovate: datasource=github-releases depName=derailed/k9s
 readonly K9S_VERSION="${K9S_VERSION:-0.51.0}"
 # renovate: datasource=github-releases depName=helmfile/helmfile
-readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.5.3}"
+readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.5.5}"
 # renovate: datasource=github-releases depName=k0sproject/k0sctl
-readonly K0SCTL_VERSION="${K0SCTL_VERSION:-0.30.1}"
+readonly K0SCTL_VERSION="${K0SCTL_VERSION:-0.31.0}"
 # renovate: datasource=github-releases depName=getsops/sops
 readonly SOPS_VERSION="${SOPS_VERSION:-3.13.1}"
 # renovate: datasource=github-releases depName=gruntwork-io/terragrunt
-readonly TERRAGRUNT_VERSION="${TERRAGRUNT_VERSION:-1.0.7}"
+readonly TERRAGRUNT_VERSION="${TERRAGRUNT_VERSION:-1.0.8}"
 # renovate: datasource=github-releases depName=opentofu/opentofu
-readonly OPENTOFU_VERSION="${OPENTOFU_VERSION:-1.12.1}"
+readonly OPENTOFU_VERSION="${OPENTOFU_VERSION:-1.12.3}"
 # renovate: datasource=github-releases depName=helm/helm
-readonly HELM_VERSION="${HELM_VERSION:-4.2.0}"
+readonly HELM_VERSION="${HELM_VERSION:-4.2.2}"
+# renovate: datasource=github-releases depName=argoproj/argo-cd
+readonly ARGOCD_VERSION="${ARGOCD_VERSION:-3.4.4}"
 # renovate: datasource=github-releases depName=FiloSottile/age
 readonly AGE_VERSION="${AGE_VERSION:-1.3.1}"
 # renovate: datasource=github-releases depName=cilium/cilium-cli
@@ -38,13 +40,15 @@ readonly DIRENV_VERSION="${DIRENV_VERSION:-2.37.1}"
 # renovate: datasource=github-releases depName=kubernetes-sigs/krew
 readonly KREW_VERSION="${KREW_VERSION:-0.5.0}"
 # renovate: datasource=github-releases depName=DNSControl/dnscontrol
-readonly DNSCONTROL_VERSION="${DNSCONTROL_VERSION:-4.41.0}"
+readonly DNSCONTROL_VERSION="${DNSCONTROL_VERSION:-4.42.0}"
 # renovate: datasource=pypi depName=ansible-core
-readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.21.0}"
+readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.21.1}"
 # renovate: datasource=pypi depName=ansible-lint
 readonly ANSIBLE_LINT_VERSION="${ANSIBLE_LINT_VERSION:-26.4.0}"
 # renovate: datasource=github-tags depName=aws/aws-cli
-readonly AWS_CLI_VERSION="${AWS_CLI_VERSION:-2.35.2}"
+readonly AWS_CLI_VERSION="${AWS_CLI_VERSION:-2.35.8}"
+# renovate: datasource=github-releases depName=rclone/rclone
+readonly RCLONE_VERSION="${RCLONE_VERSION:-1.74.3}"
 
 # Install location. Defaults to a per-user prefix. Set TOOL_BIN_DIR (and
 # TOOL_VERSION_CACHE_DIR) to a system-wide path such as /usr/local/bin to make
@@ -314,6 +318,13 @@ install_helm() {
     install -m 0755 "$tmp_dir/linux-${BIN_ARCH}/helm" "$BIN_DIR/helm"
 }
 
+install_argocd() {
+    install_binary "argocd" \
+        "https://github.com/argoproj/argo-cd/releases/download/v${ARGOCD_VERSION}/argocd-linux-${BIN_ARCH}" \
+        "$BIN_DIR/argocd" \
+        "https://github.com/argoproj/argo-cd/releases/download/v${ARGOCD_VERSION}/cli_checksums.txt"
+}
+
 install_kubie() {
     install_binary "kubie" \
         "https://github.com/sbstp/kubie/releases/download/v${KUBIE_VERSION}/kubie-linux-${BIN_ARCH}" \
@@ -490,6 +501,29 @@ AWS_CLI_PGP_KEY
 }
 
 # ============================================================================
+# Cloud Storage Tools
+# ============================================================================
+
+# rclone ships as a zip with the binary nested in a versioned subdirectory, and
+# its SHA256SUMS lists the zip by name -- so it can't use the generic
+# install_binary (tar.gz/raw only). Verify the zip, then extract just the binary.
+# Used by homelab's packer/push.sh to upload custom images to the SeaweedFS S3
+# bucket.
+install_rclone() {
+    log_info "Installing rclone ${RCLONE_VERSION}..."
+    local tmp_dir zip_name
+    make_tmp_dir tmp_dir
+    zip_name="rclone-v${RCLONE_VERSION}-linux-${BIN_ARCH}.zip"
+    curl -fsSL "https://github.com/rclone/rclone/releases/download/v${RCLONE_VERSION}/${zip_name}" \
+        -o "${tmp_dir}/rclone.zip"
+    verify_sha256 "${tmp_dir}/rclone.zip" \
+        "https://github.com/rclone/rclone/releases/download/v${RCLONE_VERSION}/SHA256SUMS" \
+        "$zip_name"
+    unzip -j -q "${tmp_dir}/rclone.zip" "*/rclone" -d "${tmp_dir}"
+    install -m 0755 "${tmp_dir}/rclone" "$BIN_DIR/rclone"
+}
+
+# ============================================================================
 # Python Tools (pipx)
 # ============================================================================
 
@@ -563,6 +597,7 @@ main() {
     install_if_needed "tofu"       "$OPENTOFU_VERSION"   install_opentofu
 
     install_if_needed "helm"     "$HELM_VERSION"     install_helm
+    install_if_needed "argocd"   "$ARGOCD_VERSION"   install_argocd
     install_helm_diff_plugin
     install_krew_if_needed
     install_if_needed "kubie"    "$KUBIE_VERSION"    install_kubie
@@ -574,6 +609,7 @@ main() {
     install_if_needed "dnscontrol" "$DNSCONTROL_VERSION" install_dnscontrol
 
     install_if_needed "aws" "$AWS_CLI_VERSION" install_aws_cli
+    install_if_needed "rclone" "$RCLONE_VERSION" install_rclone
 
     install_if_needed "ansible"      "$ANSIBLE_CORE_VERSION" install_ansible
     install_if_needed "ansible-lint" "$ANSIBLE_LINT_VERSION" install_ansible_lint

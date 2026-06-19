@@ -1,6 +1,6 @@
 # Vendored from takanao14/dotfiles, synced by sync.sh. Do not edit the run_onchange_*.sh
 # files by hand; re-run sync.sh to update them.
 repo: takanao14/dotfiles
-ref:  bb51dae
-sha:  bb51dae03c7add1bf7209b7f1f6b6e82606dc6f7
-date: 2026-06-11T12:27:57Z
+ref:  main
+sha:  61695c54554aa3033d075a7197ad3afae4545895
+date: 2026-06-19T01:48:07Z
