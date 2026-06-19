@@ -74,7 +74,7 @@ build {
   sources = ["source.qemu.ubuntu24_xrdp"]
 
   # Install base packages: guest agent, desktop/XRDP, container runtime,
-  # virtualization and GUI tools (Chrome, VS Code, Wireshark, HashiCorp).
+  # virtualization and GUI tools (Firefox, VS Code, Wireshark, HashiCorp).
   provisioner "shell" {
     scripts = [
       "scripts/ubuntu/qemu-ga.sh",

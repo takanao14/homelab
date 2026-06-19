@@ -218,7 +218,7 @@ runtime. Refresh those copies with `../scripts/install/vendor/sync.sh`.
 
 **Not tracked (always installed as latest):**
 - Unpinned APT/DNF packages installed by the shared package installer or Packer
-  scripts (terraform, packer, vault, Chrome, VS Code, Wireshark, Podman, etc.)
+  scripts (terraform, packer, vault, Firefox, VS Code, Wireshark, Podman, etc.)
 
 ## Customization
 

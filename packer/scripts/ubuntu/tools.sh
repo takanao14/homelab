@@ -8,10 +8,25 @@ echo "Installing desktop and development tools..."
 # Update package lists
 apt-get update
 
-# Install Google Chrome browser
-wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-dpkg -i google-chrome-stable_current_amd64.deb || apt-get -f install -y
-rm -f google-chrome-stable_current_amd64.deb
+# Install Firefox ESR from Mozilla's APT repository.
+# Ubuntu 24.04's default "firefox" package is a snap transitional package;
+# the Mozilla repo provides a real .deb and avoids snap on this xrdp image.
+# ESR is used to match Rocky's firefox package (also ESR) for consistency.
+# Reference: https://support.mozilla.org/en-US/kb/install-firefox-linux
+apt-get install -y wget
+install -d -m 0755 /etc/apt/keyrings
+wget -qO- https://packages.mozilla.org/apt/repo-signing-key.gpg | tee /etc/apt/keyrings/packages.mozilla.org.asc > /dev/null
+echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" > /etc/apt/sources.list.d/mozilla.list
+
+# Pin the Mozilla repo above the Ubuntu snap transitional package
+cat > /etc/apt/preferences.d/mozilla << 'EOF'
+Package: *
+Pin: origin packages.mozilla.org
+Pin-Priority: 1000
+EOF
+
+apt-get update
+apt-get install -y firefox-esr
 
 # Install Wireshark network protocol analyzer
 DEBIAN_FRONTEND=noninteractive apt-get install -y wireshark

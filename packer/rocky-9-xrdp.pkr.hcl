@@ -74,7 +74,7 @@ build {
   sources = ["source.qemu.rocky_9_xrdp"]
 
   # Install base packages: timezone, desktop/XRDP, container runtime,
-  # virtualization and GUI tools (Chrome, VS Code, Wireshark, HashiCorp).
+  # virtualization and GUI tools (Firefox, VS Code, Wireshark, HashiCorp).
   provisioner "shell" {
     scripts = [
       "scripts/rocky/timezone.sh",

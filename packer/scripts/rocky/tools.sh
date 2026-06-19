@@ -1,6 +1,6 @@
 #!/bin/bash
 # Desktop and development tools installation script
-# Installs Chrome, Wireshark, VS Code, and HashiCorp tools
+# Installs Firefox, Wireshark, VS Code, and HashiCorp tools
 # These tools are commonly used for development and system administration
 
 set -euo pipefail
@@ -10,11 +10,8 @@ echo "Installing desktop and development tools..."
 # Update package lists
 dnf update -y
 
-# Install Google Chrome browser
-# Download and install the latest stable version
-curl -sS -L -o google-chrome-stable_current_x86_64.rpm https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
-dnf install -y ./google-chrome-stable_current_x86_64.rpm
-rm -f google-chrome-stable_current_x86_64.rpm
+# Install Firefox browser from the default AppStream repository
+dnf install -y firefox
 
 # Install Wireshark network protocol analyzer
 dnf install -y wireshark
