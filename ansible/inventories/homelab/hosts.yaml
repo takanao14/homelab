@@ -46,6 +46,12 @@ all:
       ansible_host: 192.168.40.30
     seaweedfs1:
       ansible_host: 192.168.50.31
+    toolbox1:
+      ansible_host: 192.168.50.30
+    toolbox2:
+      ansible_host: 192.168.20.21
+    toolbox3:
+      ansible_host: 192.168.20.23
   children:
     dns:
       children:

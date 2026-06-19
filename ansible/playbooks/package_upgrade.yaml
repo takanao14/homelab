@@ -11,24 +11,31 @@
         upgrade: dist
         autoremove: true
       become: true
-      when: ansible_os_family == "Debian"
+      when: ansible_facts['os_family'] == "Debian"
 
     - name: Check if reboot is required (Debian)
       ansible.builtin.stat:
         path: /var/run/reboot-required
       register: deb_reboot_required
       become: true
-      when: ansible_os_family == "Debian"
+      when: ansible_facts['os_family'] == "Debian"
 
     # --- Rocky / RHEL (dnf) ---
+    # dnf rejects autoremove together with state=latest, so upgrade and
+    # autoremove are run as separate tasks.
     - name: Upgrade all packages
       ansible.builtin.dnf:
         name: "*"
         state: latest
         update_cache: true
+      become: true
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Remove unused dependencies
+      ansible.builtin.dnf:
         autoremove: true
       become: true
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts['os_family'] == "RedHat"
 
     # needs-restarting ships with dnf-utils; required for the reboot check below.
     - name: Ensure dnf-utils is present
@@ -36,7 +43,7 @@
         name: dnf-utils
         state: present
       become: true
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts['os_family'] == "RedHat"
 
     # Exit code 1 means a reboot is required, 0 means not. failed_when disabled
     # so the non-zero code is treated as data rather than a task failure.
@@ -46,7 +53,7 @@
       changed_when: false
       failed_when: false
       become: true
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts['os_family'] == "RedHat"
 
     # --- Common reboot ---
     - name: Reboot if required
@@ -54,5 +61,5 @@
         reboot_timeout: 300
       become: true
       when: >
-        (ansible_os_family == "Debian" and deb_reboot_required.stat.exists)
-        or (ansible_os_family == "RedHat" and rhel_reboot_required.rc == 1)
+        (ansible_facts['os_family'] == "Debian" and deb_reboot_required.stat.exists)
+        or (ansible_facts['os_family'] == "RedHat" and rhel_reboot_required.rc == 1)
