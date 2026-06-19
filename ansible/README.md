@@ -59,7 +59,7 @@ ansible/
 │   ├── openbao_seed_secrets.yaml
 │   ├── proxmox.yaml
 │   ├── maintenance_user.yaml
-│   ├── apt_upgrade.yaml
+│   ├── package_upgrade.yaml
 │   ├── apt_mirror.yaml
 │   ├── unattended_upgrades.yaml
 │   ├── gpuvm.yaml
@@ -156,8 +156,8 @@ ansible-playbook playbooks/maintenance_user.yaml
 # Bulk user accounts on shared VMs
 ansible-playbook playbooks/users.yaml
 
-# Apt package upgrade (all hosts)
-ansible-playbook playbooks/apt_upgrade.yaml
+# OS package upgrade (all hosts; apt on Debian/Ubuntu, dnf on Rocky/RHEL)
+ansible-playbook playbooks/package_upgrade.yaml
 
 # Dry run
 ansible-playbook playbooks/pdns_auth.yaml --check
@@ -186,7 +186,7 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `proxmox.yaml` | `proxmox` |
 | `maintenance_user.yaml` | `lxc` |
 | `users.yaml` | `shared_vms` |
-| `apt_upgrade.yaml` | `all:!proxmox` |
+| `package_upgrade.yaml` | `all:!proxmox` |
 | `apt_mirror.yaml` | `all` |
 | `unattended_upgrades.yaml` | `all:!proxmox` |
 | `gpuvm.yaml` | `gpuvm` |

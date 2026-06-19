@@ -1,0 +1,58 @@
+---
+- name: Upgrade OS packages on all hosts
+  hosts: all:!proxmox
+  serial: 1
+  any_errors_fatal: false
+  tasks:
+    # --- Debian / Ubuntu (apt) ---
+    - name: Update apt cache and upgrade packages
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        autoremove: true
+      become: true
+      when: ansible_os_family == "Debian"
+
+    - name: Check if reboot is required (Debian)
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: deb_reboot_required
+      become: true
+      when: ansible_os_family == "Debian"
+
+    # --- Rocky / RHEL (dnf) ---
+    - name: Upgrade all packages
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+        autoremove: true
+      become: true
+      when: ansible_os_family == "RedHat"
+
+    # needs-restarting ships with dnf-utils; required for the reboot check below.
+    - name: Ensure dnf-utils is present
+      ansible.builtin.dnf:
+        name: dnf-utils
+        state: present
+      become: true
+      when: ansible_os_family == "RedHat"
+
+    # Exit code 1 means a reboot is required, 0 means not. failed_when disabled
+    # so the non-zero code is treated as data rather than a task failure.
+    - name: Check if reboot is required (RedHat)
+      ansible.builtin.command: needs-restarting -r
+      register: rhel_reboot_required
+      changed_when: false
+      failed_when: false
+      become: true
+      when: ansible_os_family == "RedHat"
+
+    # --- Common reboot ---
+    - name: Reboot if required
+      ansible.builtin.reboot:
+        reboot_timeout: 300
+      become: true
+      when: >
+        (ansible_os_family == "Debian" and deb_reboot_required.stat.exists)
+        or (ansible_os_family == "RedHat" and rhel_reboot_required.rc == 1)
