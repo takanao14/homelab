@@ -13,7 +13,8 @@ handled on the router (multiple upstreams on the IX), not per-client.
   (installing chrony already deactivates it). Tolerated as a no-op where the unit
   is absent (minimal images); skipped on RedHat/Rocky (no timesyncd) and where
   `chrony_manage_timesyncd` is false.
-- Comments out the distribution default `pool` directives in the chrony config.
+- Comments out unmanaged active `server`, `pool`, and `peer` directives in the
+  chrony config so only the Ansible-managed sources remain active.
 - Injects an Ansible-managed block of `server` directives (the router, plus any
   optional `chrony_fallback_servers`).
 - Enables and starts the chrony service, restarting it on config change.

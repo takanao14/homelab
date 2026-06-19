@@ -22,22 +22,22 @@
     name: systemd-timesyncd
     state: stopped
     enabled: false
-  register: timesyncd_stop
+  register: chrony_timesyncd_stop
   failed_when:
-    - timesyncd_stop is failed
-    - "'Could not find the requested service' not in (timesyncd_stop.msg | default(''))"
+    - chrony_timesyncd_stop is failed
+    - "'Could not find the requested service' not in (chrony_timesyncd_stop.msg | default(''))"
   when:
     - chrony_manage_timesyncd | default(true)
     - ansible_facts['os_family'] == "Debian"
 
-# Comment out the distribution default 'pool' directives so only the managed
-# servers below are used. Managed entries use 'server', so they are never
-# matched here, which keeps this task idempotent and self-contained.
-- name: Disable distribution default NTP pools
+# Comment out active NTP sources outside the managed block so the configured
+# homelab servers are the only sources used. Managed server lines carry a
+# trailing marker and are excluded, keeping subsequent runs idempotent.
+- name: Disable unmanaged NTP sources
   become: true
   ansible.builtin.replace:
     path: "{{ chrony_conf_path }}"
-    regexp: '^(pool\s+.*)$'
+    regexp: '^(?![ \t]*(?:server|pool|peer)[ \t]+.*# managed by ansible \(chrony role\)[ \t]*$)([ \t]*(?:server|pool|peer)[ \t]+.*)$'
     replace: '# \1  # disabled by ansible (chrony role)'
   notify: Restart chrony
 
@@ -48,7 +48,7 @@
     marker: "# {mark} ANSIBLE MANAGED BLOCK (chrony role)"
     block: |
       {% for host in chrony_servers + chrony_fallback_servers %}
-      server {{ host }} iburst
+      server {{ host }} iburst # managed by ansible (chrony role)
       {% endfor %}
   notify: Restart chrony
 
