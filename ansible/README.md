@@ -61,6 +61,7 @@ ansible/
 │   ├── maintenance_user.yaml
 │   ├── package_upgrade.yaml
 │   ├── apt_mirror.yaml
+│   ├── chrony.yaml
 │   ├── unattended_upgrades.yaml
 │   ├── gpuvm.yaml
 │   └── rpi3.yaml
@@ -159,6 +160,9 @@ ansible-playbook playbooks/users.yaml
 # OS package upgrade (all hosts; apt on Debian/Ubuntu, dnf on Rocky/RHEL)
 ansible-playbook playbooks/package_upgrade.yaml
 
+# Time synchronization (chrony -> router; physical hosts and VMs, not LXC)
+ansible-playbook playbooks/chrony.yaml
+
 # Dry run
 ansible-playbook playbooks/pdns_auth.yaml --check
 ```
@@ -189,6 +193,7 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `package_upgrade.yaml` | `all:!proxmox` |
 | `apt_mirror.yaml` | `all` |
 | `unattended_upgrades.yaml` | `all:!proxmox` |
+| `chrony.yaml` | `all:!lxc` |
 | `gpuvm.yaml` | `gpuvm` |
 | `rpi3.yaml` | `rpi3` |
 

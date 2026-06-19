@@ -5,3 +5,10 @@ sysctl_settings:
   # Default 60 swaps out live VM pages too eagerly on a hypervisor; 10 only
   # swaps under genuine memory pressure. See roles/sysctl/README.md.
   vm.swappiness: 10
+
+# Proxmox ships chrony by default, so the chrony role only repoints its config
+# at the router: never (re)install the package, and never touch the systemd
+# state of timesyncd (it already yielded to chrony — masking/disabling it here
+# would be needless surgery on the hypervisor).
+chrony_install: false
+chrony_manage_timesyncd: false

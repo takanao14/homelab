@@ -1,0 +1,23 @@
+---
+# Whether this role installs the chrony package. Set to false for hosts that
+# already ship chrony and where installing must be avoided (e.g. Proxmox
+# hypervisors, configured via group_vars/proxmox.yaml). Configuration is still
+# applied regardless of this flag.
+chrony_install: true
+
+# Whether to stop/disable systemd-timesyncd. Only relevant on Debian/Ubuntu.
+# Set false for hosts that already run chrony (timesyncd already yielded), so we
+# don't perform needless systemd state changes on them (e.g. Proxmox).
+chrony_manage_timesyncd: true
+
+# NTP source(s) for clients. The on-prem router is the single internal NTP
+# server: clients point only at it (reachable from every internal segment), and
+# external-source redundancy is handled on the router itself (multiple upstreams
+# configured on the IX router), not per-client. This avoids every host egressing
+# to the internet and keeps a single, central time authority.
+chrony_servers:
+  - 192.168.10.1
+
+# Optional extra source(s) appended after chrony_servers. Empty by default;
+# redundancy lives on the router, so clients normally need no external fallback.
+chrony_fallback_servers: []

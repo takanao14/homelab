@@ -1,0 +1,9 @@
+---
+# Time synchronization for physical hosts and VMs. LXC containers are excluded
+# (they inherit the host clock and cannot set time themselves).
+- name: Configure chrony time synchronization
+  hosts: all:!lxc
+  any_errors_fatal: false
+  roles:
+    - role: chrony
+      tags: chrony

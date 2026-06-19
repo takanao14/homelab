@@ -1,0 +1,60 @@
+---
+- name: Load OS-specific variables
+  ansible.builtin.include_vars: "{{ ansible_facts['os_family'] }}.yaml"
+
+- name: Ensure chrony is installed
+  become: true
+  ansible.builtin.package:
+    name: chrony
+    state: present
+  when: chrony_install | default(true)
+
+# On Debian/Ubuntu the default time sync is systemd-timesyncd. When we newly
+# install chrony, stop/disable timesyncd so the two NTP clients don't compete.
+# We deliberately do NOT mask it: installing chrony already deactivates timesyncd
+# naturally, so masking is needless aggressive systemd surgery. Hosts that
+# already run chrony (e.g. Proxmox) set chrony_manage_timesyncd=false.
+# Minimal images may not ship the unit at all, so tolerate a "not found" result
+# rather than relying on service_facts (which can misreport the unit's presence).
+- name: Stop and disable systemd-timesyncd (replaced by chrony)
+  become: true
+  ansible.builtin.systemd:
+    name: systemd-timesyncd
+    state: stopped
+    enabled: false
+  register: timesyncd_stop
+  failed_when:
+    - timesyncd_stop is failed
+    - "'Could not find the requested service' not in (timesyncd_stop.msg | default(''))"
+  when:
+    - chrony_manage_timesyncd | default(true)
+    - ansible_facts['os_family'] == "Debian"
+
+# Comment out the distribution default 'pool' directives so only the managed
+# servers below are used. Managed entries use 'server', so they are never
+# matched here, which keeps this task idempotent and self-contained.
+- name: Disable distribution default NTP pools
+  become: true
+  ansible.builtin.replace:
+    path: "{{ chrony_conf_path }}"
+    regexp: '^(pool\s+.*)$'
+    replace: '# \1  # disabled by ansible (chrony role)'
+  notify: Restart chrony
+
+- name: Configure homelab NTP servers
+  become: true
+  ansible.builtin.blockinfile:
+    path: "{{ chrony_conf_path }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK (chrony role)"
+    block: |
+      {% for host in chrony_servers + chrony_fallback_servers %}
+      server {{ host }} iburst
+      {% endfor %}
+  notify: Restart chrony
+
+- name: Ensure chrony is enabled and running
+  become: true
+  ansible.builtin.service:
+    name: "{{ chrony_service }}"
+    enabled: true
+    state: started
