@@ -99,8 +99,12 @@ brew install sops
 
 # Install Ansible collections
 cd ansible
-ansible-galaxy collection install -r requirements.yaml
+ansible-galaxy collection install -r requirements.yaml -p collections --force
 ```
+
+Collections are installed under `ansible/collections/` so both Ansible and
+`ansible-lint` resolve the same pinned dependencies regardless of how the tools
+were installed.
 
 ### 2. Set Up Secrets
 
