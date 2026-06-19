@@ -18,7 +18,7 @@ releases:
   - name: cilium
     namespace: kube-system
     chart: oci://quay.io/cilium/charts/cilium
-    version: 1.19.4
+    version: 1.19.5
     values:
       - values/cilium.yaml.gotmpl
 
@@ -27,7 +27,7 @@ releases:
     namespace: openebs
     createNamespace: true
     chart: openebs/openebs
-    version: 4.5.0
+    version: 4.5.1
     values:
       - values/openebs.yaml
   {{- else if eq $storage "longhorn" }}
