@@ -10,4 +10,4 @@ rocm_amdgpu_minimum_boot_free_mb: 300
 # Updated manually with rocm_amdgpu_version.
 rocm_udev_rules: amdgpu-insecure-instinct-udev-rules_30.30.4.0-2341068.24.04_all.deb
 # renovate: datasource=custom.amd-device-metrics-exporter depName=device-metrics-exporter
-rocm_device_metrics_exporter_version: "1.4.0"
+rocm_device_metrics_exporter_version: "1.5.0"
