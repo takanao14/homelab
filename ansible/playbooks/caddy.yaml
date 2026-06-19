@@ -38,20 +38,55 @@
           {% endfor %}
       when: homelab_private_stat.stat.exists
 
-    - name: Check if dnsconfig.js has changes
+    - name: Check dnsconfig.js working tree status  # noqa command-instead-of-module
       ansible.builtin.command:
-        cmd: git diff --quiet dns-record/home-zone/dnsconfig.js
+        argv:
+          - git
+          - status
+          - --porcelain
+          - --
+          - dns-record/home-zone/dnsconfig.js
         chdir: "{{ homelab_private_path }}"
-      register: git_diff
+      register: caddy_dnsconfig_git_status
+      check_mode: false
       changed_when: false
-      failed_when: false
       when: homelab_private_stat.stat.exists
 
-    - name: Commit and push dnsconfig.js
-      ansible.builtin.shell: |
-        git add dns-record/home-zone/dnsconfig.js
-        git commit -m "sync: update caddy DNS records from ansible"
-        git push
-      args:
+    - name: Stage dnsconfig.js changes  # noqa command-instead-of-module
+      ansible.builtin.command:
+        argv:
+          - git
+          - add
+          - --
+          - dns-record/home-zone/dnsconfig.js
         chdir: "{{ homelab_private_path }}"
-      when: homelab_private_stat.stat.exists and git_diff.rc != 0
+      when:
+        - homelab_private_stat.stat.exists
+        - caddy_dnsconfig_git_status.stdout | default('') | length > 0
+      changed_when: true
+
+    - name: Commit dnsconfig.js changes  # noqa command-instead-of-module
+      ansible.builtin.command:
+        argv:
+          - git
+          - commit
+          - -m
+          - "sync: update caddy DNS records from ansible"
+          - --
+          - dns-record/home-zone/dnsconfig.js
+        chdir: "{{ homelab_private_path }}"
+      when:
+        - homelab_private_stat.stat.exists
+        - caddy_dnsconfig_git_status.stdout | default('') | length > 0
+      changed_when: true
+
+    - name: Push dnsconfig.js changes  # noqa command-instead-of-module
+      ansible.builtin.command:
+        argv:
+          - git
+          - push
+        chdir: "{{ homelab_private_path }}"
+      when:
+        - homelab_private_stat.stat.exists
+        - caddy_dnsconfig_git_status.stdout | default('') | length > 0
+      changed_when: true
