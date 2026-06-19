@@ -2,6 +2,8 @@
 - name: Create Proxmox maintenance user
   hosts: proxmox
   any_errors_fatal: true
+  vars:
+    proxmox_maintenance_user_id: "{{ maintenance_user }}@pam"
 
   roles:
     - role: maintenance_user
@@ -13,28 +15,68 @@
 
   tasks:
     # Set access permissions for Proxmox GUI (Web UI)
-    - name: Check if user exists in Proxmox
+    - name: Get Proxmox users
       become: true
-      ansible.builtin.shell: "pveum user list | grep -q '{{ maintenance_user }}@pam'"
-      register: pve_user_exists
+      ansible.builtin.command:
+        argv:
+          - pveum
+          - user
+          - list
+          - --output-format
+          - json
+      register: proxmox_user_list
       check_mode: false
       changed_when: false
-      failed_when: false
 
     - name: Add user to Proxmox VE
       become: true
-      ansible.builtin.command: "pveum user add '{{ maintenance_user }}@pam' --comment 'Managed by Ansible'"
-      when: pve_user_exists.rc != 0
+      ansible.builtin.command:
+        argv:
+          - pveum
+          - user
+          - add
+          - "{{ proxmox_maintenance_user_id }}"
+          - --comment
+          - Managed by Ansible
+      when: >-
+        proxmox_maintenance_user_id not in
+        (proxmox_user_list.stdout | from_json | map(attribute='userid') | list)
+      changed_when: true
 
-    - name: Check Administrator role
+    - name: Get Proxmox ACLs
       become: true
-      ansible.builtin.shell: "pveum user permissions '{{ maintenance_user }}@pam' | grep -q 'Administrator'"
-      register: pve_user_perm
+      ansible.builtin.command:
+        argv:
+          - pveum
+          - acl
+          - list
+          - --output-format
+          - json
+      register: proxmox_acl_list
       check_mode: false
       changed_when: false
-      failed_when: false
 
     - name: Grant Administrator role to user
       become: true
-      ansible.builtin.command: "pveum acl modify / -user '{{ maintenance_user }}@pam' -role Administrator"
-      when: pve_user_perm.rc != 0
+      ansible.builtin.command:
+        argv:
+          - pveum
+          - acl
+          - modify
+          - /
+          - -user
+          - "{{ proxmox_maintenance_user_id }}"
+          - -role
+          - Administrator
+      when: >-
+        (
+          proxmox_acl_list.stdout
+          | from_json
+          | selectattr('path', 'equalto', '/')
+          | selectattr('type', 'equalto', 'user')
+          | selectattr('ugid', 'equalto', proxmox_maintenance_user_id)
+          | selectattr('roleid', 'equalto', 'Administrator')
+          | list
+          | length
+        ) == 0
+      changed_when: true
