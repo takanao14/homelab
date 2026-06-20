@@ -127,6 +127,34 @@ EOF
 EOF
 }
 
+# Adds the GPU worker taint toleration only to CoreDNS. k0s calculates the
+# CoreDNS replica count from the number of Linux nodes, so a two-node dev
+# cluster needs one replica to be schedulable on the tainted GPU worker.
+_render_coredns_config() {
+    if [[ -z "${K0S_GPU_WORKER_ADDRESSES:-}" ]]; then
+        return
+    fi
+
+    cat <<'EOF'
+          coreDNS:
+            patches:
+              - target:
+                  kind: Deployment
+                  name: coredns
+                  namespace: kube-system
+                patch:
+                  type: JSON
+                  content: |
+                    - op: add
+                      path: /spec/template/spec/tolerations/-
+                      value:
+                        key: gpu
+                        operator: Equal
+                        value: amd
+                        effect: NoSchedule
+EOF
+}
+
 # Builds the full k0sctl config from environment variables.
 # Supports multiple controllers and workers via comma-separated address lists.
 #   K0S_CONTROLLER_ADDRESSES — required, comma-separated controller IPs
@@ -222,8 +250,12 @@ ${K0S_VERSION:+    version: ${K0S_VERSION}
           provider: custom # Set to custom to use Cilium
           kubeProxy: # Disable kube-proxy since Cilium provides kube-proxy replacement
             disabled: true
-          coreDNS:
-            replicaCount: 1
+EOF
+
+        # CoreDNS must explicitly tolerate the dedicated GPU worker taint.
+        _render_coredns_config
+
+        cat <<EOF
   options:
     wait:
       enabled: false
