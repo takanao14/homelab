@@ -12,7 +12,7 @@ all:
       ansible_host: 192.168.10.231
     dist2:
       ansible_host: 192.168.10.232
-    syslog1:
+    log1:
       ansible_host: 192.168.10.243
     forgejo1:
       ansible_host: 192.168.10.245
@@ -80,9 +80,9 @@ all:
       hosts:
         seaweedfs1: null
 
-    syslog:
+    log_collector:
       hosts:
-        syslog1: null
+        log1: null
 
     forgejo:
       hosts:
@@ -111,7 +111,7 @@ all:
     lxc:
       hosts:
         caddy1: null
-        syslog1: null
+        log1: null
         forgejo1: null
         netbox1: null
         ns1: null
@@ -120,6 +120,17 @@ all:
         dist1: null
         dist2: null
         seaweedfs1: null
+
+    # LXC guests where Vector reads logs directly from journald.
+    vector_lxc:
+      children:
+        caddy: {}
+        dns_auth: {}
+        dnsdist: {}
+        forgejo: {}
+        netbox: {}
+        seaweedfs: {}
+        log_collector: {}
 
     proxmox:
       hosts:

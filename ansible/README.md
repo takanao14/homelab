@@ -37,7 +37,8 @@ ansible/
 │       │   ├── proxmox.sops.yaml
 │       │   ├── seaweedfs.yaml
 │       │   ├── seaweedfs.sops.yaml
-│       │   └── syslog.yaml
+│       │   ├── log_collector.yaml
+│       │   └── vector_lxc.yaml       # journald policy for Vector-enabled LXC guests
 │       └── host_vars/
 │           └── <hostname>.sops.yaml # Host-specific secrets, including PowerDNS API keys
 ├── playbooks/
@@ -52,7 +53,7 @@ ansible/
 │   ├── seaweedfs.yaml
 │   ├── node_exporter.yaml
 │   ├── blackbox_exporter.yaml
-│   ├── syslog.yaml
+│   ├── vector.yaml
 │   ├── openbao.yaml
 │   ├── openbao_bootstrap.yaml
 │   ├── openbao_configure.yaml
@@ -162,7 +163,7 @@ ansible-playbook playbooks/dnsdist.yaml
 # DHCP server
 ansible-playbook playbooks/dhcp.yaml
 
-# Syslog aggregator
+# Log collector
 ansible-playbook playbooks/vector.yaml
 
 # Node Exporter
@@ -195,7 +196,7 @@ ansible-playbook playbooks/package_upgrade.yaml
 # Time synchronization (chrony -> router; physical hosts and VMs, not LXC)
 ansible-playbook playbooks/chrony.yaml
 
-# Reapply journald policy to all LXC guests (normally applied by each
+# Reapply journald policy to all Vector-enabled LXC guests (normally applied by each
 # Vector-enabled LXC service playbook)
 ansible-playbook playbooks/journald.yaml
 
@@ -212,7 +213,7 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `dnsdist.yaml` | `dnsdist` |
 | `dhcp.yaml` | `dhcp` |
 | `caddy.yaml` | `caddy` |
-| `syslog.yaml` | `syslog` |
+| `vector.yaml` | `log_collector` |
 | `node_exporter.yaml` | `node_exporter` |
 | `blackbox_exporter.yaml` | `blackbox_exporter` |
 | `forgejo.yaml` | `forgejo` |
@@ -231,7 +232,7 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `apt_mirror.yaml` | `all` |
 | `unattended_upgrades.yaml` | `all:!proxmox` |
 | `chrony.yaml` | `all:!lxc` |
-| `journald.yaml` | `lxc` |
+| `journald.yaml` | `vector_lxc` |
 | `gpuvm.yaml` | `gpuvm` |
 | `rpi3.yaml` | `rpi3` |
 

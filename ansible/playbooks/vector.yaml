@@ -1,6 +1,6 @@
 ---
-- name: Setup Syslog Aggregator
-  hosts: syslog
+- name: Setup Log Collector
+  hosts: log_collector
   roles:
     - role: timezone
       tags: timezone

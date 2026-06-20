@@ -19,7 +19,7 @@ vector_config:
       decoding:
         codec: bytes
 
-    # syslog1 is itself a Vector host, so it collects its own journal directly
+    # log1 is itself a Vector host, so it collects its own journal directly
     # instead of relying on journald-to-rsyslog forwarding (which the LXC
     # AppArmor profile denies and which would not reach Loki anyway).
     journald:

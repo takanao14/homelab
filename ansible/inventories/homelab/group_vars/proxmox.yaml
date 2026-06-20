@@ -13,7 +13,7 @@ sysctl_settings:
 chrony_install: false
 chrony_manage_timesyncd: false
 
-# Forward Proxmox host logs to the central Vector syslog aggregator.
+# Forward Proxmox host logs to the central Vector log collector.
 rsyslog_forward_host: "192.168.10.243"
 rsyslog_forward_port: 514
 rsyslog_forward_protocol: tcp

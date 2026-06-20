@@ -1,6 +1,6 @@
 # rsyslog Role
 
-Installs and configures rsyslog to forward logs to a remote syslog aggregator (Vector).
+Installs and configures rsyslog to forward logs to a remote Vector log collector.
 
 ## Functionality
 

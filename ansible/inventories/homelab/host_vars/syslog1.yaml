@@ -1,4 +1,0 @@
----
-# syslog1 runs Vector and now reads its own journal directly (vector, ssh).
-journald_forward_to_syslog: false
-journald_disable_rsyslog: true

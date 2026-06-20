@@ -16,7 +16,8 @@ Installs and configures [Vector](https://vector.dev/) as a log aggregator on Deb
 | `vector_loki_endpoint` | `http://loki:3100` | Loki push endpoint |
 | `vector_config` | `{}` | Vector pipeline configuration (sources, transforms, sinks) |
 
-`vector_config` is passed directly into the template. Define it in `group_vars/syslog.yaml`.
+`vector_config` is passed directly into the template. Define it in
+`group_vars/log_collector.yaml` for the central collector.
 
 Example:
 
@@ -41,8 +42,8 @@ None.
 ## Usage
 
 ```yaml
-- name: Setup Syslog Aggregator
-  hosts: syslog
+- name: Setup Log Collector
+  hosts: log_collector
   roles:
     - role: vector
 ```
