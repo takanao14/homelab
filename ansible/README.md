@@ -256,6 +256,7 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `openbao_admin_token` | `group_vars/openbao.sops.yaml` | OpenBao admin token for configuration |
 | `openbao_k8s_token_reviewer_jwt` | `group_vars/openbao.sops.yaml` | Kubernetes token reviewer ServiceAccount JWT |
 | `openbao_k8s_ca_cert` | `group_vars/openbao.sops.yaml` | PEM CA certificate of the Kubernetes cluster |
+| `openbao_secrets` | `group_vars/openbao.sops.yaml` | Application secrets seeded into OpenBao KV, including the Alertmanager Discord webhook |
 | `seaweedfs_s3_access_key` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS S3 access key for the Terraform identity |
 | `seaweedfs_s3_secret_key` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS S3 secret key for the Terraform identity |
 | `seaweedfs_admin_password` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS admin UI password (empty = auth disabled) |

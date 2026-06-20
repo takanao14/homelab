@@ -158,6 +158,7 @@ Secrets consumed by Kubernetes applications via ESO. Scoped per application; not
 secret/k8s/cert-manager/cloudflare   # Cloudflare API token
 secret/k8s/headlamp/admin-token      # Headlamp login token
 secret/k8s/monitoring/grafana        # Grafana credentials
+secret/k8s/monitoring/alertmanager   # Alertmanager Discord webhook
 ```
 
 ### `secret/kubeconfig/{cluster}`
@@ -170,6 +171,21 @@ secret/kubeconfig/prd   # prd cluster kubeconfig
 ```
 
 The distinction: `k8s/` is for secrets **used by** apps running in Kubernetes; `kubeconfig/` is for credentials **to access** Kubernetes clusters.
+
+Secrets are seeded from the SOPS-encrypted `openbao_secrets` list. For the
+Alertmanager Discord receiver, add:
+
+```yaml
+- path: secret/k8s/monitoring/alertmanager
+  data:
+    discord-webhook-url: "<Discord webhook URL>"
+```
+
+Then run:
+
+```bash
+ansible-playbook playbooks/openbao_seed_secrets.yaml
+```
 
 ## Userpass auth
 
