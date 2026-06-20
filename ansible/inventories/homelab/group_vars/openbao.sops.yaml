@@ -43,7 +43,7 @@ openbao_secrets:
         community: ENC[AES256_GCM,data:AumJ+F6YyQ==,iv:GtSJBWtJx8vAx8+Lu9UcXfRMkDGHIAze/YTaRk07lsg=,tag:wXXgAXdYofX3Zi9usIj25w==,type:str]
     - path: ENC[AES256_GCM,data:Lojotq7LhEXQkb/8qp9v+nMYoRCKkr3sjJ86LskwaLqJVA==,iv:n/ZYRD1AYbX4U0WCwSYELjRGnci/2/TKfT6wjrE5PB8=,tag:hRPia6Co4xe5oihGJE3UPg==,type:str]
       data:
-        discord-webhook-url: ENC[AES256_GCM,data:Kqx04+e30q39my7F7AfgzIbIU9t2phuO5BINn8IzNR0UIjmToORMC9kF5QJjn3L6DFc9RFgOCroH/bc7jwNpj65kIY182NZioM+0cDipz5y8uchF7h56CMC4BBng7nMOFwwwzn5xKPe7MxOjWRvyB8QiSwnDzDvA3w==,iv:haIsKetRn9gsFrOkcIvOoNdHwf5buLFJtmFR6hQWdVE=,tag:L9FyFCY140sVjIGhpYMXZQ==,type:str]
+        discord-webhook-url: ENC[AES256_GCM,data:FP4ExFzhXDI8EA1LV45HMSli7OhDF7w7ZsiqfFbZ13fho2tmQ2A9lYj1dDcjlGlDRXnVHT1i1otZz9aXXsY6x+0TyNN95ekSIrVFdQJxI/YMSdyn/fLWZZjHmtYmzqqgHP6TWGx+EdgNoRemofjUxRslGYumyatSbQ==,iv:/oHXrVQoNl75HsMXVTj4lEK2WRsSQjPTiWyisuvIrds=,tag:AyZxNpLQy/U4W8//sc6N4Q==,type:str]
 sops:
     age:
         - enc: |
@@ -55,7 +55,7 @@ sops:
             JOApvuBcVw/zpLimMrpKmFa51DD6fQPlWdZhPqfxUMexLacEdw/VMw==
             -----END AGE ENCRYPTED FILE-----
           recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
-    lastmodified: "2026-06-20T14:37:15Z"
-    mac: ENC[AES256_GCM,data:4fcfdeEPcN7dum9WX2prO9++g5rXD7CRw1TCCkGPXqdLwTSKac9qyL51RzcPLcxR8vQ4t7IugCOB+1ul412PB89vVjxd8EI8mkDEuTgGrFrxeyMTqdaYmKkH9f1z9oduDw4AtARrHKtgVtVMbFQ/09jlVzQQ6pphDlfXZLgdXqE=,iv:MtsgAMUq1FquzRE3P2uN7eI9Mtzq91BRF0wNmJ9JGVY=,tag:GDrLeIQ0KsLqehjTJ3qlEw==,type:str]
+    lastmodified: "2026-06-20T14:47:07Z"
+    mac: ENC[AES256_GCM,data:Z/PREPU/+iy3TqUIOChaylRTrpNkMSs2QC7bBuCw3jeUqMeo3Vb0eivI7yAlMby7+E0E8F4QgwC7aHjTE0ew4nre//xEdD5xecbRNx2GnqEbCNDQZjZKHZjYmPcdDPINAw1zMrrZJer9zkkSetPX+giQVU/CQb4DRjO/1ScT1rU=,iv:fwAmwOFtE7n66upIyoaE7ZXkmCGE99SdMOc0FSNaHsk=,tag:DXCS8U+jt1D2+xV7K/NmzA==,type:str]
     unencrypted_suffix: _unencrypted
     version: 3.13.1
