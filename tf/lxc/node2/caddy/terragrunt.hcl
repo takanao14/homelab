@@ -13,7 +13,7 @@ locals {
 
 inputs = {
   containers = {
-    "caddy" = merge(local.env.locals.container_defaults, {
+    "caddy1" = merge(local.env.locals.container_defaults, {
       cores       = 1
       memory      = 512
       bridge      = local.common.locals.node2.net10.bridge

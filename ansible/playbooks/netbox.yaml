@@ -6,3 +6,5 @@
       tags: timezone
     - role: netbox
       tags: netbox
+    - role: vector
+      tags: vector

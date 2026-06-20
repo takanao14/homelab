@@ -89,6 +89,7 @@ ansible/
     ├── sysctl/
     ├── timezone/
     ├── users/
+    ├── journald/
     └── rsyslog/
 ```
 
@@ -181,6 +182,9 @@ ansible-playbook playbooks/package_upgrade.yaml
 # Time synchronization (chrony -> router; physical hosts and VMs, not LXC)
 ansible-playbook playbooks/chrony.yaml
 
+# journald forwarding policy and optional rsyslog shutdown on LXC guests
+ansible-playbook playbooks/journald.yaml
+
 # Dry run
 ansible-playbook playbooks/pdns_auth.yaml --check
 ```
@@ -213,6 +217,7 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `apt_mirror.yaml` | `all` |
 | `unattended_upgrades.yaml` | `all:!proxmox` |
 | `chrony.yaml` | `all:!lxc` |
+| `journald.yaml` | `lxc` |
 | `gpuvm.yaml` | `gpuvm` |
 | `rpi3.yaml` | `rpi3` |
 

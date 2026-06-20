@@ -1,0 +1,45 @@
+---
+- name: Ensure journald drop-in directory exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Remove legacy journald syslog forwarding drop-in
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d/forward-to-syslog.conf
+    state: absent
+  notify: Restart systemd-journald
+
+- name: Configure journald syslog forwarding
+  become: true
+  ansible.builtin.template:
+    src: forward-to-syslog.conf.j2
+    dest: "/etc/systemd/journald.conf.d/{{ journald_forward_to_syslog_dropin }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart systemd-journald
+
+- name: Apply journald configuration before managing rsyslog
+  ansible.builtin.meta: flush_handlers
+
+- name: Disable rsyslog service
+  become: true
+  ansible.builtin.systemd_service:
+    name: rsyslog.service
+    state: stopped
+    enabled: false
+  when: journald_disable_rsyslog
+
+- name: Disable syslog socket
+  become: true
+  ansible.builtin.systemd_service:
+    name: syslog.socket
+    state: stopped
+    masked: true
+  when: journald_disable_rsyslog

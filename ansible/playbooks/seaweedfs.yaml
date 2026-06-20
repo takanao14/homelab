@@ -6,3 +6,5 @@
       tags: timezone
     - role: seaweedfs
       tags: seaweedfs
+    - role: vector
+      tags: vector

@@ -1,0 +1,4 @@
+---
+# Vector reads SeaweedFS and SSH services directly from journald.
+journald_forward_to_syslog: false
+journald_disable_rsyslog: true

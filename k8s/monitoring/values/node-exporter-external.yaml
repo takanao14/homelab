@@ -9,7 +9,7 @@ targetIPs:
   - "192.168.10.240"
   - "192.168.10.241"
   # Stateful service guests (in-guest filesystem usage is not exposed by Proxmox OTLP).
-  - "192.168.10.245" # forgejo01
-  - "192.168.10.247" # netbox01
+  - "192.168.10.245" # forgejo1
+  - "192.168.10.247" # netbox1
   - "192.168.40.30"  # openbao1
   - "192.168.50.31"  # seaweedfs1

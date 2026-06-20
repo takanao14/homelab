@@ -13,7 +13,7 @@ locals {
 
 inputs = {
   containers = {
-    "netbox" = merge(local.env.locals.container_defaults, {
+    "netbox1" = merge(local.env.locals.container_defaults, {
       cores       = 2
       memory      = 2048
       bridge      = local.common.locals.node2.net10.bridge

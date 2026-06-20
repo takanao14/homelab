@@ -1,0 +1,4 @@
+---
+journald_forward_to_syslog: false
+journald_forward_to_syslog_dropin: 99-forward-to-syslog.conf
+journald_disable_rsyslog: false

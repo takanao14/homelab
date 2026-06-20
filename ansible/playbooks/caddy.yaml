@@ -6,6 +6,8 @@
       tags: timezone
     - role: caddy
       tags: caddy
+    - role: vector
+      tags: vector
 
 - name: Sync caddy DNS records to homelab-private
   hosts: localhost

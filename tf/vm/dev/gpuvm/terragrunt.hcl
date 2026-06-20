@@ -18,7 +18,7 @@ locals {
 
 inputs = {
   vms = {
-    "gpuvm" = merge(local.base_vars, {
+    "gpuvm1" = merge(local.base_vars, {
       cores   = 8
       memory  = 32768
       bridge  = local.common.locals.dev.net20.bridge
