@@ -8,11 +8,15 @@
     group: root
     mode: "0755"
 
-- name: Remove legacy journald syslog forwarding drop-in
+- name: Remove legacy journald syslog forwarding drop-ins
   become: true
   ansible.builtin.file:
-    path: /etc/systemd/journald.conf.d/forward-to-syslog.conf
+    path: "/etc/systemd/journald.conf.d/{{ item }}"
     state: absent
+  loop:
+    - forward-to-syslog.conf
+    - 99-forward-to-syslog.conf
+  when: item != journald_forward_to_syslog_dropin
   notify: Restart systemd-journald
 
 - name: Configure journald syslog forwarding

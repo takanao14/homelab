@@ -6,3 +6,5 @@
       tags: timezone
     - role: forgejo
       tags: forgejo
+    - role: vector
+      tags: vector
