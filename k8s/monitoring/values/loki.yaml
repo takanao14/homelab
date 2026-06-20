@@ -81,4 +81,4 @@ proxmoxAlerts:
     backup: true
     serviceErrors: true
     quorum: true
-    ha: false
+    ha: true
