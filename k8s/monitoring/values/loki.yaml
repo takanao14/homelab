@@ -77,7 +77,7 @@ proxmoxAlerts:
   rules:
     appArmor: true
     oom: true
-    storage: false
+    storage: true
     backup: false
     serviceErrors: false
     quorum: false
