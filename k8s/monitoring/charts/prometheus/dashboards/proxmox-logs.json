@@ -1,0 +1,678 @@
+{
+  "uid": "proxmox-logs",
+  "title": "Proxmox Logs",
+  "tags": [
+    "proxmox",
+    "logs",
+    "infrastructure"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "fiscalYearStartMonth": 0,
+  "refresh": "60s",
+  "schemaVersion": 42,
+  "panels": [
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Summary",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate({host=~\"$node\", appname=~\"$appname\", severity=~\"$severity\"}[5m])) or vector(0)",
+          "legendFormat": "logs/s",
+          "instant": true
+        }
+      ],
+      "title": "Log Rate",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({host=~\"$node\", appname=~\"$appname\", severity=~\"emerg|alert|crit|err|error|[0-3]\"}[1h])) or vector(0)",
+          "legendFormat": "errors",
+          "instant": true
+        }
+      ],
+      "title": "Errors (1h)",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({host=~\"$node\", appname=~\"$appname\", severity=~\"warning|warn|4\"}[1h])) or vector(0)",
+          "legendFormat": "warnings",
+          "instant": true
+        }
+      ],
+      "title": "Warnings (1h)",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "yellow"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({host=~\"$node\", appname=~\"$appname\", severity=~\"$severity\"} | json | __error__=\"\" | line_format \"{{.message}}\" |~ \"(?i)(quorum.*(lost|error|fail)|corosync.*(error|fail)|cluster.*(lost|error|fail)|ha[- ]?(crm|lrm)?.*(error|fail)|backup.*(error|fail)|vzdump.*(error|fail)|zfs.*(error|fault|degrad)|i/o error|out of memory|oom-kill|killed process|apparmor=\"DENIED\")\" [24h])) or vector(0)",
+          "legendFormat": "signals",
+          "instant": true
+        }
+      ],
+      "title": "Operational Signals (24h)",
+      "description": "Quorum, HA, backup, storage/ZFS, OOM, and AppArmor denial messages.",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Errors and Warnings",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (host) (rate({host=~\"$node\", appname=~\"$appname\", severity=~\"emerg|alert|crit|err|error|[0-3]\"}[5m])) or sum by (host) (rate({host=~\"$node\", appname=~\"$appname\", severity=~\"$severity\"}[5m])) * 0",
+          "legendFormat": "{{host}}"
+        }
+      ],
+      "title": "Error Rate by Node",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "min": 0,
+          "custom": {
+            "fillOpacity": 10,
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (host) (rate({host=~\"$node\", appname=~\"$appname\", severity=~\"warning|warn|4\"}[5m])) or sum by (host) (rate({host=~\"$node\", appname=~\"$appname\", severity=~\"$severity\"}[5m])) * 0",
+          "legendFormat": "{{host}}"
+        }
+      ],
+      "title": "Warning Rate by Node",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "min": 0,
+          "custom": {
+            "fillOpacity": 10,
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (appname) (rate({host=~\"$node\", appname=~\"$appname\", severity=~\"emerg|alert|crit|err|error|[0-3]\"}[5m]))",
+          "legendFormat": "{{appname}}"
+        }
+      ],
+      "title": "Error Rate by Service",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "min": 0,
+          "custom": {
+            "fillOpacity": 10,
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (appname) (rate({host=~\"$node\", appname=~\"pve.*|corosync|qmeventd|vzdump\"}[5m]))",
+          "legendFormat": "{{appname}}"
+        }
+      ],
+      "title": "Proxmox Service Log Rate",
+      "description": "Activity from pve*, corosync, qmeventd, and vzdump services.",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "min": 0,
+          "custom": {
+            "fillOpacity": 10,
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Operational Signals",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate({host=~\"$node\", appname=~\"$appname\", severity=~\"$severity\"} | json | __error__=\"\" | line_format \"{{.message}}\" |~ \"(?i)(quorum.*(lost|error|fail)|corosync.*(error|fail)|cluster.*(lost|error|fail))\" [5m]))",
+          "legendFormat": "Cluster / quorum"
+        },
+        {
+          "expr": "sum(rate({host=~\"$node\", appname=~\"$appname\", severity=~\"$severity\"} | json | __error__=\"\" | line_format \"{{.message}}\" |~ \"(?i)(ha[- ]?(crm|lrm)?.*(error|fail))\" [5m]))",
+          "legendFormat": "HA"
+        },
+        {
+          "expr": "sum(rate({host=~\"$node\", appname=~\"$appname\", severity=~\"$severity\"} | json | __error__=\"\" | line_format \"{{.message}}\" |~ \"(?i)((backup|vzdump).*(error|fail))\" [5m]))",
+          "legendFormat": "Backup"
+        },
+        {
+          "expr": "sum(rate({host=~\"$node\", appname=~\"$appname\", severity=~\"$severity\"} | json | __error__=\"\" | line_format \"{{.message}}\" |~ \"(?i)(zfs.*(error|fault|degrad)|i/o error)\" [5m]))",
+          "legendFormat": "Storage / ZFS"
+        },
+        {
+          "expr": "sum(rate({host=~\"$node\", appname=~\"$appname\", severity=~\"$severity\"} | json | __error__=\"\" | line_format \"{{.message}}\" |~ \"(?i)(out of memory|oom-kill|killed process)\" [5m]))",
+          "legendFormat": "OOM"
+        },
+        {
+          "expr": "sum(rate({host=~\"$node\", appname=~\"$appname\", severity=~\"$severity\"} | json | __error__=\"\" | line_format \"{{.message}}\" |~ \"(?i)apparmor=\\\\\\\"DENIED\\\\\\\"\" [5m]))",
+          "legendFormat": "AppArmor denied"
+        }
+      ],
+      "title": "Signal Rate by Category",
+      "description": "Message-pattern indicators; inspect the matching logs below before treating a signal as an incident.",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "min": 0,
+          "custom": {
+            "fillOpacity": 10,
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "logs",
+      "targets": [
+        {
+          "expr": "{host=~\"$node\", appname=~\"$appname\", severity=~\"$severity\"} | json | __error__=\"\" | line_format \"{{.message}}\" |~ \"(?i)(quorum.*(lost|error|fail)|corosync.*(error|fail)|cluster.*(lost|error|fail)|ha[- ]?(crm|lrm)?.*(error|fail)|backup.*(error|fail)|vzdump.*(error|fail)|zfs.*(error|fault|degrad)|i/o error|out of memory|oom-kill|killed process|apparmor=\"DENIED\")\" | line_format \"{{.host}} [{{.severity}}] {{.appname}}: {{.message}}\"",
+          "maxLines": 500
+        }
+      ],
+      "title": "Matching Operational Signals",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "repeatDirection": "h",
+      "options": {
+        "showLabels": false,
+        "showCommonLabels": false,
+        "showTime": true,
+        "showLogContextToggle": true,
+        "wrapLogMessage": false,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "",
+        "showControls": true,
+        "showFieldSelector": true
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Logs",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 44
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "logs",
+      "targets": [
+        {
+          "expr": "{host=~\"$node\", appname=~\"$appname\", severity=~\"$severity\"} | json | __error__=\"\" | line_format \"{{.host}} [{{.severity}}] {{.appname}}: {{.message}}\"",
+          "maxLines": 1000
+        }
+      ],
+      "title": "Proxmox Host Logs",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 45
+      },
+      "repeatDirection": "h",
+      "options": {
+        "showLabels": false,
+        "showCommonLabels": false,
+        "showTime": true,
+        "showLogContextToggle": true,
+        "wrapLogMessage": false,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "",
+        "showControls": true,
+        "showFieldSelector": true
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "datasource",
+        "label": "Datasource",
+        "skipUrlSync": false,
+        "query": "loki",
+        "multi": false,
+        "allowCustomValue": true,
+        "includeAll": false,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "node",
+        "label": "Node",
+        "skipUrlSync": false,
+        "query": "label_values({host=~\"pve|node1|node2|node3\"}, host)",
+        "datasource": {
+          "type": "loki",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "allValue": "pve|node1|node2|node3",
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "appname",
+        "label": "Service",
+        "skipUrlSync": false,
+        "query": "label_values({host=~\"$node\"}, appname)",
+        "datasource": {
+          "type": "loki",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "query",
+        "name": "severity",
+        "label": "Severity",
+        "skipUrlSync": false,
+        "query": "label_values({host=~\"$node\"}, severity)",
+        "datasource": {
+          "type": "loki",
+          "uid": "$datasource"
+        },
+        "multi": true,
+        "allowCustomValue": true,
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      }
+    ]
+  },
+  "annotations": {}
+}

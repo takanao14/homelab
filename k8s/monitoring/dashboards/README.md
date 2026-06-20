@@ -18,6 +18,7 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 | `network-overview` | SNMP MIB-II (bgw1/c1200): traffic, errors, discards, interface status |
 | `monitoring-overview` | Prometheus, Alertmanager, and Loki self-monitoring: alerts, scrape targets, TSDB, ingestion rate |
 | `syslog` | Network device syslog volume and error rate via Loki |
+| `proxmox-logs` | Proxmox VE host journals via Loki: node/service errors, warnings, and operational signals |
 | `service-logs` | Generic journald service logs via Loki: volume, errors/warnings by unit |
 | `cert-manager-overview` | cert-manager certificates and ClusterIssuers: expiry countdown, ready state, sync errors |
 | `cilium-overview` | Cilium CNI: agent/operator health, packet drops, policy verdicts, BPF map pressure, endpoint state, Hubble flows |
@@ -42,6 +43,7 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 │   ├── network.go              # network-overview
 │   ├── monitoring.go           # monitoring-overview
 │   ├── syslog.go               # syslog
+│   ├── proxmox_logs.go         # proxmox-logs
 │   ├── service_logs.go         # service-logs
 │   └── uptime.go               # uptime
 ├── generated/                  # Generated JSON output (git-ignored)

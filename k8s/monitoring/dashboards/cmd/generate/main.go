@@ -28,6 +28,7 @@ func main() {
 		"monitoring-overview":   buildMonitoringOverview,
 		"dns-logs":              buildDnsLogs,
 		"syslog":                buildSyslog,
+		"proxmox-logs":          buildProxmoxLogs,
 		"service-logs":          buildServiceLogs,
 		"cert-manager-overview": buildCertManagerOverview,
 		"cilium-overview":       buildCiliumOverview,
