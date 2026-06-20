@@ -108,11 +108,9 @@ Alertmanager is the shared notification hub:
 - Resolved notifications are enabled.
 
 The Discord webhook is never stored in Git. ESO reads it from OpenBao into the
-`alertmanager-discord` Secret, which Alertmanager mounts at:
-
-```text
-/etc/alertmanager/secrets/alertmanager-discord/discord-webhook-url
-```
+`alertmanager-discord` Secret. An `AlertmanagerConfig` references its
+`discord-webhook-url` key through a `SecretKeySelector`, and the Prometheus
+Operator generates the runtime Alertmanager configuration.
 
 Before enabling the receiver in a live cluster, create the Discord webhook and
 add it to the encrypted Ansible `openbao_secrets` list:

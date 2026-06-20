@@ -1,0 +1,42 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: discord
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  route:
+    receiver: "null"
+    groupBy:
+      - alertname
+      - cluster
+      - namespace
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 12h
+    routes:
+      - receiver: discord
+        groupBy:
+          - alertname
+          - host
+        matchers:
+          - name: service
+            matchType: "="
+            value: proxmox
+          - name: severity
+            matchType: "=~"
+            value: warning|critical
+      - receiver: discord
+        matchers:
+          - name: severity
+            matchType: "=~"
+            value: warning|critical
+  receivers:
+    - name: "null"
+    - name: discord
+      discordConfigs:
+        - apiURL:
+            name: alertmanager-discord
+            key: discord-webhook-url
+          sendResolved: true
