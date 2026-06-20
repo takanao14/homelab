@@ -78,7 +78,7 @@ proxmoxAlerts:
     appArmor: true
     oom: true
     storage: true
-    backup: false
+    backup: true
     serviceErrors: false
     quorum: false
     ha: false
