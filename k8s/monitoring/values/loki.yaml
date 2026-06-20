@@ -76,7 +76,7 @@ proxmoxAlerts:
   enabled: true
   rules:
     appArmor: true
-    oom: false
+    oom: true
     storage: false
     backup: false
     serviceErrors: false
