@@ -109,3 +109,4 @@ Kubeconfig is written to `~/.kube/<env>.yaml` (e.g. `~/.kube/dev.yaml`, `~/.kube
 - **CNI**: Cilium v1.19.3 (kube-proxy disabled, L2 LoadBalancer, Gateway API enabled)
 - **Storage CSI**: OpenEBS v4.4.0 LocalPV or Longhorn v1.11.1 — selected via `K0S_STORAGE_PROVIDER`; both use SSD mounted at `/srv/storage/volume`
 - **GPU**: AMD GPU Device Plugin (enabled when `K0S_GPU_WORKER_ADDRESSES` is set; nodes labeled `gpu=amd` and tainted `gpu=amd:NoSchedule`)
+- **CoreDNS**: Replica count is calculated automatically by k0s from the number of Linux nodes. When GPU workers are configured, `template_lib.sh` adds a CoreDNS-only toleration for `gpu=amd:NoSchedule`, allowing CoreDNS replicas to be distributed across standard and GPU workers without making other workloads eligible for GPU workers.
