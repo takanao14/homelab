@@ -19,6 +19,15 @@ vector_config:
       decoding:
         codec: bytes
 
+    # syslog1 is itself a Vector host, so it collects its own journal directly
+    # instead of relying on journald-to-rsyslog forwarding (which the LXC
+    # AppArmor profile denies and which would not reach Loki anyway).
+    journald:
+      type: journald
+      include_units:
+        - vector
+        - ssh
+
   transforms:
     parse_syslog:
       type: remap
@@ -70,6 +79,14 @@ vector_config:
         if !exists(.appname) || is_null(.appname) { .appname = "unknown" }
         if !exists(.severity) || is_null(.severity) { .severity = "unknown" }
 
+    parse_journald:
+      type: remap
+      inputs:
+        - journald
+      source: |
+        .host = get_hostname!()
+        .unit = string(._SYSTEMD_UNIT) ?? string(.SYSLOG_IDENTIFIER) ?? "unknown"
+
   sinks:
     loki:
       type: loki
@@ -88,3 +105,16 @@ vector_config:
         host: !unsafe "{{ host }}"
         appname: !unsafe "{{ appname }}"
         severity: !unsafe "{{ severity }}"
+
+    loki_journald:
+      type: loki
+      inputs:
+        - parse_journald
+      endpoint: "{{ loki_endpoint }}"
+      encoding:
+        codec: json
+      healthcheck:
+        enabled: false
+      labels:
+        host: !unsafe "{{ host }}"
+        unit: !unsafe "{{ unit }}"

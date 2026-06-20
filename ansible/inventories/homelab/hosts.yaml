@@ -1,6 +1,6 @@
 all:
   hosts:
-    caddy01:
+    caddy1:
       ansible_host: 192.168.10.244
     ns1:
       ansible_host: 192.168.10.233
@@ -12,15 +12,15 @@ all:
       ansible_host: 192.168.10.231
     dist2:
       ansible_host: 192.168.10.232
-    syslog01:
+    syslog1:
       ansible_host: 192.168.10.243
-    forgejo01:
+    forgejo1:
       ansible_host: 192.168.10.245
-    forgejo-runner01:
+    runner1:
       ansible_host: 192.168.10.246
-    netbox01:
+    netbox1:
       ansible_host: 192.168.10.247
-    gpuvm01:
+    gpuvm1:
       ansible_host: 192.168.20.22
     pve:
       ansible_host: 192.168.10.10
@@ -82,27 +82,27 @@ all:
 
     syslog:
       hosts:
-        syslog01: null
+        syslog1: null
 
     forgejo:
       hosts:
-        forgejo01: null
+        forgejo1: null
 
     forgejo_runner:
       hosts:
-        forgejo-runner01: null
+        runner1: null
 
     netbox:
       hosts:
-        netbox01: null
+        netbox1: null
 
     gpuvm:
       hosts:
-        gpuvm01: null
+        gpuvm1: null
 
     caddy:
       hosts:
-        caddy01: null
+        caddy1: null
 
     dhcp:
       hosts:
@@ -110,10 +110,10 @@ all:
 
     lxc:
       hosts:
-        caddy01: null
-        syslog01: null
-        forgejo01: null
-        netbox01: null
+        caddy1: null
+        syslog1: null
+        forgejo1: null
+        netbox1: null
         ns1: null
         ns2: null
         ns3: null
@@ -147,8 +147,8 @@ all:
         # Stateful service guests: Proxmox OTLP does not expose in-guest
         # filesystem usage, so monitor disk-fill / inode / memory here.
         seaweedfs1: null
-        forgejo01: null
-        netbox01: null
+        forgejo1: null
+        netbox1: null
         openbao1: null
 
     blackbox_exporter:

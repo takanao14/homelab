@@ -23,3 +23,32 @@ caddy_upstreams:
     backend: 192.168.50.31:8333
   - hostname: seaweedfs-ui.home.butaco.net
     backend: 192.168.50.31:23646
+
+vector_config:
+  sources:
+    journald:
+      type: journald
+      include_units:
+        - caddy
+        - ssh
+  transforms:
+    parse_journald:
+      type: remap
+      inputs:
+        - journald
+      source: |
+        .host = get_hostname!()
+        .unit = string(._SYSTEMD_UNIT) ?? string(.SYSLOG_IDENTIFIER) ?? "unknown"
+  sinks:
+    loki:
+      type: loki
+      inputs:
+        - parse_journald
+      endpoint: "{{ loki_endpoint }}"
+      encoding:
+        codec: json
+      healthcheck:
+        enabled: false
+      labels:
+        host: !unsafe "{{ host }}"
+        unit: !unsafe "{{ unit }}"

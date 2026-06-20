@@ -3,3 +3,34 @@ netbox_domain: "netbox-ui.home.butaco.net"
 netbox_port: 8080
 netbox_superuser_name: admin
 netbox_superuser_email: "admin@home.butaco.net"
+
+vector_config:
+  sources:
+    journald:
+      type: journald
+      include_units:
+        - netbox
+        - netbox-rq
+        - nginx
+        - ssh
+  transforms:
+    parse_journald:
+      type: remap
+      inputs:
+        - journald
+      source: |
+        .host = get_hostname!()
+        .unit = string(._SYSTEMD_UNIT) ?? string(.SYSLOG_IDENTIFIER) ?? "unknown"
+  sinks:
+    loki:
+      type: loki
+      inputs:
+        - parse_journald
+      endpoint: "{{ loki_endpoint }}"
+      encoding:
+        codec: json
+      healthcheck:
+        enabled: false
+      labels:
+        host: !unsafe "{{ host }}"
+        unit: !unsafe "{{ unit }}"

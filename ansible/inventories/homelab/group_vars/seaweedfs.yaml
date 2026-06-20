@@ -28,3 +28,34 @@ seaweedfs_s3_extra_identities:
     access_key: "{{ seaweedfs_imagebuilder_access_key }}"
     secret_key: "{{ seaweedfs_imagebuilder_secret_key }}"
     actions: ["Read:cloud-images", "Write:cloud-images", "List:cloud-images"]
+
+vector_config:
+  sources:
+    journald:
+      type: journald
+      include_units:
+        - seaweedfs
+        - seaweedfs-admin
+        - seaweedfs-backup
+        - ssh
+  transforms:
+    parse_journald:
+      type: remap
+      inputs:
+        - journald
+      source: |
+        .host = get_hostname!()
+        .unit = string(._SYSTEMD_UNIT) ?? string(.SYSLOG_IDENTIFIER) ?? "unknown"
+  sinks:
+    loki:
+      type: loki
+      inputs:
+        - parse_journald
+      endpoint: "{{ loki_endpoint }}"
+      encoding:
+        codec: json
+      healthcheck:
+        enabled: false
+      labels:
+        host: !unsafe "{{ host }}"
+        unit: !unsafe "{{ unit }}"
