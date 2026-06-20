@@ -1,0 +1,167 @@
+{{- if .Values.proxmoxAlerts.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxmox-alerting-rules
+  namespace: {{ .Release.Namespace }}
+  labels:
+    loki_rule: "1"
+data:
+  proxmox.yaml: |
+    groups:
+      - name: proxmox.logs
+        interval: 1m
+        rules:
+          {{- if .Values.proxmoxAlerts.rules.appArmor }}
+          - alert: ProxmoxAppArmorDenied
+            expr: |
+              sum by (host) (
+                count_over_time(
+                  {host=~"pve|node1|node2|node3", appname="kernel"}
+                    | json
+                    | __error__=""
+                    | message=~".*apparmor=\\\"DENIED\\\".*"
+                    | message=~".*(operation=\\\"sendmsg\\\".*name=\\\"/run/systemd/journal/dev-log\\\"|profile=\\\"rsyslogd\\\").*"
+                  [5m]
+                )
+              ) > 0
+            labels:
+              service: proxmox
+              source: loki
+              severity: warning
+            annotations:
+              summary: 'Proxmox journald-to-rsyslog AppArmor denial on {{ "{{" }} $labels.host {{ "}}" }}'
+              description: 'AppArmor blocked the LXC journald-to-rsyslog socket path during the last five minutes.'
+              dashboard_url: https://grafana.prd.butaco.net/d/proxmox-logs/proxmox-logs
+          {{- end }}
+
+          {{- if .Values.proxmoxAlerts.rules.oom }}
+          - alert: ProxmoxOOMDetected
+            expr: |
+              sum by (host) (
+                count_over_time(
+                  {host=~"pve|node1|node2|node3", appname="kernel"}
+                    | json
+                    | __error__=""
+                    | message=~"(?i).*(out of memory|oom-kill|killed process).*"
+                  [5m]
+                )
+              ) > 0
+            labels:
+              service: proxmox
+              source: loki
+              severity: critical
+            annotations:
+              summary: 'Out-of-memory event detected on {{ "{{" }} $labels.host {{ "}}" }}'
+              description: 'The Proxmox kernel reported an OOM event during the last five minutes.'
+              dashboard_url: https://grafana.prd.butaco.net/d/proxmox-logs/proxmox-logs
+          {{- end }}
+
+          {{- if .Values.proxmoxAlerts.rules.storage }}
+          - alert: ProxmoxStorageError
+            expr: |
+              sum by (host) (
+                count_over_time(
+                  {host=~"pve|node1|node2|node3"}
+                    | json
+                    | __error__=""
+                    | message=~"(?i).*(zfs.*(error|fault|degrad)|i/o error).*"
+                  [5m]
+                )
+              ) > 0
+            labels:
+              service: proxmox
+              source: loki
+              severity: critical
+            annotations:
+              summary: 'Storage error detected on {{ "{{" }} $labels.host {{ "}}" }}'
+              description: 'A ZFS fault/degraded state or an I/O error was logged during the last five minutes.'
+              dashboard_url: https://grafana.prd.butaco.net/d/proxmox-logs/proxmox-logs
+          {{- end }}
+
+          {{- if .Values.proxmoxAlerts.rules.backup }}
+          - alert: ProxmoxBackupFailed
+            expr: |
+              sum by (host) (
+                count_over_time(
+                  {host=~"pve|node1|node2|node3", appname=~"vzdump|pvedaemon|pvescheduler|systemd"}
+                    | json
+                    | __error__=""
+                    | message=~"(?i).*((backup|vzdump).*(error|fail)|(error|fail).*(backup|vzdump)).*"
+                  [10m]
+                )
+              ) > 0
+            labels:
+              service: proxmox
+              source: loki
+              severity: warning
+            annotations:
+              summary: 'Proxmox backup failure detected on {{ "{{" }} $labels.host {{ "}}" }}'
+              description: 'A backup or vzdump failure was logged during the last ten minutes.'
+              dashboard_url: https://grafana.prd.butaco.net/d/proxmox-logs/proxmox-logs
+          {{- end }}
+
+          {{- if .Values.proxmoxAlerts.rules.quorum }}
+          - alert: ProxmoxQuorumError
+            expr: |
+              sum by (host) (
+                count_over_time(
+                  {host=~"pve|node1|node2|node3", appname=~"corosync|pve-cluster|pmxcfs|systemd"}
+                    | json
+                    | __error__=""
+                    | message=~"(?i).*(quorum.*(lost|error|fail)|corosync.*(error|fail)|cluster.*(lost|error|fail)).*"
+                  [5m]
+                )
+              ) > 0
+            labels:
+              service: proxmox
+              source: loki
+              severity: critical
+            annotations:
+              summary: 'Proxmox quorum or cluster error on {{ "{{" }} $labels.host {{ "}}" }}'
+              description: 'A quorum, corosync, or cluster failure was logged during the last five minutes.'
+              dashboard_url: https://grafana.prd.butaco.net/d/proxmox-logs/proxmox-logs
+          {{- end }}
+
+          {{- if .Values.proxmoxAlerts.rules.ha }}
+          - alert: ProxmoxHAError
+            expr: |
+              sum by (host) (
+                count_over_time(
+                  {host=~"pve|node1|node2|node3", appname=~"pve-ha-crm|pve-ha-lrm|pvedaemon|systemd"}
+                    | json
+                    | __error__=""
+                    | message=~"(?i).*ha[- ]?(crm|lrm)?.*(error|fail).*"
+                  [5m]
+                )
+              ) > 0
+            labels:
+              service: proxmox
+              source: loki
+              severity: critical
+            annotations:
+              summary: 'Proxmox HA error detected on {{ "{{" }} $labels.host {{ "}}" }}'
+              description: 'A Proxmox HA CRM or LRM failure was logged during the last five minutes.'
+              dashboard_url: https://grafana.prd.butaco.net/d/proxmox-logs/proxmox-logs
+          {{- end }}
+
+          {{- if .Values.proxmoxAlerts.rules.serviceErrors }}
+          - alert: ProxmoxServiceErrors
+            expr: |
+              sum by (host) (
+                count_over_time(
+                  {host=~"pve|node1|node2|node3", appname=~"pvedaemon|pveproxy", severity=~"emerg|alert|crit|err|error|[0-3]"}
+                  [10m]
+                )
+              ) >= 5
+            for: 5m
+            labels:
+              service: proxmox
+              source: loki
+              severity: warning
+            annotations:
+              summary: 'Sustained Proxmox service errors on {{ "{{" }} $labels.host {{ "}}" }}'
+              description: 'At least five pvedaemon or pveproxy errors were present in each ten-minute window for five minutes.'
+              dashboard_url: https://grafana.prd.butaco.net/d/proxmox-logs/proxmox-logs
+          {{- end }}
+{{- end }}

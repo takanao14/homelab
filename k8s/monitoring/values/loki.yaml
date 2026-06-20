@@ -22,6 +22,25 @@ loki:
     compactor:
       retention_enabled: true
       delete_request_store: filesystem
+    rulerConfig:
+      alertmanager_url: http://prometheus-kube-prometheus-alertmanager.monitoring.svc:9093
+      enable_alertmanager_v2: true
+      evaluation_interval: 1m
+      poll_interval: 1m
+      rule_path: /var/loki/ruler-tmp
+      storage:
+        type: local
+        local:
+          directory: /rules
+
+  rbac:
+    namespaced: true
+
+  sidecar:
+    rules:
+      enabled: true
+      folder: /rules/fake
+      resource: configmap
 
   singleBinary:
     replicas: 1
@@ -52,3 +71,14 @@ loki:
     enabled: false
   resultsCache:
     enabled: false
+
+proxmoxAlerts:
+  enabled: true
+  rules:
+    appArmor: true
+    oom: false
+    storage: false
+    backup: false
+    serviceErrors: false
+    quorum: false
+    ha: false

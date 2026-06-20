@@ -6,8 +6,8 @@ Monitoring stack for the prd cluster. Managed by ArgoCD with the helm-secrets pl
 
 | Application | Chart | Description |
 |-------------|-------|-------------|
-| `prometheus` | `kube-prometheus-stack` | Prometheus, Grafana, Alertmanager |
-| `loki` | `loki` | Log aggregation (LoadBalancer for external log ingestion) |
+| `prometheus` | `kube-prometheus-stack` | Prometheus and Alertmanager with Discord notification routing |
+| `loki` | `loki` | Log aggregation, Proxmox log alert ruler, and LoadBalancer ingestion |
 | `blackbox-exporter` | `prometheus-blackbox-exporter` | ICMP and DNS probing |
 | `snmp-exporter` | `prometheus-snmp-exporter` | SNMP metrics polling |
 | `prometheus-pve-exporter` | local chart | Proxmox VE metrics |
@@ -72,6 +72,7 @@ All secrets are fetched from OpenBao via ESO. They are not stored in this reposi
 |-------------|----------|---------|-------------|
 | `k8s/monitoring/grafana` | `adminPassword` | prometheus | Grafana admin password |
 | `k8s/monitoring/snmp-exporter` | `community` | snmp-exporter | SNMP community string |
+| `k8s/monitoring/alertmanager` | `discord-webhook-url` | Alertmanager | Discord notification webhook |
 | `k8s/monitoring/pve-exporter` | `cluster-dev-user` | prometheus-pve-exporter | Proxmox dev API username |
 | `k8s/monitoring/pve-exporter` | `cluster-dev-token-name` | prometheus-pve-exporter | Proxmox dev API token name |
 | `k8s/monitoring/pve-exporter` | `cluster-dev-token-value` | prometheus-pve-exporter | Proxmox dev API token value |
@@ -91,3 +92,44 @@ All secrets are fetched from OpenBao via ESO. They are not stored in this reposi
 - Target IPs for external exporters (blackbox, node-exporter, etc.) are hardcoded in `values/` files
 - `prometheus-pve-exporter` Deployment has a checksum annotation on its Secret for automatic restarts on credential changes
 - Future plan: move k0s controller-manager/scheduler scraping into an explicit local chart (`docs/plans/control-plane-metrics-chart.md`)
+
+## Alerting
+
+Alertmanager is the shared notification hub:
+
+- Prometheus evaluates metric alerts from `PrometheusRule` resources.
+- The Loki SingleBinary ruler evaluates Proxmox LogQL alerts.
+- The initial rollout enables only `ProxmoxAppArmorDenied`; the remaining
+  Proxmox rules are enabled incrementally through `values/loki.yaml`.
+- Only `warning` and `critical` alerts are routed to Discord.
+- `Watchdog`, `InfoInhibitor`, informational alerts, and alerts without a
+  supported severity remain on the null receiver.
+- Proxmox log alerts are grouped by `alertname` and `host`.
+- Resolved notifications are enabled.
+
+The Discord webhook is never stored in Git. ESO reads it from OpenBao into the
+`alertmanager-discord` Secret, which Alertmanager mounts at:
+
+```text
+/etc/alertmanager/secrets/alertmanager-discord/discord-webhook-url
+```
+
+Before enabling the receiver in a live cluster, create the Discord webhook and
+add it to the encrypted Ansible `openbao_secrets` list:
+
+```yaml
+- path: secret/k8s/monitoring/alertmanager
+  data:
+    discord-webhook-url: "<Discord webhook URL>"
+```
+
+Edit the file through SOPS and seed OpenBao with Ansible:
+
+```bash
+sops ansible/inventories/homelab/group_vars/openbao.sops.yaml
+cd ansible
+ansible-playbook playbooks/openbao_seed_secrets.yaml
+```
+
+Do not run `bao kv put` manually; Ansible is the source of truth for seeded
+OpenBao values.
