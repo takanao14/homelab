@@ -13,7 +13,7 @@ locals {
 
 inputs = {
   containers = {
-    "syslog1" = merge(local.env.locals.container_defaults, {
+    "log1" = merge(local.env.locals.container_defaults, {
       cores       = 2
       memory      = 1024
       bridge      = local.common.locals.node2.net10.bridge

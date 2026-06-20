@@ -71,7 +71,7 @@ tf/
     │   ├── dnsserver/              # DNS container
     │   ├── forgejo/                # Forgejo container
     │   ├── netbox/                 # NetBox container
-    │   └── syslog/                 # Syslog container
+    │   └── syslog/                 # Vector log collector (syslog ingress)
     └── node3/
         ├── env.hcl                 # node3 LXC defaults (node: node3, storage: local-lvm)
         ├── dnsserver/              # DNS container
@@ -107,6 +107,21 @@ terragrunt init
 terragrunt plan
 terragrunt apply
 ```
+
+### Log collector resource rename
+
+The central Vector collector was renamed from `syslog1` to `log1`. Its
+`for_each` resource address was migrated on 2026-06-20. The component directory
+remains `syslog/` so the existing backend state key does not change.
+
+```bash
+cd tf/lxc/node2/syslog
+terragrunt plan
+```
+
+The plan must preserve the existing container and IP address
+(`192.168.10.243`). Do not apply if it proposes creating or replacing the
+container.
 
 To apply all components in an environment at once:
 
