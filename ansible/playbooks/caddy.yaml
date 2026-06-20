@@ -8,6 +8,8 @@
       tags: caddy
     - role: vector
       tags: vector
+    - role: journald
+      tags: journald
 
 - name: Sync caddy DNS records to homelab-private
   hosts: localhost

@@ -8,3 +8,5 @@
       tags: seaweedfs
     - role: vector
       tags: vector
+    - role: journald
+      tags: journald

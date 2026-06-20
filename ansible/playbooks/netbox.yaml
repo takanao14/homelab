@@ -8,3 +8,5 @@
       tags: netbox
     - role: vector
       tags: vector
+    - role: journald
+      tags: journald

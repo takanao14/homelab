@@ -10,6 +10,8 @@
       tags: pdns_auth
     - role: vector
       tags: vector
+    - role: journald
+      tags: journald
 
 - name: Setup Secondary DNS Servers
   hosts: dns_secondary
@@ -22,3 +24,5 @@
       tags: pdns_auth
     - role: vector
       tags: vector
+    - role: journald
+      tags: journald
