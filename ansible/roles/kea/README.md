@@ -33,6 +33,12 @@ kea_subnet4:
         hostname: "myhost"
 ```
 
+## Placement
+
+DHCP runs on rpi4, outside the Proxmox / cluster nodes, so that AMT out-of-band
+management of `node1`–`node3` keeps working during node outages. See
+[ADR-0002](../../../docs/adr/0002-dhcp-outside-proxmox-cluster-nodes.md).
+
 ## Dependencies
 
 None.
