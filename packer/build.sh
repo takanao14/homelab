@@ -59,8 +59,9 @@ build_image() {
     local packer_output="$2"
     local image_file="$3"
 
-    local packer_output_dir=$(dirname "$packer_output")
-    local packer_vm_name=$(basename "$packer_output")
+    local packer_output_dir packer_vm_name
+    packer_output_dir=$(dirname "$packer_output")
+    packer_vm_name=$(basename "$packer_output")
 
     echo "Setting read permissions on host kernel for libguestfs..."
     sudo chmod 0644 /boot/vmlinuz-*
