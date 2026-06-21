@@ -7,7 +7,7 @@
     ":rebaseStalePrs"
   ],
   "timezone": "Asia/Tokyo",
-  "schedule": ["after 9am and before 6pm every weekday"],
+  "schedule": ["at any time"],
   "minimumReleaseAge": "3 days",
   "labels": ["dependencies", "renovate"],
   "vulnerabilityAlerts": {
@@ -16,12 +16,12 @@
   },
   "packageRules": [
     {
-      "description": "Apps & auxiliary components in k8s/ansible: auto-merge non-major updates. OBSERVATION MODE: automerge stays false until classification is verified; flip to true to go live.",
+      "description": "Apps & auxiliary components in k8s/ansible: auto-merge non-major updates. Renovate-native automerge (platformAutomerge=false) gates on lint without branch protection, so direct pushes to main stay unrestricted. OBSERVATION MODE: automerge stays false until classification is verified; flip to true to go live.",
       "matchFileNames": ["k8s/**", "ansible/**"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": false,
       "automergeType": "pr",
-      "platformAutomerge": true,
+      "platformAutomerge": false,
       "addLabels": ["auto-merge-candidate"]
     },
     {
