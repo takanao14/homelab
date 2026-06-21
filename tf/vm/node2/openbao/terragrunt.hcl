@@ -19,11 +19,11 @@ locals {
 inputs = {
   vms = {
     "openbao1" = merge(local.base_vars, {
-      cores   = 1
-      memory  = 1024
-      bridge  = local.common.locals.node2.net40.bridge
-      ipv4    = "192.168.40.30/24"
-      ipv4gw  = local.common.locals.node2.net40.ipv4gw
+      cores  = 1
+      memory = 1024
+      bridge = local.common.locals.node2.net40.bridge
+      ipv4   = "192.168.40.30/24"
+      ipv4gw = local.common.locals.node2.net40.ipv4gw
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 16

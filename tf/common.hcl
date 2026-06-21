@@ -1,7 +1,7 @@
 locals {
-  dns_internal  = ["192.168.10.231", "192.168.10.232"]
-  dns_external  = ["192.168.10.1", "8.8.8.8"]
-  dns_domain    = "home.butaco.net"
+  dns_internal = ["192.168.10.231", "192.168.10.232"]
+  dns_external = ["192.168.10.1", "8.8.8.8"]
+  dns_domain   = "home.butaco.net"
 
   dev = {
     net10 = {

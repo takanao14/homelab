@@ -19,11 +19,11 @@ locals {
 inputs = {
   vms = {
     "gpuvm1" = merge(local.base_vars, {
-      cores   = 8
-      memory  = 32768
-      bridge  = local.common.locals.dev.net20.bridge
-      ipv4    = "192.168.20.22/24"
-      ipv4gw  = local.common.locals.dev.net20.ipv4gw
+      cores  = 8
+      memory = 32768
+      bridge = local.common.locals.dev.net20.bridge
+      ipv4   = "192.168.20.22/24"
+      ipv4gw = local.common.locals.dev.net20.ipv4gw
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 200

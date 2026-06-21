@@ -19,11 +19,11 @@ locals {
 inputs = {
   vms = {
     "runner1" = merge(local.base_vars, {
-      cores   = 2
-      memory  = 4096
-      bridge  = local.common.locals.node2.net10.bridge
-      ipv4    = "192.168.10.246/24"
-      ipv4gw  = local.common.locals.node2.net10.ipv4gw
+      cores  = 2
+      memory = 4096
+      bridge = local.common.locals.node2.net10.bridge
+      ipv4   = "192.168.10.246/24"
+      ipv4gw = local.common.locals.node2.net10.ipv4gw
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 40
