@@ -6,6 +6,7 @@
     ":combinePatchMinorReleases",
     ":rebaseStalePrs"
   ],
+  "schedule": ["at any time"],
   "labels": ["dependencies", "renovate"],
   "vulnerabilityAlerts": {
     "labels": ["security"],
@@ -15,6 +16,13 @@
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": false
+    },
+    {
+      "matchUpdateTypes": ["patch", "digest"],
+      "matchFileNames": ["k8s/**", "ansible/**"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
     },
     {
       "matchPackageNames": ["ghcr.io/gethomepage/homepage"],

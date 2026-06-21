@@ -1,0 +1,25 @@
+name: Helm Lint
+
+on:
+  pull_request:
+    paths:
+      - "k8s/**/Chart.yaml"
+      - "k8s/**/values*.yaml"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+
+      - name: Helm dependency update & lint
+        run: |
+          find k8s -name "Chart.yaml" | while read chart; do
+            dir=$(dirname "$chart")
+            if grep -q "dependencies:" "$chart"; then
+              helm dependency update "$dir"
+            fi
+            helm lint "$dir"
+          done
