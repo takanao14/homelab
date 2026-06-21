@@ -33,7 +33,7 @@ for the config path and service name.
 
 ## Scope
 
-Applied to `all:!lxc` (see `playbooks/chrony.yaml`). LXC containers are excluded:
+Applied to `all:!lxc` (see `playbooks/common-chrony.yaml`). LXC containers are excluded:
 unprivileged containers lack `CAP_SYS_TIME` and inherit the host clock, so they
 must not run their own NTP daemon.
 

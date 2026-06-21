@@ -174,7 +174,7 @@ all:
       hosts:
         rpi4: null
 
-    # Shared VMs that receive bulk user accounts (see playbooks/users.yaml).
+    # Shared VMs that receive bulk user accounts (see playbooks/common-users.yaml).
     # Add target VM hostnames here (they must also exist under all.hosts).
     shared_vms:
       hosts: {}

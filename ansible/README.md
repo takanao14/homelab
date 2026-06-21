@@ -41,9 +41,8 @@ ansible/
 │       │   └── vector_lxc.yaml       # journald policy for Vector-enabled LXC guests
 │       └── host_vars/
 │           └── <hostname>.sops.yaml # Host-specific secrets, including PowerDNS API keys
-├── playbooks/
-│   ├── pdns_auth.yaml
-│   ├── pdns_sync.yaml
+├── playbooks/                          # see "Naming convention" below
+│   ├── pdns_auth.yaml                   # system (no prefix)
 │   ├── dnsdist.yaml
 │   ├── caddy.yaml
 │   ├── dhcp.yaml
@@ -51,23 +50,26 @@ ansible/
 │   ├── forgejo_runner.yaml
 │   ├── netbox.yaml
 │   ├── seaweedfs.yaml
-│   ├── node_exporter.yaml
+│   ├── log_collector.yaml
 │   ├── blackbox_exporter.yaml
-│   ├── vector.yaml
 │   ├── openbao.yaml
-│   ├── openbao_bootstrap.yaml
-│   ├── openbao_configure.yaml
-│   ├── openbao_configure_userpass.yaml
-│   ├── openbao_seed_secrets.yaml
 │   ├── proxmox.yaml
-│   ├── maintenance_user.yaml
-│   ├── package_upgrade.yaml
-│   ├── apt_mirror.yaml
-│   ├── chrony.yaml
-│   ├── unattended_upgrades.yaml
-│   ├── users.yaml
 │   ├── gpuvm.yaml
-│   └── rpi3.yaml
+│   ├── rpi3.yaml
+│   ├── common-vector.yaml              # cross-cutting (common- prefix)
+│   ├── common-journald.yaml
+│   ├── common-node_exporter.yaml
+│   ├── common-chrony.yaml
+│   ├── common-apt_mirror.yaml
+│   ├── common-unattended_upgrades.yaml
+│   ├── common-maintenance_user.yaml
+│   ├── common-users.yaml
+│   ├── ops-package_upgrade.yaml        # day-2 / operational (ops- prefix)
+│   ├── ops-pdns_sync.yaml
+│   ├── ops-openbao_bootstrap.yaml
+│   ├── ops-openbao_configure.yaml
+│   ├── ops-openbao_configure_userpass.yaml
+│   └── ops-openbao_seed_secrets.yaml
 └── roles/
     ├── pdns_auth/
     ├── dnsdist/
@@ -91,8 +93,25 @@ ansible/
     ├── timezone/
     ├── users/
     ├── journald/
+    ├── lxc_logging/                     # meta-role: vector + journald bundle
     └── rsyslog/
 ```
+
+## Naming convention
+
+Playbooks are named by class so the kind is obvious at a glance:
+
+| Class | Prefix | Meaning | Example |
+|-------|--------|---------|---------|
+| System | none | Build one service (relocatable). A host may be the target of several. | `netbox.yaml`, `seaweedfs.yaml` |
+| Cross-cutting | `common-` | A role applied across many systems; the bulk / version-bump entry point, targeting a dedicated group or host-pattern. | `common-vector.yaml`, `common-chrony.yaml` |
+| Day-2 / operational | `ops-` | A procedural maintenance action, not idempotent service config. | `ops-package_upgrade.yaml`, `ops-openbao_bootstrap.yaml` |
+
+System playbooks stay self-contained: the shared log-shipping stack
+(`vector` + `journald`) is pulled in via the `lxc_logging` meta-role, so a single
+`ansible-playbook playbooks/<system>.yaml` still provisions the full host. Every
+cross-cutting role additionally owns a `common-<role>.yaml` playbook so it can be
+rolled out fleet-wide in one run.
 
 ## Getting Started
 
@@ -163,11 +182,14 @@ ansible-playbook playbooks/dnsdist.yaml
 # DHCP server
 ansible-playbook playbooks/dhcp.yaml
 
-# Log collector
-ansible-playbook playbooks/vector.yaml
+# Log collector (log1 build)
+ansible-playbook playbooks/log_collector.yaml
+
+# Vector agent, all Vector hosts at once (e.g. version bump)
+ansible-playbook playbooks/common-vector.yaml
 
 # Node Exporter
-ansible-playbook playbooks/node_exporter.yaml
+ansible-playbook playbooks/common-node_exporter.yaml
 
 # SeaweedFS (standalone object storage for Terraform state)
 ansible-playbook playbooks/seaweedfs.yaml
@@ -185,20 +207,20 @@ ansible-playbook playbooks/openbao.yaml
 ansible-playbook playbooks/proxmox.yaml
 
 # Maintenance user on LXC containers
-ansible-playbook playbooks/maintenance_user.yaml
+ansible-playbook playbooks/common-maintenance_user.yaml
 
 # Bulk user accounts on shared VMs
-ansible-playbook playbooks/users.yaml
+ansible-playbook playbooks/common-users.yaml
 
 # OS package upgrade (all hosts; apt on Debian/Ubuntu, dnf on Rocky/RHEL)
-ansible-playbook playbooks/package_upgrade.yaml
+ansible-playbook playbooks/ops-package_upgrade.yaml
 
 # Time synchronization (chrony -> router; physical hosts and VMs, not LXC)
-ansible-playbook playbooks/chrony.yaml
+ansible-playbook playbooks/common-chrony.yaml
 
 # Reapply journald policy to all Vector-enabled LXC guests (normally applied by each
 # Vector-enabled LXC service playbook)
-ansible-playbook playbooks/journald.yaml
+ansible-playbook playbooks/common-journald.yaml
 
 # Dry run
 ansible-playbook playbooks/pdns_auth.yaml --check
@@ -206,35 +228,36 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 
 ## Playbooks
 
-| Playbook | Hosts |
-|----------|-------|
-| `pdns_auth.yaml` | `dns_primary`, `dns_secondary` |
-| `pdns_sync.yaml` | `dns_primary`, `dns_secondary` |
-| `dnsdist.yaml` | `dnsdist` |
-| `dhcp.yaml` | `dhcp` |
-| `caddy.yaml` | `caddy` |
-| `vector.yaml` | `log_collector` |
-| `node_exporter.yaml` | `node_exporter` |
-| `blackbox_exporter.yaml` | `blackbox_exporter` |
-| `forgejo.yaml` | `forgejo` |
-| `forgejo_runner.yaml` | `forgejo_runner` |
-| `netbox.yaml` | `netbox` |
-| `seaweedfs.yaml` | `seaweedfs` |
-| `openbao.yaml` | `openbao` |
-| `openbao_bootstrap.yaml` | `openbao` |
-| `openbao_configure.yaml` | `openbao` |
-| `openbao_configure_userpass.yaml` | `openbao` |
-| `openbao_seed_secrets.yaml` | `openbao` |
-| `proxmox.yaml` | `proxmox` |
-| `maintenance_user.yaml` | `lxc` |
-| `users.yaml` | `shared_vms` |
-| `package_upgrade.yaml` | `all:!proxmox` |
-| `apt_mirror.yaml` | `all` |
-| `unattended_upgrades.yaml` | `all:!proxmox` |
-| `chrony.yaml` | `all:!lxc` |
-| `journald.yaml` | `vector_lxc` |
-| `gpuvm.yaml` | `gpuvm` |
-| `rpi3.yaml` | `rpi3` |
+| Playbook | Hosts | Class |
+|----------|-------|-------|
+| `pdns_auth.yaml` | `dns_primary`, `dns_secondary` | system |
+| `dnsdist.yaml` | `dnsdist` | system |
+| `dhcp.yaml` | `dhcp` | system |
+| `caddy.yaml` | `caddy` | system |
+| `log_collector.yaml` | `log_collector` | system |
+| `blackbox_exporter.yaml` | `blackbox_exporter` | system |
+| `forgejo.yaml` | `forgejo` | system |
+| `forgejo_runner.yaml` | `forgejo_runner` | system |
+| `netbox.yaml` | `netbox` | system |
+| `seaweedfs.yaml` | `seaweedfs` | system |
+| `openbao.yaml` | `openbao` | system |
+| `proxmox.yaml` | `proxmox` | system (platform) |
+| `gpuvm.yaml` | `gpuvm` | system |
+| `rpi3.yaml` | `rpi3` | system |
+| `common-vector.yaml` | `vector` | cross-cutting |
+| `common-journald.yaml` | `vector_lxc` | cross-cutting |
+| `common-node_exporter.yaml` | `node_exporter` | cross-cutting |
+| `common-chrony.yaml` | `all:!lxc` | cross-cutting |
+| `common-apt_mirror.yaml` | `all` | cross-cutting |
+| `common-unattended_upgrades.yaml` | `all:!proxmox` | cross-cutting |
+| `common-maintenance_user.yaml` | `lxc` | cross-cutting |
+| `common-users.yaml` | `shared_vms` | cross-cutting |
+| `ops-package_upgrade.yaml` | `all:!proxmox` | ops |
+| `ops-pdns_sync.yaml` | `dns_primary`, `dns_secondary` | ops |
+| `ops-openbao_bootstrap.yaml` | `openbao` | ops |
+| `ops-openbao_configure.yaml` | `openbao` | ops |
+| `ops-openbao_configure_userpass.yaml` | `openbao` | ops |
+| `ops-openbao_seed_secrets.yaml` | `openbao` | ops |
 
 ## Secret Variables
 

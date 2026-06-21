@@ -41,7 +41,7 @@ None.
 ## Usage
 
 ```yaml
-# In playbooks/node_exporter.yml
+# In playbooks/common-node_exporter.yaml
 - name: Install and configure prometheus-node-exporter
   hosts: node_exporter
   roles:

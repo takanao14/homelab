@@ -18,7 +18,7 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 |----------|-------------|
 | `openbao_seal_key` | Static seal key: 32 raw bytes, base64-encoded. Generate with `openssl rand -base64 32` |
 | `openbao_root_token` | Root token from `operator init`. Stored as emergency backup; not used in day-to-day operations. |
-| `openbao_admin_token` | Admin token created by `openbao_bootstrap.yaml`. Used by `openbao_configure.yaml`. |
+| `openbao_admin_token` | Admin token created by `ops-openbao_bootstrap.yaml`. Used by `ops-openbao_configure.yaml`. |
 | `openbao_k8s_token_reviewer_jwt` | JWT of the `openbao-token-reviewer` ServiceAccount in the prd cluster. Used to configure the `kubernetes/` auth method. |
 | `openbao_k8s_ca_cert` | PEM-encoded CA certificate of the prd cluster. |
 | `openbao_k8s_dev_token_reviewer_jwt` | JWT of the `openbao-token-reviewer` ServiceAccount in the dev cluster. Used to configure the `kubernetes-dev/` auth method. |
@@ -88,7 +88,7 @@ openbao_admin_token: ""  # filled in next step
 Run the bootstrap playbook:
 
 ```bash
-ansible-playbook playbooks/openbao_bootstrap.yaml
+ansible-playbook playbooks/ops-openbao_bootstrap.yaml
 ```
 
 Copy the `openbao_admin_token` value from the output into `group_vars/openbao.sops.yaml`.
@@ -132,7 +132,7 @@ openbao_k8s_dev_ca_cert: |
 ### 3. Configure OpenBao
 
 ```bash
-ansible-playbook playbooks/openbao_configure.yaml
+ansible-playbook playbooks/ops-openbao_configure.yaml
 ```
 
 This enables KV v2, configures Kubernetes auth for both clusters, and creates policies and roles.
@@ -184,7 +184,7 @@ Alertmanager Discord receiver, add:
 Then run:
 
 ```bash
-ansible-playbook playbooks/openbao_seed_secrets.yaml
+ansible-playbook playbooks/ops-openbao_seed_secrets.yaml
 ```
 
 ## Userpass auth
@@ -211,7 +211,7 @@ Available policies:
 Run the playbook to apply:
 
 ```bash
-ansible-playbook playbooks/openbao_configure_userpass.yaml
+ansible-playbook playbooks/ops-openbao_configure_userpass.yaml
 ```
 
 Login with the bao CLI:

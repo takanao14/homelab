@@ -126,7 +126,7 @@ Edit the file through SOPS and seed OpenBao with Ansible:
 ```bash
 sops ansible/inventories/homelab/group_vars/openbao.sops.yaml
 cd ansible
-ansible-playbook playbooks/openbao_seed_secrets.yaml
+ansible-playbook playbooks/ops-openbao_seed_secrets.yaml
 ```
 
 Do not run `bao kv put` manually; Ansible is the source of truth for seeded
