@@ -6,7 +6,9 @@
     ":combinePatchMinorReleases",
     ":rebaseStalePrs"
   ],
-  "schedule": ["at any time"],
+  "timezone": "Asia/Tokyo",
+  "schedule": ["after 9am and before 6pm every weekday"],
+  "minimumReleaseAge": "3 days",
   "labels": ["dependencies", "renovate"],
   "vulnerabilityAlerts": {
     "labels": ["security"],
@@ -14,15 +16,43 @@
   },
   "packageRules": [
     {
+      "description": "Apps & auxiliary components in k8s/ansible: auto-merge non-major updates. OBSERVATION MODE: automerge stays false until classification is verified; flip to true to go live.",
+      "matchFileNames": ["k8s/**", "ansible/**"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": false
+      "automerge": false,
+      "automergeType": "pr",
+      "platformAutomerge": true,
+      "addLabels": ["auto-merge-candidate"]
     },
     {
-      "matchUpdateTypes": ["patch", "digest"],
-      "matchFileNames": ["k8s/**", "ansible/**"],
-      "automerge": true,
-      "automergeType": "pr",
-      "platformAutomerge": true
+      "description": "Cluster-foundation & stateful components: always review minor/major manually (ArgoCD auto-syncs to prod).",
+      "matchPackageNames": [
+        "/cilium/",
+        "k0sproject/k0s",
+        "openebs/openebs",
+        "cert-manager",
+        "argo-cd",
+        "openbao/openbao",
+        "seaweedfs/seaweedfs",
+        "kube-prometheus-stack",
+        "loki",
+        "external-secrets"
+      ],
+      "matchUpdateTypes": ["minor", "major"],
+      "automerge": false,
+      "addLabels": ["infra-core", "manual-review"]
+    },
+    {
+      "description": "GPU userspace driver (ROCm): review manually, tied to amdgpu-dkms.",
+      "matchDatasources": ["custom.rocm"],
+      "automerge": false,
+      "addLabels": ["manual-review"]
+    },
+    {
+      "description": "Never auto-merge major updates.",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "addLabels": ["major-update"]
     },
     {
       "matchPackageNames": ["ghcr.io/gethomepage/homepage"],
