@@ -14,11 +14,16 @@ locals {
 inputs = {
   containers = {
     "seaweedfs1" = merge(local.env.locals.container_defaults, {
-      # Bumped from 2C/2GB: the all-in-one process (master+volume+filer+s3)
-      # exhausted 2GB RAM and stalled when serving large (600MB+) cloud-images
-      # objects to concurrent clients. Matches the documented 4C/4GB target.
+      # Bumped from 4C/4GB: in an LXC the page cache counts against the memory
+      # cgroup, so serving the multi-GB custom images (cloud-images bucket, e.g.
+      # the xrdp desktop images) drove cgroup memory to the 4GB cap and the
+      # kernel OOM-killed weed mid-download ("volume server has been killed" in
+      # the journal). At idle the data-file page cache already sat at ~3.5GB.
+      # 8GB gives cache+heap headroom; 4GB swap gives weed's Go heap (anonymous
+      # memory) a reclaim target so cache eviction does not race the OOM killer.
       cores       = 4
-      memory      = 4096
+      memory      = 8192
+      swap        = 4096
       bridge      = local.common.locals.node3.net50.bridge
       ipv4        = "192.168.50.31/24"
       ipv4gw      = local.common.locals.node3.net50.ipv4gw

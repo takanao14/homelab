@@ -16,6 +16,7 @@ resource "proxmox_virtual_environment_container" "container" {
 
   memory {
     dedicated = each.value.memory
+    swap      = each.value.swap
   }
 
   operating_system {

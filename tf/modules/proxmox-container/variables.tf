@@ -12,9 +12,12 @@ variable "containers" {
     dns_servers = list(string)
     os_template = string
     os_type     = string
-    cores            = number
-    memory           = number
-    on_boot          = bool
+    cores       = number
+    memory      = number
+    # Swap (MB) backing the container's memory cgroup. Defaults to 0 (no swap),
+    # matching the previous behavior for all existing containers.
+    swap    = optional(number, 0)
+    on_boot = bool
     disks = map(object({
       datastore_id = string
       size         = number
