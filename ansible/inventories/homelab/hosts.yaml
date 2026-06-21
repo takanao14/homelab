@@ -132,6 +132,14 @@ all:
         seaweedfs: {}
         log_collector: {}
 
+    # All hosts running the Vector agent: the journald-reading LXC guests plus
+    # the rpi4 DHCP host (outside vector_lxc). Target of common-vector.yaml for
+    # fleet-wide Vector version bumps.
+    vector:
+      children:
+        vector_lxc: {}
+        dhcp: {}
+
     proxmox:
       hosts:
         pve: null

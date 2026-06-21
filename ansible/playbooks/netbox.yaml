@@ -6,7 +6,5 @@
       tags: timezone
     - role: netbox
       tags: netbox
-    - role: vector
-      tags: vector
-    - role: journald
-      tags: journald
+    - role: lxc_logging
+      tags: logging

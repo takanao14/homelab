@@ -1,10 +1,8 @@
 ---
-- name: Setup Forgejo
-  hosts: forgejo
+- name: Setup Log Collector
+  hosts: log_collector
   roles:
     - role: timezone
       tags: timezone
-    - role: forgejo
-      tags: forgejo
     - role: lxc_logging
       tags: logging

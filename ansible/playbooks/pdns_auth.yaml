@@ -8,10 +8,8 @@
       tags: timezone
     - role: pdns_auth
       tags: pdns_auth
-    - role: vector
-      tags: vector
-    - role: journald
-      tags: journald
+    - role: lxc_logging
+      tags: logging
 
 - name: Setup Secondary DNS Servers
   hosts: dns_secondary
@@ -22,7 +20,5 @@
       tags: timezone
     - role: pdns_auth
       tags: pdns_auth
-    - role: vector
-      tags: vector
-    - role: journald
-      tags: journald
+    - role: lxc_logging
+      tags: logging

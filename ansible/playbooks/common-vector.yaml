@@ -1,0 +1,10 @@
+---
+# Cross-cutting entry point for the Vector agent: applies the vector role to
+# every Vector host at once (e.g. fleet-wide version bumps). Each host still
+# renders its own vector_config from its service group_vars. Per-host journald
+# policy is handled separately by common-journald.yaml / lxc_logging.
+- name: Apply Vector agent to all Vector hosts
+  hosts: vector
+  roles:
+    - role: vector
+      tags: vector
