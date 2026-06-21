@@ -3,7 +3,7 @@
 # Launcher for the Grafana MCP server (grafana/mcp-grafana) over stdio.
 #
 # Runtime selection:
-#   - macOS (Darwin) -> OrbStack, invoked via the `docker` CLI
+#   - macOS (Darwin) -> OrbStack via `docker` when installed, otherwise Podman
 #   - Linux          -> Podman, invoked via the `podman` CLI
 # Override with GRAFANA_MCP_RUNTIME (e.g. "docker" or "podman") when needed.
 #
@@ -37,14 +37,39 @@ export GRAFANA_URL GRAFANA_SERVICE_ACCOUNT_TOKEN
 runtime="${GRAFANA_MCP_RUNTIME:-}"
 if [ -z "${runtime}" ]; then
   case "$(uname -s)" in
-    Darwin) runtime="docker" ;;  # OrbStack provides a drop-in docker CLI
+    Darwin)
+      if command -v orb >/dev/null 2>&1 || [ -d "/Applications/OrbStack.app" ]; then
+        runtime="docker"  # OrbStack provides a drop-in docker CLI
+      else
+        runtime="podman"
+      fi
+      ;;
     *)      runtime="podman" ;;
   esac
 fi
 
 if ! command -v "${runtime}" >/dev/null 2>&1; then
-  echo "grafana-mcp: container runtime '${runtime}' not found in PATH" >&2
+  if [ "${runtime}" = "podman" ] && [ "$(uname -s)" = "Darwin" ]; then
+    echo "grafana-mcp: OrbStack was not detected and Podman is not found in PATH." >&2
+    echo "grafana-mcp: Install Podman from the official macOS installer, then run 'podman machine init --now'." >&2
+  else
+    echo "grafana-mcp: container runtime '${runtime}' not found in PATH" >&2
+  fi
   exit 127
+fi
+
+if [ "${runtime}" = "podman" ] && [ "$(uname -s)" = "Darwin" ]; then
+  if ! podman_info_error="$("${runtime}" info 2>&1 >/dev/null)"; then
+    if printf '%s\n' "${podman_info_error}" | grep -qi "krunkit"; then
+      echo "grafana-mcp: Podman on macOS cannot find the 'krunkit' binary." >&2
+      echo "grafana-mcp: Install Podman from the official macOS installer, or install/configure krunkit manually." >&2
+    else
+      echo "grafana-mcp: Podman is installed, but the macOS Podman machine is not ready." >&2
+      echo "grafana-mcp: Try 'podman machine init --now' or 'podman machine start'." >&2
+      printf '%s\n' "${podman_info_error}" >&2
+    fi
+    exit 1
+  fi
 fi
 
 # stdio transport: keep stdin open (-i), never allocate a TTY (-t breaks framing).

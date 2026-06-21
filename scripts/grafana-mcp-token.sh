@@ -23,7 +23,7 @@ set -euo pipefail
 GRAFANA_URL="${GRAFANA_URL:-https://grafana.prd.butaco.net}"
 KUBE_CONTEXT="${GRAFANA_KUBE_CONTEXT:-prd-homelab}"
 SA_NAME="${GRAFANA_MCP_SA_NAME:-mcp-grafana}"
-SA_ROLE="${GRAFANA_MCP_SA_ROLE:-Editor}"
+SA_ROLE="${GRAFANA_MCP_SA_ROLE:-Viewer}"
 TOKEN_NAME="${GRAFANA_MCP_TOKEN_NAME:-mcp-grafana-$(date +%Y%m%d-%H%M%S)}"
 
 for bin in curl jq; do

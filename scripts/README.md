@@ -215,9 +215,9 @@ The server lets an MCP client (Claude Code, Codex, Cursor, …) query Grafana
 ### `grafana-mcp.sh`
 
 Launcher invoked by the MCP client over stdio. It selects a container runtime
-per OS — `docker` on macOS (OrbStack), `podman` on Linux — and runs the
-`mcp/grafana` image with `-i` (no TTY). You normally don't run this by hand; the
-client starts it.
+per OS — `docker` on macOS when OrbStack is installed, `podman` otherwise — and
+runs the `mcp/grafana` image with `-i` (no TTY). You normally don't run this by
+hand; the client starts it.
 
 Credentials are **self-resolving**: if `GRAFANA_SERVICE_ACCOUNT_TOKEN` is already
 exported (e.g. Claude Code launched under direnv) it is used as-is; otherwise the
@@ -236,8 +236,13 @@ startup_timeout_ms = 60000   # first run pulls the mcp/grafana image
 
 | Env var | Default | Notes |
 |---------|---------|-------|
-| `GRAFANA_MCP_RUNTIME` | `docker` (macOS) / `podman` (Linux) | Force a runtime |
+| `GRAFANA_MCP_RUNTIME` | `docker` on macOS with OrbStack, otherwise `podman` | Force a runtime |
 | `GRAFANA_MCP_IMAGE`   | `mcp/grafana`                       | Override the image |
+
+On macOS, the Podman fallback expects a working Podman machine. Prefer the
+official Podman macOS installer; Homebrew builds can miss VM helper binaries
+such as `krunkit`. After installing Podman, initialize the machine with
+`podman machine init --now`.
 
 ### `grafana-mcp-token.sh`
 
