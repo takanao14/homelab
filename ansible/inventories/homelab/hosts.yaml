@@ -140,6 +140,33 @@ all:
         vector_lxc: {}
         dhcp: {}
 
+    # Hosts whose system timezone is managed by Ansible (the set that previously
+    # carried the per-playbook `timezone` role). Target of common-timezone.yaml.
+    # Intentionally NOT all:!proxmox, to avoid newly touching k0s nodes/toolboxes.
+    timezone:
+      children:
+        caddy: {}
+        dnsdist: {}
+        dns_auth: {}
+        dhcp: {}
+        forgejo: {}
+        forgejo_runner: {}
+        netbox: {}
+        seaweedfs: {}
+        openbao: {}
+        gpuvm: {}
+        log_collector: {}
+      hosts:
+        rpi3: null
+
+    # Hosts forwarding syslog via the rsyslog role: the Proxmox nodes plus rpi3.
+    # Target of common-rsyslog.yaml.
+    rsyslog:
+      children:
+        proxmox: {}
+      hosts:
+        rpi3: null
+
     proxmox:
       hosts:
         pve: null

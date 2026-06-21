@@ -55,9 +55,10 @@ ansible/
 │   ├── openbao.yaml
 │   ├── proxmox.yaml
 │   ├── gpuvm.yaml
-│   ├── rpi3.yaml
 │   ├── common-vector.yaml              # cross-cutting (common- prefix)
 │   ├── common-journald.yaml
+│   ├── common-timezone.yaml
+│   ├── common-rsyslog.yaml
 │   ├── common-node_exporter.yaml
 │   ├── common-chrony.yaml
 │   ├── common-apt_mirror.yaml
@@ -243,9 +244,10 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `openbao.yaml` | `openbao` | system |
 | `proxmox.yaml` | `proxmox` | system (platform) |
 | `gpuvm.yaml` | `gpuvm` | system |
-| `rpi3.yaml` | `rpi3` | system |
 | `common-vector.yaml` | `vector` | cross-cutting |
 | `common-journald.yaml` | `vector_lxc` | cross-cutting |
+| `common-timezone.yaml` | `timezone` | cross-cutting |
+| `common-rsyslog.yaml` | `rsyslog` | cross-cutting |
 | `common-node_exporter.yaml` | `node_exporter` | cross-cutting |
 | `common-chrony.yaml` | `all:!lxc` | cross-cutting |
 | `common-apt_mirror.yaml` | `all` | cross-cutting |

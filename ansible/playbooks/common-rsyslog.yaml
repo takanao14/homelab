@@ -1,0 +1,9 @@
+---
+# Cross-cutting entry point for the rsyslog forwarder. proxmox.yaml still embeds
+# `- role: rsyslog` for platform self-containment; this playbook is the bulk
+# entry covering the Proxmox nodes plus rpi3.
+- name: Configure rsyslog forwarding on all rsyslog hosts
+  hosts: rsyslog
+  roles:
+    - role: rsyslog
+      tags: rsyslog
