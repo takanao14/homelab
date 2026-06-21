@@ -42,6 +42,7 @@ ansible/
 │       └── host_vars/
 │           └── <hostname>.sops.yaml # Host-specific secrets, including PowerDNS API keys
 ├── playbooks/                          # see "Naming convention" below
+│   ├── bootstrap.yaml                   # new-host baseline (imports common-* hygiene)
 │   ├── pdns_auth.yaml                   # system (no prefix)
 │   ├── dnsdist.yaml
 │   ├── caddy.yaml
@@ -108,11 +109,41 @@ Playbooks are named by class so the kind is obvious at a glance:
 | Cross-cutting | `common-` | A role applied across many systems; the bulk / version-bump entry point, targeting a dedicated group or host-pattern. | `common-vector.yaml`, `common-chrony.yaml` |
 | Day-2 / operational | `ops-` | A procedural maintenance action, not idempotent service config. | `ops-package_upgrade.yaml`, `ops-openbao_bootstrap.yaml` |
 
-System playbooks stay self-contained: the shared log-shipping stack
-(`vector` + `journald`) is pulled in via the `lxc_logging` meta-role, so a single
-`ansible-playbook playbooks/<system>.yaml` still provisions the full host. Every
-cross-cutting role additionally owns a `common-<role>.yaml` playbook so it can be
-rolled out fleet-wide in one run.
+### What a system playbook embeds
+
+A system playbook embeds only **service-coupled** concerns: the service role
+plus the roles whose configuration the service *owns* — i.e. the log-shipping
+stack (`vector` + `journald`, via the `lxc_logging` meta-role), since each
+service supplies its own `vector_config`. `timezone` is also embedded as a
+pragmatic exception (cheap, idempotent, keeps log timestamps correct on a
+single-playbook run).
+
+It deliberately does **not** embed fleet-uniform **host hygiene** (`apt_mirror`,
+`chrony`, `unattended_upgrades`, `node_exporter`): that config is identical on
+every host, so duplicating it into each service playbook would violate DRY. The
+test: *does this role's config vary per service?* If no, it belongs to the host
+baseline, not the service playbook.
+
+Every cross-cutting role additionally owns a `common-<role>.yaml` playbook so it
+can be rolled out fleet-wide in one run.
+
+### Provisioning a new host
+
+Host hygiene is applied at host bring-up, before services, via `bootstrap.yaml`
+(a thin aggregate that imports the baseline `common-*` playbooks):
+
+```bash
+# 1. Baseline a freshly created host (apt_mirror first, then timezone, chrony,
+#    unattended_upgrades, node_exporter). Per-play host patterns + --limit select
+#    the applicable subset automatically.
+ansible-playbook playbooks/bootstrap.yaml --limit <newhost>
+
+# 2. Deploy the service onto the baselined host.
+ansible-playbook playbooks/<system>.yaml --limit <newhost>
+```
+
+`bootstrap.yaml` covers only the universal baseline; narrow roles applied to a
+few hosts (`rsyslog`, `maintenance_user`) are run via their own `common-*.yaml`.
 
 ## Getting Started
 

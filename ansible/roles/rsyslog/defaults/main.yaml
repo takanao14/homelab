@@ -8,3 +8,21 @@ rsyslog_queue_size: 10000
 rsyslog_queue_high_watermark: 9000
 rsyslog_queue_low_watermark: 7000
 rsyslog_queue_max_disk_space: "256m"
+
+# Work directory for rsyslog state files (imfile read positions). Emitted only
+# when file inputs are present; the main rsyslog.conf already sets this at runtime,
+# but the isolated `rsyslogd -N1` config validation needs it for imfile too.
+rsyslog_work_directory: "/var/spool/rsyslog"
+
+# Optional file log collection via imfile. Each item is {path, tag} with optional
+# {facility, severity}. Empty by default so existing hosts (e.g. rpi3) keep their
+# journal/legacy-only behavior. Paths must be exact (no wildcards).
+rsyslog_file_inputs: []
+
+# Dedicated forwarding queue for file inputs, kept separate from the journal queue
+# so a high-volume file (e.g. an access log) burst cannot starve journal
+# forwarding. Sized smaller than the journal queue on purpose.
+rsyslog_file_queue_size: 5000
+rsyslog_file_queue_high_watermark: 4000
+rsyslog_file_queue_low_watermark: 2000
+rsyslog_file_queue_max_disk_space: "128m"

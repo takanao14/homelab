@@ -23,3 +23,18 @@ rsyslog_queue_size: 10000
 rsyslog_queue_high_watermark: 9000
 rsyslog_queue_low_watermark: 7000
 rsyslog_queue_max_disk_space: "256m"
+
+# Proxmox file logs the journal does not cover. Exact paths only; rotated files
+# (.1, .gz, index.1, pveam.log.0) are intentionally not matched. tasks/active and
+# the per-task tasks/[0-F]/* output files are excluded (rewritten state / hundreds
+# of low-value UPID files). Sensitive fields in access.log (source IPs, users,
+# URLs, VMIDs, UPIDs) stay in the message body and must never become Loki labels.
+rsyslog_file_inputs:
+  - path: /var/log/pve/tasks/index
+    tag: pve-task
+  - path: /var/log/pveproxy/access.log
+    tag: pveproxy-access
+  - path: /var/log/pve-firewall.log
+    tag: pve-firewall-file
+  - path: /var/log/pveam.log
+    tag: pveam

@@ -3,6 +3,28 @@
 template(name="ForwardRFC5424UTC" type="string"
   string="<%PRI%>1 %TIMESTAMP:::date-rfc3339% %HOSTNAME% %APP-NAME% %PROCID% %MSGID% %STRUCTURED-DATA% %MSG%\n")
 
+{#- Shared omfwd forwarding action (DRY). Each caller passes a distinct queue
+    filename so journal and file paths never collide on disk. timeoutEnqueue="0"
+    drops new entries instead of blocking the producer when the queue is full. -#}
+{% macro omfwd_loki(queue_filename, q_size, q_high, q_low, q_disk) -%}
+action(
+  type="omfwd"
+  target="{{ rsyslog_forward_host }}"
+  port="{{ rsyslog_forward_port }}"
+  protocol="{{ rsyslog_forward_protocol }}"
+  template="ForwardRFC5424UTC"
+  action.resumeRetryCount="-1"
+  queue.type="LinkedList"
+  queue.size="{{ q_size }}"
+  queue.highWatermark="{{ q_high }}"
+  queue.lowWatermark="{{ q_low }}"
+  queue.filename="{{ queue_filename }}"
+  queue.maxDiskSpace="{{ q_disk }}"
+  queue.saveOnShutdown="on"
+  queue.timeoutEnqueue="0"
+)
+{%- endmacro %}
+
 {% if rsyslog_journal_input %}
 ## Read journald directly and forward through a dedicated ruleset, so journal
 ## entries bypass the default local-file rules (imuxsock keeps writing local
@@ -23,22 +45,7 @@ module(
 )
 
 ruleset(name="ForwardJournalToLoki") {
-  action(
-    type="omfwd"
-    target="{{ rsyslog_forward_host }}"
-    port="{{ rsyslog_forward_port }}"
-    protocol="{{ rsyslog_forward_protocol }}"
-    template="ForwardRFC5424UTC"
-    action.resumeRetryCount="-1"
-    queue.type="LinkedList"
-    queue.size="{{ rsyslog_queue_size }}"
-    queue.highWatermark="{{ rsyslog_queue_high_watermark }}"
-    queue.lowWatermark="{{ rsyslog_queue_low_watermark }}"
-    queue.filename="loki_forward"
-    queue.maxDiskSpace="{{ rsyslog_queue_max_disk_space }}"
-    queue.saveOnShutdown="on"
-    queue.timeoutEnqueue="0"
-  )
+{{ omfwd_loki("loki_forward", rsyslog_queue_size, rsyslog_queue_high_watermark, rsyslog_queue_low_watermark, rsyslog_queue_max_disk_space) | indent(2, true) }}
 }
 
 input(
@@ -65,4 +72,39 @@ input(
 {% else %}
 *.* action(type="omfwd" target="{{ rsyslog_forward_host }}" port="{{ rsyslog_forward_port }}" protocol="udp" template="ForwardRFC5424UTC")
 {% endif %}
+{% endif %}
+
+{% if rsyslog_file_inputs %}
+## File log collection via imfile (e.g. Proxmox /var/log files the journal does
+## not cover). Inputs are bound to their own ForwardFilesToLoki ruleset with a
+## separate disk-assisted, non-blocking queue (distinct filename), so a
+## high-volume file burst cannot starve the journal forwarding queue. inotify
+## mode (default) follows rename-based rotation; state is persisted so only the
+## current file is replayed once on first deployment. NOTE: per-line size is
+## bounded by rsyslog's global maxMessageSize default (imfile has no per-input
+## line-size cap); a global override is intentionally not set here to avoid
+## touching the hypervisor's shared rsyslog limits.
+##
+## workDirectory is required so imfile persists read-position state files in a
+## stable location (and so isolated `rsyslogd -N1` validation passes); it is set
+## to the path the main rsyslog.conf already uses, so this is idempotent.
+global(workDirectory="{{ rsyslog_work_directory }}")
+module(load="imfile")
+
+ruleset(name="ForwardFilesToLoki") {
+{{ omfwd_loki("loki_forward_files", rsyslog_file_queue_size, rsyslog_file_queue_high_watermark, rsyslog_file_queue_low_watermark, rsyslog_file_queue_max_disk_space) | indent(2, true) }}
+}
+
+{% for f in rsyslog_file_inputs %}
+input(
+  type="imfile"
+  File="{{ f.path }}"
+  Tag="{{ f.tag }}"
+  Facility="{{ f.facility | default('local6') }}"
+  Severity="{{ f.severity | default('info') }}"
+  Ruleset="ForwardFilesToLoki"
+  PersistStateInterval="100"
+  reopenOnTruncate="off"
+)
+{% endfor %}
 {% endif %}
