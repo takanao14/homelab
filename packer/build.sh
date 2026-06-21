@@ -17,11 +17,13 @@ OPTIONS:
     rocky9         Build a basic Rocky 9 Linux image with the timezone set to JST
     rocky9-xrdp    Build Rocky 9 Linux image with XRDP service
     debian13       Build a basic Debian 13 image
+    all            Build every image listed above, in order
     help           Display this help message
 
 EXAMPLES:
     $0 ubuntu24
     $0 ubuntu24-xrdp
+    $0 -y all
 
 EOF
     exit "$exit_status"
@@ -92,6 +94,56 @@ build_image() {
     sha256sum "${image_file}" | cut -d' ' -f1 > "${image_file}.sha256"
 }
 
+# Build a single target by name. Maps CLI targets to their Packer templates and
+# outputs. Keep the target list in sync with ALL_TARGETS and push.sh.
+build_target() {
+    case "$1" in
+        ubuntu24)
+            build_image \
+                "ubuntu-24.04-custom.pkr.hcl" \
+                "output-ubuntu24-custom/ubuntu-24.04-custom.qcow2" \
+                "images/ubuntu-24.04-custom.img"
+            ;;
+        ubuntu24-xrdp)
+            build_image \
+                "ubuntu-24.04-xrdp.pkr.hcl" \
+                "output-ubuntu24-xrdp/ubuntu-24.04-xrdp.qcow2" \
+                "images/ubuntu-24.04-xrdp.img"
+            ;;
+        rocky10)
+            build_image \
+                "rocky-10-custom.pkr.hcl" \
+                "output-rocky-10-custom/rocky-10-custom.qcow2" \
+                "images/rocky-10-custom.img"
+            ;;
+        rocky9)
+            build_image \
+                "rocky-9-custom.pkr.hcl" \
+                "output-rocky-9-custom/rocky-9-custom.qcow2" \
+                "images/rocky-9-custom.img"
+            ;;
+        rocky9-xrdp)
+            build_image \
+                "rocky-9-xrdp.pkr.hcl" \
+                "output-rocky-9-xrdp/rocky-9-xrdp.qcow2" \
+                "images/rocky-9-xrdp.img"
+            ;;
+        debian13)
+            build_image \
+                "debian-13-custom.pkr.hcl" \
+                "output-debian-13-custom/debian-13-custom.qcow2" \
+                "images/debian-13-custom.img"
+            ;;
+        *)
+            echo "Error: Unknown build target '$1'"
+            usage
+            ;;
+    esac
+}
+
+# All targets, in build order. `all` iterates this list.
+ALL_TARGETS=(ubuntu24 ubuntu24-xrdp rocky10 rocky9 rocky9-xrdp debian13)
+
 FORCE_OVERWRITE=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -121,50 +173,17 @@ BUILD_TARGET="$1"
 
 mkdir -p images
 
-# Map CLI targets to their Packer templates and outputs.
 case "$BUILD_TARGET" in
-    ubuntu24)
-        build_image \
-            "ubuntu-24.04-custom.pkr.hcl" \
-            "output-ubuntu24-custom/ubuntu-24.04-custom.qcow2" \
-            "images/ubuntu-24.04-custom.img"
-        ;;
-    ubuntu24-xrdp)
-        build_image \
-            "ubuntu-24.04-xrdp.pkr.hcl" \
-            "output-ubuntu24-xrdp/ubuntu-24.04-xrdp.qcow2" \
-            "images/ubuntu-24.04-xrdp.img"
-        ;;
-    rocky10)
-        build_image \
-            "rocky-10-custom.pkr.hcl" \
-            "output-rocky-10-custom/rocky-10-custom.qcow2" \
-            "images/rocky-10-custom.img"
-        ;;
-    rocky9)
-        build_image \
-            "rocky-9-custom.pkr.hcl" \
-            "output-rocky-9-custom/rocky-9-custom.qcow2" \
-            "images/rocky-9-custom.img"
-        ;;
-    rocky9-xrdp)
-        build_image \
-            "rocky-9-xrdp.pkr.hcl" \
-            "output-rocky-9-xrdp/rocky-9-xrdp.qcow2" \
-            "images/rocky-9-xrdp.img"
-        ;;
-    debian13)
-        build_image \
-            "debian-13-custom.pkr.hcl" \
-            "output-debian-13-custom/debian-13-custom.qcow2" \
-            "images/debian-13-custom.img"
-        ;;
     help|--help|-h)
         usage 0
         ;;
+    all)
+        for target in "${ALL_TARGETS[@]}"; do
+            build_target "$target"
+        done
+        ;;
     *)
-        echo "Error: Unknown build target '$BUILD_TARGET'"
-        usage
+        build_target "$BUILD_TARGET"
         ;;
 esac
 
