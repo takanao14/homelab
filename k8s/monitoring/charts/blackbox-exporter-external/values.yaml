@@ -1,0 +1,11 @@
+blackboxExporterURL: ""
+scrapeInterval: 30s
+
+dnsExternal:
+  targets: []
+
+dnsInternal:
+  targets: []
+
+icmp:
+  targets: []

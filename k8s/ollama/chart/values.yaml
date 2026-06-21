@@ -1,5 +1,7 @@
 replicaCount: 0
 
+hostname: ""
+
 image:
   repository: ollama/ollama
   tag: 0.30.10-rocm

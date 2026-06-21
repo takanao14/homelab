@@ -1,0 +1,7 @@
+proxmoxAlerts:
+  enabled: false
+  rules:
+    appArmor: false
+    oom: false
+    storage: false
+    backup: false
