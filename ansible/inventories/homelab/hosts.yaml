@@ -34,6 +34,14 @@ all:
       ansible_host: 192.168.10.240
     rpi4:
       ansible_host: 192.168.10.241
+    sandbox-cp1:
+      ansible_host: 192.168.20.31
+    sandbox-worker1:
+      ansible_host: 192.168.20.32
+    sandbox-worker2:
+      ansible_host: 192.168.20.33
+    sandbox-worker3:
+      ansible_host: 192.168.20.34
     dev-cp1:
       ansible_host: 192.168.20.11
     dev-worker1:
@@ -107,6 +115,22 @@ all:
     dhcp:
       hosts:
         rpi4: null
+
+    prd_k8s:
+      hosts:
+        prd-cp1: null
+        prd-worker1: null
+    dev_k8s:
+      hosts:
+        dev-cp1: null
+        dev-worker1: null
+        gpuvm1: null
+    sandbox_k8s:
+      hosts:
+        sandbox-cp1: null
+        sandbox-worker1: null
+        sandbox-worker2: null
+        sandbox-worker3: null
 
     lxc:
       hosts:
