@@ -99,8 +99,10 @@ Alertmanager is the shared notification hub:
 
 - Prometheus evaluates metric alerts from `PrometheusRule` resources.
 - The Loki SingleBinary ruler evaluates Proxmox LogQL alerts.
-- The initial rollout enables only `ProxmoxAppArmorDenied`; the remaining
-  Proxmox rules are enabled incrementally through `values/loki.yaml`.
+- All seven Proxmox LogQL rules are enabled through `values/loki.yaml`
+  (`ProxmoxAppArmorDenied`, `ProxmoxOOMDetected`, `ProxmoxStorageError`,
+  `ProxmoxBackupFailed`, `ProxmoxServiceErrors`, `ProxmoxQuorumError`,
+  `ProxmoxHAError`).
 - Only `warning` and `critical` alerts are routed to Discord.
 - `Watchdog`, `InfoInhibitor`, informational alerts, and alerts without a
   supported severity remain on the null receiver.
