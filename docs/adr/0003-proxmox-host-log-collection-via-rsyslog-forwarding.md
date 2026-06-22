@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-21
-- **Related:** [`docs/plans/proxmox-loki-log-collection.md`](../plans/proxmox-loki-log-collection.md) (implementation plan, Phase 6 pending), [`ansible/roles/rsyslog/README.md`](../../ansible/roles/rsyslog/README.md), [ADR-0004](0004-alertmanager-single-notification-hub.md)
+- **Related:** [`ansible/roles/rsyslog/README.md`](../../ansible/roles/rsyslog/README.md), [ADR-0004](0004-alertmanager-single-notification-hub.md). The implementation plan (`docs/plans/proxmox-loki-log-collection.md`) has been removed now that every phase, including Phase 6 file-log collection, is complete on all four nodes.
 
 ## Context
 

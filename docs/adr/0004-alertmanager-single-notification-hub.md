@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-21
-- **Related:** [`docs/plans/proxmox-loki-log-collection.md`](../plans/proxmox-loki-log-collection.md) (Phase 5), [`k8s/monitoring/README.md`](../../k8s/monitoring/README.md), [ADR-0003](0003-proxmox-host-log-collection-via-rsyslog-forwarding.md)
+- **Related:** [`k8s/monitoring/README.md`](../../k8s/monitoring/README.md), [ADR-0003](0003-proxmox-host-log-collection-via-rsyslog-forwarding.md). The implementation plan (`docs/plans/proxmox-loki-log-collection.md`, Phase 5) has been removed now that the rollout is complete.
 
 ## Context
 
