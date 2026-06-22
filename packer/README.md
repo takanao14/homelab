@@ -128,6 +128,7 @@ terragrunt apply
 | [ubuntu-24.04-custom.pkr.hcl](ubuntu-24.04-custom.pkr.hcl) | Ubuntu 24.04 base with QEMU Guest Agent | `images/ubuntu-24.04-custom.img` |
 | [ubuntu-24.04-xrdp.pkr.hcl](ubuntu-24.04-xrdp.pkr.hcl) | Ubuntu 24.04 with XRDP + XFCE4 desktop | `images/ubuntu-24.04-xrdp.img` |
 | [rocky-10-custom.pkr.hcl](rocky-10-custom.pkr.hcl) | Rocky Linux 10 base image | `images/rocky-10-custom.img` |
+| [rocky-9-custom.pkr.hcl](rocky-9-custom.pkr.hcl) | Rocky Linux 9 base image | `images/rocky-9-custom.img` |
 | [rocky-9-xrdp.pkr.hcl](rocky-9-xrdp.pkr.hcl) | Rocky Linux 9 with XRDP + XFCE desktop | `images/rocky-9-xrdp.img` |
 | [debian-13-custom.pkr.hcl](debian-13-custom.pkr.hcl) | Debian 13 base image | `images/debian-13-custom.img` |
 
@@ -146,8 +147,10 @@ The `build.sh` script simplifies the build process:
 - `ubuntu24` - Ubuntu 24.04 base image
 - `ubuntu24-xrdp` - Ubuntu 24.04 with XRDP
 - `rocky10` - Rocky Linux 10 base image
+- `rocky9` - Rocky Linux 9 base image
 - `rocky9-xrdp` - Rocky Linux 9 with XRDP
 - `debian13` - Debian 13 base image
+- `all` - Build every image above, in order (pair with `-y` for unattended runs)
 
 ### Build Process
 
@@ -169,6 +172,7 @@ The `build.sh` script simplifies the build process:
 - `images/ubuntu-24.04-custom.img`
 - `images/ubuntu-24.04-xrdp.img`
 - `images/rocky-10-custom.img`
+- `images/rocky-9-custom.img`
 - `images/rocky-9-xrdp.img`
 - `images/debian-13-custom.img`
 
@@ -295,6 +299,21 @@ Verify:
 - Proxmox credentials are set correctly
 - API endpoint is accessible
 - Target node and datastore exist
+
+### Download Fails to Resolve `s3.home.butaco.net`
+The image download runs **on the Proxmox node**, not on the host running
+`terragrunt apply`. If a node cannot resolve the internal S3 hostname, add a
+per-node `/etc/hosts` entry pointing at the Caddy that fronts SeaweedFS
+(`192.168.10.244  s3.home.butaco.net`). Every node that downloads needs it
+(dev pve, prd node1/node2/node3). This keeps TLS and avoids resolver changes.
+
+### Download Stalls or the Image Server Restarts Mid-Transfer
+Serving multi-GB images is memory-heavy on the SeaweedFS host. In an LXC the page
+cache counts against the memory cgroup, so the node can OOM-kill `weed` while
+serving even though it has plenty of disk (symptom: `volume server has been
+killed` in `journalctl -u seaweedfs`). Give the SeaweedFS LXC enough RAM + swap
+(currently 8GB + 4GB; see `tf/lxc/node3/seaweedfs` and the seaweedfs role README),
+and keep `tf/customimage` at `-parallelism=1` so downloads run serially.
 
 ## License
 
