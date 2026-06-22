@@ -2,7 +2,11 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-21
-- **Related:** [`docs/plans/seaweedfs-custom-image-flow.md`](../plans/seaweedfs-custom-image-flow.md) (remaining tasks: real-machine plan unverified), [`packer/README.md`](../../packer/README.md). The original consolidation plan (`docs/plans/packer-monorepo-consolidation.md`) has been removed now that it is executed; see git history.
+- **Related:** [`packer/README.md`](../../packer/README.md),
+  [`ansible/roles/seaweedfs/README.md`](../../ansible/roles/seaweedfs/README.md).
+  Both implementation plans (`docs/plans/packer-monorepo-consolidation.md` and
+  `docs/plans/seaweedfs-custom-image-flow.md`) have been removed now that the
+  pipeline is executed and verified end to end on real hardware; see git history.
 
 ## Context
 
@@ -51,3 +55,17 @@ tooling baseline, so consolidation needed no secret re-encryption.
 - `push.sh` uses `no_check_bucket=true` (the imagebuilder S3 identity cannot
   create buckets); rclone is provisioned via dotfiles.
 - `tf/customimage` forces `-parallelism=1` (parallel large downloads timed out).
+- **DNS for the download must resolve on the Proxmox nodes.** The download runs
+  on the Proxmox node, not the apply host; the nodes could not resolve the
+  internal `s3.home.butaco.net`. Resolved with a per-node `/etc/hosts` entry
+  (`192.168.10.244 s3.home.butaco.net`, the Caddy fronting SeaweedFS) rather than
+  changing the resolver — surgical, keeps TLS, avoids breaking ACME / split-horizon.
+  Every node that downloads (dev pve, prd node1/node2/node3) needs the entry.
+- **The SeaweedFS LXC must be sized for *serving*, not just storing.** In an
+  (unprivileged) LXC the page cache counts against the memory cgroup, so RAM and
+  file cache share one cap. Serving the multi-GB custom images (e.g. the xrdp
+  desktop variants) drove the cgroup to its limit and the kernel OOM-killed
+  `weed` mid-download. 2GB then 4GB both proved insufficient as the image set
+  grew; the LXC now runs **8GB RAM + 4GB swap** (`tf/lxc/node3/seaweedfs`). This
+  required adding an optional `swap` field to the `proxmox-container` module
+  (defaults to 0, leaving other containers unchanged).

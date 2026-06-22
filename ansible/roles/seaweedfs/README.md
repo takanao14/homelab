@@ -144,6 +144,15 @@ The `cloud-images` bucket distributes the custom Proxmox images built by Packer.
 `packer/push.sh` uploads each `<image>.img` and its `<image>.img.sha256`, and the
 Terragrunt stack in `tf/customimage` makes Proxmox download them from
 `https://s3.home.butaco.net/cloud-images/<file>` (pinned by the published sha256).
+
+> **Sizing note (LXC):** serving multi-GB images is memory-heavy. In an
+> unprivileged LXC the page cache counts against the memory cgroup — RAM and file
+> cache share one cap — so a node large enough to *store* the images can still
+> OOM-kill `weed` while *serving* them (symptom: `volume server has been killed`
+> in `journalctl -u seaweedfs`, followed by a systemd restart; the cgroup OOM
+> fires on the host, so it is absent from the container's `journalctl -k`). The
+> `cloud-images` host (`tf/lxc/node3/seaweedfs`) runs **8GB RAM + 4GB swap** for
+> this reason; size new deployments accordingly if they serve large objects.
 The build host only needs **write** access; rather than reusing the Admin
 `terraform` identity, scope a dedicated upload key via `seaweedfs_s3_extra_identities`:
 
