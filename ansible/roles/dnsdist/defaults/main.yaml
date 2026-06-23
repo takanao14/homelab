@@ -21,6 +21,7 @@ dnsdist_internal_domains:
   - "home.butaco.net."
   - "prd.butaco.net."
   - "dev.butaco.net."
+  - "sandbox.butaco.net."
 dnsdist_internal_check_name: "ns1.home.butaco.net."
 
 # Secrets - loaded via community.sops.sops from group_vars/dnsdist.sops.yaml
