@@ -7,7 +7,7 @@ spec:
   parentRefs:
     - name: shared-gateway
       namespace: gateway-system
-      sectionName: https
+      sectionName: {{ .Values.server.route.sectionName }}
   hostnames:
     - {{ .Values.server.ingress.hostname }}
   rules:

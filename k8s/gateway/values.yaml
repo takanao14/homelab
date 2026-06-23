@@ -1,1 +1,7 @@
 domain: ""
+
+listeners:
+  http:
+    enabled: true
+  https:
+    enabled: true

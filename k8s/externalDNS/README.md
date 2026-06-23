@@ -1,6 +1,7 @@
 # ExternalDNS
 
-Automatically registers DNS records in PowerDNS from Kubernetes HTTPRoute resources. Managed by ArgoCD with the helm-secrets plugin.
+Automatically registers DNS records in PowerDNS from Kubernetes HTTPRoute
+resources. Managed by ArgoCD, with the PowerDNS API key supplied by ESO.
 
 ## Directory Structure
 
@@ -11,6 +12,8 @@ externalDNS/
 │   └── values.yaml            # domainFilter: dev.butaco.net.
 ├── prd/
 │   └── values.yaml            # domainFilter: prd.butaco.net.
+├── sandbox/
+│   └── values.yaml            # domainFilter: sandbox.butaco.net.
 └── chart/                     # Local Helm chart
     ├── Chart.yaml
     ├── values.yaml
@@ -29,9 +32,11 @@ externalDNS/
 | `pdns.apiKey` | `secrets.enc.yaml` | PowerDNS API key (encrypted) |
 | `domainFilter` | `{env}/values.yaml` | Target domain filter |
 
-Source is set to `gateway-httproute`, so DNS records are created automatically when HTTPRoute resources are applied.
+Source is set to `gateway-httproute`, so DNS records are created automatically
+when HTTPRoute resources are applied. Each environment uses a distinct TXT
+owner ID.
 
-> `butaco.net` is a personal domain. Replace it in `dev/values.yaml` and `prd/values.yaml`.
+> `butaco.net` is a personal domain. Replace it in each environment values file.
 
 ## Secrets
 

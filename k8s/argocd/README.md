@@ -1,6 +1,7 @@
 # ArgoCD
 
-ArgoCD configuration for Kubernetes cluster management via GitOps. Supports two environments: `dev` and `prd`.
+ArgoCD configuration for Kubernetes cluster management via GitOps. Supports
+`dev`, `prd`, and `sandbox`.
 
 ## Directory Structure
 
@@ -28,20 +29,29 @@ argocd/
 │       ├── ollama.yaml
 │       ├── open-webui.yaml
 │       └── reloader.yaml
-└── prd/
-    ├── helmfile.yaml         # Initial deployment config for prd
-    ├── values.yaml           # server.ingress.hostname: argocd.prd.butaco.net
-    ├── root-apps.yaml        # Bootstrap App of Apps for prd
-    └── apps/                 # ArgoCD Application manifests
+├── prd/
+│   ├── helmfile.yaml         # Initial deployment config for prd
+│   ├── values.yaml           # server.ingress.hostname: argocd.prd.butaco.net
+│   ├── root-apps.yaml        # Bootstrap App of Apps for prd
+│   └── apps/                 # ArgoCD Application manifests
+│       ├── argocd.yaml
+│       ├── cert-manager-config.yaml
+│       ├── cert-manager.yaml
+│       ├── eso.yaml
+│       ├── external-dns.yaml
+│       ├── gateway.yaml
+│       ├── homepage.yaml
+│       ├── monitoring.yaml       # Full monitoring stack (k8s/monitoring)
+│       └── reloader.yaml
+└── sandbox/
+    ├── helmfile.yaml         # Initial deployment config for sandbox
+    ├── values.yaml           # HTTP route: argocd.sandbox.butaco.net
+    ├── root-apps.yaml        # Bootstrap App of Apps for sandbox
+    └── apps/
         ├── argocd.yaml
-        ├── cert-manager-config.yaml
-        ├── cert-manager.yaml
         ├── eso.yaml
         ├── external-dns.yaml
-        ├── gateway.yaml
-        ├── homepage.yaml
-        ├── monitoring.yaml       # Full monitoring stack (k8s/monitoring)
-        └── reloader.yaml
+        └── gateway.yaml
 ```
 
 ## Environments
@@ -50,6 +60,7 @@ argocd/
 |-------------|---------|------------|
 | dev | dev-homelab | `argocd.dev.butaco.net` |
 | prd | prd-homelab | `argocd.prd.butaco.net` |
+| sandbox | sandbox-homelab | `http://argocd.sandbox.butaco.net` |
 
 > `butaco.net` is a personal domain. Replace with your own domain in `dev/values.yaml` and `prd/values.yaml`.
 
@@ -85,13 +96,13 @@ The `argocd.yaml` Application uses multi-source:
 
 | Application | Namespace | Environment |
 |-------------|-----------|-------------|
-| argocd | argocd | dev, prd |
+| argocd | argocd | dev, prd, sandbox |
 | cert-manager | cert-manager | dev, prd |
 | cert-manager-config | cert-manager | dev, prd |
 | comfyui | comfyui | dev only |
-| external-secrets (eso) | external-secrets | dev, prd |
-| external-dns | dns-homelab | dev, prd |
-| gateway | gateway-system | dev, prd |
+| external-secrets (eso) | external-secrets | dev, prd, sandbox |
+| external-dns | dns-homelab | dev, prd, sandbox |
+| gateway | gateway-system | dev, prd, sandbox |
 | homepage | homepage | prd only |
 | lemonade-server | lemonade-server | dev only |
 | meshcentral | meshcentral | dev only |
@@ -99,3 +110,7 @@ The `argocd.yaml` Application uses multi-source:
 | ollama | ollama | dev only |
 | open-webui | open-webui | dev only |
 | reloader | reloader | dev, prd |
+
+Sandbox intentionally uses HTTP only. Its Gateway has no HTTPS listener, and
+cert-manager is not installed. ESO uses the `kubernetes-sandbox` OpenBao auth
+mount, while external-dns manages `sandbox.butaco.net.` through PowerDNS.

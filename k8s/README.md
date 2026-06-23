@@ -8,6 +8,7 @@ Kubernetes manifests and Helm charts for homelab clusters managed via ArgoCD Git
 |-------------|--------|---------|
 | prd | `*.prd.butaco.net` | prd-homelab |
 | dev | `*.dev.butaco.net` | dev-homelab |
+| sandbox | `*.sandbox.butaco.net` (HTTP only) | sandbox-homelab |
 
 > **Note**: `butaco.net` is a personal domain. Replace it with your own domain before use.
 > Search for `butaco.net` across `k8s/` and update all occurrences in values files.
@@ -19,6 +20,7 @@ Kubernetes manifests and Helm charts for homelab clusters managed via ArgoCD Git
 - **CNI**: Cilium 1.19.x
 - **Ingress**: Cilium Gateway API (Gateway API v1.4.1 experimental)
 - **TLS**: cert-manager wildcard certificate via Cloudflare DNS-01 challenge
+  for prd/dev; sandbox intentionally uses HTTP without cert-manager
 - **DNS**: external-dns with PowerDNS provider (`gateway-httproute` source)
 
 All HTTP services are exposed via HTTPRoute referencing a shared Gateway (`shared-gateway` in `gateway-system` namespace). TLS is terminated at the Gateway using a wildcard certificate.
