@@ -1,6 +1,40 @@
 ---
 # https://gethomepage.dev/latest/configs/services/
 
+- Hypervisor:
+    {{- range .Values.proxmox }}
+    {{- if and .node .url }}
+    - Proxmox VE {{ .key | title }}:
+        icon: proxmox.png
+        href: {{ .url }}
+        description: Virtualization Platform
+        widget:
+          type: proxmox
+          url: {{ .url }}
+          username: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ .key | upper }}_TOKEN{{ "}}" }}
+          password: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ .key | upper }}_SECRET{{ "}}" }}
+          node: {{ .node }}
+    {{- end }}
+    {{- end }}
+
+- Storage:
+    - TrueNAS:
+        icon: truenas.png
+        href: {{ .Values.truenas.url }}
+        description: Network Storage
+        proxmoxNode: {{ .Values.truenas.pveNode }}
+        proxmoxVMID: {{ .Values.truenas.pveVmid }}
+        widget:
+          type: truenas
+          url: {{ .Values.truenas.url }}
+          key: {{ "{{" }}HOMEPAGE_VAR_TRUENAS_KEY{{ "}}" }}
+          nasType: scale
+
+    - SeaweedFS:
+        icon: sh-seaweedfs.png
+        href: {{ .Values.seaweedfs.url }}
+        description: Object Storage
+
 - DNS:
     - Authoritative:
         - PowerDNS origin:
@@ -49,36 +83,7 @@
             proxmoxType: {{ .Values.dnsdist.dnsdist2.pveType }}
             siteMonitor: http://{{ .Values.dnsdist.dnsdist2.addr }}:8083/
 
-- HyperVisor:
-    {{- range .Values.proxmox }}
-    {{- if and .node .url }}
-    - Proxmox VE {{ .key | title }}:
-        icon: proxmox.png
-        href: {{ .url }}
-        description: Virtualization Platform
-        widget:
-          type: proxmox
-          url: {{ .url }}
-          username: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ .key | upper }}_TOKEN{{ "}}" }}
-          password: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ .key | upper }}_SECRET{{ "}}" }}
-          node: {{ .node }}
-    {{- end }}
-    {{- end }}
-
-- Storage:
-    - TrueNAS:
-        icon: truenas.png
-        href: {{ .Values.truenas.url }}
-        description: Network Storage
-        proxmoxNode: {{ .Values.truenas.pveNode }}
-        proxmoxVMID: {{ .Values.truenas.pveVmid }}
-        widget:
-          type: truenas
-          url: {{ .Values.truenas.url }}
-          key: {{ "{{" }}HOMEPAGE_VAR_TRUENAS_KEY{{ "}}" }}
-          nasType: scale
-
-- Infra:
+- Infrastructure:
     - NetBox:
         icon: netbox.png
         href: {{ .Values.netbox.url }}
@@ -93,11 +98,6 @@
         description: Secret Management
         proxmoxNode: {{ .Values.openbao.pveNode }}
         proxmoxVMID: {{ .Values.openbao.pveVmid }}
-
-    - SeaweedFS:
-        icon: sh-seaweedfs.png
-        href: {{ .Values.seaweedfs.url }}
-        description: Object Storage
 
 - Monitoring:
     - Grafana:
@@ -119,29 +119,29 @@
           type: prometheus
           url: {{ .Values.prometheus.url }}
 
-- Develop:
-    - forgejo:
+- Development:
+    - Forgejo:
         icon: forgejo.png
         href: {{ .Values.forgejo.url }}
         description: Git Repository
 
-    - HeadLamp:
+    - Headlamp:
         icon: headlamp.png
         href: {{ .Values.headlamp.url }}
-        description: k8s cluster UI
+        description: k8s Cluster UI
 
-- CD:
-    - ArgoCD(Prod):
+- CI/CD:
+    - ArgoCD (Prod):
         icon: argo-cd.png
         href: {{ .Values.prdArgo.url }}
-        description: Continuous Delivery
+        description: Continuous Delivery (prd)
 
-    - ArgoCD(Dev):
+    - ArgoCD (Dev):
         icon: argo-cd.png
         href: {{ .Values.devArgo.url }}
-        description: Continuous Delivery
+        description: Continuous Delivery (dev)
 
-- AI App:
+- AI:
     - Open WebUI:
         icon: open-webui.png
         href: {{ .Values.openWebui.url }}
@@ -150,12 +150,12 @@
     - Lemonade Server:
         icon: sh-lemonade-ai
         href: {{ .Values.lemonadeServer.url }}
-        description: Local LLM WebUI
+        description: Local LLM Inference Server
 
     - ComfyUI:
         icon: comfyui.png
         href: {{ .Values.comfyUI.url }}
-        description: ComfyUI
+        description: Image Generation UI
 
 - Remote Management:
     - MeshCentral:
@@ -163,7 +163,7 @@
         href: {{ .Values.meshCentral.url }}
         description: MeshCentral AMT remote control
 
-- Network Element:
+- Network:
     - bgw1:
         icon: mdi-router
         description: Border Gateway ({{ .Values.network.bgw1 }})

@@ -3,3 +3,36 @@
 title: HomeLab Portal
 description: Homelab Portal
 logpath: stdout
+
+# Group display order and rendering style.
+# Keys must match the group names in services.yaml exactly.
+layout:
+  Hypervisor:
+    style: row
+    columns: 4
+  Storage:
+    style: row
+    columns: 2
+  DNS:
+    style: column
+  Infrastructure:
+    style: row
+    columns: 2
+  Monitoring:
+    style: row
+    columns: 2
+  Development:
+    style: row
+    columns: 2
+  CI/CD:
+    style: row
+    columns: 2
+  AI:
+    style: row
+    columns: 3
+  Remote Management:
+    style: row
+    columns: 2
+  Network:
+    style: row
+    columns: 3

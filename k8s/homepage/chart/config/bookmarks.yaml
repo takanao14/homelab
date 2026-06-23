@@ -1,5 +1,19 @@
 ---
 # https://gethomepage.dev/latest/configs/bookmarks/
+# Group names are kept consistent with services.yaml.
+
+- Hypervisor:
+  - Proxmox VE:
+    - abbr: PM
+      href: https://pve.proxmox.com/pve-docs/
+
+- Storage:
+  - TrueNAS:
+    - abbr: TN
+      href: https://www.truenas.com/docs/
+  - SeaweedFS:
+    - abbr: SW
+      href: https://github.com/seaweedfs/seaweedfs/
 
 - DNS:
   - PowerDNS Authoritative:
@@ -12,20 +26,13 @@
     - abbr: DC
       href: https://github.com/dmachard/DNS-collector/
 
-- HyperVisor:
-  - Proxmox VE:
-    - abbr: PM
-      href: https://pve.proxmox.com/pve-docs/
-
-- Storage:
-  - TrueNAS:
-    - abbr: TN
-      href: https://www.truenas.com/docs/
-
-- IPAN:
+- Infrastructure:
   - NetBox:
     - abbr: NB
       href: https://netboxlabs.com/docs/netbox/?focus=community
+  - OpenBao:
+    - abbr: OB
+      href: https://openbao.org/docs/
 
 - Monitoring:
   - Prometheus:
@@ -44,7 +51,7 @@
     - abbr: VE
       href: https://vector.dev/
 
-- Develop:
+- Development:
   - Forgejo:
     - abbr: FO
       href: https://forgejo.org/
@@ -68,48 +75,44 @@
     - abbr: OL
       href: https://ollama.com/
 
-- Admin:
+- Remote Management:
   - MeshCentral:
     - abbr: MC
       href: https://github.com/Ylianst/MeshCentral/
 
-- Devices:
-    - IX2106:
-      - abbr: IX
-        href: https://jpn.nec.com/univerge/ix/download.html?
-    - Catalyst 1200:
-      - abbr: C1
-        href: https://www.cisco.com/c/ja_jp/support/switches/catalyst-1200-series-switches/series.html
-    - Wifi-AP:
-      - abbr: WA
-        href: https://www.buffalo.jp/product/detail/software/wnr-5400xe6.html
-    - ASUS PRIME B550M-A:
-      - abbr: AP
-        href: https://www.asus.com/jp/motherboards-components/motherboards/prime/prime-b550m-a/
-    - ASUS TUF Gaming B550-PLUS:
-      - abbr: AT
-        href: https://www.asus.com/jp/motherboards-components/motherboards/tuf-gaming/tuf-gaming-b550-plus/
-    - HP drivers:
-      - abbr: HD
-        href: https://support.hp.com/jp-ja/drivers
+- Network:
+  - IX2106:
+    - abbr: IX
+      href: https://jpn.nec.com/univerge/ix/download.html?
+  - Catalyst 1200:
+    - abbr: C1
+      href: https://www.cisco.com/c/ja_jp/support/switches/catalyst-1200-series-switches/series.html
+  - Wifi-AP:
+    - abbr: WA
+      href: https://www.buffalo.jp/product/detail/software/wnr-5400xe6.html
+  - ASUS PRIME B550M-A:
+    - abbr: AP
+      href: https://www.asus.com/jp/motherboards-components/motherboards/prime/prime-b550m-a/
+  - ASUS TUF Gaming B550-PLUS:
+    - abbr: AT
+      href: https://www.asus.com/jp/motherboards-components/motherboards/tuf-gaming/tuf-gaming-b550-plus/
+  - HP drivers:
+    - abbr: HD
+      href: https://support.hp.com/jp-ja/drivers
 
 - Homepage:
   - Homepage:
     - abbr: HP
       href: https://gethomepage.dev/
-
   - Dashboard Icons:
     - abbr: DI
       href: https://github.com/homarr-labs/dashboard-icons/
-
   - Material Design Icons:
     - abbr: MD
       href: https://pictogrammers.com/library/mdi/
-
   - Simple Icons:
     - abbr: SI
       href: https://simpleicons.org/
-
   - Selfhst Icons:
     - abbr: SE
       href: https://selfh.st/icons/
