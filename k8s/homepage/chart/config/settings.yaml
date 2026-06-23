@@ -8,13 +8,14 @@ logpath: stdout
 # Keys must match the group names in services.yaml exactly.
 layout:
   Hypervisor:
-    style: column
+    style: row
     columns: 4
   Storage:
     style: row
-    columns: 2
+    columns: 4
   DNS:
-    style: column
+    style: row
+    columns: 4
   Infrastructure:
     style: row
     columns: 2
