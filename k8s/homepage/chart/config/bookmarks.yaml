@@ -1,13 +1,17 @@
 ---
 # https://gethomepage.dev/latest/configs/bookmarks/
-# Group names are kept consistent with services.yaml.
+# NOTE: Bookmark group names must NOT collide with service group names in
+# services.yaml, otherwise Homepage hides the bookmark group. To keep them
+# consistent with the service groups while avoiding the collision, each group
+# mirrors its service-group name with a " Docs" suffix. These groups are not
+# listed in settings.yaml `layout`, so they render at the bottom of the page.
 
-- Hypervisor:
+- Hypervisor Docs:
   - Proxmox VE:
     - abbr: PM
       href: https://pve.proxmox.com/pve-docs/
 
-- Storage:
+- Storage Docs:
   - TrueNAS:
     - abbr: TN
       href: https://www.truenas.com/docs/
@@ -15,7 +19,7 @@
     - abbr: SW
       href: https://github.com/seaweedfs/seaweedfs/
 
-- DNS:
+- DNS Docs:
   - PowerDNS Authoritative:
     - abbr: PA
       href: https://doc.powerdns.com/authoritative/
@@ -26,7 +30,7 @@
     - abbr: DC
       href: https://github.com/dmachard/DNS-collector/
 
-- Infrastructure:
+- Infrastructure Docs:
   - NetBox:
     - abbr: NB
       href: https://netboxlabs.com/docs/netbox/?focus=community
@@ -34,7 +38,7 @@
     - abbr: OB
       href: https://openbao.org/docs/
 
-- Monitoring:
+- Monitoring Docs:
   - Prometheus:
     - abbr: PR
       href: https://prometheus.io/
@@ -51,17 +55,17 @@
     - abbr: VE
       href: https://vector.dev/
 
-- Development:
+- Development Docs:
   - Forgejo:
     - abbr: FO
       href: https://forgejo.org/
 
-- CI/CD:
+- CI/CD Docs:
   - ArgoCD:
     - abbr: AC
       href: https://argo-cd.readthedocs.io/en/stable/
 
-- AI:
+- AI Docs:
   - Open WebUI:
     - abbr: OW
       href: https://github.com/open-webui/open-webui
@@ -75,12 +79,12 @@
     - abbr: OL
       href: https://ollama.com/
 
-- Remote Management:
+- Remote Management Docs:
   - MeshCentral:
     - abbr: MC
       href: https://github.com/Ylianst/MeshCentral/
 
-- Network:
+- Network Docs:
   - IX2106:
     - abbr: IX
       href: https://jpn.nec.com/univerge/ix/download.html?
@@ -100,7 +104,7 @@
     - abbr: HD
       href: https://support.hp.com/jp-ja/drivers
 
-- Homepage:
+- Homepage Docs:
   - Homepage:
     - abbr: HP
       href: https://gethomepage.dev/
