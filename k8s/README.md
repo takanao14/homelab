@@ -71,8 +71,7 @@ k8s/
 │   ├── Chart.yaml
 │   ├── values.yaml           # Schema: domain
 │   └── templates/
-│       ├── gatewayclass.yaml # GatewayClass: cilium
-│       └── gateway.yaml      # shared-gateway (HTTPS + HTTP listeners)
+│       └── gateway.yaml      # shared-gateway (configurable HTTP/HTTPS listeners)
 ├── externalDNS/          # external-dns with PowerDNS
 │   ├── chart/
 │   │   ├── values.yaml
