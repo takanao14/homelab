@@ -26,6 +26,7 @@
         proxmoxVMID: {{ .Values.truenas.pveVmid }}
         widget:
           type: truenas
+          version: 2
           url: {{ .Values.truenas.url }}
           key: {{ "{{" }}HOMEPAGE_VAR_TRUENAS_KEY{{ "}}" }}
           nasType: scale
