@@ -138,7 +138,7 @@ openbao_k8s_dev_ca_cert: |
 ansible-playbook playbooks/ops-openbao_configure.yaml
 ```
 
-This enables KV v2, configures Kubernetes auth for both clusters, and creates policies and roles.
+This enables KV v2, configures Kubernetes auth for the clusters, and creates policies and roles.
 
 ### 4. Install ESO via ArgoCD
 
@@ -160,6 +160,7 @@ Secrets consumed by Kubernetes applications via ESO. Scoped per application; not
 ```
 secret/k8s/cert-manager/cloudflare   # Cloudflare API token
 secret/k8s/headlamp/admin-token      # Headlamp login token
+secret/k8s/longhorn-ui/basic-auth    # Longhorn UI htpasswd
 secret/k8s/monitoring/grafana        # Grafana credentials
 secret/k8s/monitoring/alertmanager   # Alertmanager Discord webhook
 ```
