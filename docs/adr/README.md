@@ -42,3 +42,4 @@ When a `docs/plans/*` plan is finished, split its content before deleting it:
 | [0005](0005-renovate-native-automerge-over-branch-protection.md) | Renovate-native automerge instead of branch protection | Accepted |
 | [0006](0006-custom-image-pipeline-monorepo-and-seaweedfs-s3.md) | Custom image pipeline — monorepo build + SeaweedFS S3 distribution | Accepted |
 | [0007](0007-defer-grafana-dashboard-v2-migration.md) | Defer Grafana Dashboard v2 migration | Accepted |
+| [0008](0008-caddy-https-upstream-for-self-signed-backends.md) | Caddy re-encrypts to HTTPS upstreams that enforce TLS (TrueNAS) | Accepted |

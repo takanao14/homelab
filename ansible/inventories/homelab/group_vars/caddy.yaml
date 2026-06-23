@@ -14,7 +14,9 @@ caddy_upstreams:
   - hostname: forgejo.home.butaco.net
     backend: 192.168.10.245:3000
   - hostname: truenas-ui.home.butaco.net
-    backend: 192.168.20.10:80
+    backend: 192.168.20.10:443
+    scheme: https
+    tls_insecure: true   # TrueNAS uses a local (self-signed) cert; verify only the internal Caddy->TrueNAS leg is skipped
   - hostname: netbox-ui.home.butaco.net
     backend: 192.168.10.247:80
   - hostname: openbao.home.butaco.net

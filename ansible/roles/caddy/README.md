@@ -35,7 +35,19 @@ Installs and configures [Caddy](https://caddyserver.com/) as an HTTPS reverse pr
 caddy_upstreams:
   - hostname: ns1.home.butaco.net
     backend: 192.168.10.233:8081
+  # HTTPS upstream with a self-signed cert (e.g. TrueNAS):
+  - hostname: truenas-ui.home.butaco.net
+    backend: 192.168.20.10:443
+    scheme: https        # optional, defaults to "http"
+    tls_insecure: true   # optional, skip cert verification on the Caddy->upstream leg
 ```
+
+| Upstream field | Default | Description |
+|----------------|---------|-------------|
+| `hostname` | – | Public hostname Caddy serves (Let's Encrypt cert) |
+| `backend` | – | Upstream `host:port` |
+| `scheme` | `http` | Upstream scheme (`http` or `https`) |
+| `tls_insecure` | `false` | Skip TLS verification for an `https` upstream using a self-signed cert |
 
 ## Secrets Setup
 
