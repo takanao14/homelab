@@ -15,16 +15,33 @@ set -euo pipefail
 BUCKET="${SEAWEEDFS_CLOUD_IMAGES_BUCKET:-cloud-images}"
 IMAGES_DIR="$(cd "$(dirname "$0")" && pwd)/images"
 
-# Map CLI targets to the image basename produced by build.sh. Keep in sync with
-# the case block in build.sh.
-declare -A TARGET_IMAGE=(
-    [ubuntu24]="ubuntu-24.04-custom.img"
-    [ubuntu24-xrdp]="ubuntu-24.04-xrdp.img"
-    [rocky10]="rocky-10-custom.img"
-    [rocky9]="rocky-9-custom.img"
-    [rocky9-xrdp]="rocky-9-xrdp.img"
-    [debian13]="debian-13-custom.img"
-)
+# Map CLI targets to image basenames produced by build.sh or import-upstream.sh.
+# Keep this in sync with those scripts. Use a case statement instead of an
+# associative array so the script works with macOS' older /bin/bash.
+target_image() {
+    case "$1" in
+        ubuntu24) echo "ubuntu-24.04-custom.img" ;;
+        ubuntu24-xrdp) echo "ubuntu-24.04-xrdp.img" ;;
+        rocky10) echo "rocky-10-custom.img" ;;
+        rocky9) echo "rocky-9-custom.img" ;;
+        rocky9-xrdp) echo "rocky-9-xrdp.img" ;;
+        debian13) echo "debian-13-custom.img" ;;
+        freebsd151) echo "freebsd-15.1-cloudinit-ufs.img" ;;
+        *) return 1 ;;
+    esac
+}
+
+list_targets() {
+    cat << EOF
+    debian13       debian-13-custom.img
+    freebsd151     freebsd-15.1-cloudinit-ufs.img
+    rocky10        rocky-10-custom.img
+    rocky9         rocky-9-custom.img
+    rocky9-xrdp    rocky-9-xrdp.img
+    ubuntu24       ubuntu-24.04-custom.img
+    ubuntu24-xrdp  ubuntu-24.04-xrdp.img
+EOF
+}
 
 usage() {
     local exit_status="${1:-1}"
@@ -34,7 +51,7 @@ Usage: $0 <TARGET|all>
 Upload built images and their checksums to the SeaweedFS cloud-images bucket.
 
 TARGETS:
-$(for t in "${!TARGET_IMAGE[@]}"; do printf '    %-14s %s\n' "$t" "${TARGET_IMAGE[$t]}"; done | sort)
+$(list_targets)
     all            Upload every *.img present in images/
 
 ENVIRONMENT:
@@ -86,11 +103,11 @@ push_image() {
     local checksum_file="${image_file}.sha256"
 
     if [ ! -f "$image_file" ]; then
-        echo "Error: '$image_file' not found. Build it first with ./build.sh" >&2
+        echo "Error: '$image_file' not found. Build it with ./build.sh or import it with ./import-upstream.sh first" >&2
         exit 1
     fi
     if [ ! -f "$checksum_file" ]; then
-        echo "Error: '$checksum_file' not found. Rebuild with ./build.sh to generate it" >&2
+        echo "Error: '$checksum_file' not found. Rebuild or re-import the image to generate it" >&2
         exit 1
     fi
 
@@ -116,8 +133,7 @@ if [ "$1" = "all" ]; then
     done
     [ "$found" -eq 1 ] || { echo "Error: no images found in ${IMAGES_DIR}" >&2; exit 1; }
 else
-    image_name="${TARGET_IMAGE[$1]:-}"
-    [ -n "$image_name" ] || { echo "Error: unknown target '$1'" >&2; usage; }
+    image_name="$(target_image "$1")" || { echo "Error: unknown target '$1'" >&2; usage; }
     push_image "$image_name"
 fi
 

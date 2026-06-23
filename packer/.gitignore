@@ -1,6 +1,7 @@
 # Packer build artifacts
 output-*/
 packer_cache/
+downloads/
 
 # Generated images
 images/*.img

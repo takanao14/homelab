@@ -6,6 +6,8 @@ VE homelab.
 The build and the Proxmox registration are **decoupled** through S3 (SeaweedFS):
 
 1. `build.sh` builds the image into `images/` and writes a `.sha256` sidecar.
+   For upstream images that only need normalization, `import-upstream.sh`
+   downloads, verifies, and normalizes them into the same `images/` contract.
 2. `push.sh` uploads the image and its checksum to the SeaweedFS `cloud-images`
    bucket (`https://s3.home.butaco.net/cloud-images/`).
 3. The Terragrunt stack in [`../tf/customimage`](../tf/customimage) makes each
@@ -20,7 +22,7 @@ can run on a dedicated builder, separate from where images are registered.
 
 - **Purpose**: Automated creation of cloud-init enabled golden images
 - **Target Platform**: Proxmox VE
-- **Supported OS**: Ubuntu 24.04, Rocky Linux 9/10, Debian 13
+- **Supported OS**: Ubuntu 24.04, Rocky Linux 9/10, Debian 13, FreeBSD 15.1
 - **Image Variants**: Base (minimal) and XRDP (desktop environment with remote access)
 
 ## Requirements
@@ -30,6 +32,7 @@ can run on a dedicated builder, separate from where images are registered.
 - QEMU tools (`qemu-img`)
 - Proxmox VE API access
 - Internet access for downloading base images and packages
+- For upstream imports: `curl`, `xz`, and `sha256sum`
 
 ### Upload (push to S3)
 
@@ -57,6 +60,7 @@ per-environment (`dev`/`prd`/`node2`/`node3`) configs.
 │   ├── rocky/          # Shell provisioners for Rocky Linux
 │   └── debian/         # Shell provisioners for Debian
 ├── build.sh            # Main build script
+├── import-upstream.sh  # Download/verify/normalize upstream compressed images
 ├── push.sh             # Upload built images + checksums to SeaweedFS S3
 └── *.pkr.hcl           # Packer template files
 ```
@@ -98,6 +102,9 @@ export PROXMOX_VE_SSH_AGENT=true
 
 # Build base Debian 13 image
 ./build.sh debian13
+
+# Import FreeBSD 15.1 upstream cloud-init image
+./import-upstream.sh freebsd151
 ```
 
 ### 3. Push Images to S3
@@ -105,6 +112,9 @@ export PROXMOX_VE_SSH_AGENT=true
 ```bash
 # Upload one target (image + .sha256) to the cloud-images bucket
 ./push.sh ubuntu24
+
+# Upload imported FreeBSD 15.1 image
+./push.sh freebsd151
 
 # Or upload every image currently in images/
 ./push.sh all
@@ -132,6 +142,35 @@ terragrunt apply
 | [rocky-9-xrdp.pkr.hcl](rocky-9-xrdp.pkr.hcl) | Rocky Linux 9 with XRDP + XFCE desktop | `images/rocky-9-xrdp.img` |
 | [debian-13-custom.pkr.hcl](debian-13-custom.pkr.hcl) | Debian 13 base image | `images/debian-13-custom.img` |
 
+## Upstream Image Imports
+
+Some upstream cloud images do not need a full Packer build, but still need to be
+normalized before they can be consumed by `tf/customimage`.
+
+FreeBSD official VM images are published as `.qcow2.xz` archives. Proxmox should
+not download those archives directly as VM disk images, and the bpg/proxmox
+`proxmox_download_file` decompression option does not support `xz`. Instead,
+import the upstream archive into the same artifact contract used by Packer-built
+images:
+
+```bash
+./import-upstream.sh freebsd151
+```
+
+This command:
+
+1. downloads `FreeBSD-15.1-RELEASE-amd64-BASIC-CLOUDINIT-ufs.qcow2.xz`;
+2. verifies the official upstream archive sha256;
+3. decompresses it to `images/freebsd-15.1-cloudinit-ufs.img`;
+4. writes `images/freebsd-15.1-cloudinit-ufs.img.sha256` for the decompressed
+   object that Proxmox will download.
+
+Then publish it like any other custom image:
+
+```bash
+./push.sh freebsd151
+```
+
 ## Build Script Options
 
 The `build.sh` script simplifies the build process:
@@ -151,6 +190,9 @@ The `build.sh` script simplifies the build process:
 - `rocky9-xrdp` - Rocky Linux 9 with XRDP
 - `debian13` - Debian 13 base image
 - `all` - Build every image above, in order (pair with `-y` for unattended runs)
+
+Upstream imports are handled separately by `import-upstream.sh`; they are not
+included in `build.sh all`.
 
 ### Build Process
 
@@ -175,6 +217,7 @@ The `build.sh` script simplifies the build process:
 - `images/rocky-9-custom.img`
 - `images/rocky-9-xrdp.img`
 - `images/debian-13-custom.img`
+- `images/freebsd-15.1-cloudinit-ufs.img` (from `import-upstream.sh`)
 
 ## Image Distribution with S3 + Terragrunt
 

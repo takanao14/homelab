@@ -32,5 +32,9 @@ locals {
       file_name    = "debian-13-custom.img"
       content_type = "iso"
     }
+    "freebsd-151-cloudinit" = {
+      file_name    = "freebsd-15.1-cloudinit-ufs.img"
+      content_type = "iso"
+    }
   }
 }

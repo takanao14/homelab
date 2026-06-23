@@ -171,6 +171,19 @@ cd tf/customimage/node2
 terragrunt apply -target='proxmox_download_file.image["ubuntu-24.04-custom"]'
 ```
 
+### FreeBSD cloud images
+
+FreeBSD official VM images are currently published as `.qcow2.xz` / `.raw.xz`
+archives. Do not add those URLs directly to `tf/cloudimage/images.hcl`: Proxmox
+will store the compressed archive, and the bpg/proxmox `proxmox_download_file`
+decompression option does not support `xz` (only `gz`, `lzo`, `zst`, and `bz2`).
+
+To use a FreeBSD cloud image, import it through `packer/import-upstream.sh`.
+That script downloads the official `.qcow2.xz`, verifies the upstream checksum,
+decompresses it to `packer/images/freebsd-15.1-cloudinit-ufs.img`, and writes a
+sidecar checksum for the decompressed object. Then publish it with
+`packer/push.sh freebsd151` and consume it through `tf/customimage`.
+
 ## Architecture
 
 - **Backend**: Local state (`terraform.tfstate` per component directory)

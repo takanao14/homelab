@@ -25,6 +25,7 @@ locals {
     "rocky-9-custom",
     "rocky-10-custom",
     "debian-13-custom",
+    "freebsd-151-cloudinit",
   ]
 }
 
