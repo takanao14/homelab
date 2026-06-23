@@ -7,11 +7,9 @@ logpath: stdout
 # Group display order and rendering style.
 # Keys must match the group names in services.yaml exactly.
 layout:
-  General:
-    style: column
-    columns: 4
   Hypervisor:
     style: column
+    columns: 4
   Storage:
     style: row
   DNS:
