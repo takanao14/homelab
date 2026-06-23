@@ -105,6 +105,7 @@ The `argocd.yaml` Application uses multi-source:
 | gateway | gateway-system | dev, prd, sandbox |
 | homepage | homepage | prd only |
 | lemonade-server | lemonade-server | dev only |
+| longhorn-ui | longhorn-system | sandbox only |
 | meshcentral | meshcentral | dev only |
 | monitoring | monitoring | dev, prd |
 | ollama | ollama | dev only |
@@ -113,4 +114,6 @@ The `argocd.yaml` Application uses multi-source:
 
 Sandbox intentionally uses HTTP only. Its Gateway has no HTTPS listener, and
 cert-manager is not installed. ESO uses the `kubernetes-sandbox` OpenBao auth
-mount, while external-dns manages `sandbox.butaco.net.` through PowerDNS.
+mount, while external-dns manages `sandbox.butaco.net.` through PowerDNS. The
+sandbox Longhorn UI is exposed through an authenticated reverse proxy instead
+of routing directly to `longhorn-frontend`.

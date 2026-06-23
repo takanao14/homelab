@@ -23,7 +23,7 @@ Kubernetes manifests and Helm charts for homelab clusters managed via ArgoCD Git
   for prd/dev; sandbox intentionally uses HTTP without cert-manager
 - **DNS**: external-dns with PowerDNS provider (`gateway-httproute` source)
 
-All HTTP services are exposed via HTTPRoute referencing a shared Gateway (`shared-gateway` in `gateway-system` namespace). TLS is terminated at the Gateway using a wildcard certificate.
+All HTTP services are exposed via HTTPRoute referencing a shared Gateway (`shared-gateway` in `gateway-system` namespace). TLS is terminated at the Gateway using a wildcard certificate in prd/dev; sandbox uses HTTP-only routes.
 
 ### Secrets Management
 
@@ -38,7 +38,7 @@ All HTTP services are exposed via HTTPRoute referencing a shared Gateway (`share
 k8s/
 ├── argocd/               # ArgoCD self-management + App of Apps
 │   ├── values-common.yaml
-│   ├── chart/                # Helm chart for ArgoCD HTTPRoute (shared by prd/dev)
+│   ├── chart/                # Helm chart for ArgoCD HTTPRoute
 │   │   └── templates/
 │   │       └── httproute.yaml    # Uses server.ingress.hostname from values
 │   ├── dev/
@@ -46,10 +46,15 @@ k8s/
 │   │   ├── values.yaml           # server.ingress.hostname: argocd.dev.butaco.net
 │   │   ├── root-apps.yaml        # Bootstrap App of Apps for dev
 │   │   └── apps/                 # ArgoCD Application manifests
-│   └── prd/
+│   ├── prd/
+│   │   ├── helmfile.yaml
+│   │   ├── values.yaml           # server.ingress.hostname: argocd.prd.butaco.net
+│   │   ├── root-apps.yaml        # Bootstrap App of Apps for prd
+│   │   └── apps/                 # ArgoCD Application manifests
+│   └── sandbox/
 │       ├── helmfile.yaml
-│       ├── values.yaml           # server.ingress.hostname: argocd.prd.butaco.net
-│       ├── root-apps.yaml        # Bootstrap App of Apps for prd
+│       ├── values.yaml           # server.ingress.hostname: argocd.sandbox.butaco.net
+│       ├── root-apps.yaml        # Bootstrap App of Apps for sandbox
 │       └── apps/                 # ArgoCD Application manifests
 ├── cert-manager/         # Wildcard certificate config (local Helm chart)
 │   ├── Chart.yaml
@@ -81,7 +86,12 @@ k8s/
 │   │       └── external-secret.yaml  # ESO ExternalSecret for PowerDNS API key
 │   ├── values-common.yaml
 │   ├── dev/values.yaml
-│   └── prd/values.yaml
+│   ├── prd/values.yaml
+│   └── sandbox/values.yaml
+├── longhorn-ui/          # Authenticated reverse proxy + HTTPRoute for Longhorn UI
+│   ├── Chart.yaml
+│   ├── values.yaml
+│   └── templates/
 ├── monitoring/           # Prometheus stack + Loki + exporters (prd only)
 │   ├── apps/             # ArgoCD Application manifests
 │   ├── charts/           # Local Helm charts (wrappers + HTTPRoutes)
