@@ -10,3 +10,4 @@ openbao_raft_retry_join: []
 
 openbao_k8s_host: "https://192.168.30.11:6443"
 openbao_k8s_dev_host: "https://192.168.20.11:6443"
+openbao_k8s_sandbox_host: "https://192.168.20.31:6443"

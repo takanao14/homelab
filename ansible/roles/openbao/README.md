@@ -49,6 +49,9 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_local_addr` | `http://127.0.0.1:8200` | API address used by `bao` CLI tasks running on the openbao host. Plain HTTP because TLS is terminated by Caddy upstream. |
 | `openbao_k8s_host` | `""` | prd cluster API server URL (e.g. `https://192.168.30.11:6443`) |
 | `openbao_k8s_dev_host` | `""` | dev cluster API server URL (e.g. `https://192.168.20.11:6443`) |
+| `openbao_k8s_sandbox_host` | `""` | sandbox cluster API server URL (e.g. `https://192.168.20.31:6443`) |
+| `openbao_k8s_sandbox_token_reviewer_jwt` | `""` | JWT of the sandbox `openbao-token-reviewer` ServiceAccount. |
+| `openbao_k8s_sandbox_ca_cert` | `""` | PEM-encoded CA certificate of the sandbox cluster. |
 | `openbao_k8s_clusters` | see defaults | List of Kubernetes clusters to configure auth for. Each entry defines `mount_path`, `host`, `ca_cert`, `ca_cert_file`, `token_reviewer_jwt`, `role`, and `policies`. |
 
 ## Post-install initialization
