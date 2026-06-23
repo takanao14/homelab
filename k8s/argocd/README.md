@@ -51,7 +51,8 @@ argocd/
         ├── argocd.yaml
         ├── eso.yaml
         ├── external-dns.yaml
-        └── gateway.yaml
+        ├── gateway.yaml
+        └── longhorn-ui.yaml
 ```
 
 ## Environments
@@ -78,6 +79,9 @@ kubectl apply -f k8s/argocd/prd/root-apps.yaml
 ```
 
 A helmfile hook will interrupt the deployment if the context of the target cluster is incorrect.
+
+For sandbox, use `k8s/argocd/sandbox`. It intentionally exposes ArgoCD over
+HTTP only and does not install cert-manager.
 
 ## Secrets Management
 
