@@ -1,0 +1,5 @@
+server:
+  ingress:
+    hostname: argocd.sandbox.butaco.net
+  route:
+    sectionName: http

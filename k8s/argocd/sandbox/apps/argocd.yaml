@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  sources:
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      targetRevision: 9.6.0
+      helm:
+        valueFiles:
+          - $values/k8s/argocd/values-common.yaml
+          - $values/k8s/argocd/sandbox/values.yaml
+    - repoURL: https://github.com/takanao14/homelab.git
+      targetRevision: HEAD
+      ref: values
+    - repoURL: https://github.com/takanao14/homelab.git
+      targetRevision: HEAD
+      path: k8s/argocd/chart
+      helm:
+        releaseName: argocd-routes
+        valueFiles:
+          - $values/k8s/argocd/values-common.yaml
+          - $values/k8s/argocd/sandbox/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  ignoreDifferences:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      jsonPointers:
+        - /spec/parentRefs
+        - /spec/rules

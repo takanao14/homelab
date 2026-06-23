@@ -1,0 +1,3 @@
+ownerId: sandbox-cluster
+domainFilter: sandbox.butaco.net.
+namespace: dns-homelab
