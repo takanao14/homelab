@@ -62,7 +62,7 @@ Usage: $script_name <${env_hint}> <command>
   secrets.<name>.enc.env and helmfile.<name>.yaml.gotmpl).
 
 Commands:
-  apply       Full cluster setup: k0sctl apply → kubeconfig → helmfile apply → gateway-api CRDs
+  apply       Full cluster setup: k0sctl apply → kubeconfig → gateway-api CRDs → helmfile apply
   reset       Reset cluster: k0sctl reset
   kubeconfig  Fetch kubeconfig to \$HOME/.kube/<env>.yaml
   helmfile    Apply helmfile only (requires kubeconfig to exist)
@@ -346,8 +346,12 @@ helmfile_apply() {
 
 gateway_api_apply() {
     # Gateway API CRD version must match what the installed Cilium version requires.
+    # These upstream CRDs must exist before Cilium starts; otherwise the Cilium
+    # operator disables its Gateway API controller until the operator is restarted.
+    # This is separate from Cilium-owned CRDs, which are installed by the Cilium
+    # chart and awaited inside helmfile_apply().
     # Check the supported version at: https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/
-    # Current: v1.4.1 experimental for Cilium 1.19.2
+    # Current: v1.4.1 experimental for Cilium 1.19.x
     log_info "Applying Gateway API CRDs..."
     kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/experimental-install.yaml
     log_success "Gateway API CRDs applied"
@@ -376,8 +380,8 @@ run_main() {
             generate_kubeconfig "$k0sctl_file" "$kubeconfig_out"
             export KUBECONFIG="$kubeconfig_out"
             wait_for_cluster
-            helmfile_apply "$helmfile_file"
             gateway_api_apply
+            helmfile_apply "$helmfile_file"
             cilium status --wait
             log_success "Cluster setup completed successfully!"
             ;;

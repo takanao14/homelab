@@ -78,7 +78,7 @@ sops edit secrets.sandbox.enc.env
 
 | Command | Description |
 |---------|-------------|
-| `apply` | Full setup: k0sctl apply → fetch kubeconfig → helmfile apply → Gateway API CRDs |
+| `apply` | Full setup: k0sctl apply → fetch kubeconfig → Gateway API CRDs → helmfile apply |
 | `reset` | Reset the cluster: k0sctl reset |
 | `kubeconfig` | Write kubeconfig to `~/.kube/<env>.yaml` |
 | `helmfile` | Apply Helmfile only (requires kubeconfig to exist) |
