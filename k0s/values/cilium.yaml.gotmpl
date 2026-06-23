@@ -10,6 +10,11 @@ ingressController:
   loadbalancerMode: dedicated
 gatewayAPI:
   enabled: true
+  # GatewayClass/cilium belongs to the Cilium control plane and is managed by
+  # this Helm release. Use an explicit value instead of API-discovery-dependent
+  # "auto" rendering.
+  gatewayClass:
+    create: "true"
 # Expose Cilium metrics for Prometheus. metricsService creates the metrics
 # Services (cilium-agent:9962, cilium-operator:9963) without requiring the
 # ServiceMonitor CRD, so this stays bootstrap-safe (helmfile installs Cilium
