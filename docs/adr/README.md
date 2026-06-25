@@ -9,10 +9,15 @@ the context, the option we chose, the options we rejected, and the trade-offs.
 |----------|----------|-----------|
 | `README.md` (per directory) | **What** the system currently is / how to use it | Kept up to date |
 | `docs/adr/` | **Why** a decision was made | Append-only; never rewritten |
-| `docs/plans/` | **What we are about to do** (steps, rollout) | Disposable once executed |
+| Plans repo (private) | **What we are about to do** (steps, rollout) | Disposable once executed |
 
 A `README` tells you the current shape; an ADR tells you how we got there, so the
 rationale survives even after the README is rewritten.
+
+In-progress plans live in a **separate private repository**, not in this public
+repo: planning and design exploration should not be published here. Only the
+durable outcomes land in this repo — folded into a `README` or distilled into an
+ADR — once a plan completes.
 
 ## Conventions
 
@@ -25,11 +30,13 @@ rationale survives even after the README is rewritten.
 
 ## When a plan completes
 
-When a `docs/plans/*` plan is finished, split its content before deleting it:
+When a plan in the private plans repo is finished, split its content before
+deleting it:
 
 1. **Resulting structure** → fold into the relevant `README.md`.
 2. **Decisions and rejected alternatives** → extract here as an ADR.
-3. **Step-by-step procedure / rollout order** → discard (git history retains it).
+3. **Step-by-step procedure / rollout order** → discard (the private repo
+   history retains it).
 
 ## Index
 
