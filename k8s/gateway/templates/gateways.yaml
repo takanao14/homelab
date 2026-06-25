@@ -1,25 +1,29 @@
+{{- $root := . -}}
+{{- range .Values.gateways }}
+{{- if .enabled }}
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: shared-gateway
-  namespace: gateway-system
+  name: {{ .name }}
+  namespace: {{ .namespace | default $root.Release.Namespace }}
 spec:
-  gatewayClassName: cilium
+  gatewayClassName: {{ .gatewayClassName }}
   listeners:
-    {{- if .Values.listeners.https.enabled }}
+    {{- if .listeners.https.enabled }}
     - name: https
       protocol: HTTPS
       port: 443
       tls:
         mode: Terminate
         certificateRefs:
-          - name: wildcard-{{ .Values.domain | replace "." "-" }}-tls
+          - name: wildcard-{{ $root.Values.domain | replace "." "-" }}-tls
             namespace: cert-manager
       allowedRoutes:
         namespaces:
           from: All
     {{- end }}
-    {{- if .Values.listeners.http.enabled }}
+    {{- if .listeners.http.enabled }}
     - name: http
       protocol: HTTP
       port: 80
@@ -27,3 +31,6 @@ spec:
         namespaces:
           from: All
     {{- end }}
+{{- end }}
+{{- end }}
+

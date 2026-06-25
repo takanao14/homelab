@@ -12,5 +12,5 @@ spec:
     - {{ .Values.hostname }}
   rules:
     - backendRefs:
-        - name: longhorn-ui-proxy
-          port: 80
+        - name: {{ .Values.route.backend.name }}
+          port: {{ .Values.route.backend.port }}

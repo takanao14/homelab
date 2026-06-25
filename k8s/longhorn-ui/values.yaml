@@ -5,6 +5,9 @@ image:
   tag: 1.29-alpine
   pullPolicy: IfNotPresent
 
+proxy:
+  enabled: true
+
 hostname: longhorn.sandbox.butaco.net
 
 gateway:
@@ -17,6 +20,16 @@ longhorn:
     name: longhorn-frontend
     namespace: longhorn-system
     port: 80
+
+route:
+  backend:
+    name: longhorn-ui-proxy
+    port: 80
+
+securityPolicy:
+  enabled: false
+  name: longhorn-basic-auth
+  secretName: longhorn-ui-basic-auth
 
 openbao:
   secretStore:

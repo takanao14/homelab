@@ -1,7 +1,14 @@
 domain: ""
 
-listeners:
-  http:
+gatewayClasses: []
+
+gateways:
+  - name: shared-gateway
+    namespace: gateway-system
+    gatewayClassName: cilium
     enabled: true
-  https:
-    enabled: true
+    listeners:
+      http:
+        enabled: true
+      https:
+        enabled: true

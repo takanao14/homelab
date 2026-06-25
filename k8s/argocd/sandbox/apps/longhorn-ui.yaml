@@ -13,6 +13,11 @@ spec:
     path: k8s/longhorn-ui
     helm:
       releaseName: longhorn-ui
+      values: |
+        gateway:
+          name: shared-gateway-envoy
+          namespace: gateway-system
+          sectionName: http
   destination:
     server: https://kubernetes.default.svc
     namespace: longhorn-system

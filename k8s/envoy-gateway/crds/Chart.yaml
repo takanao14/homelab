@@ -1,0 +1,10 @@
+apiVersion: v2
+name: envoy-gateway-crds
+description: Envoy Gateway CRDs wrapper
+type: application
+version: 0.1.0
+dependencies:
+  - name: gateway-crds-helm
+    version: v1.7.4
+    repository: oci://docker.io/envoyproxy
+

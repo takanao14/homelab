@@ -1,3 +1,4 @@
+{{- if .Values.proxy.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -52,3 +53,4 @@ spec:
         - name: basic-auth
           secret:
             secretName: longhorn-ui-basic-auth
+{{- end }}

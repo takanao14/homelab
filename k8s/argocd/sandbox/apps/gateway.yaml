@@ -15,11 +15,29 @@ spec:
       releaseName: gateway
       values: |
         domain: sandbox.butaco.net
-        listeners:
-          http:
+        gatewayClasses:
+          - name: envoy-gateway
+            controllerName: gateway.envoyproxy.io/gatewayclass-controller
             enabled: true
-          https:
-            enabled: false
+        gateways:
+          - name: shared-gateway
+            namespace: gateway-system
+            gatewayClassName: cilium
+            enabled: true
+            listeners:
+              http:
+                enabled: true
+              https:
+                enabled: false
+          - name: shared-gateway-envoy
+            namespace: gateway-system
+            gatewayClassName: envoy-gateway
+            enabled: true
+            listeners:
+              http:
+                enabled: true
+              https:
+                enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: gateway-system

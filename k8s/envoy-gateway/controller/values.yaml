@@ -1,0 +1,6 @@
+gateway-helm:
+  crds:
+    gatewayAPI:
+      safeUpgradePolicy:
+        enabled: false
+

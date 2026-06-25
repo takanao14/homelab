@@ -2,9 +2,9 @@
 
 Authenticated Gateway API route for the Longhorn UI.
 
-Longhorn itself is installed by the k0s bootstrap Helmfile. This chart only
-adds a small nginx reverse proxy with Basic Auth and exposes it through the
-shared Cilium Gateway.
+Longhorn itself is installed by the k0s bootstrap Helmfile. This chart exposes
+the UI through Gateway API. It can use the legacy nginx Basic Auth proxy or,
+during the Envoy Gateway migration, Envoy Gateway `SecurityPolicy` Basic Auth.
 
 ## Ownership model
 
@@ -12,9 +12,10 @@ Longhorn is cluster infrastructure and remains part of the `k0s/` bootstrap
 layer. This chart is intentionally limited to the UI exposure layer:
 
 - `ExternalSecret` for Basic Auth htpasswd content
-- nginx reverse proxy with `auth_basic`
-- `Service` for the proxy
-- `HTTPRoute` attached to the shared Cilium Gateway
+- optional nginx reverse proxy with `auth_basic`
+- optional `Service` for the proxy
+- optional Envoy Gateway `SecurityPolicy`
+- `HTTPRoute` attached to the configured shared Gateway
 
 Do not move the Longhorn Helm release itself into this chart unless the storage
 bootstrap ownership model changes.
@@ -23,10 +24,15 @@ bootstrap ownership model changes.
 
 ```text
 http://longhorn.sandbox.butaco.net
-  -> gateway-system/shared-gateway:http
+  -> gateway-system/shared-gateway-envoy:http
   -> longhorn-system/longhorn-ui-proxy
   -> longhorn-system/longhorn-frontend:80
 ```
+
+The initial sandbox Envoy Gateway canary keeps the nginx proxy in the backend
+path. After Envoy Gateway is validated, `securityPolicy.enabled=true`,
+`proxy.enabled=false`, and `route.backend.name=longhorn-frontend` move Basic
+Auth to the Gateway layer and remove the per-service proxy.
 
 ## Secret
 
@@ -100,6 +106,6 @@ Expected results:
 
 - Argo CD reports `Synced` / `Healthy`.
 - `ExternalSecret` reports `SecretSynced` and `READY=True`.
-- DNS resolves `longhorn.sandbox.butaco.net` to the sandbox shared Gateway IP.
+- DNS resolves `longhorn.sandbox.butaco.net` to the configured sandbox Gateway IP.
 - unauthenticated `curl` returns `HTTP/1.1 401 Unauthorized` with
   `WWW-Authenticate: Basic realm="Longhorn UI"`.
