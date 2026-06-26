@@ -9,15 +9,15 @@ eso/
 ├── Chart.yaml
 ├── values.yaml               # Default: openbao server URL, path, role, mountPath
 └── templates/
-    ├── cluster-secret-store.yaml  # ClusterSecretStore: openbao
-    └── token-reviewer.yaml        # ServiceAccount + ClusterRoleBinding for OpenBao Kubernetes auth
+    ├── auth-delegator.yaml        # ClusterRoleBinding for ESO TokenReview access
+    └── cluster-secret-store.yaml  # ClusterSecretStore: openbao
 ```
 
 ## How It Works
 
 1. ESO is installed from the upstream `external-secrets` Helm chart (included as dependency).
 2. A `ClusterSecretStore` named `openbao` is created, pointing to the OpenBao server using Kubernetes auth.
-3. The `openbao-token-reviewer` ServiceAccount (bound to `system:auth-delegator`) allows OpenBao to validate Kubernetes tokens.
+3. The ESO ServiceAccount is bound to `system:auth-delegator`, allowing OpenBao to validate Kubernetes tokens using the client's login token.
 4. All other charts in the cluster use `ExternalSecret` resources referencing the `openbao` ClusterSecretStore.
 
 ## Values

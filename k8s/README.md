@@ -71,7 +71,7 @@ k8s/
 │   ├── values.yaml
 │   └── templates/
 │       ├── cluster-secret-store.yaml  # ClusterSecretStore pointing to OpenBao
-│       └── token-reviewer.yaml        # ServiceAccount for OpenBao Kubernetes auth
+│       └── auth-delegator.yaml        # TokenReview RBAC for the ESO ServiceAccount
 ├── gateway/              # Cilium Gateway API (local Helm chart)
 │   ├── Chart.yaml
 │   ├── values.yaml           # Schema: domain
