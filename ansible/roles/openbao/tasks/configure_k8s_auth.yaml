@@ -14,7 +14,7 @@
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
-  loop: "{{ openbao_k8s_clusters }}"
+  loop: "{{ openbao_k8s_target_clusters | default(openbao_k8s_clusters) }}"
   when: "(item.mount_path + '/') not in (openbao_auth_methods.stdout | from_json)"
   changed_when: true
 
@@ -26,7 +26,7 @@
     owner: "{{ openbao_user }}"
     group: "{{ openbao_group }}"
     mode: '0644'
-  loop: "{{ openbao_k8s_clusters }}"
+  loop: "{{ openbao_k8s_target_clusters | default(openbao_k8s_clusters) }}"
   when: item.ca_cert | length > 0
 
 - name: Configure Kubernetes auth method
@@ -35,10 +35,10 @@
       {{ openbao_binary }} write auth/{{ item.mount_path }}/config
       kubernetes_host="{{ item.host }}"
       kubernetes_ca_cert=@{{ item.ca_cert_file }}
-      token_reviewer_jwt="{{ item.token_reviewer_jwt }}"
+      disable_local_ca_jwt=true
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
-  loop: "{{ openbao_k8s_clusters }}"
-  when: item.ca_cert | length > 0 and item.token_reviewer_jwt | length > 0
+  loop: "{{ openbao_k8s_target_clusters | default(openbao_k8s_clusters) }}"
+  when: item.ca_cert | length > 0
   changed_when: true

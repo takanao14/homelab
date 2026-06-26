@@ -1,0 +1,205 @@
+---
+- name: Harvest Kubernetes CA for OpenBao registration
+  hosts: localhost
+  gather_facts: false
+  vars:
+    openbao_register_clusters:
+      prd:
+        kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/prd.yaml"
+        context: prd-homelab
+      dev:
+        kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/dev.yaml"
+        context: dev-homelab
+      sandbox:
+        kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/sandbox.yaml"
+        context: sandbox-homelab
+    target_cluster: "{{ cluster | default('') }}"
+  tasks:
+    - name: Validate target cluster
+      ansible.builtin.assert:
+        that:
+          - target_cluster in openbao_register_clusters
+        fail_msg: "Set a valid target cluster with -e cluster=prd|dev|sandbox."
+
+    - name: Set target kubeconfig
+      ansible.builtin.set_fact:
+        openbao_register_kubeconfig: "{{ kubeconfig | default(openbao_register_clusters[target_cluster].kubeconfig) }}"
+        openbao_register_kube_context: >-
+          {{ kube_context | default(openbao_register_clusters[target_cluster].context, true) }}
+
+    - name: Build kubectl command prefix
+      ansible.builtin.set_fact:
+        openbao_register_kubectl_args: >-
+          {{
+            ['kubectl', '--kubeconfig', openbao_register_kubeconfig]
+            + (
+              ['--context', openbao_register_kube_context]
+              if openbao_register_kube_context | length > 0
+              else []
+            )
+          }}
+
+    - name: Read cluster CA from kubeconfig
+      ansible.builtin.command:
+        argv: >-
+          {{
+            openbao_register_kubectl_args
+            + [
+              'config',
+              'view',
+              '--raw',
+              '--minify',
+              '-o',
+              'jsonpath={.clusters[0].cluster.certificate-authority-data}',
+            ]
+          }}
+      register: openbao_register_ca_data
+      changed_when: false
+
+    - name: Validate cluster CA data
+      ansible.builtin.assert:
+        that:
+          - openbao_register_ca_data.stdout | length > 0
+        fail_msg: "No certificate-authority-data found in {{ openbao_register_kubeconfig }}."
+
+    - name: Store OpenBao registration facts
+      ansible.builtin.set_fact:
+        openbao_register_cluster: "{{ target_cluster }}"
+        openbao_register_ca_cert: "{{ openbao_register_ca_data.stdout | b64decode }}"
+
+- name: Register rebuilt Kubernetes cluster with OpenBao
+  hosts: openbao
+  gather_facts: false
+  vars:
+    openbao_register_cluster: "{{ hostvars['localhost']['openbao_register_cluster'] }}"
+    openbao_register_ca_cert: "{{ hostvars['localhost']['openbao_register_ca_cert'] }}"
+  tasks:
+    - name: Load OpenBao role defaults
+      ansible.builtin.include_role:
+        name: openbao
+        tasks_from: load_defaults
+        public: true
+
+    - name: Select OpenBao cluster mapping
+      ansible.builtin.set_fact:
+        openbao_register_selected_clusters: >-
+          {{ openbao_k8s_clusters | selectattr('name', 'equalto', openbao_register_cluster) | list }}
+
+    - name: Validate OpenBao cluster mapping
+      ansible.builtin.assert:
+        that:
+          - openbao_register_selected_clusters | length == 1
+        fail_msg: "No OpenBao Kubernetes auth mapping found for {{ openbao_register_cluster }}."
+
+    - name: Build OpenBao target cluster
+      ansible.builtin.set_fact:
+        openbao_k8s_target_clusters: >-
+          {{ [openbao_register_selected_clusters[0] | combine({'ca_cert': openbao_register_ca_cert})] }}
+
+    - name: Configure Kubernetes auth method
+      ansible.builtin.include_role:
+        name: openbao
+        tasks_from: configure_k8s_auth
+
+    - name: Configure Kubernetes role for ESO
+      ansible.builtin.include_role:
+        name: openbao
+        tasks_from: configure_roles
+
+- name: Restart ESO and validate ExternalSecrets
+  hosts: localhost
+  gather_facts: false
+  vars:
+    target_cluster: "{{ hostvars['localhost']['openbao_register_cluster'] }}"
+    target_kubeconfig: "{{ hostvars['localhost']['openbao_register_kubeconfig'] }}"
+    target_kubectl_args: "{{ hostvars['localhost']['openbao_register_kubectl_args'] }}"
+  tasks:
+    - name: Restart external-secrets controller
+      ansible.builtin.command:
+        argv: >-
+          {{
+            target_kubectl_args
+            + [
+              '-n',
+              'external-secrets',
+              'rollout',
+              'restart',
+              'deployment/external-secrets',
+            ]
+          }}
+      changed_when: true
+
+    - name: Wait for external-secrets controller rollout
+      ansible.builtin.command:
+        argv: >-
+          {{
+            target_kubectl_args
+            + [
+              '-n',
+              'external-secrets',
+              'rollout',
+              'status',
+              'deployment/external-secrets',
+              '--timeout=120s',
+            ]
+          }}
+      changed_when: false
+
+    - name: Wait for ExternalSecrets to become Ready
+      ansible.builtin.command:
+        argv: >-
+          {{
+            target_kubectl_args
+            + [
+              'wait',
+              '--for=condition=Ready',
+              'externalsecret',
+              '--all',
+              '--all-namespaces',
+              '--timeout=120s',
+            ]
+          }}
+      register: external_secret_wait
+      changed_when: false
+      failed_when: false
+
+    - name: Read ExternalSecret sync status
+      ansible.builtin.command:
+        argv: "{{ target_kubectl_args + ['get', 'externalsecret', '--all-namespaces'] }}"
+      register: external_secret_status
+      changed_when: false
+
+    - name: Read external-secrets controller logs on sync failure
+      ansible.builtin.command:
+        argv: >-
+          {{
+            target_kubectl_args
+            + [
+              '-n',
+              'external-secrets',
+              'logs',
+              'deployment/external-secrets',
+              '--tail=100',
+            ]
+          }}
+      register: external_secret_logs
+      changed_when: false
+      failed_when: false
+      when: external_secret_wait.rc != 0
+
+    - name: Show ExternalSecret sync summary
+      ansible.builtin.debug:
+        msg: "{{ external_secret_status.stdout_lines }}"
+
+    - name: Show external-secrets controller logs on sync failure
+      ansible.builtin.debug:
+        msg: "{{ external_secret_logs.stdout_lines }}"
+      when: external_secret_wait.rc != 0
+
+    - name: Fail when ExternalSecrets are not synced
+      ansible.builtin.fail:
+        msg: >-
+          ExternalSecret sync did not complete. Wait stderr:
+          {{ external_secret_wait.stderr_lines | default([]) }}
+      when: >-
+        external_secret_wait.rc != 0

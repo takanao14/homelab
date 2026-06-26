@@ -71,6 +71,7 @@ ansible/
 │   ├── ops-openbao_bootstrap.yaml
 │   ├── ops-openbao_configure.yaml
 │   ├── ops-openbao_configure_userpass.yaml
+│   ├── ops-openbao_register_cluster.yaml
 │   └── ops-openbao_seed_secrets.yaml
 └── roles/
     ├── pdns_auth/
@@ -290,6 +291,7 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `ops-openbao_bootstrap.yaml` | `openbao` | ops |
 | `ops-openbao_configure.yaml` | `openbao` | ops |
 | `ops-openbao_configure_userpass.yaml` | `openbao` | ops |
+| `ops-openbao_register_cluster.yaml` | `openbao`, localhost kubeconfig/context | ops |
 | `ops-openbao_seed_secrets.yaml` | `openbao` | ops |
 
 ## Secret Variables
@@ -310,8 +312,6 @@ ansible-playbook playbooks/pdns_auth.yaml --check
 | `openbao_seal_key` | `group_vars/openbao.sops.yaml` | OpenBao static seal key (base64-encoded 32 bytes) |
 | `openbao_root_token` | `group_vars/openbao.sops.yaml` | OpenBao root token (emergency backup) |
 | `openbao_admin_token` | `group_vars/openbao.sops.yaml` | OpenBao admin token for configuration |
-| `openbao_k8s_token_reviewer_jwt` | `group_vars/openbao.sops.yaml` | Kubernetes token reviewer ServiceAccount JWT |
-| `openbao_k8s_ca_cert` | `group_vars/openbao.sops.yaml` | PEM CA certificate of the Kubernetes cluster |
 | `openbao_secrets` | `group_vars/openbao.sops.yaml` | Application secrets seeded into OpenBao KV, including the Alertmanager Discord webhook |
 | `seaweedfs_s3_access_key` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS S3 access key for the Terraform identity |
 | `seaweedfs_s3_secret_key` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS S3 secret key for the Terraform identity |

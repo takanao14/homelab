@@ -19,10 +19,6 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_seal_key` | Static seal key: 32 raw bytes, base64-encoded. Generate with `openssl rand -base64 32` |
 | `openbao_root_token` | Root token from `operator init`. Stored as emergency backup; not used in day-to-day operations. |
 | `openbao_admin_token` | Admin token created by `ops-openbao_bootstrap.yaml`. Used by `ops-openbao_configure.yaml`. |
-| `openbao_k8s_token_reviewer_jwt` | JWT of the `openbao-token-reviewer` ServiceAccount in the prd cluster. Used to configure the `kubernetes/` auth method. |
-| `openbao_k8s_ca_cert` | PEM-encoded CA certificate of the prd cluster. |
-| `openbao_k8s_dev_token_reviewer_jwt` | JWT of the `openbao-token-reviewer` ServiceAccount in the dev cluster. Used to configure the `kubernetes-dev/` auth method. |
-| `openbao_k8s_dev_ca_cert` | PEM-encoded CA certificate of the dev cluster. |
 | `openbao_secrets` | List of KV secrets to write. Each entry requires `path` and `data` (key/value pairs). |
 | `openbao_userpass_users` | List of userpass users. Each entry requires `username`, `password`, and `policies`. |
 
@@ -50,9 +46,7 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_k8s_host` | `""` | prd cluster API server URL (e.g. `https://192.168.30.11:6443`) |
 | `openbao_k8s_dev_host` | `""` | dev cluster API server URL (e.g. `https://192.168.20.11:6443`) |
 | `openbao_k8s_sandbox_host` | `""` | sandbox cluster API server URL (e.g. `https://192.168.20.31:6443`) |
-| `openbao_k8s_sandbox_token_reviewer_jwt` | `""` | JWT of the sandbox `openbao-token-reviewer` ServiceAccount. |
-| `openbao_k8s_sandbox_ca_cert` | `""` | PEM-encoded CA certificate of the sandbox cluster. |
-| `openbao_k8s_clusters` | see defaults | List of Kubernetes clusters to configure auth for. Each entry defines `mount_path`, `host`, `ca_cert`, `ca_cert_file`, `token_reviewer_jwt`, `role`, and `policies`. |
+| `openbao_k8s_clusters` | see defaults | List of Kubernetes clusters to configure auth for. Each entry defines `name`, `mount_path`, `host`, `ca_cert`, `ca_cert_file`, `role`, and `policies`. |
 
 ## Post-install initialization
 
@@ -72,12 +66,13 @@ bao token revoke <root_token>
 
 After initialization, run the following playbooks in order to set up OpenBao for use with External Secrets Operator.
 
-OpenBao manages two Kubernetes clusters:
+OpenBao manages three Kubernetes clusters:
 
 | Auth mount | Cluster | ESO ArgoCD app |
 |---|---|---|
 | `kubernetes/` | prd (`192.168.30.11`) | `k8s/argocd/prd/apps/eso.yaml` |
 | `kubernetes-dev/` | dev (`192.168.20.11`) | `k8s/argocd/dev/apps/eso.yaml` (overrides `mountPath`) |
+| `kubernetes-sandbox/` | sandbox (`192.168.20.31`) | `k8s/argocd/sandbox/apps/eso.yaml` (overrides `mountPath`) |
 
 ### 1. Bootstrap admin token (run once)
 
@@ -96,58 +91,53 @@ ansible-playbook playbooks/ops-openbao_bootstrap.yaml
 
 Copy the `openbao_admin_token` value from the output into `group_vars/openbao.sops.yaml`.
 
-### 2. Apply Kubernetes token reviewer manifest (both clusters)
-
-Run on each cluster to create the `openbao-token-reviewer` ServiceAccount:
-
-```bash
-kubectl create namespace external-secrets --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -f k8s/eso/templates/token-reviewer.yaml
-```
-
-Retrieve the JWT and CA cert from each cluster:
-
-```bash
-# JWT
-kubectl get secret openbao-token-reviewer -n external-secrets \
-  -o jsonpath='{.data.token}' | base64 -d
-
-# CA cert
-kubectl get secret openbao-token-reviewer -n external-secrets \
-  -o jsonpath='{.data.ca\.crt}' | base64 -d
-```
-
-Add all values to `group_vars/openbao.sops.yaml`:
-
-```yaml
-openbao_k8s_token_reviewer_jwt: "eyJ..."   # prd cluster
-openbao_k8s_ca_cert: |
-  -----BEGIN CERTIFICATE-----
-  ...
-  -----END CERTIFICATE-----
-openbao_k8s_dev_token_reviewer_jwt: "eyJ..."   # dev cluster
-openbao_k8s_dev_ca_cert: |
-  -----BEGIN CERTIFICATE-----
-  ...
-  -----END CERTIFICATE-----
-```
-
-### 3. Configure OpenBao
+### 2. Configure OpenBao base objects
 
 ```bash
 ansible-playbook playbooks/ops-openbao_configure.yaml
 ```
 
-This enables KV v2, configures Kubernetes auth for the clusters, and creates policies and roles.
+This enables KV v2, configures policies, and creates Kubernetes auth roles.
+Kubernetes auth config is refreshed per cluster by `ops-openbao_register_cluster.yaml`
+so cluster CA rotation does not require editing SOPS secrets.
 
-### 4. Install ESO via ArgoCD
+### 3. Install ESO via ArgoCD
 
-Push the changes to git. ArgoCD will sync both ESO apps and install ESO on each cluster.
+Push the changes to git. ArgoCD will sync the ESO apps and install ESO on each cluster.
 Verify the `ClusterSecretStore` becomes `Ready` on each cluster:
 
 ```bash
 kubectl get clustersecretstore openbao
 ```
+
+### 4. Register each cluster with OpenBao
+
+Run the registration playbook after ESO has been reconciled by ArgoCD. It reads
+the target cluster CA from the local kubeconfig, writes the OpenBao Kubernetes
+auth config with `disable_local_ca_jwt=true`, restarts ESO, and validates
+`ExternalSecret` readiness.
+
+```bash
+ansible-playbook playbooks/ops-openbao_register_cluster.yaml -e cluster=prd
+ansible-playbook playbooks/ops-openbao_register_cluster.yaml -e cluster=dev
+ansible-playbook playbooks/ops-openbao_register_cluster.yaml -e cluster=sandbox
+```
+
+By default the playbook reads `~/.kube/<cluster>.yaml` and uses the
+`<cluster>-homelab` kube context. Override either value when needed:
+
+```bash
+ansible-playbook playbooks/ops-openbao_register_cluster.yaml \
+  -e cluster=sandbox \
+  -e kubeconfig=/path/to/kubeconfig
+
+ansible-playbook playbooks/ops-openbao_register_cluster.yaml \
+  -e cluster=sandbox \
+  -e kube_context=sandbox-homelab
+```
+
+Run the same command after rebuilding a k0s cluster. OpenBao KV secret values
+remain intact because OpenBao is external to the Kubernetes cluster.
 
 ## KV Path Conventions
 
