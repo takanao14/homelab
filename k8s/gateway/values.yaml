@@ -2,6 +2,8 @@ domain: ""
 
 gatewayClasses: []
 
+envoyProxies: []
+
 gateways:
   - name: shared-gateway
     namespace: gateway-system

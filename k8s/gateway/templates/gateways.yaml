@@ -9,6 +9,10 @@ metadata:
   namespace: {{ .namespace | default $root.Release.Namespace }}
 spec:
   gatewayClassName: {{ .gatewayClassName }}
+  {{- with .infrastructure }}
+  infrastructure:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   listeners:
     {{- if .listeners.https.enabled }}
     - name: https
@@ -33,4 +37,3 @@ spec:
     {{- end }}
 {{- end }}
 {{- end }}
-

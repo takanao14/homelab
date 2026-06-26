@@ -19,6 +19,16 @@ spec:
           - name: envoy-gateway
             controllerName: gateway.envoyproxy.io/gatewayclass-controller
             enabled: true
+        envoyProxies:
+          - name: shared-gateway-envoy
+            namespace: gateway-system
+            enabled: true
+            spec:
+              provider:
+                type: Kubernetes
+                kubernetes:
+                  envoyService:
+                    externalTrafficPolicy: Cluster
         gateways:
           - name: shared-gateway
             namespace: gateway-system
@@ -33,6 +43,11 @@ spec:
             namespace: gateway-system
             gatewayClassName: envoy-gateway
             enabled: true
+            infrastructure:
+              parametersRef:
+                group: gateway.envoyproxy.io
+                kind: EnvoyProxy
+                name: shared-gateway-envoy
             listeners:
               http:
                 enabled: true

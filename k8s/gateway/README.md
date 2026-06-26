@@ -44,6 +44,14 @@ namespace: gateway-system
 gatewayClassName: envoy-gateway
 ```
 
+### EnvoyProxy
+
+Envoy Gateway proxy settings can be rendered from `envoyProxies` and attached
+to a Gateway through `gateway.infrastructure.parametersRef`. Sandbox uses this
+to set the generated Envoy proxy LoadBalancer Service to
+`externalTrafficPolicy: Cluster`, avoiding Cilium L2 announcement problems when
+the VIP is advertised by a node that does not host the Envoy proxy pod.
+
 | Listener | Port | Protocol | TLS Secret |
 |----------|------|----------|------------|
 | https | 443 | HTTPS | `wildcard-{domain-dashes}-tls` in `cert-manager` |
@@ -57,6 +65,7 @@ The TLS secret is referenced cross-namespace via a `ReferenceGrant` created by t
 |-----|-------------|
 | `domain` | Base domain for the environment (e.g. `prd.butaco.net`) |
 | `gatewayClasses` | Optional GatewayClass definitions to render. |
+| `envoyProxies` | Optional EnvoyProxy definitions for Envoy Gateway infrastructure settings. |
 | `gateways` | Gateway definitions, including name, namespace, class, and listeners. |
 
 `domain` has no default value and must be explicitly provided. It is used to construct the TLS secret name.
