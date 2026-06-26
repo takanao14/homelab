@@ -259,6 +259,36 @@ ansible-playbook playbooks/common-journald.yaml
 ansible-playbook playbooks/pdns_auth.yaml --check
 ```
 
+### OpenBao registration after k0s cluster rebuild
+
+OpenBao runs outside the k0s clusters, so rebuilding a cluster does not remove
+KV secret values. What must be refreshed is the OpenBao Kubernetes auth config
+for the rebuilt cluster. After ArgoCD has reconciled the ESO app and the
+`external-secrets-auth-delegator` ClusterRoleBinding exists, run:
+
+```bash
+ansible-playbook playbooks/ops-openbao_register_cluster.yaml -e cluster=sandbox
+ansible-playbook playbooks/ops-openbao_register_cluster.yaml -e cluster=dev
+ansible-playbook playbooks/ops-openbao_register_cluster.yaml -e cluster=prd
+```
+
+The playbook reads `~/.kube/<cluster>.yaml` and uses the `<cluster>-homelab`
+kube context by default. Override either value when needed:
+
+```bash
+ansible-playbook playbooks/ops-openbao_register_cluster.yaml \
+  -e cluster=sandbox \
+  -e kubeconfig=/path/to/kubeconfig \
+  -e kube_context=sandbox-homelab
+```
+
+Verify ESO after registration:
+
+```bash
+kubectl --kubeconfig ~/.kube/<cluster>.yaml get clustersecretstore openbao
+kubectl --kubeconfig ~/.kube/<cluster>.yaml get externalsecret -A
+```
+
 ## Playbooks
 
 | Playbook | Hosts | Class |
