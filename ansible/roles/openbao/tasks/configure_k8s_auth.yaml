@@ -27,7 +27,7 @@
     group: "{{ openbao_group }}"
     mode: '0644'
   loop: "{{ openbao_k8s_target_clusters | default(openbao_k8s_clusters) }}"
-  when: item.ca_cert | length > 0
+  when: item.ca_cert | default('') | length > 0
 
 - name: Configure Kubernetes auth method
   ansible.builtin.command:
@@ -40,5 +40,5 @@
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
   loop: "{{ openbao_k8s_target_clusters | default(openbao_k8s_clusters) }}"
-  when: item.ca_cert | length > 0
+  when: item.ca_cert | default('') | length > 0
   changed_when: true

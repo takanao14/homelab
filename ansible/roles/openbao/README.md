@@ -46,7 +46,7 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_k8s_host` | `""` | prd cluster API server URL (e.g. `https://192.168.30.11:6443`) |
 | `openbao_k8s_dev_host` | `""` | dev cluster API server URL (e.g. `https://192.168.20.11:6443`) |
 | `openbao_k8s_sandbox_host` | `""` | sandbox cluster API server URL (e.g. `https://192.168.20.31:6443`) |
-| `openbao_k8s_clusters` | see defaults | List of Kubernetes clusters to configure auth for. Each entry defines `name`, `mount_path`, `host`, `ca_cert`, `ca_cert_file`, `role`, and `policies`. |
+| `openbao_k8s_clusters` | see defaults | List of Kubernetes clusters to configure auth for. Each entry defines `name`, `mount_path`, `host`, `ca_cert_file`, `role`, and `policies`. Runtime CA data is injected by `ops-openbao_register_cluster.yaml`. |
 
 ## Post-install initialization
 
@@ -97,9 +97,9 @@ Copy the `openbao_admin_token` value from the output into `group_vars/openbao.so
 ansible-playbook playbooks/ops-openbao_configure.yaml
 ```
 
-This enables KV v2, configures policies, and creates Kubernetes auth roles.
-Kubernetes auth config is refreshed per cluster by `ops-openbao_register_cluster.yaml`
-so cluster CA rotation does not require editing SOPS secrets.
+This enables KV v2 and configures policies. Kubernetes auth mounts, auth config,
+and roles are refreshed per cluster by `ops-openbao_register_cluster.yaml` so
+cluster CA rotation does not require editing SOPS secrets.
 
 ### 3. Install ESO via ArgoCD
 

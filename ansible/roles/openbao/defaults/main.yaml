@@ -39,36 +39,31 @@ openbao_admin_token: ""
 # Kubernetes auth configuration
 # prd cluster (mount path: kubernetes)
 openbao_k8s_host: ""
-openbao_k8s_ca_cert: ""
 
 # dev cluster (mount path: kubernetes-dev)
 openbao_k8s_dev_host: ""
-openbao_k8s_dev_ca_cert: ""
 
 # sandbox cluster (mount path: kubernetes-sandbox)
 openbao_k8s_sandbox_host: ""
-openbao_k8s_sandbox_ca_cert: ""
 
-# All clusters to configure (references vars above)
+# All clusters to configure. Cluster CA certificates are harvested at runtime by
+# ops-openbao_register_cluster.yaml and injected into openbao_k8s_target_clusters.
 openbao_k8s_clusters:
   - name: prd
     mount_path: kubernetes
     host: "{{ openbao_k8s_host }}"
-    ca_cert: "{{ openbao_k8s_ca_cert }}"
     ca_cert_file: "{{ openbao_config_dir }}/k8s-prd-ca.pem"
     role: k8s-eso
     policies: "k8s-cert-manager,k8s-dns-homelab,k8s-homepage,k8s-monitoring,k8s-headlamp"
   - name: dev
     mount_path: kubernetes-dev
     host: "{{ openbao_k8s_dev_host }}"
-    ca_cert: "{{ openbao_k8s_dev_ca_cert }}"
     ca_cert_file: "{{ openbao_config_dir }}/k8s-dev-ca.pem"
     role: k8s-eso
     policies: "k8s-cert-manager,k8s-dns-homelab,k8s-monitoring"
   - name: sandbox
     mount_path: kubernetes-sandbox
     host: "{{ openbao_k8s_sandbox_host }}"
-    ca_cert: "{{ openbao_k8s_sandbox_ca_cert }}"
     ca_cert_file: "{{ openbao_config_dir }}/k8s-sandbox-ca.pem"
     role: k8s-eso
     policies: "k8s-dns-homelab,k8s-longhorn-ui"
