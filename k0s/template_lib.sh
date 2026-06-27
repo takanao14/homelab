@@ -345,15 +345,17 @@ helmfile_apply() {
 # ── gateway API CRDs ──────────────────────────────────────────────────────────
 
 gateway_api_apply() {
-    # Gateway API CRD version must match what the installed Cilium version requires.
-    # These upstream CRDs must exist before Cilium starts; otherwise the Cilium
-    # operator disables its Gateway API controller until the operator is restarted.
+    # Gateway API CRD version must match what the installed Gateway controllers
+    # require. These upstream CRDs must exist before Cilium starts; otherwise the
+    # Cilium operator disables its Gateway API controller until the operator is restarted.
     # This is separate from Cilium-owned CRDs, which are installed by the Cilium
     # chart and awaited inside helmfile_apply().
-    # Check the supported version at: https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/
-    # Current: v1.4.1 experimental for Cilium 1.19.x
+    # Check the supported versions before changing this:
+    # - https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/
+    # - https://gateway.envoyproxy.io/
+    # Current: v1.5.1 experimental for Envoy Gateway 1.8.x.
     log_info "Applying Gateway API CRDs..."
-    kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/experimental-install.yaml
+    kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
     log_success "Gateway API CRDs applied"
 }
 
