@@ -16,5 +16,8 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: {{ .Values.route.backend.name }}
+        - group: ""
+          kind: Service
+          name: {{ .Values.route.backend.name }}
           port: {{ .Values.route.backend.port }}
+          weight: 1
