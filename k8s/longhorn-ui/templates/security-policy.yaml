@@ -11,5 +11,7 @@ spec:
       name: longhorn-ui
   basicAuth:
     users:
+      group: ""
+      kind: Secret
       name: {{ .Values.securityPolicy.secretName }}
 {{- end }}

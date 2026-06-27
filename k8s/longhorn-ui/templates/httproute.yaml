@@ -11,6 +11,10 @@ spec:
   hostnames:
     - {{ .Values.hostname }}
   rules:
-    - backendRefs:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
         - name: {{ .Values.route.backend.name }}
           port: {{ .Values.route.backend.port }}
