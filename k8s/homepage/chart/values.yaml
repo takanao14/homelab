@@ -1,6 +1,11 @@
 hostname: www.prd.butaco.net
 namespace: homepage
 
+gateway:
+  name: shared-gateway
+  namespace: gateway-system
+  sectionName: https
+
 image:
   repository: ghcr.io/gethomepage/homepage
   tag: v1.13.2

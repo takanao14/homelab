@@ -13,6 +13,11 @@ spec:
     path: k8s/homepage/chart
     helm:
       releaseName: homepage
+      values: |
+        gateway:
+          name: shared-gateway-envoy
+          namespace: gateway-system
+          sectionName: https
   destination:
     server: https://kubernetes.default.svc
     namespace: homepage
@@ -22,3 +27,4 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true

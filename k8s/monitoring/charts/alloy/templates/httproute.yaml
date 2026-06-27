@@ -5,12 +5,21 @@ metadata:
   namespace: monitoring
 spec:
   parentRefs:
-    - name: shared-gateway
-      namespace: gateway-system
-      sectionName: https
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ .Values.gateway.name }}
+      namespace: {{ .Values.gateway.namespace }}
+      sectionName: {{ .Values.gateway.sectionName }}
   hostnames:
     - {{ .Values.hostname }}
   rules:
-    - backendRefs:
-        - name: alloy
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: alloy
           port: 12345
+          weight: 1

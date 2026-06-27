@@ -5,12 +5,21 @@ metadata:
   namespace: monitoring
 spec:
   parentRefs:
-    - name: shared-gateway
-      namespace: gateway-system
-      sectionName: https
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ .Values.gateway.name }}
+      namespace: {{ .Values.gateway.namespace }}
+      sectionName: {{ .Values.gateway.sectionName }}
   hostnames:
     - {{ .Values.prometheus.hostname }}
   rules:
-    - backendRefs:
-        - name: prometheus-kube-prometheus-prometheus
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: prometheus-kube-prometheus-prometheus
           port: 9090
+          weight: 1

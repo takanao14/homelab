@@ -1,7 +1,7 @@
-prometheus:
-  hostname: ""
+hostname: ""
 
 gateway:
   name: shared-gateway
   namespace: gateway-system
   sectionName: https
+
