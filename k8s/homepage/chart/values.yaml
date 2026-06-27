@@ -2,7 +2,7 @@ hostname: www.prd.butaco.net
 namespace: homepage
 
 gateway:
-  name: shared-gateway
+  name: shared-gateway-envoy
   namespace: gateway-system
   sectionName: https
 

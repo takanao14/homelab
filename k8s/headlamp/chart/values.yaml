@@ -22,6 +22,8 @@ headlamp:
   httpRoute:
     enabled: true
     parentRefs:
-      - name: shared-gateway
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: shared-gateway-envoy
         namespace: gateway-system
         sectionName: https

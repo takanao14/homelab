@@ -2,6 +2,6 @@ server:
   ingress:
     hostname: ""
   route:
-    gatewayName: shared-gateway
+    gatewayName: shared-gateway-envoy
     gatewayNamespace: gateway-system
     sectionName: https

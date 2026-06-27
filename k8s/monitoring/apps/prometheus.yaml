@@ -43,7 +43,3 @@ spec:
       jsonPointers:
         - /spec/shards
         - /spec/replicas
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      jsonPointers:
-        - /spec/rules/0/matches

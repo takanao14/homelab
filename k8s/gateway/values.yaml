@@ -1,14 +1,31 @@
 domain: ""
 
-gatewayClasses: []
+gatewayClasses:
+  - name: envoy-gateway
+    controllerName: gateway.envoyproxy.io/gatewayclass-controller
+    enabled: true
 
-envoyProxies: []
+envoyProxies:
+  - name: shared-gateway-envoy
+    namespace: gateway-system
+    enabled: true
+    spec:
+      provider:
+        type: Kubernetes
+        kubernetes:
+          envoyService:
+            externalTrafficPolicy: Cluster
 
 gateways:
-  - name: shared-gateway
+  - name: shared-gateway-envoy
     namespace: gateway-system
-    gatewayClassName: cilium
+    gatewayClassName: envoy-gateway
     enabled: true
+    infrastructure:
+      parametersRef:
+        group: gateway.envoyproxy.io
+        kind: EnvoyProxy
+        name: shared-gateway-envoy
     listeners:
       http:
         enabled: true
