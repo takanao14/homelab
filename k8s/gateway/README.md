@@ -27,22 +27,17 @@ chart does not render it. The migrated clusters render
 
 ### Gateway
 
-Gateway resources are rendered from `gateways`. The chart default keeps a
-Cilium-compatible `shared-gateway` for compatibility:
-
-```yaml
-name: shared-gateway
-namespace: gateway-system
-gatewayClassName: cilium
-```
-
-Migrated environments override `gateways` to render the Envoy Gateway:
+Gateway resources are rendered from `gateways`. The chart default renders the
+shared Envoy Gateway:
 
 ```yaml
 name: shared-gateway-envoy
 namespace: gateway-system
 gatewayClassName: envoy-gateway
 ```
+
+Environments may still override `gateways` to select listeners, domains, or
+future per-cluster infrastructure settings.
 
 ### EnvoyProxy
 
