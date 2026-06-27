@@ -289,6 +289,10 @@ kubectl --kubeconfig ~/.kube/<cluster>.yaml get clustersecretstore openbao
 kubectl --kubeconfig ~/.kube/<cluster>.yaml get externalsecret -A
 ```
 
+See
+[`ADR-0012`](../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md) for
+the decision behind the rebuild registration flow.
+
 ## Playbooks
 
 | Playbook | Hosts | Class |

@@ -54,3 +54,4 @@ deleting it:
 | [0009](0009-longhorn-ui-exposed-through-authenticated-gateway-route.md) | Longhorn UI is exposed through an authenticated Gateway route | Accepted |
 | [0010](0010-sandbox-argocd-uses-http-only-gitops-bootstrap.md) | Sandbox Argo CD uses HTTP-only GitOps bootstrap without cert-manager | Accepted |
 | [0011](0011-cilium-gateway-to-envoy-gateway-migration.md) | Use Envoy Gateway for shared Gateway API ingress | Accepted |
+| [0012](0012-openbao-eso-cluster-rebuild-registration.md) | Re-register rebuilt clusters with OpenBao for ESO | Accepted |

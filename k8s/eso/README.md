@@ -31,6 +31,11 @@ eso/
 
 The `mountPath` can be overridden per-environment in the ArgoCD Application. For example, the dev cluster uses `kubernetes-dev`.
 
+After rebuilding a k0s cluster, re-register that cluster with OpenBao so ESO can
+authenticate with the new cluster CA. See
+[`ADR-0012`](../../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md)
+and the OpenBao registration runbook in `ansible/README.md`.
+
 ## Dependencies
 
 - OpenBao must be deployed and configured before ESO can sync secrets.
