@@ -36,6 +36,7 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
   ignoreDifferences:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
