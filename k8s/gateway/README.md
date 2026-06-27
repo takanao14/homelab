@@ -75,7 +75,7 @@ The TLS secret is referenced cross-namespace via a `ReferenceGrant` created by t
 ## Notes
 
 - `GatewayClass/cilium` is owned by the Cilium Helm release.
-- Requires Gateway API CRDs v1.4.1 experimental
+- Requires Gateway API CRDs v1.5.1 experimental for Envoy Gateway 1.8.x.
 - Sandbox HTTPRoutes reference `shared-gateway-envoy` after the migration PoC.
 - Dev/prd services continue to reference `shared-gateway` until those
   environments are migrated.

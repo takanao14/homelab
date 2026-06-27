@@ -18,7 +18,7 @@ Kubernetes manifests and Helm charts for homelab clusters managed via ArgoCD Git
 ### Networking
 
 - **CNI**: Cilium 1.19.x
-- **Ingress**: Cilium Gateway API (Gateway API v1.4.1 experimental)
+- **Ingress**: Gateway API (Gateway API v1.5.1 experimental)
 - **TLS**: cert-manager wildcard certificate via Cloudflare DNS-01 challenge
   for prd/dev; sandbox intentionally uses HTTP without cert-manager
 - **DNS**: external-dns with PowerDNS provider (`gateway-httproute` source)
