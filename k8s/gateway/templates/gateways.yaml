@@ -21,7 +21,9 @@ spec:
       tls:
         mode: Terminate
         certificateRefs:
-          - name: wildcard-{{ $root.Values.domain | replace "." "-" }}-tls
+          - group: ""
+            kind: Secret
+            name: wildcard-{{ $root.Values.domain | replace "." "-" }}-tls
             namespace: cert-manager
       allowedRoutes:
         namespaces:
