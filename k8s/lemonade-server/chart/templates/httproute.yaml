@@ -5,12 +5,21 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   parentRefs:
-    - name: shared-gateway
-      namespace: gateway-system
-      sectionName: https
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ .Values.gateway.name }}
+      namespace: {{ .Values.gateway.namespace }}
+      sectionName: {{ .Values.gateway.sectionName }}
   hostnames:
     - {{ .Values.hostname }}
   rules:
-    - backendRefs:
-        - name: lemonade-server
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: lemonade-server
           port: 13305
+          weight: 1

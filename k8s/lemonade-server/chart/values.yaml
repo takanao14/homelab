@@ -29,3 +29,8 @@ tolerations:
     effect: NoSchedule
 
 hostname: lemonade.dev.butaco.net
+
+gateway:
+  name: shared-gateway
+  namespace: gateway-system
+  sectionName: https

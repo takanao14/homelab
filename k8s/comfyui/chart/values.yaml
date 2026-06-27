@@ -24,3 +24,8 @@ tolerations:
     effect: NoSchedule
 
 hostname: comfyui.dev.butaco.net
+
+gateway:
+  name: shared-gateway
+  namespace: gateway-system
+  sectionName: https

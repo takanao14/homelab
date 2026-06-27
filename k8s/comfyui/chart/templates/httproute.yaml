@@ -5,12 +5,21 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   parentRefs:
-    - name: shared-gateway
-      namespace: gateway-system
-      sectionName: https
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ .Values.gateway.name }}
+      namespace: {{ .Values.gateway.namespace }}
+      sectionName: {{ .Values.gateway.sectionName }}
   hostnames:
     - {{ .Values.hostname }}
   rules:
-    - backendRefs:
-        - name: comfyui
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: comfyui
           port: 8188
+          weight: 1

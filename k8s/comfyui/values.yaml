@@ -1,1 +1,5 @@
 hostname: comfyui.dev.butaco.net
+gateway:
+  name: shared-gateway-envoy
+  namespace: gateway-system
+  sectionName: https

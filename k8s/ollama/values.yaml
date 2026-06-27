@@ -1,2 +1,6 @@
 hostname: ollama.dev.butaco.net
+gateway:
+  name: shared-gateway-envoy
+  namespace: gateway-system
+  sectionName: https
 numCtx: 65536
