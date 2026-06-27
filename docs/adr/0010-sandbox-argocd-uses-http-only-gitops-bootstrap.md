@@ -10,7 +10,7 @@ The sandbox cluster is used for short-lived experimentation and storage
 validation. It should be bootstrapped through the same Argo CD App of Apps
 pattern as dev and prd, but it intentionally has a smaller platform footprint.
 
-The dev and prd clusters expose services through the shared Cilium Gateway with
+The dev and prd clusters expose services through the shared Envoy Gateway with
 HTTPS termination, wildcard certificates, cert-manager, and Cloudflare DNS-01.
 For sandbox, that is more machinery than needed. The cluster is reachable only
 from the trusted internal network, and avoiding cert-manager keeps the first
@@ -62,7 +62,7 @@ dedicated TXT owner ID.
 - Sandbox follows the same GitOps control-plane pattern as dev and prd while
   keeping the platform set intentionally small.
 - Shared Gateway and Argo CD route charts must keep listener selection
-  configurable; dev/prd continue to render HTTPS and sandbox renders HTTP only.
+  configurable; dev/prd render HTTPS and sandbox renders HTTP only.
 - HTTP carries credentials and sessions without transport encryption. Sandbox
   Gateway addresses must stay on the trusted internal network and must not be
   published through public DNS or an internet-facing router. If that boundary
