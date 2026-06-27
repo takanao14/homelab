@@ -21,9 +21,9 @@ gateway/
 ### GatewayClass
 
 Optional `GatewayClass` resources can be rendered from `gatewayClasses`.
-The Cilium `GatewayClass/cilium` is still owned by the Cilium Helm release, so
-this chart does not render it. During the Envoy Gateway migration, sandbox
-renders `GatewayClass/envoy-gateway`.
+The Cilium `GatewayClass/cilium` is owned by the Cilium Helm release, so this
+chart does not render it. Sandbox renders `GatewayClass/envoy-gateway` for the
+Envoy Gateway migration.
 
 ### Gateway
 
@@ -36,7 +36,7 @@ namespace: gateway-system
 gatewayClassName: cilium
 ```
 
-Sandbox can also render a parallel Envoy Gateway:
+Sandbox renders the Envoy Gateway during the migration:
 
 ```yaml
 name: shared-gateway-envoy
@@ -76,5 +76,6 @@ The TLS secret is referenced cross-namespace via a `ReferenceGrant` created by t
 
 - `GatewayClass/cilium` is owned by the Cilium Helm release.
 - Requires Gateway API CRDs v1.4.1 experimental
-- Existing services expose themselves via HTTPRoute referencing `shared-gateway`
-  until they are explicitly migrated to `shared-gateway-envoy`.
+- Sandbox HTTPRoutes reference `shared-gateway-envoy` after the migration PoC.
+- Dev/prd services continue to reference `shared-gateway` until those
+  environments are migrated.

@@ -25,14 +25,13 @@ bootstrap ownership model changes.
 ```text
 http://longhorn.sandbox.butaco.net
   -> gateway-system/shared-gateway-envoy:http
-  -> longhorn-system/longhorn-ui-proxy
+  -> Envoy Gateway SecurityPolicy Basic Auth
   -> longhorn-system/longhorn-frontend:80
 ```
 
-The initial sandbox Envoy Gateway canary keeps the nginx proxy in the backend
-path. After Envoy Gateway is validated, `securityPolicy.enabled=true`,
-`proxy.enabled=false`, and `route.backend.name=longhorn-frontend` move Basic
-Auth to the Gateway layer and remove the per-service proxy.
+The sandbox Envoy Gateway migration sets `securityPolicy.enabled=true`,
+`proxy.enabled=false`, and `route.backend.name=longhorn-frontend`. Basic Auth
+is enforced at the Gateway layer and the per-service nginx proxy is removed.
 
 ## Secret
 
