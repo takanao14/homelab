@@ -42,7 +42,7 @@ openbao_secrets:
         discord-webhook-url: ENC[AES256_GCM,data:FP4ExFzhXDI8EA1LV45HMSli7OhDF7w7ZsiqfFbZ13fho2tmQ2A9lYj1dDcjlGlDRXnVHT1i1otZz9aXXsY6x+0TyNN95ekSIrVFdQJxI/YMSdyn/fLWZZjHmtYmzqqgHP6TWGx+EdgNoRemofjUxRslGYumyatSbQ==,iv:/oHXrVQoNl75HsMXVTj4lEK2WRsSQjPTiWyisuvIrds=,tag:AyZxNpLQy/U4W8//sc6N4Q==,type:str]
     - path: ENC[AES256_GCM,data:DKQrp8+vqPiVzwMgaxTNTDg/nqALJ2w2/QRpazGdZLvy,iv:G0peEuW1S51Pokis+XoqVjS5x4cRcLwD6fOetqpf0vw=,tag:cCHarhy7c5rrd7zjgUL3Yw==,type:str]
       data:
-        htpasswd: ENC[AES256_GCM,data:h1D+uauKKkIR212KxaNtc1BaYs7pSX2in3HdIbL52/7Kj0LPKHuLXZ1og+hfRAL8NE7EjJiko1xkPnv98hwo76nA,iv:ci6qbqMLkr7ypNoS3/ClQKfRdkDHIOF4ElQ4qUYnmjg=,tag:cCoiGIaq4WPrUPYwLhxW+w==,type:str]
+        htpasswd: ENC[AES256_GCM,data:tCQcs4tgdmbDwvbIMw1pOa0G6+wJH566jjnVSIqQPwqjIv+IaSg6,iv:veNH8/JmGylJMX7tEQRjan6ofAkSjDMphNhBERt14Sg=,tag:nQffVfMWZdAWNulim6AoZg==,type:str]
 sops:
     age:
         - enc: |
@@ -54,7 +54,7 @@ sops:
             JOApvuBcVw/zpLimMrpKmFa51DD6fQPlWdZhPqfxUMexLacEdw/VMw==
             -----END AGE ENCRYPTED FILE-----
           recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
-    lastmodified: "2026-06-26T22:24:21Z"
-    mac: ENC[AES256_GCM,data:YgDm6ZUByJ+uPLQ+hV5zzLSmTbPGy2/+J17Zceo21qOh3NM+DsP1HPPZxAGcJd4wtdfUyZ5DlwqilCZO5U1u+gkZOomcs6nu0i7C+Sb132V+QlLPi7je0Wcjvth23MHsx65pVWkrtJPlaLM1cReRSji/ezhtZIIGPQRW4ryyZyk=,iv:tNvWKg8C38xy5+v1kNEuO3/i8JVFt2cpL5y7sJH2nZY=,tag:Rb6HiPYJMBoSD9HkjnqGOg==,type:str]
+    lastmodified: "2026-06-27T00:32:52Z"
+    mac: ENC[AES256_GCM,data:nhytQRuFJzaJXcyYYVcEy2LOH3rmsogWWmkONQpriht3rlQBT8cuaWMnEL52coRUmG3GX9lhM1g537dAIIWKGcR9HG/6xKf40XgQ6PzGusfpnvH/1e5v6cGY2/1LsPrddwNYnpBBcjEdgv1xKRdqs33puDdrTKKro0NIbYlIZ5U=,iv:amb7bbER2VJrM6mw69cfU8AxXXfD5MDP9RUnQIhGKec=,tag:I73MpyeWfcMikRNqLEP0jQ==,type:str]
     unencrypted_suffix: _unencrypted
     version: 3.13.1

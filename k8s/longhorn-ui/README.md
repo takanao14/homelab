@@ -47,20 +47,30 @@ secret/k8s/longhorn-ui/basic-auth
 Example value format:
 
 ```text
-admin:$apr1$...
+admin:{SHA}...
 ```
 
 Generate it locally with:
 
 ```bash
-htpasswd -nbB admin '<password>'
+htpasswd -nbs admin '<password>'
 ```
 
-Then write it to OpenBao without committing the secret:
+Envoy Gateway `SecurityPolicy` Basic Auth validates htpasswd entries in `{SHA}`
+format. The previous nginx proxy accepted bcrypt/apr1 entries, but Envoy
+Gateway rejects them.
+
+OpenBao values are seeded from the encrypted Ansible inventory. Update the
+source of truth with SOPS, then seed OpenBao:
 
 ```bash
-bao kv put secret/k8s/longhorn-ui/basic-auth htpasswd='<generated line>'
+sops ansible/inventories/homelab/group_vars/openbao.sops.yaml
+cd ansible
+ansible-playbook playbooks/ops-openbao_seed_secrets.yaml
 ```
+
+Do not keep manual `bao kv put` changes as the final state; the next Ansible
+seed would overwrite them.
 
 The sandbox OpenBao Kubernetes auth role must include the `k8s-longhorn-ui`
 policy so ESO can read this path.

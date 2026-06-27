@@ -167,7 +167,22 @@ secret/kubeconfig/prd   # prd cluster kubeconfig
 The distinction: `k8s/` is for secrets **used by** apps running in Kubernetes; `kubeconfig/` is for credentials **to access** Kubernetes clusters.
 
 Secrets are seeded from the SOPS-encrypted `openbao_secrets` list. For the
-Alertmanager Discord receiver, add:
+Longhorn UI Basic Auth secret used by Envoy Gateway, store an htpasswd entry in
+`{SHA}` format:
+
+```yaml
+- path: secret/k8s/longhorn-ui/basic-auth
+  data:
+    htpasswd: "admin:{SHA}..."
+```
+
+Generate the value with:
+
+```bash
+htpasswd -nbs admin '<password>'
+```
+
+For the Alertmanager Discord receiver, add:
 
 ```yaml
 - path: secret/k8s/monitoring/alertmanager

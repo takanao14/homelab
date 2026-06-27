@@ -1,6 +1,6 @@
 # ADR-0009: Longhorn UI is exposed through an authenticated Gateway route
 
-- **Status:** Accepted
+- **Status:** Accepted, amended during Envoy Gateway migration
 - **Date:** 2026-06-24
 - **Related:** [`k8s/longhorn-ui/README.md`](../../k8s/longhorn-ui/README.md), [`k8s/argocd/README.md`](../../k8s/argocd/README.md), [`k0s/README.md`](../../k0s/README.md)
 
@@ -28,18 +28,26 @@ the UI exposure layer from Argo CD:
 
 ```text
 http://longhorn.sandbox.butaco.net
-  -> gateway-system/shared-gateway:http
-  -> longhorn-system/longhorn-ui-proxy
+  -> gateway-system/shared-gateway-envoy:http
+  -> Envoy Gateway SecurityPolicy Basic Auth
   -> longhorn-system/longhorn-frontend:80
 ```
 
-The `k8s/longhorn-ui` chart deploys an unprivileged nginx reverse proxy with
-Basic Auth enabled. The htpasswd content is read by External Secrets Operator
-from OpenBao at:
+The `k8s/longhorn-ui` chart manages the `HTTPRoute`, the Basic Auth
+`ExternalSecret`, and, during the Envoy Gateway migration, an Envoy Gateway
+`SecurityPolicy`. The legacy nginx reverse proxy can still be enabled through
+chart values for rollback, but the migration target is to authenticate at the
+Gateway layer and route directly to `longhorn-frontend`.
+
+The htpasswd content is read by External Secrets Operator from OpenBao at:
 
 ```text
 secret/k8s/longhorn-ui/basic-auth
 ```
+
+For Envoy Gateway Basic Auth, the htpasswd value must use `{SHA}` format. The
+OpenBao value is seeded from the encrypted Ansible `openbao_secrets` inventory
+so manual `bao kv put` changes are only temporary.
 
 The sandbox OpenBao Kubernetes auth role includes a narrow `k8s-longhorn-ui`
 policy that can read only `secret/k8s/longhorn-ui/*`. The DNS record is created
@@ -47,9 +55,13 @@ by external-dns from the `HTTPRoute` hostname.
 
 ## Alternatives considered
 
-- **Expose `longhorn-frontend` directly with an HTTPRoute** — simplest and would
-  work technically, but leaves the storage administration UI without an explicit
-  access control layer. *Rejected.*
+- **Expose `longhorn-frontend` directly with an HTTPRoute and no policy** —
+  simplest and would work technically, but leaves the storage administration UI
+  without an explicit access control layer. *Rejected.*
+- **Keep nginx Basic Auth proxy after migrating to Envoy Gateway** — preserves
+  the original design, but keeps an extra deployment, service, and config map
+  after Envoy Gateway can enforce the same edge authentication. *Rejected for
+  the migration target; retained as rollback.*
 - **Move the Longhorn Helm release itself under Argo CD** — makes all Kubernetes
   resources GitOps-managed in one place, but entangles cluster storage bootstrap
   with application GitOps. If Argo CD or its storage dependencies are unhealthy,
@@ -66,8 +78,8 @@ by external-dns from the `HTTPRoute` hostname.
   owned by Argo CD.
 - Sandbox Longhorn UI access is protected by Basic Auth while preserving the
   cluster's HTTP-only sandbox design.
-- OpenBao is the single source of truth for the htpasswd secret; no credentials
-  are committed to Git.
+- The encrypted Ansible `openbao_secrets` inventory is the source of truth for
+  the OpenBao htpasswd value; no plaintext credentials are committed to Git.
 - Argo CD drift from Kubernetes API defaulting must be handled explicitly:
   `ExternalSecret.remoteRef` default fields are pinned, and the sandbox
   `longhorn-ui` Application ignores known Gateway API defaulting on the

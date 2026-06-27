@@ -2,4 +2,6 @@ server:
   ingress:
     hostname: argocd.sandbox.butaco.net
   route:
+    gatewayName: shared-gateway-envoy
+    gatewayNamespace: gateway-system
     sectionName: http
