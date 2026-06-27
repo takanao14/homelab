@@ -40,5 +40,4 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       jsonPointers:
-        - /spec/parentRefs
-        - /spec/rules
+        - /spec/rules/0/matches

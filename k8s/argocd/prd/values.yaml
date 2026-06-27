@@ -1,6 +1,10 @@
 server:
   ingress:
     hostname: argocd-ui.prd.butaco.net
+  route:
+    gatewayName: shared-gateway-envoy
+    gatewayNamespace: gateway-system
+    sectionName: https
   service:
     annotations:
       external-dns.alpha.kubernetes.io/hostname: argocd.prd.butaco.net
