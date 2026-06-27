@@ -5,7 +5,9 @@ metadata:
   namespace: argocd
 spec:
   parentRefs:
-    - name: {{ .Values.server.route.gatewayName }}
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ .Values.server.route.gatewayName }}
       namespace: {{ .Values.server.route.gatewayNamespace }}
       sectionName: {{ .Values.server.route.sectionName }}
   hostnames:
