@@ -73,3 +73,6 @@ The TLS secret is referenced cross-namespace via a `ReferenceGrant` created by t
 - Requires Gateway API CRDs v1.5.1 experimental for Envoy Gateway 1.8.x.
 - Sandbox, dev, and prd HTTPRoutes reference `shared-gateway-envoy` after the
   migration.
+- See
+  [`ADR-0011`](../../docs/adr/0011-cilium-gateway-to-envoy-gateway-migration.md)
+  for the migration decision and rejected alternatives.

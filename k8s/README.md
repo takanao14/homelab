@@ -26,7 +26,9 @@ Kubernetes manifests and Helm charts for homelab clusters managed via ArgoCD Git
 All HTTP services are exposed via HTTPRoute referencing the shared Envoy Gateway
 (`shared-gateway-envoy` in the `gateway-system` namespace). TLS is terminated at
 the Gateway using a wildcard certificate in prd/dev; sandbox uses HTTP-only
-routes.
+routes. See
+[`ADR-0011`](../docs/adr/0011-cilium-gateway-to-envoy-gateway-migration.md) for
+the Cilium Gateway to Envoy Gateway migration decision.
 
 ### Secrets Management
 

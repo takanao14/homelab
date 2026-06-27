@@ -25,8 +25,9 @@ ADR — once a plan completes.
 - Status is one of `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
 - Records are **immutable**. When a decision changes, write a new ADR and mark the
   old one `Superseded by ADR-NNNN` (do not edit the original rationale away).
-- Keep it short. Link to the implementing `docs/plans/*` and resulting `README`s
-  instead of duplicating their content.
+- Keep it short. Link to the resulting `README`s instead of duplicating their
+  content. Completed plans should be distilled into README updates and ADRs,
+  then deleted.
 
 ## When a plan completes
 
@@ -52,3 +53,4 @@ deleting it:
 | [0008](0008-caddy-https-upstream-for-self-signed-backends.md) | Caddy re-encrypts to HTTPS upstreams that enforce TLS (TrueNAS) | Accepted |
 | [0009](0009-longhorn-ui-exposed-through-authenticated-gateway-route.md) | Longhorn UI is exposed through an authenticated Gateway route | Accepted |
 | [0010](0010-sandbox-argocd-uses-http-only-gitops-bootstrap.md) | Sandbox Argo CD uses HTTP-only GitOps bootstrap without cert-manager | Accepted |
+| [0011](0011-cilium-gateway-to-envoy-gateway-migration.md) | Use Envoy Gateway for shared Gateway API ingress | Accepted |
