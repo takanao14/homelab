@@ -15,6 +15,44 @@ spec:
       releaseName: gateway
       values: |
         domain: prd.butaco.net
+        gatewayClasses:
+          - name: envoy-gateway
+            controllerName: gateway.envoyproxy.io/gatewayclass-controller
+            enabled: true
+        envoyProxies:
+          - name: shared-gateway-envoy
+            namespace: gateway-system
+            enabled: true
+            spec:
+              provider:
+                type: Kubernetes
+                kubernetes:
+                  envoyService:
+                    externalTrafficPolicy: Cluster
+        gateways:
+          - name: shared-gateway
+            namespace: gateway-system
+            gatewayClassName: cilium
+            enabled: true
+            listeners:
+              http:
+                enabled: true
+              https:
+                enabled: true
+          - name: shared-gateway-envoy
+            namespace: gateway-system
+            gatewayClassName: envoy-gateway
+            enabled: true
+            infrastructure:
+              parametersRef:
+                group: gateway.envoyproxy.io
+                kind: EnvoyProxy
+                name: shared-gateway-envoy
+            listeners:
+              http:
+                enabled: true
+              https:
+                enabled: true
   destination:
     server: https://kubernetes.default.svc
     namespace: gateway-system
@@ -24,3 +62,4 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
