@@ -20,7 +20,7 @@ meshcentral/
 
 ## Access
 
-Exposed via Gateway API HTTPRoute (`shared-gateway` in `gateway-system`). Hostname is set in `values.yaml`. TLS is terminated at the Gateway.
+Exposed via Gateway API HTTPRoute (`shared-gateway-envoy` in `gateway-system`). Hostname is set in `values.yaml`. TLS is terminated at the Gateway.
 
 MeshCentral is configured with `REVERSE_PROXY: "true"` to handle traffic behind the gateway.
 

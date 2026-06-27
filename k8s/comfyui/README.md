@@ -14,7 +14,7 @@ comfyui/
         ├── deployment.yaml  # Recreate strategy; mounts /dev/kfd and /dev/dri for ROCm
         ├── pvc.yaml
         ├── service.yaml
-        └── httproute.yaml   # HTTPRoute → shared-gateway
+        └── httproute.yaml   # HTTPRoute → shared-gateway-envoy
 ```
 
 ## Access

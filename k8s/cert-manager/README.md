@@ -28,7 +28,7 @@ cert-manager/
 1. `ClusterIssuer` uses Cloudflare DNS-01 challenge to prove domain ownership
 2. `Certificate` requests `*.{domain}` from letsencrypt-production
 3. The issued certificate is stored as a Secret in `cert-manager` namespace
-4. `ReferenceGrant` allows the `shared-gateway` in `gateway-system` to use the Secret for TLS termination
+4. `ReferenceGrant` allows the shared Gateway in `gateway-system` to use the Secret for TLS termination
 
 ## Certificate
 

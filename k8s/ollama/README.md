@@ -14,7 +14,7 @@ ollama/
         ├── deployment.yaml  # Recreate strategy; AMD GPU resource requests
         ├── pvc.yaml
         ├── service.yaml     # ClusterIP (also accessed by open-webui in-cluster)
-        └── httproute.yaml   # HTTPRoute → shared-gateway
+        └── httproute.yaml   # HTTPRoute → shared-gateway-envoy
 ```
 
 ## Access

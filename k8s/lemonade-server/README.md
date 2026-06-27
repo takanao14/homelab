@@ -14,7 +14,7 @@ lemonade-server/
         ├── deployment.yaml  # Recreate strategy; AMD GPU resource requests
         ├── pvc.yaml         # HuggingFace cache, llama.cpp binaries, recipe cache
         ├── service.yaml     # ClusterIP on port 13305
-        └── httproute.yaml   # HTTPRoute → shared-gateway
+        └── httproute.yaml   # HTTPRoute → shared-gateway-envoy
 ```
 
 ## Access

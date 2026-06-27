@@ -95,7 +95,7 @@ metadataPolicy: None
 nullBytePolicy: Ignore
 ```
 
-The Argo CD Application also ignores Cilium/Gateway API defaulting on
+The Argo CD Application also ignores known Gateway API defaulting on
 `HTTPRoute.spec.parentRefs` and `HTTPRoute.spec.rules`, matching the pattern used
 by the sandbox Argo CD route.
 

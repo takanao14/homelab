@@ -18,12 +18,15 @@ Kubernetes manifests and Helm charts for homelab clusters managed via ArgoCD Git
 ### Networking
 
 - **CNI**: Cilium 1.19.x
-- **Ingress**: Gateway API (Gateway API v1.5.1 experimental)
+- **Ingress**: Envoy Gateway via Gateway API (Gateway API v1.5.1 experimental)
 - **TLS**: cert-manager wildcard certificate via Cloudflare DNS-01 challenge
   for prd/dev; sandbox intentionally uses HTTP without cert-manager
 - **DNS**: external-dns with PowerDNS provider (`gateway-httproute` source)
 
-All HTTP services are exposed via HTTPRoute referencing a shared Gateway (`shared-gateway` in `gateway-system` namespace). TLS is terminated at the Gateway using a wildcard certificate in prd/dev; sandbox uses HTTP-only routes.
+All HTTP services are exposed via HTTPRoute referencing the shared Envoy Gateway
+(`shared-gateway-envoy` in the `gateway-system` namespace). TLS is terminated at
+the Gateway using a wildcard certificate in prd/dev; sandbox uses HTTP-only
+routes.
 
 ### Secrets Management
 
@@ -72,11 +75,13 @@ k8s/
 │   └── templates/
 │       ├── cluster-secret-store.yaml  # ClusterSecretStore pointing to OpenBao
 │       └── auth-delegator.yaml        # TokenReview RBAC for the ESO ServiceAccount
-├── gateway/              # Cilium Gateway API (local Helm chart)
+├── gateway/              # Shared Envoy Gateway API resources (local Helm chart)
 │   ├── Chart.yaml
 │   ├── values.yaml           # Schema: domain
 │   └── templates/
-│       └── gateway.yaml      # shared-gateway (configurable HTTP/HTTPS listeners)
+│       ├── envoyproxies.yaml
+│       ├── gatewayclasses.yaml
+│       └── gateways.yaml     # shared-gateway-envoy (configurable HTTP/HTTPS listeners)
 ├── externalDNS/          # external-dns with PowerDNS
 │   ├── chart/
 │   │   ├── values.yaml

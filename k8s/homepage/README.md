@@ -21,7 +21,7 @@ homepage/
         ├── external-secret.yaml # ESO ExternalSecret for API credentials
         ├── deployment.yaml
         ├── service.yaml        # ClusterIP
-        ├── httproute.yaml      # HTTPRoute → shared-gateway
+        ├── httproute.yaml      # HTTPRoute → shared-gateway-envoy
         └── rbac.yaml
 ```
 

@@ -22,13 +22,13 @@ gateway/
 
 Optional `GatewayClass` resources can be rendered from `gatewayClasses`.
 The Cilium `GatewayClass/cilium` is owned by the Cilium Helm release, so this
-chart does not render it. Sandbox renders `GatewayClass/envoy-gateway` for the
-Envoy Gateway migration.
+chart does not render it. The migrated clusters render
+`GatewayClass/envoy-gateway` for Envoy Gateway.
 
 ### Gateway
 
-Gateway resources are rendered from `gateways`. The default render preserves the
-existing Cilium Gateway:
+Gateway resources are rendered from `gateways`. The chart default keeps a
+Cilium-compatible `shared-gateway` for compatibility:
 
 ```yaml
 name: shared-gateway
@@ -36,7 +36,7 @@ namespace: gateway-system
 gatewayClassName: cilium
 ```
 
-Sandbox renders the Envoy Gateway during the migration:
+Migrated environments override `gateways` to render the Envoy Gateway:
 
 ```yaml
 name: shared-gateway-envoy
@@ -47,8 +47,8 @@ gatewayClassName: envoy-gateway
 ### EnvoyProxy
 
 Envoy Gateway proxy settings can be rendered from `envoyProxies` and attached
-to a Gateway through `gateway.infrastructure.parametersRef`. Sandbox uses this
-to set the generated Envoy proxy LoadBalancer Service to
+to a Gateway through `gateway.infrastructure.parametersRef`. Migrated
+environments use this to set the generated Envoy proxy LoadBalancer Service to
 `externalTrafficPolicy: Cluster`, avoiding Cilium L2 announcement problems when
 the VIP is advertised by a node that does not host the Envoy proxy pod.
 
@@ -76,6 +76,5 @@ The TLS secret is referenced cross-namespace via a `ReferenceGrant` created by t
 
 - `GatewayClass/cilium` is owned by the Cilium Helm release.
 - Requires Gateway API CRDs v1.5.1 experimental for Envoy Gateway 1.8.x.
-- Sandbox HTTPRoutes reference `shared-gateway-envoy` after the migration PoC.
-- Dev/prd services continue to reference `shared-gateway` until those
-  environments are migrated.
+- Sandbox, dev, and prd HTTPRoutes reference `shared-gateway-envoy` after the
+  migration.

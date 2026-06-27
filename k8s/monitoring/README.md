@@ -56,8 +56,8 @@ monitoring/
 
 | Service | URL | Method |
 |---------|-----|--------|
-| Grafana | `https://grafana.prd.butaco.net` | HTTPRoute → shared-gateway |
-| Prometheus | `https://prometheus.prd.butaco.net` | HTTPRoute → shared-gateway |
+| Grafana | `https://grafana.prd.butaco.net` | HTTPRoute → shared-gateway-envoy |
+| Prometheus | `https://prometheus.prd.butaco.net` | HTTPRoute → shared-gateway-envoy |
 | Loki | `loki.prd.butaco.net` (LoadBalancer) | LoadBalancer (external log ingestion) |
 
 > `butaco.net` is a personal domain. Replace it in `values/prometheus.yaml` and `values/loki.yaml`.
