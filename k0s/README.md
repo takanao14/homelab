@@ -10,8 +10,6 @@ Scripts for managing the k0s cluster lifecycle using k0sctl and Helmfile.
 | `helmfile` / `helm` | Helm deployments for CNI, storage, and device plugins |
 | `kubectl` | Apply Gateway API CRDs |
 | `cilium` CLI | Wait for Cilium to become ready |
-| `sops` | Decrypt secrets files |
-
 ## Directory Structure
 
 ```
@@ -23,9 +21,6 @@ k0s/
 │   ├── dev.sh                     # Dev non-secret variables (committed)
 │   ├── prd.sh                     # Prd non-secret variables (committed)
 │   └── sandbox.sh                 # Sandbox non-secret variables (committed)
-├── secrets.dev.enc.env            # SOPS-encrypted secrets for dev (committed)
-├── secrets.prd.enc.env            # SOPS-encrypted secrets for prd (committed)
-├── secrets.sandbox.enc.env        # SOPS-encrypted secrets for sandbox (committed)
 ├── charts/
 │   └── cilium-config/             # Local chart for Cilium L2 policy and IP pool
 ├── values/
@@ -43,9 +38,9 @@ k0s/
 
 ## Environment Variables
 
-Variables are split between plain `env/` files (non-secrets) and SOPS-encrypted `secrets.*.enc.env` files (secrets).
+Cluster topology and non-secret settings live in `env/` files. `K0S_SSH_USER` can be provided as an environment variable; when it is unset, `create_cluster.sh` uses the user running the command (`id -un`).
 
-### Non-secret (`env/dev.sh` / `env/prd.sh` / `env/sandbox.sh`)
+### Environment files (`env/dev.sh` / `env/prd.sh` / `env/sandbox.sh`)
 
 | Variable | Description |
 |----------|-------------|
@@ -56,18 +51,14 @@ Variables are split between plain `env/` files (non-secrets) and SOPS-encrypted 
 | `K0S_VERSION` | k0s version to install (optional; omits `version:` if unset) |
 | `K0S_STORAGE_PROVIDER` | Storage CSI to deploy: `openebs` (default) or `longhorn` |
 
-### Secrets (`secrets.dev.enc.env` / `secrets.prd.enc.env` / `secrets.sandbox.enc.env`)
+### Optional shell variables
 
 | Variable | Description |
 |----------|-------------|
-| `K0S_SSH_USER` | SSH username for cluster nodes |
-
-Edit secrets with:
+| `K0S_SSH_USER` | SSH username for cluster nodes. Defaults to the command runner (`id -un`) when unset. |
 
 ```bash
-sops edit secrets.dev.enc.env
-sops edit secrets.prd.enc.env
-sops edit secrets.sandbox.enc.env
+K0S_SSH_USER=ubuntu ./create_cluster.sh dev config
 ```
 
 ## Usage

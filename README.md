@@ -61,8 +61,7 @@ The `*.enc.env` files committed in this repository are encrypted with the author
 
 ```bash
 # Remove the existing encrypted file and create your own
-sops edit k0s/secrets.dev.enc.env
-sops edit k0s/secrets.prd.enc.env
+sops edit k8s/monitoring/secrets.enc.env
 ```
 
 Make sure your AGE key is listed in `.sops.yaml` before editing.
@@ -72,7 +71,7 @@ Make sure your AGE key is listed in `.sops.yaml` before editing.
 | Category | Handling |
 |----------|----------|
 | Passwords, API keys, tokens | Encrypted in `*.enc.env` |
-| Usernames | Encrypted (treated as sensitive) |
+| Usernames | Environment variables when needed; for k0s, `K0S_SSH_USER` defaults to the command runner |
 | IP addresses, domains, ports | Hardcoded in config files |
 | Shared non-secret config | Variables in group_vars or defaults |
 

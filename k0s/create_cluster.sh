@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # create_cluster.sh — Entry point for k0s cluster management
-# Usage: ./create_cluster.sh <dev|prd> <command>
+# Usage: ./create_cluster.sh <dev|prd|sandbox> <command>
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -22,7 +22,6 @@ COMMAND="$2"
 # ── paths ─────────────────────────────────────────────────────────────────────
 
 ENV_FILE="$SCRIPT_DIR/env/$ENV_TARGET.sh"
-SECRETS_FILE="$SCRIPT_DIR/secrets.$ENV_TARGET.enc.env"
 
 _ENV_HELMFILE="$SCRIPT_DIR/helmfile.$ENV_TARGET.yaml.gotmpl"
 HELMFILE_FILE="$( [[ -f "$_ENV_HELMFILE" ]] && echo "$_ENV_HELMFILE" || echo "$SCRIPT_DIR/helmfile.yaml.gotmpl" )"
@@ -45,13 +44,7 @@ export K0S_CLUSTER_NAME="${ENV_TARGET}-homelab"
 set -a
 # shellcheck disable=SC1090
 source "$ENV_FILE"
-if [[ -f "$SECRETS_FILE" ]]; then
-    _tmp=$(mktemp)
-    trap 'rm -f "$_tmp"' EXIT
-    sops --decrypt "$SECRETS_FILE" > "$_tmp"
-    # shellcheck disable=SC1090
-    source "$_tmp"
-fi
+K0S_SSH_USER="${K0S_SSH_USER:-$(id -un)}"
 set +a
 
 # ── dispatch ──────────────────────────────────────────────────────────────────

@@ -59,7 +59,7 @@ usage() {
 Usage: $script_name <${env_hint}> <command>
 
   To add a new environment, create env/<name>.sh (and optionally
-  secrets.<name>.enc.env and helmfile.<name>.yaml.gotmpl).
+  helmfile.<name>.yaml.gotmpl).
 
 Commands:
   apply       Full cluster setup: k0sctl apply → kubeconfig → gateway-api CRDs → helmfile apply
