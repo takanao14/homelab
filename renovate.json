@@ -8,6 +8,7 @@
   ],
   "timezone": "Asia/Tokyo",
   "schedule": ["after 9am and before 6pm"],
+  "automergeSchedule": ["after 9am and before 6pm"],
   "minimumReleaseAge": "3 days",
   "ignorePaths": [
     "**/node_modules/**",
