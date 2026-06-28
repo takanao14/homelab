@@ -1,0 +1,27 @@
+name: Notify auto-merge
+
+# Posts to Discord when Renovate auto-merges a PR (merged by the bot itself),
+# so deploys that land without human action are still surfaced. Manual merges
+# (merged by a person) are intentionally skipped.
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  notify:
+    if: >-
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.merged_by.login, 'renovate')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post to Discord
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_RENOVATE }}
+          TITLE: ${{ github.event.pull_request.title }}
+          NUMBER: ${{ github.event.pull_request.number }}
+          URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          payload=$(jq -n --arg t "$TITLE" --arg n "$NUMBER" --arg u "$URL" \
+            '{content: ("🔀 Renovate auto-merged **#" + $n + "**: " + $t + "\n" + $u)}')
+          curl -fsS -H "Content-Type: application/json" -d "$payload" "$WEBHOOK"
