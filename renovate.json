@@ -30,8 +30,8 @@
   },
   "packageRules": [
     {
-      "description": "Apps & auxiliary components in k8s/ansible: auto-merge non-major updates. Renovate-native automerge (platformAutomerge=false) gates on lint without branch protection, so direct pushes to main stay unrestricted.",
-      "matchFileNames": ["k8s/**", "ansible/**"],
+      "description": "Apps & auxiliary components in k8s/ansible/tf: auto-merge non-major updates. Renovate-native automerge (platformAutomerge=false) gates on lint without branch protection, so direct pushes to main stay unrestricted.",
+      "matchFileNames": ["k8s/**", "ansible/**", "tf/**"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": true,
       "automergeType": "pr",
@@ -39,15 +39,18 @@
       "addLabels": ["auto-merge-candidate"]
     },
     {
-      "description": "Cluster-foundation & stateful components: always review minor/major manually (ArgoCD auto-syncs to prod).",
+      "description": "ansible/ and tf/ are not auto-applied (manual ansible-playbook / terragrunt apply), so a merge is not a deploy. Lift the daytime automerge window for them; the window only matters for ArgoCD-synced k8s/.",
+      "matchFileNames": ["ansible/**", "tf/**"],
+      "automergeSchedule": ["at any time"]
+    },
+    {
+      "description": "Cluster-foundation & stateful components on ArgoCD-synced paths: always review minor/major manually (merge = immediate deploy). openbao/seaweedfs are excluded because they live in ansible/ (manual apply, not deploy-on-merge).",
       "matchPackageNames": [
         "/cilium/",
         "k0sproject/k0s",
         "openebs/openebs",
         "cert-manager",
         "argo-cd",
-        "openbao/openbao",
-        "seaweedfs/seaweedfs",
         "kube-prometheus-stack",
         "loki",
         "external-secrets"

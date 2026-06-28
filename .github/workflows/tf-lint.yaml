@@ -1,0 +1,36 @@
+name: Terraform Lint
+
+on:
+  pull_request:
+    paths:
+      - "tf/**"
+
+jobs:
+  lint:
+    name: tf-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Check formatting
+        run: terraform fmt -check -recursive tf/
+
+      # Modules don't declare the provider themselves (it is injected into each
+      # stack by terragrunt from tf/provider.tf). Copy that same file in so init
+      # resolves bpg/proxmox at the pinned version, then validate the module's
+      # resources against that provider's schema. -backend=false needs no creds.
+      - name: Validate modules against the pinned provider
+        run: |
+          set -euo pipefail
+          for dir in tf/modules/*/; do
+            echo "::group::validate ${dir}"
+            cp tf/provider.tf "${dir}provider.tf"
+            terraform -chdir="${dir}" init -backend=false -input=false -no-color
+            terraform -chdir="${dir}" validate -no-color
+            rm -f "${dir}provider.tf"
+            echo "::endgroup::"
+          done
