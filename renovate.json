@@ -22,9 +22,11 @@
     "**/templates/**"
   ],
   "labels": ["dependencies", "renovate"],
+  "osvVulnerabilityAlerts": true,
   "vulnerabilityAlerts": {
     "labels": ["security"],
-    "assignees": ["takanao14"]
+    "assignees": ["takanao14"],
+    "minimumReleaseAge": null
   },
   "packageRules": [
     {
