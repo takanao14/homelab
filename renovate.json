@@ -7,8 +7,8 @@
     ":rebaseStalePrs"
   ],
   "timezone": "Asia/Tokyo",
-  "schedule": ["after 9am and before 6pm"],
-  "automergeSchedule": ["after 9am and before 6pm"],
+  "schedule": ["after 9am and before 10pm"],
+  "automergeSchedule": ["after 9am and before 10pm"],
   "minimumReleaseAge": "3 days",
   "ignorePaths": [
     "**/node_modules/**",
@@ -35,8 +35,7 @@
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": true,
       "automergeType": "pr",
-      "platformAutomerge": false,
-      "addLabels": ["auto-merge-candidate"]
+      "platformAutomerge": false
     },
     {
       "description": "ansible/ and tf/ are not auto-applied (manual ansible-playbook / terragrunt apply), so a merge is not a deploy. Lift the daytime automerge window for them; the window only matters for ArgoCD-synced k8s/.",
