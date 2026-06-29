@@ -71,6 +71,12 @@
       "addLabels": ["major-update"]
     },
     {
+      "description": "Internal Forgejo registry is LAN-only and unreachable from Mend cloud; do not track its images (e.g. comfyui-docker:latest).",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/^forgejo\\.home\\.butaco\\.net\\//"],
+      "enabled": false
+    },
+    {
       "matchPackageNames": ["ghcr.io/gethomepage/homepage"],
       "groupName": "homepage updates"
     },
