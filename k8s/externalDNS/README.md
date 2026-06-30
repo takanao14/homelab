@@ -42,7 +42,7 @@ owner ID.
 
 The PowerDNS API key is fetched from OpenBao via ESO. It is not stored in this repository.
 
-OpenBao KV path: `k8s/dns-homelab/pdns`
+OpenBao KV path: `k8s/external-dns/pdns`
 
 | Property | Description |
 |----------|-------------|
@@ -51,7 +51,7 @@ OpenBao KV path: `k8s/dns-homelab/pdns`
 To seed the secret into OpenBao:
 
 ```bash
-bao kv put secret/k8s/dns-homelab/pdns api-key=<key>
+bao kv put secret/k8s/external-dns/pdns api-key=<key>
 ```
 
 ## Notes

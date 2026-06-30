@@ -105,7 +105,7 @@ The `argocd.yaml` Application uses multi-source:
 | cert-manager-config | cert-manager | dev, prd |
 | comfyui | comfyui | dev only |
 | external-secrets (eso) | external-secrets | dev, prd, sandbox |
-| external-dns | dns-homelab | dev, prd, sandbox |
+| external-dns | external-dns | dev, prd, sandbox |
 | gateway | gateway-system | dev, prd, sandbox |
 | homepage | homepage | prd only |
 | lemonade-server | lemonade-server | dev only |

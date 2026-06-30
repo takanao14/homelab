@@ -1,3 +1,2 @@
 ownerId: homelab-cluster
 domainFilter: prd.butaco.net.
-namespace: dns-homelab
