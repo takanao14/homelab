@@ -11,3 +11,8 @@
       ansible.builtin.include_role:
         name: openbao
         tasks_from: configure_policies
+
+    - name: Configure Kubernetes roles for ESO
+      ansible.builtin.include_role:
+        name: openbao
+        tasks_from: configure_roles
