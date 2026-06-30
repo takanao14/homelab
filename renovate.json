@@ -7,9 +7,7 @@
     ":rebaseStalePrs"
   ],
   "timezone": "Asia/Tokyo",
-  "schedule": ["after 9am and before 10pm"],
-  "automergeSchedule": ["after 9am and before 10pm"],
-  "minimumReleaseAge": "3 days",
+  "minimumReleaseAge": "1 day",
   "ignorePaths": [
     "**/node_modules/**",
     "**/bower_components/**",
@@ -36,11 +34,6 @@
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": false
-    },
-    {
-      "description": "ansible/ and tf/ are not auto-applied (manual ansible-playbook / terragrunt apply), so a merge is not a deploy. Lift the daytime automerge window for them; the window only matters for ArgoCD-synced k8s/.",
-      "matchFileNames": ["ansible/**", "tf/**"],
-      "automergeSchedule": ["at any time"]
     },
     {
       "description": "Cluster-foundation & stateful components on ArgoCD-synced paths: always review minor/major manually (merge = immediate deploy). openbao/seaweedfs are excluded because they live in ansible/ (manual apply, not deploy-on-merge).",
