@@ -16,14 +16,14 @@
     BAO_TOKEN: "{{ openbao_admin_token }}"
   changed_when: true
 
-- name: Write policy for dns-homelab namespace
+- name: Write policy for external-dns namespace
   ansible.builtin.command:
-    cmd: "{{ openbao_binary }} policy write k8s-dns-homelab -"
+    cmd: "{{ openbao_binary }} policy write k8s-external-dns -"
     stdin: |
-      path "secret/data/k8s/dns-homelab/*" {
+      path "secret/data/k8s/external-dns/*" {
         capabilities = ["read"]
       }
-      path "secret/metadata/k8s/dns-homelab/*" {
+      path "secret/metadata/k8s/external-dns/*" {
         capabilities = ["read"]
       }
   environment:
