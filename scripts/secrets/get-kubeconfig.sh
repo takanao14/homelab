@@ -23,25 +23,30 @@ echo "Retrieving kubeconfig from OpenBao..."
 KUBE_DIR="${HOME}/.kube"
 mkdir -p "$KUBE_DIR"
 
-dev_tmp="$(mktemp "${KUBE_DIR}/dev.yaml.tmp.XXXXXX")"
-prd_tmp="$(mktemp "${KUBE_DIR}/prd.yaml.tmp.XXXXXX")"
+# Environments to fetch kubeconfig for.
+ENVS=(dev prd sandbox)
+
+declare -A tmp_files
 cleanup() {
-  rm -f "$dev_tmp" "$prd_tmp"
+  rm -f "${tmp_files[@]}"
 }
 trap cleanup EXIT
 
-bao kv get -field=kubeconfig secret/kubeconfig/dev > "$dev_tmp"
-bao kv get -field=kubeconfig secret/kubeconfig/prd > "$prd_tmp"
-
-for kubeconfig in "$dev_tmp" "$prd_tmp"; do
-  if [[ ! -s "$kubeconfig" ]]; then
-    echo "Error: OpenBao returned an empty kubeconfig." >&2
+for env in "${ENVS[@]}"; do
+  tmp="$(mktemp "${KUBE_DIR}/${env}.yaml.tmp.XXXXXX")"
+  tmp_files["$env"]="$tmp"
+  bao kv get -field=kubeconfig "secret/kubeconfig/${env}" > "$tmp"
+  if [[ ! -s "$tmp" ]]; then
+    echo "Error: OpenBao returned an empty kubeconfig for ${env}." >&2
     exit 1
   fi
 done
 
-chmod 600 "$dev_tmp" "$prd_tmp"
-mv "$dev_tmp" "${KUBE_DIR}/dev.yaml"
-mv "$prd_tmp" "${KUBE_DIR}/prd.yaml"
+for env in "${ENVS[@]}"; do
+  tmp="${tmp_files[$env]}"
+  chmod 600 "$tmp"
+  mv "$tmp" "${KUBE_DIR}/${env}.yaml"
+done
+
 trap - EXIT
 echo "Kubeconfig retrieved into ~/.kube."
