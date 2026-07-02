@@ -174,19 +174,6 @@ ansible-lint
 The local Collection installation directory and SOPS-generated encrypted YAML
 files are excluded by `.ansible-lint`.
 
-### Known Deprecation Warnings
-
-As of 2026-06-20, syntax checks report that
-`ansible.builtin.apt_repository` is deprecated and scheduled for removal in
-ansible-core 2.25. The following tasks still use it:
-
-- `roles/dnsdist/tasks/main.yaml`: PowerDNS dnsdist repository
-- `roles/pdns_auth/tasks/main.yaml`: PowerDNS authoritative repository
-
-Migrate these tasks to `ansible.builtin.deb822_repository` before upgrading to
-ansible-core 2.25. This warning does not currently prevent the playbooks from
-passing syntax checks.
-
 ### 2. Set Up Secrets
 
 Secrets are managed with SOPS and loaded natively by Ansible via the `community.sops.sops` vars plugin.
