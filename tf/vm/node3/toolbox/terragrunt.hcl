@@ -19,11 +19,11 @@ locals {
 inputs = {
   vms = {
     "toolbox1" = merge(local.base_vars, {
-      cores   = 4
-      memory  = 8192
-      bridge  = local.common.locals.node3.net50.bridge
-      ipv4    = "192.168.50.30/24"
-      ipv4gw  = local.common.locals.node3.net50.ipv4gw
+      cores  = 4
+      memory = 8192
+      bridge = local.common.locals.node3.net50.bridge
+      ipv4   = "192.168.50.30/24"
+      ipv4gw = local.common.locals.node3.net50.ipv4gw
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 100
