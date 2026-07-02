@@ -84,8 +84,8 @@ case "$IMAGE" in
   rocky10)  FILE_ID="local:iso/rocky-10-custom.img" ;;
   rocky9-xrdp)  FILE_ID="local:iso/rocky-9-xrdp.img" ;;
   rocky9)  FILE_ID="local:iso/rocky-9-custom.img" ;;
-  debian13)  FILE_ID="local:iso/debian13-custom.img" ;;
-  *) echo "Error: image must be 'ubuntu24', 'ubuntu24-xrdp', 'rocky10', or 'rocky9' or 'rocky9-xrdp' or 'debian13'" >&2; exit 1 ;;
+  debian13)  FILE_ID="local:iso/debian-13-custom.img" ;;
+  *) echo "Error: image must be one of: ubuntu24, ubuntu24-xrdp, rocky10, rocky9, rocky9-xrdp, debian13" >&2; exit 1 ;;
 esac
 
 SUBNET=$(echo "$IP" | cut -d. -f1-3)
