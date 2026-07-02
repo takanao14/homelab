@@ -7,7 +7,8 @@
   serial: 1
   any_errors_fatal: false
   tasks:
-    - ansible.builtin.import_tasks: tasks/package_upgrade.yaml
+    - name: Run package upgrade tasks
+      ansible.builtin.import_tasks: tasks/package_upgrade.yaml
 
 # All other hosts run a single independent service each, so a simultaneous
 # reboot only takes down that one service either way — no need to serialize.
@@ -15,4 +16,5 @@
   hosts: all:!proxmox:!dns
   any_errors_fatal: false
   tasks:
-    - ansible.builtin.import_tasks: tasks/package_upgrade.yaml
+    - name: Run package upgrade tasks
+      ansible.builtin.import_tasks: tasks/package_upgrade.yaml
