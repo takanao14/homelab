@@ -81,9 +81,8 @@ all:
       hosts:
         openbao1: null
 
-    # Standalone SeaweedFS for the Terraform state backend. Placement (host) is
-    # still under review; add the target LXC/VM hostname here once decided (it
-    # must also exist under all.hosts).
+    # Standalone SeaweedFS object storage: Terraform state backup target and
+    # the cloud-images bucket for Packer-built images.
     seaweedfs:
       hosts:
         seaweedfs1: null
