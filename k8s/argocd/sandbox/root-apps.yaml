@@ -16,3 +16,13 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    # Sync waves gate on child app health; on a fresh cluster apps can be
+    # transiently Degraded while their workloads bootstrap, which fails the
+    # whole app-of-apps operation. Automated sync never re-attempts the same
+    # revision, so give the operation a generous retry budget.
+    retry:
+      limit: 10
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 10m
