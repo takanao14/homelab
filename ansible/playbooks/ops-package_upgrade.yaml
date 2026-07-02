@@ -1,65 +1,18 @@
 ---
-- name: Upgrade OS packages on all hosts
-  hosts: all:!proxmox
+# The dns group (dns_auth: ns1-3, dnsdist: dist1-2) is a redundant pool that
+# collectively provides name resolution, so hosts are upgraded/rebooted one
+# at a time to keep resolution available throughout.
+- name: Upgrade OS packages on DNS hosts serially
+  hosts: dns
   serial: 1
   any_errors_fatal: false
   tasks:
-    # --- Debian / Ubuntu (apt) ---
-    - name: Update apt cache and upgrade packages
-      ansible.builtin.apt:
-        update_cache: true
-        upgrade: dist
-        autoremove: true
-      become: true
-      when: ansible_facts['os_family'] == "Debian"
+    - ansible.builtin.import_tasks: tasks/package_upgrade.yaml
 
-    - name: Check if reboot is required (Debian)
-      ansible.builtin.stat:
-        path: /var/run/reboot-required
-      register: deb_reboot_required
-      become: true
-      when: ansible_facts['os_family'] == "Debian"
-
-    # --- Rocky / RHEL (dnf) ---
-    # dnf rejects autoremove together with state=latest, so upgrade and
-    # autoremove are run as separate tasks.
-    - name: Upgrade all packages  # noqa package-latest
-      ansible.builtin.dnf:
-        name: "*"
-        state: latest
-        update_cache: true
-      become: true
-      when: ansible_facts['os_family'] == "RedHat"
-
-    - name: Remove unused dependencies
-      ansible.builtin.dnf:
-        autoremove: true
-      become: true
-      when: ansible_facts['os_family'] == "RedHat"
-
-    # needs-restarting ships with dnf-utils; required for the reboot check below.
-    - name: Ensure dnf-utils is present
-      ansible.builtin.dnf:
-        name: dnf-utils
-        state: present
-      become: true
-      when: ansible_facts['os_family'] == "RedHat"
-
-    # Exit code 1 means a reboot is required, 0 means not. failed_when disabled
-    # so the non-zero code is treated as data rather than a task failure.
-    - name: Check if reboot is required (RedHat)
-      ansible.builtin.command: needs-restarting -r
-      register: rhel_reboot_required
-      changed_when: false
-      failed_when: false
-      become: true
-      when: ansible_facts['os_family'] == "RedHat"
-
-    # --- Common reboot ---
-    - name: Reboot if required
-      ansible.builtin.reboot:
-        reboot_timeout: 300
-      become: true
-      when: >
-        (ansible_facts['os_family'] == "Debian" and deb_reboot_required.stat.exists)
-        or (ansible_facts['os_family'] == "RedHat" and rhel_reboot_required.rc == 1)
+# All other hosts run a single independent service each, so a simultaneous
+# reboot only takes down that one service either way — no need to serialize.
+- name: Upgrade OS packages on remaining hosts
+  hosts: all:!proxmox:!dns
+  any_errors_fatal: false
+  tasks:
+    - ansible.builtin.import_tasks: tasks/package_upgrade.yaml
