@@ -1,0 +1,23 @@
+name: Vendor Sync Check
+
+# The vendored dotfiles installers under scripts/install/vendor/ must match
+# takanao14/dotfiles. Drift usually appears when dotfiles changes, not this
+# repo, so a weekly schedule is the primary trigger; the PR path filter only
+# guards edits to the vendored copies themselves.
+on:
+  pull_request:
+    paths:
+      - "scripts/install/vendor/**"
+  schedule:
+    - cron: "0 21 * * 0" # Monday 06:00 JST
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: vendor-sync-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check vendored installers against dotfiles
+        run: ./scripts/install/vendor/sync.sh --check

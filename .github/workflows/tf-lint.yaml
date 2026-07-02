@@ -19,6 +19,17 @@ jobs:
       - name: Check formatting
         run: terraform fmt -check -recursive tf/
 
+      - name: Check Terragrunt HCL formatting
+        env:
+          # renovate: datasource=github-releases depName=gruntwork-io/terragrunt
+          TERRAGRUNT_VERSION: "v1.0.8"
+        run: |
+          set -euo pipefail
+          curl -fsSL -o "${RUNNER_TEMP}/terragrunt" \
+            "https://github.com/gruntwork-io/terragrunt/releases/download/${TERRAGRUNT_VERSION}/terragrunt_linux_amd64"
+          chmod +x "${RUNNER_TEMP}/terragrunt"
+          "${RUNNER_TEMP}/terragrunt" hcl format --check --diff --working-dir tf
+
       # Modules don't declare the provider themselves (it is injected into each
       # stack by terragrunt from tf/provider.tf). Copy that same file in so init
       # resolves bpg/proxmox at the pinned version, then validate the module's

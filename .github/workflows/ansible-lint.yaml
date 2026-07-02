@@ -17,7 +17,10 @@ jobs:
           python-version: "3.14"
 
       - name: Install ansible-lint
-        run: pip install ansible-lint
+        env:
+          # renovate: datasource=pypi depName=ansible-lint
+          ANSIBLE_LINT_VERSION: "26.6.0"
+        run: pip install "ansible-lint==${ANSIBLE_LINT_VERSION}"
 
       - name: Install Ansible collections
         run: ansible-galaxy collection install -r ansible/requirements.yaml -p ansible/collections

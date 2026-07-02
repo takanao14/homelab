@@ -1,0 +1,21 @@
+name: Shell Lint
+
+on:
+  pull_request:
+    paths:
+      - "**.sh"
+
+jobs:
+  shellcheck:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Gate at warning severity: style/info findings (e.g. SC1091 for files
+      # not passed as input) stay visible locally but do not fail CI.
+      - name: Run shellcheck
+        run: |
+          set -euo pipefail
+          find . -name '*.sh' -not -path './ansible/collections/*' -print0 \
+            | xargs -0 shellcheck -S warning
