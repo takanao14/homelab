@@ -1,6 +1,4 @@
-{{- range .Values.envoyProxies }}
-{{- if .enabled }}
----
+{{- with .Values.envoyProxy }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:
@@ -9,5 +7,3 @@ metadata:
 spec:
   {{- toYaml .spec | nindent 2 }}
 {{- end }}
-{{- end }}
-

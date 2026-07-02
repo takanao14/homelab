@@ -24,3 +24,12 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+    # On a fresh cluster the first automated sync can race the cert-manager app
+    # (ClusterIssuer/Certificate kinds not yet registered); a failed automated
+    # sync is never re-attempted for the same revision unless a retry policy is set.
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

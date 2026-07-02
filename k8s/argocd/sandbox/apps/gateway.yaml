@@ -13,37 +13,14 @@ spec:
     path: k8s/gateway
     helm:
       releaseName: gateway
+      # Shared definitions live in k8s/gateway/values.yaml; only the per-env
+      # differences are set here. Sandbox is HTTP-only (no cert-manager).
       values: |
         domain: sandbox.butaco.net
-        gatewayClasses:
-          - name: envoy-gateway
-            controllerName: gateway.envoyproxy.io/gatewayclass-controller
-            enabled: true
-        envoyProxies:
-          - name: shared-gateway-envoy
-            namespace: gateway-system
-            enabled: true
-            spec:
-              provider:
-                type: Kubernetes
-                kubernetes:
-                  envoyService:
-                    externalTrafficPolicy: Cluster
-        gateways:
-          - name: shared-gateway-envoy
-            namespace: gateway-system
-            gatewayClassName: envoy-gateway
-            enabled: true
-            infrastructure:
-              parametersRef:
-                group: gateway.envoyproxy.io
-                kind: EnvoyProxy
-                name: shared-gateway-envoy
-            listeners:
-              http:
-                enabled: true
-              https:
-                enabled: false
+        gateway:
+          listeners:
+            https:
+              enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: gateway-system
@@ -54,3 +31,12 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+    # On a fresh cluster the first automated sync can race the envoy-gateway-crds
+    # app (EnvoyProxy kind not yet registered); a failed automated sync is never
+    # re-attempted for the same revision unless a retry policy is set.
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

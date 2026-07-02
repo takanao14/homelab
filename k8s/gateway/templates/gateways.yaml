@@ -1,7 +1,5 @@
 {{- $root := . -}}
-{{- range .Values.gateways }}
-{{- if .enabled }}
----
+{{- with .Values.gateway }}
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -37,5 +35,4 @@ spec:
         namespaces:
           from: All
     {{- end }}
-{{- end }}
 {{- end }}

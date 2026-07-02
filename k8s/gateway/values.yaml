@@ -1,33 +1,35 @@
+# Base domain for the environment (e.g. prd.butaco.net). No default — each
+# environment must set it; used to construct the wildcard TLS secret name.
 domain: ""
 
-gatewayClasses:
-  - name: envoy-gateway
-    controllerName: gateway.envoyproxy.io/gatewayclass-controller
-    enabled: true
+gatewayClass:
+  name: envoy-gateway
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
 
-envoyProxies:
-  - name: shared-gateway-envoy
-    namespace: gateway-system
-    enabled: true
-    spec:
-      provider:
-        type: Kubernetes
-        kubernetes:
-          envoyService:
-            externalTrafficPolicy: Cluster
+envoyProxy:
+  name: shared-gateway-envoy
+  namespace: gateway-system
+  spec:
+    provider:
+      type: Kubernetes
+      kubernetes:
+        envoyService:
+          # Cilium L2 announcement can advertise the VIP from a node that does
+          # not host the Envoy proxy pod, so Local traffic policy would
+          # blackhole traffic.
+          externalTrafficPolicy: Cluster
 
-gateways:
-  - name: shared-gateway-envoy
-    namespace: gateway-system
-    gatewayClassName: envoy-gateway
-    enabled: true
-    infrastructure:
-      parametersRef:
-        group: gateway.envoyproxy.io
-        kind: EnvoyProxy
-        name: shared-gateway-envoy
-    listeners:
-      http:
-        enabled: true
-      https:
-        enabled: true
+gateway:
+  name: shared-gateway-envoy
+  namespace: gateway-system
+  gatewayClassName: envoy-gateway
+  infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: shared-gateway-envoy
+  listeners:
+    http:
+      enabled: true
+    https:
+      enabled: true

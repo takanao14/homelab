@@ -8,7 +8,7 @@ Scripts for managing the k0s cluster lifecycle using k0sctl and Helmfile.
 |------|---------|
 | `k0sctl` | Cluster setup / reset |
 | `helmfile` / `helm` | Helm deployments for CNI, storage, and device plugins |
-| `kubectl` | Apply Gateway API CRDs |
+| `kubectl` | Cluster readiness checks and helmfile hooks |
 | `cilium` CLI | Wait for Cilium to become ready |
 ## Directory Structure
 
@@ -69,11 +69,10 @@ K0S_SSH_USER=ubuntu ./create_cluster.sh dev config
 
 | Command | Description |
 |---------|-------------|
-| `apply` | Full setup: k0sctl apply → fetch kubeconfig → Gateway API CRDs → helmfile apply |
+| `apply` | Full setup: k0sctl apply → fetch kubeconfig → helmfile apply |
 | `reset` | Reset the cluster: k0sctl reset |
 | `kubeconfig` | Write kubeconfig to `~/.kube/<env>.yaml` |
 | `helmfile` | Apply Helmfile only (requires kubeconfig to exist) |
-| `gateway-api` | Apply Gateway API CRDs only (requires kubeconfig to exist) |
 | `config` | Print the generated k0sctl config to stdout (dry-run inspection) |
 
 ### Examples
@@ -97,7 +96,7 @@ Kubeconfig is written to `~/.kube/<env>.yaml` (e.g. `~/.kube/dev.yaml`, `~/.kube
 ## Cluster Architecture
 
 - **Datastore**: kine (single controller) or etcd (multiple controllers — count must be odd for quorum); selected automatically based on `K0S_CONTROLLER_ADDRESSES`
-- **CNI**: Cilium v1.19.3 (kube-proxy disabled, L2 LoadBalancer, Gateway API enabled)
+- **CNI**: Cilium v1.19.x (kube-proxy disabled, L2 LoadBalancer; ingress/Gateway API controllers disabled — shared ingress is Envoy Gateway, ArgoCD-managed, see ADR-0011)
 - **Storage CSI**: OpenEBS v4.4.0 LocalPV or Longhorn v1.11.1 — selected via `K0S_STORAGE_PROVIDER`; both use SSD mounted at `/srv/storage/volume`
 - **GPU**: AMD GPU Device Plugin (enabled when `K0S_GPU_WORKER_ADDRESSES` is set; nodes labeled `gpu=amd` and tainted `gpu=amd:NoSchedule`)
 - **CoreDNS**: Replica count is calculated automatically by k0s from the number of Linux nodes. When GPU workers are configured, `template_lib.sh` adds a CoreDNS-only toleration for `gpu=amd:NoSchedule`, allowing CoreDNS replicas to be distributed across standard and GPU workers without making other workloads eligible for GPU workers.

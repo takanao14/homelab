@@ -6,6 +6,23 @@ server:
 
 configs:
   cm:
+    ### Argo CD >=1.8 ships no built-in health check for the Application CRD,
+    ### so app-of-apps sync waves do not gate on child app health without this.
+    ### Required so envoy-gateway-crds (wave -2) is Healthy before the
+    ### envoy-gateway controller (-1) and gateway (0) apps sync on a fresh cluster.
+    resource.customizations.health.argoproj.io_Application: |
+      hs = {}
+      hs.status = "Progressing"
+      hs.message = ""
+      if obj.status ~= nil then
+        if obj.status.health ~= nil then
+          hs.status = obj.status.health.status
+          if obj.status.health.message ~= nil then
+            hs.message = obj.status.health.message
+          end
+        end
+      end
+      return hs
     resource.exclusions: |
       ### Network resources created by the Kubernetes control plane and excluded to reduce watched events and UI clutter.
       ### Keep core Endpoints managed: kube-prometheus-stack uses manual Endpoints for k0s control-plane scraping.
