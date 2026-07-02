@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 export K0S_VERSION=v1.36.1+k0s.0
 export K0S_CONTROLLER_ADDRESSES=192.168.30.11
 export K0S_WORKER_ADDRESSES=192.168.30.12

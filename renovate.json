@@ -147,6 +147,13 @@
     },
     {
       "customType": "regex",
+      "fileMatch": ["(^|/)\\.github/workflows/.+\\.ya?ml$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s*\\w+: \"(?<currentValue>[^\"]+)\""
+      ]
+    },
+    {
+      "customType": "regex",
       "fileMatch": ["(^|/)ansible/roles/forgejo_runner/defaults/main\\.ya?ml$"],
       "matchStrings": [
         "docker://(?<depName>catthehacker/ubuntu):(?<currentValue>[^\"]+)\""
