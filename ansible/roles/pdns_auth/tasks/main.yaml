@@ -55,13 +55,30 @@
       Pin: origin repo.powerdns.com
       Pin-Priority: 600
 
+# deb822_repository replaces apt_repository (deprecated, removal in
+# ansible-core 2.25). Writes pdns-auth.sources instead of pdns-auth.list.
 - name: Configure PowerDNS authoritative repository
   become: true
-  ansible.builtin.apt_repository:
-    repo: "deb [signed-by={{ pdns_repo_key_path }}] {{ pdns_repo_base_url }} {{ pdns_repo_release }}-{{ pdns_repo_channel }} main"
-    filename: pdns-auth
-    state: present
+  ansible.builtin.deb822_repository:
+    name: pdns-auth
+    uris: "{{ pdns_repo_base_url }}"
+    suites: "{{ pdns_repo_release }}-{{ pdns_repo_channel }}"
+    components: main
+    signed_by: "{{ pdns_repo_key_path }}"
+  register: pdns_auth_repo
+
+- name: Remove legacy pdns-auth.list written by apt_repository
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/pdns-auth.list
+    state: absent
+  register: pdns_auth_legacy_list
+
+- name: Update apt cache after repository change  # noqa no-handler
+  become: true
+  ansible.builtin.apt:
     update_cache: true
+  when: pdns_auth_repo.changed or pdns_auth_legacy_list.changed
 
 - name: Install pdns packages
   become: true

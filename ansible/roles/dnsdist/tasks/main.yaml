@@ -45,13 +45,30 @@
       Pin: origin repo.powerdns.com
       Pin-Priority: 600
 
+# deb822_repository replaces apt_repository (deprecated, removal in
+# ansible-core 2.25). Writes dnsdist.sources instead of dnsdist.list.
 - name: Configure PowerDNS dnsdist repository
   become: true
-  ansible.builtin.apt_repository:
-    repo: "deb [signed-by={{ dnsdist_repo_key_path }}] {{ dnsdist_repo_base_url }} {{ dnsdist_repo_release }}-{{ dnsdist_repo_channel }} main"
-    filename: dnsdist
-    state: present
+  ansible.builtin.deb822_repository:
+    name: dnsdist
+    uris: "{{ dnsdist_repo_base_url }}"
+    suites: "{{ dnsdist_repo_release }}-{{ dnsdist_repo_channel }}"
+    components: main
+    signed_by: "{{ dnsdist_repo_key_path }}"
+  register: dnsdist_repo
+
+- name: Remove legacy dnsdist.list written by apt_repository
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/dnsdist.list
+    state: absent
+  register: dnsdist_legacy_list
+
+- name: Update apt cache after repository change  # noqa no-handler
+  become: true
+  ansible.builtin.apt:
     update_cache: true
+  when: dnsdist_repo.changed or dnsdist_legacy_list.changed
 
 - name: Install dnsdist package
   become: true
