@@ -145,6 +145,34 @@
           }}
       changed_when: false
 
+    # Store-level validation: ESO performs an OpenBao login when validating the
+    # store, so a Ready ClusterSecretStore proves the re-registered auth works
+    # even when no ExternalSecret exists yet (fresh bootstrap runs this playbook
+    # before the ArgoCD apps that create them).
+    - name: Wait for ClusterSecretStore to become Ready
+      ansible.builtin.command:
+        argv: >-
+          {{
+            target_kubectl_args
+            + [
+              'wait',
+              '--for=condition=Ready',
+              'clustersecretstore/openbao',
+              '--timeout=120s',
+            ]
+          }}
+      changed_when: false
+
+    - name: List ExternalSecrets
+      ansible.builtin.command:
+        argv: >-
+          {{
+            target_kubectl_args
+            + ['get', 'externalsecret', '--all-namespaces', '--no-headers', '--ignore-not-found']
+          }}
+      register: external_secret_list
+      changed_when: false
+
     - name: Wait for ExternalSecrets to become Ready
       ansible.builtin.command:
         argv: >-
@@ -162,6 +190,7 @@
       register: external_secret_wait
       changed_when: false
       failed_when: false
+      when: external_secret_list.stdout != ''
 
     - name: Read ExternalSecret sync status
       ansible.builtin.command:
@@ -185,7 +214,7 @@
       register: external_secret_logs
       changed_when: false
       failed_when: false
-      when: external_secret_wait.rc != 0
+      when: external_secret_wait.rc | default(0) != 0
 
     - name: Show ExternalSecret sync summary
       ansible.builtin.debug:
@@ -194,7 +223,7 @@
     - name: Show external-secrets controller logs on sync failure
       ansible.builtin.debug:
         msg: "{{ external_secret_logs.stdout_lines }}"
-      when: external_secret_wait.rc != 0
+      when: external_secret_wait.rc | default(0) != 0
 
     - name: Fail when ExternalSecrets are not synced
       ansible.builtin.fail:
@@ -202,4 +231,4 @@
           ExternalSecret sync did not complete. Wait stderr:
           {{ external_secret_wait.stderr_lines | default([]) }}
       when: >-
-        external_secret_wait.rc != 0
+        external_secret_wait.rc | default(0) != 0
