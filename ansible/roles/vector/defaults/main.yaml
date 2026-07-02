@@ -1,2 +1,5 @@
 ---
+vector_repo_url: "https://apt.vector.dev/"
+vector_repo_key_url: "https://keys.datadoghq.com/DATADOG_APT_KEY_CURRENT.public"
+
 vector_config: {}

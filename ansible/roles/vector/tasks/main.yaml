@@ -1,23 +1,36 @@
 ---
-- name: Install curl
+# Declarative replacement for the setup.vector.dev installer script, which
+# piped an unpinned remote script into bash. Same repository and signing key:
+# the key URL always points at Datadog's currently active apt signing key.
+- name: Add Vector apt repository
+  become: true
+  ansible.builtin.deb822_repository:
+    name: vector
+    uris: "{{ vector_repo_url }}"
+    suites: stable
+    components: vector-0
+    signed_by: "{{ vector_repo_key_url }}"
+    architectures: "{{ 'arm64' if ansible_facts['architecture'] == 'aarch64' else 'amd64' }}"
+  register: vector_repo
+
+- name: Remove legacy vector.list installed by setup.vector.dev
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/vector.list
+    state: absent
+  register: vector_legacy_list
+
+- name: Update apt cache after repository change  # noqa no-handler
   become: true
   ansible.builtin.apt:
-    name: curl
-    state: present
     update_cache: true
-
-- name: Add Vector repository
-  become: true
-  ansible.builtin.shell:
-    cmd: bash -c "$(curl -L https://setup.vector.dev)"
-    creates: /etc/apt/sources.list.d/vector.list
+  when: vector_repo.changed or vector_legacy_list.changed
 
 - name: Install Vector
   become: true
   ansible.builtin.apt:
     name: vector
     state: present
-    update_cache: true
 
 - name: Configure Vector
   become: true

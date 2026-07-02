@@ -4,7 +4,9 @@ Installs and configures [Vector](https://vector.dev/) as a log aggregator on Deb
 
 ## Functionality
 
-- Adds the Vector APT repository via the official setup script.
+- Adds the Vector APT repository declaratively (`deb822_repository`, signed by
+  Datadog's current apt key) and removes the legacy `vector.list` left behind by
+  the old `setup.vector.dev` script.
 - Installs the `vector` package.
 - Deploys `/etc/vector/vector.yaml` from a Jinja2 template.
 - Ensures the `vector` service is started and enabled.
@@ -13,6 +15,8 @@ Installs and configures [Vector](https://vector.dev/) as a log aggregator on Deb
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `vector_repo_url` | `https://apt.vector.dev/` | Vector apt repository URL |
+| `vector_repo_key_url` | `https://keys.datadoghq.com/DATADOG_APT_KEY_CURRENT.public` | Repository signing key |
 | `vector_loki_endpoint` | `http://loki:3100` | Loki push endpoint |
 | `vector_config` | `{}` | Vector pipeline configuration (sources, transforms, sinks) |
 
@@ -50,4 +54,7 @@ None.
 
 ## Notes
 
-- Repository setup uses the official `setup.vector.dev` script with `creates:` guard for idempotency.
+- The repository was previously registered by piping `setup.vector.dev` into
+  bash. The declarative task writes the same repo definition
+  (`deb https://apt.vector.dev/ stable vector-0`) as `vector.sources` and
+  cleans up the script-generated `vector.list` on already-provisioned hosts.
