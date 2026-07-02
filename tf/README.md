@@ -17,7 +17,7 @@ Manages VMs, LXC containers, and cloud images on Proxmox using Terragrunt + Terr
 tf/
 ├── root.hcl                        # Terragrunt root config (generates provider / backend)
 ├── common.hcl                      # Shared locals (DNS servers, domain, networks per env)
-├── provider.tf                     # Proxmox provider definition (bpg/proxmox ~> 0.109)
+├── provider.tf                     # Proxmox provider definition (bpg/proxmox ~> 0.111)
 ├── .env/
 │   ├── secrets.env.sample          # Secret template
 │   ├── secrets.dev.enc.env         # SOPS-encrypted dev secrets (committed)
@@ -30,18 +30,14 @@ tf/
 │   └── proxmox-cloudimage/         # Image download module (stock + custom, proxmox_download_file)
 ├── cloudimage/
 │   ├── images.hcl                  # Stock cloud image definitions (download URLs)
+│   ├── base.hcl                    # Shared stack config (module source, inputs)
 │   ├── run-all.sh                  # Download images to all nodes (serial, per-node creds)
-│   ├── dev/terragrunt.hcl          # dev:   download to pve
-│   ├── prd/terragrunt.hcl          # prd:   download to node1
-│   ├── node2/terragrunt.hcl        # node2: download to node2
-│   └── node3/terragrunt.hcl        # node3: download to node3
+│   └── dev|prd|node2|node3/        # Per node: thin terragrunt.hcl + node.hcl (node_name)
 ├── customimage/
 │   ├── images.hcl                  # Custom image definitions (SeaweedFS cloud-images URLs)
+│   ├── base.hcl                    # Shared stack config (module source, checksum pinning)
 │   ├── run-all.sh                  # -> ../cloudimage/run-all.sh (symlink, shared)
-│   ├── dev/terragrunt.hcl          # dev:   download from S3 to pve
-│   ├── prd/terragrunt.hcl          # prd:   download from S3 to node1
-│   ├── node2/terragrunt.hcl        # node2: download from S3 to node2
-│   └── node3/terragrunt.hcl        # node3: download from S3 to node3
+│   └── dev|prd|node2|node3/        # Per node: thin terragrunt.hcl + node.hcl (node_name, image_keys)
 ├── vm/
 │   ├── dev/
 │   │   ├── env.hcl                 # dev VM defaults (node: pve, storage: local-zfs)
@@ -151,7 +147,7 @@ Each Proxmox node fetches the image directly from the URL
 source (the single-node SeaweedFS LXC) and time out, so `run-all.sh` pins
 terraform's parallelism to `1` by default (one download at a time) and runs
 nodes serially. `customimage/` additionally enforces `-parallelism=1` via
-`extra_arguments` in its `terragrunt.hcl`, so even a plain `terragrunt apply`
+`extra_arguments` in its shared `base.hcl`, so even a plain `terragrunt apply`
 there is serial. Override when the source can take it:
 
 ```bash
@@ -186,8 +182,9 @@ sidecar checksum for the decompressed object. Then publish it with
 
 ## Architecture
 
-- **Backend**: Local state (`terraform.tfstate` per component directory)
-- **Provider**: bpg/proxmox ~> 0.109
+- **Backend**: Cloudflare R2 (S3-compatible) remote state with native lockfile
+  locking (`use_lockfile`); one state object per component directory
+- **Provider**: bpg/proxmox ~> 0.111
 - **Environment separation**: dev / prd / node2 / node3 (per Proxmox node)
 - **Networking**: Configured via `common.hcl` per environment (e.g. `vmbr0`, `vnets001`)
 - **Storage**: dev=local-zfs (pve), prd=data-nvme (node1), node2=local-lvm, node3=local-lvm

@@ -28,8 +28,19 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-NODES=(dev node2 node3 prd)
 PARALLELISM="${PARALLELISM:-1}"
+
+# Discover node stacks: every direct subdirectory holding a terragrunt.hcl.
+# The script is symlinked into customimage/, so discovery follows the symlink's
+# own directory and picks up that stack's nodes.
+NODES=()
+for dir in "${SCRIPT_DIR}"/*/; do
+  [[ -f "${dir}terragrunt.hcl" ]] && NODES+=("$(basename "${dir}")")
+done
+if [[ ${#NODES[@]} -eq 0 ]]; then
+  echo "Error: no node directories with terragrunt.hcl under ${SCRIPT_DIR}" >&2
+  exit 1
+fi
 
 if [[ $# -eq 0 ]]; then
   echo "Usage: $0 <terragrunt-command> [args...]" >&2
