@@ -96,7 +96,10 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					}},
 				}).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`up{job="scrapeConfig/monitoring/node-exporter-external", ` + instFilter + `} * on(instance) group_left(nodename) last_over_time(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm"}[1d])`).
+					// max by dedupes node_uname_info when a kernel upgrade + reboot leaves
+					// two series (differing only in "release") for the same instance
+					// within the last_over_time lookback window.
+					Expr(`up{job="scrapeConfig/monitoring/node-exporter-external", ` + instFilter + `} * on(instance) group_left(nodename) max by (instance, nodename) (last_over_time(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm"}[1d]))`).
 					LegendFormat("{{nodename}}"),
 				),
 		).
@@ -259,6 +262,70 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					Expr(`(1 - node_memory_MemAvailable_bytes{` + instFilter + `} / node_memory_MemTotal_bytes{` + instFilter + `}) * 100 ` + joinNodename).
 					LegendFormat("{{nodename}}"),
 				),
+		).
+		// PSI: fraction of time at least one task was stalled ("some") or all
+		// tasks were stalled ("full") waiting on the resource. CPU has no "full"
+		// series since the kernel doesn't track fully-stalled CPU time.
+		WithRow(dashboard.NewRowBuilder("Pressure (PSI)")).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("CPU Pressure (some)").
+				Datasource(ds).
+				Span(24).Height(8).
+				Unit("percent").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(node_pressure_cpu_waiting_seconds_total{` + instFilter + `}[$__rate_interval]) * 100 ` + joinNodename).
+					LegendFormat("{{nodename}}"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Memory Pressure").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("percent").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("Some").
+					Expr(`rate(node_pressure_memory_waiting_seconds_total{`+instFilter+`}[$__rate_interval]) * 100 `+joinNodename).
+					LegendFormat("{{nodename}} some"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("Full").
+					Expr(`rate(node_pressure_memory_stalled_seconds_total{`+instFilter+`}[$__rate_interval]) * 100 `+joinNodename).
+					LegendFormat("{{nodename}} full"),
+				).
+				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* full$"}, []dashboard.DynamicConfigValue{
+					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
+				}),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("IO Pressure").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("percent").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("Some").
+					Expr(`rate(node_pressure_io_waiting_seconds_total{`+instFilter+`}[$__rate_interval]) * 100 `+joinNodename).
+					LegendFormat("{{nodename}} some"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("Full").
+					Expr(`rate(node_pressure_io_stalled_seconds_total{`+instFilter+`}[$__rate_interval]) * 100 `+joinNodename).
+					LegendFormat("{{nodename}} full"),
+				).
+				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* full$"}, []dashboard.DynamicConfigValue{
+					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
+				}),
 		).
 		WithRow(dashboard.NewRowBuilder("Temperature & Throttling")).
 		WithPanel(

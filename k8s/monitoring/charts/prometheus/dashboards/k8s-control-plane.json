@@ -427,12 +427,12 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(kube_persistentvolume_status_phase{cluster=~\"$cluster\",phase!=\"Bound\"} == 1) or vector(0)",
-          "legendFormat": "Not bound"
+          "expr": "count(kube_node_status_condition{cluster=~\"$cluster\",condition=~\"MemoryPressure|DiskPressure|PIDPressure|NetworkUnavailable\",status=\"true\"}) or vector(0)",
+          "legendFormat": "Under pressure"
         }
       ],
-      "title": "PV Not Bound",
-      "description": "PersistentVolumes not in the Bound phase.",
+      "title": "Node Pressure Conditions",
+      "description": "Nodes currently reporting MemoryPressure, DiskPressure, PIDPressure, or NetworkUnavailable.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -480,6 +480,62 @@
       }
     },
     {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count(kube_persistentvolume_status_phase{cluster=~\"$cluster\",phase!=\"Bound\"} == 1) or vector(0)",
+          "legendFormat": "Not bound"
+        }
+      ],
+      "title": "PV Not Bound",
+      "description": "PersistentVolumes not in the Bound phase.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 0,
+        "y": 5
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
       "type": "row",
       "collapsed": false,
       "title": "API Server",
@@ -487,7 +543,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 5
+        "y": 9
       },
       "id": 0,
       "panels": []
@@ -510,7 +566,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 6
+        "y": 10
       },
       "repeatDirection": "h",
       "options": {
@@ -553,7 +609,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 6
+        "y": 10
       },
       "repeatDirection": "h",
       "options": {
@@ -596,7 +652,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 14
+        "y": 18
       },
       "repeatDirection": "h",
       "options": {
@@ -639,7 +695,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 14
+        "y": 18
       },
       "repeatDirection": "h",
       "options": {
@@ -682,7 +738,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 14
+        "y": 18
       },
       "repeatDirection": "h",
       "options": {
@@ -725,7 +781,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 22
+        "y": 26
       },
       "repeatDirection": "h",
       "options": {
@@ -772,7 +828,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 22
+        "y": 26
       },
       "repeatDirection": "h",
       "options": {
@@ -804,7 +860,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 30
+        "y": 34
       },
       "id": 0,
       "panels": []
@@ -828,7 +884,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 31
+        "y": 35
       },
       "repeatDirection": "h",
       "options": {
@@ -871,7 +927,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 31
+        "y": 35
       },
       "repeatDirection": "h",
       "options": {
@@ -914,7 +970,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 39
+        "y": 43
       },
       "repeatDirection": "h",
       "options": {
@@ -957,7 +1013,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 39
+        "y": 43
       },
       "repeatDirection": "h",
       "options": {
@@ -1003,7 +1059,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 47
+        "y": 51
       },
       "repeatDirection": "h",
       "transformations": [
@@ -1074,7 +1130,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 56
+        "y": 60
       },
       "id": 0,
       "panels": []
@@ -1098,7 +1154,7 @@
         "h": 4,
         "w": 8,
         "x": 0,
-        "y": 57
+        "y": 61
       },
       "repeatDirection": "h",
       "options": {
@@ -1154,7 +1210,7 @@
         "h": 4,
         "w": 8,
         "x": 8,
-        "y": 57
+        "y": 61
       },
       "repeatDirection": "h",
       "options": {
@@ -1210,7 +1266,7 @@
         "h": 4,
         "w": 8,
         "x": 16,
-        "y": 57
+        "y": 61
       },
       "repeatDirection": "h",
       "options": {
@@ -1265,7 +1321,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 61
+        "y": 65
       },
       "repeatDirection": "h",
       "options": {
@@ -1307,7 +1363,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 61
+        "y": 65
       },
       "repeatDirection": "h",
       "options": {
@@ -1349,7 +1405,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 69
+        "y": 73
       },
       "repeatDirection": "h",
       "options": {
@@ -1392,7 +1448,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 69
+        "y": 73
       },
       "repeatDirection": "h",
       "options": {
@@ -1424,7 +1480,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 77
+        "y": 81
       },
       "id": 0,
       "panels": []
@@ -1450,7 +1506,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 78
+        "y": 82
       },
       "repeatDirection": "h",
       "options": {
@@ -1516,7 +1572,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 78
+        "y": 82
       },
       "repeatDirection": "h",
       "options": {
@@ -1583,7 +1639,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 78
+        "y": 82
       },
       "repeatDirection": "h",
       "transformations": [
@@ -1671,7 +1727,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 86
+        "y": 90
       },
       "repeatDirection": "h",
       "transformations": [
@@ -1743,7 +1799,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 95
+        "y": 99
       },
       "id": 0,
       "panels": []
@@ -1767,7 +1823,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 96
+        "y": 100
       },
       "repeatDirection": "h",
       "options": {
@@ -1810,7 +1866,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 96
+        "y": 100
       },
       "repeatDirection": "h",
       "options": {
@@ -1853,7 +1909,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 96
+        "y": 100
       },
       "repeatDirection": "h",
       "options": {
@@ -1885,7 +1941,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 104
+        "y": 108
       },
       "id": 0,
       "panels": []
@@ -1909,7 +1965,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 105
+        "y": 109
       },
       "repeatDirection": "h",
       "options": {
@@ -1952,7 +2008,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 105
+        "y": 109
       },
       "repeatDirection": "h",
       "options": {
@@ -1995,7 +2051,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 105
+        "y": 109
       },
       "repeatDirection": "h",
       "options": {
@@ -2027,7 +2083,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 113
+        "y": 117
       },
       "id": 0,
       "panels": []
@@ -2053,7 +2109,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 114
+        "y": 118
       },
       "repeatDirection": "h",
       "options": {
@@ -2124,7 +2180,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 114
+        "y": 118
       },
       "repeatDirection": "h",
       "options": {
@@ -2195,7 +2251,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 114
+        "y": 118
       },
       "repeatDirection": "h",
       "options": {

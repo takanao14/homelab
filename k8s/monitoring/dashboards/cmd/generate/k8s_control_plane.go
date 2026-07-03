@@ -170,6 +170,22 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
+				Title("Node Pressure Conditions").
+				Description("Nodes currently reporting MemoryPressure, DiskPressure, PIDPressure, or NetworkUnavailable.").
+				Datasource(ds).
+				Span(3).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`count(kube_node_status_condition{` + clusterFilter + `,condition=~"MemoryPressure|DiskPressure|PIDPressure|NetworkUnavailable",status="true"}) or vector(0)`).
+					LegendFormat("Under pressure"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
 				Title("PV Not Bound").
 				Description("PersistentVolumes not in the Bound phase.").
 				Datasource(ds).

@@ -529,12 +529,201 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Disk",
+      "title": "Pressure (PSI)",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 41
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(node_pressure_cpu_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}}"
+        }
+      ],
+      "title": "CPU Pressure (some)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(node_pressure_memory_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}} some",
+          "refId": "Some"
+        },
+        {
+          "expr": "rate(node_pressure_memory_stalled_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}} full",
+          "refId": "Full"
+        }
+      ],
+      "title": "Memory Pressure",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 50
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* full$"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    8,
+                    8
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(node_pressure_io_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}} some",
+          "refId": "Some"
+        },
+        {
+          "expr": "rate(node_pressure_io_stalled_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "legendFormat": "{{nodename}} full",
+          "refId": "Full"
+        }
+      ],
+      "title": "IO Pressure",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 50
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* full$"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    8,
+                    8
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Disk",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 58
       },
       "id": 0,
       "panels": []
@@ -559,7 +748,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 42
+        "y": 59
       },
       "repeatDirection": "h",
       "options": {
@@ -614,7 +803,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 42
+        "y": 59
       },
       "repeatDirection": "h",
       "options": {
@@ -681,7 +870,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 67
       },
       "repeatDirection": "h",
       "options": {
@@ -742,7 +931,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 58
+        "y": 75
       },
       "id": 0,
       "panels": []
@@ -771,7 +960,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 59
+        "y": 76
       },
       "repeatDirection": "h",
       "options": {

@@ -220,6 +220,70 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{nodename}} Available"),
 				),
 		).
+		// PSI: fraction of time at least one task was stalled ("some") or all
+		// tasks were stalled ("full") waiting on the resource. CPU has no "full"
+		// series since the kernel doesn't track fully-stalled CPU time.
+		WithRow(dashboard.NewRowBuilder("Pressure (PSI)")).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("CPU Pressure (some)").
+				Datasource(ds).
+				Span(24).Height(8).
+				Unit("percent").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(node_pressure_cpu_waiting_seconds_total{` + clusterFilter + `}[$__rate_interval]) * 100 ` + joinNode).
+					LegendFormat("{{nodename}}"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Memory Pressure").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("percent").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("Some").
+					Expr(`rate(node_pressure_memory_waiting_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode).
+					LegendFormat("{{nodename}} some"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("Full").
+					Expr(`rate(node_pressure_memory_stalled_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode).
+					LegendFormat("{{nodename}} full"),
+				).
+				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* full$"}, []dashboard.DynamicConfigValue{
+					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
+				}),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("IO Pressure").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("percent").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("Some").
+					Expr(`rate(node_pressure_io_waiting_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode).
+					LegendFormat("{{nodename}} some"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					RefId("Full").
+					Expr(`rate(node_pressure_io_stalled_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode).
+					LegendFormat("{{nodename}} full"),
+				).
+				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* full$"}, []dashboard.DynamicConfigValue{
+					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
+				}),
+		).
 		WithRow(dashboard.NewRowBuilder("Disk")).
 		WithPanel(
 			bargauge.NewPanelBuilder().
