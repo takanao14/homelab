@@ -1,3 +1,6 @@
+# Shared template for the XRDP desktop images. Per-distro inputs live in
+# vars/<target>-xrdp.pkrvars.hcl; build.sh selects the var file and injects the
+# output variables. The headless server variant is basic.pkr.hcl.
 packer {
   required_plugins {
     qemu = {
@@ -7,7 +10,8 @@ packer {
   }
 }
 
-# Variables for output configuration
+# --- Output configuration (injected by build.sh) ---
+
 variable "output_directory" {
   type        = string
   description = "Directory where the built image will be stored"
@@ -29,15 +33,60 @@ variable "user_password" {
   description = "Password for the default user account (used in Cloud-Init)"
 }
 
-# ssh_pubkey is used in Cloud-Init user-data to set up SSH access for the default user account
-locals {
-  ssh_pubkey = file("~/.ssh/id_ed25519.pub")
+# SSH public key injected into cloud-init user-data for the default user.
+# Empty (default) means "read the builder's ~/.ssh/id_ed25519.pub"; CI passes
+# a stub value so validate needs no key file on the runner.
+variable "ssh_pubkey" {
+  type        = string
+  default     = ""
+  description = "SSH public key for the default user (empty = read ~/.ssh/id_ed25519.pub)"
 }
 
-source "qemu" "ubuntu24_xrdp" {
-  # Official image URL and checksum
-  iso_url      = "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
-  iso_checksum = "file:https://cloud-images.ubuntu.com/noble/current/SHA256SUMS"
+# --- Distro configuration (vars/<target>-xrdp.pkrvars.hcl) ---
+
+variable "iso_url" {
+  type        = string
+  description = "Upstream cloud image URL"
+}
+
+variable "iso_checksum" {
+  type        = string
+  description = "Upstream image checksum (file:<url> form)"
+}
+
+variable "ssh_username" {
+  type        = string
+  description = "Default user of the upstream cloud image"
+}
+
+variable "distro" {
+  type        = string
+  description = "cloud-init template directory under cinit/"
+}
+
+variable "provision_scripts" {
+  type        = list(string)
+  description = "Shell provisioner scripts for base setup, desktop/XRDP and tooling"
+}
+
+variable "cleanup_script" {
+  type        = string
+  description = "Cleanup script run last (purges caches, cloud-init data, build user)"
+}
+
+variable "disk_size" {
+  type        = string
+  default     = "20G"
+  description = "Disk size of the built image"
+}
+
+locals {
+  ssh_pubkey = var.ssh_pubkey != "" ? var.ssh_pubkey : file("~/.ssh/id_ed25519.pub")
+}
+
+source "qemu" "xrdp" {
+  iso_url      = var.iso_url
+  iso_checksum = var.iso_checksum
   disk_image   = true
 
   cpus      = 2
@@ -48,21 +97,21 @@ source "qemu" "ubuntu24_xrdp" {
   output_directory = var.output_directory
   vm_name          = var.vm_name
   format           = "qcow2"
-  disk_size        = "20G"
+  disk_size        = var.disk_size
   accelerator      = "kvm"
 
   # SSH connection settings
-  ssh_username   = "ubuntu"
+  ssh_username   = var.ssh_username
   ssh_agent_auth = true
   ssh_timeout    = "15m"
 
   # Attach Cloud-Init as a seed disk
   cd_content = {
-    "/user-data" = templatefile("./cinit/ubuntu/user-data.pkrtpl.hcl", {
+    "/user-data" = templatefile("./cinit/${var.distro}/user-data.pkrtpl.hcl", {
       ssh_pubkey    = local.ssh_pubkey
       user_password = var.user_password
     }),
-    "/meta-data" = file("./cinit/ubuntu/meta-data")
+    "/meta-data" = file("./cinit/${var.distro}/meta-data")
   }
   cd_label = "cidata"
 
@@ -71,18 +120,13 @@ source "qemu" "ubuntu24_xrdp" {
 }
 
 build {
-  sources = ["source.qemu.ubuntu24_xrdp"]
+  sources = ["source.qemu.xrdp"]
 
-  # Install base packages: guest agent, desktop/XRDP, container runtime,
-  # virtualization and GUI tools (Firefox, VS Code, Wireshark, HashiCorp).
+  # Install base packages: guest agent / timezone, desktop/XRDP, container
+  # runtime, virtualization and GUI tools (Firefox, VS Code, Wireshark,
+  # HashiCorp).
   provisioner "shell" {
-    scripts = [
-      "scripts/ubuntu/qemu-ga.sh",
-      "scripts/ubuntu/xrdp.sh",
-      "scripts/ubuntu/container.sh",
-      "scripts/ubuntu/vm.sh",
-      "scripts/ubuntu/tools.sh"
-    ]
+    scripts         = var.provision_scripts
     execute_command = "chmod +x {{ .Path }}; sudo -S bash -c '{{ .Vars }} {{ .Path }}'"
   }
 
@@ -139,7 +183,7 @@ build {
 
   # Clean up last: purges caches, cloud-init data and the build user.
   provisioner "shell" {
-    script          = "scripts/ubuntu/cleanup.sh"
+    script          = var.cleanup_script
     execute_command = "chmod +x {{ .Path }}; sudo -S bash -c '{{ .Vars }} {{ .Path }}'"
   }
 

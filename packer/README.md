@@ -59,10 +59,12 @@ per-environment (`dev`/`prd`/`node2`/`node3`) configs.
 │   ├── ubuntu/         # Shell provisioners for Ubuntu
 │   ├── rocky/          # Shell provisioners for Rocky Linux
 │   └── debian/         # Shell provisioners for Debian
-├── build.sh            # Main build script
+├── vars/               # Per-target inputs (URL, checksum, user, script list)
+├── basic.pkr.hcl       # Shared template: headless server images
+├── xrdp.pkr.hcl        # Shared template: XRDP desktop images
+├── build.sh            # Main build script (selects template + var file)
 ├── import-upstream.sh  # Download/verify/normalize upstream compressed images
-├── push.sh             # Upload built images + checksums to SeaweedFS S3
-└── *.pkr.hcl           # Packer template files
+└── push.sh             # Upload built images + checksums to SeaweedFS S3
 ```
 
 ## Quick Start
@@ -72,6 +74,10 @@ per-environment (`dev`/`prd`/`node2`/`node3`) configs.
 ```bash
 # Required: Set the default user password for cloud-init
 export PKR_VAR_user_password='your_secure_password'
+
+# Optional: SSH public key for the default user. When unset, templates read
+# the builder's ~/.ssh/id_ed25519.pub (CI passes a stub for validate).
+export PKR_VAR_ssh_pubkey='ssh-ed25519 AAAA...'
 
 # Required for push.sh: SeaweedFS S3 credentials (write to cloud-images)
 export SEAWEEDFS_S3_ENDPOINT='https://s3.home.butaco.net'
@@ -131,16 +137,27 @@ cd ../tf/customimage/prd
 terragrunt apply
 ```
 
-## Available Packer Templates
+## Available Build Targets
 
-| Template | Description | Output |
-|----------|-------------|--------|
-| [ubuntu-24.04-custom.pkr.hcl](ubuntu-24.04-custom.pkr.hcl) | Ubuntu 24.04 base with QEMU Guest Agent | `images/ubuntu-24.04-custom.img` |
-| [ubuntu-24.04-xrdp.pkr.hcl](ubuntu-24.04-xrdp.pkr.hcl) | Ubuntu 24.04 with XRDP + XFCE4 desktop | `images/ubuntu-24.04-xrdp.img` |
-| [rocky-10-custom.pkr.hcl](rocky-10-custom.pkr.hcl) | Rocky Linux 10 base image | `images/rocky-10-custom.img` |
-| [rocky-9-custom.pkr.hcl](rocky-9-custom.pkr.hcl) | Rocky Linux 9 base image | `images/rocky-9-custom.img` |
-| [rocky-9-xrdp.pkr.hcl](rocky-9-xrdp.pkr.hcl) | Rocky Linux 9 with XRDP + XFCE desktop | `images/rocky-9-xrdp.img` |
-| [debian-13-custom.pkr.hcl](debian-13-custom.pkr.hcl) | Debian 13 base image | `images/debian-13-custom.img` |
+Two shared templates cover all targets: [basic.pkr.hcl](basic.pkr.hcl)
+(headless server) and [xrdp.pkr.hcl](xrdp.pkr.hcl) (XRDP + XFCE desktop with
+the baked-in CLI toolchain). Per-target differences — upstream image URL and
+checksum, default user, cloud-init directory, provisioner script list — live in
+`vars/<target>.pkrvars.hcl`; `build.sh` pairs each target with its template and
+var file (`*-xrdp` targets use `xrdp.pkr.hcl`, the rest `basic.pkr.hcl`).
+
+| Target | Template | Var file | Output |
+|--------|----------|----------|--------|
+| `ubuntu24` | basic | [vars/ubuntu24.pkrvars.hcl](vars/ubuntu24.pkrvars.hcl) | `images/ubuntu-24.04-custom.img` |
+| `ubuntu24-xrdp` | xrdp | [vars/ubuntu24-xrdp.pkrvars.hcl](vars/ubuntu24-xrdp.pkrvars.hcl) | `images/ubuntu-24.04-xrdp.img` |
+| `rocky10` | basic | [vars/rocky10.pkrvars.hcl](vars/rocky10.pkrvars.hcl) | `images/rocky-10-custom.img` |
+| `rocky9` | basic | [vars/rocky9.pkrvars.hcl](vars/rocky9.pkrvars.hcl) | `images/rocky-9-custom.img` |
+| `rocky9-xrdp` | xrdp | [vars/rocky9-xrdp.pkrvars.hcl](vars/rocky9-xrdp.pkrvars.hcl) | `images/rocky-9-xrdp.img` |
+| `debian13` | basic | [vars/debian13.pkrvars.hcl](vars/debian13.pkrvars.hcl) | `images/debian-13-custom.img` |
+
+To add a target, create a `vars/<target>.pkrvars.hcl` and register the target in
+`build.sh`, `push.sh` and `tf/customimage/images.hcl`
+(`scripts/check-image-refs.sh` verifies the filename mapping in CI).
 
 ## Upstream Image Imports
 

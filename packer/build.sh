@@ -53,11 +53,12 @@ check_overwrite() {
 }
 
 # Run a Packer build for the given target.
-# Arguments: packer_file, packer_output, image_file
+# Arguments: packer_file, var_file, packer_output, image_file
 build_image() {
     local packer_file="$1"
-    local packer_output="$2"
-    local image_file="$3"
+    local var_file="$2"
+    local packer_output="$3"
+    local image_file="$4"
 
     local packer_output_dir packer_vm_name
     packer_output_dir=$(dirname "$packer_output")
@@ -73,6 +74,7 @@ build_image() {
 
     echo "Building ${packer_vm_name}..."
     packer build \
+        -var-file "$var_file" \
         -var "output_directory=${packer_output_dir}" \
         -var "vm_name=${packer_vm_name}" \
         -var "image_name=${image_file}" \
@@ -103,37 +105,43 @@ build_target() {
     case "$1" in
         ubuntu24)
             build_image \
-                "ubuntu-24.04-custom.pkr.hcl" \
+                "basic.pkr.hcl" \
+                "vars/ubuntu24.pkrvars.hcl" \
                 "output-ubuntu24-custom/ubuntu-24.04-custom.qcow2" \
                 "images/ubuntu-24.04-custom.img"
             ;;
         ubuntu24-xrdp)
             build_image \
-                "ubuntu-24.04-xrdp.pkr.hcl" \
+                "xrdp.pkr.hcl" \
+                "vars/ubuntu24-xrdp.pkrvars.hcl" \
                 "output-ubuntu24-xrdp/ubuntu-24.04-xrdp.qcow2" \
                 "images/ubuntu-24.04-xrdp.img"
             ;;
         rocky10)
             build_image \
-                "rocky-10-custom.pkr.hcl" \
+                "basic.pkr.hcl" \
+                "vars/rocky10.pkrvars.hcl" \
                 "output-rocky-10-custom/rocky-10-custom.qcow2" \
                 "images/rocky-10-custom.img"
             ;;
         rocky9)
             build_image \
-                "rocky-9-custom.pkr.hcl" \
+                "basic.pkr.hcl" \
+                "vars/rocky9.pkrvars.hcl" \
                 "output-rocky-9-custom/rocky-9-custom.qcow2" \
                 "images/rocky-9-custom.img"
             ;;
         rocky9-xrdp)
             build_image \
-                "rocky-9-xrdp.pkr.hcl" \
+                "xrdp.pkr.hcl" \
+                "vars/rocky9-xrdp.pkrvars.hcl" \
                 "output-rocky-9-xrdp/rocky-9-xrdp.qcow2" \
                 "images/rocky-9-xrdp.img"
             ;;
         debian13)
             build_image \
-                "debian-13-custom.pkr.hcl" \
+                "basic.pkr.hcl" \
+                "vars/debian13.pkrvars.hcl" \
                 "output-debian-13-custom/debian-13-custom.qcow2" \
                 "images/debian-13-custom.img"
             ;;

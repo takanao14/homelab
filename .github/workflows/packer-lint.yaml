@@ -20,37 +20,40 @@ jobs:
       - name: Check formatting
         run: packer fmt -check -recursive packer/
 
-      # Templates read the builder's SSH public key via
-      # file("~/.ssh/id_ed25519.pub"); provide a stub so validate can evaluate
-      # locals on the runner. The content is never used beyond interpolation.
-      - name: Create stub SSH public key
-        run: |
-          mkdir -p ~/.ssh
-          echo "ssh-ed25519 AAAA ci-stub" > ~/.ssh/id_ed25519.pub
-
-      # Full validate checks attributes against the qemu plugin schema. It also
-      # fetches each template's iso_checksum URL (file:https://...), so a brief
-      # upstream mirror outage can fail a run; retry once to absorb transient
-      # network errors.
+      # Validate every var file against its template (vars/*-xrdp.pkrvars.hcl
+      # -> xrdp.pkr.hcl, the rest -> basic.pkr.hcl; same convention as
+      # build.sh). Full validate checks attributes against the qemu plugin
+      # schema. It also fetches each target's iso_checksum URL
+      # (file:https://...), so a brief upstream mirror outage can fail a run;
+      # retry once to absorb transient network errors. ssh_pubkey is stubbed so
+      # validate needs no key file on the runner (empty default = read the
+      # builder's ~/.ssh/id_ed25519.pub).
       - name: Validate templates
         working-directory: packer
         run: |
           set -euo pipefail
           validate() {
             packer validate \
+              -var-file "$1" \
               -var output_directory=output-ci \
               -var vm_name=ci.qcow2 \
               -var image_name=images/ci.img \
               -var user_password=ci-stub \
-              "$1"
+              -var ssh_pubkey="ssh-ed25519 AAAA ci-stub" \
+              "$2"
           }
-          for template in *.pkr.hcl; do
-            echo "::group::validate ${template}"
-            packer init "$template"
-            if ! validate "$template"; then
-              echo "Transient failure validating ${template}; retrying in 15s..."
+          packer init basic.pkr.hcl
+          packer init xrdp.pkr.hcl
+          for var_file in vars/*.pkrvars.hcl; do
+            case "$var_file" in
+              *-xrdp.pkrvars.hcl) template="xrdp.pkr.hcl" ;;
+              *) template="basic.pkr.hcl" ;;
+            esac
+            echo "::group::validate ${var_file} (${template})"
+            if ! validate "$var_file" "$template"; then
+              echo "Transient failure validating ${var_file}; retrying in 15s..."
               sleep 15
-              validate "$template"
+              validate "$var_file" "$template"
             fi
             echo "::endgroup::"
           done
