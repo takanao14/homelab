@@ -16,8 +16,10 @@ BUCKET="${SEAWEEDFS_CLOUD_IMAGES_BUCKET:-cloud-images}"
 IMAGES_DIR="$(cd "$(dirname "$0")" && pwd)/images"
 
 # Map CLI targets to image basenames produced by build.sh or import-upstream.sh.
-# Keep this in sync with those scripts. Use a case statement instead of an
-# associative array so the script works with macOS' older /bin/bash.
+# Keep this in sync with those scripts and tf/customimage/images.hcl; CI
+# verifies the mapping via scripts/check-image-refs.sh. Use a case statement
+# instead of an associative array so the script works with macOS' older
+# /bin/bash.
 target_image() {
     case "$1" in
         ubuntu24) echo "ubuntu-24.04-custom.img" ;;

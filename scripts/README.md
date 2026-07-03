@@ -9,6 +9,7 @@ sync, and GPU workload switching.
 scripts/
 ├── create-vm.sh / remove-vm.sh / provision.sh  # VM lifecycle (run directly)
 ├── gpu-switch.sh                             # k8s GPU workload switch
+├── check-image-refs.sh                       # CI: image filename map consistency check
 ├── grafana-mcp.sh                            # Grafana MCP server launcher (stdio)
 ├── grafana-mcp-token.sh                      # issue Grafana MCP service-account token
 ├── lib/openbao-auth.sh                       # shared OpenBao auth helper
@@ -108,6 +109,18 @@ system-package step runs with `TOOL_SKIP_SYSTEM_PACKAGES=1`, so it never invokes
 sudo and fails fast when the required packages were not baked into the image.
 The remaining install steps stay in per-user (`local`) mode, landing tools under
 `$HOME/.local`.
+
+### `check-image-refs.sh`
+
+Cross-checks the image-filename maps duplicated across `create-vm.sh`,
+`packer/build.sh` and `packer/push.sh` against the definitions in
+`tf/customimage/images.hcl` (and `tf/cloudimage/images.hcl`). Run by CI on
+changes to any of those files (`.github/workflows/image-refs.yaml`); run it
+manually after adding or renaming an image target.
+
+```bash
+./check-image-refs.sh
+```
 
 ## Secrets / environment
 

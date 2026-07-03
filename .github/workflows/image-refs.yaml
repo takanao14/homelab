@@ -1,0 +1,24 @@
+name: Image Reference Check
+
+# The target -> image-filename mapping is duplicated across packer/build.sh,
+# packer/push.sh and scripts/create-vm.sh, with tf/customimage/images.hcl as
+# the source of truth. This job fails when any of them drift.
+on:
+  pull_request:
+    paths:
+      - "tf/customimage/images.hcl"
+      - "tf/cloudimage/images.hcl"
+      - "packer/build.sh"
+      - "packer/push.sh"
+      - "scripts/create-vm.sh"
+      - "scripts/check-image-refs.sh"
+
+jobs:
+  check:
+    name: image-refs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cross-check image filename maps
+        run: ./scripts/check-image-refs.sh

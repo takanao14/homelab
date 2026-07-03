@@ -96,7 +96,9 @@ build_image() {
 }
 
 # Build a single target by name. Maps CLI targets to their Packer templates and
-# outputs. Keep the target list in sync with ALL_TARGETS and push.sh.
+# outputs. Keep the target list in sync with ALL_TARGETS, push.sh and
+# tf/customimage/images.hcl; CI verifies the image filenames via
+# scripts/check-image-refs.sh.
 build_target() {
     case "$1" in
         ubuntu24)

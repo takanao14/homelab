@@ -78,6 +78,8 @@ for value_name in CORES MEMORY DISK; do
   fi
 done
 
+# Image names must match tf/customimage/images.hcl file_name entries; CI
+# verifies this via scripts/check-image-refs.sh.
 case "$IMAGE" in
   ubuntu24) FILE_ID="local:iso/ubuntu-24.04-custom.img" ;;
   ubuntu24-xrdp) FILE_ID="local:iso/ubuntu-24.04-xrdp.img" ;;
