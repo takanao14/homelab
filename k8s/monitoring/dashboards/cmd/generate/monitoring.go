@@ -111,6 +111,22 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("Corruptions"),
 				),
 		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Config Reload Failures").
+				Description("kube-prometheus-stack config-reloader sidecars (Prometheus/Alertmanager) that failed to reload their config on the last change.").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`count(reloader_last_reload_successful == 0) or vector(0)`).
+					LegendFormat("Failed"),
+				),
+		).
 		WithRow(dashboard.NewRowBuilder("Alerting")).
 		WithPanel(
 			stat.NewPanelBuilder().
