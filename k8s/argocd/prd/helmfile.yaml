@@ -7,7 +7,7 @@ releases:
     namespace: argocd
     createNamespace: true
     chart: argo/argo-cd
-    version: 10.1.0
+    version: 10.1.1
     # On a fresh cluster the redis-secret-init pre-install hook pulls the
     # ~200MB argocd image on an empty node cache, which alone can exceed
     # helm's default 5m timeout.
