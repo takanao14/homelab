@@ -108,21 +108,32 @@
     }
   },
   "helm-values": {
-    "fileMatch": ["(^|/)values\\.yaml$"]
+    "managerFilePatterns": [
+      "/(^|/)values\\.yaml$/"
+    ]
   },
   "kubernetes": {
-    "fileMatch": ["(^|/)k8s/.+\\.yaml$"]
+    "managerFilePatterns": [
+      "/(^|/)k8s/.+\\.yaml$/"
+    ]
   },
   "helmfile": {
-    "fileMatch": ["(^|/)k0s/helmfile\\.yaml\\.gotmpl$"]
+    "managerFilePatterns": [
+      "/(^|/)k0s/helmfile\\.yaml\\.gotmpl$/"
+    ]
   },
   "ansible-galaxy": {
-    "fileMatch": ["(^|/)ansible/requirements\\.ya?ml$"]
+    "managerFilePatterns": [
+      "/(^|/)ansible/requirements\\.ya?ml$/"
+    ]
   },
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["(^|/)ansible/.+\\.yaml$", "(^|/)ansible/.+\\.yml$"],
+      "managerFilePatterns": [
+        "/(^|/)ansible/.+\\.yaml$/",
+        "/(^|/)ansible/.+\\.yml$/"
+      ],
       "matchStrings": [
         "image:\\s*\"?(?<depName>[^\"]+):(?<currentValue>[^\"]+)\"?"
       ],
@@ -130,7 +141,9 @@
     },
     {
       "customType": "regex",
-      "fileMatch": ["(^|/)k0s/env/.+\\.sh$"],
+      "managerFilePatterns": [
+        "/(^|/)k0s/env/.+\\.sh$/"
+      ],
       "matchStrings": [
         "K0S_VERSION=(?<currentValue>[^\\s]+)"
       ],
@@ -140,21 +153,27 @@
     },
     {
       "customType": "regex",
-      "fileMatch": ["(^|/)ansible/.+\\.ya?ml$"],
+      "managerFilePatterns": [
+        "/(^|/)ansible/.+\\.ya?ml$/"
+      ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?\\n\\w+: \"(?<currentValue>[^\"]+)\""
       ]
     },
     {
       "customType": "regex",
-      "fileMatch": ["(^|/)\\.github/workflows/.+\\.ya?ml$"],
+      "managerFilePatterns": [
+        "/(^|/)\\.github/workflows/.+\\.ya?ml$/"
+      ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s*\\w+: \"(?<currentValue>[^\"]+)\""
       ]
     },
     {
       "customType": "regex",
-      "fileMatch": ["(^|/)ansible/roles/forgejo_runner/defaults/main\\.ya?ml$"],
+      "managerFilePatterns": [
+        "/(^|/)ansible/roles/forgejo_runner/defaults/main\\.ya?ml$/"
+      ],
       "matchStrings": [
         "docker://(?<depName>catthehacker/ubuntu):(?<currentValue>[^\"]+)\""
       ],
@@ -162,7 +181,9 @@
     },
     {
       "customType": "regex",
-      "fileMatch": ["(^|/)k8s/.+\\.yaml$"],
+      "managerFilePatterns": [
+        "/(^|/)k8s/.+\\.yaml$/"
+      ],
       "matchStrings": [
         "repoURL: (?<registryUrl>https://[^\\n]+)\\n\\s+chart: (?<depName>[^\\n]+)\\n\\s+targetRevision: (?<currentValue>[^\\n]+)"
       ],
