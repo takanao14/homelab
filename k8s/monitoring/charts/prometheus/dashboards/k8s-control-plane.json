@@ -427,7 +427,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(kube_node_status_condition{cluster=~\"$cluster\",condition=~\"MemoryPressure|DiskPressure|PIDPressure|NetworkUnavailable\",status=\"true\"}) or vector(0)",
+          "expr": "count(kube_node_status_condition{cluster=~\"$cluster\",condition=~\"MemoryPressure|DiskPressure|PIDPressure|NetworkUnavailable\",status=\"true\"} == 1) or vector(0)",
           "legendFormat": "Under pressure"
         }
       ],

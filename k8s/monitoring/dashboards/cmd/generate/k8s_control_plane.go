@@ -180,7 +180,8 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count(kube_node_status_condition{` + clusterFilter + `,condition=~"MemoryPressure|DiskPressure|PIDPressure|NetworkUnavailable",status="true"}) or vector(0)`).
+					// status="true" only selects the "true" series; == 1 checks it's actually asserted.
+					Expr(`count(kube_node_status_condition{` + clusterFilter + `,condition=~"MemoryPressure|DiskPressure|PIDPressure|NetworkUnavailable",status="true"} == 1) or vector(0)`).
 					LegendFormat("Under pressure"),
 				),
 		).
