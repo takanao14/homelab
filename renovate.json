@@ -172,6 +172,15 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
+        "/(^|/)packer/.+\\.pkr\\.hcl$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s*version\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+      ]
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
         "/(^|/)ansible/roles/forgejo_runner/defaults/main\\.ya?ml$/"
       ],
       "matchStrings": [

@@ -64,7 +64,8 @@ per-environment (`dev`/`prd`/`node2`/`node3`) configs.
 ├── xrdp.pkr.hcl        # Shared template: XRDP desktop images
 ├── build.sh            # Main build script (selects template + var file)
 ├── import-upstream.sh  # Download/verify/normalize upstream compressed images
-└── push.sh             # Upload built images + checksums to SeaweedFS S3
+├── push.sh             # Upload built images + checksums to SeaweedFS S3
+└── setup.sh            # One-time build-host setup (QEMU/KVM + libguestfs)
 ```
 
 ## Quick Start

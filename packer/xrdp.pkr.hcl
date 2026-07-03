@@ -4,7 +4,8 @@
 packer {
   required_plugins {
     qemu = {
-      version = ">= 1.1.4"
+      # renovate: datasource=github-releases depName=hashicorp/packer-plugin-qemu
+      version = "1.1.5"
       source  = "github.com/hashicorp/qemu"
     }
   }
