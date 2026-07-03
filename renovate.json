@@ -47,7 +47,7 @@
         "loki",
         "external-secrets"
       ],
-      "matchUpdateTypes": ["minor", "major"],
+      "matchUpdateTypes": ["patch", "minor", "major"],
       "automerge": false,
       "addLabels": ["infra-core", "manual-review"]
     },
