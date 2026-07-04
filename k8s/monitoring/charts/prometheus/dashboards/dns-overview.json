@@ -1424,6 +1424,348 @@
         },
         "overrides": []
       }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "external-dns Summary",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 106
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "ceil(sum(increase(external_dns_registry_errors_total{job=\"external-dns\"}[1h]))) or vector(0)",
+          "instant": true,
+          "legendFormat": "Errors",
+          "range": false
+        }
+      ],
+      "title": "external-dns Registry Errors (1h)",
+      "description": "Errors talking to the DNS provider (registry) in the last hour, all clusters.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 107
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "ceil(sum(increase(external_dns_source_errors_total{job=\"external-dns\"}[1h]))) or vector(0)",
+          "instant": true,
+          "legendFormat": "Errors",
+          "range": false
+        }
+      ],
+      "title": "external-dns Source Errors (1h)",
+      "description": "Errors reading route sources (HTTPRoute/Service/...) in the last hour, all clusters.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 107
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(time() - external_dns_controller_last_sync_timestamp_seconds{job=\"external-dns\"})",
+          "instant": true,
+          "legendFormat": "Age",
+          "range": false
+        }
+      ],
+      "title": "external-dns Last Sync Age",
+      "description": "Time since the last successful full sync to the DNS provider, worst cluster.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 107
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 300,
+                "color": "yellow"
+              },
+              {
+                "value": 900,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "external-dns Metrics",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 111
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "time() - external_dns_controller_last_sync_timestamp_seconds{job=\"external-dns\"}",
+          "legendFormat": "{{cluster}} sync"
+        },
+        {
+          "expr": "time() - external_dns_controller_last_reconcile_timestamp_seconds{job=\"external-dns\"}",
+          "legendFormat": "{{cluster}} reconcile"
+        }
+      ],
+      "title": "external-dns Sync Age",
+      "description": "Seconds since the last provider sync and source reconcile, grouped by cluster. A steadily climbing line means external-dns has stopped syncing.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 112
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (cluster) (rate(external_dns_registry_errors_total{job=\"external-dns\"}[$__rate_interval]))",
+          "legendFormat": "{{cluster}} registry"
+        },
+        {
+          "expr": "sum by (cluster) (rate(external_dns_source_errors_total{job=\"external-dns\"}[$__rate_interval]))",
+          "legendFormat": "{{cluster}} source"
+        }
+      ],
+      "title": "external-dns Error Rate",
+      "description": "Registry (provider) and source errors per second, grouped by cluster.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 112
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (cluster) (external_dns_source_records{job=\"external-dns\"})",
+          "legendFormat": "{{cluster}} source"
+        },
+        {
+          "expr": "sum by (cluster) (external_dns_registry_records{job=\"external-dns\"})",
+          "legendFormat": "{{cluster}} registry"
+        }
+      ],
+      "title": "external-dns Records",
+      "description": "Records desired by sources vs records present in the registry, grouped by cluster. A persistent gap means records are failing to sync.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 120
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {}
+        },
+        "overrides": []
+      }
     }
   ],
   "templating": {

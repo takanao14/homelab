@@ -22,6 +22,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		dnsdist = `job="scrapeConfig/monitoring/dnsdist-external"`
 		pdns    = `job="scrapeConfig/monitoring/pdns-auth-external"`
 		coredns = `job="coredns"`
+		extdns  = `job="external-dns"`
 	)
 
 	// mapDNS maps instance IPs to logical ns1/ns2 names for better readability.
@@ -77,6 +78,16 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
 			{Value: float64Ptr(0.001), Color: "red"},
+		})
+
+	// external-dns syncs every minute; warn once a sync is a few intervals
+	// late, alert red when it has been stuck for 15 minutes.
+	syncAgeThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "green"},
+			{Value: float64Ptr(300), Color: "yellow"},
+			{Value: float64Ptr(900), Color: "red"},
 		})
 
 	d, err := dashboard.NewDashboardBuilder("DNS Overview").
@@ -496,6 +507,110 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(coredns_dns_request_duration_seconds_bucket{` + coredns + `}[$__rate_interval])))`).
 					LegendFormat("{{cluster}}"),
+				),
+		).
+		WithRow(dashboard.NewRowBuilder("external-dns Summary")).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("external-dns Registry Errors (1h)").
+				Description("Errors talking to the DNS provider (registry) in the last hour, all clusters.").
+				Datasource(ds).
+				Span(8).Height(4).
+				Unit("short").Min(0).
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`ceil(sum(increase(external_dns_registry_errors_total{` + extdns + `}[1h]))) or vector(0)`).
+					Instant().
+					LegendFormat("Errors"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("external-dns Source Errors (1h)").
+				Description("Errors reading route sources (HTTPRoute/Service/...) in the last hour, all clusters.").
+				Datasource(ds).
+				Span(8).Height(4).
+				Unit("short").Min(0).
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`ceil(sum(increase(external_dns_source_errors_total{` + extdns + `}[1h]))) or vector(0)`).
+					Instant().
+					LegendFormat("Errors"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("external-dns Last Sync Age").
+				Description("Time since the last successful full sync to the DNS provider, worst cluster.").
+				Datasource(ds).
+				Span(8).Height(4).
+				Unit("s").
+				Thresholds(syncAgeThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`max(time() - external_dns_controller_last_sync_timestamp_seconds{` + extdns + `})`).
+					Instant().
+					LegendFormat("Age"),
+				).Decimals(0),
+		).
+		WithRow(dashboard.NewRowBuilder("external-dns Metrics")).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("external-dns Sync Age").
+				Description("Seconds since the last provider sync and source reconcile, grouped by cluster. A steadily climbing line means external-dns has stopped syncing.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("s").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`time() - external_dns_controller_last_sync_timestamp_seconds{` + extdns + `}`).
+					LegendFormat("{{cluster}} sync"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`time() - external_dns_controller_last_reconcile_timestamp_seconds{` + extdns + `}`).
+					LegendFormat("{{cluster}} reconcile"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("external-dns Error Rate").
+				Description("Registry (provider) and source errors per second, grouped by cluster.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("ops").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum by (cluster) (rate(external_dns_registry_errors_total{` + extdns + `}[$__rate_interval]))`).
+					LegendFormat("{{cluster}} registry"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum by (cluster) (rate(external_dns_source_errors_total{` + extdns + `}[$__rate_interval]))`).
+					LegendFormat("{{cluster}} source"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("external-dns Records").
+				Description("Records desired by sources vs records present in the registry, grouped by cluster. A persistent gap means records are failing to sync.").
+				Datasource(ds).
+				Span(24).Height(8).
+				Unit("short").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum by (cluster) (external_dns_source_records{` + extdns + `})`).
+					LegendFormat("{{cluster}} source"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum by (cluster) (external_dns_registry_records{` + extdns + `})`).
+					LegendFormat("{{cluster}} registry"),
 				),
 		).
 		Build()

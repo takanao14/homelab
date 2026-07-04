@@ -1,0 +1,671 @@
+{
+  "uid": "openbao-overview",
+  "title": "OpenBao Overview",
+  "tags": [
+    "openbao",
+    "secrets",
+    "infrastructure"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "fiscalYearStartMonth": 0,
+  "refresh": "1m",
+  "schemaVersion": 42,
+  "panels": [
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Status",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "up{job=\"scrapeConfig/monitoring/openbao\"}",
+          "instant": true,
+          "legendFormat": "Up",
+          "range": false
+        }
+      ],
+      "title": "Scrape Target",
+      "description": "Whether Prometheus can reach the OpenBao metrics endpoint.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 1,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "vault_core_unsealed{job=\"scrapeConfig/monitoring/openbao\"}",
+          "instant": true,
+          "legendFormat": "Seal",
+          "range": false
+        }
+      ],
+      "title": "Seal Status",
+      "description": "OpenBao seal status. Sealed means all secret operations fail until unsealed (static seal auto-unseals on restart).",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Sealed",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Unsealed",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 1,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "vault_core_active{job=\"scrapeConfig/monitoring/openbao\"}",
+          "instant": true,
+          "legendFormat": "Active",
+          "range": false
+        }
+      ],
+      "title": "HA Mode",
+      "description": "Whether this node is the active node (single-node raft: always Active when healthy).",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Standby",
+                  "color": "yellow"
+                },
+                "1": {
+                  "text": "Active",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 1,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(vault_token_count{job=\"scrapeConfig/monitoring/openbao\"})",
+          "instant": true,
+          "legendFormat": "Tokens",
+          "range": false
+        }
+      ],
+      "title": "Service Tokens",
+      "description": "Number of live service tokens in the token store.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Requests",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(vault_core_handle_request_count{job=\"scrapeConfig/monitoring/openbao\"}[$__rate_interval])",
+          "legendFormat": "requests"
+        },
+        {
+          "expr": "rate(vault_core_handle_login_request_count{job=\"scrapeConfig/monitoring/openbao\"}[$__rate_interval])",
+          "legendFormat": "logins"
+        }
+      ],
+      "title": "Request Rate",
+      "description": "Core request and login-request throughput.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "vault_core_handle_request{job=\"scrapeConfig/monitoring/openbao\",quantile=~\"0.5|0.9|0.99\"}",
+          "legendFormat": "p{{quantile}}"
+        }
+      ],
+      "title": "Request Latency",
+      "description": "Core request handling latency percentiles (summary quantiles; gaps mean no requests in the window).",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Raft Storage",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(vault_raft_apply{job=\"scrapeConfig/monitoring/openbao\"}[$__rate_interval])",
+          "legendFormat": "applies"
+        }
+      ],
+      "title": "Raft Apply Rate",
+      "description": "Raft log entries applied to the FSM per second (write activity).",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 15
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "vault_raft_commitTime{job=\"scrapeConfig/monitoring/openbao\",quantile=~\"0.5|0.9|0.99\"}",
+          "legendFormat": "p{{quantile}}"
+        }
+      ],
+      "title": "Raft Commit Time",
+      "description": "Time to commit a raft log entry (summary quantiles).",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 15
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "vault_raft_boltdb_storeLogs{job=\"scrapeConfig/monitoring/openbao\",quantile=~\"0.5|0.9|0.99\"}",
+          "legendFormat": "p{{quantile}}"
+        }
+      ],
+      "title": "BoltDB Store Logs Time",
+      "description": "Time to persist raft log entries to BoltDB — the usual disk-latency bottleneck.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 15
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Leases \u0026 Identity",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "vault_expire_num_leases{job=\"scrapeConfig/monitoring/openbao\"}",
+          "legendFormat": "leases"
+        },
+        {
+          "expr": "vault_expire_num_irrevocable_leases{job=\"scrapeConfig/monitoring/openbao\"}",
+          "legendFormat": "irrevocable"
+        }
+      ],
+      "title": "Leases",
+      "description": "Live leases in the expiration manager. Irrevocable leases indicate revocation failures.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "irrevocable"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(vault_token_count{job=\"scrapeConfig/monitoring/openbao\"})",
+          "legendFormat": "tokens"
+        },
+        {
+          "expr": "vault_identity_num_entities{job=\"scrapeConfig/monitoring/openbao\"}",
+          "legendFormat": "entities"
+        }
+      ],
+      "title": "Tokens \u0026 Identity Entities",
+      "description": "Service token count and identity entities over time. A runaway token count points at a login loop (e.g. an ESO auth misconfiguration).",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {}
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "datasource",
+        "label": "Datasource",
+        "skipUrlSync": false,
+        "query": "prometheus",
+        "multi": false,
+        "allowCustomValue": true,
+        "includeAll": false,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      }
+    ]
+  },
+  "annotations": {}
+}

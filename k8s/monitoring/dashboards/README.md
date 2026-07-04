@@ -13,7 +13,7 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 | `proxmox-otlp-overview` | Proxmox VE cluster (native OTLP metrics): VM/LXC counts, node and guest resources, storage, network I/O, PSI pressure |
 | `gpu-overview` | AMD RX 9060 XT: activity, VRAM, temperature, power, clock speed |
 | `disk-health` | Physical disk S.M.A.R.T.: health flag, failure precursors, SSD wear, temperature |
-| `dns-overview` | dnsdist + pdns-auth: QPS, cache hit rate, latency, response codes, drop rate |
+| `dns-overview` | dnsdist + pdns-auth + CoreDNS + external-dns: QPS, cache hit rate, latency, response codes, record sync |
 | `dns-logs` | DNS query logs via Loki: query rate, response codes, top domains, per-host breakdown |
 | `network-overview` | SNMP MIB-II (bgw1/c1200): traffic, errors, discards, interface status |
 | `monitoring-overview` | Prometheus, Alertmanager, and Loki self-monitoring: alerts, scrape targets, TSDB, ingestion rate |
@@ -22,6 +22,9 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 | `service-logs` | Generic journald service logs via Loki: volume, errors/warnings by unit |
 | `cert-manager-overview` | cert-manager certificates and ClusterIssuers: expiry countdown, ready state, sync errors |
 | `cilium-overview` | Cilium CNI: agent/operator health, packet drops, policy verdicts, BPF map pressure, endpoint state, Hubble flows |
+| `envoy-gateway-overview` | Envoy Gateway: listener/HTTPRoute traffic, response codes, upstream latency, xDS sync health |
+| `argocd-overview` | ArgoCD: app health/sync status, sync failures, reconcile latency, repo-server git requests |
+| `openbao-overview` | OpenBao (external VM): seal/active status, request rate and latency, raft storage, leases and tokens |
 | `uptime` | ICMP/DNS probe availability timeline |
 
 ## Structure
@@ -45,6 +48,11 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 │   ├── syslog.go               # syslog
 │   ├── proxmox_logs.go         # proxmox-logs
 │   ├── service_logs.go         # service-logs
+│   ├── cert_manager.go         # cert-manager-overview
+│   ├── cilium.go               # cilium-overview
+│   ├── envoy_gateway.go        # envoy-gateway-overview
+│   ├── argocd.go               # argocd-overview
+│   ├── openbao.go              # openbao-overview
 │   └── uptime.go               # uptime
 ├── generated/                  # Generated JSON output (git-ignored)
 ├── provisioning/               # Local Grafana provisioning config
