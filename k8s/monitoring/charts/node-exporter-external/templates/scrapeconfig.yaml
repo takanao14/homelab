@@ -16,7 +16,8 @@ spec:
     {{- end }}
   relabelings:
     # Scrape by IP (no DNS dependency) but expose the hostname as instance.
-    - sourceLabels: [__tmp_name]
+    - action: replace
+      sourceLabels: [__tmp_name]
       targetLabel: instance
   metricsPath: {{ .Values.metricsPath }}
   scrapeInterval: 30s

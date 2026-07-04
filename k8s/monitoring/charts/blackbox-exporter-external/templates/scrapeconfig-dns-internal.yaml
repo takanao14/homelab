@@ -18,10 +18,13 @@ spec:
         __tmp_name: {{ .name | quote }}
     {{- end }}
   relabelings:
-    - sourceLabels: [__address__]
+    - action: replace
+      sourceLabels: [__address__]
       targetLabel: __param_target
-    - sourceLabels: [__tmp_name]
+    - action: replace
+      sourceLabels: [__tmp_name]
       targetLabel: instance
-    - targetLabel: __address__
+    - action: replace
+      targetLabel: __address__
       replacement: {{ .Values.blackboxExporterURL | quote }}
   scrapeInterval: {{ .Values.scrapeInterval }}

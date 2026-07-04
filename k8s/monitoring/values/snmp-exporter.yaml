@@ -35,11 +35,16 @@ prometheus-snmp-exporter:
               # Probe staticConfig has no per-target labels, so map each probed
               # IP (__param_target) to its hostname as the instance label.
               # Probing still connects by IP: no DNS dependency.
-              - sourceLabels: [__param_target]
+              # action is explicit: the CRD defaults it to replace, and with
+              # ServerSideApply the ArgoCD diff cannot absorb server-side
+              # defaults, leaving the app permanently OutOfSync if omitted.
+              - action: replace
+                sourceLabels: [__param_target]
                 regex: "192.168.10.1"
                 targetLabel: instance
                 replacement: bgw1
-              - sourceLabels: [__param_target]
+              - action: replace
+                sourceLabels: [__param_target]
                 regex: "192.168.10.2"
                 targetLabel: instance
                 replacement: c1200

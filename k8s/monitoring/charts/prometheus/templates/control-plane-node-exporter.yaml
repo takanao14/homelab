@@ -27,5 +27,9 @@ spec:
         __tmp_name: dev-cp1
   relabelings:
     # Scrape by IP (no DNS dependency) but expose the hostname as instance.
-    - sourceLabels: [__tmp_name]
+    # action is explicit: the CRD defaults it to replace, and with
+    # ServerSideApply the ArgoCD diff cannot absorb server-side defaults,
+    # leaving the app permanently OutOfSync if omitted.
+    - action: replace
+      sourceLabels: [__tmp_name]
       targetLabel: instance
