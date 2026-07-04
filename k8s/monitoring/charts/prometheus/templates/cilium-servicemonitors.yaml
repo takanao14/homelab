@@ -3,7 +3,8 @@ ServiceMonitors for Cilium metrics. Defined here (not in the Cilium chart)
 because Cilium is installed via helmfile at cluster bootstrap, before the
 kube-prometheus-stack ServiceMonitor CRD exists. Cilium only exposes the metrics
 Services (prometheus.metricsService / hubble.metrics.enabled); scraping is wired
-up here. cluster=prd is injected to match the rest of the prd ServiceMonitors.
+up here. cluster=prd is injected by the default cluster-prd scrape class
+(see prometheusSpec.scrapeClasses in values/prometheus.yaml).
 */ -}}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -25,9 +26,6 @@ spec:
         - action: replace
           sourceLabels: [__meta_kubernetes_pod_node_name]
           targetLabel: node
-        - action: replace
-          targetLabel: cluster
-          replacement: prd
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -45,10 +43,6 @@ spec:
   endpoints:
     - port: metrics
       interval: 30s
-      relabelings:
-        - action: replace
-          targetLabel: cluster
-          replacement: prd
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -70,6 +64,3 @@ spec:
         - action: replace
           sourceLabels: [__meta_kubernetes_pod_node_name]
           targetLabel: node
-        - action: replace
-          targetLabel: cluster
-          replacement: prd

@@ -102,15 +102,6 @@ kube-prometheus-stack:
             resources:
               requests:
                 storage: 10Gi
-    serviceMonitor:
-      # Use target relabelings (relabel_configs) so the cluster label is also
-      # applied to synthetic series such as up and scrape_*, which bypass
-      # metric_relabel_configs. This keeps prd consistent with dev (whose
-      # cluster label arrives via remote_write external labels).
-      relabelings:
-        - action: replace
-          targetLabel: cluster
-          replacement: prd
     service:
       type: ClusterIP
 
@@ -119,56 +110,24 @@ kube-prometheus-stack:
 
   kubelet:
     serviceMonitor:
-      # Target relabelings cover the up series for all three kubelet scrape
-      # endpoints (/metrics, /metrics/cadvisor, /metrics/probes). Without the
-      # cluster label the KubeletDown rule false-fires, because it joins
-      # kube_node_info (labeled cluster=prd) against up{job="kubelet"}.
       # NOTE: these keys override the chart defaults, so the default
-      # __metrics_path__ -> metrics_path relabeling must be repeated here;
-      # the KubeletDown rule selects up{...,metrics_path="/metrics"}.
+      # __metrics_path__ -> metrics_path relabeling must be repeated here for
+      # all three kubelet scrape endpoints (/metrics, /metrics/cadvisor,
+      # /metrics/probes); the KubeletDown rule selects
+      # up{...,metrics_path="/metrics"}. The cluster label itself comes from
+      # the default cluster-prd scrape class (values/prometheus.yaml).
       relabelings:
         - action: replace
           sourceLabels: [__metrics_path__]
           targetLabel: metrics_path
-        - action: replace
-          targetLabel: cluster
-          replacement: prd
       cAdvisorRelabelings:
         - action: replace
           sourceLabels: [__metrics_path__]
           targetLabel: metrics_path
-        - action: replace
-          targetLabel: cluster
-          replacement: prd
       probesRelabelings:
         - action: replace
           sourceLabels: [__metrics_path__]
           targetLabel: metrics_path
-        - action: replace
-          targetLabel: cluster
-          replacement: prd
-
-  kubeApiServer:
-    serviceMonitor:
-      relabelings:
-        - action: replace
-          targetLabel: cluster
-          replacement: prd
-
-  coreDns:
-    serviceMonitor:
-      relabelings:
-        - action: replace
-          targetLabel: cluster
-          replacement: prd
-
-  kube-state-metrics:
-    prometheus:
-      monitor:
-        relabelings:
-          - action: replace
-            targetLabel: cluster
-            replacement: prd
 
   nodeExporter:
     enabled: true
@@ -182,9 +141,6 @@ kube-prometheus-stack:
           - action: replace
             sourceLabels: [__meta_kubernetes_pod_node_name]
             targetLabel: node
-          - action: replace
-            targetLabel: cluster
-            replacement: prd
 
   # The k0s controller (192.168.30.11) is a dedicated control-plane node with no
   # kubelet, so it is not discoverable as a Kubernetes Endpoint. Point the chart
@@ -203,10 +159,6 @@ kube-prometheus-stack:
     serviceMonitor:
       https: true
       insecureSkipVerify: true
-      relabelings:
-        - action: replace
-          targetLabel: cluster
-          replacement: prd
   kubeScheduler:
     enabled: true
     endpoints:
@@ -218,10 +170,6 @@ kube-prometheus-stack:
     serviceMonitor:
       https: true
       insecureSkipVerify: true
-      relabelings:
-        - action: replace
-          targetLabel: cluster
-          replacement: prd
   # kube-proxy is disabled cluster-wide (Cilium kube-proxy replacement).
   kubeProxy:
     enabled: false
