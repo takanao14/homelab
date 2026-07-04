@@ -23,6 +23,9 @@ proxmox:
   - key: node3
     url: https://node3.home.butaco.net:8006
     node: node3
+  - key: node4
+    url: https://node4.home.butaco.net:8006
+    node: node4
 
 pdns:
   primary:
