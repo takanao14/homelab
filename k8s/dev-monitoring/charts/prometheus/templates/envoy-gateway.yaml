@@ -1,0 +1,48 @@
+{{- /*
+Envoy Gateway metrics on the dev cluster. See the prd counterpart
+(k8s/monitoring/charts/prometheus/templates/envoy-gateway.yaml) for the full
+rationale on why this lives here instead of in k8s/envoy-gateway/ or
+k8s/gateway/, and why the proxy needs a PodMonitor rather than a
+ServiceMonitor. The cluster label is added at remote_write time via
+externalLabels (cluster=dev), so no per-resource relabeling is needed here.
+*/ -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: envoy-gateway-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames: ["envoy-gateway-system"]
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gateway-helm
+      control-plane: envoy-gateway
+  endpoints:
+    - port: metrics
+      interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: envoy-gateway-proxy
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames: ["envoy-gateway-system"]
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: envoy
+      app.kubernetes.io/component: proxy
+  podMetricsEndpoints:
+    - port: metrics
+      path: /stats/prometheus
+      interval: 30s
+      relabelings:
+        - action: replace
+          sourceLabels: [__meta_kubernetes_pod_label_gateway_envoyproxy_io_owning_gateway_name]
+          targetLabel: gateway

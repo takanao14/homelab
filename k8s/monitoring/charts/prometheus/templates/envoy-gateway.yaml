@@ -1,0 +1,57 @@
+{{- /*
+Envoy Gateway metrics. Defined here (not in k8s/envoy-gateway/ or k8s/gateway/)
+because those charts sync before the monitoring app (sync-wave -2/-1 vs 1) and
+would fail on a fresh cluster if they referenced the ServiceMonitor/PodMonitor
+CRD before it exists — same reasoning as cilium-servicemonitors.yaml.
+
+Control plane: the gateway-helm chart already creates the "envoy-gateway"
+Service with a metrics port (19001, path /metrics); only a ServiceMonitor is
+needed. Data plane: Envoy Gateway places proxy Pods in envoy-gateway-system
+(the controller's namespace), not gateway-system where the Gateway resource
+itself lives; the proxy Service only carries client traffic (ports 80/443),
+so metrics (19001, path /stats/prometheus) require a PodMonitor. Confirmed by
+port-forwarding both endpoints on prd (2026-07-04).
+
+cluster=prd is injected by the default cluster-prd scrape class (see
+prometheusSpec.scrapeClasses in values/prometheus.yaml).
+*/ -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: envoy-gateway-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames: ["envoy-gateway-system"]
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gateway-helm
+      control-plane: envoy-gateway
+  endpoints:
+    - port: metrics
+      interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: envoy-gateway-proxy
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames: ["envoy-gateway-system"]
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: envoy
+      app.kubernetes.io/component: proxy
+  podMetricsEndpoints:
+    - port: metrics
+      path: /stats/prometheus
+      interval: 30s
+      relabelings:
+        - action: replace
+          sourceLabels: [__meta_kubernetes_pod_label_gateway_envoyproxy_io_owning_gateway_name]
+          targetLabel: gateway
