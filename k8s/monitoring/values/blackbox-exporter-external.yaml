@@ -17,12 +17,12 @@ icmp:
       name: "node2"
     - ip: "192.168.10.13"
       name: "node3"
+    - ip: "192.168.10.14"
+      name: "node4"
     - ip: "192.168.10.240"
       name: "rpi3"
     - ip: "192.168.10.241"
       name: "rpi4"
-    - ip: "192.168.10.253"
-      name: "wifi-ap2"
     - ip: "192.168.10.254"
       name: "wifi-ap1"
     - ip: "192.168.110.11"
@@ -31,6 +31,8 @@ icmp:
       name: "node2-amt"
     - ip: "192.168.110.13"
       name: "node3-amt"
+    - ip: "192.168.110.14"
+      name: "node4-amt"
 
 # DNS external resolution probe (query google.com against each DNS server)
 dnsExternal:
