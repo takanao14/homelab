@@ -19,11 +19,21 @@ listener "tcp" {
   tls_cert_file = "{{ openbao_tls_cert_file }}"
   tls_key_file  = "{{ openbao_tls_key_file }}"
 {% endif %}
+  # Metrics are operational data, not secret material, and this listener is
+  # LAN-only, so skip provisioning/rotating a separate scrape token.
+  telemetry {
+    unauthenticated_metrics_access = true
+  }
 }
 
 seal "static" {
   current_key_id = "{{ openbao_seal_key_id }}"
   current_key    = "file://{{ openbao_seal_key_path }}"
+}
+
+telemetry {
+  prometheus_retention_time = "{{ openbao_prometheus_retention_time }}"
+  disable_hostname          = true
 }
 
 api_addr     = "{{ openbao_api_addr }}"

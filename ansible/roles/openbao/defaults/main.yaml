@@ -17,6 +17,9 @@ openbao_tls_disable: true
 openbao_tls_cert_file: "{{ openbao_config_dir }}/tls/cert.pem"
 openbao_tls_key_file: "{{ openbao_config_dir }}/tls/key.pem"
 
+# How long Prometheus-format metrics stay in memory before eviction.
+openbao_prometheus_retention_time: "60s"
+
 # List of other cluster node API addresses for Raft auto-join
 # e.g. ["https://192.168.10.1:8200", "https://192.168.10.2:8200"]
 openbao_raft_retry_join: []

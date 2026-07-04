@@ -1,0 +1,6 @@
+port: 8200
+metricsPath: /v1/sys/metrics
+scheme: http
+
+targetIPs:
+  - "192.168.40.30" # openbao1
