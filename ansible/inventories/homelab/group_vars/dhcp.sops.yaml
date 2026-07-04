@@ -11,10 +11,11 @@ kea_subnet4:
           ip_address: 192.168.110.12
         - hw_address: ENC[AES256_GCM,data:G3aSVMfOiqFbSDEFiBrsZGw=,iv:WmnXYkyIcWMhOCg10A09lldSCeYFJ8xQh4/6QlTCqmI=,tag:QE29vdK1vA961hEOljwrcA==,type:str]
           ip_address: 192.168.110.13
+        - hw_address: ENC[AES256_GCM,data:6KNHIdKIcOX+4lES1Ww5eBw=,iv:SUi16OI+xpe4R3NPycZlcY1WnQa5njeBWFmNjnc7oLc=,tag:K4366mVXcFH1qyOTPtyddQ==,type:str]
+          ip_address: 192.168.110.14
 sops:
     age:
-        - recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
-          enc: |
+        - enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
             YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBRV2pEaDdHMkZ6Y2pidnVo
             N3BtbVFxUXJLVzBXaytTY0VPTWlaSFo3a2hRCkxjOUw3b3lTaUJTRWxkRW9LSm9U
@@ -22,7 +23,8 @@ sops:
             MVo5Slh3M1V3MDVwZFNkeWVmRFdlQU0KpwaW3JMEqqmC5nBSofZUbXfHyP5dSHnf
             xXm4cp3OOhbgm7R8gzNwJOdh80eIi95QQPjWVOx/Nzh4OiJjf6Hrig==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-05-02T08:42:40Z"
-    mac: ENC[AES256_GCM,data:gO43r2BBh0PtPOkADJqwWHikr8o/PgpbY+RsYXcFGeDyOUVSeo3I5V95f5nrMg4WghtmCHjY8xqOKt7259AZPiMGf8HkIckecWAmRw5/DHyHvEst/eTCzN6eMVSCgwnaMi3kxW+kizVZW5qr2l55NIBlhMs8gs78PSrzPCIFHqw=,iv:uI5ka3J581Pqlqjj6Fl0zvxU7iuCTj/WHQ+We1BTNs4=,tag:YnsKq8Q1pbJmAZZS0e7NlQ==,type:str]
+          recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
     encrypted_regex: hw_address
-    version: 3.12.2
+    lastmodified: "2026-07-04T15:59:15Z"
+    mac: ENC[AES256_GCM,data:YXICKtaaGIi/lQTn+YP3ZOwWmWSBg28k+eB7S7Psg/vhTI3MXxXv0EdS1Ok8ogWQMoLiHaFL3pcA8V6RCrG0IPyjxTQxKgm2jADE3oisnqQ+9C9hRtQTnGY2dsqi+ismv0htrpeKvOIWYdalou1la71pfptzRjmr+hTflo90ZVs=,iv:jn5kOWvAYrJ1mf83pW/aaZ6x0VVC9EijP2EMH4kKkRY=,tag:S6Foflm4JqmcNTkW/Sba9A==,type:str]
+    version: 3.13.2
