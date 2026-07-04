@@ -15,12 +15,12 @@ spec:
     {{- range .Values.dnsInternal.targets }}
     - targets: [{{ .ip | quote }}]
       labels:
-        name: {{ .name | quote }}
+        __tmp_name: {{ .name | quote }}
     {{- end }}
   relabelings:
     - sourceLabels: [__address__]
       targetLabel: __param_target
-    - sourceLabels: [name]
+    - sourceLabels: [__tmp_name]
       targetLabel: instance
     - targetLabel: __address__
       replacement: {{ .Values.blackboxExporterURL | quote }}

@@ -9,9 +9,14 @@ spec:
   # External LAN hosts: opt out of the default cluster-prd scrape class.
   scrapeClass: external
   staticConfigs:
-    - targets:
-        {{- range .Values.targetIPs }}
-        - "{{ . }}:{{ $.Values.port }}"
-        {{- end }}
+    {{- range .Values.targets }}
+    - targets: ["{{ .ip }}:{{ $.Values.port }}"]
+      labels:
+        __tmp_name: {{ .name | quote }}
+    {{- end }}
+  relabelings:
+    # Scrape by IP (no DNS dependency) but expose the hostname as instance.
+    - sourceLabels: [__tmp_name]
+      targetLabel: instance
   metricsPath: {{ .Values.metricsPath }}
   scrapeInterval: 30s

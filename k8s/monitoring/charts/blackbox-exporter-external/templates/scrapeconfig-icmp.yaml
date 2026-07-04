@@ -15,14 +15,14 @@ spec:
     {{- range .Values.icmp.targets }}
     - targets: [{{ .ip | quote }}]
       labels:
-        name: {{ .name | quote }}
+        __tmp_name: {{ .name | quote }}
     {{- end }}
   relabelings:
     # Set target IP as __param_target
     - sourceLabels: [__address__]
       targetLabel: __param_target
     # Set instance label to hostname
-    - sourceLabels: [name]
+    - sourceLabels: [__tmp_name]
       targetLabel: instance
     # Point scrape target to blackbox_exporter on rpi4
     - targetLabel: __address__

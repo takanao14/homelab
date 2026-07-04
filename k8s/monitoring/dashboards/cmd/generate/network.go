@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
@@ -11,7 +9,8 @@ import (
 )
 
 // buildNetworkOverview defines the network device dashboard using SNMP MIB-II metrics.
-// Targets: 192.168.10.1 (router), 192.168.10.2 (switch).
+// The snmp-exporter Probe relabels instance to the device hostname
+// (bgw1 = router, c1200 = switch), so panels use the instance label directly.
 // ifHC* counters are 64-bit, avoiding wrap-around on high-speed interfaces.
 func buildNetworkOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
@@ -20,23 +19,6 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 	// Match them explicitly to exclude loopbacks, tunnels, VLANs, port channels,
 	// subinterfaces, and vendor-internal interfaces.
 	const ifFilter = `ifDescr=~"GigaEthernet[0-9]+|GigabitEthernet[0-9]+", instance=~"$instance"`
-
-	// mapDevice maps instance IPs to logical device names for better readability.
-	mapDevice := func(expr string) string {
-		replacements := []struct {
-			device   string
-			instance string
-		}{
-			{"bgw1", "192.168.10.1.*"},
-			{"c1200", "192.168.10.2.*"},
-		}
-
-		for _, r := range replacements {
-			expr = fmt.Sprintf(`label_replace(%s, "device", "%s", "instance", "%s")`, expr, r.device, r.instance)
-		}
-
-		return expr
-	}
 
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
@@ -58,7 +40,7 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 		WithVariable(
 			dashboard.NewCustomVariableBuilder("instance").
 				Label("Device").
-				Values(dashboard.StringOrMap{String: strPtr("192.168.10.1,192.168.10.2")}).
+				Values(dashboard.StringOrMap{String: strPtr("bgw1,c1200")}).
 				Multi(true).
 				IncludeAll(true),
 		).
@@ -72,8 +54,8 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Min(0).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`count by (instance) (ifOperStatus{` + ifFilter + `} == 1)`)).
-					LegendFormat("{{device}}"),
+					Expr(`count by (instance) (ifOperStatus{` + ifFilter + `} == 1)`).
+					LegendFormat("{{instance}}"),
 				),
 		).
 		WithPanel(
@@ -87,8 +69,8 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`count by (instance) (ifOperStatus{` + ifFilter + `} != 1) or count by (instance) (ifOperStatus{` + ifFilter + `}) * 0`)).
-					LegendFormat("{{device}}"),
+					Expr(`count by (instance) (ifOperStatus{` + ifFilter + `} != 1) or count by (instance) (ifOperStatus{` + ifFilter + `}) * 0`).
+					LegendFormat("{{instance}}"),
 				),
 		).
 		WithPanel(
@@ -100,12 +82,12 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Min(0).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`sum by (instance) (rate(ifHCInOctets{` + ifFilter + `}[$__rate_interval]) * 8)`)).
-					LegendFormat("{{device}} In"),
+					Expr(`sum by (instance) (rate(ifHCInOctets{` + ifFilter + `}[$__rate_interval]) * 8)`).
+					LegendFormat("{{instance}} In"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`sum by (instance) (rate(ifHCOutOctets{` + ifFilter + `}[$__rate_interval]) * 8)`)).
-					LegendFormat("{{device}} Out"),
+					Expr(`sum by (instance) (rate(ifHCOutOctets{` + ifFilter + `}[$__rate_interval]) * 8)`).
+					LegendFormat("{{instance}} Out"),
 				),
 		).
 		WithRow(dashboard.NewRowBuilder("Traffic")).
@@ -121,13 +103,13 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("In").
-					Expr(mapDevice(`sum by (instance) (rate(ifHCInOctets{`+ifFilter+`}[$__rate_interval]) * 8)`)).
-					LegendFormat("{{device}} In"),
+					Expr(`sum by (instance) (rate(ifHCInOctets{`+ifFilter+`}[$__rate_interval]) * 8)`).
+					LegendFormat("{{instance}} In"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Out").
-					Expr(mapDevice(`sum by (instance) (rate(ifHCOutOctets{`+ifFilter+`}[$__rate_interval]) * 8)`)).
-					LegendFormat("{{device}} Out"),
+					Expr(`sum by (instance) (rate(ifHCOutOctets{`+ifFilter+`}[$__rate_interval]) * 8)`).
+					LegendFormat("{{instance}} Out"),
 				).
 				OverrideByQuery("Out", []dashboard.DynamicConfigValue{
 					{Id: "custom.transform", Value: "negative-Y"},
@@ -144,12 +126,12 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`rate(ifInErrors{` + ifFilter + `}[$__rate_interval])`)).
-					LegendFormat("{{device}} {{ifDescr}} In"),
+					Expr(`rate(ifInErrors{` + ifFilter + `}[$__rate_interval])`).
+					LegendFormat("{{instance}} {{ifDescr}} In"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`rate(ifOutErrors{` + ifFilter + `}[$__rate_interval])`)).
-					LegendFormat("{{device}} {{ifDescr}} Out"),
+					Expr(`rate(ifOutErrors{` + ifFilter + `}[$__rate_interval])`).
+					LegendFormat("{{instance}} {{ifDescr}} Out"),
 				),
 		).
 		WithPanel(
@@ -162,12 +144,12 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`rate(ifInDiscards{` + ifFilter + `}[$__rate_interval])`)).
-					LegendFormat("{{device}} {{ifDescr}} In"),
+					Expr(`rate(ifInDiscards{` + ifFilter + `}[$__rate_interval])`).
+					LegendFormat("{{instance}} {{ifDescr}} In"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDevice(`rate(ifOutDiscards{` + ifFilter + `}[$__rate_interval])`)).
-					LegendFormat("{{device}} {{ifDescr}} Out"),
+					Expr(`rate(ifOutDiscards{` + ifFilter + `}[$__rate_interval])`).
+					LegendFormat("{{instance}} {{ifDescr}} Out"),
 				),
 		).
 		Build()

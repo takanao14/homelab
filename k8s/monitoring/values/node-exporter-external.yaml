@@ -1,15 +1,27 @@
 port: 9100
 metricsPath: /metrics
 
-targetIPs:
-  - "192.168.10.10"
-  - "192.168.10.11"
-  - "192.168.10.12"
-  - "192.168.10.13"
-  - "192.168.10.240"
-  - "192.168.10.241"
+# name becomes the instance label (relabeled from __tmp_name); scraping still
+# connects by IP so monitoring does not depend on DNS resolution.
+targets:
+  - ip: "192.168.10.10"
+    name: "pve"
+  - ip: "192.168.10.11"
+    name: "node1"
+  - ip: "192.168.10.12"
+    name: "node2"
+  - ip: "192.168.10.13"
+    name: "node3"
+  - ip: "192.168.10.240"
+    name: "rpi3"
+  - ip: "192.168.10.241"
+    name: "rpi4"
   # Stateful service guests (in-guest filesystem usage is not exposed by Proxmox OTLP).
-  - "192.168.10.245" # forgejo1
-  - "192.168.10.247" # netbox1
-  - "192.168.40.30"  # openbao1
-  - "192.168.50.31"  # seaweedfs1
+  - ip: "192.168.10.245"
+    name: "forgejo1"
+  - ip: "192.168.10.247"
+    name: "netbox1"
+  - ip: "192.168.40.30"
+    name: "openbao1"
+  - ip: "192.168.50.31"
+    name: "seaweedfs1"

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
@@ -11,10 +9,8 @@ import (
 )
 
 // buildDnsOverview defines the DNS infrastructure dashboard.
-//   - dist1/dist2: 192.168.10.231/232 (dnsdist)
-//   - ns1: 192.168.10.233 (primary)
-//   - ns2: 192.168.10.234 (secondary)
-//   - ns3: 192.168.10.235 (secondary)
+// The dnsdist/pdns-auth scrape configs relabel instance to the hostname
+// (dist1/dist2, ns1/ns2), so panels use the instance label directly.
 func buildDnsOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
@@ -24,28 +20,6 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		coredns = `job="coredns"`
 		extdns  = `job="external-dns"`
 	)
-
-	// mapDNS maps instance IPs to logical ns1/ns2 names for better readability.
-	mapDNS := func(expr string) string {
-		replacements := []struct {
-			server   string
-			instance string
-		}{
-			{"old-ns1", "192.168.10.242:.*"},
-			{"old-ns2", "192.168.10.241:.*"},
-			{"dist1", "192.168.10.231:.*"},
-			{"dist2", "192.168.10.232:.*"},
-			{"ns1", "192.168.10.233:.*"},
-			{"ns2", "192.168.10.234:.*"},
-			{"ns3", "192.168.10.235:.*"},
-		}
-
-		for _, r := range replacements {
-			expr = fmt.Sprintf(`label_replace(%s, "server", "%s", "instance", "%s")`, expr, r.server, r.instance)
-		}
-
-		return expr
-	}
 
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
@@ -151,13 +125,13 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Queries").
-					Expr(mapDNS(`rate(dnsdist_queries{`+dnsdist+`}[$__rate_interval])`)).
-					LegendFormat("{{server}} Queries"),
+					Expr(`rate(dnsdist_queries{`+dnsdist+`}[$__rate_interval])`).
+					LegendFormat("{{instance}} Queries"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Responses").
-					Expr(mapDNS(`rate(dnsdist_responses{`+dnsdist+`}[$__rate_interval])`)).
-					LegendFormat("{{server}} Responses"),
+					Expr(`rate(dnsdist_responses{`+dnsdist+`}[$__rate_interval])`).
+					LegendFormat("{{instance}} Responses"),
 				).
 				OverrideByQuery("Responses", []dashboard.DynamicConfigValue{
 					{Id: "custom.transform", Value: "negative-Y"},
@@ -213,12 +187,12 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Legend(legend).
 				Thresholds(latencyThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`dnsdist_latency_avg100{`+dnsdist+`}`)).
-					LegendFormat("{{server}} avg100"),
+					Expr(`dnsdist_latency_avg100{`+dnsdist+`}`).
+					LegendFormat("{{instance}} avg100"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`dnsdist_latency_avg1000{`+dnsdist+`}`)).
-					LegendFormat("{{server}} avg1000"),
+					Expr(`dnsdist_latency_avg1000{`+dnsdist+`}`).
+					LegendFormat("{{instance}} avg1000"),
 				).
 				// Visual differentiation: emphasize avg100 (short-term) and de-emphasize avg1000 (long-term trend).
 				WithOverride(dashboard.MatcherConfig{
@@ -239,8 +213,8 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(dnsdist_cache_hits{` + dnsdist + `}[$__rate_interval]) / clamp_min(rate(dnsdist_cache_hits{` + dnsdist + `}[$__rate_interval]) + rate(dnsdist_cache_misses{` + dnsdist + `}[$__rate_interval]), 1) * 100`)).
-					LegendFormat("{{server}}"),
+					Expr(`rate(dnsdist_cache_hits{` + dnsdist + `}[$__rate_interval]) / clamp_min(rate(dnsdist_cache_hits{` + dnsdist + `}[$__rate_interval]) + rate(dnsdist_cache_misses{` + dnsdist + `}[$__rate_interval]), 1) * 100`).
+					LegendFormat("{{instance}}"),
 				),
 		).
 		WithPanel(
@@ -254,16 +228,16 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(dnsdist_acl_drops{` + dnsdist + `}[$__rate_interval])`)).
-					LegendFormat("{{server}} ACL Drop"),
+					Expr(`rate(dnsdist_acl_drops{` + dnsdist + `}[$__rate_interval])`).
+					LegendFormat("{{instance}} ACL Drop"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(dnsdist_rule_drops{` + dnsdist + `}[$__rate_interval])`)).
-					LegendFormat("{{server}} Rule Drop"),
+					Expr(`rate(dnsdist_rule_drops{` + dnsdist + `}[$__rate_interval])`).
+					LegendFormat("{{instance}} Rule Drop"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(dnsdist_dynamic_blocked{` + dnsdist + `}[$__rate_interval])`)).
-					LegendFormat("{{server}} Dynamic Block"),
+					Expr(`rate(dnsdist_dynamic_blocked{` + dnsdist + `}[$__rate_interval])`).
+					LegendFormat("{{instance}} Dynamic Block"),
 				),
 		).
 		WithPanel(
@@ -275,8 +249,8 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(dnsdist_queries{` + dnsdist + `}[$__rate_interval]) - rate(dnsdist_responses{` + dnsdist + `}[$__rate_interval])`)).
-					LegendFormat("{{server}}"),
+					Expr(`rate(dnsdist_queries{` + dnsdist + `}[$__rate_interval]) - rate(dnsdist_responses{` + dnsdist + `}[$__rate_interval])`).
+					LegendFormat("{{instance}}"),
 				),
 		).
 		WithRow(dashboard.NewRowBuilder("pdns-auth")).
@@ -315,12 +289,12 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(pdns_auth_udp_queries{` + pdns + `}[$__rate_interval])`)).
-					LegendFormat("{{server}} UDP"),
+					Expr(`rate(pdns_auth_udp_queries{` + pdns + `}[$__rate_interval])`).
+					LegendFormat("{{instance}} UDP"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`rate(pdns_auth_tcp_queries{` + pdns + `}[$__rate_interval])`)).
-					LegendFormat("{{server}} TCP"),
+					Expr(`rate(pdns_auth_tcp_queries{` + pdns + `}[$__rate_interval])`).
+					LegendFormat("{{instance}} TCP"),
 				),
 		).
 		WithPanel(
@@ -373,8 +347,8 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Legend(legend).
 				Thresholds(latencyThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`pdns_auth_latency{` + pdns + `}`)).
-					LegendFormat("{{server}}"),
+					Expr(`pdns_auth_latency{` + pdns + `}`).
+					LegendFormat("{{instance}}"),
 				),
 		).
 		WithPanel(
@@ -387,8 +361,8 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Legend(legend).
 				Thresholds(latencyThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(mapDNS(`pdns_auth_backend_latency{` + pdns + `}`)).
-					LegendFormat("{{server}}"),
+					Expr(`pdns_auth_backend_latency{` + pdns + `}`).
+					LegendFormat("{{instance}}"),
 				),
 		).
 		WithRow(dashboard.NewRowBuilder("CoreDNS Summary")).

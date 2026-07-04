@@ -1,4 +1,8 @@
 port: 5000
 metricsPath: /metrics
 
-targetIP: "192.168.20.22"
+# name becomes the instance label (relabeled from __tmp_name); scraping still
+# connects by IP so monitoring does not depend on DNS resolution.
+targets:
+  - ip: "192.168.20.22"
+    name: "gpuvm"

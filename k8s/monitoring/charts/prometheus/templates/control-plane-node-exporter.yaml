@@ -20,6 +20,12 @@ spec:
     - targets: ["192.168.30.11:9100"]
       labels:
         cluster: prd
+        __tmp_name: prd-cp1
     - targets: ["192.168.20.11:9100"]
       labels:
         cluster: dev
+        __tmp_name: dev-cp1
+  relabelings:
+    # Scrape by IP (no DNS dependency) but expose the hostname as instance.
+    - sourceLabels: [__tmp_name]
+      targetLabel: instance
