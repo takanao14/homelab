@@ -34,6 +34,20 @@ spec:
             {{- range .Values.serviceTypeFilter }}
             - --service-type-filter={{ . }}
             {{- end }}
+          ports:
+            - name: http-metrics
+              containerPort: 7979
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http-metrics
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http-metrics
+            initialDelaySeconds: 10
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           envFrom:

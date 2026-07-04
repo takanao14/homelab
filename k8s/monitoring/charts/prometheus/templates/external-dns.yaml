@@ -1,0 +1,26 @@
+{{- /*
+external-dns metrics. Defined here (not in k8s/externalDNS/) for consistency
+with the other cross-cutting ServiceMonitors in this chart (cilium, envoy
+gateway, argocd) — see cilium-servicemonitors.yaml for the CRD-race rationale,
+though external-dns itself has no such ordering constraint since it isn't
+part of cluster bootstrap.
+
+cluster=prd is injected by the default cluster-prd scrape class (see
+prometheusSpec.scrapeClasses in values/prometheus.yaml).
+*/ -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: external-dns
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames: ["external-dns"]
+  selector:
+    matchLabels:
+      app: external-dns
+  endpoints:
+    - port: http-metrics
+      interval: 30s
