@@ -1,15 +1,25 @@
 {{- /*
 ArgoCD metrics on the dev cluster. See the prd counterpart
 (k8s/monitoring/charts/prometheus/templates/argocd.yaml) for the full
-rationale on why this lives here instead of in k8s/argocd/. The cluster label
-is added at remote_write time via externalLabels (cluster=dev), so no
-per-resource relabeling is needed here.
+rationale on why this lives here instead of in k8s/argocd/, and why the
+selector needs both app.kubernetes.io/name and app.kubernetes.io/component
+(application-controller and applicationset-controller share the same
+generic "argocd-metrics" Service name label). The cluster label is added at
+remote_write time via externalLabels (cluster=dev), so no per-resource
+relabeling is needed here.
 */ -}}
-{{- $components := list "application-controller" "server" "repo-server" "applicationset-controller" }}
-{{- range $i, $component := $components }}
+{{- $components := dict
+  "application-controller" "argocd-metrics"
+  "applicationset-controller" "argocd-metrics"
+  "repo-server" "argocd-repo-server-metrics"
+  "server" "argocd-server-metrics"
+}}
+{{- $i := 0 }}
+{{- range $component, $serviceName := $components }}
 {{- if $i }}
 ---
 {{- end }}
+{{- $i = add $i 1 }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -22,7 +32,8 @@ spec:
     matchNames: ["argocd"]
   selector:
     matchLabels:
-      app.kubernetes.io/name: argocd-{{ $component }}
+      app.kubernetes.io/name: {{ $serviceName }}
+      app.kubernetes.io/component: {{ $component }}
   endpoints:
     - port: http-metrics
       interval: 30s

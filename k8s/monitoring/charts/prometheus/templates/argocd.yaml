@@ -6,14 +6,30 @@ same reasoning as cilium-servicemonitors.yaml and envoy-gateway.yaml. The
 metrics Services themselves are enabled via controller/server/repoServer/
 applicationSet.metrics.enabled in k8s/argocd/values-common.yaml.
 
+The metrics Services' own app.kubernetes.io/name label is not simply
+"argocd-<component>" (that value is the *pod* selector, not the Service's own
+label): application-controller and applicationset-controller both share the
+generic "argocd-metrics" name and are distinguished only by
+app.kubernetes.io/component, while repo-server and server each get their own
+distinct "argocd-<component>-metrics" name. Confirmed via `kubectl get svc -o
+yaml` on prd (2026-07-04) after the first version of this file (matching on
+"argocd-<component>") produced zero scraped targets.
+
 cluster=prd is injected by the default cluster-prd scrape class (see
 prometheusSpec.scrapeClasses in values/prometheus.yaml).
 */ -}}
-{{- $components := list "application-controller" "server" "repo-server" "applicationset-controller" }}
-{{- range $i, $component := $components }}
+{{- $components := dict
+  "application-controller" "argocd-metrics"
+  "applicationset-controller" "argocd-metrics"
+  "repo-server" "argocd-repo-server-metrics"
+  "server" "argocd-server-metrics"
+}}
+{{- $i := 0 }}
+{{- range $component, $serviceName := $components }}
 {{- if $i }}
 ---
 {{- end }}
+{{- $i = add $i 1 }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -26,7 +42,8 @@ spec:
     matchNames: ["argocd"]
   selector:
     matchLabels:
-      app.kubernetes.io/name: argocd-{{ $component }}
+      app.kubernetes.io/name: {{ $serviceName }}
+      app.kubernetes.io/component: {{ $component }}
   endpoints:
     - port: http-metrics
       interval: 30s
