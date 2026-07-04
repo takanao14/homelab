@@ -6,6 +6,9 @@ metadata:
   labels:
     release: prometheus
 spec:
+  # Opt out of the default cluster-prd scrape class: the per-target cluster
+  # labels below would otherwise be overwritten with cluster=prd.
+  scrapeClass: external
   metricsPath: /metrics
   scrapeInterval: 30s
   # k0s controllers run kine (embedded SQLite) and have no kubelet, so they are

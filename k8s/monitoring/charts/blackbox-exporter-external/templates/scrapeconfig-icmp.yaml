@@ -6,6 +6,8 @@ metadata:
   labels:
     release: prometheus
 spec:
+  # External probe targets: opt out of the default cluster-prd scrape class.
+  scrapeClass: external
   metricsPath: /probe
   params:
     module: [icmp]

@@ -6,6 +6,8 @@ metadata:
   labels:
     release: prometheus
 spec:
+  # External LAN hosts: opt out of the default cluster-prd scrape class.
+  scrapeClass: external
   staticConfigs:
     - targets:
         {{- range .Values.targetIPs }}

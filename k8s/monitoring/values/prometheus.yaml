@@ -73,6 +73,23 @@ kube-prometheus-stack:
       enableRemoteWriteReceiver: true
       externalLabels:
         cluster: prd
+      # Default scrape class stamps cluster=prd on every scraped target so
+      # individual ServiceMonitors/PodMonitors don't need their own relabeling.
+      # Uses target relabelings (not metricRelabelings) so synthetic series
+      # such as up and scrape_* get the label too — KubeletDown and other
+      # up-join rules depend on it. External LAN targets opt out with
+      # scrapeClass: external because they are not prd-cluster workloads and
+      # must not appear in cluster=~"$cluster" dashboard queries (and
+      # control-plane-node-exporter sets its own per-target cluster labels
+      # that the default class would overwrite).
+      scrapeClasses:
+        - name: cluster-prd
+          default: true
+          relabelings:
+            - action: replace
+              targetLabel: cluster
+              replacement: prd
+        - name: external
       retention: 30d
       resourceSpec:
         requests:
