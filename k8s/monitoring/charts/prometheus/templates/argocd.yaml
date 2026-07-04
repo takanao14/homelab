@@ -1,0 +1,33 @@
+{{- /*
+ArgoCD metrics. Defined here (not in k8s/argocd/) because argocd is
+bootstrapped via helmfile before any ArgoCD Application exists, and would fail
+on a fresh cluster if it referenced the ServiceMonitor CRD before it exists —
+same reasoning as cilium-servicemonitors.yaml and envoy-gateway.yaml. The
+metrics Services themselves are enabled via controller/server/repoServer/
+applicationSet.metrics.enabled in k8s/argocd/values-common.yaml.
+
+cluster=prd is injected by the default cluster-prd scrape class (see
+prometheusSpec.scrapeClasses in values/prometheus.yaml).
+*/ -}}
+{{- $components := list "application-controller" "server" "repo-server" "applicationset-controller" }}
+{{- range $i, $component := $components }}
+{{- if $i }}
+---
+{{- end }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-{{ $component }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames: ["argocd"]
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-{{ $component }}
+  endpoints:
+    - port: http-metrics
+      interval: 30s
+{{- end }}

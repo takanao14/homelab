@@ -3,6 +3,23 @@ server:
     - --insecure
   ingress:
     enabled: false
+  # Only the metrics Service is enabled here; the ServiceMonitor lives in the
+  # prometheus chart (monitoring app syncs after argocd, so a ServiceMonitor
+  # bundled here would fail its CRD lookup on a fresh cluster).
+  metrics:
+    enabled: true
+
+controller:
+  metrics:
+    enabled: true
+
+repoServer:
+  metrics:
+    enabled: true
+
+applicationSet:
+  metrics:
+    enabled: true
 
 configs:
   cm:
