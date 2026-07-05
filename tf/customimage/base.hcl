@@ -2,7 +2,7 @@
 # holds a minimal terragrunt.hcl (root + base includes) and a node.hcl
 # declaring `node_name` and the `image_keys` deployed to that node.
 terraform {
-  source = "${get_parent_terragrunt_dir("root")}/modules/proxmox-cloudimage"
+  source = "${dirname(find_in_parent_folders("root.hcl"))}/modules/proxmox-cloudimage"
 
   # Image downloads are large; running them in parallel overwhelms the Proxmox
   # node / S3 path and times out. Force serial downloads.
