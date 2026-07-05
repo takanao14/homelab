@@ -5,6 +5,7 @@ on:
     paths:
       - "k8s/**/Chart.yaml"
       - "k8s/**/values*.yaml"
+      - "k8s/argocd/**/*.yaml"
 
 jobs:
   lint:
@@ -23,4 +24,39 @@ jobs:
               helm dependency update "$dir"
             fi
             helm lint "$dir"
+          done
+
+      - name: Install yq
+        env:
+          # renovate: datasource=github-releases depName=mikefarah/yq
+          YQ_VERSION: "v4.44.3"
+        run: |
+          set -euo pipefail
+          curl -fsSL -o "${RUNNER_TEMP}/yq" \
+            "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+          chmod +x "${RUNNER_TEMP}/yq"
+          echo "${RUNNER_TEMP}" >> "${GITHUB_PATH}"
+
+      # ArgoCD Applications that reference a remote chart (repoURL+chart, as
+      # opposed to a path into this repo) have no local Chart.yaml, so the
+      # lint loop above never touches them. Render each one against its
+      # pinned targetRevision to catch incompatible chart/values bumps.
+      - name: Validate ArgoCD remote Helm sources
+        run: |
+          set -euo pipefail
+          find k8s/argocd -name "*.yaml" | while read -r app; do
+            yq -o=json -I=0 '.spec.sources[] | select(has("chart"))' "$app" | \
+            while IFS= read -r src; do
+              repo=$(jq -r '.repoURL' <<<"$src")
+              chart=$(jq -r '.chart' <<<"$src")
+              version=$(jq -r '.targetRevision' <<<"$src")
+              values=$(jq -r '.helm.values // ""' <<<"$src")
+              echo "::group::validate ${app} (${chart} ${version})"
+              if [ -n "$values" ]; then
+                echo "$values" | helm template "$chart" --repo "$repo" --version "$version" -f - > /dev/null
+              else
+                helm template "$chart" --repo "$repo" --version "$version" > /dev/null
+              fi
+              echo "::endgroup::"
+            done
           done
