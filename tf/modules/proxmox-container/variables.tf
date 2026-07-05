@@ -22,6 +22,18 @@ variable "containers" {
       datastore_id = string
       size         = number
     }))
+    mount_points = optional(map(object({
+      volume        = string
+      path          = string
+      size          = optional(string)
+      acl           = optional(bool)
+      backup        = optional(bool, false)
+      mount_options = optional(list(string))
+      quota         = optional(bool)
+      read_only     = optional(bool)
+      replicate     = optional(bool)
+      shared        = optional(bool)
+    })), {})
   }))
 }
 
@@ -35,4 +47,3 @@ variable "ssh_public_key" {
   description = "Path to the SSH public key file"
   type        = string
 }
-

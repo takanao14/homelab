@@ -30,11 +30,21 @@ inputs = {
       dns_servers = local.common.locals.dns_internal
       disks = {
         disk0 = merge(local.env.locals.disk_defaults, {
-          # Sized to hold the cloud-images bucket (custom Packer images) in
-          # addition to the tfstate backup. node3 local-lvm thin pool has ample
-          # free space. Disk can only grow, never shrink.
-          size = 100
+          # Rootfs only. SeaweedFS object data lives on the dedicated
+          # /var/lib/seaweedfs mount point below.
+          size = 40
         })
+      }
+      mount_points = {
+        data = {
+          # Allocate a dedicated SeaweedFS data volume on the node3 USB SSD.
+          # The mount hides any existing files at /var/lib/seaweedfs until data
+          # is migrated into the new volume.
+          volume = "usb-ssd"
+          path   = "/var/lib/seaweedfs"
+          size   = "100G"
+          backup = false
+        }
       }
     })
   }
