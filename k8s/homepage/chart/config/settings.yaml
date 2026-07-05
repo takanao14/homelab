@@ -12,7 +12,6 @@ layout:
     columns: 5
   Storage:
     style: row
-    columns: 2
   DNS:
     style: row
     columns: 5
