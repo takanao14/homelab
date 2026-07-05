@@ -153,17 +153,18 @@ Terragrunt stack in `tf/customimage` makes Proxmox download them from
 > fires on the host, so it is absent from the container's `journalctl -k`). The
 > `cloud-images` host (`tf/lxc/node3/seaweedfs`) runs **8GB RAM + 4GB swap** for
 > this reason; size new deployments accordingly if they serve large objects.
-The build host uses a dedicated upload key rather than the global Admin
-`terraform` identity. Scope Admin to `cloud-images` only: large images are
-uploaded through S3 multipart upload, and SeaweedFS may reject multipart setup
-for a non-owner identity that only has plain `Write:<bucket>`.
+The build host only needs **write** access; rather than reusing the Admin
+`terraform` identity, scope a dedicated upload key via `seaweedfs_s3_extra_identities`.
+`packer/push.sh` disables S3 multipart upload so the scoped identity can upload
+large image files with plain `PutObject` instead of requiring broader multipart
+setup permissions.
 
 ```yaml
 seaweedfs_s3_extra_identities:
   - name: imagebuilder
     access_key: "{{ seaweedfs_imagebuilder_access_key }}"   # in seaweedfs.sops.yaml
     secret_key: "{{ seaweedfs_imagebuilder_secret_key }}"
-    actions: ["Admin:cloud-images", "Read:cloud-images", "Write:cloud-images", "List:cloud-images"]
+    actions: ["Read:cloud-images", "Write:cloud-images", "List:cloud-images"]
 ```
 
 ## Single-node deployment

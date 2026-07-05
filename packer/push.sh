@@ -7,7 +7,7 @@ set -euo pipefail
 #
 # Auth is taken from the environment (inject via .envrc / sops, never hardcode):
 #   SEAWEEDFS_S3_ENDPOINT     e.g. https://s3.home.butaco.net
-#   SEAWEEDFS_S3_ACCESS_KEY   identity with Admin:cloud-images for multipart upload
+#   SEAWEEDFS_S3_ACCESS_KEY   identity with Write:cloud-images
 #   SEAWEEDFS_S3_SECRET_KEY
 #
 # Requires: rclone.
@@ -96,6 +96,10 @@ setup_rclone() {
     # buckets. Without this, rclone attempts CreateBucket before upload and
     # fails with 403. The bucket must already exist (admin-created).
     export RCLONE_CONFIG_SEAWEEDFS_NO_CHECK_BUCKET=true
+    # Keep uploads on plain PutObject. rclone's default S3 behavior switches
+    # large files to multipart upload, but SeaweedFS rejects CreateMultipartUpload
+    # for the scoped imagebuilder identity with AccessDenied.
+    export RCLONE_CONFIG_SEAWEEDFS_USE_MULTIPART_UPLOADS=false
 }
 
 # Upload one image and its sidecar checksum.
@@ -114,8 +118,8 @@ push_image() {
     fi
 
     echo "Uploading ${image_name} -> seaweedfs:${BUCKET}/${image_name}"
-    rclone copyto "$image_file" "seaweedfs:${BUCKET}/${image_name}"
-    rclone copyto "$checksum_file" "seaweedfs:${BUCKET}/${image_name}.sha256"
+    rclone copyto --s3-use-multipart-uploads=false "$image_file" "seaweedfs:${BUCKET}/${image_name}"
+    rclone copyto --s3-use-multipart-uploads=false "$checksum_file" "seaweedfs:${BUCKET}/${image_name}.sha256"
 }
 
 [ $# -eq 1 ] || usage
