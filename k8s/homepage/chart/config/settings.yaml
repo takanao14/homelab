@@ -7,6 +7,8 @@ logpath: stdout
 # Group display order and rendering style.
 # Keys must match the group names in services.yaml exactly.
 layout:
+  style: row
+  maxGroupColumns: 8
   Hypervisor:
     style: row
     columns: 5
