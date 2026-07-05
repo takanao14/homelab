@@ -20,14 +20,16 @@ seaweedfs_public_buckets:
   - firmware
   - cloud-images
 
-# Write-only identity for packer/push.sh to upload custom images. Scoped to the
-# cloud-images bucket so the build host never holds the Admin terraform key.
+# Upload identity for packer/push.sh. Large images are sent with S3 multipart
+# upload, which SeaweedFS authorizes more broadly than plain PutObject when the
+# uploader is not the bucket owner. Keep Admin scoped to cloud-images only so
+# the build host never holds the global Admin terraform key.
 # Credentials live in seaweedfs.sops.yaml.
 seaweedfs_s3_extra_identities:
   - name: imagebuilder
     access_key: "{{ seaweedfs_imagebuilder_access_key }}"
     secret_key: "{{ seaweedfs_imagebuilder_secret_key }}"
-    actions: ["Read:cloud-images", "Write:cloud-images", "List:cloud-images"]
+    actions: ["Admin:cloud-images", "Read:cloud-images", "Write:cloud-images", "List:cloud-images"]
 
 vector_config:
   sources:
