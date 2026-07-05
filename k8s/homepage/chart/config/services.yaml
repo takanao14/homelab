@@ -24,6 +24,7 @@
         description: Network Storage
         proxmoxNode: {{ .Values.truenas.pveNode }}
         proxmoxVMID: {{ .Values.truenas.pveVmid }}
+        proxmoxType: {{ .Values.truenas.pveType }}
         widget:
           type: truenas
           version: 2
