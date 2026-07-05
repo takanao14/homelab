@@ -36,53 +36,53 @@
         href: {{ .Values.seaweedfs.url }}
         description: Object Storage
 
+    - OpenBAO:
+        icon: openbao.png
+        href: {{ .Values.openbao.url }}
+        description: Secret Management
+        proxmoxNode: {{ .Values.openbao.pveNode }}
+        proxmoxVMID: {{ .Values.openbao.pveVmid }}
+
 - DNS:
-    - Authoritative:
-        - PowerDNS origin:
-            icon: powerdns.png
-            href: {{ .Values.pdns.primary.url }}
-            description: Primary Authoritative DNS ({{ .Values.pdns.primary.addr }}:53)
-            proxmoxNode: {{ .Values.pdns.primary.pveNode }}
-            proxmoxVMID: {{ .Values.pdns.primary.pveVmid }}
-            proxmoxType: {{ .Values.pdns.primary.pveType }}
-            siteMonitor: http://{{ .Values.pdns.primary.addr }}:8081/
+    - PowerDNS origin:
+        icon: powerdns.png
+        href: {{ .Values.pdns.primary.url }}
+        description: Primary Authoritative DNS ({{ .Values.pdns.primary.addr }}:53)
+        proxmoxNode: {{ .Values.pdns.primary.pveNode }}
+        proxmoxVMID: {{ .Values.pdns.primary.pveVmid }}
+        proxmoxType: {{ .Values.pdns.primary.pveType }}
 
-        - PowerDNS auth1:
-            icon: powerdns.png
-            href: {{ .Values.pdns.secondary1.url }}
-            description: Secondary1 Authoritative DNS ({{ .Values.pdns.secondary1.addr }}:53)
-            proxmoxNode: {{ .Values.pdns.secondary1.pveNode }}
-            proxmoxVMID: {{ .Values.pdns.secondary1.pveVmid }}
-            proxmoxType: {{ .Values.pdns.secondary1.pveType }}
-            siteMonitor: http://{{ .Values.pdns.secondary1.addr }}:8081/
+    - PowerDNS auth1:
+        icon: powerdns.png
+        href: {{ .Values.pdns.secondary1.url }}
+        description: Secondary1 Authoritative DNS ({{ .Values.pdns.secondary1.addr }}:53)
+        proxmoxNode: {{ .Values.pdns.secondary1.pveNode }}
+        proxmoxVMID: {{ .Values.pdns.secondary1.pveVmid }}
+        proxmoxType: {{ .Values.pdns.secondary1.pveType }}
 
-        - PowerDNS auth2:
-            icon: powerdns.png
-            href: {{ .Values.pdns.secondary2.url }}
-            description: Secondary2 Authoritative DNS ({{ .Values.pdns.secondary2.addr }}:53)
-            proxmoxNode: {{ .Values.pdns.secondary2.pveNode }}
-            proxmoxVMID: {{ .Values.pdns.secondary2.pveVmid }}
-            proxmoxType: {{ .Values.pdns.secondary2.pveType }}
-            siteMonitor: http://{{ .Values.pdns.secondary2.addr }}:8081/
+    - PowerDNS auth2:
+        icon: powerdns.png
+        href: {{ .Values.pdns.secondary2.url }}
+        description: Secondary2 Authoritative DNS ({{ .Values.pdns.secondary2.addr }}:53)
+        proxmoxNode: {{ .Values.pdns.secondary2.pveNode }}
+        proxmoxVMID: {{ .Values.pdns.secondary2.pveVmid }}
+        proxmoxType: {{ .Values.pdns.secondary2.pveType }}
 
-    - DNS Balancer:
-        - dnsdist1:
-            icon: mdi-dns
-            href: {{ .Values.dnsdist.dnsdist1.url }}
-            description: DNS Load Balancer ({{ .Values.dnsdist.dnsdist1.addr }}:53)
-            proxmoxNode: {{ .Values.dnsdist.dnsdist1.pveNode }}
-            proxmoxVMID: {{ .Values.dnsdist.dnsdist1.pveVmid }}
-            proxmoxType: {{ .Values.dnsdist.dnsdist1.pveType }}
-            siteMonitor: http://{{ .Values.dnsdist.dnsdist1.addr }}:8083/
+    - dnsdist1:
+        icon: mdi-dns
+        href: {{ .Values.dnsdist.dnsdist1.url }}
+        description: DNS Load Balancer ({{ .Values.dnsdist.dnsdist1.addr }}:53)
+        proxmoxNode: {{ .Values.dnsdist.dnsdist1.pveNode }}
+        proxmoxVMID: {{ .Values.dnsdist.dnsdist1.pveVmid }}
+        proxmoxType: {{ .Values.dnsdist.dnsdist1.pveType }}
 
-        - dnsdist2:
-            icon: mdi-dns
-            href: {{ .Values.dnsdist.dnsdist2.url }}
-            description: DNS Load Balancer ({{ .Values.dnsdist.dnsdist2.addr }}:53)
-            proxmoxNode: {{ .Values.dnsdist.dnsdist2.pveNode }}
-            proxmoxVMID: {{ .Values.dnsdist.dnsdist2.pveVmid }}
-            proxmoxType: {{ .Values.dnsdist.dnsdist2.pveType }}
-            siteMonitor: http://{{ .Values.dnsdist.dnsdist2.addr }}:8083/
+    - dnsdist2:
+        icon: mdi-dns
+        href: {{ .Values.dnsdist.dnsdist2.url }}
+        description: DNS Load Balancer ({{ .Values.dnsdist.dnsdist2.addr }}:53)
+        proxmoxNode: {{ .Values.dnsdist.dnsdist2.pveNode }}
+        proxmoxVMID: {{ .Values.dnsdist.dnsdist2.pveVmid }}
+        proxmoxType: {{ .Values.dnsdist.dnsdist2.pveType }}
 
 - Infrastructure:
     - NetBox:
@@ -92,13 +92,6 @@
         proxmoxNode: {{ .Values.netbox.pveNode }}
         proxmoxVMID: {{ .Values.netbox.pveVmid }}
         proxmoxType: {{ .Values.netbox.pveType }}
-
-    - OpenBAO:
-        icon: openbao.png
-        href: {{ .Values.openbao.url }}
-        description: Secret Management
-        proxmoxNode: {{ .Values.openbao.pveNode }}
-        proxmoxVMID: {{ .Values.openbao.pveVmid }}
 
 - Monitoring:
     - Grafana:
@@ -141,6 +134,11 @@
         icon: argo-cd.png
         href: {{ .Values.devArgo.url }}
         description: Continuous Delivery (dev)
+
+    - ArgoCD (Sandbox):
+        icon: argo-cd.png
+        href: {{ .Values.sandboxArgo.url }}
+        description: Continuous Delivery (sandbox)
 
 - AI:
     - Open WebUI:
