@@ -84,6 +84,9 @@
     state: started
     enabled: true
 
+- name: Apply SeaweedFS service changes before bucket management
+  ansible.builtin.meta: flush_handlers
+
 - name: Install rclone
   become: true
   ansible.builtin.apt:
@@ -106,7 +109,6 @@
     RCLONE_CONFIG_SEAWEEDFS_SECRET_ACCESS_KEY: "{{ seaweedfs_s3_secret_key }}"
     RCLONE_CONFIG_SEAWEEDFS_ENDPOINT: "http://127.0.0.1:{{ seaweedfs_s3_port }}"
     RCLONE_CONFIG_SEAWEEDFS_REGION: us-east-1
-    RCLONE_CONFIG_SEAWEEDFS_NO_CHECK_BUCKET: "true"
   loop: "{{ seaweedfs_public_buckets }}"
   loop_control:
     label: "{{ item }}"

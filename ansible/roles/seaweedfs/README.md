@@ -68,9 +68,11 @@ for a single-node homelab backend.
 
 ## Post-install: provisioning the Terraform state bucket
 
-The role does not create buckets (deferred until the migration target is
-decided). Once ready, create the bucket and enable versioning with any S3 client,
-e.g. the AWS CLI pointed at the gateway:
+The role creates the public download buckets listed in `seaweedfs_public_buckets`
+(`firmware`, `cloud-images`, etc.). The Terraform state bucket is intentionally
+left as a post-install step until the migration target is decided. Once ready,
+create the bucket and enable versioning with any S3 client, e.g. the AWS CLI
+pointed at the gateway:
 
 ```bash
 export AWS_ACCESS_KEY_ID=<seaweedfs_s3_access_key>
@@ -96,9 +98,10 @@ runs on the `seaweedfs-backup.timer` systemd timer (default every 15 minutes),
 and the destination bucket is versioned so overwrites keep history.
 
 The role installs `rclone`, writes `/etc/seaweedfs/rclone.conf` (an `r2` and a
-`seaweedfs` remote), and enables the timer. It does **not** create the
-destination bucket. Create it once with versioning enabled, using the SeaweedFS
-S3 gateway (the `terraform` identity has `Admin`):
+`seaweedfs` remote), and enables the timer. It does **not** create the backup
+destination bucket because it needs versioning enabled. Create it once with
+versioning enabled, using the SeaweedFS S3 gateway (the `terraform` identity has
+`Admin`):
 
 ```bash
 export AWS_ACCESS_KEY_ID=<seaweedfs_s3_access_key>
