@@ -68,6 +68,9 @@ truenas:
 
 seaweedfs:
   url: https://seaweedfs-ui.home.butaco.net
+  pveNode: node3
+  pveVmid: "103"
+  pveType: lxc
 
 netbox:
   url: https://netbox-ui.home.butaco.net

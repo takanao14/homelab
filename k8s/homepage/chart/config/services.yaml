@@ -35,6 +35,8 @@
         icon: sh-seaweedfs.png
         href: {{ .Values.seaweedfs.url }}
         description: Object Storage
+        proxmoxNode: {{ .Values.seaweedfs.pveNode }}
+        proxmoxVMID: {{ .Values.seaweedfs.pveVmid }}
 
     - OpenBAO:
         icon: openbao.png
