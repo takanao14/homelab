@@ -37,6 +37,7 @@
         description: Object Storage
         proxmoxNode: {{ .Values.seaweedfs.pveNode }}
         proxmoxVMID: {{ .Values.seaweedfs.pveVmid }}
+        proxmoxType: {{ .Values.seaweedfs.pveType }}
 
     - OpenBAO:
         icon: openbao.png
@@ -44,6 +45,7 @@
         description: Secret Management
         proxmoxNode: {{ .Values.openbao.pveNode }}
         proxmoxVMID: {{ .Values.openbao.pveVmid }}
+        proxmoxType: {{ .Values.openbao.pveType }}
 
 - DNS:
     - PowerDNS origin:
