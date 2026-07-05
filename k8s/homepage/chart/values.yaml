@@ -83,6 +83,7 @@ openbao:
   url: https://openbao.home.butaco.net/
   pveNode: node2
   pveVmid: "100"
+  pveType: qemu
 
 grafana:
   url: https://grafana.prd.butaco.net
@@ -105,6 +106,9 @@ sandboxArgo:
 
 forgejo:
   url: https://forgejo.home.butaco.net
+  pveNode: node2
+  pveVmid: "103"
+  pveType: lxc
 
 openWebui:
   url: https://open-webui.dev.butaco.net

@@ -123,6 +123,9 @@
         icon: forgejo.png
         href: {{ .Values.forgejo.url }}
         description: Git Repository
+        proxmoxNode: {{ .Values.forgejo.pveNode }}
+        proxmoxVMID: {{ .Values.forgejo.pveVmid }}
+        proxmoxType: {{ .Values.forgejo.pveType }}
 
     - Headlamp:
         icon: headlamp.png
