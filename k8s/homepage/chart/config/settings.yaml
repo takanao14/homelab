@@ -15,13 +15,7 @@ layout:
     columns: 2
   DNS:
     style: row
-    columns: 2
-    Authoritative:
-      style: row
-      columns: 3
-    DNS Backend:
-      style: row
-      columns: 2
+    columns: 5
   Infrastructure:
     style: row
     columns: 2
