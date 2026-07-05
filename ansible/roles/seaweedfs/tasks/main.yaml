@@ -84,6 +84,69 @@
     state: started
     enabled: true
 
+- name: Install rclone
+  become: true
+  ansible.builtin.apt:
+    name: rclone
+    state: present
+    update_cache: true
+  when: (seaweedfs_public_buckets | length > 0) or (seaweedfs_backup_enabled | bool)
+
+- name: List SeaweedFS buckets
+  become: true
+  ansible.builtin.command:
+    argv:
+      - rclone
+      - lsf
+      - seaweedfs:
+      - --dirs-only
+  environment:
+    RCLONE_CONFIG_SEAWEEDFS_TYPE: s3
+    RCLONE_CONFIG_SEAWEEDFS_PROVIDER: Other
+    RCLONE_CONFIG_SEAWEEDFS_ACCESS_KEY_ID: "{{ seaweedfs_s3_access_key }}"
+    RCLONE_CONFIG_SEAWEEDFS_SECRET_ACCESS_KEY: "{{ seaweedfs_s3_secret_key }}"
+    RCLONE_CONFIG_SEAWEEDFS_ENDPOINT: "http://127.0.0.1:{{ seaweedfs_s3_port }}"
+    RCLONE_CONFIG_SEAWEEDFS_REGION: us-east-1
+    RCLONE_CONFIG_SEAWEEDFS_NO_CHECK_BUCKET: "true"
+  register: seaweedfs_existing_buckets
+  changed_when: false
+  no_log: true
+  when:
+    - not ansible_check_mode
+    - seaweedfs_public_buckets | length > 0
+
+- name: Normalize existing SeaweedFS bucket names
+  ansible.builtin.set_fact:
+    seaweedfs_existing_bucket_names: "{{ seaweedfs_existing_buckets.stdout_lines | map('regex_replace', '/$', '') | list }}"
+  when:
+    - not ansible_check_mode
+    - seaweedfs_public_buckets | length > 0
+
+- name: Ensure SeaweedFS public buckets exist
+  become: true
+  ansible.builtin.command:
+    argv:
+      - rclone
+      - mkdir
+      - "seaweedfs:{{ item }}"
+  environment:
+    RCLONE_CONFIG_SEAWEEDFS_TYPE: s3
+    RCLONE_CONFIG_SEAWEEDFS_PROVIDER: Other
+    RCLONE_CONFIG_SEAWEEDFS_ACCESS_KEY_ID: "{{ seaweedfs_s3_access_key }}"
+    RCLONE_CONFIG_SEAWEEDFS_SECRET_ACCESS_KEY: "{{ seaweedfs_s3_secret_key }}"
+    RCLONE_CONFIG_SEAWEEDFS_ENDPOINT: "http://127.0.0.1:{{ seaweedfs_s3_port }}"
+    RCLONE_CONFIG_SEAWEEDFS_REGION: us-east-1
+    RCLONE_CONFIG_SEAWEEDFS_NO_CHECK_BUCKET: "true"
+  loop: "{{ seaweedfs_public_buckets }}"
+  loop_control:
+    label: "{{ item }}"
+  changed_when: true
+  no_log: true
+  when:
+    - not ansible_check_mode
+    - seaweedfs_public_buckets | length > 0
+    - item not in seaweedfs_existing_bucket_names
+
 - name: Configure SeaweedFS admin UI
   when: seaweedfs_admin_enabled | bool
   block:
@@ -129,13 +192,6 @@
 - name: Configure R2 -> SeaweedFS state backup
   when: seaweedfs_backup_enabled | bool
   block:
-    - name: Install rclone
-      become: true
-      ansible.builtin.apt:
-        name: rclone
-        state: present
-        update_cache: true
-
     - name: Deploy rclone configuration
       become: true
       ansible.builtin.template:

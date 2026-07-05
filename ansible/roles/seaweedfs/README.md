@@ -21,6 +21,7 @@ for a single-node homelab backend.
 - Downloads the pinned `weed` binary from GitHub releases.
 - Deploys the S3 identity config (`/etc/seaweedfs/s3.json`) and a systemd unit.
 - Ensures the service is started and enabled.
+- Creates configured public download buckets.
 
 ## Variables
 
@@ -54,7 +55,7 @@ for a single-node homelab backend.
 | `seaweedfs_volume_max` | `0` | Max volumes per server (`0` = auto from free disk) |
 | `seaweedfs_s3_identity_name` | `terraform` | Name of the default (Admin) S3 identity in `s3.json` |
 | `seaweedfs_s3_extra_identities` | `[]` | Extra credentialed identities (`name`/`access_key`/`secret_key`/`actions`) |
-| `seaweedfs_public_buckets` | `[]` | Buckets exposed anonymously (Read-only, no List) for HTTP download |
+| `seaweedfs_public_buckets` | `[]` | Buckets created by the role and exposed anonymously (Read-only, no List) for HTTP download |
 | `seaweedfs_admin_enabled` | `true` | Deploy the `weed admin` UI as a separate service |
 | `seaweedfs_admin_port` | `23646` | Admin UI HTTP port |
 | `seaweedfs_admin_data_dir` | `/var/lib/seaweedfs-admin` | Admin state directory |
@@ -120,25 +121,16 @@ journalctl -u seaweedfs-backup.service          # logs
 
 ## Public download buckets
 
-Buckets listed in `seaweedfs_public_buckets` get an `anonymous` S3 identity with
-`Read:<bucket>` only (no `List`), so any client can fetch an object by key but
-cannot enumerate the bucket. This replaces Garage's public web serving. The
-buckets are fronted over HTTPS by the central Caddy:
+Buckets listed in `seaweedfs_public_buckets` are created by the role and get an
+`anonymous` S3 identity with `Read:<bucket>` only (no `List`), so any client can
+fetch an object by key but cannot enumerate the bucket. This replaces Garage's
+public web serving. The buckets are fronted over HTTPS by the central Caddy:
 
 ```
 https://s3.home.butaco.net/firmware/<file>      # -> SeaweedFS :8333, path-style
 ```
 
 Direct (LAN, no TLS) access also works: `http://seaweedfs1.home.butaco.net:8333/firmware/<file>`.
-Create the buckets out of band (the role does not create buckets):
-
-```bash
-export AWS_ACCESS_KEY_ID=<seaweedfs_s3_access_key>
-export AWS_SECRET_ACCESS_KEY=<seaweedfs_s3_secret_key>
-ENDPOINT=http://seaweedfs1.home.butaco.net:8333
-aws --endpoint-url "$ENDPOINT" s3api create-bucket --bucket firmware
-aws --endpoint-url "$ENDPOINT" s3api create-bucket --bucket cloud-images
-```
 
 The `cloud-images` bucket distributes the custom Proxmox images built by Packer.
 `packer/push.sh` uploads each `<image>.img` and its `<image>.img.sha256`, and the
@@ -153,18 +145,19 @@ Terragrunt stack in `tf/customimage` makes Proxmox download them from
 > fires on the host, so it is absent from the container's `journalctl -k`). The
 > `cloud-images` host (`tf/lxc/node3/seaweedfs`) runs **8GB RAM + 4GB swap** for
 > this reason; size new deployments accordingly if they serve large objects.
-The build host only needs **write** access; rather than reusing the Admin
-`terraform` identity, scope a dedicated upload key via `seaweedfs_s3_extra_identities`.
-`packer/push.sh` disables S3 multipart upload so the scoped identity can upload
-large image files with plain `PutObject` instead of requiring broader multipart
-setup permissions.
+The build host only needs object-level S3 access; rather than reusing the Admin
+`terraform` identity, use a dedicated upload key via `seaweedfs_s3_extra_identities`.
+`packer/push.sh` disables S3 multipart upload so large image files are sent with
+plain `PutObject`. SeaweedFS 4.37 rejects `PutObject` when the `Write` action is
+bucket-scoped, so the upload identity uses unscoped `Read` / `Write` / `List`
+but still has no `Admin` privileges.
 
 ```yaml
 seaweedfs_s3_extra_identities:
   - name: imagebuilder
     access_key: "{{ seaweedfs_imagebuilder_access_key }}"   # in seaweedfs.sops.yaml
     secret_key: "{{ seaweedfs_imagebuilder_secret_key }}"
-    actions: ["Read:cloud-images", "Write:cloud-images", "List:cloud-images"]
+    actions: ["Read", "Write", "List"]
 ```
 
 ## Single-node deployment

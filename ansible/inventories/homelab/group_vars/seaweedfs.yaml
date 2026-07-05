@@ -12,23 +12,23 @@ seaweedfs_ip: "{{ ansible_facts['default_ipv4']['address'] }}"
 
 # Public-download buckets (absorbed from Garage). Anonymous clients get Read-only
 # (no List) on these; served over HTTPS via the central Caddy at
-# https://s3.home.butaco.net/<bucket>/<file>. The buckets themselves must be
-# created out of band (see roles/seaweedfs/README.md).
+# https://s3.home.butaco.net/<bucket>/<file>. The seaweedfs role creates these
+# buckets with the Admin identity.
 #   firmware     - router / PC firmware images (in use)
 #   cloud-images - custom image distribution (future; empty for now)
 seaweedfs_public_buckets:
   - firmware
   - cloud-images
 
-# Upload identity for packer/push.sh. The script disables S3 multipart upload
-# so this scoped identity only needs object read/write/list permissions on the
-# cloud-images bucket.
+# Upload identity for packer/push.sh. The script disables S3 multipart upload,
+# and this identity gets object-level S3 actions without Admin/IAM privileges.
+# SeaweedFS 4.37 rejects PutObject when these actions are bucket-scoped.
 # Credentials live in seaweedfs.sops.yaml.
 seaweedfs_s3_extra_identities:
   - name: imagebuilder
     access_key: "{{ seaweedfs_imagebuilder_access_key }}"
     secret_key: "{{ seaweedfs_imagebuilder_secret_key }}"
-    actions: ["Read:cloud-images", "Write:cloud-images", "List:cloud-images"]
+    actions: ["Read", "Write", "List"]
 
 vector_config:
   sources:
