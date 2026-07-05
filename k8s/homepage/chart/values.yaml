@@ -96,6 +96,9 @@ prdArgo:
 devArgo:
   url: https://argocd-ui.dev.butaco.net
 
+sandboxArgo:
+  url: https://argocd-ui.sandbox.butaco.net
+
 forgejo:
   url: https://forgejo.home.butaco.net
 
