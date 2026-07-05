@@ -46,9 +46,10 @@ seaweedfs_imagebuilder_secret_key: ""
 # Action scoping follows SeaweedFS syntax, e.g. "Read:bucket", "Write:bucket".
 seaweedfs_s3_extra_identities: []
 
-# Buckets exposed to unauthenticated (anonymous) clients for HTTP download.
-# For each bucket an "anonymous" identity is granted Read:<bucket> only — no
-# List — so objects are fetchable by key but the bucket cannot be enumerated.
+# Buckets exposed to unauthenticated (anonymous) clients for HTTP download. The
+# role creates these buckets with the Admin identity. For each bucket an
+# "anonymous" identity is granted Read:<bucket> only — no List — so objects are
+# fetchable by key but the bucket cannot be enumerated.
 seaweedfs_public_buckets: []
 
 # Admin web UI (weed admin), deployed as a separate systemd service.

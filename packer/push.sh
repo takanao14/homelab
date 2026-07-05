@@ -7,7 +7,7 @@ set -euo pipefail
 #
 # Auth is taken from the environment (inject via .envrc / sops, never hardcode):
 #   SEAWEEDFS_S3_ENDPOINT     e.g. https://s3.home.butaco.net
-#   SEAWEEDFS_S3_ACCESS_KEY   identity with Write:cloud-images
+#   SEAWEEDFS_S3_ACCESS_KEY   identity with non-Admin Read/Write/List actions
 #   SEAWEEDFS_S3_SECRET_KEY
 #
 # Requires: rclone.
@@ -102,6 +102,21 @@ setup_rclone() {
     export RCLONE_CONFIG_SEAWEEDFS_USE_MULTIPART_UPLOADS=false
 }
 
+run_rclone_copyto() {
+    if ! rclone copyto --s3-use-multipart-uploads=false "$@"; then
+        cat >&2 << EOF
+
+Upload failed. If the error above is S3 403 AccessDenied, update the
+SeaweedFS S3 identity and managed buckets on the server:
+
+  cd ../ansible
+  ansible-playbook playbooks/seaweedfs.yaml --tags seaweedfs
+
+EOF
+        exit 1
+    fi
+}
+
 # Upload one image and its sidecar checksum.
 push_image() {
     local image_name="$1"
@@ -118,8 +133,8 @@ push_image() {
     fi
 
     echo "Uploading ${image_name} -> seaweedfs:${BUCKET}/${image_name}"
-    rclone copyto --s3-use-multipart-uploads=false "$image_file" "seaweedfs:${BUCKET}/${image_name}"
-    rclone copyto --s3-use-multipart-uploads=false "$checksum_file" "seaweedfs:${BUCKET}/${image_name}.sha256"
+    run_rclone_copyto "$image_file" "seaweedfs:${BUCKET}/${image_name}"
+    run_rclone_copyto "$checksum_file" "seaweedfs:${BUCKET}/${image_name}.sha256"
 }
 
 [ $# -eq 1 ] || usage
