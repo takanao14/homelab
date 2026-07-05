@@ -1,4 +1,11 @@
 ---
+- name: Install deb822 repository prerequisites
+  become: true
+  ansible.builtin.apt:
+    name: python3-debian
+    state: present
+    update_cache: true
+
 # Declarative replacement for the setup.vector.dev installer script, which
 # piped an unpinned remote script into bash. Same repository and signing key:
 # the key URL always points at Datadog's currently active apt signing key.

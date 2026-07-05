@@ -32,6 +32,22 @@ resource "proxmox_virtual_environment_container" "container" {
     }
   }
 
+  dynamic "mount_point" {
+    for_each = each.value.mount_points
+    content {
+      volume        = mount_point.value.volume
+      path          = mount_point.value.path
+      size          = mount_point.value.size
+      acl           = mount_point.value.acl
+      backup        = mount_point.value.backup
+      mount_options = mount_point.value.mount_options
+      quota         = mount_point.value.quota
+      read_only     = mount_point.value.read_only
+      replicate     = mount_point.value.replicate
+      shared        = mount_point.value.shared
+    }
+  }
+
   network_interface {
     name   = each.value.ifname
     bridge = each.value.bridge
@@ -58,4 +74,3 @@ resource "proxmox_virtual_environment_container" "container" {
     }
   }
 }
-

@@ -187,5 +187,5 @@ sidecar checksum for the decompressed object. Then publish it with
 - **Provider**: bpg/proxmox ~> 0.111
 - **Environment separation**: dev / prd / node2 / node3 (per Proxmox node)
 - **Networking**: Configured via `common.hcl` per environment (e.g. `vmbr0`, `vnets001`)
-- **Storage**: dev=local-zfs (pve), prd=data-nvme (node1), node2=local-lvm, node3=local-lvm
+- **Storage**: dev=local-zfs (pve), prd=data-nvme (node1), node2=local-lvm, node3=local-lvm; SeaweedFS data volume on node3 uses usb-ssd
 ```
