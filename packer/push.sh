@@ -7,7 +7,7 @@ set -euo pipefail
 #
 # Auth is taken from the environment (inject via .envrc / sops, never hardcode):
 #   SEAWEEDFS_S3_ENDPOINT     e.g. https://s3.home.butaco.net
-#   SEAWEEDFS_S3_ACCESS_KEY   identity with Write:cloud-images
+#   SEAWEEDFS_S3_ACCESS_KEY   identity with Admin:cloud-images for multipart upload
 #   SEAWEEDFS_S3_SECRET_KEY
 #
 # Requires: rclone.
@@ -92,9 +92,9 @@ setup_rclone() {
     export RCLONE_CONFIG_SEAWEEDFS_SECRET_ACCESS_KEY="$SEAWEEDFS_S3_SECRET_KEY"
     export RCLONE_CONFIG_SEAWEEDFS_ENDPOINT="$SEAWEEDFS_S3_ENDPOINT"
     export RCLONE_CONFIG_SEAWEEDFS_REGION=us-east-1
-    # The imagebuilder identity is scoped to Read/Write/List on cloud-images and
-    # cannot create buckets. Without this, rclone attempts CreateBucket before
-    # upload and fails with 403. The bucket must already exist (admin-created).
+    # The imagebuilder identity is scoped to cloud-images and cannot create
+    # buckets. Without this, rclone attempts CreateBucket before upload and
+    # fails with 403. The bucket must already exist (admin-created).
     export RCLONE_CONFIG_SEAWEEDFS_NO_CHECK_BUCKET=true
 }
 
