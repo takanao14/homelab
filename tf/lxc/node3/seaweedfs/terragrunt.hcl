@@ -42,7 +42,7 @@ inputs = {
           # is migrated into the new volume.
           volume = "usb-ssd"
           path   = "/var/lib/seaweedfs"
-          size   = "100G"
+          size   = "200G"
           backup = false
         }
       }
