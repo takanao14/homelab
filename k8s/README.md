@@ -118,7 +118,7 @@ k8s/
 ├── ollama/               # Ollama LLM server (dev only, AMD GPU)
 │   ├── values.yaml
 │   └── chart/
-├── homepage/             # Homepage dashboard (prd only)
+├── homepage/             # Homepage dashboard (prd, sandbox)
 │   └── chart/
 └── meshcentral/          # MeshCentral remote management (dev only)
     └── chart/

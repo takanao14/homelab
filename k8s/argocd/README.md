@@ -107,7 +107,7 @@ The `argocd.yaml` Application uses multi-source:
 | external-secrets (eso) | external-secrets | dev, prd, sandbox |
 | external-dns | external-dns | dev, prd, sandbox |
 | gateway | gateway-system | dev, prd, sandbox |
-| homepage | homepage | prd only |
+| homepage | homepage | prd, sandbox |
 | lemonade-server | lemonade-server | dev only |
 | longhorn-ui | longhorn-system | sandbox only |
 | meshcentral | meshcentral | dev only |
@@ -118,6 +118,8 @@ The `argocd.yaml` Application uses multi-source:
 
 Sandbox intentionally uses HTTP only. Its Gateway has no HTTPS listener, and
 cert-manager is not installed. ESO uses the `kubernetes-sandbox` OpenBao auth
-mount, while external-dns manages `sandbox.butaco.net.` through PowerDNS. The
-sandbox Longhorn UI is exposed through an authenticated reverse proxy instead
-of routing directly to `longhorn-frontend`.
+mount, while external-dns manages `sandbox.butaco.net.` through PowerDNS.
+Sandbox homepage is exposed at `http://homepage.sandbox.butaco.net` and reuses
+the production dashboard Secret paths for staging validation. The sandbox
+Longhorn UI is exposed through an authenticated reverse proxy instead of
+routing directly to `longhorn-frontend`.
