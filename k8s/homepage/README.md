@@ -8,8 +8,8 @@
 homepage/
 └── chart/                 # Custom Helm chart
     ├── Chart.yaml
-    ├── values.yaml        # hostname, Proxmox URLs, internal host addresses
-    ├── config/            # Homepage YAML configs (Helm template expanded)
+    ├── values.yaml        # Kubernetes deployment values (hostname, image, Gateway)
+    ├── config/            # Homepage YAML configs mounted as-is
     │   ├── settings.yaml
     │   ├── services.yaml
     │   ├── widgets.yaml
@@ -35,7 +35,10 @@ overridden per environment by the ArgoCD Application. Sandbox uses HTTP via the
 
 ## Configuration
 
-Homepage configs (`services.yaml`, `widgets.yaml`, etc.) are in `chart/config/`. These are standard Homepage YAMLs that also support Helm template syntax (`{{ .Values... }}`).
+Homepage configs (`services.yaml`, `widgets.yaml`, etc.) are in `chart/config/`.
+They are mounted as-is and should stay close to Homepage's native YAML format.
+Do not use Helm templating in these files; keep deployment differences in
+`values.yaml` or in the per-environment ArgoCD Application.
 
 `secret-config.yaml` reads all `*.yaml` files in `chart/config/` and creates a Kubernetes Secret named `homepage-config`.
 

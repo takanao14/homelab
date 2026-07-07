@@ -2,185 +2,225 @@
 # https://gethomepage.dev/latest/configs/services/
 
 - Hypervisor:
-    {{- range .Values.proxmox }}
-    {{- if and .node .url }}
-    - Proxmox VE {{ .key | title }}:
+    - Proxmox VE Prd:
         icon: proxmox.png
-        href: {{ .url }}
+        href: https://node1.home.butaco.net:8006
         description: Virtualization Platform
         widget:
           type: proxmox
-          url: {{ .url }}
-          username: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ .key | upper }}_TOKEN{{ "}}" }}
-          password: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ .key | upper }}_SECRET{{ "}}" }}
-          node: {{ .node }}
-    {{- end }}
-    {{- end }}
+          url: https://node1.home.butaco.net:8006
+          username: "{{HOMEPAGE_VAR_PROXMOX_PRD_TOKEN}}"
+          password: "{{HOMEPAGE_VAR_PROXMOX_PRD_SECRET}}"
+          node: node1
+
+    - Proxmox VE Dev:
+        icon: proxmox.png
+        href: https://pve.home.butaco.net:8006
+        description: Virtualization Platform
+        widget:
+          type: proxmox
+          url: https://pve.home.butaco.net:8006
+          username: "{{HOMEPAGE_VAR_PROXMOX_DEV_TOKEN}}"
+          password: "{{HOMEPAGE_VAR_PROXMOX_DEV_SECRET}}"
+          node: pve
+
+    - Proxmox VE Node2:
+        icon: proxmox.png
+        href: https://node2.home.butaco.net:8006
+        description: Virtualization Platform
+        widget:
+          type: proxmox
+          url: https://node2.home.butaco.net:8006
+          username: "{{HOMEPAGE_VAR_PROXMOX_NODE2_TOKEN}}"
+          password: "{{HOMEPAGE_VAR_PROXMOX_NODE2_SECRET}}"
+          node: node2
+
+    - Proxmox VE Node3:
+        icon: proxmox.png
+        href: https://node3.home.butaco.net:8006
+        description: Virtualization Platform
+        widget:
+          type: proxmox
+          url: https://node3.home.butaco.net:8006
+          username: "{{HOMEPAGE_VAR_PROXMOX_NODE3_TOKEN}}"
+          password: "{{HOMEPAGE_VAR_PROXMOX_NODE3_SECRET}}"
+          node: node3
+
+    - Proxmox VE Node4:
+        icon: proxmox.png
+        href: https://node4.home.butaco.net:8006
+        description: Virtualization Platform
+        widget:
+          type: proxmox
+          url: https://node4.home.butaco.net:8006
+          username: "{{HOMEPAGE_VAR_PROXMOX_NODE4_TOKEN}}"
+          password: "{{HOMEPAGE_VAR_PROXMOX_NODE4_SECRET}}"
+          node: node4
 
 - Storage:
     - TrueNAS:
         icon: truenas.png
-        href: {{ .Values.truenas.url }}
+        href: https://truenas-ui.home.butaco.net
         description: Network Storage
-        proxmoxNode: {{ .Values.truenas.pveNode }}
-        proxmoxVMID: {{ .Values.truenas.pveVmid }}
-        proxmoxType: {{ .Values.truenas.pveType }}
+        proxmoxNode: node1
+        proxmoxVMID: "100"
+        proxmoxType: qemu
         widget:
           type: truenas
           version: 2
-          url: {{ .Values.truenas.url }}
-          key: {{ "{{" }}HOMEPAGE_VAR_TRUENAS_KEY{{ "}}" }}
+          url: https://truenas-ui.home.butaco.net
+          key: "{{HOMEPAGE_VAR_TRUENAS_KEY}}"
           nasType: scale
 
     - SeaweedFS:
         icon: sh-seaweedfs.png
-        href: {{ .Values.seaweedfs.url }}
+        href: https://seaweedfs-ui.home.butaco.net
         description: Object Storage
-        proxmoxNode: {{ .Values.seaweedfs.pveNode }}
-        proxmoxVMID: {{ .Values.seaweedfs.pveVmid }}
-        proxmoxType: {{ .Values.seaweedfs.pveType }}
+        proxmoxNode: node3
+        proxmoxVMID: "103"
+        proxmoxType: lxc
 
     - OpenBAO:
         icon: openbao.png
-        href: {{ .Values.openbao.url }}
+        href: https://openbao.home.butaco.net/
         description: Secret Management
-        proxmoxNode: {{ .Values.openbao.pveNode }}
-        proxmoxVMID: {{ .Values.openbao.pveVmid }}
-        proxmoxType: {{ .Values.openbao.pveType }}
+        proxmoxNode: node2
+        proxmoxVMID: "100"
+        proxmoxType: qemu
 
 - DNS:
     - PowerDNS origin:
         icon: powerdns.png
-        href: {{ .Values.pdns.primary.url }}
-        description: Primary Authoritative DNS ({{ .Values.pdns.primary.addr }}:53)
-        proxmoxNode: {{ .Values.pdns.primary.pveNode }}
-        proxmoxVMID: {{ .Values.pdns.primary.pveVmid }}
-        proxmoxType: {{ .Values.pdns.primary.pveType }}
+        href: https://pdns1.home.butaco.net
+        description: Primary Authoritative DNS (ns1.home.butaco.net:53)
+        proxmoxNode: node2
+        proxmoxVMID: "108"
+        proxmoxType: lxc
 
     - PowerDNS auth1:
         icon: powerdns.png
-        href: {{ .Values.pdns.secondary1.url }}
-        description: Secondary1 Authoritative DNS ({{ .Values.pdns.secondary1.addr }}:53)
-        proxmoxNode: {{ .Values.pdns.secondary1.pveNode }}
-        proxmoxVMID: {{ .Values.pdns.secondary1.pveVmid }}
-        proxmoxType: {{ .Values.pdns.secondary1.pveType }}
+        href: https://pdns2.home.butaco.net
+        description: Secondary1 Authoritative DNS (ns2.home.butaco.net:53)
+        proxmoxNode: node3
+        proxmoxVMID: "100"
+        proxmoxType: lxc
 
     - PowerDNS auth2:
         icon: powerdns.png
-        href: {{ .Values.pdns.secondary2.url }}
-        description: Secondary2 Authoritative DNS ({{ .Values.pdns.secondary2.addr }}:53)
-        proxmoxNode: {{ .Values.pdns.secondary2.pveNode }}
-        proxmoxVMID: {{ .Values.pdns.secondary2.pveVmid }}
-        proxmoxType: {{ .Values.pdns.secondary2.pveType }}
+        href: https://pdns3.home.butaco.net
+        description: Secondary2 Authoritative DNS (ns3.home.butaco.net:53)
+        proxmoxNode: node2
+        proxmoxVMID: "109"
+        proxmoxType: lxc
 
     - dnsdist1:
         icon: mdi-dns
-        href: {{ .Values.dnsdist.dnsdist1.url }}
-        description: DNS Load Balancer ({{ .Values.dnsdist.dnsdist1.addr }}:53)
-        proxmoxNode: {{ .Values.dnsdist.dnsdist1.pveNode }}
-        proxmoxVMID: {{ .Values.dnsdist.dnsdist1.pveVmid }}
-        proxmoxType: {{ .Values.dnsdist.dnsdist1.pveType }}
+        href: https://dnsdist1.home.butaco.net
+        description: DNS Load Balancer (dist1.home.butaco.net:53)
+        proxmoxNode: node2
+        proxmoxVMID: "107"
+        proxmoxType: lxc
 
     - dnsdist2:
         icon: mdi-dns
-        href: {{ .Values.dnsdist.dnsdist2.url }}
-        description: DNS Load Balancer ({{ .Values.dnsdist.dnsdist2.addr }}:53)
-        proxmoxNode: {{ .Values.dnsdist.dnsdist2.pveNode }}
-        proxmoxVMID: {{ .Values.dnsdist.dnsdist2.pveVmid }}
-        proxmoxType: {{ .Values.dnsdist.dnsdist2.pveType }}
+        href: https://dnsdist2.home.butaco.net
+        description: DNS Load Balancer (dist2.home.butaco.net:53)
+        proxmoxNode: node3
+        proxmoxVMID: "101"
+        proxmoxType: lxc
 
 - Infrastructure:
     - NetBox:
         icon: netbox.png
-        href: {{ .Values.netbox.url }}
+        href: https://netbox-ui.home.butaco.net
         description: IP Management
-        proxmoxNode: {{ .Values.netbox.pveNode }}
-        proxmoxVMID: {{ .Values.netbox.pveVmid }}
-        proxmoxType: {{ .Values.netbox.pveType }}
+        proxmoxNode: node2
+        proxmoxVMID: "106"
+        proxmoxType: lxc
 
 - Monitoring:
     - Grafana:
         icon: grafana.png
-        href: {{ .Values.grafana.url }}
+        href: https://grafana.prd.butaco.net
         description: Metrics Visualization
         widget:
           type: grafana
           version: 2
-          url: {{ .Values.grafana.url }}
-          username: {{ .Values.grafana.username }}
-          password: {{ "{{" }}HOMEPAGE_VAR_GRAFANA_PASSWORD{{ "}}" }}
+          url: https://grafana.prd.butaco.net
+          username: admin
+          password: "{{HOMEPAGE_VAR_GRAFANA_PASSWORD}}"
 
     - Prometheus:
         icon: prometheus.png
-        href: {{ .Values.prometheus.url }}
+        href: https://prometheus.prd.butaco.net
         description: Monitoring System
         widget:
           type: prometheus
-          url: {{ .Values.prometheus.url }}
+          url: https://prometheus.prd.butaco.net
 
 - Development:
     - Forgejo:
         icon: forgejo.png
-        href: {{ .Values.forgejo.url }}
+        href: https://forgejo.home.butaco.net
         description: Git Repository
-        proxmoxNode: {{ .Values.forgejo.pveNode }}
-        proxmoxVMID: {{ .Values.forgejo.pveVmid }}
-        proxmoxType: {{ .Values.forgejo.pveType }}
+        proxmoxNode: node2
+        proxmoxVMID: "103"
+        proxmoxType: lxc
 
     - Headlamp:
         icon: headlamp.png
-        href: {{ .Values.headlamp.url }}
+        href: https://headlamp.prd.butaco.net
         description: k8s Cluster UI
 
 - CI/CD:
     - ArgoCD (Prod):
         icon: argo-cd.png
-        href: {{ .Values.prdArgo.url }}
+        href: https://argocd-ui.prd.butaco.net
         description: Continuous Delivery (prd)
 
     - ArgoCD (Dev):
         icon: argo-cd.png
-        href: {{ .Values.devArgo.url }}
+        href: https://argocd-ui.dev.butaco.net
         description: Continuous Delivery (dev)
 
     - ArgoCD (Sandbox):
         icon: argo-cd.png
-        href: {{ .Values.sandboxArgo.url }}
+        href: http://argocd.sandbox.butaco.net
         description: Continuous Delivery (sandbox)
 
 - AI:
     - Open WebUI:
         icon: open-webui.png
-        href: {{ .Values.openWebui.url }}
+        href: https://open-webui.dev.butaco.net
         description: Local LLM WebUI
 
     - Lemonade Server:
         icon: sh-lemonade-ai
-        href: {{ .Values.lemonadeServer.url }}
+        href: https://lemonade.dev.butaco.net
         description: Local LLM Inference Server
 
     - ComfyUI:
         icon: comfyui.png
-        href: {{ .Values.comfyUI.url }}
+        href: https://comfyui.dev.butaco.net
         description: Image Generation UI
 
 - Remote Management:
     - MeshCentral:
         icon: si-intel-#0071C5
-        href: {{ .Values.meshCentral.url }}
+        href: https://meshcentral.dev.butaco.net
         description: MeshCentral AMT remote control
 
 - Network:
     - bgw1:
         icon: mdi-router
-        description: Border Gateway ({{ .Values.network.bgw1 }})
+        description: Border Gateway (bgw1.home.butaco.net)
 
     - C1200:
         icon: mdi-switch
-        href: http://{{ .Values.network.c1200 }}/
-        description: L3-SW ({{ .Values.network.c1200 }})
+        href: http://c1200.home.butaco.net/
+        description: L3-SW (c1200.home.butaco.net)
 
     - WiFi-AP1:
         icon: mdi-access-point-network
-        href: http://{{ .Values.network.wifiAp1 }}/
+        href: http://wifiap1.home.butaco.net/
         description: wifi-ap1

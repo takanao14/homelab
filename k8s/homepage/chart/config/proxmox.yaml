@@ -1,8 +1,20 @@
-{{- range .Values.proxmox }}
-{{- if and .node .url }}
-{{ .node }}:
-  url: {{ .url }}
-  token: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ .key | upper }}_TOKEN{{ "}}" }}
-  secret: {{ "{{" }}HOMEPAGE_VAR_PROXMOX_{{ .key | upper }}_SECRET{{ "}}" }}
-{{- end }}
-{{- end }}
+node1:
+  url: https://node1.home.butaco.net:8006
+  token: "{{HOMEPAGE_VAR_PROXMOX_PRD_TOKEN}}"
+  secret: "{{HOMEPAGE_VAR_PROXMOX_PRD_SECRET}}"
+pve:
+  url: https://pve.home.butaco.net:8006
+  token: "{{HOMEPAGE_VAR_PROXMOX_DEV_TOKEN}}"
+  secret: "{{HOMEPAGE_VAR_PROXMOX_DEV_SECRET}}"
+node2:
+  url: https://node2.home.butaco.net:8006
+  token: "{{HOMEPAGE_VAR_PROXMOX_NODE2_TOKEN}}"
+  secret: "{{HOMEPAGE_VAR_PROXMOX_NODE2_SECRET}}"
+node3:
+  url: https://node3.home.butaco.net:8006
+  token: "{{HOMEPAGE_VAR_PROXMOX_NODE3_TOKEN}}"
+  secret: "{{HOMEPAGE_VAR_PROXMOX_NODE3_SECRET}}"
+node4:
+  url: https://node4.home.butaco.net:8006
+  token: "{{HOMEPAGE_VAR_PROXMOX_NODE4_TOKEN}}"
+  secret: "{{HOMEPAGE_VAR_PROXMOX_NODE4_SECRET}}"
