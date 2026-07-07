@@ -3,6 +3,8 @@
 title: HomeLab Portal
 description: Homelab Portal
 logpath: stdout
+disableCollapse: true
+useEqualHeights: true
 
 # Group display order and rendering style.
 # Keys must match the group names in services.yaml exactly.
@@ -32,6 +34,8 @@ layout:
     style: row
     columns: 3
   Remote Management:
+    style: row
+    columns: 1
   Network:
     style: row
     columns: 3
