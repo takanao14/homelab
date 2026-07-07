@@ -16,6 +16,9 @@
     - role: rsyslog
       tags: rsyslog
 
+    - role: proxmox_metric_server
+      tags: proxmox_metric_server
+
   tasks:
     # Set access permissions for Proxmox GUI (Web UI)
     - name: Get Proxmox users

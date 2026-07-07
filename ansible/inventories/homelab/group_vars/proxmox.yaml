@@ -38,3 +38,22 @@ rsyslog_file_inputs:
     tag: pve-firewall-file
   - path: /var/log/pveam.log
     tag: pveam
+
+# Proxmox external metric server definitions are cluster-scoped. These hosts are
+# independent Proxmox installations, so each one manages its own definition.
+proxmox_metric_server_manage_hosts:
+  - pve
+  - node1
+  - node2
+  - node3
+  - node4
+
+proxmox_metric_server_definitions:
+  - id: alloy-otlp
+    type: opentelemetry
+    server: 192.168.30.251
+    port: 4318
+    otel-protocol: http
+    otel-path: /v1/metrics
+    otel-compression: gzip
+    state: present

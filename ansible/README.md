@@ -88,6 +88,7 @@ ansible/
     ├── blackbox_exporter/
     ├── openbao/
     ├── apt_mirror/
+    ├── proxmox_metric_server/
     ├── chrony/
     ├── unattended_upgrades/
     ├── maintenance_user/
