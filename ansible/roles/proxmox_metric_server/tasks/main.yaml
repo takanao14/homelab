@@ -1,0 +1,10 @@
+---
+- name: Manage Proxmox metric servers on cluster representatives
+  ansible.builtin.include_tasks: manage_one.yaml
+  loop: "{{ proxmox_metric_server_definitions }}"
+  loop_control:
+    loop_var: proxmox_metric_server
+    label: "{{ proxmox_metric_server.id }}"
+  when:
+    - inventory_hostname in proxmox_metric_server_manage_hosts
+    - proxmox_metric_server_definitions | length > 0

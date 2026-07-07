@@ -1,0 +1,194 @@
+---
+- name: Validate metric server definition
+  ansible.builtin.assert:
+    that:
+      - proxmox_metric_server.id is defined
+      - proxmox_metric_server.state | default('present') in ['present', 'absent']
+      - proxmox_metric_server.state | default('present') == 'absent' or proxmox_metric_server.type is defined
+      - proxmox_metric_server.state | default('present') == 'absent' or proxmox_metric_server.server is defined
+    fail_msg: "Metric server entries require id, state, and for present entries type + server."
+
+- name: Read Proxmox metric server {{ proxmox_metric_server.id }}
+  become: true
+  ansible.builtin.command:
+    argv:
+      - pvesh
+      - get
+      - "/cluster/metrics/server/{{ proxmox_metric_server.id }}"
+      - --output-format
+      - json
+  register: proxmox_metric_server_read
+  check_mode: false
+  changed_when: false
+  failed_when: false
+
+- name: Prepare current metric server state
+  ansible.builtin.set_fact:
+    proxmox_metric_server_exists: "{{ proxmox_metric_server_read.rc == 0 }}"
+    proxmox_metric_server_current: >-
+      {{
+        (proxmox_metric_server_read.stdout | from_json)
+        if proxmox_metric_server_read.rc == 0
+        else {}
+      }}
+
+- name: Reset metric server comparison data
+  ansible.builtin.set_fact:
+    proxmox_metric_server_desired_compare: {}
+    proxmox_metric_server_current_compare: {}
+    proxmox_metric_server_create_options: []
+    proxmox_metric_server_update_options: []
+
+- name: Build desired/current comparison data
+  ansible.builtin.set_fact:
+    proxmox_metric_server_desired_compare: >-
+      {{
+        proxmox_metric_server_desired_compare
+        | combine({option_key: proxmox_metric_server[option_key]})
+      }}
+    proxmox_metric_server_current_compare: >-
+      {{
+        proxmox_metric_server_current_compare
+        | combine({option_key: proxmox_metric_server_current[option_key] | default(none)})
+      }}
+  loop: "{{ proxmox_metric_server_option_keys }}"
+  loop_control:
+    loop_var: option_key
+  when:
+    - proxmox_metric_server.state | default('present') == 'present'
+    - proxmox_metric_server[option_key] is defined
+
+- name: Build create arguments for metric server {{ proxmox_metric_server.id }}
+  ansible.builtin.set_fact:
+    proxmox_metric_server_create_options: >-
+      {{
+        proxmox_metric_server_create_options
+        + [
+          '--' ~ option_key,
+          (
+            (proxmox_metric_server[option_key] | ternary('1', '0'))
+            if proxmox_metric_server[option_key] is boolean
+            else (proxmox_metric_server[option_key] | string)
+          )
+        ]
+      }}
+  loop: "{{ proxmox_metric_server_option_keys }}"
+  loop_control:
+    loop_var: option_key
+  when:
+    - proxmox_metric_server.state | default('present') == 'present'
+    - proxmox_metric_server[option_key] is defined
+
+- name: Build update arguments for metric server {{ proxmox_metric_server.id }}
+  ansible.builtin.set_fact:
+    proxmox_metric_server_update_options: >-
+      {{
+        proxmox_metric_server_update_options
+        + [
+          '--' ~ option_key,
+          (
+            (proxmox_metric_server[option_key] | ternary('1', '0'))
+            if proxmox_metric_server[option_key] is boolean
+            else (proxmox_metric_server[option_key] | string)
+          )
+        ]
+      }}
+  loop: "{{ proxmox_metric_server_option_keys | difference(['type']) }}"
+  loop_control:
+    loop_var: option_key
+  when:
+    - proxmox_metric_server.state | default('present') == 'present'
+    - proxmox_metric_server[option_key] is defined
+
+- name: Reject metric server type changes
+  ansible.builtin.fail:
+    msg: >-
+      Metric server {{ proxmox_metric_server.id }} already exists with type
+      {{ proxmox_metric_server_current.type }}. Delete/recreate it explicitly
+      before changing it to {{ proxmox_metric_server.type }}.
+  when:
+    - proxmox_metric_server.state | default('present') == 'present'
+    - proxmox_metric_server_exists
+    - proxmox_metric_server.type is defined
+    - proxmox_metric_server_current.type != proxmox_metric_server.type
+
+- name: Report metric server creation in check mode
+  ansible.builtin.debug:
+    msg: "Would create Proxmox metric server {{ proxmox_metric_server.id }}"
+  changed_when: true
+  when:
+    - ansible_check_mode
+    - proxmox_metric_server.state | default('present') == 'present'
+    - not proxmox_metric_server_exists
+
+- name: Create Proxmox metric server {{ proxmox_metric_server.id }}
+  become: true
+  ansible.builtin.command:
+    argv: >-
+      {{
+        [
+          'pvesh',
+          'create',
+          '/cluster/metrics/server/' ~ proxmox_metric_server.id
+        ]
+        + proxmox_metric_server_create_options
+      }}
+  register: proxmox_metric_server_create
+  changed_when: proxmox_metric_server_create.rc == 0
+  when:
+    - not ansible_check_mode
+    - proxmox_metric_server.state | default('present') == 'present'
+    - not proxmox_metric_server_exists
+
+- name: Report metric server update in check mode
+  ansible.builtin.debug:
+    msg: "Would update Proxmox metric server {{ proxmox_metric_server.id }}"
+  changed_when: true
+  when:
+    - ansible_check_mode
+    - proxmox_metric_server.state | default('present') == 'present'
+    - proxmox_metric_server_exists
+    - proxmox_metric_server_desired_compare != proxmox_metric_server_current_compare
+
+- name: Update Proxmox metric server {{ proxmox_metric_server.id }}
+  become: true
+  ansible.builtin.command:
+    argv: >-
+      {{
+        [
+          'pvesh',
+          'set',
+          '/cluster/metrics/server/' ~ proxmox_metric_server.id
+        ]
+        + proxmox_metric_server_update_options
+      }}
+  register: proxmox_metric_server_update
+  changed_when: proxmox_metric_server_update.rc == 0
+  when:
+    - not ansible_check_mode
+    - proxmox_metric_server.state | default('present') == 'present'
+    - proxmox_metric_server_exists
+    - proxmox_metric_server_desired_compare != proxmox_metric_server_current_compare
+
+- name: Report metric server deletion in check mode
+  ansible.builtin.debug:
+    msg: "Would delete Proxmox metric server {{ proxmox_metric_server.id }}"
+  changed_when: true
+  when:
+    - ansible_check_mode
+    - proxmox_metric_server.state | default('present') == 'absent'
+    - proxmox_metric_server_exists
+
+- name: Delete Proxmox metric server {{ proxmox_metric_server.id }}
+  become: true
+  ansible.builtin.command:
+    argv:
+      - pvesh
+      - delete
+      - "/cluster/metrics/server/{{ proxmox_metric_server.id }}"
+  register: proxmox_metric_server_delete
+  changed_when: proxmox_metric_server_delete.rc == 0
+  when:
+    - not ansible_check_mode
+    - proxmox_metric_server.state | default('present') == 'absent'
+    - proxmox_metric_server_exists

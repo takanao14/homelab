@@ -1,0 +1,29 @@
+---
+# Metric server definitions are cluster-scoped in Proxmox VE
+# (/etc/pve/status.cfg), so only the representative hosts should manage them.
+proxmox_metric_server_manage_hosts: []
+
+# Desired external metric servers. Each item uses Proxmox API option names
+# directly, for example:
+# - id: alloy-otlp
+#   type: opentelemetry
+#   server: alloy-otlp.prd.butaco.net
+#   port: 4318
+#   otel-protocol: http
+#   otel-path: /v1/metrics
+#   state: present
+proxmox_metric_server_definitions: []
+
+proxmox_metric_server_option_keys:
+  - type
+  - server
+  - port
+  - disable
+  - otel-protocol
+  - otel-path
+  - otel-timeout
+  - otel-headers
+  - otel-verify-ssl
+  - otel-max-body-size
+  - otel-resource-attributes
+  - otel-compression
