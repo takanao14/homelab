@@ -17,6 +17,12 @@
     state: present
   notify: Restart openbao
 
+- name: Manage openbao apt hold
+  become: true
+  ansible.builtin.dpkg_selections:
+    name: openbao
+    selection: "{{ 'hold' if openbao_package_hold | bool else 'install' }}"
+
 - name: Create data directory
   become: true
   ansible.builtin.file:

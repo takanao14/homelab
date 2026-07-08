@@ -5,6 +5,8 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 ## Functionality
 
 - Installs OpenBao via the official apt repository.
+- Holds the `openbao` apt package by default so fleet package upgrades do not
+  advance the stateful secret store ahead of the reviewed version.
 - Deploys `/etc/openbao/openbao.hcl` from a Jinja2 template.
 - Deploys the static seal key to `/etc/openbao/seal.key`.
 - Applies a systemd drop-in to grant `CAP_IPC_LOCK` for mlock support.
@@ -26,9 +28,10 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `openbao_version` | `2.5.4` | OpenBao version to install |
+| `openbao_version` | `2.5.5` | Reviewed OpenBao version used by Renovate/audit |
 | `openbao_user` | `openbao` | System user (created by package) |
 | `openbao_group` | `openbao` | System group (created by package) |
+| `openbao_package_hold` | `true` | Hold the `openbao` apt package after install. Set `false` temporarily before an explicit package upgrade. |
 | `openbao_config_dir` | `/etc/openbao` | Config directory |
 | `openbao_data_dir` | `/opt/openbao/data` | Raft storage directory |
 | `openbao_binary` | `/usr/bin/bao` | Binary path |

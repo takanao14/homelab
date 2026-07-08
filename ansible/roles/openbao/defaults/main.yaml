@@ -3,6 +3,7 @@
 openbao_version: "2.5.5"
 openbao_user: openbao
 openbao_group: openbao
+openbao_package_hold: true
 openbao_config_dir: /etc/openbao
 openbao_data_dir: /opt/openbao/data
 openbao_binary: /usr/bin/bao
