@@ -91,7 +91,7 @@ kube-prometheus-stack:
               replacement: prd
         - name: external
       retention: 30d
-      resourceSpec:
+      resources:
         requests:
           memory: 512Mi
       storageSpec:

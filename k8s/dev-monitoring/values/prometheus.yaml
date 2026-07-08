@@ -38,7 +38,7 @@ kube-prometheus-stack:
         matchLabels:
           release: prometheus
       scrapeConfigNamespaceSelector: {}
-      resourceSpec:
+      resources:
         requests:
           memory: 256Mi
 
