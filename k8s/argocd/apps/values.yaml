@@ -1,0 +1,87 @@
+# Environment name (prd / dev / sandbox). Required — selects the
+# k8s/<app>/<env>/values.yaml files referenced by the generated Applications.
+env: ""
+
+# This repository, as seen by the in-cluster ArgoCD.
+repo:
+  url: https://github.com/takanao14/homelab.git
+  targetRevision: HEAD
+
+# One entry per app template. `enabled` gates rendering; `wave` sets the
+# ArgoCD sync-wave annotation. Upstream chart coordinates are kept here (not
+# in templates/) because Renovate ignores **/templates/** and its regex
+# manager tracks the repoURL/chart/targetRevision triple in k8s/**/*.yaml.
+apps:
+  argocd:
+    enabled: false
+    wave: "1"
+    upstream:
+      repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      targetRevision: 10.1.2
+  cert-manager:
+    enabled: false
+    wave: "0"
+    upstream:
+      repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: v1.20.3
+  cert-manager-config:
+    enabled: false
+    wave: "1"
+  comfyui:
+    enabled: false
+    wave: "1"
+  envoy-gateway-crds:
+    enabled: false
+    wave: "-2"
+  envoy-gateway:
+    enabled: false
+    wave: "-1"
+  eso:
+    enabled: false
+    wave: "0"
+  external-dns:
+    enabled: false
+    wave: "1"
+  gateway:
+    enabled: false
+    wave: "0"
+  headlamp:
+    enabled: false
+    wave: "1"
+  homepage:
+    enabled: false
+    wave: "1"
+  lemonade-server:
+    enabled: false
+    wave: "1"
+  longhorn-ui:
+    enabled: false
+    wave: "2"
+  meshcentral:
+    enabled: false
+    wave: "1"
+  # monitoring differs structurally per environment (prd: central
+  # kube-prometheus-stack app-of-apps, dev: Prometheus agent chart), so its
+  # source path / namespace / helm settings come from apps-values.yaml.
+  monitoring:
+    enabled: false
+    wave: "1"
+    path: ""
+    namespace: ""
+    helm: {}
+    syncOptions: []
+  ollama:
+    enabled: false
+    wave: "1"
+  open-webui:
+    enabled: false
+    wave: "1"
+    upstream:
+      repoURL: https://helm.openwebui.com/
+      chart: open-webui
+      targetRevision: 15.2.0
+  reloader:
+    enabled: false
+    wave: "1"

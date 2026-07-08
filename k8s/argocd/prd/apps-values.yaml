@@ -1,0 +1,30 @@
+env: prd
+
+apps:
+  argocd:
+    enabled: true
+  cert-manager:
+    enabled: true
+  cert-manager-config:
+    enabled: true
+  envoy-gateway-crds:
+    enabled: true
+  envoy-gateway:
+    enabled: true
+  eso:
+    enabled: true
+  external-dns:
+    enabled: true
+  gateway:
+    enabled: true
+  headlamp:
+    enabled: true
+  homepage:
+    enabled: true
+  monitoring:
+    enabled: true
+    # Central kube-prometheus-stack app-of-apps (see k8s/monitoring).
+    path: k8s/monitoring/apps
+    namespace: argocd
+  reloader:
+    enabled: true

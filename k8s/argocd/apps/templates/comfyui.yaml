@@ -1,0 +1,41 @@
+{{- $app := index .Values.apps "comfyui" }}
+{{- if $app.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: comfyui
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $app.wave | quote }}
+spec:
+  project: default
+  sources:
+    - repoURL: {{ .Values.repo.url }}
+      targetRevision: {{ .Values.repo.targetRevision }}
+      path: k8s/comfyui/chart
+      helm:
+        valueFiles:
+          - $values/k8s/comfyui/values.yaml
+    - repoURL: {{ .Values.repo.url }}
+      targetRevision: {{ .Values.repo.targetRevision }}
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: comfyui
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: ""
+      kind: PersistentVolumeClaim
+      jsonPointers:
+        - /spec/volumeName
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - RespectIgnoreDifferences=true
+{{- end }}

@@ -1,0 +1,31 @@
+{{- $app := index .Values.apps "meshcentral" }}
+{{- if $app.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: meshcentral
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $app.wave | quote }}
+spec:
+  project: default
+  sources:
+    - repoURL: {{ .Values.repo.url }}
+      targetRevision: {{ .Values.repo.targetRevision }}
+      path: k8s/meshcentral/chart
+      helm:
+        valueFiles:
+          - $values/k8s/meshcentral/values.yaml
+    - repoURL: {{ .Values.repo.url }}
+      targetRevision: {{ .Values.repo.targetRevision }}
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: meshcentral
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+{{- end }}

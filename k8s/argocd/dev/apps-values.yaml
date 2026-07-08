@@ -1,0 +1,43 @@
+env: dev
+
+apps:
+  argocd:
+    enabled: true
+  cert-manager:
+    enabled: true
+  cert-manager-config:
+    enabled: true
+  comfyui:
+    enabled: true
+  envoy-gateway-crds:
+    enabled: true
+  envoy-gateway:
+    enabled: true
+  eso:
+    enabled: true
+  external-dns:
+    enabled: true
+  gateway:
+    enabled: true
+  lemonade-server:
+    enabled: true
+  meshcentral:
+    enabled: true
+  monitoring:
+    enabled: true
+    # Prometheus agent mode, remote_write to prd (see k8s/dev-monitoring).
+    path: k8s/dev-monitoring/charts/prometheus
+    namespace: monitoring
+    helm:
+      releaseName: prometheus
+      valueFiles:
+        - ../../values/prometheus.yaml
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  ollama:
+    enabled: true
+  open-webui:
+    enabled: true
+  reloader:
+    enabled: true

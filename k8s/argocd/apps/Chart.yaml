@@ -1,0 +1,8 @@
+apiVersion: v2
+name: argocd-apps
+description: >-
+  App-of-apps chart rendering the ArgoCD Application set for one environment.
+  Each environment enables its apps and sets `env` in
+  k8s/argocd/<env>/apps-values.yaml, referenced by root-apps.yaml.
+type: application
+version: 0.1.0

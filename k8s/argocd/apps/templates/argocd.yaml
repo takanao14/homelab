@@ -1,0 +1,41 @@
+{{- $app := index .Values.apps "argocd" }}
+{{- if $app.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $app.wave | quote }}
+spec:
+  project: default
+  sources:
+    - repoURL: {{ $app.upstream.repoURL }}
+      chart: {{ $app.upstream.chart }}
+      targetRevision: {{ $app.upstream.targetRevision }}
+      helm:
+        valueFiles:
+          - $values/k8s/argocd/values-common.yaml
+          - $values/k8s/argocd/{{ include "argocd-apps.env" . }}/values.yaml
+    - repoURL: {{ .Values.repo.url }}
+      targetRevision: {{ .Values.repo.targetRevision }}
+      ref: values
+    - repoURL: {{ .Values.repo.url }}
+      targetRevision: {{ .Values.repo.targetRevision }}
+      path: k8s/argocd/chart
+      helm:
+        releaseName: argocd-routes
+        valueFiles:
+          - $values/k8s/argocd/values-common.yaml
+          - $values/k8s/argocd/{{ include "argocd-apps.env" . }}/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+{{- end }}

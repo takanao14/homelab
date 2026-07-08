@@ -1,0 +1,30 @@
+{{- $app := index .Values.apps "external-dns" }}
+{{- if $app.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $app.wave | quote }}
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.repo.url }}
+    targetRevision: {{ .Values.repo.targetRevision }}
+    path: k8s/externalDNS/chart
+    helm:
+      valueFiles:
+        - ../values-common.yaml
+        - ../{{ include "argocd-apps.env" . }}/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-dns
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+{{- end }}

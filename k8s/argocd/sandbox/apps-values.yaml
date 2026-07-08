@@ -1,0 +1,21 @@
+env: sandbox
+
+apps:
+  argocd:
+    enabled: true
+  envoy-gateway-crds:
+    enabled: true
+  envoy-gateway:
+    enabled: true
+  eso:
+    enabled: true
+  external-dns:
+    enabled: true
+  gateway:
+    enabled: true
+  homepage:
+    enabled: true
+    # After the sandbox Gateway, ESO, and external-dns applications.
+    wave: "2"
+  longhorn-ui:
+    enabled: true

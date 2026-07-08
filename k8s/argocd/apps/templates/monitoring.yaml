@@ -1,0 +1,31 @@
+{{- $app := index .Values.apps "monitoring" }}
+{{- if $app.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $app.wave | quote }}
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.repo.url }}
+    targetRevision: {{ .Values.repo.targetRevision }}
+    path: {{ required "apps.monitoring.path must be set per environment" $app.path }}
+    {{- with $app.helm }}
+    helm:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ required "apps.monitoring.namespace must be set per environment" $app.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    {{- with $app.syncOptions }}
+    syncOptions:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+{{- end }}

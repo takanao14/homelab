@@ -1,0 +1,32 @@
+{{- $app := index .Values.apps "open-webui" }}
+{{- if $app.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: open-webui
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $app.wave | quote }}
+spec:
+  project: default
+  sources:
+    - repoURL: {{ $app.upstream.repoURL }}
+      chart: {{ $app.upstream.chart }}
+      targetRevision: {{ $app.upstream.targetRevision }}
+      helm:
+        valueFiles:
+          - $values/k8s/open-webui/values.yaml
+          - $values/k8s/open-webui/{{ include "argocd-apps.env" . }}/values.yaml
+    - repoURL: {{ .Values.repo.url }}
+      targetRevision: {{ .Values.repo.targetRevision }}
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: open-webui
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+{{- end }}
