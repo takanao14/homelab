@@ -55,3 +55,6 @@ deleting it:
 | [0010](0010-sandbox-argocd-uses-http-only-gitops-bootstrap.md) | Sandbox Argo CD uses HTTP-only GitOps bootstrap without cert-manager | Accepted |
 | [0011](0011-cilium-gateway-to-envoy-gateway-migration.md) | Use Envoy Gateway for shared Gateway API ingress | Accepted |
 | [0012](0012-openbao-eso-cluster-rebuild-registration.md) | Re-register rebuilt clusters with OpenBao for ESO | Accepted |
+| [0013](0013-truenas-nfs-for-proxmox-shared-images.md) | TrueNAS NFS for Proxmox shared image storage | Accepted |
+| [0014](0014-argocd-app-of-apps-shared-helm-chart.md) | ArgoCD App of Apps rendered from a shared Helm chart | Accepted |
+| [0015](0015-headlamp-per-cluster-in-cluster-deployment.md) | Headlamp runs in-cluster per cluster instead of a central multi-cluster UI | Accepted |
