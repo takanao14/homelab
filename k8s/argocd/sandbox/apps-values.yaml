@@ -19,14 +19,13 @@ apps:
     enabled: true
   monitoring:
     enabled: true
-    # Standalone kube-prometheus-stack + bundled Grafana, not coupled to prd
-    # (see k8s/sandbox-monitoring).
-    path: k8s/sandbox-monitoring/charts/prometheus
-    namespace: monitoring
+    # Staging-style subset of the shared monitoring stack. External alert
+    # delivery and external target scrapes stay disabled in the overlay.
+    path: k8s/monitoring/apps
+    namespace: argocd
     helm:
-      releaseName: prometheus
+      releaseName: monitoring-apps
       valueFiles:
-        - ../../values/prometheus.yaml
+        - ../values/apps-sandbox.yaml
     syncOptions:
-      - CreateNamespace=true
       - ServerSideApply=true

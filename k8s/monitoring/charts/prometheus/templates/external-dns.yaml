@@ -5,8 +5,8 @@ gateway, argocd) — see cilium-servicemonitors.yaml for the CRD-race rationale,
 though external-dns itself has no such ordering constraint since it isn't
 part of cluster bootstrap.
 
-cluster=prd is injected by the default cluster-prd scrape class (see
-prometheusSpec.scrapeClasses in values/prometheus.yaml).
+The cluster label is injected by the environment's default scrape class (see
+prometheusSpec.scrapeClasses in values/prometheus*.yaml).
 */ -}}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor

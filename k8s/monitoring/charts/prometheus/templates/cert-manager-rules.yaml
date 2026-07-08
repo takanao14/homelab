@@ -1,3 +1,4 @@
+{{- if .Values.prometheusRules.certManager.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -53,3 +54,4 @@ spec:
           annotations:
             summary: 'cert-manager metrics target down ({{ "{{" }} $labels.cluster {{ "}}" }})'
             description: 'cert-manager is not being scraped; certificate expiry can no longer be monitored.'
+{{- end }}

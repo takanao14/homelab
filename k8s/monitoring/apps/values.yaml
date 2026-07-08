@@ -1,0 +1,119 @@
+repo:
+  url: https://github.com/takanao14/homelab.git
+  targetRevision: HEAD
+
+argocdNamespace: argocd
+project: default
+destinationServer: https://kubernetes.default.svc
+defaultNamespace: monitoring
+defaultSyncOptions:
+  - CreateNamespace=true
+
+apps:
+  prometheus:
+    enabled: true
+    wave: "0"
+    path: k8s/monitoring/charts/prometheus
+    valueFiles:
+      - ../../values/prometheus.yaml
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 30s
+        factor: 2
+    ignoreDifferences:
+      - group: admissionregistration.k8s.io
+        kind: MutatingWebhookConfiguration
+        jsonPointers:
+          - /webhooks
+      - group: admissionregistration.k8s.io
+        kind: ValidatingWebhookConfiguration
+        jsonPointers:
+          - /webhooks
+      - group: monitoring.coreos.com
+        kind: Prometheus
+        jsonPointers:
+          - /spec/shards
+          - /spec/replicas
+  grafana:
+    enabled: true
+    wave: "1"
+    path: k8s/monitoring/charts/grafana
+    valueFiles:
+      - ../../values/grafana.yaml
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 30s
+        factor: 2
+  loki:
+    enabled: true
+    wave: "1"
+    path: k8s/monitoring/charts/loki
+    valueFiles:
+      - ../../values/loki.yaml
+  alloy:
+    enabled: true
+    wave: "1"
+    path: k8s/monitoring/charts/alloy
+    valueFiles:
+      - ../../values/alloy.yaml
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 30s
+        factor: 2
+  blackbox-exporter-external:
+    enabled: true
+    wave: "1"
+    path: k8s/monitoring/charts/blackbox-exporter-external
+    valueFiles:
+      - ../../values/blackbox-exporter-external.yaml
+  snmp-exporter:
+    enabled: true
+    wave: "1"
+    path: k8s/monitoring/charts/snmp-exporter
+    valueFiles:
+      - ../../values/snmp-exporter.yaml
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  node-exporter-external:
+    enabled: true
+    wave: "1"
+    path: k8s/monitoring/charts/node-exporter-external
+    valueFiles:
+      - ../../values/node-exporter-external.yaml
+  amd-gpu-external:
+    enabled: true
+    wave: "1"
+    path: k8s/monitoring/charts/amd-gpu-external
+    valueFiles:
+      - ../../values/amd-gpu-external.yaml
+  dnsdist:
+    enabled: true
+    wave: "1"
+    path: k8s/monitoring/charts/dnsdist
+    valueFiles:
+      - ../../values/dnsdist.yaml
+  pdns-auth:
+    enabled: true
+    wave: "1"
+    path: k8s/monitoring/charts/pdns-auth
+    valueFiles:
+      - ../../values/pdns-auth.yaml
+  openbao:
+    enabled: true
+    wave: "1"
+    path: k8s/monitoring/charts/openbao
+    valueFiles:
+      - ../../values/openbao.yaml

@@ -12,8 +12,8 @@ itself lives; the proxy Service only carries client traffic (ports 80/443),
 so metrics (19001, path /stats/prometheus) require a PodMonitor. Confirmed by
 port-forwarding both endpoints on prd (2026-07-04).
 
-cluster=prd is injected by the default cluster-prd scrape class (see
-prometheusSpec.scrapeClasses in values/prometheus.yaml).
+The cluster label is injected by the environment's default scrape class (see
+prometheusSpec.scrapeClasses in values/prometheus*.yaml).
 */ -}}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor

@@ -1,0 +1,36 @@
+grafana:
+  podAnnotations:
+    reloader.stakater.com/auto: "true"
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://prometheus-kube-prometheus-prometheus:9090
+          access: proxy
+          isDefault: true
+  persistence:
+    enabled: false
+  initChownData:
+    enabled: false
+  service:
+    type: ClusterIP
+  defaultDashboardsEnabled: false
+
+hostname: grafana.sandbox.butaco.net
+
+gateway:
+  name: shared-gateway-envoy
+  namespace: gateway-system
+  sectionName: http

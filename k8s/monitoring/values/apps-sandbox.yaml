@@ -1,0 +1,27 @@
+apps:
+  prometheus:
+    enabled: true
+    valueFiles:
+      - ../../values/prometheus-sandbox.yaml
+  grafana:
+    enabled: true
+    valueFiles:
+      - ../../values/grafana-sandbox.yaml
+  loki:
+    enabled: false
+  alloy:
+    enabled: false
+  blackbox-exporter-external:
+    enabled: false
+  snmp-exporter:
+    enabled: false
+  node-exporter-external:
+    enabled: false
+  amd-gpu-external:
+    enabled: false
+  dnsdist:
+    enabled: false
+  pdns-auth:
+    enabled: false
+  openbao:
+    enabled: false

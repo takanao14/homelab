@@ -15,8 +15,8 @@ distinct "argocd-<component>-metrics" name. Confirmed via `kubectl get svc -o
 yaml` on prd (2026-07-04) after the first version of this file (matching on
 "argocd-<component>") produced zero scraped targets.
 
-cluster=prd is injected by the default cluster-prd scrape class (see
-prometheusSpec.scrapeClasses in values/prometheus.yaml).
+The cluster label is injected by the environment's default scrape class (see
+prometheusSpec.scrapeClasses in values/prometheus*.yaml).
 */ -}}
 {{- $components := dict
   "application-controller" "argocd-metrics"

@@ -1,3 +1,4 @@
+{{- if .Values.controlPlaneNodeExporter.enabled }}
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: ScrapeConfig
 metadata:
@@ -6,8 +7,8 @@ metadata:
   labels:
     release: prometheus
 spec:
-  # Opt out of the default cluster-prd scrape class: the per-target cluster
-  # labels below would otherwise be overwritten with cluster=prd.
+  # Opt out of the default in-cluster scrape class: the per-target cluster
+  # labels below would otherwise be overwritten.
   scrapeClass: external
   metricsPath: /metrics
   scrapeInterval: 30s
@@ -33,3 +34,4 @@ spec:
     - action: replace
       sourceLabels: [__tmp_name]
       targetLabel: instance
+{{- end }}

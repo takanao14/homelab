@@ -1,0 +1,48 @@
+{{- range $name, $app := .Values.apps }}
+{{- if $app.enabled }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.argocdNamespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ default "1" $app.wave | quote }}
+spec:
+  project: {{ $.Values.project }}
+  source:
+    repoURL: {{ $.Values.repo.url }}
+    targetRevision: {{ $.Values.repo.targetRevision }}
+    path: {{ required (printf "apps.%s.path must be set" $name) $app.path }}
+    {{- if or $app.valueFiles $app.helm }}
+    helm:
+      {{- with $app.releaseName }}
+      releaseName: {{ . }}
+      {{- end }}
+      {{- with $app.valueFiles }}
+      valueFiles:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $app.helm }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+    {{- end }}
+  destination:
+    server: {{ $.Values.destinationServer }}
+    namespace: {{ default $.Values.defaultNamespace $app.namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    {{- with $app.retry }}
+    retry:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    syncOptions:
+      {{- toYaml (default $.Values.defaultSyncOptions $app.syncOptions) | nindent 6 }}
+  {{- with $app.ignoreDifferences }}
+  ignoreDifferences:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}

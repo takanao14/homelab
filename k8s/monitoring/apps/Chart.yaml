@@ -1,0 +1,5 @@
+apiVersion: v2
+name: monitoring-apps
+description: ArgoCD Applications for the monitoring stack
+type: application
+version: 0.1.0

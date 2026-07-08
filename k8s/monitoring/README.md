@@ -22,21 +22,17 @@ Monitoring stack for the prd cluster. Managed by ArgoCD with the helm-secrets pl
 
 ```
 monitoring/
-├── apps/                         # ArgoCD Application manifests
-│   ├── prometheus.yaml
-│   ├── grafana.yaml
-│   ├── loki.yaml
-│   ├── alloy.yaml
-│   ├── blackbox-exporter-external.yaml
-│   ├── snmp-exporter.yaml
-│   ├── node-exporter-external.yaml
-│   ├── amd-gpu-external.yaml
-│   ├── dnsdist.yaml
-│   ├── pdns-auth.yaml
-│   └── openbao.yaml
+├── apps/                         # Helm chart that renders ArgoCD Applications
+│   ├── Chart.yaml
+│   ├── values.yaml               # prd full-stack defaults; env overlays can disable apps
+│   └── templates/
+│       └── applications.yaml
 ├── values/                       # Helm values per component
 │   ├── prometheus.yaml           # kube-prometheus-stack + Prometheus/Alertmanager config
+│   ├── prometheus-sandbox.yaml   # sandbox subset Prometheus config
 │   ├── grafana.yaml
+│   ├── grafana-sandbox.yaml
+│   ├── apps-sandbox.yaml         # sandbox Application subset overlay
 │   ├── loki.yaml                 # SingleBinary mode, LoadBalancer
 │   ├── alloy.yaml
 │   ├── blackbox-exporter-external.yaml
@@ -61,9 +57,12 @@ monitoring/
 
 ## Ownership Policy
 
-`k8s/monitoring` is the prd observability control plane, not just the
-Prometheus chart. Keep monitoring-owned resources here when their primary
-purpose is to collect, store, query, alert on, or expose telemetry.
+`k8s/monitoring` is the observability control-plane definition, not just the
+Prometheus chart. Its default values describe the prd full stack, and the
+`apps/` chart intentionally supports environment overlays that render only a
+safe subset for staging-style clusters such as sandbox. Keep monitoring-owned
+resources here when their primary purpose is to collect, store, query, alert on,
+or expose telemetry.
 
 It is acceptable for this directory to be large: observability is naturally
 cross-cutting, and keeping the scrape contracts, dashboards, alerting, and
@@ -73,6 +72,9 @@ values files, not as an unbounded `charts/prometheus` dumping ground.
 
 Use these boundaries:
 
+- The `apps/` chart owns ArgoCD Application generation. Add new monitoring
+  components there with an `enabled` flag so prd can run the full set while
+  sandbox can opt into a subset without forking Application manifests.
 - Telemetry backends and frontends belong here: Prometheus, Alertmanager,
   Grafana, Loki, Alloy, their Secrets, HTTPRoutes, LoadBalancers, dashboards,
   and alert routing.
@@ -123,6 +125,23 @@ or non-telemetry infrastructure here merely because they expose metrics. Also
 avoid adding unrelated scrape resources directly to `charts/prometheus`; prefer
 a dedicated small chart unless the resource genuinely belongs to the Prometheus
 control plane or must be centralized for bootstrap/cross-cluster reasons.
+
+## Environment Subsets
+
+The default `apps/values.yaml` renders the prd full stack. Sandbox consumes the
+same `apps/` chart with `values/apps-sandbox.yaml`, currently enabling only
+Prometheus and Grafana:
+
+- Prometheus runs locally with `cluster=sandbox`, short retention, no
+  Alertmanager deployment, and no external alert delivery.
+- Grafana uses the shared Grafana wrapper chart with sandbox HTTPRoute values
+  and an ephemeral data directory.
+- Loki, Alloy, external LAN scrapes, SNMP, DNS, GPU, and OpenBao scrape
+  contracts are disabled until they have sandbox-safe values.
+
+When adding a monitoring component, keep the prd default enabled in
+`apps/values.yaml` only if it belongs to the full stack, then explicitly decide
+whether `values/apps-sandbox.yaml` should opt in or out.
 
 ## Current Inventory
 

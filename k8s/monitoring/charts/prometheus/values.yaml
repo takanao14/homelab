@@ -5,3 +5,25 @@ gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
   sectionName: https
+
+alertmanagerConfig:
+  enabled: true
+
+externalSecretAlertmanager:
+  enabled: true
+
+prometheusRules:
+  certManager:
+    enabled: true
+  hardware:
+    enabled: true
+
+serviceMonitors:
+  loki:
+    enabled: true
+
+controlPlaneNodeExporter:
+  enabled: true
+
+dashboards:
+  enabled: true

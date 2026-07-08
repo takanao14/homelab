@@ -1,3 +1,4 @@
+{{- if .Values.prometheusRules.hardware.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -60,3 +61,4 @@ spec:
           annotations:
             summary: 'CPU Throttling active on {{ "{{" }} $labels.instance {{ "}}" }}'
             description: "CPU package is throttling due to thermal or power limits."
+{{- end }}
