@@ -1,0 +1,125 @@
+kube-prometheus-stack:
+  # Standalone stack for sandbox experimentation: full Prometheus + bundled
+  # Grafana, no coupling to the prd cluster (no remote_write, no central
+  # Alertmanager). See k8s/monitoring (prd) and k8s/dev-monitoring (dev agent)
+  # for the other environments.
+  alertmanager:
+    # No notification target on sandbox; alerts are visible in the Prometheus
+    # UI only.
+    enabled: false
+
+  defaultRules:
+    # Alertmanager is not deployed, so drop the rules that would always fire
+    # against a missing/never-connected Alertmanager.
+    rules:
+      alertmanager: false
+    disabled:
+      PrometheusNotConnectedToAlertmanagers: true
+
+  prometheus:
+    prometheusSpec:
+      externalLabels:
+        cluster: sandbox
+      # externalLabels only apply to remote_write/alerts, not to local queries,
+      # so stamp cluster=sandbox at scrape time (same pattern as prd) to keep
+      # cluster-scoped dashboard queries working against the local Grafana.
+      scrapeClasses:
+        - name: cluster-sandbox
+          default: true
+          relabelings:
+            - action: replace
+              targetLabel: cluster
+              replacement: sandbox
+      serviceMonitorSelectorNilUsesHelmValues: false
+      serviceMonitorSelector:
+        matchLabels:
+          release: prometheus
+      serviceMonitorNamespaceSelector: {}
+      ruleSelectorNilUsesHelmValues: false
+      ruleSelector:
+        matchLabels:
+          release: prometheus
+      ruleNamespaceSelector: {}
+      scrapeConfigSelectorNilUsesHelmValues: false
+      scrapeConfigSelector:
+        matchLabels:
+          release: prometheus
+      scrapeConfigNamespaceSelector: {}
+      # Short-lived experimentation cluster: keep retention and footprint small.
+      retention: 3d
+      resources:
+        requests:
+          memory: 512Mi
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 5Gi
+    service:
+      type: ClusterIP
+
+  grafana:
+    enabled: true
+    admin:
+      existingSecret: grafana-admin
+      userKey: admin-user
+      passwordKey: admin-password
+    service:
+      type: ClusterIP
+    # Sandbox keeps the upstream default dashboards and stays ephemeral;
+    # manually created dashboards do not survive pod restarts.
+    persistence:
+      enabled: false
+    sidecar:
+      datasources:
+        # Rendered independently of alertmanager.enabled; drop the datasource
+        # that would point at the non-existent Alertmanager service.
+        alertmanager:
+          enabled: false
+
+  # The k0s controller (192.168.20.31) is a dedicated control-plane node with no
+  # kubelet, so it is not discoverable as a Kubernetes Endpoint. Point the chart
+  # at the node IP directly; it renders a headless Service + manual Endpoints and
+  # a ServiceMonitor that scrapes the component's secure metrics port over HTTPS.
+  # Requires the component to listen on a routable address (bind-address !=
+  # 127.0.0.1); see k0s/template_lib.sh.
+  kubeControllerManager:
+    enabled: true
+    endpoints:
+      - 192.168.20.31
+    service:
+      enabled: true
+      port: 10257
+      targetPort: 10257
+    serviceMonitor:
+      https: true
+      insecureSkipVerify: true
+  kubeScheduler:
+    enabled: true
+    endpoints:
+      - 192.168.20.31
+    service:
+      enabled: true
+      port: 10259
+      targetPort: 10259
+    serviceMonitor:
+      https: true
+      insecureSkipVerify: true
+  # kube-proxy is disabled cluster-wide (Cilium kube-proxy replacement).
+  kubeProxy:
+    enabled: false
+
+prometheus:
+  hostname: prometheus.sandbox.butaco.net
+
+grafana:
+  hostname: grafana.sandbox.butaco.net
+
+# Sandbox is HTTP-only (no cert-manager). See ADR-0010.
+gateway:
+  name: shared-gateway-envoy
+  namespace: gateway-system
+  sectionName: http

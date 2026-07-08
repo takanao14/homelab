@@ -19,3 +19,17 @@ apps:
     wave: "2"
   longhorn-ui:
     enabled: true
+  monitoring:
+    enabled: true
+    # Standalone kube-prometheus-stack + bundled Grafana, not coupled to prd
+    # (see k8s/sandbox-monitoring). After the sandbox Gateway and ESO.
+    wave: "2"
+    path: k8s/sandbox-monitoring/charts/prometheus
+    namespace: monitoring
+    helm:
+      releaseName: prometheus
+      valueFiles:
+        - ../../values/prometheus.yaml
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

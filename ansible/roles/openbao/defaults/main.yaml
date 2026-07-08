@@ -70,7 +70,9 @@ openbao_k8s_clusters:
     host: "{{ openbao_k8s_sandbox_host }}"
     ca_cert_file: "{{ openbao_config_dir }}/k8s-sandbox-ca.pem"
     role: k8s-eso
-    policies: "k8s-external-dns,k8s-homepage,k8s-longhorn-ui"
+    # k8s-monitoring covers the Grafana admin secret read by
+    # k8s/sandbox-monitoring (secret/k8s/monitoring/grafana).
+    policies: "k8s-external-dns,k8s-homepage,k8s-longhorn-ui,k8s-monitoring"
 
 # Secrets to write into OpenBao KV (set via group_vars with SOPS encryption)
 # Each entry requires: path (KV path) and data (key/value pairs)
