@@ -112,6 +112,7 @@ SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=y
 # All provisioning scripts are staged under this single directory so they can be
 # removed in one shot when provisioning finishes (remote mode only).
 REMOTE_ROOT="/tmp/homelab-provision"
+CLOUD_INIT_WAIT_TIMEOUT="${CLOUD_INIT_WAIT_TIMEOUT:-600}"
 
 # Stage every script a remote step needs under REMOTE_ROOT in a single
 # round-trip, preserving each script's path relative to SCRIPT_DIR so it resolves
@@ -164,10 +165,74 @@ run_shell() {
 # heredoc, whose body must not be expanded by the client shell).
 run_shell_stdin() {
   if $LOCAL_MODE; then
-    bash -s
+    env "$@" bash -s
   else
-    ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" 'bash -s'
+    local env_prefix=""
+    if (( $# > 0 )); then
+      env_prefix="$* "
+    fi
+    # shellcheck disable=SC2029  # env_prefix is built client-side by design.
+    ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "${env_prefix}bash -s"
   fi
+}
+
+wait_cloud_init() {
+  echo "Waiting for cloud-init to complete..."
+  run_shell_stdin "CLOUD_INIT_WAIT_TIMEOUT=$(shell_quote "$CLOUD_INIT_WAIT_TIMEOUT")" <<'REMOTE'
+set -euo pipefail
+
+timeout_seconds="${CLOUD_INIT_WAIT_TIMEOUT:-600}"
+deadline=$(( $(date +%s) + timeout_seconds ))
+boot_finished="/var/lib/cloud/instance/boot-finished"
+last_status=""
+
+if ! command -v cloud-init >/dev/null 2>&1; then
+  echo "cloud-init is not installed; skipping wait."
+  exit 0
+fi
+
+while true; do
+  if [[ -f "$boot_finished" ]]; then
+    cloud-init status --long 2>/dev/null || true
+    echo "cloud-init boot-finished marker found."
+    exit 0
+  fi
+
+  status="$(cloud-init status 2>&1 || true)"
+  case "$status" in
+    *"status: done"*)
+      echo "$status"
+      exit 0
+      ;;
+    *"status: disabled"*)
+      echo "$status"
+      exit 0
+      ;;
+    *"status: error"*)
+      echo "$status" >&2
+      exit 1
+      ;;
+  esac
+
+  if [[ "$status" != "$last_status" ]]; then
+    echo "$status"
+    last_status="$status"
+  fi
+
+  if (( $(date +%s) >= deadline )); then
+    echo "Error: timed out waiting for cloud-init after ${timeout_seconds}s." >&2
+    echo "Last cloud-init status:" >&2
+    echo "$status" >&2
+    if command -v systemctl >/dev/null 2>&1; then
+      systemctl --no-pager --full status cloud-init-local.service cloud-init.service cloud-config.service cloud-final.service >&2 || true
+    fi
+    exit 1
+  fi
+
+  sleep 5
+done
+REMOTE
+  echo "cloud-init complete."
 }
 
 shell_quote() {
@@ -228,10 +293,8 @@ else
   stage_scripts
 fi
 
-# Wait for cloud-init to finish (no-op where cloud-init is not installed)
-echo "Waiting for cloud-init to complete..."
-run_shell "cloud-init status --wait" 2>/dev/null || true
-echo "cloud-init complete."
+# Wait for cloud-init to finish (no-op where cloud-init is not installed).
+wait_cloud_init
 
 if $LOCAL_MODE; then
   echo "Verifying system package prerequisites (no sudo)..."

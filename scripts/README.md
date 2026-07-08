@@ -90,12 +90,16 @@ Each step then runs through the `run_remote` helper, which is a single `ssh`
 invocation, so a piped credential reaches the script intact. The OpenBao
 credential is reused across steps: when `BAO_TOKEN` is set it is forwarded to the
 remote scripts over stdin; otherwise the password is entered once and reused.
+The cloud-init wait checks the standard `/var/lib/cloud/instance/boot-finished`
+marker and `cloud-init status` before provisioning continues. The default wait
+timeout is 600 seconds and can be overridden with `CLOUD_INIT_WAIT_TIMEOUT`.
 
 ```bash
 ./provision.sh <ip> [username]      # remote: push to the VM at <ip> over SSH
 ./provision.sh --local [username]    # local: provision this machine directly
 
 ./provision.sh 192.168.20.50 myuser
+CLOUD_INIT_WAIT_TIMEOUT=900 ./provision.sh 192.168.20.50 myuser
 ./provision.sh --local               # run on the target Linux box as that user
 ```
 
