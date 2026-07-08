@@ -46,26 +46,31 @@ k8s/
 │   ├── chart/                # Helm chart for ArgoCD HTTPRoute
 │   │   └── templates/
 │   │       └── httproute.yaml    # Uses server.ingress.hostname from values
+│   ├── apps/                 # App-of-apps chart (one Application template per app, ADR-0014)
+│   │   ├── Chart.yaml
+│   │   ├── values.yaml           # Defaults: apps disabled, waves, upstream chart versions
+│   │   └── templates/
 │   ├── dev/
 │   │   ├── helmfile.yaml
 │   │   ├── values.yaml           # server.ingress.hostname: argocd.dev.butaco.net
-│   │   ├── root-apps.yaml        # Bootstrap App of Apps for dev
-│   │   └── apps/                 # ArgoCD Application manifests
+│   │   ├── apps-values.yaml      # env: dev + enabled apps
+│   │   └── root-apps.yaml        # Bootstrap App of Apps for dev
 │   ├── prd/
 │   │   ├── helmfile.yaml
 │   │   ├── values.yaml           # server.ingress.hostname: argocd.prd.butaco.net
-│   │   ├── root-apps.yaml        # Bootstrap App of Apps for prd
-│   │   └── apps/                 # ArgoCD Application manifests
+│   │   ├── apps-values.yaml      # env: prd + enabled apps
+│   │   └── root-apps.yaml        # Bootstrap App of Apps for prd
 │   └── sandbox/
 │       ├── helmfile.yaml
 │       ├── values.yaml           # server.ingress.hostname: argocd.sandbox.butaco.net
-│       ├── root-apps.yaml        # Bootstrap App of Apps for sandbox
-│       └── apps/                 # ArgoCD Application manifests
+│       ├── apps-values.yaml      # env: sandbox + enabled apps
+│       └── root-apps.yaml        # Bootstrap App of Apps for sandbox
 ├── cert-manager/         # Wildcard certificate config (local Helm chart)
 │   ├── Chart.yaml
 │   ├── values.yaml           # Schema: email, domain
 │   ├── dev/values.yaml       # domain: dev.butaco.net
 │   ├── prd/values.yaml       # domain: prd.butaco.net
+│   ├── controller/           # Values for the upstream cert-manager chart (common + per-env)
 │   └── templates/
 │       ├── cluster-issuer.yaml          # letsencrypt-staging + letsencrypt-production
 │       ├── certificate.yaml             # Wildcard cert: *.{domain}
@@ -74,12 +79,14 @@ k8s/
 ├── eso/                  # External Secrets Operator + ClusterSecretStore (OpenBao)
 │   ├── Chart.yaml
 │   ├── values.yaml
+│   ├── {dev,prd,sandbox}/values.yaml  # openbao.mountPath per environment
 │   └── templates/
 │       ├── cluster-secret-store.yaml  # ClusterSecretStore pointing to OpenBao
 │       └── auth-delegator.yaml        # TokenReview RBAC for the ESO ServiceAccount
 ├── gateway/              # Shared Envoy Gateway API resources (local Helm chart)
 │   ├── Chart.yaml
 │   ├── values.yaml           # Schema: domain
+│   ├── {dev,prd,sandbox}/values.yaml  # domain per environment; sandbox disables HTTPS
 │   └── templates/
 │       ├── envoyproxies.yaml
 │       ├── gatewayclasses.yaml
@@ -98,6 +105,7 @@ k8s/
 ├── longhorn-ui/          # Authenticated reverse proxy + HTTPRoute for Longhorn UI
 │   ├── Chart.yaml
 │   ├── values.yaml
+│   ├── sandbox/values.yaml   # Gateway SecurityPolicy auth, no nginx proxy
 │   └── templates/
 ├── monitoring/           # Prometheus stack + Loki + exporters (prd only)
 │   ├── apps/             # ArgoCD Application manifests
@@ -119,7 +127,11 @@ k8s/
 │   ├── values.yaml
 │   └── chart/
 ├── homepage/             # Homepage dashboard (prd, sandbox)
+│   ├── {prd,sandbox}/values.yaml  # hostname / Gateway listener per environment
 │   └── chart/
+├── open-webui/           # Open WebUI values for the upstream chart (dev only)
+│   ├── values.yaml
+│   └── dev/values.yaml
 └── meshcentral/          # MeshCentral remote management (dev only)
     └── chart/
 ```

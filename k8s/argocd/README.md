@@ -11,48 +11,25 @@ argocd/
 ├── chart/                    # Shared Helm chart for ArgoCD HTTPRoute
 │   └── templates/
 │       └── httproute.yaml    # Uses server.ingress.hostname from values
+├── apps/                     # App-of-apps chart: one Application template per app
+│   ├── Chart.yaml
+│   ├── values.yaml           # All apps disabled by default; waves; upstream chart versions
+│   └── templates/            # Gated by apps.<name>.enabled, env via {{ .Values.env }}
 ├── dev/
 │   ├── helmfile.yaml         # Initial deployment config for dev
 │   ├── values.yaml           # server.ingress.hostname: argocd.dev.butaco.net
-│   ├── root-apps.yaml        # Bootstrap App of Apps for dev
-│   └── apps/                 # ArgoCD Application manifests
-│       ├── argocd.yaml
-│       ├── cert-manager-config.yaml
-│       ├── cert-manager.yaml
-│       ├── comfyui.yaml
-│       ├── eso.yaml
-│       ├── external-dns.yaml
-│       ├── gateway.yaml
-│       ├── lemonade-server.yaml
-│       ├── meshcentral.yaml
-│       ├── monitoring.yaml       # Prometheus agent mode (k8s/dev-monitoring)
-│       ├── ollama.yaml
-│       ├── open-webui.yaml
-│       └── reloader.yaml
+│   ├── apps-values.yaml      # env: dev + enabled apps (see ADR-0014)
+│   └── root-apps.yaml        # Bootstrap App of Apps for dev
 ├── prd/
 │   ├── helmfile.yaml         # Initial deployment config for prd
 │   ├── values.yaml           # server.ingress.hostname: argocd.prd.butaco.net
-│   ├── root-apps.yaml        # Bootstrap App of Apps for prd
-│   └── apps/                 # ArgoCD Application manifests
-│       ├── argocd.yaml
-│       ├── cert-manager-config.yaml
-│       ├── cert-manager.yaml
-│       ├── eso.yaml
-│       ├── external-dns.yaml
-│       ├── gateway.yaml
-│       ├── homepage.yaml
-│       ├── monitoring.yaml       # Full monitoring stack (k8s/monitoring)
-│       └── reloader.yaml
+│   ├── apps-values.yaml      # env: prd + enabled apps
+│   └── root-apps.yaml        # Bootstrap App of Apps for prd
 └── sandbox/
     ├── helmfile.yaml         # Initial deployment config for sandbox
     ├── values.yaml           # HTTP route: argocd.sandbox.butaco.net
-    ├── root-apps.yaml        # Bootstrap App of Apps for sandbox
-    └── apps/
-        ├── argocd.yaml
-        ├── eso.yaml
-        ├── external-dns.yaml
-        ├── gateway.yaml
-        └── longhorn-ui.yaml
+    ├── apps-values.yaml      # env: sandbox + enabled apps
+    └── root-apps.yaml        # Bootstrap App of Apps for sandbox
 ```
 
 ## Environments
@@ -95,6 +72,31 @@ The `argocd.yaml` Application uses multi-source:
 1. Upstream `argo-cd` Helm chart
 2. Values ref (this repo)
 3. `k8s/argocd/chart` — renders HTTPRoute from values
+
+## App of Apps
+
+Each environment's `root-apps.yaml` points at the shared `apps/` chart with
+`helm.valueFiles: [../<env>/apps-values.yaml]`. The chart renders one
+Application per enabled app; per-app environment differences live in
+`k8s/<app>/<env>/values.yaml` files referenced by the generated Applications
+(see [ADR-0014](../../docs/adr/0014-argocd-app-of-apps-shared-helm-chart.md)).
+
+To deploy an app to another environment:
+
+1. Set `apps.<name>.enabled: true` in `k8s/argocd/<env>/apps-values.yaml`.
+2. Add `k8s/<app>/<env>/values.yaml` if the app takes per-env values.
+
+To add a new application, add a template to `apps/templates/` and a defaults
+entry (enabled: false, wave) to `apps/values.yaml`. Keep upstream chart
+coordinates in `apps/values.yaml` — Renovate ignores `**/templates/**`, and
+its regex manager matches the `repoURL:` / `chart:` / `targetRevision:` key
+order there.
+
+Inspect the rendered Applications with:
+
+```bash
+helm template k8s/argocd/apps -f k8s/argocd/<env>/apps-values.yaml
+```
 
 ## Apps
 
