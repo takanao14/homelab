@@ -109,6 +109,7 @@ helm template k8s/argocd/apps -f k8s/argocd/<env>/apps-values.yaml
 | external-secrets (eso) | external-secrets | dev, prd, sandbox |
 | external-dns | external-dns | dev, prd, sandbox |
 | gateway | gateway-system | dev, prd, sandbox |
+| headlamp | headlamp | dev, prd |
 | homepage | homepage | prd, sandbox |
 | lemonade-server | lemonade-server | dev only |
 | longhorn-ui | longhorn-system | sandbox only |

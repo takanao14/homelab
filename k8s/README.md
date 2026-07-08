@@ -126,6 +126,9 @@ k8s/
 ├── ollama/               # Ollama LLM server (dev only, AMD GPU)
 │   ├── values.yaml
 │   └── chart/
+├── headlamp/             # Headlamp Kubernetes Web UI, in-cluster per environment (dev, prd)
+│   ├── {dev,prd}/values.yaml      # hostname per environment
+│   └── chart/            # Wrapper chart (in-cluster mode, HTTPRoute)
 ├── homepage/             # Homepage dashboard (prd, sandbox)
 │   ├── {prd,sandbox}/values.yaml  # hostname / Gateway listener per environment
 │   └── chart/

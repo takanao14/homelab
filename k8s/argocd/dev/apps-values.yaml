@@ -19,6 +19,8 @@ apps:
     enabled: true
   gateway:
     enabled: true
+  headlamp:
+    enabled: true
   lemonade-server:
     enabled: true
   meshcentral:

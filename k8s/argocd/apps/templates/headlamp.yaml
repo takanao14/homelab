@@ -9,17 +9,14 @@ metadata:
     argocd.argoproj.io/sync-wave: {{ $app.wave | quote }}
 spec:
   project: default
-  sources:
-    - repoURL: {{ .Values.repo.url }}
-      targetRevision: {{ .Values.repo.targetRevision }}
-      path: k8s/headlamp/chart
-      helm:
-        releaseName: headlamp
-        valueFiles:
-          - $values/k8s/headlamp/values.yaml
-    - repoURL: {{ .Values.repo.url }}
-      targetRevision: {{ .Values.repo.targetRevision }}
-      ref: values
+  source:
+    repoURL: {{ .Values.repo.url }}
+    targetRevision: {{ .Values.repo.targetRevision }}
+    path: k8s/headlamp/chart
+    helm:
+      releaseName: headlamp
+      valueFiles:
+        - ../{{ include "argocd-apps.env" . }}/values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: headlamp

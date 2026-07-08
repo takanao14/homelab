@@ -1,14 +1,35 @@
 # Headlamp
 
-Kubernetes Web UI deployed in the prd cluster.
+Kubernetes Web UI, deployed in-cluster per environment (prd, dev). Each
+cluster runs its own Headlamp instance authenticated via ServiceAccount RBAC —
+no cross-cluster kubeconfig secrets. See the design change note below.
 
-## Initial Setup
+## Directory Structure
 
-The Helm chart automatically creates a ServiceAccount `headlamp` with `cluster-admin` binding.
-After ArgoCD syncs, create a long-lived token Secret for login.
+```
+headlamp/
+├── chart/
+│   ├── Chart.yaml    # Wrapper chart with headlamp as dependency
+│   └── values.yaml   # Common values (in-cluster mode, HTTPRoute gateway config)
+├── prd/values.yaml   # hostname: headlamp.prd.butaco.net
+└── dev/values.yaml   # hostname: headlamp.dev.butaco.net
+```
+
+Deployed via the app-of-apps chart (`k8s/argocd/apps/templates/headlamp.yaml`);
+enable per environment in `k8s/argocd/<env>/apps-values.yaml`.
+
+## Access
+
+- prd: https://headlamp.prd.butaco.net
+- dev: https://headlamp.dev.butaco.net
+
+## Login Token (per cluster)
+
+The Helm chart creates a ServiceAccount `headlamp` with a `cluster-admin`
+binding. After ArgoCD syncs, create a long-lived token Secret for login on
+each cluster:
 
 ```bash
-# Create a non-expiring token Secret for the headlamp ServiceAccount
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Secret
@@ -25,46 +46,23 @@ kubectl get secret headlamp-token -n headlamp \
   -o jsonpath='{.data.token}' | base64 -d
 ```
 
-Store the token in OpenBao for future reference:
-
-```bash
-bao kv put secret/k8s/headlamp/admin-token value=<token>
-```
-
-To revoke access, delete the Secret and recreate it:
+To revoke access, delete and recreate the Secret:
 
 ```bash
 kubectl delete secret headlamp-token -n headlamp
 ```
 
-## Access
+## Design Note: per-cluster in-cluster instead of central multi-cluster
 
-- prd: https://headlamp.prd.butaco.net
+Headlamp originally ran only in prd with `-in-cluster=false`, mounting
+ESO-synced kubeconfigs (OpenBao `kubeconfig/dev`, `kubeconfig/prd`) to show
+both clusters in one UI. That was replaced by per-cluster in-cluster
+deployments because:
 
-## Adding Dev Cluster
+- static kubeconfigs mounted in prd spanned cluster boundaries (blast radius)
+  and went stale on every k0s cluster rebuild;
+- in-cluster mode needs no secret material at all, so a rebuilt cluster gets a
+  working Headlamp from the app-of-apps bootstrap with zero manual steps.
 
-Headlamp supports multi-cluster by mounting a kubeconfig file as a volume.
-The dev kubeconfig is stored in OpenBao at `secret/kubeconfig/dev` and synced via ESO.
-
-### 1. Store kubeconfigs in OpenBao
-
-```bash
-./scripts/secrets/admin/set-kubeconfig.sh
-```
-
-This stores `~/.kube/dev.yaml` and `~/.kube/prd.yaml` in OpenBao.
-
-### 2. Sync and verify
-
-Push the changes and let ArgoCD sync. Headlamp will mount the dev kubeconfig at
-`/headlamp/kubeconfig` and expose it as a selectable cluster in the UI.
-
-## Directory Structure
-
-```
-headlamp/
-├── chart/
-│   ├── Chart.yaml    # Wrapper chart with headlamp as dependency
-│   └── values.yaml   # Common values (HTTPRoute gateway config)
-└── values.yaml       # prd-specific values (hostname)
-```
+The OpenBao `kubeconfig/*` entries remain in use for workstation kubeconfig
+sync (`scripts/secrets/get-kubeconfig.sh`); Headlamp no longer reads them.

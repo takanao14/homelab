@@ -1,24 +1,8 @@
+# Common values for all environments. Headlamp runs in-cluster (upstream
+# chart default): ServiceAccount RBAC only, no kubeconfig secrets. Per-env
+# differences (hostname) live in k8s/headlamp/<env>/values.yaml.
 headlamp:
-  config:
-    extraArgs:
-      - "-kubeconfig=/headlamp/dev-kubeconfig:/headlamp/prd-kubeconfig"
-      - "-in-cluster=false"
-  volumeMounts:
-    - name: dev-kubeconfig
-      mountPath: /headlamp/dev-kubeconfig
-      subPath: kubeconfig
-      readOnly: true
-    - name: prd-kubeconfig
-      mountPath: /headlamp/prd-kubeconfig
-      subPath: kubeconfig
-      readOnly: true
-  volumes:
-    - name: dev-kubeconfig
-      secret:
-        secretName: headlamp-dev-kubeconfig
-    - name: prd-kubeconfig
-      secret:
-        secretName: headlamp-prd-kubeconfig
+  namespaceOverride: headlamp
   httpRoute:
     enabled: true
     parentRefs:
@@ -27,3 +11,14 @@ headlamp:
         name: shared-gateway-envoy
         namespace: gateway-system
         sectionName: https
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+        backendRefs:
+          - group: ""
+            kind: Service
+            name: headlamp
+            port: 80
+            weight: 1
