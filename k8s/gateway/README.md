@@ -4,8 +4,8 @@ Local Helm chart that creates shared Gateway API Gateway resources.
 
 Managed by ArgoCD. Each environment has its own ArgoCD Application in
 `k8s/argocd/{env}/apps/gateway.yaml`. Shared definitions live in this chart's
-`values.yaml`; the per-environment Applications only override the differences
-(`domain`, and the HTTPS listener toggle for sandbox).
+`values.yaml`; per-environment differences (`domain`, and the HTTPS listener
+toggle for sandbox) live in `{env}/values.yaml`.
 
 ## Directory Structure
 
@@ -13,6 +13,9 @@ Managed by ArgoCD. Each environment has its own ArgoCD Application in
 gateway/
 ├── Chart.yaml
 ├── values.yaml          # Shared GatewayClass / EnvoyProxy / Gateway definitions
+├── dev/values.yaml      # domain: dev.butaco.net
+├── prd/values.yaml      # domain: prd.butaco.net
+├── sandbox/values.yaml  # domain: sandbox.butaco.net, HTTPS listener disabled
 └── templates/
     ├── gatewayclasses.yaml
     ├── envoyproxies.yaml

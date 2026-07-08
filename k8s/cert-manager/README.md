@@ -11,11 +11,15 @@ Managed by ArgoCD with the helm-secrets plugin. Two ArgoCD Applications are used
 ```
 cert-manager/
 ├── Chart.yaml
-├── values.yaml               # Schema: email, domain
+├── values.yaml               # Schema: email, domain (local config chart)
 ├── dev/
 │   └── values.yaml           # domain: dev.butaco.net
 ├── prd/
 │   └── values.yaml           # domain: prd.butaco.net
+├── controller/               # Values for the upstream cert-manager chart
+│   ├── values.yaml           # Common: CRDs, DNS-01 resolvers, ServiceMonitor
+│   ├── dev/values.yaml       # No dev-specific overrides
+│   └── prd/values.yaml       # cluster=prd ServiceMonitor relabeling
 └── templates/
     ├── cluster-issuer.yaml              # letsencrypt-staging + letsencrypt-production
     ├── certificate.yaml                 # Wildcard cert: *.{domain}

@@ -12,29 +12,12 @@ spec:
       chart: cert-manager
       targetRevision: v1.20.3
       helm:
-        values: |
-          crds:
-            enabled: true
-          extraArgs:
-            - --dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53
-            - --dns01-recursive-nameservers-only
-          prometheus:
-            enabled: true
-            servicemonitor:
-              enabled: true
-              # Must match the Prometheus serviceMonitorSelector (release: prometheus).
-              labels:
-                release: prometheus
-              # Inject cluster=prd via target relabeling, matching the rest of the
-              # prd ServiceMonitors. externalLabels does not apply to locally stored
-              # series, and this chart's ServiceMonitor is not covered by the
-              # kube-prometheus-stack relabelings. (dev gets cluster=dev via
-              # remote_write external labels, so no relabeling is needed there.)
-              endpointAdditionalProperties:
-                relabelings:
-                  - action: replace
-                    targetLabel: cluster
-                    replacement: prd
+        valueFiles:
+          - $values/k8s/cert-manager/controller/values.yaml
+          - $values/k8s/cert-manager/controller/prd/values.yaml
+    - repoURL: https://github.com/takanao14/homelab.git
+      targetRevision: HEAD
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager

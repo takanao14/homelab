@@ -1,0 +1,31 @@
+# Common values for the upstream open-webui chart
+# (https://helm.openwebui.com/). Per-env overrides live in <env>/values.yaml.
+ollama:
+  enabled: false
+ollamaUrls:
+  - http://ollama.ollama.svc.cluster.local:11434
+
+pipelines:
+  enabled: false
+
+enableOpenaiApi: true
+openaiBaseApiUrls:
+  - http://lemonade-server.lemonade-server.svc.cluster.local:13305/v1
+openaiApiKeys:
+  - "dummy"
+
+persistence:
+  enabled: true
+  size: 2Gi
+
+ingress:
+  enabled: false
+
+route:
+  enabled: true
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: shared-gateway-envoy
+      namespace: gateway-system
+      sectionName: https

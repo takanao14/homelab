@@ -1,0 +1,3 @@
+# No dev-specific overrides for the cert-manager controller chart.
+# dev gets cluster=dev via remote_write external labels, so the prd-style
+# ServiceMonitor relabeling is not needed here.

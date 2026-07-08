@@ -6,6 +6,8 @@
 
 ```
 homepage/
+├── prd/values.yaml        # prd overrides (Gateway https listener)
+├── sandbox/values.yaml    # sandbox overrides (hostname, http listener)
 └── chart/                 # Custom Helm chart
     ├── Chart.yaml
     ├── values.yaml        # Kubernetes deployment values (hostname, image, Gateway)
@@ -28,7 +30,7 @@ homepage/
 ## Access
 
 Exposed via Gateway API HTTPRoute. Hostname is set in `chart/values.yaml` and
-overridden per environment by the ArgoCD Application. Sandbox uses HTTP via the
+overridden per environment in `{env}/values.yaml`. Sandbox uses HTTP via the
 `http` Gateway listener at `http://homepage.sandbox.butaco.net`.
 
 > `butaco.net` is a personal domain. Replace it in `chart/values.yaml`.
@@ -38,7 +40,7 @@ overridden per environment by the ArgoCD Application. Sandbox uses HTTP via the
 Homepage configs (`services.yaml`, `widgets.yaml`, etc.) are in `chart/config/`.
 They are mounted as-is and should stay close to Homepage's native YAML format.
 Do not use Helm templating in these files; keep deployment differences in
-`values.yaml` or in the per-environment ArgoCD Application.
+`chart/values.yaml` or in the per-environment `{env}/values.yaml`.
 
 `secret-config.yaml` reads all `*.yaml` files in `chart/config/` and creates a Kubernetes Secret named `homepage-config`.
 

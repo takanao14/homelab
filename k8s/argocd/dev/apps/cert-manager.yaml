@@ -12,19 +12,12 @@ spec:
       chart: cert-manager
       targetRevision: v1.20.3
       helm:
-        values: |
-          crds:
-            enabled: true
-          extraArgs:
-            - --dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53
-            - --dns01-recursive-nameservers-only
-          prometheus:
-            enabled: true
-            servicemonitor:
-              enabled: true
-              # Must match the Prometheus serviceMonitorSelector (release: prometheus).
-              labels:
-                release: prometheus
+        valueFiles:
+          - $values/k8s/cert-manager/controller/values.yaml
+          - $values/k8s/cert-manager/controller/dev/values.yaml
+    - repoURL: https://github.com/takanao14/homelab.git
+      targetRevision: HEAD
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager

@@ -1,0 +1,15 @@
+gateway:
+  name: shared-gateway-envoy
+  namespace: gateway-system
+  sectionName: http
+
+proxy:
+  enabled: false
+
+route:
+  backend:
+    name: longhorn-frontend
+    port: 80
+
+securityPolicy:
+  enabled: true

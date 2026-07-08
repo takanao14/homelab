@@ -1,0 +1,6 @@
+hostname: homepage.sandbox.butaco.net
+
+gateway:
+  name: shared-gateway-envoy
+  namespace: gateway-system
+  sectionName: http

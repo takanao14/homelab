@@ -13,12 +13,8 @@ spec:
     path: k8s/homepage/chart
     helm:
       releaseName: homepage
-      values: |
-        hostname: homepage.sandbox.butaco.net
-        gateway:
-          name: shared-gateway-envoy
-          namespace: gateway-system
-          sectionName: http
+      valueFiles:
+        - ../sandbox/values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: homepage

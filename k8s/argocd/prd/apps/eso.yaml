@@ -13,6 +13,8 @@ spec:
     path: k8s/eso
     helm:
       releaseName: external-secrets
+      valueFiles:
+        - prd/values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: external-secrets

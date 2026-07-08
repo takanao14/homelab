@@ -1,0 +1,7 @@
+domain: sandbox.butaco.net
+
+# Sandbox is HTTP-only (no cert-manager). See ADR-0010.
+gateway:
+  listeners:
+    https:
+      enabled: false

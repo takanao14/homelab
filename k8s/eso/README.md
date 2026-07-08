@@ -8,6 +8,9 @@ Deploys [External Secrets Operator](https://external-secrets.io/) (ESO) and conf
 eso/
 ├── Chart.yaml
 ├── values.yaml               # Default: openbao server URL, path, role, mountPath
+├── dev/values.yaml           # mountPath: kubernetes-dev
+├── prd/values.yaml           # mountPath: kubernetes
+├── sandbox/values.yaml       # mountPath: kubernetes-sandbox
 └── templates/
     ├── auth-delegator.yaml        # ClusterRoleBinding for ESO TokenReview access
     └── cluster-secret-store.yaml  # ClusterSecretStore: openbao
@@ -29,7 +32,9 @@ eso/
 | `openbao.role` | `k8s-eso` | OpenBao Kubernetes auth role |
 | `openbao.mountPath` | `kubernetes` | Kubernetes auth mount path in OpenBao |
 
-The `mountPath` can be overridden per-environment in the ArgoCD Application. For example, the dev cluster uses `kubernetes-dev`.
+The `mountPath` is overridden per environment in `{env}/values.yaml`, which the
+ArgoCD Application references via `valueFiles`. For example, the dev cluster
+uses `kubernetes-dev`.
 
 After rebuilding a k0s cluster, re-register that cluster with OpenBao so ESO can
 authenticate with the new cluster CA. See
@@ -49,7 +54,6 @@ and the OpenBao registration runbook in `ansible/README.md`.
 source:
   path: k8s/eso
   helm:
-    values: |
-      openbao:
-        mountPath: "kubernetes-dev"  # dev cluster override
+    valueFiles:
+      - dev/values.yaml  # per-env override (openbao.mountPath)
 ```

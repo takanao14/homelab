@@ -12,33 +12,12 @@ spec:
       chart: open-webui
       targetRevision: 15.2.0
       helm:
-        values: |
-          ollama:
-            enabled: false
-          ollamaUrls:
-            - http://ollama.ollama.svc.cluster.local:11434
-          pipelines:
-            enabled: false
-          enableOpenaiApi: true
-          openaiBaseApiUrls:
-            - http://lemonade-server.lemonade-server.svc.cluster.local:13305/v1
-          openaiApiKeys:
-            - "dummy"
-          persistence:
-            enabled: true
-            size: 2Gi
-          ingress:
-            enabled: false
-          route:
-            enabled: true
-            hostnames:
-              - open-webui.dev.butaco.net
-            parentRefs:
-              - group: gateway.networking.k8s.io
-                kind: Gateway
-                name: shared-gateway-envoy
-                namespace: gateway-system
-                sectionName: https
+        valueFiles:
+          - $values/k8s/open-webui/values.yaml
+          - $values/k8s/open-webui/dev/values.yaml
+    - repoURL: https://github.com/takanao14/homelab.git
+      targetRevision: HEAD
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: open-webui

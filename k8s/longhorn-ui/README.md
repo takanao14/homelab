@@ -30,8 +30,9 @@ http://longhorn.sandbox.butaco.net
 ```
 
 The sandbox Envoy Gateway migration sets `securityPolicy.enabled=true`,
-`proxy.enabled=false`, and `route.backend.name=longhorn-frontend`. Basic Auth
-is enforced at the Gateway layer and the per-service nginx proxy is removed.
+`proxy.enabled=false`, and `route.backend.name=longhorn-frontend` in
+`sandbox/values.yaml`. Basic Auth is enforced at the Gateway layer and the
+per-service nginx proxy is removed.
 
 ## Secret
 

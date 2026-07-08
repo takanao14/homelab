@@ -13,10 +13,10 @@ spec:
     path: k8s/gateway
     helm:
       releaseName: gateway
-      # Shared definitions live in k8s/gateway/values.yaml; only the per-env
-      # differences are set here.
-      values: |
-        domain: dev.butaco.net
+      # Shared definitions live in k8s/gateway/values.yaml; per-env
+      # differences live in k8s/gateway/<env>/values.yaml.
+      valueFiles:
+        - dev/values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: gateway-system

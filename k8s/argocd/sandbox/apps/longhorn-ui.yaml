@@ -13,19 +13,8 @@ spec:
     path: k8s/longhorn-ui
     helm:
       releaseName: longhorn-ui
-      values: |
-        gateway:
-          name: shared-gateway-envoy
-          namespace: gateway-system
-          sectionName: http
-        proxy:
-          enabled: false
-        route:
-          backend:
-            name: longhorn-frontend
-            port: 80
-        securityPolicy:
-          enabled: true
+      valueFiles:
+        - sandbox/values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: longhorn-system
