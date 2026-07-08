@@ -52,17 +52,13 @@ To revoke access, delete and recreate the Secret:
 kubectl delete secret headlamp-token -n headlamp
 ```
 
-## Design Note: per-cluster in-cluster instead of central multi-cluster
+## Design Note
 
-Headlamp originally ran only in prd with `-in-cluster=false`, mounting
-ESO-synced kubeconfigs (OpenBao `kubeconfig/dev`, `kubeconfig/prd`) to show
-both clusters in one UI. That was replaced by per-cluster in-cluster
-deployments because:
-
-- static kubeconfigs mounted in prd spanned cluster boundaries (blast radius)
-  and went stale on every k0s cluster rebuild;
-- in-cluster mode needs no secret material at all, so a rebuilt cluster gets a
-  working Headlamp from the app-of-apps bootstrap with zero manual steps.
-
-The OpenBao `kubeconfig/*` entries remain in use for workstation kubeconfig
-sync (`scripts/secrets/get-kubeconfig.sh`); Headlamp no longer reads them.
+Headlamp originally ran only in prd, mounting ESO-synced kubeconfigs to show
+both clusters in one UI. It now runs in-cluster per cluster — no kubeconfig
+secrets, so a rebuilt cluster gets a working Headlamp from the app-of-apps
+bootstrap alone. See
+[ADR-0015](../../docs/adr/0015-headlamp-per-cluster-in-cluster-deployment.md)
+for the rationale and rejected alternatives. The OpenBao `kubeconfig/*`
+entries remain in use for workstation kubeconfig sync
+(`scripts/secrets/get-kubeconfig.sh`); Headlamp no longer reads them.
