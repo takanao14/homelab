@@ -35,7 +35,9 @@ Supporting choices:
   kube-prometheus-stack, loki, external-secrets, plus `custom.rocm`) stay manual
   for minor/major. **All major updates are manual** regardless of package.
   `tf/**` stays manual.
-- **`minimumReleaseAge: "3 days"`** filters dead-on-arrival releases.
+- **`minimumReleaseAge: "1 day"`** filters dead-on-arrival releases while keeping
+  homelab app updates moving quickly. This is intentionally shorter than the
+  original observation-window plan.
 - **Daytime merge window** at go-live (`after 9am and before 6pm every weekday`,
   `Asia/Tokyo`) so unattended deploys land when someone can react.
 
