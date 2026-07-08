@@ -26,6 +26,24 @@
     owner: root
     group: root
 
+- name: Ensure homelab version marker directory exists
+  become: true
+  ansible.builtin.file:
+    path: /usr/local/share/homelab-versions
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Record installed dnscollector version
+  become: true
+  ansible.builtin.copy:
+    dest: /usr/local/share/homelab-versions/dnscollector.version
+    content: "{{ dnscollector_version }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: Create dnscollector config directory
   become: true
   ansible.builtin.file:

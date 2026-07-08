@@ -1,0 +1,312 @@
+---
+# Read-only audit for Renovate-managed Ansible components.
+# This playbook compares desired versions from role defaults with the versions
+# currently installed on hosts. It does not call service roles or change state.
+
+- name: Audit Forgejo version
+  hosts: forgejo
+  gather_facts: false
+  vars_files:
+    - ../roles/forgejo/defaults/main.yaml
+  tasks:
+    - name: Read installed Forgejo version marker
+      ansible.builtin.slurp:
+        src: /usr/local/share/homelab-versions/forgejo.version
+      register: forgejo_audit_marker
+      failed_when: false
+
+    - name: Read installed Forgejo version
+      ansible.builtin.command:
+        argv:
+          - "{{ forgejo_binary }}"
+          - "--version"
+      register: forgejo_audit_version
+      changed_when: false
+      failed_when: false
+
+    - name: Report Forgejo version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            'forgejo',
+            inventory_hostname,
+            forgejo_version,
+            forgejo_audit_installed,
+            'OK' if forgejo_audit_installed == forgejo_version else 'DIFF'
+          ) }}
+      vars:
+        forgejo_audit_installed: >-
+          {{ forgejo_audit_marker_version
+             if forgejo_audit_marker_version != ''
+             else (forgejo_audit_output
+                   | regex_search('v?[0-9]+\\.[0-9]+\\.[0-9]+')
+                   | default('unknown', true)
+                   | regex_replace('^v', '')) }}
+        forgejo_audit_marker_version: >-
+          {{ (forgejo_audit_marker.content | default('') | b64decode | trim) }}
+        forgejo_audit_output: >-
+          {{ forgejo_audit_version.stdout ~ ' ' ~ forgejo_audit_version.stderr }}
+
+- name: Audit Forgejo Runner version
+  hosts: forgejo_runner
+  gather_facts: false
+  vars_files:
+    - ../roles/forgejo_runner/defaults/main.yaml
+  tasks:
+    - name: Read installed Forgejo Runner version marker
+      ansible.builtin.slurp:
+        src: /usr/local/share/homelab-versions/forgejo-runner.version
+      register: forgejo_runner_audit_marker
+      failed_when: false
+
+    - name: Read installed Forgejo Runner version
+      ansible.builtin.command:
+        argv:
+          - "{{ forgejo_runner_binary }}"
+          - "--version"
+      register: forgejo_runner_audit_version
+      changed_when: false
+      failed_when: false
+
+    - name: Report Forgejo Runner version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            'forgejo_runner',
+            inventory_hostname,
+            forgejo_runner_version,
+            forgejo_runner_audit_installed,
+            'OK' if forgejo_runner_audit_installed == forgejo_runner_version else 'DIFF'
+          ) }}
+      vars:
+        forgejo_runner_audit_installed: >-
+          {{ forgejo_runner_audit_marker_version
+             if forgejo_runner_audit_marker_version != ''
+             else (forgejo_runner_audit_output
+                   | regex_search('v?[0-9]+\\.[0-9]+\\.[0-9]+')
+                   | default('unknown', true)
+                   | regex_replace('^v', '')) }}
+        forgejo_runner_audit_marker_version: >-
+          {{ (forgejo_runner_audit_marker.content | default('') | b64decode | trim) }}
+        forgejo_runner_audit_output: >-
+          {{ forgejo_runner_audit_version.stdout ~ ' ' ~ forgejo_runner_audit_version.stderr }}
+
+- name: Audit NetBox version
+  hosts: netbox
+  gather_facts: false
+  vars_files:
+    - ../roles/netbox/defaults/main.yaml
+  tasks:
+    - name: Read installed NetBox symlink target
+      ansible.builtin.command:
+        argv:
+          - readlink
+          - "-f"
+          - "{{ netbox_home }}"
+      register: netbox_audit_target
+      changed_when: false
+      failed_when: false
+
+    - name: Report NetBox version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            'netbox',
+            inventory_hostname,
+            netbox_version,
+            netbox_audit_installed,
+            'OK' if netbox_audit_installed == netbox_version else 'DIFF'
+          ) }}
+      vars:
+        netbox_audit_installed: >-
+          {{ netbox_audit_target.stdout
+             | basename
+             | regex_replace('^netbox-', '')
+             | default('unknown', true) }}
+
+- name: Audit DNS-collector version
+  hosts: dnsdist
+  gather_facts: false
+  vars_files:
+    - ../roles/dnscollector/defaults/main.yaml
+  tasks:
+    - name: Read installed DNS-collector version marker
+      ansible.builtin.slurp:
+        src: /usr/local/share/homelab-versions/dnscollector.version
+      register: dnscollector_audit_marker
+      failed_when: false
+
+    - name: Read installed DNS-collector version
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/dnscollector
+          - "-version"
+      register: dnscollector_audit_version
+      changed_when: false
+      failed_when: false
+
+    - name: Report DNS-collector version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            'dnscollector',
+            inventory_hostname,
+            dnscollector_version,
+            dnscollector_audit_installed,
+            'OK' if dnscollector_audit_installed == dnscollector_version else 'DIFF'
+          ) }}
+      vars:
+        dnscollector_audit_installed: >-
+          {{ dnscollector_audit_marker_version
+             if dnscollector_audit_marker_version != ''
+             else (dnscollector_audit_output
+                   | regex_search('v?[0-9]+\\.[0-9]+\\.[0-9]+')
+                   | default('unknown', true)
+                   | regex_replace('^v', '')) }}
+        dnscollector_audit_marker_version: >-
+          {{ (dnscollector_audit_marker.content | default('') | b64decode | trim) }}
+        dnscollector_audit_output: >-
+          {{ dnscollector_audit_version.stdout ~ ' ' ~ dnscollector_audit_version.stderr }}
+
+- name: Audit SeaweedFS version
+  hosts: seaweedfs
+  gather_facts: false
+  vars_files:
+    - ../roles/seaweedfs/defaults/main.yaml
+  tasks:
+    - name: Read installed SeaweedFS version marker
+      ansible.builtin.slurp:
+        src: /usr/local/share/homelab-versions/seaweedfs.version
+      register: seaweedfs_audit_marker
+      failed_when: false
+
+    - name: Read installed SeaweedFS version
+      ansible.builtin.command:
+        argv:
+          - "{{ seaweedfs_binary }}"
+          - version
+      register: seaweedfs_audit_version
+      changed_when: false
+      failed_when: false
+
+    - name: Report SeaweedFS version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            'seaweedfs',
+            inventory_hostname,
+            seaweedfs_version,
+            seaweedfs_audit_installed,
+            'OK' if seaweedfs_audit_installed == seaweedfs_version else 'DIFF'
+          ) }}
+      vars:
+        seaweedfs_audit_installed: >-
+          {{ seaweedfs_audit_marker_version
+             if seaweedfs_audit_marker_version != ''
+             else (seaweedfs_audit_output
+                   | regex_search('v?[0-9]+\\.[0-9]+(?:\\.[0-9]+)?')
+                   | default('unknown', true)
+                   | regex_replace('^v', '')) }}
+        seaweedfs_audit_marker_version: >-
+          {{ (seaweedfs_audit_marker.content | default('') | b64decode | trim) }}
+        seaweedfs_audit_output: >-
+          {{ seaweedfs_audit_version.stdout ~ ' ' ~ seaweedfs_audit_version.stderr }}
+
+- name: Audit OpenBao package version
+  hosts: openbao
+  gather_facts: false
+  vars_files:
+    - ../roles/openbao/defaults/main.yaml
+  tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Report OpenBao package version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            'openbao',
+            inventory_hostname,
+            openbao_version,
+            openbao_audit_installed,
+            'OK' if openbao_audit_matches else 'DIFF'
+          ) }}
+      vars:
+        openbao_audit_installed: >-
+          {{ (ansible_facts.packages.get('openbao', [{'version': 'unknown'}]) | first).version }}
+        openbao_audit_matches: >-
+          {{ openbao_audit_installed == openbao_version
+             or openbao_audit_installed.startswith(openbao_version ~ '-')
+             or openbao_audit_installed.startswith(openbao_version ~ '+')
+             or openbao_audit_installed.startswith(openbao_version ~ '~') }}
+
+- name: Audit ROCm package versions
+  hosts: gpuvm
+  gather_facts: false
+  vars_files:
+    - ../roles/rocm/defaults/main.yaml
+  tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Report ROCm package version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            'rocm',
+            inventory_hostname,
+            rocm_version,
+            rocm_audit_installed,
+            'OK' if rocm_audit_matches else 'DIFF'
+          ) }}
+      vars:
+        rocm_audit_installed: >-
+          {{ (ansible_facts.packages.get('rocm', [{'version': 'unknown'}]) | first).version }}
+        rocm_audit_matches: >-
+          {{ rocm_audit_installed == rocm_version
+             or rocm_audit_installed.startswith(rocm_version ~ '.')
+             or rocm_audit_installed.startswith(rocm_version ~ '-')
+             or rocm_audit_installed.startswith(rocm_version ~ '+')
+             or rocm_audit_installed.startswith(rocm_version ~ '~') }}
+
+    - name: Report AMD GPU driver package version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            'amdgpu-dkms',
+            inventory_hostname,
+            rocm_amdgpu_version,
+            amdgpu_audit_installed,
+            'OK' if amdgpu_audit_matches else 'DIFF'
+          ) }}
+      vars:
+        amdgpu_audit_installed: >-
+          {{ (ansible_facts.packages.get('amdgpu-dkms', [{'version': 'unknown'}]) | first).version }}
+        amdgpu_audit_matches: >-
+          {{ amdgpu_audit_installed == rocm_amdgpu_version
+             or amdgpu_audit_installed.startswith(rocm_amdgpu_version ~ '.')
+             or amdgpu_audit_installed.startswith(rocm_amdgpu_version ~ '-')
+             or amdgpu_audit_installed.startswith(rocm_amdgpu_version ~ '+')
+             or amdgpu_audit_installed.startswith(rocm_amdgpu_version ~ '~') }}
+
+    - name: Report AMD device metrics exporter package version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            'amdgpu-exporter',
+            inventory_hostname,
+            rocm_device_metrics_exporter_version,
+            exporter_audit_installed,
+            'OK' if exporter_audit_matches else 'DIFF'
+          ) }}
+      vars:
+        exporter_audit_installed: >-
+          {{ (ansible_facts.packages.get('amdgpu-exporter', [{'version': 'unknown'}]) | first).version }}
+        exporter_audit_matches: >-
+          {{ exporter_audit_installed == rocm_device_metrics_exporter_version
+             or exporter_audit_installed.startswith(rocm_device_metrics_exporter_version ~ '.')
+             or exporter_audit_installed.startswith(rocm_device_metrics_exporter_version ~ '-')
+             or exporter_audit_installed.startswith(rocm_device_metrics_exporter_version ~ '+')
+             or exporter_audit_installed.startswith(rocm_device_metrics_exporter_version ~ '~') }}

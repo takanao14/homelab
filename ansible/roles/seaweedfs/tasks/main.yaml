@@ -54,6 +54,24 @@
   when: seaweedfs_download.changed
   notify: Restart seaweedfs
 
+- name: Ensure homelab version marker directory exists
+  become: true
+  ansible.builtin.file:
+    path: /usr/local/share/homelab-versions
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Record installed SeaweedFS version
+  become: true
+  ansible.builtin.copy:
+    dest: /usr/local/share/homelab-versions/seaweedfs.version
+    content: "{{ seaweedfs_version }}\n"
+    owner: root
+    group: root
+    mode: '0644'
+
 - name: Deploy S3 identity configuration
   become: true
   ansible.builtin.template:

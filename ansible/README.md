@@ -67,6 +67,7 @@ ansible/
 │   ├── common-maintenance_user.yaml
 │   ├── common-users.yaml
 │   ├── ops-package_upgrade.yaml        # day-2 / operational (ops- prefix)
+│   ├── ops-version_audit.yaml          # read-only desired vs installed version audit
 │   ├── ops-pdns_sync.yaml
 │   ├── ops-openbao_bootstrap.yaml
 │   ├── ops-openbao_configure.yaml
@@ -235,6 +236,9 @@ ansible-playbook playbooks/common-users.yaml
 
 # OS package upgrade (all hosts; apt on Debian/Ubuntu, dnf on Rocky/RHEL)
 ansible-playbook playbooks/ops-package_upgrade.yaml
+
+# Version audit for Renovate-managed Ansible components (read-only)
+ansible-playbook playbooks/ops-version_audit.yaml
 
 # Time synchronization (chrony -> router; physical hosts and VMs, not LXC)
 ansible-playbook playbooks/common-chrony.yaml

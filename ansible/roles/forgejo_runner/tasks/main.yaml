@@ -89,6 +89,24 @@
     mode: '0755'
   notify: Restart forgejo-runner
 
+- name: Ensure homelab version marker directory exists
+  become: true
+  ansible.builtin.file:
+    path: /usr/local/share/homelab-versions
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Record installed forgejo-runner version
+  become: true
+  ansible.builtin.copy:
+    dest: /usr/local/share/homelab-versions/forgejo-runner.version
+    content: "{{ forgejo_runner_version }}\n"
+    owner: root
+    group: root
+    mode: '0644'
+
 - name: Deploy forgejo-runner config
   become: true
   ansible.builtin.template:
