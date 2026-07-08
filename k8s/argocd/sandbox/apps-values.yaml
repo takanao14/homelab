@@ -15,15 +15,12 @@ apps:
     enabled: true
   homepage:
     enabled: true
-    # After the sandbox Gateway, ESO, and external-dns applications.
-    wave: "2"
   longhorn-ui:
     enabled: true
   monitoring:
     enabled: true
     # Standalone kube-prometheus-stack + bundled Grafana, not coupled to prd
-    # (see k8s/sandbox-monitoring). After the sandbox Gateway and ESO.
-    wave: "2"
+    # (see k8s/sandbox-monitoring).
     path: k8s/sandbox-monitoring/charts/prometheus
     namespace: monitoring
     helm:

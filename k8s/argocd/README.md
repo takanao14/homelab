@@ -98,6 +98,31 @@ Inspect the rendered Applications with:
 helm template k8s/argocd/apps -f k8s/argocd/<env>/apps-values.yaml
 ```
 
+### Sync waves
+
+Waves are defined once in `apps/values.yaml` and shared by all environments:
+
+| Wave | Applications | Rationale |
+|------|--------------|-----------|
+| -2 | envoy-gateway-crds | Gateway API CRDs (sole owner) |
+| -1 | envoy-gateway | Controller after its CRDs |
+| 0 | cert-manager, eso, gateway | Foundation: CRDs, ClusterSecretStore, shared Gateway |
+| 1 | everything else | Consumers of wave 0 (ExternalSecrets, HTTPRoutes, issuers) |
+| 2 | longhorn-ui | Behind the authenticated Gateway route (ADR-0009) |
+
+Wave gating relies on the Application health check re-enabled in
+`values-common.yaml`; automated syncs never retry the same revision, so
+`root-apps` and the CRD-racing apps carry explicit retry policies.
+
+Known caveat: the Gateway HTTPS listener (wave 0) references the wildcard TLS
+Secret and ReferenceGrant created by cert-manager-config (wave 1). On a fresh
+dev/prd cluster the listener reports `ResolvedRefs=False` until wave 1 syncs;
+this only converges if Envoy Gateway still reports the Gateway as `Programmed`
+via the HTTP listener, which the HTTP-only sandbox bootstrap (ADR-0010) could
+not exercise. Verify on the next dev rebuild — if the gateway app sticks at
+Progressing/Degraded in wave 0, trigger a manual sync of cert-manager-config
+to create the Secret, then re-sync root-apps.
+
 ## Apps
 
 | Application | Namespace | Environment |
@@ -114,7 +139,7 @@ helm template k8s/argocd/apps -f k8s/argocd/<env>/apps-values.yaml
 | lemonade-server | lemonade-server | dev only |
 | longhorn-ui | longhorn-system | sandbox only |
 | meshcentral | meshcentral | dev only |
-| monitoring | monitoring | dev, prd |
+| monitoring | monitoring (argocd in prd) | dev, prd, sandbox |
 | ollama | ollama | dev only |
 | open-webui | open-webui | dev only |
 | reloader | reloader | dev, prd |

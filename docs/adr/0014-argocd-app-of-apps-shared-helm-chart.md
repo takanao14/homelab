@@ -41,9 +41,10 @@ ArgoCD instances.
    `{{ .Values.env }}` into values paths.
 3. Each environment declares its app set in
    `k8s/argocd/<env>/apps-values.yaml` (`env`, enabled flags, per-env
-   overrides such as the homepage sync-wave and the monitoring source, which
-   is the only structurally divergent app: prd runs the central
-   kube-prometheus-stack app-of-apps, dev runs the Prometheus agent chart).
+   overrides such as the monitoring source, which is the only structurally
+   divergent app: prd runs the central kube-prometheus-stack app-of-apps,
+   dev runs the Prometheus agent chart, sandbox runs a standalone
+   kube-prometheus-stack).
 4. `root-apps.yaml` points at the chart with
    `helm.valueFiles: [../<env>/apps-values.yaml]`.
 5. Upstream chart coordinates (`repoURL` / `chart` / `targetRevision`) live in
