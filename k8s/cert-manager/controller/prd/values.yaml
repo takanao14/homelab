@@ -1,12 +1,4 @@
-prometheus:
-  servicemonitor:
-    # Inject cluster=prd via target relabeling, matching the rest of the
-    # prd ServiceMonitors. externalLabels does not apply to locally stored
-    # series, and this chart's ServiceMonitor is not covered by the
-    # kube-prometheus-stack relabelings. (dev gets cluster=dev via
-    # remote_write external labels, so no relabeling is needed there.)
-    endpointAdditionalProperties:
-      relabelings:
-        - action: replace
-          targetLabel: cluster
-          replacement: prd
+# No prd-specific overrides for the cert-manager controller chart.
+# cluster=prd is injected by the default Prometheus scrapeClass cluster-prd
+# (ADR-0016, prometheusSpec.scrapeClasses in k8s/monitoring/values/prometheus.yaml),
+# so no per-ServiceMonitor relabeling is needed here.
