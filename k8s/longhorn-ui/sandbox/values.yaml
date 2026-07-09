@@ -1,15 +1,3 @@
-gateway:
-  name: shared-gateway-envoy
-  namespace: gateway-system
-  sectionName: http
-
-proxy:
-  enabled: false
-
-route:
-  backend:
-    name: longhorn-frontend
-    port: 80
-
-securityPolicy:
-  enabled: true
+# Sandbox currently matches the chart defaults (SecurityPolicy Basic Auth,
+# direct route to longhorn-frontend, HTTP listener). This file is kept because
+# the generated ArgoCD Application always references <env>/values.yaml.

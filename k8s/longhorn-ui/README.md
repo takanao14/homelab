@@ -77,11 +77,9 @@ policy so ESO can read this path.
 
 ## Argo CD
 
-The sandbox App of Apps deploys this chart through:
-
-```text
-k8s/argocd/sandbox/apps/longhorn-ui.yaml
-```
+The sandbox App of Apps deploys this chart through the app-of-apps chart
+(`k8s/argocd/apps/templates/longhorn-ui.yaml`), enabled in
+`k8s/argocd/sandbox/apps-values.yaml`.
 
 The application syncs to the existing `longhorn-system` namespace. It uses sync
 wave `2`, after the sandbox Gateway, ESO, and external-dns applications.
