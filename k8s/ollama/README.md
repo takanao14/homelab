@@ -53,4 +53,4 @@ Uses the official `ollama/ollama:rocm` image.
 ## Notes
 
 - `replicaCount` defaults to `0` (scaled down when not in use). ArgoCD ignores replica drift via `ignoreDifferences`.
-- Open-WebUI is deployed as a separate ArgoCD Application (`k8s/argocd/dev/apps/open-webui.yaml`) using the upstream `open-webui` Helm chart.
+- Open-WebUI is deployed as a separate ArgoCD Application (rendered by the app-of-apps chart, enabled in `k8s/argocd/dev/apps-values.yaml`) using the upstream `open-webui` Helm chart with values from `k8s/open-webui/`.
