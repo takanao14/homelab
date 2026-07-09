@@ -76,6 +76,9 @@ k8s/
 │       ├── certificate.yaml             # Wildcard cert: *.{domain}
 │       ├── cloudflare-external-secret.yaml  # ESO ExternalSecret for Cloudflare API token
 │       └── reference-grant.yaml         # Allows gateway-system to reference TLS secret
+├── envoy-gateway/        # Envoy Gateway controller + Gateway API CRDs (sole CRD owner, ADR-0011)
+│   ├── crds/                 # CRD-only wrapper chart (sync wave -2)
+│   └── controller/           # gateway-helm wrapper values (sync wave -1)
 ├── eso/                  # External Secrets Operator + ClusterSecretStore (OpenBao)
 │   ├── Chart.yaml
 │   ├── values.yaml
@@ -107,10 +110,11 @@ k8s/
 │   ├── values.yaml
 │   ├── sandbox/values.yaml   # Gateway SecurityPolicy auth, no nginx proxy
 │   └── templates/
-├── monitoring/           # Prometheus stack + Loki + exporters (prd only)
-│   ├── apps/             # ArgoCD Application manifests
-│   ├── charts/           # Local Helm charts (wrappers + HTTPRoutes)
-│   └── values/           # Values per component
+├── monitoring/           # Prometheus stack + Loki + exporters (prd full stack; sandbox subset)
+│   ├── apps/             # Helm chart rendering the monitoring ArgoCD Applications
+│   ├── charts/           # Local Helm charts (wrappers + HTTPRoutes + dashboards)
+│   ├── dashboards/       # Dashboard generator (Go, grafana-foundation-sdk)
+│   └── values/           # Values per component (+ apps-sandbox.yaml subset overlay)
 ├── dev-monitoring/       # Prometheus agent mode (dev cluster → remote_write to prd)
 │   ├── charts/prometheus/    # kube-prometheus-stack wrapper (agent mode)
 │   └── values/prometheus.yaml
