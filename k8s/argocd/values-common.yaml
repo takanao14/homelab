@@ -40,6 +40,86 @@ configs:
         end
       end
       return hs
+    resource.customizations.health._PersistentVolumeClaim: |
+      hs = {}
+      hs.status = "Progressing"
+      hs.message = ""
+
+      local labels = {}
+      if obj.metadata ~= nil and obj.metadata.labels ~= nil then
+        labels = obj.metadata.labels
+      end
+
+      if obj.status ~= nil and obj.status.phase ~= nil then
+        if obj.status.phase == "Bound" then
+          hs.status = "Healthy"
+          hs.message = "PVC is bound"
+        elseif labels["homelab/gpu-switchable"] == "true" and obj.status.phase == "Pending" then
+          hs.status = "Healthy"
+          hs.message = "PVC is waiting for the switchable GPU workload's first consumer"
+        elseif obj.status.phase == "Lost" then
+          hs.status = "Degraded"
+          hs.message = "PVC is lost"
+        else
+          hs.status = "Progressing"
+          hs.message = "PVC phase is " .. obj.status.phase
+        end
+      end
+      return hs
+    resource.customizations.health.gateway.networking.k8s.io_HTTPRoute: |
+      hs = {}
+      hs.status = "Progressing"
+      hs.message = ""
+
+      local labels = {}
+      if obj.metadata ~= nil and obj.metadata.labels ~= nil then
+        labels = obj.metadata.labels
+      end
+
+      if obj.status == nil or obj.status.parents == nil or #obj.status.parents == 0 then
+        hs.message = "HTTPRoute has no parent status"
+        return hs
+      end
+
+      local accepted = false
+      local resolvedRefs = false
+      local backendsAvailable = true
+      local backendMessage = ""
+
+      for _, parent in ipairs(obj.status.parents) do
+        if parent.conditions ~= nil then
+          for _, condition in ipairs(parent.conditions) do
+            if condition.type == "Accepted" and condition.status == "True" then
+              accepted = true
+            end
+            if condition.type == "ResolvedRefs" and condition.status == "True" then
+              resolvedRefs = true
+            end
+            if condition.type == "BackendsAvailable" and condition.status == "False" then
+              backendsAvailable = false
+              backendMessage = condition.message or ""
+            end
+          end
+        end
+      end
+
+      if not accepted then
+        hs.status = "Degraded"
+        hs.message = "HTTPRoute is not accepted"
+      elseif not resolvedRefs then
+        hs.status = "Degraded"
+        hs.message = "HTTPRoute references are not resolved"
+      elseif not backendsAvailable and labels["homelab/gpu-switchable"] == "true" then
+        hs.status = "Healthy"
+        hs.message = "HTTPRoute is accepted; backend is intentionally scaled to zero"
+      elseif not backendsAvailable then
+        hs.status = "Progressing"
+        hs.message = backendMessage
+      else
+        hs.status = "Healthy"
+        hs.message = "HTTPRoute is accepted"
+      end
+      return hs
     resource.exclusions: |
       ### Network resources created by the Kubernetes control plane and excluded to reduce watched events and UI clutter.
       ### Keep core Endpoints managed: kube-prometheus-stack uses manual Endpoints for k0s control-plane scraping.

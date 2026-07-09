@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: lemonade-server
   namespace: {{ .Release.Namespace }}
+  labels:
+    homelab/gpu-switchable: "true"
 spec:
   replicas: {{ .Values.replicaCount }}
   strategy:
@@ -14,6 +16,7 @@ spec:
     metadata:
       labels:
         app: lemonade-server
+        homelab/gpu-switchable: "true"
     spec:
       nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
       tolerations: {{ toYaml .Values.tolerations | nindent 8 }}

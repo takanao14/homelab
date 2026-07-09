@@ -3,6 +3,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: comfyui-data
   namespace: {{ .Release.Namespace }}
+  labels:
+    homelab/gpu-switchable: "true"
 spec:
   accessModes:
     - ReadWriteOnce

@@ -1,3 +1,22 @@
+nodeSelector:
+  gpu: amd
+
+tolerations:
+  - key: gpu
+    operator: Equal
+    value: amd
+    effect: NoSchedule
+
 route:
   hostnames:
     - open-webui.prd.butaco.net
+
+websocket:
+  nodeSelector:
+    gpu: amd
+  redis:
+    tolerations:
+      - key: gpu
+        operator: Equal
+        value: amd
+        effect: NoSchedule

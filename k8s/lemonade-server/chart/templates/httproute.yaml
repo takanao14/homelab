@@ -3,6 +3,8 @@ kind: HTTPRoute
 metadata:
   name: lemonade-server
   namespace: {{ .Release.Namespace }}
+  labels:
+    homelab/gpu-switchable: "true"
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
