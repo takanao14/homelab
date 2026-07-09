@@ -21,6 +21,8 @@ prometheus-snmp-exporter:
         labels:
           release: prometheus
       spec:
+        # External LAN devices: opt out of the default cluster-prd scrape class.
+        scrapeClass: external
         interval: 60s
         module: if_mib
         prober:

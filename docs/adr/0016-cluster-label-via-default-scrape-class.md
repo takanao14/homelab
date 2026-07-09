@@ -26,8 +26,9 @@ per full-server environment, and keep dev on remote_write externalLabels:
   `cluster-sandbox` in `values/prometheus*.yaml`) applying a
   `targetLabel: cluster` relabeling to every scrape resource.
 - A named opt-out class `external` (no relabelings) for targets that are not
-  cluster workloads: external LAN ScrapeConfigs, and resources that set their
-  own per-target `cluster` labels (`control-plane-node-exporter`).
+  cluster workloads: external LAN scrape resources (ScrapeConfigs and Probes),
+  and resources that set their own per-target `cluster` labels
+  (`control-plane-node-exporter`).
 - Use `relabelings` (target relabeling), **not** `metricRelabelings`, so
   synthetic series (`up`, `scrape_*`) also carry the label — a past
   `KubeletDown` false-fire was caused by exactly this gap.
@@ -51,7 +52,7 @@ per full-server environment, and keep dev on remote_write externalLabels:
 
 - New in-cluster ServiceMonitors/PodMonitors need no cluster relabeling in
   any environment.
-- Every external ScrapeConfig **must** set `scrapeClass: external`, or the
+- Every external scrape resource **must** set `scrapeClass: external`, or the
   default class stamps the cluster label onto LAN hosts and leaks them into
   `cluster=~"$cluster"` dashboard queries.
 - The cluster-label mechanism intentionally differs per environment
