@@ -1,0 +1,13 @@
+controllers:
+  - ip: 192.168.30.11
+    name: prd-cp1
+    cluster: prd
+  - ip: 192.168.20.11
+    name: dev-cp1
+    cluster: dev
+
+nodeExporter:
+  port: 9100
+  metricsPath: /metrics
+  scrapeInterval: 30s
+  scrapeClass: external

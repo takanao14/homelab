@@ -93,6 +93,12 @@ apps:
     path: k8s/monitoring/charts/node-exporter-external
     valueFiles:
       - ../../values/node-exporter-external.yaml
+  control-plane-metrics:
+    enabled: true
+    wave: "1"
+    path: k8s/monitoring/charts/control-plane-metrics
+    valueFiles:
+      - ../../values/control-plane-metrics.yaml
   amd-gpu-external:
     enabled: true
     wave: "1"

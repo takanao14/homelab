@@ -97,8 +97,5 @@ prometheusRules:
   hardware:
     enabled: false
 
-controlPlaneNodeExporter:
-  enabled: false
-
 dashboards:
   enabled: true

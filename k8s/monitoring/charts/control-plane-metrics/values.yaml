@@ -1,0 +1,7 @@
+controllers: []
+
+nodeExporter:
+  port: 9100
+  metricsPath: /metrics
+  scrapeInterval: 30s
+  scrapeClass: external

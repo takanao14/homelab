@@ -1,0 +1,5 @@
+apiVersion: v2
+name: control-plane-metrics
+description: Scrape configs for control-plane host metrics
+type: application
+version: 0.1.0

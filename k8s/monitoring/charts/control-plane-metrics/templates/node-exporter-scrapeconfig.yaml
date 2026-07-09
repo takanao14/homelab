@@ -1,4 +1,3 @@
-{{- if .Values.controlPlaneNodeExporter.enabled }}
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: ScrapeConfig
 metadata:
@@ -9,23 +8,21 @@ metadata:
 spec:
   # Opt out of the default in-cluster scrape class: the per-target cluster
   # labels below would otherwise be overwritten.
-  scrapeClass: external
-  metricsPath: /metrics
-  scrapeInterval: 30s
+  scrapeClass: {{ .Values.nodeExporter.scrapeClass }}
+  metricsPath: {{ .Values.nodeExporter.metricsPath }}
+  scrapeInterval: {{ .Values.nodeExporter.scrapeInterval }}
   # k0s controllers run kine (embedded SQLite) and have no kubelet, so they are
   # not covered by the in-cluster node-exporter DaemonSet. Scrape them host-level
   # with an explicit cluster label (per target) so they appear in the
   # k8s-node-overview dashboard alongside the other cluster nodes. node-exporter
   # is installed on these hosts via the ansible node_exporter role.
   staticConfigs:
-    - targets: ["192.168.30.11:9100"]
+    {{- range .Values.controllers }}
+    - targets: ["{{ .ip }}:{{ $.Values.nodeExporter.port }}"]
       labels:
-        cluster: prd
-        __tmp_name: prd-cp1
-    - targets: ["192.168.20.11:9100"]
-      labels:
-        cluster: dev
-        __tmp_name: dev-cp1
+        cluster: {{ .cluster }}
+        __tmp_name: {{ .name }}
+    {{- end }}
   relabelings:
     # Scrape by IP (no DNS dependency) but expose the hostname as instance.
     # action is explicit: the CRD defaults it to replace, and with
@@ -34,4 +31,3 @@ spec:
     - action: replace
       sourceLabels: [__tmp_name]
       targetLabel: instance
-{{- end }}
