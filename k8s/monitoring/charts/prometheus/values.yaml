@@ -18,10 +18,6 @@ prometheusRules:
   hardware:
     enabled: true
 
-serviceMonitors:
-  loki:
-    enabled: true
-
 controlPlaneNodeExporter:
   enabled: true
 
