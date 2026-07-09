@@ -100,6 +100,19 @@ Use these boundaries:
   dashboards currently live under the Prometheus wrapper because the Grafana
   dashboard sidecar discovers labeled ConfigMaps across namespaces.
 
+kube-prometheus-stack boundary: the upstream chart owns in-cluster Kubernetes
+telemetry and its bundled rule library — kubelet, apiserver, and CoreDNS
+discovery, the node-exporter DaemonSet, kube-state-metrics, and
+`defaultRules`. Its `kubeControllerManager` / `kubeScheduler` endpoints
+mechanism is the supported way to scrape the external k0s controllers and
+stays in use until the re-evaluation triggers in
+`docs/plans/control-plane-metrics-chart.md` fire; the bundled alert rules are
+coupled to the job names upstream renders, so replacing that wiring would
+carry a standing compatibility obligation across chart version bumps. Local
+charts own what the cluster cannot natively discover: fixed-IP hosts and
+external services. Do not pull upstream-managed scrape targets into local
+charts for ownership-style reasons alone.
+
 The main tradeoff is intentional centralization versus ownership clarity. This
 directory centralizes monitoring-specific resources so bootstrap ordering,
 Prometheus Operator selectors, common labels, and dashboards remain coherent.
