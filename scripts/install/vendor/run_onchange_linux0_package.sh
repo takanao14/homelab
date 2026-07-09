@@ -146,10 +146,10 @@ install_base_dependencies() {
     case "$OS_ID" in
         ubuntu|debian)
             # fontconfig provides fc-cache/fc-list consumed by the font script.
-            install_packages ca-certificates curl coreutils file findutils git gnupg gzip make tar unzip xz-utils fontconfig
+            install_packages ca-certificates curl coreutils file findutils git gnupg gzip make tar unzip xz-utils fontconfig mosh tmux podman
             ;;
         rocky)
-            install_packages ca-certificates curl coreutils file findutils git gnupg2 gzip make tar unzip xz fontconfig
+            install_packages ca-certificates curl coreutils file findutils git gnupg2 gzip make tar unzip xz fontconfig mosh tmux podman
             ;;
         *)
             log_error "Unsupported OS: ${OS_ID}"
@@ -223,7 +223,7 @@ install_openbao() {
             local pkg_name="openbao_${OPENBAO_VERSION}_linux_${BIN_ARCH}.deb"
             curl -fsSL "https://github.com/openbao/openbao/releases/download/v${OPENBAO_VERSION}/${pkg_name}" \
                 -o "${tmp_dir}/${pkg_name}"
-            sudo dpkg -i "${tmp_dir}/${pkg_name}"
+            sudo apt-get install -y "${tmp_dir}/${pkg_name}"
             ;;
         rocky)
             local pkg_name="openbao_${OPENBAO_VERSION}_linux_${BIN_ARCH}.rpm"
@@ -295,7 +295,7 @@ preflight_packages() {
     local missing=() cmd
     # base deps (as commands) + font deps + the package-managed tools.
     for cmd in curl tar gzip unzip xz gpg git file find make sha256sum install \
-               fc-cache fc-list terraform packer vault kubectl bao pipx; do
+               fc-cache fc-list terraform packer vault kubectl bao pipx mosh tmux podman; do
         command -v "$cmd" &>/dev/null || missing+=("$cmd")
     done
     have_python312 || missing+=("python>=3.12")
