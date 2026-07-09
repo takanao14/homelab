@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-27
-- **Related:** [`ansible/README.md`](../../ansible/README.md), [`ansible/roles/openbao/README.md`](../../ansible/roles/openbao/README.md), [`k8s/eso/README.md`](../../k8s/eso/README.md)
+- **Related:** [`ansible/README.md`](../../ansible/README.md), [`ansible/roles/openbao/README.md`](../../ansible/roles/openbao/README.md), [`k8s/eso/README.md`](../../k8s/eso/README.md), [ADR-0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md)
 
 ## Context
 
@@ -22,6 +22,12 @@ configuration. That made cluster rebuild recovery slower and mixed runtime
 cluster identity with durable secret inventory.
 
 ## Decision
+
+> **Update 2026-07-10:** ADR-0019 retired the dev cluster. The registration
+> workflow remains valid for active clusters, but the current OpenBao
+> Kubernetes auth mounts are `kubernetes` for prd and `kubernetes-sandbox` for
+> sandbox. Historical references to `kubernetes-dev` below describe the
+> topology at the time this ADR was accepted.
 
 Keep OpenBao persistent and external to the Kubernetes clusters. After a k0s
 cluster rebuild, refresh only the OpenBao Kubernetes auth configuration for the
