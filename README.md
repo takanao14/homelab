@@ -13,23 +13,30 @@ homelab/
 ├── packer/            # Packer templates building custom Proxmox cloud images
 ├── k0s/               # k0s cluster bootstrap — Helmfile for core in-cluster components
 ├── k8s/               # ArgoCD-managed workloads
-│   ├── argocd/        # ArgoCD root apps and ApplicationSets
+│   ├── argocd/        # ArgoCD self-management + app-of-apps chart (ADR-0014)
 │   ├── cert-manager/  # cert-manager + wildcard certificate issuers
 │   ├── comfyui/       # ComfyUI (Stable Diffusion) deployment
 │   ├── dev-monitoring/# Lightweight monitoring stack for the dev cluster
+│   ├── envoy-gateway/ # Envoy Gateway controller + Gateway API CRDs (ADR-0011)
 │   ├── eso/           # External Secrets Operator + ClusterSecretStore (OpenBao)
 │   ├── externalDNS/   # ExternalDNS (PowerDNS provider)
-│   ├── gateway/       # Gateway API (Cilium) setup
+│   ├── gateway/       # Shared Gateway API resources (GatewayClass, Gateway)
+│   ├── headlamp/      # Headlamp Kubernetes Web UI (in-cluster per environment)
 │   ├── homepage/      # Homepage dashboard
 │   ├── lemonade-server/ # Lemonade LLM server (ROCm / AMD GPU)
 │   ├── longhorn-ui/   # Authenticated route for the sandbox Longhorn UI
 │   ├── meshcentral/   # MeshCentral remote management
 │   ├── monitoring/    # Prometheus, Grafana, exporters, and dashboards
 │   ├── ollama/        # Ollama LLM server deployment
+│   ├── open-webui/    # Open WebUI values for the upstream chart
 │   └── reloader/      # Stakater Reloader (auto-restart on ConfigMap/Secret changes)
+├── scripts/           # VM lifecycle, provisioning, OpenBao secret sync, GPU switching
+├── docs/
+│   ├── adr/           # Architecture Decision Records
+│   └── plans/         # Symlink to the private plans repository (may be absent)
 └── tf/                # Terraform / Terragrunt (Proxmox VMs, LXC containers, cloud images)
     ├── cloudimage/    # Stock cloud image download (proxmox_download_file)
-    ├── customimage/   # Upload of Packer-built custom images (proxmox_virtual_environment_file)
+    ├── customimage/   # Deploy of Packer-built custom images via SeaweedFS S3 (proxmox_download_file)
     ├── k8s/           # VM definitions for k0s cluster nodes
     ├── lxc/           # LXC container definitions
     ├── modules/       # Shared Terraform modules
@@ -48,12 +55,15 @@ Secrets are managed with [SOPS](https://github.com/getsops/sops) + [AGE](https:/
 
 ```bash
 # Create or edit an encrypted secrets file
-sops edit secrets.enc.env
+sops edit tf/.env/secrets.prd.enc.env
 
 # direnv loads secrets automatically when entering a directory
-cd k8s/monitoring
+cd tf
 direnv allow   # first time only
 ```
+
+In-cluster secrets are not stored in this repository at all: they are served
+by OpenBao and synced via External Secrets Operator (see `k8s/eso/`).
 
 ### Using this repository on a new machine
 
@@ -61,7 +71,7 @@ The `*.enc.env` files committed in this repository are encrypted with the author
 
 ```bash
 # Remove the existing encrypted file and create your own
-sops edit k8s/monitoring/secrets.enc.env
+sops edit tf/.env/secrets.prd.enc.env
 ```
 
 Make sure your AGE key is listed in `.sops.yaml` before editing.
