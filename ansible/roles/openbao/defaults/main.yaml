@@ -65,10 +65,6 @@ openbao_k8s_clusters:
     # monitoring subset (secret/k8s/monitoring/grafana).
     policies: "k8s-external-dns,k8s-homepage,k8s-longhorn-ui,k8s-monitoring"
 
-# Kubernetes auth mounts that should be disabled after cluster retirement.
-openbao_k8s_retired_mounts:
-  - kubernetes-dev
-
 # Secrets to write into OpenBao KV (set via group_vars with SOPS encryption)
 # Each entry requires: path (KV path) and data (key/value pairs)
 # Example:

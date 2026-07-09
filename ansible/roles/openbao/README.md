@@ -49,7 +49,6 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_k8s_host` | `""` | prd cluster API server URL (e.g. `https://192.168.30.11:6443`) |
 | `openbao_k8s_sandbox_host` | `""` | sandbox cluster API server URL (e.g. `https://192.168.20.31:6443`) |
 | `openbao_k8s_clusters` | see defaults | List of Kubernetes clusters to configure auth for. Each entry defines `name`, `mount_path`, `host`, `ca_cert_file`, `role`, and `policies`. Runtime CA data is injected by `ops-openbao_register_cluster.yaml`. |
-| `openbao_k8s_retired_mounts` | `["kubernetes-dev"]` | Kubernetes auth mounts to disable after cluster retirement. |
 
 ## Post-install initialization
 
