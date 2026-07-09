@@ -3,18 +3,7 @@ locals {
   dns_external = ["192.168.10.1", "8.8.8.8"]
   dns_domain   = "home.butaco.net"
 
-  dev = {
-    net10 = {
-      bridge = "vmbr0"
-      ipv4gw = "192.168.10.1"
-    }
-    net20 = {
-      bridge = "vnets001"
-      ipv4gw = "192.168.20.1"
-    }
-  }
-
-  prd = {
+  node1 = {
     net10 = {
       bridge = "vmbr0"
       ipv4gw = "192.168.10.1"
@@ -44,6 +33,28 @@ locals {
     net50 = {
       bridge = "vnets50"
       ipv4gw = "192.168.50.1"
+    }
+  }
+
+  node4 = {
+    net10 = {
+      bridge = "vmbr0"
+      ipv4gw = "192.168.10.1"
+    }
+    net60 = {
+      bridge = "vnets60"
+      ipv4gw = "192.168.60.1"
+    }
+  }
+
+  pve = {
+    net10 = {
+      bridge = "vmbr0"
+      ipv4gw = "192.168.10.1"
+    }
+    net20 = {
+      bridge = "vnets001"
+      ipv4gw = "192.168.20.1"
     }
   }
 

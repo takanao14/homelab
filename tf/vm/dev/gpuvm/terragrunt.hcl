@@ -21,9 +21,12 @@ inputs = {
     "gpuvm1" = merge(local.base_vars, {
       cores  = 8
       memory = 32768
-      bridge = local.common.locals.dev.net20.bridge
-      ipv4   = "192.168.20.22/24"
-      ipv4gw = local.common.locals.dev.net20.ipv4gw
+      # prd GPU worker (ADR-0019): must start with the host, unlike the
+      # on_boot=false default this host's env.hcl sets for lab VMs.
+      on_boot = true
+      bridge  = local.common.locals.pve.net20.bridge
+      ipv4    = "192.168.20.22/24"
+      ipv4gw  = local.common.locals.pve.net20.ipv4gw
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 200
