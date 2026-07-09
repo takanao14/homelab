@@ -16,7 +16,7 @@ apps:
   eso:
     enabled: false
   external-dns:
-    enabled: true
+    enabled: false
   gateway:
     enabled: false
   headlamp:
