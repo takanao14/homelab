@@ -1,0 +1,36 @@
+name: Notify workflow failure
+
+# Post to Discord when CI workflows fail. This intentionally uses a separate
+# webhook from Renovate auto-merge notifications because failures usually need
+# attention, while auto-merge notices are informational.
+on:
+  workflow_run:
+    workflows:
+      - Ansible Lint
+      - Dashboard Check
+      - Helm Lint
+      - Image Reference Check
+      - Packer Lint
+      - Shell Lint
+      - Terraform Lint
+      - Vendor Sync Check
+    types: [completed]
+
+jobs:
+  notify:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post to Discord
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_ACTIONS }}
+          WORKFLOW: ${{ github.event.workflow_run.name }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          payload=$(jq -n \
+            --arg w "$WORKFLOW" \
+            --arg b "$BRANCH" \
+            --arg u "$URL" \
+            '{content: ("❌ GitHub Actions failed: **" + $w + "** on `" + $b + "`\n" + $u)}')
+          curl -fsS -H "Content-Type: application/json" -d "$payload" "$WEBHOOK"
