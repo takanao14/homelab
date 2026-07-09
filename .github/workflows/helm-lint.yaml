@@ -39,24 +39,43 @@ jobs:
 
       # ArgoCD Applications that reference a remote chart (repoURL+chart, as
       # opposed to a path into this repo) have no local Chart.yaml, so the
-      # lint loop above never touches them. Render each one against its
-      # pinned targetRevision to catch incompatible chart/values bumps.
+      # lint loop above never touches them. The Application manifests are
+      # themselves templates of the shared app-of-apps chart, so render that
+      # chart with each environment's values first, then validate every
+      # enabled remote source against its pinned targetRevision to catch
+      # incompatible chart/values bumps. Apps disabled in every environment
+      # are not rendered and therefore not validated, mirroring what ArgoCD
+      # would actually deploy.
       - name: Validate ArgoCD remote Helm sources
         run: |
           set -euo pipefail
-          find k8s/argocd -name "*.yaml" | while read -r app; do
-            yq -o=json -I=0 '.spec.sources[] | select(has("chart"))' "$app" | \
+          for env in prd sandbox; do
+            rendered="${RUNNER_TEMP}/argocd-apps-${env}.yaml"
+            helm template root-apps k8s/argocd/apps \
+              -f "k8s/argocd/${env}/apps-values.yaml" > "$rendered"
+            yq -o=json -I=0 \
+              'select(.kind == "Application") | .spec.sources[] | select(has("chart"))' \
+              "$rendered" |
             while IFS= read -r src; do
               repo=$(jq -r '.repoURL' <<<"$src")
               chart=$(jq -r '.chart' <<<"$src")
               version=$(jq -r '.targetRevision' <<<"$src")
-              values=$(jq -r '.helm.values // ""' <<<"$src")
-              echo "::group::validate ${app} (${chart} ${version})"
-              if [ -n "$values" ]; then
-                echo "$values" | helm template "$chart" --repo "$repo" --version "$version" -f - > /dev/null
-              else
-                helm template "$chart" --repo "$repo" --version "$version" > /dev/null
-              fi
+              ignore_missing=$(jq -r '.helm.ignoreMissingValueFiles // false' <<<"$src")
+              args=()
+              while IFS= read -r vf; do
+                [ -z "$vf" ] && continue
+                # "$values" is the ref source pointing at this repo's root
+                path="${vf#\$values/}"
+                if [ -f "$path" ]; then
+                  args+=(-f "$path")
+                elif [ "$ignore_missing" != "true" ]; then
+                  echo "::error::${env}/${chart}: value file ${path} not found"
+                  exit 1
+                fi
+              done < <(jq -r '.helm.valueFiles // [] | .[]' <<<"$src")
+              echo "::group::validate ${env} ${chart} ${version}"
+              helm template "$chart" --repo "$repo" --version "$version" \
+                ${args[@]+"${args[@]}"} > /dev/null
               echo "::endgroup::"
             done
           done
