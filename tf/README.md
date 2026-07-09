@@ -20,10 +20,8 @@ tf/
 ├── provider.tf                     # Proxmox provider definition (bpg/proxmox ~> 0.111)
 ├── .env/
 │   ├── secrets.env.sample          # Secret template
-│   ├── secrets.dev.enc.env         # SOPS-encrypted dev secrets (committed)
-│   ├── secrets.prd.enc.env         # SOPS-encrypted prd secrets (committed)
-│   ├── secrets.node2.enc.env       # SOPS-encrypted node2 secrets (committed)
-│   └── secrets.node3.enc.env       # SOPS-encrypted node3 secrets (committed)
+│   ├── secrets.common.enc.env      # SOPS-encrypted shared secrets (committed)
+│   └── secrets.{dev,prd,node2,node3,node4}.enc.env  # SOPS-encrypted per-node secrets (committed)
 ├── modules/
 │   ├── proxmox-vm/                 # Proxmox VM module
 │   ├── proxmox-container/          # Proxmox LXC container module
@@ -32,17 +30,17 @@ tf/
 │   ├── images.hcl                  # Stock cloud image definitions (download URLs)
 │   ├── base.hcl                    # Shared stack config (module source, inputs)
 │   ├── run-all.sh                  # Download images to all nodes (serial, per-node creds)
-│   └── dev|prd|node2|node3/        # Per node: thin terragrunt.hcl + node.hcl (node_name)
+│   └── dev|prd|node2|node3|node4/  # Per node: thin terragrunt.hcl + node.hcl (node_name)
 ├── customimage/
 │   ├── images.hcl                  # Custom image definitions (SeaweedFS cloud-images URLs)
 │   ├── base.hcl                    # Shared stack config (module source, checksum pinning)
 │   ├── run-all.sh                  # -> ../cloudimage/run-all.sh (symlink, shared)
-│   └── dev|prd|node2|node3/        # Per node: thin terragrunt.hcl + node.hcl (node_name, image_keys)
+│   └── dev|prd|node2|node3|node4/  # Per node: thin terragrunt.hcl + node.hcl (node_name, image_keys)
 ├── vm/
 │   ├── dev/
 │   │   ├── env.hcl                 # dev VM defaults (node: pve, storage: local-zfs)
 │   │   ├── gpuvm/                  # GPU passthrough VM (Ollama)
-│   │   └── sample/                 # Sample / scratch VM
+│   │   └── toolbox2|toolbox3/      # Toolbox / scratch VMs
 │   ├── node2/
 │   │   ├── env.hcl                 # node2 VM defaults (node: node2, storage: local-lvm)
 │   │   ├── openbao/                # OpenBAO VM
@@ -185,7 +183,7 @@ sidecar checksum for the decompressed object. Then publish it with
 - **Backend**: Cloudflare R2 (S3-compatible) remote state with native lockfile
   locking (`use_lockfile`); one state object per component directory
 - **Provider**: bpg/proxmox ~> 0.111
-- **Environment separation**: dev / prd / node2 / node3 (per Proxmox node)
+- **Environment separation**: dev / prd / node2 / node3 / node4 (per Proxmox node)
 - **Networking**: Configured via `common.hcl` per environment (e.g. `vmbr0`, `vnets001`)
 - **Storage**: dev=local-zfs (pve), prd=data-nvme (node1), node2=local-lvm, node3=local-lvm; SeaweedFS data volume on node3 uses usb-ssd
 ```
