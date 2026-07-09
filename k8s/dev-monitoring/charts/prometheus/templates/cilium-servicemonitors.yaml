@@ -3,6 +3,12 @@ ServiceMonitors for Cilium metrics on the dev cluster. Cilium only exposes the
 metrics Services (configured via k0s helmfile values, shared across clusters);
 scraping is wired up here. The cluster label is added at remote_write time via
 externalLabels (cluster=dev), so no per-ServiceMonitor relabeling is needed.
+
+Keep this semantically paired with the prd/sandbox copy at
+k8s/monitoring/charts/prometheus/templates/cilium-servicemonitors.yaml.
+Selectors, ports, paths, and non-cluster relabelings should stay in sync;
+cluster-label handling intentionally differs (prd/sandbox use scrape classes,
+dev uses remote_write externalLabels).
 */ -}}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
