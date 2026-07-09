@@ -8,6 +8,13 @@ generate:
 build:
 	go build ./...
 
+.PHONY: check
+check:
+	@tmp=$$(mktemp -d); \
+	trap 'rm -rf "$$tmp"' EXIT; \
+	go run ./cmd/generate/ "$$tmp" >/dev/null; \
+	diff -ruN "$(CHART_DASHBOARDS_DIR)" "$$tmp"
+
 .PHONY: dev
 dev: generate
 	docker compose up -d

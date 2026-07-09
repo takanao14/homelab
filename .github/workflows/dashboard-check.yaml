@@ -1,0 +1,29 @@
+name: Dashboard Check
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/dashboard-check.yaml"
+      - "k8s/monitoring/dashboards/**"
+      - "k8s/monitoring/charts/dashboards/**"
+
+jobs:
+  check:
+    name: dashboard-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: k8s/monitoring/dashboards/go.mod
+          cache-dependency-path: k8s/monitoring/dashboards/go.sum
+
+      - name: Check generated dashboard JSON
+        working-directory: k8s/monitoring/dashboards
+        run: make check
+
+      - uses: azure/setup-helm@v5
+
+      - name: Lint dashboards chart
+        run: helm lint k8s/monitoring/charts/dashboards

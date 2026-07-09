@@ -122,18 +122,21 @@ make dev-stop
 
 ## Production
 
-`make generate` writes JSON directly to `charts/dashboards/dashboards/`. Commit the diff and ArgoCD will sync the updated ConfigMaps to the cluster.
+`make generate` writes JSON directly to `charts/dashboards/dashboards/`. Commit the generated JSON with the Go source changes so ArgoCD can sync and roll back entirely from Git. CI runs `make check`, which regenerates dashboards into a temporary directory and fails if the committed chart JSON has drifted.
 
 ```
 Edit .go files in cmd/generate/
   → make generate
+  → make check
   → git commit & push
+  → CI verifies generated JSON drift
   → ArgoCD syncs ConfigMaps
   → Grafana sidecar reloads dashboards
 ```
 
 ```bash
 make generate
+make check
 git add ../charts/dashboards/dashboards/
 git commit -m "..."
 ```
