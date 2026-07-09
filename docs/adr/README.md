@@ -58,3 +58,6 @@ deleting it:
 | [0013](0013-truenas-nfs-for-proxmox-shared-images.md) | TrueNAS NFS for Proxmox shared image storage | Accepted |
 | [0014](0014-argocd-app-of-apps-shared-helm-chart.md) | ArgoCD App of Apps rendered from a shared Helm chart | Accepted |
 | [0015](0015-headlamp-per-cluster-in-cluster-deployment.md) | Headlamp runs in-cluster per cluster instead of a central multi-cluster UI | Accepted |
+| [0016](0016-cluster-label-via-default-scrape-class.md) | Cluster label via default scrape class, asymmetric per environment | Accepted |
+| [0017](0017-renovate-automerge-golive-adjustments.md) | Renovate automerge go-live adjustments | Accepted |
+| [0018](0018-seaweedfs-data-on-usb-ssd-directory-storage.md) | SeaweedFS data on a node3 USB SSD via Proxmox directory storage | Accepted |

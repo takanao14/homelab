@@ -218,6 +218,11 @@ All secrets are fetched from OpenBao via ESO. They are not stored in this reposi
 ## Notes
 
 - `serviceMonitorSelectorNilUsesHelmValues: false` — Prometheus discovers all ServiceMonitors cluster-wide
+- Cluster labels (ADR-0016): prd and sandbox stamp `cluster` via a default
+  scrapeClass (`cluster-prd` / `cluster-sandbox` in `values/prometheus*.yaml`);
+  dev series get `cluster=dev` via remote_write externalLabels. Every external
+  LAN ScrapeConfig must set `scrapeClass: external` to opt out, or LAN hosts
+  leak into `cluster=~"$cluster"` dashboard queries.
 - Target IPs for external exporters (blackbox, node-exporter, etc.) are hardcoded in `values/` files
 - Future plan: move k0s controller-manager/scheduler scraping into an explicit local chart (`docs/plans/control-plane-metrics-chart.md`)
 

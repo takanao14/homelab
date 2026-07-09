@@ -1,8 +1,11 @@
 # ADR-0005: Renovate-native automerge instead of branch protection
 
-- **Status:** Accepted
+- **Status:** Accepted (amended by [ADR-0017](0017-renovate-automerge-golive-adjustments.md))
 - **Date:** 2026-06-21
-- **Related:** [`docs/plans/renovate-automerge-strategy.md`](../plans/renovate-automerge-strategy.md) (rollout, observation mode active), `renovate.json`
+- **Related:** `renovate.json`. The strategy plan
+  (`renovate-automerge-strategy.md` in the private plans repo) has been
+  removed now that automerge is live; go-live adjustments (no merge window,
+  `tf/**` automerge, security fast-track) are recorded in ADR-0017.
 
 ## Context
 
