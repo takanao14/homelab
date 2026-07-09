@@ -49,8 +49,12 @@ and the OpenBao registration runbook in `ansible/README.md`.
 
 ## Usage
 
+The ESO Application is rendered by the app-of-apps chart
+(`k8s/argocd/apps/templates/`) and enabled per environment in
+`k8s/argocd/<env>/apps-values.yaml` (ADR-0014). The generated Application
+sources this chart with the per-environment values override:
+
 ```yaml
-# In ArgoCD Application (k8s/argocd/{env}/apps/eso.yaml)
 source:
   path: k8s/eso
   helm:
