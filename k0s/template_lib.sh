@@ -173,6 +173,33 @@ _render_coredns_config() {
 EOF
 }
 
+sync_worker_l2_labels() {
+    validate_vars K0S_WORKER_ADDRESSES
+
+    local addresses node_table addr node_name l2_segment
+    local -a addr_list
+    addresses="${K0S_WORKER_ADDRESSES// /}"
+    if [[ -n "${K0S_GPU_WORKER_ADDRESSES:-}" ]]; then
+        addresses="${addresses},${K0S_GPU_WORKER_ADDRESSES// /}"
+    fi
+
+    log_info "Syncing worker L2 segment labels..."
+    node_table="$(kubectl get nodes -o wide --no-headers)"
+
+    IFS=',' read -ra addr_list <<< "$addresses"
+    for addr in "${addr_list[@]}"; do
+        [[ -n "$addr" ]] || continue
+        l2_segment="$(_l2_segment_from_ip "$addr")"
+        node_name="$(awk -v ip="$addr" '$6 == ip { print $1; exit }' <<< "$node_table")"
+        if [[ -z "$node_name" ]]; then
+            log_info "Skipping L2 label for $addr; node is not registered yet"
+            continue
+        fi
+
+        kubectl label node "$node_name" "homelab/l2-segment=${l2_segment}" --overwrite
+    done
+}
+
 # Builds the full k0sctl config from environment variables.
 # Supports multiple controllers and workers via comma-separated address lists.
 #   K0S_CONTROLLER_ADDRESSES — required, comma-separated controller IPs
@@ -342,6 +369,8 @@ helmfile_apply() {
     local base_dir
     base_dir="$(dirname "$helmfile_file")"
     log_info "Using KUBECONFIG: ${KUBECONFIG:-unknown}"
+
+    sync_worker_l2_labels
 
     # Phase 1: install Cilium first so its CRDs exist before other releases are diffed.
     # helm-diff validates manifests against the live API, so CRD-dependent resources
