@@ -1,7 +1,7 @@
 # ADR-0019: Merge the GPU worker into prd and retire the dev cluster
 
-- **Status:** Accepted (migration in progress; runbook in the private plans
-  repo, `dev-cluster-retirement.md`)
+- **Status:** Accepted (migration completed 2026-07-10; the runbook in the
+  private plans repo has been removed now that the retirement is done)
 - **Date:** 2026-07-09
 - **Related:** [ADR-0011](0011-cilium-gateway-to-envoy-gateway-migration.md),
   [ADR-0014](0014-argocd-app-of-apps-shared-helm-chart.md),
