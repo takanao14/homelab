@@ -55,12 +55,9 @@ OpenBao KV path: `k8s/cert-manager/cloudflare`
 |----------|-------------|
 | `api-token` | Cloudflare API token with `Zone:DNS:Edit` permission |
 
-To seed the secret into OpenBao:
-
-```bash
-# Via Ansible openbao_seed_secrets playbook, or manually:
-bao kv put secret/k8s/cert-manager/cloudflare api-token=<token>
-```
+To seed the secret into OpenBao, add it to the encrypted Ansible
+`openbao_secrets` list and run `ops-openbao_seed_secrets.yaml`. Do not run
+`bao kv put` manually; Ansible is the source of truth for seeded values.
 
 ## Notes
 
