@@ -2,8 +2,9 @@
 
 Local Helm chart that creates shared Gateway API Gateway resources.
 
-Managed by ArgoCD. Each environment has its own ArgoCD Application in
-`k8s/argocd/{env}/apps/gateway.yaml`. Shared definitions live in this chart's
+Managed by ArgoCD. The `gateway` Application is rendered by the app-of-apps
+chart (`k8s/argocd/apps`) and enabled per environment in
+`k8s/argocd/<env>/apps-values.yaml`. Shared definitions live in this chart's
 `values.yaml`; per-environment differences (`domain`, and the HTTPS listener
 toggle for sandbox) live in `{env}/values.yaml`.
 
@@ -66,7 +67,7 @@ not host the Envoy proxy pod.
 
 `domain` has no default value and must be explicitly provided. It is used to construct the TLS secret name.
 
-> `butaco.net` is a personal domain. Replace it in `k8s/argocd/{env}/apps/gateway.yaml`.
+> `butaco.net` is a personal domain. Replace it in `k8s/gateway/{env}/values.yaml`.
 
 ## Notes
 
