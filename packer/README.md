@@ -46,7 +46,7 @@ can run on a dedicated builder, separate from where images are registered.
 Proxmox download of the pushed images is handled by the Terragrunt stack in
 [`../tf/customimage`](../tf/customimage) (module `tf/modules/proxmox-cloudimage`,
 shared with the stock-image stack `tf/cloudimage`). See that directory for the
-per-environment (`dev`/`prd`/`node2`/`node3`) configs.
+per-environment (`dev`/`prd`/`node2`/`node3`/`node4`) configs.
 
 ## Directory Structure
 
