@@ -10,4 +10,4 @@ services:
       - LOKI_URL=${LOKI_URL}
     volumes:
       - ./provisioning:/etc/grafana/provisioning
-      - ./generated:/var/lib/grafana/dashboards
+      - ../charts/dashboards/dashboards:/var/lib/grafana/dashboards

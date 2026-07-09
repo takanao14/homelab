@@ -17,6 +17,3 @@ prometheusRules:
     enabled: true
   hardware:
     enabled: true
-
-dashboards:
-  enabled: true

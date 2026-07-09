@@ -52,6 +52,10 @@ apps:
       backoff:
         duration: 30s
         factor: 2
+  dashboards:
+    enabled: true
+    wave: "1"
+    path: k8s/monitoring/charts/dashboards
   loki:
     enabled: true
     wave: "1"

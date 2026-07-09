@@ -7,6 +7,8 @@ apps:
     enabled: true
     valueFiles:
       - ../../values/grafana-sandbox.yaml
+  dashboards:
+    enabled: true
   loki:
     enabled: false
   alloy:

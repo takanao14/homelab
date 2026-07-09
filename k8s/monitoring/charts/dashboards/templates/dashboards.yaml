@@ -1,4 +1,3 @@
-{{- if .Values.dashboards.enabled }}
 {{- range $path, $_ := .Files.Glob "dashboards/*.json" }}
 {{- $name := base $path | trimSuffix ".json" }}
 ---
@@ -12,5 +11,4 @@ metadata:
 data:
   {{ base $path }}: |-
 {{ $.Files.Get $path | indent 4 }}
-{{- end }}
 {{- end }}

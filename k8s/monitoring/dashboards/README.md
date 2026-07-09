@@ -54,7 +54,6 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 │   ├── argocd.go               # argocd-overview
 │   ├── openbao.go              # openbao-overview
 │   └── uptime.go               # uptime
-├── generated/                  # Generated JSON output (git-ignored)
 ├── provisioning/               # Local Grafana provisioning config
 │   ├── datasources/            # Prometheus datasource
 │   └── dashboards/             # Dashboard file provider
@@ -63,7 +62,7 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 ```
 
 To add a new dashboard, create a new `.go` file in `cmd/generate/` (e.g., `new_dashboard.go`) and add an entry to the `dashboards` map in `cmd/generate/main.go`.
-The Helm template auto-discovers all JSON files in `charts/prometheus/dashboards/`, so no template changes are needed.
+The Helm template auto-discovers all JSON files in `charts/dashboards/dashboards/`, so no template changes are needed.
 
 ## Conventions
 
@@ -123,18 +122,18 @@ make dev-stop
 
 ## Production
 
-`make deploy` generates JSON and copies it to `charts/prometheus/dashboards/`. Commit the diff and ArgoCD will sync the updated ConfigMaps to the cluster.
+`make generate` writes JSON directly to `charts/dashboards/dashboards/`. Commit the diff and ArgoCD will sync the updated ConfigMaps to the cluster.
 
 ```
 Edit .go files in cmd/generate/
-  → make deploy  (generate JSON + copy to Helm chart)
+  → make generate
   → git commit & push
   → ArgoCD syncs ConfigMaps
   → Grafana sidecar reloads dashboards
 ```
 
 ```bash
-make deploy
-git add ../charts/prometheus/dashboards/
+make generate
+git add ../charts/dashboards/dashboards/
 git commit -m "..."
 ```
