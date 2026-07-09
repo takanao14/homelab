@@ -27,8 +27,11 @@ Deployed to both `dev` and `prd` clusters.
 
 ## Usage
 
+The `reloader` Application is rendered by the app-of-apps chart
+(`k8s/argocd/apps`) and enabled per environment in
+`k8s/argocd/<env>/apps-values.yaml`. The generated Application:
+
 ```yaml
-# In ArgoCD Application (k8s/argocd/{env}/apps/reloader.yaml)
 source:
   path: k8s/reloader
   helm:
