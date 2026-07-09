@@ -262,7 +262,6 @@ for the rebuilt cluster. After ArgoCD has reconciled the ESO app and the
 
 ```bash
 ansible-playbook playbooks/ops-openbao_register_cluster.yaml -e cluster=sandbox
-ansible-playbook playbooks/ops-openbao_register_cluster.yaml -e cluster=dev
 ansible-playbook playbooks/ops-openbao_register_cluster.yaml -e cluster=prd
 ```
 

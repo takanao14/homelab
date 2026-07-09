@@ -7,7 +7,6 @@ Kubernetes manifests and Helm charts for homelab clusters managed via ArgoCD Git
 | Environment | Domain | Cluster |
 |-------------|--------|---------|
 | prd | `*.prd.butaco.net` | prd-homelab |
-| dev | `*.dev.butaco.net` | dev-homelab |
 | sandbox | `*.sandbox.butaco.net` (HTTP only) | sandbox-homelab |
 
 > **Note**: `butaco.net` is a personal domain. Replace it with your own domain before use.
@@ -20,12 +19,12 @@ Kubernetes manifests and Helm charts for homelab clusters managed via ArgoCD Git
 - **CNI**: Cilium 1.19.x
 - **Ingress**: Envoy Gateway via Gateway API (Gateway API v1.5.1 experimental)
 - **TLS**: cert-manager wildcard certificate via Cloudflare DNS-01 challenge
-  for prd/dev; sandbox intentionally uses HTTP without cert-manager
+  for prd; sandbox intentionally uses HTTP without cert-manager
 - **DNS**: external-dns with PowerDNS provider (`gateway-httproute` source)
 
 All HTTP services are exposed via HTTPRoute referencing the shared Envoy Gateway
 (`shared-gateway-envoy` in the `gateway-system` namespace). TLS is terminated at
-the Gateway using a wildcard certificate in prd/dev; sandbox uses HTTP-only
+the Gateway using a wildcard certificate in prd; sandbox uses HTTP-only
 routes. See
 [`ADR-0011`](../docs/adr/0011-cilium-gateway-to-envoy-gateway-migration.md) for
 the Cilium Gateway to Envoy Gateway migration decision.
@@ -50,11 +49,6 @@ k8s/
 │   │   ├── Chart.yaml
 │   │   ├── values.yaml           # Defaults: apps disabled, waves, upstream chart versions
 │   │   └── templates/
-│   ├── dev/
-│   │   ├── helmfile.yaml
-│   │   ├── values.yaml           # server.ingress.hostname: argocd.dev.butaco.net
-│   │   ├── apps-values.yaml      # env: dev + enabled apps
-│   │   └── root-apps.yaml        # Bootstrap App of Apps for dev
 │   ├── prd/
 │   │   ├── helmfile.yaml
 │   │   ├── values.yaml           # server.ingress.hostname: argocd.prd.butaco.net
@@ -68,7 +62,6 @@ k8s/
 ├── cert-manager/         # Wildcard certificate config (local Helm chart)
 │   ├── Chart.yaml
 │   ├── values.yaml           # Schema: email, domain
-│   ├── dev/values.yaml       # domain: dev.butaco.net
 │   ├── prd/values.yaml       # domain: prd.butaco.net
 │   ├── controller/           # Values for the upstream cert-manager chart (common + per-env)
 │   └── templates/
@@ -82,14 +75,14 @@ k8s/
 ├── eso/                  # External Secrets Operator + ClusterSecretStore (OpenBao)
 │   ├── Chart.yaml
 │   ├── values.yaml
-│   ├── {dev,prd,sandbox}/values.yaml  # openbao.mountPath per environment
+│   ├── {prd,sandbox}/values.yaml  # openbao.mountPath per environment
 │   └── templates/
 │       ├── cluster-secret-store.yaml  # ClusterSecretStore pointing to OpenBao
 │       └── auth-delegator.yaml        # TokenReview RBAC for the ESO ServiceAccount
 ├── gateway/              # Shared Envoy Gateway API resources (local Helm chart)
 │   ├── Chart.yaml
 │   ├── values.yaml           # Schema: domain
-│   ├── {dev,prd,sandbox}/values.yaml  # domain per environment; sandbox disables HTTPS
+│   ├── {prd,sandbox}/values.yaml  # domain per environment; sandbox disables HTTPS
 │   └── templates/
 │       ├── envoyproxies.yaml
 │       ├── gatewayclasses.yaml
@@ -102,7 +95,6 @@ k8s/
 │   │       ├── rbac.yaml
 │   │       └── external-secret.yaml  # ESO ExternalSecret for PowerDNS API key
 │   ├── values-common.yaml
-│   ├── dev/values.yaml
 │   ├── prd/values.yaml
 │   └── sandbox/values.yaml
 ├── longhorn-ui/          # Authenticated Gateway route for the Longhorn UI (SecurityPolicy Basic Auth)
@@ -115,31 +107,28 @@ k8s/
 │   ├── charts/           # Local Helm charts (wrappers + HTTPRoutes + dashboards)
 │   ├── dashboards/       # Dashboard generator (Go, grafana-foundation-sdk)
 │   └── values/           # Values per component (+ apps-sandbox.yaml subset overlay)
-├── dev-monitoring/       # Prometheus agent mode (dev cluster → remote_write to prd)
-│   ├── charts/prometheus/    # kube-prometheus-stack wrapper (agent mode)
-│   └── values/prometheus.yaml
 ├── reloader/             # Stakater Reloader (auto-restart on Secret/ConfigMap change)
 │   ├── Chart.yaml
 │   └── values.yaml
-├── comfyui/              # ComfyUI AI image generation (dev only, AMD GPU)
+├── comfyui/              # ComfyUI AI image generation (prd, AMD GPU)
 │   ├── values.yaml
 │   └── chart/
-├── lemonade-server/      # Lemonade LLM inference server (dev only, AMD GPU)
+├── lemonade-server/      # Lemonade LLM inference server (prd, AMD GPU)
 │   ├── values.yaml
 │   └── chart/
-├── ollama/               # Ollama LLM server (dev only, AMD GPU)
+├── ollama/               # Ollama LLM server (prd, AMD GPU)
 │   ├── values.yaml
 │   └── chart/
-├── headlamp/             # Headlamp Kubernetes Web UI, in-cluster per environment (dev, prd)
-│   ├── {dev,prd}/values.yaml      # hostname per environment
+├── headlamp/             # Headlamp Kubernetes Web UI, in-cluster for prd
+│   ├── prd/values.yaml      # hostname
 │   └── chart/            # Wrapper chart (in-cluster mode, HTTPRoute)
 ├── homepage/             # Homepage dashboard (prd, sandbox)
 │   ├── {prd,sandbox}/values.yaml  # hostname / Gateway listener per environment
 │   └── chart/
-├── open-webui/           # Open WebUI values for the upstream chart (dev only)
+├── open-webui/           # Open WebUI values for the upstream chart (prd, AMD GPU)
 │   ├── values.yaml
-│   └── dev/values.yaml
-└── meshcentral/          # MeshCentral remote management (dev only)
+│   └── prd/values.yaml
+└── meshcentral/          # MeshCentral remote management (prd)
     └── chart/
 ```
 

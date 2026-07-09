@@ -17,7 +17,7 @@ if ! command -v bao &>/dev/null; then
 fi
 
 KUBE_DIR="${HOME}/.kube"
-clusters=(dev prd sandbox)
+clusters=(prd sandbox)
 
 for cluster in "${clusters[@]}"; do
   kubeconfig="${KUBE_DIR}/${cluster}.yaml"

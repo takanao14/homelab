@@ -178,11 +178,6 @@
         href: https://argocd-ui.prd.butaco.net
         description: Continuous Delivery (prd)
 
-    - ArgoCD (Dev):
-        icon: argo-cd.png
-        href: https://argocd-ui.dev.butaco.net
-        description: Continuous Delivery (dev)
-
     - ArgoCD (Sandbox):
         icon: argo-cd.png
         href: http://argocd.sandbox.butaco.net
@@ -191,23 +186,23 @@
 - AI:
     - Open WebUI:
         icon: open-webui.png
-        href: https://open-webui.dev.butaco.net
+        href: https://open-webui.prd.butaco.net
         description: Local LLM WebUI
 
     - Lemonade Server:
         icon: sh-lemonade-ai
-        href: https://lemonade.dev.butaco.net
+        href: https://lemonade.prd.butaco.net
         description: Local LLM Inference Server
 
     - ComfyUI:
         icon: comfyui.png
-        href: https://comfyui.dev.butaco.net
+        href: https://comfyui.prd.butaco.net
         description: Image Generation UI
 
 - Remote Management:
     - MeshCentral:
         icon: si-intel-#0071C5
-        href: https://meshcentral.dev.butaco.net
+        href: https://meshcentral.prd.butaco.net
         description: MeshCentral AMT remote control
 
 - Network:

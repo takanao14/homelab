@@ -163,7 +163,7 @@ BAO_TOKEN=xxx ./secrets/admin/set-env.sh
 
 ### `get-kubeconfig.sh`
 
-Retrieves the `dev`/`prd` kubeconfigs from OpenBao into `~/.kube/`. Existing
+Retrieves the `prd`/`sandbox` kubeconfigs from OpenBao into `~/.kube/`. Existing
 files are replaced only after both kubeconfigs are fetched successfully.
 
 ```bash
@@ -174,8 +174,8 @@ BAO_PASSWORD=xxx ./secrets/get-kubeconfig.sh      # non-interactive
 
 ### `set-kubeconfig.sh`
 
-Stores `~/.kube/dev.yaml` and `~/.kube/prd.yaml` in OpenBao at
-`secret/kubeconfig/dev` and `secret/kubeconfig/prd`. Defaults to the `admin`
+Stores `~/.kube/prd.yaml` and `~/.kube/sandbox.yaml` in OpenBao at
+`secret/kubeconfig/prd` and `secret/kubeconfig/sandbox`. Defaults to the `admin`
 OpenBao user and validates both files before writing either secret.
 
 ```bash

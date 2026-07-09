@@ -16,3 +16,8 @@
       ansible.builtin.include_role:
         name: openbao
         tasks_from: configure_roles
+
+    - name: Disable retired Kubernetes auth mounts
+      ansible.builtin.include_role:
+        name: openbao
+        tasks_from: disable_retired_k8s_auth

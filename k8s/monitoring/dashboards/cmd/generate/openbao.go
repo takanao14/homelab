@@ -13,7 +13,8 @@ import (
 // performance, and lease/token inventory.
 //
 // OpenBao keeps the vault_* metric prefix for compatibility, and its metrics
-// carry their own cluster label (the raft cluster name, not prd/dev), so
+// carry their own cluster label (the raft cluster name, not the Kubernetes
+// environment name), so
 // panels filter on the scrape job only — no $cluster variable here.
 // Latency summaries (vault_core_handle_request, vault_raft_*) are emitted in
 // milliseconds.

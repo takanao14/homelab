@@ -1,12 +1,12 @@
 # MeshCentral
 
-[MeshCentral](https://meshcentral.com/) remote management server deployed on the dev cluster. Managed by ArgoCD.
+[MeshCentral](https://meshcentral.com/) remote management server deployed on the prd cluster. Managed by ArgoCD.
 
 ## Directory Structure
 
 ```
 meshcentral/
-├── values.yaml            # hostname: meshcentral.dev.butaco.net
+├── values.yaml            # hostname: meshcentral.prd.butaco.net
 └── chart/                 # Custom Helm chart
     ├── Chart.yaml
     ├── values.yaml        # Default chart values

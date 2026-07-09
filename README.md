@@ -16,7 +16,6 @@ homelab/
 │   ├── argocd/        # ArgoCD self-management + app-of-apps chart (ADR-0014)
 │   ├── cert-manager/  # cert-manager + wildcard certificate issuers
 │   ├── comfyui/       # ComfyUI (Stable Diffusion) deployment
-│   ├── dev-monitoring/# Lightweight monitoring stack for the dev cluster
 │   ├── envoy-gateway/ # Envoy Gateway controller + Gateway API CRDs (ADR-0011)
 │   ├── eso/           # External Secrets Operator + ClusterSecretStore (OpenBao)
 │   ├── externalDNS/   # ExternalDNS (PowerDNS provider)

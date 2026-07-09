@@ -28,7 +28,7 @@ tolerations:
     value: amd
     effect: NoSchedule
 
-hostname: lemonade.dev.butaco.net
+hostname: lemonade.prd.butaco.net
 
 gateway:
   name: shared-gateway-envoy

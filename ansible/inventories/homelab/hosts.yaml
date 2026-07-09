@@ -44,10 +44,6 @@ all:
       ansible_host: 192.168.20.33
     sandbox-worker3:
       ansible_host: 192.168.20.34
-    dev-cp1:
-      ansible_host: 192.168.20.11
-    dev-worker1:
-      ansible_host: 192.168.20.12
     prd-cp1:
       ansible_host: 192.168.30.11
     prd-worker1:
@@ -121,11 +117,6 @@ all:
       hosts:
         prd-cp1: null
         prd-worker1: null
-    dev_k8s:
-      hosts:
-        dev-cp1: null
-        dev-worker1: null
-        gpuvm1: null
     sandbox_k8s:
       hosts:
         sandbox-cp1: null
@@ -216,7 +207,6 @@ all:
         # are not covered by the in-cluster node-exporter DaemonSet. Scrape them
         # host-level to monitor the control-plane node and kine DB disk.
         prd-cp1: null
-        dev-cp1: null
         # Stateful service guests: Proxmox OTLP does not expose in-guest
         # filesystem usage, so monitor disk-fill / inode / memory here.
         seaweedfs1: null

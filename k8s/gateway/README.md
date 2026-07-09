@@ -14,7 +14,6 @@ toggle for sandbox) live in `{env}/values.yaml`.
 gateway/
 ├── Chart.yaml
 ├── values.yaml          # Shared GatewayClass / EnvoyProxy / Gateway definitions
-├── dev/values.yaml      # domain: dev.butaco.net
 ├── prd/values.yaml      # domain: prd.butaco.net
 ├── sandbox/values.yaml  # domain: sandbox.butaco.net, HTTPS listener disabled
 └── templates/
@@ -76,7 +75,7 @@ not host the Envoy proxy pod.
 - Gateway API CRDs are owned by the `envoy-gateway-crds` ArgoCD app
   (`k8s/envoy-gateway/crds`), which bundles the version matching the pinned
   Envoy Gateway chart (1.8.x → Gateway API v1.5.1 experimental).
-- Sandbox, dev, and prd HTTPRoutes reference `shared-gateway-envoy` after the
+- Sandbox and prd HTTPRoutes reference `shared-gateway-envoy` after the
   migration.
 - See
   [`ADR-0011`](../../docs/adr/0011-cilium-gateway-to-envoy-gateway-migration.md)

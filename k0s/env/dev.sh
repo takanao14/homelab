@@ -1,6 +1,0 @@
-# shellcheck shell=bash
-export K0S_VERSION=v1.36.2+k0s.0
-export K0S_CONTROLLER_ADDRESSES=192.168.20.11
-export K0S_WORKER_ADDRESSES=192.168.20.12
-export K0S_LB_POOL=192.168.20.128,192.168.20.254
-export K0S_STORAGE_PROVIDER=openebs # openebs | longhorn

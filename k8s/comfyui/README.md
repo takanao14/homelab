@@ -1,6 +1,6 @@
 # comfyui
 
-[ComfyUI](https://github.com/comfyanonymous/ComfyUI) AI image generation deployed on the dev cluster with AMD GPU support. Managed by ArgoCD.
+[ComfyUI](https://github.com/comfyanonymous/ComfyUI) AI image generation deployed on the prd cluster with AMD GPU support. Managed by ArgoCD.
 
 ## Directory Structure
 
@@ -19,7 +19,7 @@ comfyui/
 
 ## Access
 
-Exposed via Gateway API HTTPRoute at `comfyui.dev.butaco.net`.
+Exposed via Gateway API HTTPRoute at `comfyui.prd.butaco.net`.
 
 > `butaco.net` is a personal domain. Replace it in `values.yaml`.
 
@@ -39,7 +39,7 @@ The container uses an unconfined seccomp profile and mounts `/dev/kfd` and `/dev
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `hostname` | `comfyui.dev.butaco.net` | HTTPRoute hostname |
+| `hostname` | `comfyui.prd.butaco.net` | HTTPRoute hostname |
 | `replicaCount` | `0` | Set to `1` to start (default off to save GPU) |
 | `image.repository` | `forgejo.home.butaco.net/takanao/comfyui-docker` | Custom ROCm-enabled ComfyUI image |
 | `storage.size` | `100Gi` | PVC size for model storage |

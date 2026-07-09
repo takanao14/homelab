@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # create_cluster.sh — Entry point for k0s cluster management
-# Usage: ./create_cluster.sh <dev|prd|sandbox> <command>
+# Usage: ./create_cluster.sh <prd|sandbox> <command>
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

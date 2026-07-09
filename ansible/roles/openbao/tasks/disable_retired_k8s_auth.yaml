@@ -1,0 +1,19 @@
+---
+- name: List enabled auth methods
+  ansible.builtin.command:
+    cmd: "{{ openbao_binary }} auth list -format=json"
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  register: openbao_auth_methods
+  changed_when: false
+
+- name: Disable retired Kubernetes auth methods
+  ansible.builtin.command:
+    cmd: "{{ openbao_binary }} auth disable {{ item }}"
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  loop: "{{ openbao_k8s_retired_mounts }}"
+  when: "(item + '/') in (openbao_auth_methods.stdout | default('{}', true) | from_json)"
+  changed_when: true

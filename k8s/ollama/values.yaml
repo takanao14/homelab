@@ -1,4 +1,4 @@
-hostname: ollama.dev.butaco.net
+hostname: ollama.prd.butaco.net
 gateway:
   name: shared-gateway-envoy
   namespace: gateway-system

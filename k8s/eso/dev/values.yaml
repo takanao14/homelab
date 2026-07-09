@@ -1,2 +1,0 @@
-openbao:
-  mountPath: "kubernetes-dev"

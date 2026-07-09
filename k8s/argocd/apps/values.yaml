@@ -1,4 +1,4 @@
-# Environment name (prd / dev / sandbox). Required — selects the
+# Environment name (prd / sandbox). Required — selects the
 # k8s/<app>/<env>/values.yaml files referenced by the generated Applications.
 env: ""
 
@@ -62,9 +62,9 @@ apps:
   meshcentral:
     enabled: false
     wave: "1"
-  # monitoring differs structurally per environment (prd: central
-  # kube-prometheus-stack app-of-apps, dev: Prometheus agent chart), so its
-  # source path / namespace / helm settings come from apps-values.yaml.
+  # monitoring differs structurally per environment (prd: central full stack,
+  # sandbox: subset overlay), so its source path / namespace / helm settings
+  # come from apps-values.yaml.
   monitoring:
     enabled: false
     wave: "1"

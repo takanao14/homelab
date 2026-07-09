@@ -12,7 +12,7 @@
 - name: Fail with actionable message if admin token is invalid
   ansible.builtin.fail:
     msg: >-
-      openbao_admin_token is invalid or expired (rc={{ token_lookup.rc }}).
+      openbao_admin_token is invalid or expired (rc={{ openbao_token_lookup.rc }}).
       Run openbao_bootstrap.yaml to generate a new token, then update
       openbao_admin_token in group_vars/openbao.sops.yaml.
   when: openbao_token_lookup.rc != 0
@@ -32,5 +32,5 @@
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
-  when: "'secret/' not in (openbao_secrets_engines.stdout | from_json)"
+  when: "'secret/' not in (openbao_secrets_engines.stdout | default('{}', true) | from_json)"
   changed_when: true

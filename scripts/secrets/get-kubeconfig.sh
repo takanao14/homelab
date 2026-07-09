@@ -24,7 +24,7 @@ KUBE_DIR="${HOME}/.kube"
 mkdir -p "$KUBE_DIR"
 
 # Environments to fetch kubeconfig for.
-ENVS=(dev prd sandbox)
+ENVS=(prd sandbox)
 
 declare -A tmp_files
 cleanup() {

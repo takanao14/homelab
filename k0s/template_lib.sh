@@ -146,8 +146,8 @@ EOF
 }
 
 # Adds the GPU worker taint toleration only to CoreDNS. k0s calculates the
-# CoreDNS replica count from the number of Linux nodes, so a two-node dev
-# cluster needs one replica to be schedulable on the tainted GPU worker.
+# CoreDNS replica count from the number of Linux nodes, so a small cluster with
+# a tainted GPU worker needs one replica to stay schedulable.
 _render_coredns_config() {
     if [[ -z "${K0S_GPU_WORKER_ADDRESSES:-}" ]]; then
         return

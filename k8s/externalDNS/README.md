@@ -8,8 +8,6 @@ resources. Managed by ArgoCD, with the PowerDNS API key supplied by ESO.
 ```
 externalDNS/
 ├── values-common.yaml         # PowerDNS API endpoint (shared)
-├── dev/
-│   └── values.yaml            # domainFilter: dev.butaco.net.
 ├── prd/
 │   └── values.yaml            # domainFilter: prd.butaco.net.
 ├── sandbox/

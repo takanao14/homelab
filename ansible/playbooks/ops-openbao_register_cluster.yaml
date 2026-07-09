@@ -7,9 +7,6 @@
       prd:
         kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/prd.yaml"
         context: prd-homelab
-      dev:
-        kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/dev.yaml"
-        context: dev-homelab
       sandbox:
         kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/sandbox.yaml"
         context: sandbox-homelab
@@ -19,7 +16,7 @@
       ansible.builtin.assert:
         that:
           - target_cluster in openbao_register_clusters
-        fail_msg: "Set a valid target cluster with -e cluster=prd|dev|sandbox."
+        fail_msg: "Set a valid target cluster with -e cluster=prd|sandbox."
 
     - name: Set target kubeconfig
       ansible.builtin.set_fact:

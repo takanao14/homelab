@@ -23,7 +23,7 @@ or specific secret/configmap annotations. This prevents unintended restarts acro
 
 ## Environments
 
-Deployed to both `dev` and `prd` clusters.
+Deployed to the `prd` cluster.
 
 ## Usage
 

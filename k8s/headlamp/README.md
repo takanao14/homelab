@@ -1,6 +1,6 @@
 # Headlamp
 
-Kubernetes Web UI, deployed in-cluster per environment (prd, dev). Each
+Kubernetes Web UI, deployed in-cluster for prd. Each
 cluster runs its own Headlamp instance authenticated via ServiceAccount RBAC —
 no cross-cluster kubeconfig secrets. See the design change note below.
 
@@ -11,8 +11,7 @@ headlamp/
 ├── chart/
 │   ├── Chart.yaml    # Wrapper chart with headlamp as dependency
 │   └── values.yaml   # Common values (in-cluster mode, HTTPRoute gateway config)
-├── prd/values.yaml   # hostname: headlamp.prd.butaco.net
-└── dev/values.yaml   # hostname: headlamp.dev.butaco.net
+└── prd/values.yaml   # hostname: headlamp.prd.butaco.net
 ```
 
 Deployed via the app-of-apps chart (`k8s/argocd/apps/templates/headlamp.yaml`);
@@ -21,7 +20,6 @@ enable per environment in `k8s/argocd/<env>/apps-values.yaml`.
 ## Access
 
 - prd: https://headlamp.prd.butaco.net
-- dev: https://headlamp.dev.butaco.net
 
 ## Login Token (per cluster)
 
@@ -55,7 +53,7 @@ kubectl delete secret headlamp-token -n headlamp
 ## Design Note
 
 Headlamp originally ran only in prd, mounting ESO-synced kubeconfigs to show
-both clusters in one UI. It now runs in-cluster per cluster — no kubeconfig
+multiple clusters in one UI. It now runs in-cluster per cluster — no kubeconfig
 secrets, so a rebuilt cluster gets a working Headlamp from the app-of-apps
 bootstrap alone. See
 [ADR-0015](../../docs/adr/0015-headlamp-per-cluster-in-cluster-deployment.md)

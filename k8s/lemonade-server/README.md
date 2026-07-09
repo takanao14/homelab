@@ -1,6 +1,6 @@
 # lemonade-server
 
-[Lemonade](https://github.com/lemonade-sdk/lemonade) LLM inference server deployed on the dev cluster with AMD GPU (ROCm) support. Managed by ArgoCD.
+[Lemonade](https://github.com/lemonade-sdk/lemonade) LLM inference server deployed on the prd cluster with AMD GPU (ROCm) support. Managed by ArgoCD.
 
 ## Directory Structure
 
@@ -21,7 +21,7 @@ lemonade-server/
 
 | Client | Address |
 |--------|---------|
-| External | `https://lemonade.dev.butaco.net` |
+| External | `https://lemonade.prd.butaco.net` |
 | In-cluster | `http://lemonade-server.lemonade-server.svc.cluster.local:13305` |
 
 ## GPU
@@ -42,7 +42,7 @@ Uses `ghcr.io/lemonade-sdk/lemonade-server` with `LEMONADE_LLAMACPP=rocm` to ena
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `hostname` | `lemonade.dev.butaco.net` | HTTPRoute hostname |
+| `hostname` | `lemonade.prd.butaco.net` | HTTPRoute hostname |
 | `replicaCount` | `0` | Set to `1` to start (default off to save GPU) |
 | `image.tag` | `v10.4.0` | Lemonade server image tag |
 | `storage.storageClassName` | `openebs-hostpath` | Storage class |

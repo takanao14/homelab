@@ -1,4 +1,4 @@
-hostname: meshcentral.dev.butaco.net
+hostname: meshcentral.prd.butaco.net
 gateway:
   name: shared-gateway-envoy
   namespace: gateway-system

@@ -23,7 +23,7 @@ tolerations:
     value: amd
     effect: NoSchedule
 
-hostname: comfyui.dev.butaco.net
+hostname: comfyui.prd.butaco.net
 
 gateway:
   name: shared-gateway-envoy

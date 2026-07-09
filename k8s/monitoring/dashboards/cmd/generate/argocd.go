@@ -10,7 +10,7 @@ import (
 )
 
 // buildArgocdOverview defines ArgoCD application health, sync activity, and
-// repo-server performance across prd and dev.
+// repo-server performance across prd and sandbox.
 //
 // Metrics come from the four per-component ServiceMonitors
 // (job="argocd-<component>-metrics", see docs/plans/prometheus-scrape-gaps.md).

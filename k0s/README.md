@@ -14,11 +14,10 @@ Scripts for managing the k0s cluster lifecycle using k0sctl and Helmfile.
 
 ```
 k0s/
-├── create_cluster.sh              # Entry point: ./create_cluster.sh <dev|prd|sandbox> <command>
+├── create_cluster.sh              # Entry point: ./create_cluster.sh <env> <command>
 ├── template_lib.sh                # Shared library: k0sctl config generation and cluster management logic
 ├── helmfile.yaml.gotmpl           # Default Helm release definitions (cilium / openebs or longhorn / cilium-config)
 ├── env/
-│   ├── dev.sh                     # Dev non-secret variables (committed)
 │   ├── prd.sh                     # Prd non-secret variables (committed)
 │   └── sandbox.sh                 # Sandbox non-secret variables (committed)
 ├── charts/
@@ -40,7 +39,7 @@ k0s/
 
 Cluster topology and non-secret settings live in `env/` files. `K0S_SSH_USER` can be provided as an environment variable; when it is unset, `create_cluster.sh` uses the user running the command (`id -un`).
 
-### Environment files (`env/dev.sh` / `env/prd.sh` / `env/sandbox.sh`)
+### Environment files (`env/prd.sh` / `env/sandbox.sh`)
 
 | Variable | Description |
 |----------|-------------|
@@ -58,13 +57,13 @@ Cluster topology and non-secret settings live in `env/` files. `K0S_SSH_USER` ca
 | `K0S_SSH_USER` | SSH username for cluster nodes. Defaults to the command runner (`id -un`) when unset. |
 
 ```bash
-K0S_SSH_USER=ubuntu ./create_cluster.sh dev config
+K0S_SSH_USER=ubuntu ./create_cluster.sh prd config
 ```
 
 ## Usage
 
 ```bash
-./create_cluster.sh <dev|prd|sandbox> <command>
+./create_cluster.sh <prd|sandbox> <command>
 ```
 
 | Command | Description |
@@ -79,19 +78,19 @@ K0S_SSH_USER=ubuntu ./create_cluster.sh dev config
 
 ```bash
 # Inspect the generated config
-./create_cluster.sh dev config
+./create_cluster.sh prd config
 
-# Build a new dev cluster
-./create_cluster.sh dev apply
+# Build a cluster
+./create_cluster.sh prd apply
 
 # Re-apply Helmfile only
-./create_cluster.sh dev helmfile
+./create_cluster.sh prd helmfile
 
 # Reset the cluster
-./create_cluster.sh dev reset
+./create_cluster.sh sandbox reset
 ```
 
-Kubeconfig is written to `~/.kube/<env>.yaml` (e.g. `~/.kube/dev.yaml`, `~/.kube/prd.yaml`).
+Kubeconfig is written to `~/.kube/<env>.yaml` (e.g. `~/.kube/prd.yaml`, `~/.kube/sandbox.yaml`).
 
 ## Cluster Architecture
 

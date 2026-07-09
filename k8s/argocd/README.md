@@ -1,7 +1,7 @@
 # ArgoCD
 
 ArgoCD configuration for Kubernetes cluster management via GitOps. Supports
-`dev`, `prd`, and `sandbox`.
+`prd` and `sandbox`.
 
 ## Directory Structure
 
@@ -15,11 +15,6 @@ argocd/
 │   ├── Chart.yaml
 │   ├── values.yaml           # All apps disabled by default; waves; upstream chart versions
 │   └── templates/            # Gated by apps.<name>.enabled, env via {{ .Values.env }}
-├── dev/
-│   ├── helmfile.yaml         # Initial deployment config for dev
-│   ├── values.yaml           # server.ingress.hostname: argocd.dev.butaco.net
-│   ├── apps-values.yaml      # env: dev + enabled apps (see ADR-0014)
-│   └── root-apps.yaml        # Bootstrap App of Apps for dev
 ├── prd/
 │   ├── helmfile.yaml         # Initial deployment config for prd
 │   ├── values.yaml           # server.ingress.hostname: argocd.prd.butaco.net
@@ -36,11 +31,10 @@ argocd/
 
 | Environment | Cluster | ArgoCD URL |
 |-------------|---------|------------|
-| dev | dev-homelab | `argocd.dev.butaco.net` |
 | prd | prd-homelab | `argocd.prd.butaco.net` |
 | sandbox | sandbox-homelab | `http://argocd.sandbox.butaco.net` |
 
-> `butaco.net` is a personal domain. Replace with your own domain in `dev/values.yaml` and `prd/values.yaml`.
+> `butaco.net` is a personal domain. Replace with your own domain in `prd/values.yaml` and `sandbox/values.yaml`.
 
 ## Initial Deployment
 
@@ -116,33 +110,30 @@ Wave gating relies on the Application health check re-enabled in
 
 Known caveat: the Gateway HTTPS listener (wave 0) references the wildcard TLS
 Secret and ReferenceGrant created by cert-manager-config (wave 1). On a fresh
-dev/prd cluster the listener reports `ResolvedRefs=False` until wave 1 syncs;
-this only converges if Envoy Gateway still reports the Gateway as `Programmed`
-via the HTTP listener, which the HTTP-only sandbox bootstrap (ADR-0010) could
-not exercise. Verify on the next dev rebuild — if the gateway app sticks at
-Progressing/Degraded in wave 0, trigger a manual sync of cert-manager-config
-to create the Secret, then re-sync root-apps.
+prd cluster the listener reports `ResolvedRefs=False` until wave 1 syncs; if
+the gateway app sticks at Progressing/Degraded in wave 0, trigger a manual sync
+of cert-manager-config to create the Secret, then re-sync root-apps.
 
 ## Apps
 
 | Application | Namespace | Environment |
 |-------------|-----------|-------------|
-| argocd | argocd | dev, prd, sandbox |
-| cert-manager | cert-manager | dev, prd |
-| cert-manager-config | cert-manager | dev, prd |
-| comfyui | comfyui | dev, prd |
-| external-secrets (eso) | external-secrets | dev, prd, sandbox |
-| external-dns | external-dns | dev, prd, sandbox |
-| gateway | gateway-system | dev, prd, sandbox |
-| headlamp | headlamp | dev, prd |
+| argocd | argocd | prd, sandbox |
+| cert-manager | cert-manager | prd |
+| cert-manager-config | cert-manager | prd |
+| comfyui | comfyui | prd |
+| external-secrets (eso) | external-secrets | prd, sandbox |
+| external-dns | external-dns | prd, sandbox |
+| gateway | gateway-system | prd, sandbox |
+| headlamp | headlamp | prd |
 | homepage | homepage | prd, sandbox |
-| lemonade-server | lemonade-server | dev, prd |
+| lemonade-server | lemonade-server | prd |
 | longhorn-ui | longhorn-system | sandbox only |
-| meshcentral | meshcentral | dev, prd |
-| monitoring | monitoring (argocd in prd) | dev, prd, sandbox |
-| ollama | ollama | dev, prd |
-| open-webui | open-webui | dev, prd |
-| reloader | reloader | dev, prd |
+| meshcentral | meshcentral | prd |
+| monitoring | monitoring (argocd in prd) | prd, sandbox |
+| ollama | ollama | prd |
+| open-webui | open-webui | prd |
+| reloader | reloader | prd |
 
 Sandbox intentionally uses HTTP only. Its Gateway has no HTTPS listener, and
 cert-manager is not installed. ESO uses the `kubernetes-sandbox` OpenBao auth

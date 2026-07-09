@@ -11,4 +11,4 @@ multi-source `$values` ref.
 - `values.yaml`: common values (Ollama/Lemonade endpoints, persistence, route)
 - `<env>/values.yaml`: per-env overrides (hostnames)
 
-Currently deployed to `dev` only.
+Currently deployed to `prd` only.

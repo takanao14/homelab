@@ -12,13 +12,10 @@ Managed by ArgoCD with the helm-secrets plugin. Two ArgoCD Applications are used
 cert-manager/
 ├── Chart.yaml
 ├── values.yaml               # Schema: email, domain (local config chart)
-├── dev/
-│   └── values.yaml           # domain: dev.butaco.net
 ├── prd/
 │   └── values.yaml           # domain: prd.butaco.net
 ├── controller/               # Values for the upstream cert-manager chart
 │   ├── values.yaml           # Common: CRDs, DNS-01 resolvers, ServiceMonitor
-│   ├── dev/values.yaml       # No dev-specific overrides
 │   └── prd/values.yaml       # cluster=prd ServiceMonitor relabeling
 └── templates/
     ├── cluster-issuer.yaml              # letsencrypt-staging + letsencrypt-production
@@ -43,7 +40,7 @@ cert-manager/
 | Namespace | `cert-manager` |
 | Issuer | `letsencrypt-production` |
 
-> `butaco.net` is a personal domain. Replace it in `dev/values.yaml` and `prd/values.yaml`.
+> `butaco.net` is a personal domain. Replace it in `prd/values.yaml`.
 
 ## Secrets
 

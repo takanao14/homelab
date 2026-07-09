@@ -8,9 +8,8 @@ metadata:
     release: prometheus
 spec:
   groups:
-    # cert-manager metrics from both clusters land here: dev is a Prometheus agent
-    # that remote_writes to this prd instance, so a single rule covers prd and dev
-    # (distinguished by the cluster label).
+    # cert-manager metrics from prd land here; rules keep the cluster label in
+    # annotations so dashboards and alerts remain consistent with sandbox views.
     - name: cert-manager.rules
       rules:
         # ACME certs are 90-day and renew at 30 days remaining; under 21 days left

@@ -20,7 +20,6 @@ dnsdist_packet_cache_max_ttl: 86400
 dnsdist_internal_domains:
   - "home.butaco.net."
   - "prd.butaco.net."
-  - "dev.butaco.net."
   - "sandbox.butaco.net."
 dnsdist_internal_check_name: "ns1.home.butaco.net."
 

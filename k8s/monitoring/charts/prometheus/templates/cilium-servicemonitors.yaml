@@ -6,12 +6,10 @@ Services (prometheus.metricsService / hubble.metrics.enabled); scraping is wired
 up here. The cluster label is injected by the environment's default scrape class
 (see prometheusSpec.scrapeClasses in values/prometheus*.yaml).
 
-Keep this semantically paired with the dev copy at
-k8s/dev-monitoring/charts/prometheus/templates/cilium-servicemonitors.yaml.
 Sandbox renders this same template through values/prometheus-sandbox.yaml and
 has no separate copy. Selectors, ports, paths, and non-cluster relabelings
-should stay in sync; cluster-label handling intentionally differs (prd/sandbox
-use scrape classes, dev uses remote_write externalLabels).
+should stay in sync across prd and sandbox; cluster labels are injected by each
+environment's scrape class.
 */ -}}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
