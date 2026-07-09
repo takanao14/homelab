@@ -130,18 +130,18 @@ to create the Secret, then re-sync root-apps.
 | argocd | argocd | dev, prd, sandbox |
 | cert-manager | cert-manager | dev, prd |
 | cert-manager-config | cert-manager | dev, prd |
-| comfyui | comfyui | dev only |
+| comfyui | comfyui | dev, prd |
 | external-secrets (eso) | external-secrets | dev, prd, sandbox |
 | external-dns | external-dns | dev, prd, sandbox |
 | gateway | gateway-system | dev, prd, sandbox |
 | headlamp | headlamp | dev, prd |
 | homepage | homepage | prd, sandbox |
-| lemonade-server | lemonade-server | dev only |
+| lemonade-server | lemonade-server | dev, prd |
 | longhorn-ui | longhorn-system | sandbox only |
-| meshcentral | meshcentral | dev only |
+| meshcentral | meshcentral | dev, prd |
 | monitoring | monitoring (argocd in prd) | dev, prd, sandbox |
-| ollama | ollama | dev only |
-| open-webui | open-webui | dev only |
+| ollama | ollama | dev, prd |
+| open-webui | open-webui | dev, prd |
 | reloader | reloader | dev, prd |
 
 Sandbox intentionally uses HTTP only. Its Gateway has no HTTPS listener, and

@@ -14,8 +14,10 @@ spec:
       targetRevision: {{ .Values.repo.targetRevision }}
       path: k8s/comfyui/chart
       helm:
+        ignoreMissingValueFiles: true
         valueFiles:
           - $values/k8s/comfyui/values.yaml
+          - $values/k8s/comfyui/{{ include "argocd-apps.env" . }}/values.yaml
     - repoURL: {{ .Values.repo.url }}
       targetRevision: {{ .Values.repo.targetRevision }}
       ref: values

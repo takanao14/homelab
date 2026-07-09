@@ -14,8 +14,10 @@ spec:
       targetRevision: {{ .Values.repo.targetRevision }}
       path: k8s/meshcentral/chart
       helm:
+        ignoreMissingValueFiles: true
         valueFiles:
           - $values/k8s/meshcentral/values.yaml
+          - $values/k8s/meshcentral/{{ include "argocd-apps.env" . }}/values.yaml
     - repoURL: {{ .Values.repo.url }}
       targetRevision: {{ .Values.repo.targetRevision }}
       ref: values

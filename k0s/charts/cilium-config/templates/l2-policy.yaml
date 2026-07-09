@@ -5,5 +5,10 @@ metadata:
 spec:
   interfaces:
     - {{ .Values.l2Policy.interface }}
+  {{- with .Values.l2Policy.nodeSelector }}
+  nodeSelector:
+    matchLabels:
+      {{- toYaml . | nindent 6 }}
+  {{- end }}
   externalIPs: true
   loadBalancerIPs: true

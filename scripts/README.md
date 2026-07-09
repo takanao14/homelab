@@ -216,8 +216,8 @@ BAO_PASSWORD=xxx ./secrets/admin/set-sops-key.sh
 
 ### `gpu-switch.sh`
 
-Switches which single GPU workload runs on the `dev-homelab` cluster by scaling
-deployments. Only runs against the `dev-homelab` kube context.
+Switches which single GPU workload runs on the `prd-homelab` cluster by scaling
+deployments. Only runs against the `prd-homelab` kube context.
 
 ```bash
 ./gpu-switch.sh <ollama|comfyui|lemonade-server|off>

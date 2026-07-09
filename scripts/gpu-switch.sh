@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Switch which single GPU workload runs on the dev-homelab cluster by scaling
-# deployments. Only runs against the dev-homelab kube context.
+# Switch which single GPU workload runs on the prd-homelab cluster by scaling
+# deployments. Only runs against the prd-homelab kube context.
 
 # Namespace/deployment pairs for all GPU workloads
 GPU_WORKLOADS=(
@@ -19,8 +19,8 @@ usage() {
 [[ $# -ne 1 ]] && usage
 
 current_context=$(kubectl config current-context)
-if [[ "$current_context" != "dev-homelab" ]]; then
-  echo "Error: current context is '$current_context', expected 'dev-homelab'"
+if [[ "$current_context" != "prd-homelab" ]]; then
+  echo "Error: current context is '$current_context', expected 'prd-homelab'"
   exit 1
 fi
 

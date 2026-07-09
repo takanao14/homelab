@@ -1,5 +1,6 @@
 l2Policy:
   interface: "^eth0$"
+  nodeSelector: {}
 
 ipPool:
   start: ""

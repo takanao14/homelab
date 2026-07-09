@@ -14,8 +14,10 @@ spec:
       targetRevision: {{ .Values.repo.targetRevision }}
       path: k8s/lemonade-server/chart
       helm:
+        ignoreMissingValueFiles: true
         valueFiles:
           - $values/k8s/lemonade-server/values.yaml
+          - $values/k8s/lemonade-server/{{ include "argocd-apps.env" . }}/values.yaml
     - repoURL: {{ .Values.repo.url }}
       targetRevision: {{ .Values.repo.targetRevision }}
       ref: values

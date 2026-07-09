@@ -14,6 +14,7 @@ spec:
       chart: {{ $app.upstream.chart }}
       targetRevision: {{ $app.upstream.targetRevision }}
       helm:
+        ignoreMissingValueFiles: true
         valueFiles:
           - $values/k8s/open-webui/values.yaml
           - $values/k8s/open-webui/{{ include "argocd-apps.env" . }}/values.yaml

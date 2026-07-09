@@ -61,3 +61,4 @@ deleting it:
 | [0016](0016-cluster-label-via-default-scrape-class.md) | Cluster label via default scrape class, asymmetric per environment | Accepted |
 | [0017](0017-renovate-automerge-golive-adjustments.md) | Renovate automerge go-live adjustments | Accepted |
 | [0018](0018-seaweedfs-data-on-usb-ssd-directory-storage.md) | SeaweedFS data on a node3 USB SSD via Proxmox directory storage | Accepted |
+| [0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md) | Merge the GPU worker into prd and retire the dev cluster | Accepted |

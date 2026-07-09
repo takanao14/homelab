@@ -1,3 +1,10 @@
+{{- $poolStart := requiredEnv "K0S_LB_POOL" | splitList "," | first -}}
+{{- $poolStop := requiredEnv "K0S_LB_POOL" | splitList "," | last -}}
+{{- $poolStartParts := splitList "." $poolStart -}}
+l2Policy:
+  nodeSelector:
+    homelab/l2-segment: {{ printf "%s-%s-%s" (index $poolStartParts 0) (index $poolStartParts 1) (index $poolStartParts 2) | quote }}
+
 ipPool:
-  start: {{ requiredEnv "K0S_LB_POOL" | splitList "," | first | quote }}
-  stop: {{ requiredEnv "K0S_LB_POOL" | splitList "," | last | quote }}
+  start: {{ $poolStart | quote }}
+  stop: {{ $poolStop | quote }}

@@ -7,6 +7,8 @@ apps:
     enabled: true
   cert-manager-config:
     enabled: true
+  comfyui:
+    enabled: true
   envoy-gateway-crds:
     enabled: true
   envoy-gateway:
@@ -21,10 +23,18 @@ apps:
     enabled: true
   homepage:
     enabled: true
+  lemonade-server:
+    enabled: true
+  meshcentral:
+    enabled: true
   monitoring:
     enabled: true
     # Central kube-prometheus-stack app-of-apps (see k8s/monitoring).
     path: k8s/monitoring/apps
     namespace: argocd
+  ollama:
+    enabled: true
+  open-webui:
+    enabled: true
   reloader:
     enabled: true

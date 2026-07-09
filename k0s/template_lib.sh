@@ -85,11 +85,30 @@ preflight() {
 
 # ── k0sctl configuration ──────────────────────────────────────────────────────
 
+_l2_segment_from_ip() {
+    local addr="$1"
+    local octet1 octet2 octet3 _octet4
+
+    IFS='.' read -r octet1 octet2 octet3 _octet4 <<< "$addr"
+    if [[ -z "$octet1" || -z "$octet2" || -z "$octet3" ]]; then
+        log_error "Invalid worker IP address for L2 segment label: $addr"
+        return 1
+    fi
+
+    printf '%s-%s-%s' "$octet1" "$octet2" "$octet3"
+}
+
 # Generates a worker host entry (standard or GPU).
 # Usage: _render_worker_host <address> [gpu]
 _render_worker_host() {
     local addr="$1"
     local kind="${2:-}"
+    local labels l2_segment
+    l2_segment="$(_l2_segment_from_ip "$addr")"
+    labels="homelab/l2-segment=${l2_segment}"
+    if [[ "$kind" == "gpu" ]]; then
+        labels="${labels},gpu=amd"
+    fi
 
     cat <<EOF
   - role: worker
@@ -98,12 +117,12 @@ _render_worker_host() {
       user: ${K0S_SSH_USER}
       port: 22
       keyPath: ~/.ssh/id_ed25519
+    installFlags:
+      - --labels=${labels}
 EOF
 
     if [[ "$kind" == "gpu" ]]; then
         cat <<EOF
-    installFlags:
-      - --labels=gpu=amd
       - --taints=gpu=amd:NoSchedule
 EOF
     fi
