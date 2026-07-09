@@ -71,11 +71,15 @@ After initialization, run the following playbooks in order to set up OpenBao for
 
 OpenBao manages three Kubernetes clusters:
 
-| Auth mount | Cluster | ESO ArgoCD app |
+| Auth mount | Cluster | ESO mountPath values |
 |---|---|---|
-| `kubernetes/` | prd (`192.168.30.11`) | `k8s/argocd/prd/apps/eso.yaml` |
-| `kubernetes-dev/` | dev (`192.168.20.11`) | `k8s/argocd/dev/apps/eso.yaml` (overrides `mountPath`) |
-| `kubernetes-sandbox/` | sandbox (`192.168.20.31`) | `k8s/argocd/sandbox/apps/eso.yaml` (overrides `mountPath`) |
+| `kubernetes/` | prd (`192.168.30.11`) | `k8s/eso/prd/values.yaml` |
+| `kubernetes-dev/` | dev (`192.168.20.11`) | `k8s/eso/dev/values.yaml` |
+| `kubernetes-sandbox/` | sandbox (`192.168.20.31`) | `k8s/eso/sandbox/values.yaml` |
+
+The ESO ArgoCD Application itself is rendered by the app-of-apps chart
+(`k8s/argocd/apps`) and enabled per environment in
+`k8s/argocd/<env>/apps-values.yaml`.
 
 ### 1. Bootstrap admin token (run once)
 

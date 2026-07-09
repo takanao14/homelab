@@ -34,13 +34,15 @@ ansible/
 │       │   ├── node_exporter_rpi.yaml
 │       │   ├── openbao.yaml
 │       │   ├── openbao.sops.yaml
+│       │   ├── proxmox.yaml
 │       │   ├── proxmox.sops.yaml
 │       │   ├── seaweedfs.yaml
 │       │   ├── seaweedfs.sops.yaml
 │       │   ├── log_collector.yaml
 │       │   └── vector_lxc.yaml       # journald policy for Vector-enabled LXC guests
 │       └── host_vars/
-│           └── <hostname>.sops.yaml # Host-specific secrets, including PowerDNS API keys
+│           ├── <hostname>.sops.yaml # Host-specific secrets, including PowerDNS API keys
+│           └── rpi4.yaml            # Non-secret host-specific overrides
 ├── playbooks/                          # see "Naming convention" below
 │   ├── bootstrap.yaml                   # new-host baseline (imports common-* hygiene)
 │   ├── pdns_auth.yaml                   # system (no prefix)
@@ -313,6 +315,7 @@ the decision behind the rebuild registration flow.
 | `common-maintenance_user.yaml` | `lxc` | cross-cutting |
 | `common-users.yaml` | `shared_vms` | cross-cutting |
 | `ops-package_upgrade.yaml` | `all:!proxmox` | ops |
+| `ops-version_audit.yaml` | `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `seaweedfs`, `openbao`, `gpuvm` | ops |
 | `ops-pdns_sync.yaml` | `dns_primary`, `dns_secondary` | ops |
 | `ops-openbao_bootstrap.yaml` | `openbao` | ops |
 | `ops-openbao_configure.yaml` | `openbao` | ops |
