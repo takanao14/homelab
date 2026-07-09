@@ -3,8 +3,9 @@
 Authenticated Gateway API route for the Longhorn UI.
 
 Longhorn itself is installed by the k0s bootstrap Helmfile. This chart exposes
-the UI through Gateway API. It can use the legacy nginx Basic Auth proxy or,
-during the Envoy Gateway migration, Envoy Gateway `SecurityPolicy` Basic Auth.
+the UI through Gateway API, with Basic Auth enforced at the Gateway layer by an
+Envoy Gateway `SecurityPolicy` (ADR-0009). The legacy per-service nginx proxy
+used before the Envoy Gateway migration has been removed.
 
 ## Ownership model
 
@@ -12,9 +13,7 @@ Longhorn is cluster infrastructure and remains part of the `k0s/` bootstrap
 layer. This chart is intentionally limited to the UI exposure layer:
 
 - `ExternalSecret` for Basic Auth htpasswd content
-- optional nginx reverse proxy with `auth_basic`
-- optional `Service` for the proxy
-- optional Envoy Gateway `SecurityPolicy`
+- Envoy Gateway `SecurityPolicy` (Basic Auth)
 - `HTTPRoute` attached to the configured shared Gateway
 
 Do not move the Longhorn Helm release itself into this chart unless the storage
@@ -29,10 +28,9 @@ http://longhorn.sandbox.butaco.net
   -> longhorn-system/longhorn-frontend:80
 ```
 
-The sandbox Envoy Gateway migration sets `securityPolicy.enabled=true`,
-`proxy.enabled=false`, and `route.backend.name=longhorn-frontend` in
-`sandbox/values.yaml`. Basic Auth is enforced at the Gateway layer and the
-per-service nginx proxy is removed.
+The chart defaults (`values.yaml`) describe this shape directly;
+`sandbox/values.yaml` exists only because the generated ArgoCD Application
+always references `<env>/values.yaml`.
 
 ## Secret
 
@@ -57,8 +55,8 @@ htpasswd -nbs admin '<password>'
 ```
 
 Envoy Gateway `SecurityPolicy` Basic Auth validates htpasswd entries in `{SHA}`
-format. The previous nginx proxy accepted bcrypt/apr1 entries, but Envoy
-Gateway rejects them.
+format (the removed nginx proxy accepted bcrypt/apr1 entries, but Envoy
+Gateway rejects them — keep the OpenBao value in `{SHA}` format).
 
 OpenBao values are seeded from the encrypted Ansible inventory. Update the
 source of truth with SOPS, then seed OpenBao:
