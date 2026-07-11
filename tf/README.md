@@ -58,7 +58,7 @@ tf/
 │   │   └── gpuvm/                  # GPU worker @ pve — own env.hcl + .envrc (host override)
 │   └── sandbox/
 │       ├── env.hcl                 # Host binding: pve (storage: local-zfs)
-│       └── sandbox-cluster/
+│       └── nodes-pve/              # cp1 + worker1-3, all on pve
 └── lxc/                            # Host-first: lxc/<host>/<service>
     ├── node2/
     │   ├── env.hcl                 # node2 LXC defaults (storage: local-lvm)
