@@ -25,7 +25,7 @@ apps:
     upstream:
       repoURL: https://charts.jetstack.io
       chart: cert-manager
-      targetRevision: v1.20.3
+      targetRevision: v1.21.0
   cert-manager-config:
     enabled: false
     wave: "1"
