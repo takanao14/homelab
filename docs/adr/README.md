@@ -63,3 +63,4 @@ deleting it:
 | [0018](0018-seaweedfs-data-on-usb-ssd-directory-storage.md) | SeaweedFS data on a node3 USB SSD via Proxmox directory storage | Accepted |
 | [0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md) | Merge the GPU worker into prd and retire the dev cluster | Accepted |
 | [0020](0020-tf-tree-axes-host-vs-cluster.md) | tf tree axes — host-named trees, cluster tree with per-stack host binding | Accepted |
+| [0021](0021-relocate-prd-control-plane-to-node4.md) | Relocate the prd control plane to node4 via k0s backup/restore | Accepted |
