@@ -36,6 +36,12 @@
       "platformAutomerge": false
     },
     {
+      "description": "Terraform provider updates must refresh committed .terraform.lock.hcl files across all Terragrunt stacks.",
+      "matchManagers": ["terraform"],
+      "automerge": false,
+      "addLabels": ["manual-review"]
+    },
+    {
       "description": "Cluster-foundation & stateful components on ArgoCD-synced paths: always review minor/major manually (merge = immediate deploy). openbao/seaweedfs are excluded because they live in ansible/ (manual apply, not deploy-on-merge).",
       "matchPackageNames": [
         "/cilium/",

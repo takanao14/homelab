@@ -17,7 +17,7 @@ Manages VMs, LXC containers, and cloud images on Proxmox using Terragrunt + Terr
 tf/
 ├── root.hcl                        # Terragrunt root config (generates provider / backend)
 ├── common.hcl                      # Shared locals (DNS servers, domain, networks per host)
-├── provider.tf                     # Proxmox provider definition (bpg/proxmox ~> 0.111)
+├── provider.tf                     # Provider constraints generated into every stack
 ├── .env/
 │   ├── secrets.env.sample          # Secret template
 │   ├── secrets.common.enc.env      # SOPS-encrypted shared secrets (committed)
@@ -106,6 +106,26 @@ terragrunt plan
 terragrunt apply
 ```
 
+### Provider lock files
+
+Commit `.terraform.lock.hcl` for every Terragrunt stack. The lock files keep
+provider versions and package hashes consistent across local macOS operations
+and Linux automation. They intentionally include hashes for both
+`darwin_arm64` and `linux_amd64`.
+
+When provider constraints change, refresh all stack locks from the repository
+root:
+
+```bash
+./tf/update-locks.sh
+```
+
+The helper discovers every `terragrunt.hcl` under `tf/`, loads each stack's
+environment with `direnv exec`, runs `terragrunt run -- init -upgrade`, and
+then records provider hashes with `terragrunt run -- providers lock`. Review
+the resulting lock diff together with the provider constraint change, and run
+representative `terragrunt plan` checks before merging.
+
 ### Log collector resource rename
 
 The central Vector collector was renamed from `syslog1` to `log1`. Its
@@ -186,7 +206,7 @@ sidecar checksum for the decompressed object. Then publish it with
 
 - **Backend**: Cloudflare R2 (S3-compatible) remote state with native lockfile
   locking (`use_lockfile`); one state object per component directory
-- **Provider**: bpg/proxmox ~> 0.111
+- **Providers**: bpg/proxmox ~> 0.111, hashicorp/local ~> 2.9
 - **Tree axes (ADR-0020)**: first level = host name for `vm/` `lxc/`
   `cloudimage/` `customimage/` (pve, node1–node4), cluster name for `k8s/`
   (prd, sandbox). Each stack binds to exactly one Proxmox endpoint via its
