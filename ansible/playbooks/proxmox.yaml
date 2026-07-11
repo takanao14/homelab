@@ -13,6 +13,9 @@
     - role: sysctl
       tags: sysctl
 
+    - role: proxmox_simplezone_routes
+      tags: proxmox_simplezone_routes
+
     - role: rsyslog
       tags: rsyslog
 

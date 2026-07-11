@@ -92,6 +92,7 @@ ansible/
     ├── openbao/
     ├── apt_mirror/
     ├── proxmox_metric_server/
+    ├── proxmox_simplezone_routes/
     ├── chrony/
     ├── unattended_upgrades/
     ├── maintenance_user/
@@ -230,6 +231,9 @@ ansible-playbook playbooks/openbao.yaml
 # Proxmox maintenance user setup
 ansible-playbook playbooks/proxmox.yaml
 
+# Proxmox SimpleZone static routes only (file render; user runs ifreload -a)
+ansible-playbook playbooks/proxmox.yaml --tags proxmox_simplezone_routes
+
 # Maintenance user on LXC containers
 ansible-playbook playbooks/common-maintenance_user.yaml
 
@@ -251,6 +255,69 @@ ansible-playbook playbooks/common-journald.yaml
 
 # Dry run
 ansible-playbook playbooks/pdns_auth.yaml --check
+```
+
+### Proxmox SimpleZone Static Routes
+
+The Proxmox nodes each own one routed SDN SimpleZone behind their management-LAN
+address:
+
+| Node | Management IP | SimpleZone segment |
+|------|---------------|--------------------|
+| `pve` | `192.168.10.10` | `192.168.20.0/24` |
+| `node1` | `192.168.10.11` | `192.168.30.0/24` |
+| `node2` | `192.168.10.12` | `192.168.40.0/24` |
+| `node3` | `192.168.10.13` | `192.168.50.0/24` |
+| `node4` | `192.168.10.14` | `192.168.60.0/24` |
+
+`proxmox_simplezone_routes` writes routes to every *other* SimpleZone into
+`/etc/network/interfaces.d/ansible-simplezone-routes`, attached to `vmbr0`
+using ifupdown2 `post-up` / `pre-down` hooks. Ansible renders the file and
+checks syntax during apply, but intentionally does not run `ifreload -a`; the
+operator performs the live network reload after reviewing the diff.
+
+Dry-run a single node first:
+
+```bash
+ANSIBLE_ROLES_PATH=$PWD/roles \
+ansible-playbook --check --diff -i inventories/homelab/hosts.yaml \
+  playbooks/proxmox.yaml --limit node3 --tags proxmox_simplezone_routes
+```
+
+Render the file on a single node:
+
+```bash
+ANSIBLE_ROLES_PATH=$PWD/roles \
+ansible-playbook --diff -i inventories/homelab/hosts.yaml \
+  playbooks/proxmox.yaml --limit node3 --tags proxmox_simplezone_routes
+```
+
+Then apply the network change on that node:
+
+```bash
+ifreload -a
+```
+
+Verify that remote SimpleZone traffic takes the direct Proxmox-node next-hop,
+not the IX2106 default gateway:
+
+```bash
+ip route get 192.168.60.11
+ip route show 192.168.60.0/24
+```
+
+Expected from `node3`:
+
+```text
+192.168.60.11 via 192.168.10.14 dev vmbr0
+```
+
+Rollback on the target node:
+
+```bash
+mv /etc/network/interfaces.d/ansible-simplezone-routes \
+  /root/ansible-simplezone-routes.disabled
+ifreload -a
 ```
 
 ### OpenBao registration after k0s cluster rebuild

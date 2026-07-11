@@ -1,0 +1,56 @@
+---
+- name: Validate local Proxmox SimpleZone route entry exists
+  ansible.builtin.assert:
+    that:
+      - inventory_hostname in proxmox_simplezone_routes
+    fail_msg: >-
+      {{ inventory_hostname }} has no entry in proxmox_simplezone_routes; add one
+      or set proxmox_simplezone_routes_require_local_entry=false.
+  when: proxmox_simplezone_routes_require_local_entry | bool
+
+- name: Build remote SimpleZone route list
+  ansible.builtin.set_fact:
+    proxmox_simplezone_remote_routes: >-
+      {{
+        proxmox_simplezone_routes
+        | dict2items
+        | rejectattr('key', 'equalto', inventory_hostname)
+        | map(attribute='value')
+        | list
+      }}
+
+- name: Ensure network interfaces drop-in directory exists
+  become: true
+  ansible.builtin.file:
+    path: "{{ proxmox_simplezone_route_file | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install SimpleZone route interfaces drop-in
+  become: true
+  ansible.builtin.template:
+    src: simplezone-routes.j2
+    dest: "{{ proxmox_simplezone_route_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Validate ifupdown2 can parse SimpleZone route drop-in
+  become: true
+  ansible.builtin.command:
+    argv:
+      - ifquery
+      - --check
+      - "{{ proxmox_simplezone_route_interface }}"
+  register: proxmox_simplezone_ifquery
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Report deferred network reload command
+  ansible.builtin.debug:
+    msg: >-
+      SimpleZone route configuration is written to {{ proxmox_simplezone_route_file }}.
+      Review the diff, then run 'ifreload -a' on {{ inventory_hostname }} to apply it.
+

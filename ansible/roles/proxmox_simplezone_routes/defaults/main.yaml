@@ -1,0 +1,9 @@
+---
+# Persistent ifupdown2 drop-in for SimpleZone static routes.
+proxmox_simplezone_route_interface: vmbr0
+proxmox_simplezone_route_file: /etc/network/interfaces.d/ansible-simplezone-routes
+proxmox_simplezone_routes: {}
+
+# Only render routes on inventory hosts that own a SimpleZone entry.
+proxmox_simplezone_routes_require_local_entry: true
+

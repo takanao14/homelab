@@ -13,6 +13,29 @@ sysctl_settings:
 chrony_install: false
 chrony_manage_timesyncd: false
 
+# Static route source of truth for per-node Proxmox SDN SimpleZone segments.
+# Each Proxmox host owns one routed SimpleZone behind its management-LAN address.
+# The proxmox_simplezone_routes role installs routes to every *other* segment on
+# each node, avoiding IX2106 hairpinning for SimpleZone-to-SimpleZone traffic.
+proxmox_simplezone_route_interface: vmbr0
+proxmox_simplezone_route_file: /etc/network/interfaces.d/ansible-simplezone-routes
+proxmox_simplezone_routes:
+  pve:
+    segment: 192.168.20.0/24
+    via: 192.168.10.10
+  node1:
+    segment: 192.168.30.0/24
+    via: 192.168.10.11
+  node2:
+    segment: 192.168.40.0/24
+    via: 192.168.10.12
+  node3:
+    segment: 192.168.50.0/24
+    via: 192.168.10.13
+  node4:
+    segment: 192.168.60.0/24
+    via: 192.168.10.14
+
 # Forward Proxmox host logs to the central Vector log collector.
 rsyslog_forward_host: "192.168.10.243"
 rsyslog_forward_port: 514
