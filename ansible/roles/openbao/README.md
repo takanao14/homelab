@@ -46,7 +46,7 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_raft_retry_join` | `[]` | List of other cluster node API addresses for Raft auto-join |
 | `openbao_seal_key_id` | `key-1` | Permanent identifier for the static seal key (update when rotating) |
 | `openbao_local_addr` | `http://127.0.0.1:8200` | API address used by `bao` CLI tasks running on the openbao host. Plain HTTP because TLS is terminated by Caddy upstream. |
-| `openbao_k8s_host` | `""` | prd cluster API server URL (e.g. `https://192.168.30.11:6443`) |
+| `openbao_k8s_host` | `""` | prd cluster API server URL (e.g. `https://192.168.60.11:6443`) |
 | `openbao_k8s_sandbox_host` | `""` | sandbox cluster API server URL (e.g. `https://192.168.20.31:6443`) |
 | `openbao_k8s_clusters` | see defaults | List of Kubernetes clusters to configure auth for. Each entry defines `name`, `mount_path`, `host`, `ca_cert_file`, `role`, and `policies`. Runtime CA data is injected by `ops-openbao_register_cluster.yaml`. |
 
@@ -72,7 +72,7 @@ OpenBao manages two Kubernetes clusters:
 
 | Auth mount | Cluster | ESO mountPath values |
 |---|---|---|
-| `kubernetes/` | prd (`192.168.30.11`) | `k8s/eso/prd/values.yaml` |
+| `kubernetes/` | prd (`192.168.60.11`) | `k8s/eso/prd/values.yaml` |
 | `kubernetes-sandbox/` | sandbox (`192.168.20.31`) | `k8s/eso/sandbox/values.yaml` |
 
 The ESO ArgoCD Application itself is rendered by the app-of-apps chart

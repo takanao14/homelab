@@ -8,5 +8,5 @@ openbao_api_addr: "https://openbao.home.butaco.net"
 #   - "https://192.168.40.32:8200"
 openbao_raft_retry_join: []
 
-openbao_k8s_host: "https://192.168.30.11:6443"
+openbao_k8s_host: "https://192.168.60.11:6443"
 openbao_k8s_sandbox_host: "https://192.168.20.31:6443"
