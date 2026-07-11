@@ -62,3 +62,4 @@ deleting it:
 | [0017](0017-renovate-automerge-golive-adjustments.md) | Renovate automerge go-live adjustments | Accepted |
 | [0018](0018-seaweedfs-data-on-usb-ssd-directory-storage.md) | SeaweedFS data on a node3 USB SSD via Proxmox directory storage | Accepted |
 | [0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md) | Merge the GPU worker into prd and retire the dev cluster | Accepted |
+| [0020](0020-tf-tree-axes-host-vs-cluster.md) | tf tree axes — host-named trees, cluster tree with per-stack host binding | Accepted |

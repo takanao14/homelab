@@ -27,8 +27,10 @@ inputs = {
       file_name    = local.images_common.locals.image_definitions[name].file_name
       content_type = local.images_common.locals.image_definitions[name].content_type
       # Pin the sha256 published next to the object so a rebuilt image (same URL,
-      # new content) is re-downloaded. Fails fast if the image is not yet pushed.
-      checksum            = run_cmd("--terragrunt-quiet", "sh", "-c", "curl -fsS '${local.base_url}/${local.images_common.locals.image_definitions[name].file_name}.sha256' | tr -d '[:space:]'")
+      # new content) is re-downloaded. Fails fast if the image is not yet pushed
+      # (pipefail: without it the trailing tr masks curl's failure and the
+      # checksum silently becomes an empty string).
+      checksum            = run_cmd("--terragrunt-quiet", "sh", "-c", "set -o pipefail; curl -fsS '${local.base_url}/${local.images_common.locals.image_definitions[name].file_name}.sha256' | tr -d '[:space:]'")
       node_name           = local.node.locals.node_name
       datastore_id        = local.datastore_id
       overwrite_unmanaged = true
