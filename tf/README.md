@@ -16,12 +16,12 @@ Manages VMs, LXC containers, and cloud images on Proxmox using Terragrunt + Terr
 ```
 tf/
 ├── root.hcl                        # Terragrunt root config (generates provider / backend)
-├── common.hcl                      # Shared locals (DNS servers, domain, networks per env)
+├── common.hcl                      # Shared locals (DNS servers, domain, networks per host)
 ├── provider.tf                     # Proxmox provider definition (bpg/proxmox ~> 0.111)
 ├── .env/
 │   ├── secrets.env.sample          # Secret template
 │   ├── secrets.common.enc.env      # SOPS-encrypted shared secrets (committed)
-│   └── secrets.{dev,prd,node2,node3,node4}.enc.env  # SOPS-encrypted per-node secrets (committed)
+│   └── secrets.{node1,node2,node3,node4,pve}.enc.env  # SOPS-encrypted per-host secrets (committed)
 ├── modules/
 │   ├── proxmox-vm/                 # Proxmox VM module
 │   ├── proxmox-container/          # Proxmox LXC container module
@@ -30,44 +30,45 @@ tf/
 │   ├── images.hcl                  # Stock cloud image definitions (download URLs)
 │   ├── base.hcl                    # Shared stack config (module source, inputs)
 │   ├── run-all.sh                  # Download images to all nodes (serial, per-node creds)
-│   └── dev|prd|node2|node3|node4/  # Per node: thin terragrunt.hcl + node.hcl (node_name)
+│   └── node1|node2|node3|node4|pve/  # Per host: thin terragrunt.hcl + node.hcl (node_name)
 ├── customimage/
 │   ├── images.hcl                  # Custom image definitions (SeaweedFS cloud-images URLs)
 │   ├── base.hcl                    # Shared stack config (module source, checksum pinning)
 │   ├── run-all.sh                  # -> ../cloudimage/run-all.sh (symlink, shared)
-│   └── dev|prd|node2|node3|node4/  # Per node: thin terragrunt.hcl + node.hcl (node_name, image_keys)
-├── vm/
-│   ├── dev/
-│   │   ├── env.hcl                 # dev VM defaults (node: pve, storage: local-zfs)
-│   │   ├── gpuvm/                  # GPU passthrough VM (Ollama)
+│   └── node1|node2|node3|node4|pve/  # Per host: thin terragrunt.hcl + node.hcl (node_name, image_keys)
+├── vm/                             # Host-first: vm/<host>/<service> (non-k0s VMs)
+│   ├── pve/
+│   │   ├── env.hcl                 # pve VM defaults (storage: local-zfs, lab VMs: on_boot=false)
 │   │   └── toolbox2|toolbox3/      # Toolbox / scratch VMs
 │   ├── node2/
-│   │   ├── env.hcl                 # node2 VM defaults (node: node2, storage: local-lvm)
+│   │   ├── env.hcl                 # node2 VM defaults (storage: local-lvm)
 │   │   ├── openbao/                # OpenBAO VM
 │   │   ├── runner1/                # CI runner VM
 │   │   └── vpngw/                  # VPN gateway VM
-│   └── node3/
-│       ├── env.hcl                 # node3 VM defaults (node: node3, storage: local-lvm)
-│       └── toolbox/                # Toolbox VM
-├── k8s/
-│   ├── dev/
-│   │   ├── env.hcl                 # dev k8s defaults (node: pve, storage: local-zfs)
-│   │   └── dev-cluster/
-│   └── prd/
-│       ├── env.hcl                 # prd k8s defaults (node: node1, storage: data-nvme)
-│       └── prd-cluster/
-└── lxc/
-    ├── dev/
-    │   └── env.hcl                 # dev LXC defaults (node: pve, storage: local-zfs)
+│   ├── node3/
+│   │   ├── env.hcl                 # node3 VM defaults (storage: local-lvm)
+│   │   └── toolbox/                # Toolbox VM
+│   └── node4/
+│       └── env.hcl                 # node4 VM defaults (no stacks yet; EliteDesk expansion)
+├── k8s/                            # Cluster-first: k8s/<cluster>/<stack> (k0s node VMs, ADR-0020)
+│   ├── prd/
+│   │   ├── env.hcl                 # Default host binding: node1 (storage: data-nvme)
+│   │   ├── prd-cluster/            # worker1 (+ cp1 until the CP relocation) @ node1
+│   │   ├── cp1/                    # k0s controller @ node4 — own env.hcl + .envrc (host override)
+│   │   └── gpuvm/                  # GPU worker @ pve — own env.hcl + .envrc (host override)
+│   └── sandbox/
+│       ├── env.hcl                 # Host binding: pve (storage: local-zfs)
+│       └── sandbox-cluster/
+└── lxc/                            # Host-first: lxc/<host>/<service>
     ├── node2/
-    │   ├── env.hcl                 # node2 LXC defaults (node: node2, storage: local-lvm)
+    │   ├── env.hcl                 # node2 LXC defaults (storage: local-lvm)
     │   ├── caddy/                  # Caddy reverse proxy
     │   ├── dnsserver/              # DNS container
     │   ├── forgejo/                # Forgejo container
     │   ├── netbox/                 # NetBox container
     │   └── syslog/                 # Vector log collector (syslog ingress)
     └── node3/
-        ├── env.hcl                 # node3 LXC defaults (node: node3, storage: local-lvm)
+        ├── env.hcl                 # node3 LXC defaults (storage: local-lvm)
         ├── dnsserver/              # DNS container
         └── seaweedfs/              # SeaweedFS container
 ```
@@ -87,16 +88,19 @@ Secrets are managed with SOPS and loaded per directory via `direnv` (each
 component's `.envrc` decrypts the secrets file for its target node):
 
 ```bash
-sops edit tf/.env/secrets.dev.enc.env
-sops edit tf/.env/secrets.prd.enc.env
+sops edit tf/.env/secrets.node1.enc.env
 sops edit tf/.env/secrets.node2.enc.env
 sops edit tf/.env/secrets.node3.enc.env
+sops edit tf/.env/secrets.node4.enc.env
+sops edit tf/.env/secrets.pve.enc.env
 ```
 
 ## Usage
 
 ```bash
-cd tf/<type>/<env>/<component>
+# First level per tree: host name (vm/, lxc/, cloudimage/, customimage/)
+# or cluster name (k8s/) — see ADR-0020.
+cd tf/<type>/<host-or-cluster>/<component>
 terragrunt init
 terragrunt plan
 terragrunt apply
@@ -183,7 +187,11 @@ sidecar checksum for the decompressed object. Then publish it with
 - **Backend**: Cloudflare R2 (S3-compatible) remote state with native lockfile
   locking (`use_lockfile`); one state object per component directory
 - **Provider**: bpg/proxmox ~> 0.111
-- **Environment separation**: dev / prd / node2 / node3 / node4 (per Proxmox node)
-- **Networking**: Configured via `common.hcl` per environment (e.g. `vmbr0`, `vnets001`)
-- **Storage**: dev=local-zfs (pve), prd=data-nvme (node1), node2=local-lvm, node3=local-lvm; SeaweedFS data volume on node3 uses usb-ssd
+- **Tree axes (ADR-0020)**: first level = host name for `vm/` `lxc/`
+  `cloudimage/` `customimage/` (pve, node1–node4), cluster name for `k8s/`
+  (prd, sandbox). Each stack binds to exactly one Proxmox endpoint via its
+  `.envrc` (per-host SOPS secrets); `k8s/` stacks whose VM lives on another
+  host carry their own `env.hcl` + `.envrc`
+- **Networking**: Configured via `common.hcl` per host (e.g. `vmbr0`, `vnets001`)
+- **Storage**: pve=local-zfs, node1=data-nvme, node2/node3/node4=local-lvm; SeaweedFS data volume on node3 uses usb-ssd
 ```
