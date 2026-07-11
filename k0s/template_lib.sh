@@ -16,9 +16,11 @@ export NC='\033[0m'
 
 # ── logging ───────────────────────────────────────────────────────────────────
 
+# All logs go to stderr so stdout stays clean for machine-readable output
+# (e.g. `create_cluster.sh <env> config > k0sctl.yaml`).
 log_error()   { echo -e "${RED}✗${NC} Error: $*" >&2; }
-log_info()    { echo -e "${YELLOW}→${NC} $*"; }
-log_success() { echo -e "${GREEN}✓${NC} $*"; }
+log_info()    { echo -e "${YELLOW}→${NC} $*" >&2; }
+log_success() { echo -e "${GREEN}✓${NC} $*" >&2; }
 
 # ── validation ────────────────────────────────────────────────────────────────
 

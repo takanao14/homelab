@@ -10,4 +10,8 @@ tf/.state-backups/
 k8s/monitoring/dashboards/cmd/generate/generate
 **/Chart.lock
 ansible/collections/
+# Generated k0sctl configs (create_cluster.sh mktemp leftovers / manual
+# `config` output). Regenerated from env/*.sh; contain host addresses only,
+# but must not be committed as they would drift from the generator.
+k0s/k0sctl-*
 docs/plans
