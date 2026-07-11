@@ -2,17 +2,17 @@
 - name: Validate local Proxmox SimpleZone route entry exists
   ansible.builtin.assert:
     that:
-      - inventory_hostname in proxmox_simplezone_routes
+      - inventory_hostname in proxmox_simplezone_routes_map
     fail_msg: >-
-      {{ inventory_hostname }} has no entry in proxmox_simplezone_routes; add one
+      {{ inventory_hostname }} has no entry in proxmox_simplezone_routes_map; add one
       or set proxmox_simplezone_routes_require_local_entry=false.
   when: proxmox_simplezone_routes_require_local_entry | bool
 
 - name: Build remote SimpleZone route list
   ansible.builtin.set_fact:
-    proxmox_simplezone_remote_routes: >-
+    proxmox_simplezone_routes_remote_routes: >-
       {{
-        proxmox_simplezone_routes
+        proxmox_simplezone_routes_map
         | dict2items
         | rejectattr('key', 'equalto', inventory_hostname)
         | map(attribute='value')
@@ -22,7 +22,7 @@
 - name: Ensure network interfaces drop-in directory exists
   become: true
   ansible.builtin.file:
-    path: "{{ proxmox_simplezone_route_file | dirname }}"
+    path: "{{ proxmox_simplezone_routes_file | dirname }}"
     state: directory
     owner: root
     group: root
@@ -32,7 +32,7 @@
   become: true
   ansible.builtin.template:
     src: simplezone-routes.j2
-    dest: "{{ proxmox_simplezone_route_file }}"
+    dest: "{{ proxmox_simplezone_routes_file }}"
     owner: root
     group: root
     mode: "0644"
@@ -43,14 +43,13 @@
     argv:
       - ifquery
       - --check
-      - "{{ proxmox_simplezone_route_interface }}"
-  register: proxmox_simplezone_ifquery
+      - "{{ proxmox_simplezone_routes_interface }}"
+  register: proxmox_simplezone_routes_ifquery
   changed_when: false
   when: not ansible_check_mode
 
 - name: Report deferred network reload command
   ansible.builtin.debug:
     msg: >-
-      SimpleZone route configuration is written to {{ proxmox_simplezone_route_file }}.
+      SimpleZone route configuration is written to {{ proxmox_simplezone_routes_file }}.
       Review the diff, then run 'ifreload -a' on {{ inventory_hostname }} to apply it.
-
