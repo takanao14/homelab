@@ -15,8 +15,17 @@ handled on the router (multiple upstreams on the IX), not per-client.
   `chrony_manage_timesyncd` is false.
 - Comments out unmanaged active `server`, `pool`, and `peer` directives in the
   chrony config so only the Ansible-managed sources remain active.
-- Injects an Ansible-managed block of `server` directives (the router, plus any
-  optional `chrony_fallback_servers`).
+- Leaves dynamic source directories (for example `/run/chrony-dhcp`) enabled by
+  default. DHCP-provided NTP servers are accepted as site policy when DHCP is
+  controlled; `chrony_disabled_source_dirs` is available as an opt-in escape
+  hatch for untrusted or noisy dynamic sources.
+- Writes the Ansible-managed `server` directives (the router, plus any optional
+  `chrony_fallback_servers`) into the chrony source directory
+  (`/etc/chrony/sources.d/homelab.sources`).
+- Ensures the source directory is included from the main chrony config with
+  `sourcedir /etc/chrony/sources.d`.
+- Removes the legacy Ansible-managed block from the main chrony config if it
+  exists from older role runs.
 - Enables and starts the chrony service, restarting it on config change.
 
 The role is OS-aware (Debian/Ubuntu and RedHat/Rocky) via `vars/<os_family>.yaml`
@@ -30,6 +39,9 @@ for the config path and service name.
 | `chrony_manage_timesyncd` | `true` | Stop/disable `systemd-timesyncd` (Debian/Ubuntu only). Set `false` on hosts already running chrony to leave systemd state untouched (e.g. Proxmox). |
 | `chrony_servers` | `[192.168.10.1]` | NTP source(s) — the router (single internal NTP server). |
 | `chrony_fallback_servers` | `[]` | Optional extra sources appended after `chrony_servers`. Empty by default: external-source redundancy is handled on the router, not per-client. |
+| `chrony_disabled_source_dirs` | `[]` | Optional `sourcedir` paths to comment out when a dynamic source directory is untrusted or noisy. DHCP-provided sources are allowed by default. |
+| `chrony_source_dir_path` | `/etc/chrony/sources.d` | Source directory included from the main chrony config. |
+| `chrony_managed_sources_path` | `/etc/chrony/sources.d/homelab.sources` | Managed chrony source file containing homelab NTP sources. |
 
 ## Scope
 

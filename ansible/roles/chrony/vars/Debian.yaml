@@ -1,3 +1,5 @@
 ---
 chrony_conf_path: /etc/chrony/chrony.conf
+chrony_source_dir_path: /etc/chrony/sources.d
+chrony_managed_sources_path: /etc/chrony/sources.d/homelab.sources
 chrony_service: chrony

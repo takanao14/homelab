@@ -21,3 +21,9 @@ chrony_servers:
 # Optional extra source(s) appended after chrony_servers. Empty by default;
 # redundancy lives on the router, so clients normally need no external fallback.
 chrony_fallback_servers: []
+
+# Chrony can import extra NTP sources through source directories. Keep dynamic
+# sources enabled by default; DHCP-provided NTP servers are legitimate site
+# policy when the DHCP service is controlled. Add paths here only for hosts
+# where a dynamic source directory is known to be untrusted or noisy.
+chrony_disabled_source_dirs: []
