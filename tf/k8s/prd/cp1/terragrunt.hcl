@@ -19,10 +19,9 @@ locals {
   })
 }
 
-# prd k0s controller relocated from node1 (../prd-cluster, 192.168.30.11).
-# Same spec as the original cp1. The old VM definition is removed from
-# ../prd-cluster only after the k0s backup/restore cutover succeeds
-# (see docs/plans/control-plane-relocation.md).
+# prd k0s controller. Relocated 2026-07-11 from node1 (../workers-node1,
+# formerly prd-cluster, old IP 192.168.30.11) via k0s backup/restore
+# (see docs/plans/control-plane-relocation.md). Same spec as the original.
 inputs = {
   vms = {
     "k0s-cp1" = merge(local.base_vars, {

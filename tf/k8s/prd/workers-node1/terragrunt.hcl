@@ -19,19 +19,6 @@ locals {
 
 inputs = {
   vms = {
-    "k0s-cp1" = merge(local.base_vars, {
-      cores  = 2
-      memory = 4096
-      bridge = local.common.locals.node1.net30.bridge
-      ipv4gw = local.common.locals.node1.net30.ipv4gw
-      ipv4   = "192.168.30.11/24"
-      disks = {
-        scsi0 = merge(local.env.locals.disk_defaults, {
-          size    = 40
-          file_id = local.env.locals.os_image
-        })
-      }
-    })
     "k0s-worker1" = merge(local.base_vars, {
       cores  = 8
       memory = 24576

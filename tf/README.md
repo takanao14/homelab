@@ -53,7 +53,7 @@ tf/
 ├── k8s/                            # Cluster-first: k8s/<cluster>/<stack> (k0s node VMs, ADR-0020)
 │   ├── prd/
 │   │   ├── env.hcl                 # Default host binding: node1 (storage: data-nvme)
-│   │   ├── prd-cluster/            # worker1 (+ cp1 until the CP relocation) @ node1
+│   │   ├── workers-node1/          # worker1 @ node1
 │   │   ├── cp1/                    # k0s controller @ node4 — own env.hcl + .envrc (host override)
 │   │   └── gpuvm/                  # GPU worker @ pve — own env.hcl + .envrc (host override)
 │   └── sandbox/
