@@ -1,5 +1,5 @@
 controllers:
-  - ip: 192.168.30.11
+  - ip: 192.168.60.11
     name: prd-cp1
     cluster: prd
 

@@ -142,7 +142,7 @@ kube-prometheus-stack:
             sourceLabels: [__meta_kubernetes_pod_node_name]
             targetLabel: node
 
-  # The k0s controller (192.168.30.11) is a dedicated control-plane node with no
+  # The k0s controller (192.168.60.11) is a dedicated control-plane node with no
   # kubelet, so it is not discoverable as a Kubernetes Endpoint. Point the chart
   # at the node IP directly; it renders a headless Service + manual Endpoints and
   # a ServiceMonitor that scrapes the component's secure metrics port over HTTPS
@@ -151,7 +151,7 @@ kube-prometheus-stack:
   kubeControllerManager:
     enabled: true
     endpoints:
-      - 192.168.30.11
+      - 192.168.60.11
     service:
       enabled: true
       port: 10257
@@ -162,7 +162,7 @@ kube-prometheus-stack:
   kubeScheduler:
     enabled: true
     endpoints:
-      - 192.168.30.11
+      - 192.168.60.11
     service:
       enabled: true
       port: 10259
