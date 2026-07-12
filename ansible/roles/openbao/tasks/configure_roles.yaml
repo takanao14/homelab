@@ -1,4 +1,7 @@
 ---
+- name: Log in as the Ansible admin user
+  ansible.builtin.include_tasks: login_admin.yaml
+
 - name: Write Kubernetes role for ESO
   ansible.builtin.command:
     cmd: >

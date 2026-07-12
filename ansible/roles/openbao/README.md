@@ -19,8 +19,8 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | Variable | Description |
 |----------|-------------|
 | `openbao_seal_key` | Static seal key: 32 raw bytes, base64-encoded. Generate with `openssl rand -base64 32` |
-| `openbao_root_token` | Root token from `operator init`. Stored as emergency backup; not used in day-to-day operations. |
-| `openbao_admin_token` | Admin token created by `ops-openbao_bootstrap.yaml`. Used by `ops-openbao_configure.yaml`. |
+| `openbao_root_token` | Root token from `operator init`. Used only for bootstrap and recovery. |
+| `openbao_ansible_password` | Password for the dedicated Ansible userpass account. Generate with `openssl rand -base64 24`. |
 | `openbao_secrets` | List of KV secrets to write. Each entry requires `path` and `data` (key/value pairs). |
 | `openbao_userpass_users` | List of userpass users. Each entry requires `username`, `password`, and `policies`. |
 
@@ -46,6 +46,7 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_raft_retry_join` | `[]` | List of other cluster node API addresses for Raft auto-join |
 | `openbao_seal_key_id` | `key-1` | Permanent identifier for the static seal key (update when rotating) |
 | `openbao_local_addr` | `http://127.0.0.1:8200` | API address used by `bao` CLI tasks running on the openbao host. Plain HTTP because TLS is terminated by Caddy upstream. |
+| `openbao_ansible_user` | `ansible-admin` | Dedicated userpass account for OpenBao operational playbooks |
 | `openbao_k8s_host` | `""` | prd cluster API server URL (e.g. `https://192.168.60.11:6443`) |
 | `openbao_k8s_sandbox_host` | `""` | sandbox cluster API server URL (e.g. `https://192.168.20.31:6443`) |
 | `openbao_k8s_clusters` | see defaults | List of Kubernetes clusters to configure auth for. Each entry defines `name`, `mount_path`, `host`, `ca_cert_file`, `role`, and `policies`. Runtime CA data is injected by `ops-openbao_register_cluster.yaml`. |
@@ -58,11 +59,9 @@ The role starts the OpenBao service but does **not** initialize it. On first dep
 BAO_ADDR=http://127.0.0.1:8200 bao operator init
 ```
 
-Save the output (root token and recovery keys) securely. After completing initial configuration, revoke the root token:
-
-```bash
-bao token revoke <root_token>
-```
+Save the recovery keys securely. Store the root token only in the
+SOPS-encrypted inventory; it is required by the bootstrap and recovery path but
+is not used by routine operational playbooks.
 
 ## Kubernetes ESO integration setup
 
@@ -79,13 +78,14 @@ The ESO ArgoCD Application itself is rendered by the app-of-apps chart
 (`k8s/argocd/apps`) and enabled per environment in
 `k8s/argocd/<env>/apps-values.yaml`.
 
-### 1. Bootstrap admin token (run once)
+### 1. Bootstrap Ansible userpass authentication
 
-Add the root token to `group_vars/openbao.sops.yaml`:
+Add the root token and a newly generated Ansible password to
+`group_vars/openbao.sops.yaml`:
 
 ```yaml
 openbao_root_token: "hvs.xxxx"
-openbao_admin_token: ""  # filled in next step
+openbao_ansible_password: "<output of openssl rand -base64 24>"
 ```
 
 Run the bootstrap playbook:
@@ -94,7 +94,11 @@ Run the bootstrap playbook:
 ansible-playbook playbooks/ops-openbao_bootstrap.yaml
 ```
 
-Copy the `openbao_admin_token` value from the output into `group_vars/openbao.sops.yaml`.
+The playbook enables userpass and creates or updates `ansible-admin` with the
+`admin` policy and a one-hour token TTL. Operational playbooks log in at runtime
+with this account, retain the temporary token only for the current play, and do
+not require a stored admin token. Re-run bootstrap after changing
+`openbao_ansible_password` to rotate the account password.
 
 ### 2. Configure OpenBao base objects
 

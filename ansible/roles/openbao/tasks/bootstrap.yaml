@@ -1,4 +1,11 @@
 ---
+- name: Require Ansible admin password
+  ansible.builtin.fail:
+    msg: >-
+      openbao_ansible_password is empty. Set it in the SOPS-encrypted
+      group_vars/openbao.sops.yaml before running this playbook.
+  when: openbao_ansible_password | length == 0
+
 - name: Define admin policy
   ansible.builtin.set_fact:
     openbao_admin_policy: |
@@ -46,22 +53,32 @@
   when: openbao_admin_policy_check.rc != 0 or openbao_admin_policy_check.stdout != openbao_admin_policy
   changed_when: true
 
-- name: Create admin token
+- name: List enabled auth methods
   ansible.builtin.command:
-    cmd: >
-      {{ openbao_binary }} token create
-      -policy=admin
-      -no-default-policy
-      -display-name=ansible-admin
-      -format=json
+    cmd: "{{ openbao_binary }} auth list -format=json"
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_root_token }}"
-  register: openbao_admin_token_result
+  register: openbao_auth_methods
+  changed_when: false
+
+- name: Enable userpass auth method
+  ansible.builtin.command:
+    cmd: "{{ openbao_binary }} auth enable userpass"
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_root_token }}"
+  when: "'userpass/' not in (openbao_auth_methods.stdout | default('{}', true) | from_json)"
   changed_when: true
 
-- name: Show admin token
-  ansible.builtin.debug:
-    msg: >-
-      Admin token created. Add the following to openbao.sops.yaml:
-      openbao_admin_token: "{{ (openbao_admin_token_result.stdout | from_json).auth.client_token }}"
+- name: Create or update Ansible admin user
+  ansible.builtin.command:
+    cmd: >-
+      {{ openbao_binary }} write auth/userpass/users/{{ openbao_ansible_user }}
+      password=- policies=admin token_ttl=1h
+    stdin: "{{ openbao_ansible_password }}"
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_root_token }}"
+  changed_when: true
+  no_log: true

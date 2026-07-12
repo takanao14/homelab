@@ -1,0 +1,32 @@
+---
+# Authenticate once per play and retain the short-lived token only as an
+# in-memory fact. Subsequent includes reuse the fact through the block guard.
+
+- name: Log in to OpenBao as the Ansible admin user
+  when: openbao_admin_token is not defined
+  block:
+    - name: Request temporary admin token
+      ansible.builtin.command:
+        cmd: >-
+          {{ openbao_binary }} login -token-only -method=userpass
+          username={{ openbao_ansible_user }} password=-
+        stdin: "{{ openbao_ansible_password }}"
+      environment:
+        BAO_ADDR: "{{ openbao_local_addr }}"
+      register: openbao_admin_login
+      changed_when: false
+      failed_when: false
+      no_log: true
+
+    - name: Fail when Ansible admin login is unsuccessful
+      ansible.builtin.fail:
+        msg: >-
+          OpenBao userpass login failed (rc={{ openbao_admin_login.rc }}).
+          The password may not match or the Ansible admin user may not exist.
+          Run ops-openbao_bootstrap.yaml to create or update the user.
+      when: openbao_admin_login.rc != 0
+
+    - name: Store temporary admin token for this play
+      ansible.builtin.set_fact:
+        openbao_admin_token: "{{ openbao_admin_login.stdout }}"
+      no_log: true

@@ -36,9 +36,12 @@ openbao_seal_key: ""
 # TLS is terminated by Caddy upstream, so the listener is plain HTTP.
 openbao_local_addr: "http://127.0.0.1:{{ openbao_api_port }}"
 
-# Tokens (set via group_vars with SOPS encryption)
+# Root token (set via group_vars with SOPS encryption; bootstrap/recovery only)
 openbao_root_token: ""
-openbao_admin_token: ""
+
+# Ansible userpass credentials. Override the password via SOPS-encrypted group_vars.
+openbao_ansible_user: ansible-admin
+openbao_ansible_password: ""
 
 # Kubernetes auth configuration
 # prd cluster (mount path: kubernetes)

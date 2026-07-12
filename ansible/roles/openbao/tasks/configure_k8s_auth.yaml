@@ -1,4 +1,7 @@
 ---
+- name: Log in as the Ansible admin user
+  ansible.builtin.include_tasks: login_admin.yaml
+
 - name: List enabled auth methods
   ansible.builtin.command:
     cmd: "{{ openbao_binary }} auth list -format=json"

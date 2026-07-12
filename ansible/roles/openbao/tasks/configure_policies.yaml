@@ -1,6 +1,9 @@
 ---
 # KV v2 stores secrets at secret/data/<path>, so policies must use that prefix.
 
+- name: Log in as the Ansible admin user
+  ansible.builtin.include_tasks: login_admin.yaml
+
 - name: Write policy for cert-manager namespace
   ansible.builtin.command:
     cmd: "{{ openbao_binary }} policy write k8s-cert-manager -"

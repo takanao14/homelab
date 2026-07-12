@@ -228,6 +228,12 @@ ansible-playbook playbooks/forgejo_runner.yaml
 # OpenBao
 ansible-playbook playbooks/openbao.yaml
 
+# Bootstrap runtime userpass authentication (first install or password rotation)
+ansible-playbook playbooks/ops-openbao_bootstrap.yaml
+
+# Configure OpenBao using a short-lived token obtained at runtime
+ansible-playbook playbooks/ops-openbao_configure.yaml
+
 # Proxmox maintenance user setup
 ansible-playbook playbooks/proxmox.yaml
 
@@ -320,6 +326,17 @@ mv /etc/network/interfaces.d/ansible-simplezone-routes \
 ifreload -a
 ```
 
+### OpenBao operational authentication
+
+Routine OpenBao playbooks authenticate as the dedicated `ansible-admin`
+userpass account. Set `openbao_ansible_password` in the SOPS-encrypted OpenBao
+group variables, then run `ops-openbao_bootstrap.yaml` with the stored root
+token. Bootstrap enables userpass and creates or updates the account.
+
+Each subsequent operational playbook logs in at runtime, uses the resulting
+one-hour token only for that play, and does not persist it. The root token is
+reserved for bootstrap, password rotation, and recovery.
+
 ### OpenBao registration after k0s cluster rebuild
 
 OpenBao runs outside the k0s clusters, so rebuilding a cluster does not remove
@@ -405,8 +422,8 @@ the decision behind the rebuild registration flow.
 | `netbox_secret_key` | `group_vars/netbox.sops.yaml` | NetBox Django secret key |
 | `netbox_superuser_password` | `group_vars/netbox.sops.yaml` | NetBox superuser password |
 | `openbao_seal_key` | `group_vars/openbao.sops.yaml` | OpenBao static seal key (base64-encoded 32 bytes) |
-| `openbao_root_token` | `group_vars/openbao.sops.yaml` | OpenBao root token (emergency backup) |
-| `openbao_admin_token` | `group_vars/openbao.sops.yaml` | OpenBao admin token for configuration |
+| `openbao_root_token` | `group_vars/openbao.sops.yaml` | OpenBao root token for bootstrap and recovery only |
+| `openbao_ansible_password` | `group_vars/openbao.sops.yaml` | Password used to obtain a short-lived token for OpenBao operational playbooks |
 | `openbao_secrets` | `group_vars/openbao.sops.yaml` | Application secrets seeded into OpenBao KV, including the Alertmanager Discord webhook |
 | `seaweedfs_s3_access_key` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS S3 access key for the Terraform identity |
 | `seaweedfs_s3_secret_key` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS S3 secret key for the Terraform identity |

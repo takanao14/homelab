@@ -1,6 +1,6 @@
 openbao_seal_key: ENC[AES256_GCM,data:aLuomDikON+SmSFF08C88xgtgAJ3YRAz1elBGDZmlDOUoMxCWGyhunGnfhc=,iv:dyVwSds0laX9jE3PMEl5mSY3dxeuHFY7mw5qe7MfHiA=,tag:GgGq1ANHKITyusXp7dvvaw==,type:str]
 openbao_root_token: ENC[AES256_GCM,data:2EDLbaXxY04p4TespVgl79xzncuO2QXE98Q=,iv:s2VjtkHMWQP62BULYsULRK3etojohI4dBmbQP21MEHQ=,tag:p9YzXf9uVcLivjlfZypItw==,type:str]
-openbao_admin_token: ENC[AES256_GCM,data:+nXmfr3RQegdwY5XWZcoSGybAq6CLjaCJIE=,iv:d8GK+2xiZO9m/4N1Ecr6ngBdyXlosEpJ1vrw1pQh76Y=,tag:ltunM3DD+Td4wq+cDiKa9w==,type:str]
+openbao_ansible_password: ENC[AES256_GCM,data:PKG/7RCKS+Z/I4VR2/qw/5H29LO3kmxcBOxyCCj1f4c=,iv:LrzAAbjkr0CVkPPFRmNfRiSM8dX1WFnmrAeXl1pPBqQ=,tag:A+YoIfs+jfDPAnNGYWDL0w==,type:str]
 openbao_userpass_users:
     - username: ENC[AES256_GCM,data:nKzOM9Y=,iv:SXzzMlnbbBeyPonZstXX1KjtEHB1rX7W+VcBS6yXsXE=,tag:mNjIqV8XEler9pCwvWF80Q==,type:str]
       password: ENC[AES256_GCM,data:6TZmJjkizzDauGg=,iv:xMuePd1Zljgtvjtaxgq48RXTjb8qWdn5dduoo0AEu/U=,tag:pjnrKd0onbS8KF6/NREf7Q==,type:str]
@@ -58,7 +58,7 @@ sops:
             JOApvuBcVw/zpLimMrpKmFa51DD6fQPlWdZhPqfxUMexLacEdw/VMw==
             -----END AGE ENCRYPTED FILE-----
           recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
-    lastmodified: "2026-07-12T08:53:21Z"
-    mac: ENC[AES256_GCM,data:kInQvoTZPkGN+kqpoZ7ODz05Ci6FxZkHlI3TD5Sn3Qiupa8dUnCdeuWYgtQjagtjrjxT1059obiB4edNFk+DindWKwbJ9UGbz4CICe6L7pIS3OkXgTU3QHijhqDsyLd4XWXGyYAlmMatm+cMFgAlqGgw9zQM6f4ixWyu4c+nsSA=,iv:xtcmQJEKguWVGDdLtZtLE6mioez5SqP9RZ9yL2shPAM=,tag:U2FYBicVrg5kWU+43YcRTA==,type:str]
+    lastmodified: "2026-07-12T09:46:53Z"
+    mac: ENC[AES256_GCM,data:W4tsmyiDnHyUk+QRFVPNvWs5/SKKXxFkuk0iatO0E2K9XNkavPhCeS6DglI2AA9XjNhtFEVKprE1aE1BU+ax2fbOrwhRI6XxvAax7dMaQBZUhA7vn4KZTuBdWhg5cGqOTSwM4uxFmRgYKp8B3v587dxT0tvo38s6flxmJ+SNymI=,iv:piTUNkw3oHvLLLAYRLmXLblIPVtFqHKPkuZ2XgiOlyw=,tag:BkiTdVBs3HtaBmEvABkT1g==,type:str]
     unencrypted_suffix: _unencrypted
     version: 3.13.2
