@@ -35,6 +35,9 @@ proxmox_simplezone_routes:
   node4:
     segment: 192.168.60.0/24
     via: 192.168.10.14
+  node5:
+    segment: 192.168.70.0/24
+    via: 192.168.10.15
 
 # Forward Proxmox host logs to the central Vector log collector.
 rsyslog_forward_host: "192.168.10.243"
@@ -70,6 +73,7 @@ proxmox_metric_server_manage_hosts:
   - node2
   - node3
   - node4
+  - node5
 
 proxmox_metric_server_definitions:
   - id: alloy-otlp
