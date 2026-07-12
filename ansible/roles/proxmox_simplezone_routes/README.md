@@ -8,7 +8,7 @@ operator action.
 ## Functionality
 
 - Requires the current Proxmox inventory host to have an entry in
-  `proxmox_simplezone_routes`.
+  `proxmox_simplezone_routes_map`.
 - Renders routes to every other Proxmox node's SimpleZone segment.
 - Writes `post-up ip route replace ...` and matching `pre-down ip route del ...`
   hooks for the management bridge.
@@ -20,9 +20,9 @@ operator action.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `proxmox_simplezone_route_interface` | `vmbr0` | Interface stanza that receives route hooks. |
-| `proxmox_simplezone_route_file` | `/etc/network/interfaces.d/ansible-simplezone-routes` | Managed ifupdown2 drop-in path. |
-| `proxmox_simplezone_routes` | `{}` | Map of Proxmox host name to `{ segment, via }`. |
+| `proxmox_simplezone_routes_interface` | `vmbr0` | Interface stanza that receives route hooks. |
+| `proxmox_simplezone_routes_file` | `/etc/network/interfaces.d/ansible-simplezone-routes` | Managed ifupdown2 drop-in path. |
+| `proxmox_simplezone_routes_map` | `{}` | Map of Proxmox host name to `{ segment, via }`. |
 | `proxmox_simplezone_routes_require_local_entry` | `true` | Fail when the current host has no route map entry. |
 
 ## Apply Flow

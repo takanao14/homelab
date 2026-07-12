@@ -3,11 +3,10 @@
 # Static routes to remote Proxmox SDN SimpleZone segments. The local node's own
 # SimpleZone is intentionally omitted because it is directly connected.
 
-iface {{ proxmox_simplezone_route_interface }} inet static
-{% for route in proxmox_simplezone_remote_routes %}
+iface {{ proxmox_simplezone_routes_interface }} inet static
+{% for route in proxmox_simplezone_routes_remote_routes %}
     post-up ip route replace {{ route.segment }} via {{ route.via }}
 {% endfor %}
-{% for route in proxmox_simplezone_remote_routes %}
+{% for route in proxmox_simplezone_routes_remote_routes %}
     pre-down ip route del {{ route.segment }} via {{ route.via }} 2>/dev/null || true
 {% endfor %}
-
