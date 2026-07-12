@@ -32,6 +32,8 @@ all:
       ansible_host: 192.168.10.13
     node4:
       ansible_host: 192.168.10.14
+    node5:
+      ansible_host: 192.168.10.15
     rpi3:
       ansible_host: 192.168.10.240
     rpi4:
@@ -190,6 +192,7 @@ all:
         node2: null
         node3: null
         node4: null
+        node5: null
 
     node_exporter:
       children:
@@ -203,6 +206,7 @@ all:
         node2: null
         node3: null
         node4: null
+        node5: null
         # k0s controllers run kine (embedded SQLite) and have no kubelet, so they
         # are not covered by the in-cluster node-exporter DaemonSet. Scrape them
         # host-level to monitor the control-plane node and kine DB disk.
