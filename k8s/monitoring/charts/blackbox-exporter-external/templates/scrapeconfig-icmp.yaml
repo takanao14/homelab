@@ -12,6 +12,20 @@ spec:
   params:
     module: [icmp]
   staticConfigs:
+    # Proxmox hypervisors come from the shared inventory (values/proxmox-nodes.yaml):
+    # one ICMP probe per node IP, plus one per AMT IP when amtIp is set.
+    {{- range .Values.proxmoxNodes }}
+    - targets: [{{ .ip | quote }}]
+      labels:
+        __tmp_name: {{ .name | quote }}
+    {{- end }}
+    {{- range .Values.proxmoxNodes }}
+    {{- if .amtIp }}
+    - targets: [{{ .amtIp | quote }}]
+      labels:
+        __tmp_name: {{ printf "%s-amt" .name | quote }}
+    {{- end }}
+    {{- end }}
     {{- range .Values.icmp.targets }}
     - targets: [{{ .ip | quote }}]
       labels:

@@ -619,7 +619,7 @@
         "name": "node",
         "label": "Node",
         "skipUrlSync": false,
-        "query": "label_values({host=~\"pve|node1|node2|node3\"}, host)",
+        "query": "label_values({host=~\"pve|node1|node2|node3|node4|node5\"}, host)",
         "datasource": {
           "type": "loki",
           "uid": "$datasource"
@@ -629,7 +629,7 @@
         "refresh": 2,
         "sort": 1,
         "includeAll": true,
-        "allValue": "pve|node1|node2|node3",
+        "allValue": "pve|node1|node2|node3|node4|node5",
         "auto": false,
         "auto_min": "10s",
         "auto_count": 30

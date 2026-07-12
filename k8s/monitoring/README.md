@@ -40,6 +40,8 @@ monitoring/
 │   ├── blackbox-exporter-external.yaml
 │   ├── snmp-exporter.yaml
 │   ├── node-exporter-external.yaml
+│   ├── proxmox-nodes.yaml        # shared Proxmox hypervisor inventory (ADR-0024)
+│   ├── dns-recursors.yaml        # shared DNS recursor inventory (ADR-0024)
 │   ├── control-plane-metrics.yaml # k0s controller host targets
 │   ├── amd-gpu-external.yaml
 │   ├── dnsdist.yaml
@@ -233,6 +235,13 @@ All secrets are fetched from OpenBao via ESO. They are not stored in this reposi
   `scrapeClass: external` to opt out, or LAN hosts leak into
   `cluster=~"$cluster"` dashboard queries.
 - Target IPs for external exporters (blackbox, node-exporter, etc.) are hardcoded in `values/` files
+- Proxmox hypervisors are listed once in `values/proxmox-nodes.yaml`
+  (ADR-0024). node-exporter targets, ICMP/AMT probes, the Loki alert host
+  regex, and the proxmox-logs dashboard all derive from it — add a node
+  there, then run `make generate` in `dashboards/`
+- DNS recursors are listed once in `values/dns-recursors.yaml`
+  (ADR-0024 addendum). dnsdist metrics targets and both blackbox DNS
+  resolution probes derive from it
 - Future plan: move k0s controller-manager/scheduler scraping into an explicit local chart (`docs/plans/control-plane-metrics-chart.md`)
 
 ## Alerting

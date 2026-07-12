@@ -1,10 +1,5 @@
 port: 8083
 metricsPath: /metrics
 
-# name becomes the instance label (relabeled from __tmp_name); scraping still
-# connects by IP so DNS monitoring does not depend on DNS itself.
-targets:
-  - ip: "192.168.10.231"
-    name: "dist1"
-  - ip: "192.168.10.232"
-    name: "dist2"
+# Scrape targets come from the shared recursor inventory
+# (values/dns-recursors.yaml via apps/values.yaml valueFiles).

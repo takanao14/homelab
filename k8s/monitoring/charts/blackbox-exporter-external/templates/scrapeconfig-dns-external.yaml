@@ -12,7 +12,9 @@ spec:
   params:
     module: [dns_external]
   staticConfigs:
-    {{- range .Values.dnsExternal.targets }}
+    # Recursors come from the shared inventory (values/dns-recursors.yaml);
+    # dns_external and dns_internal probe the same set with different modules.
+    {{- range .Values.dnsRecursors }}
     - targets: [{{ .ip | quote }}]
       labels:
         __tmp_name: {{ .name | quote }}

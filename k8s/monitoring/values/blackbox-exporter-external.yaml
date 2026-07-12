@@ -2,50 +2,23 @@
 blackboxExporterURL: "192.168.10.241:9115"
 scrapeInterval: 60s
 
-# ICMP probe targets (network devices + hosts)
+# ICMP probe targets (network devices + hosts).
+# Proxmox hypervisors (and their AMT interfaces) are injected from the shared
+# inventory (values/proxmox-nodes.yaml via apps/values.yaml valueFiles); list
+# only non-hypervisor targets here.
 icmp:
   targets:
     - ip: "192.168.10.1"
       name: "bgw1"
     - ip: "192.168.10.2"
       name: "c1200"
-    - ip: "192.168.10.10"
-      name: "pve"
-    - ip: "192.168.10.11"
-      name: "node1"
-    - ip: "192.168.10.12"
-      name: "node2"
-    - ip: "192.168.10.13"
-      name: "node3"
-    - ip: "192.168.10.14"
-      name: "node4"
     - ip: "192.168.10.240"
       name: "rpi3"
     - ip: "192.168.10.241"
       name: "rpi4"
     - ip: "192.168.10.254"
       name: "wifi-ap1"
-    - ip: "192.168.110.11"
-      name: "node1-amt"
-    - ip: "192.168.110.12"
-      name: "node2-amt"
-    - ip: "192.168.110.13"
-      name: "node3-amt"
-    - ip: "192.168.110.14"
-      name: "node4-amt"
 
-# DNS external resolution probe (query google.com against each DNS server)
-dnsExternal:
-  targets:
-    - ip: "192.168.10.231"
-      name: "dist1"
-    - ip: "192.168.10.232"
-      name: "dist2"
-
-# DNS internal resolution probe (query ns1.home.butaco.net against each DNS server)
-dnsInternal:
-  targets:
-    - ip: "192.168.10.231"
-      name: "dist1"
-    - ip: "192.168.10.232"
-      name: "dist2"
+# DNS resolution probes (dns_external: google.com / dns_internal:
+# ns1.home.butaco.net) target the shared recursor inventory
+# (values/dns-recursors.yaml via apps/values.yaml valueFiles).

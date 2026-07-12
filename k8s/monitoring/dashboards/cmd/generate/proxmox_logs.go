@@ -10,20 +10,25 @@ import (
 )
 
 // buildProxmoxLogs defines the Proxmox VE host journal dashboard backed by Loki.
-// The four hypervisors forward RFC 5424 syslog with labels: host, appname, severity.
+// The hypervisors forward RFC 5424 syslog with labels: host, appname, severity.
+// The host regex comes from the shared inventory (../values/proxmox-nodes.yaml).
 func buildProxmoxLogs() (*dashboard.Dashboard, error) {
+	proxmoxHosts, err := loadProxmoxHostRegex()
+	if err != nil {
+		return nil, err
+	}
+
 	ds := lokiDatasource()
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
 
 	const (
-		proxmoxHosts = `pve|node1|node2|node3`
-		base         = `{host=~"$node", appname=~"$appname", severity=~"$severity"}`
-		baseJSON     = `{host=~"$node", appname=~"$appname", severity=~"$severity"} | json | __error__=""`
-		errSel       = `{host=~"$node", appname=~"$appname", severity=~"emerg|alert|crit|err|error|[0-3]"}`
-		warnSel      = `{host=~"$node", appname=~"$appname", severity=~"warning|warn|4"}`
-		messageBase  = `{host=~"$node", appname=~"$appname", severity=~"$severity"} | json | __error__="" | line_format "{{.message}}"`
-		signalRegex  = `(?i)(quorum.*(lost|error|fail)|corosync.*(error|fail)|cluster.*(lost|error|fail)|ha[- ]?(crm|lrm)?.*(error|fail)|backup.*(error|fail)|vzdump.*(error|fail)|zfs.*(error|fault|degrad)|i/o error|out of memory|oom-kill|killed process|apparmor="DENIED")`
+		base        = `{host=~"$node", appname=~"$appname", severity=~"$severity"}`
+		baseJSON    = `{host=~"$node", appname=~"$appname", severity=~"$severity"} | json | __error__=""`
+		errSel      = `{host=~"$node", appname=~"$appname", severity=~"emerg|alert|crit|err|error|[0-3]"}`
+		warnSel     = `{host=~"$node", appname=~"$appname", severity=~"warning|warn|4"}`
+		messageBase = `{host=~"$node", appname=~"$appname", severity=~"$severity"} | json | __error__="" | line_format "{{.message}}"`
+		signalRegex = `(?i)(quorum.*(lost|error|fail)|corosync.*(error|fail)|cluster.*(lost|error|fail)|ha[- ]?(crm|lrm)?.*(error|fail)|backup.*(error|fail)|vzdump.*(error|fail)|zfs.*(error|fault|degrad)|i/o error|out of memory|oom-kill|killed process|apparmor="DENIED")`
 	)
 
 	warnThresholds := dashboard.NewThresholdsConfigBuilder().

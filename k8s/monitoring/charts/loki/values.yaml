@@ -1,3 +1,7 @@
+# Proxmox hypervisor inventory; populated by the shared
+# values/proxmox-nodes.yaml through apps/values.yaml valueFiles.
+proxmoxNodes: []
+
 proxmoxAlerts:
   enabled: false
   rules:

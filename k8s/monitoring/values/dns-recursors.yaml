@@ -1,0 +1,15 @@
+# Shared DNS recursor (dnsdist) inventory (single source of truth,
+# ADR-0024 addendum).
+#
+# Consumers (wired via valueFiles in apps/values.yaml):
+#   - dnsdist: dnsdist metrics scrape targets (ip:port)
+#   - blackbox-exporter-external: dns_external and dns_internal resolution
+#     probes (both probe the same recursor set; only the module differs)
+#
+# name becomes the instance label; scraping/probing connects by IP so DNS
+# monitoring does not depend on DNS itself.
+dnsRecursors:
+  - ip: "192.168.10.231"
+    name: "dist1"
+  - ip: "192.168.10.232"
+    name: "dist2"

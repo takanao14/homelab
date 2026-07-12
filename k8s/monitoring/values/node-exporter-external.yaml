@@ -1,19 +1,12 @@
 port: 9100
 metricsPath: /metrics
 
+# Proxmox hypervisors are injected from the shared inventory
+# (values/proxmox-nodes.yaml via apps/values.yaml valueFiles); list only
+# non-hypervisor hosts here.
 # name becomes the instance label (relabeled from __tmp_name); scraping still
 # connects by IP so monitoring does not depend on DNS resolution.
 targets:
-  - ip: "192.168.10.10"
-    name: "pve"
-  - ip: "192.168.10.11"
-    name: "node1"
-  - ip: "192.168.10.12"
-    name: "node2"
-  - ip: "192.168.10.13"
-    name: "node3"
-  - ip: "192.168.10.14"
-    name: "node4"
   - ip: "192.168.10.240"
     name: "rpi3"
   - ip: "192.168.10.241"

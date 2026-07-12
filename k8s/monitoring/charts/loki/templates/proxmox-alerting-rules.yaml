@@ -1,4 +1,10 @@
 {{- if .Values.proxmoxAlerts.enabled }}
+{{- /* Host regex derived from the shared inventory (values/proxmox-nodes.yaml). */}}
+{{- $proxmoxHosts := list }}
+{{- range .Values.proxmoxNodes }}
+{{- $proxmoxHosts = append $proxmoxHosts .name }}
+{{- end }}
+{{- $proxmoxHostRegex := join "|" $proxmoxHosts | required "proxmoxNodes must be set (values/proxmox-nodes.yaml) when proxmoxAlerts is enabled" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -17,7 +23,7 @@ data:
             expr: |
               sum by (host) (
                 count_over_time(
-                  {host=~"pve|node1|node2|node3", appname="kernel"}
+                  {host=~"{{ $proxmoxHostRegex }}", appname="kernel"}
                     | json
                     | __error__=""
                     | message=~".*apparmor=\\\"DENIED\\\".*"
@@ -40,7 +46,7 @@ data:
             expr: |
               sum by (host) (
                 count_over_time(
-                  {host=~"pve|node1|node2|node3", appname="kernel"}
+                  {host=~"{{ $proxmoxHostRegex }}", appname="kernel"}
                     | json
                     | __error__=""
                     | message=~"(?i).*(out of memory|oom-kill|killed process).*"
@@ -62,7 +68,7 @@ data:
             expr: |
               sum by (host) (
                 count_over_time(
-                  {host=~"pve|node1|node2|node3"}
+                  {host=~"{{ $proxmoxHostRegex }}"}
                     | json
                     | __error__=""
                     | message=~"(?i).*(zfs.*(error|fault|degrad)|i/o error).*"
@@ -84,7 +90,7 @@ data:
             expr: |
               sum by (host) (
                 count_over_time(
-                  {host=~"pve|node1|node2|node3", appname=~"vzdump|pvedaemon|pvescheduler|systemd"}
+                  {host=~"{{ $proxmoxHostRegex }}", appname=~"vzdump|pvedaemon|pvescheduler|systemd"}
                     | json
                     | __error__=""
                     | message=~"(?i).*((backup|vzdump).*(error|fail)|(error|fail).*(backup|vzdump)).*"
@@ -106,7 +112,7 @@ data:
             expr: |
               sum by (host) (
                 count_over_time(
-                  {host=~"pve|node1|node2|node3", appname=~"corosync|pve-cluster|pmxcfs|systemd"}
+                  {host=~"{{ $proxmoxHostRegex }}", appname=~"corosync|pve-cluster|pmxcfs|systemd"}
                     | json
                     | __error__=""
                     | message=~"(?i).*(quorum.*(lost|error|fail)|corosync.*(error|fail)|cluster.*(lost|error|fail)).*"
@@ -128,7 +134,7 @@ data:
             expr: |
               sum by (host) (
                 count_over_time(
-                  {host=~"pve|node1|node2|node3", appname=~"pve-ha-crm|pve-ha-lrm|pvedaemon|systemd"}
+                  {host=~"{{ $proxmoxHostRegex }}", appname=~"pve-ha-crm|pve-ha-lrm|pvedaemon|systemd"}
                     | json
                     | __error__=""
                     | message=~"(?i).*ha[- ]?(crm|lrm)?.*(error|fail).*"
@@ -150,7 +156,7 @@ data:
             expr: |
               sum by (host) (
                 count_over_time(
-                  {host=~"pve|node1|node2|node3", appname=~"pvedaemon|pveproxy", severity=~"emerg|alert|crit|err|error|[0-3]"}
+                  {host=~"{{ $proxmoxHostRegex }}", appname=~"pvedaemon|pveproxy", severity=~"emerg|alert|crit|err|error|[0-3]"}
                   [10m]
                 )
               ) >= 5

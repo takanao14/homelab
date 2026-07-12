@@ -1,11 +1,14 @@
 blackboxExporterURL: ""
 scrapeInterval: 30s
 
-dnsExternal:
-  targets: []
+# Proxmox hypervisor inventory; populated by the shared
+# values/proxmox-nodes.yaml through apps/values.yaml valueFiles.
+proxmoxNodes: []
 
-dnsInternal:
-  targets: []
+# DNS recursor inventory; populated by the shared
+# values/dns-recursors.yaml through apps/values.yaml valueFiles.
+# Both DNS resolution probes (dns_external / dns_internal) derive from it.
+dnsRecursors: []
 
 icmp:
   targets: []

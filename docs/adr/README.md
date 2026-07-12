@@ -66,3 +66,4 @@ deleting it:
 | [0021](0021-relocate-prd-control-plane-to-node4.md) | Relocate the prd control plane to node4 via k0s backup/restore | Accepted |
 | [0022](0022-commit-terraform-provider-lock-files.md) | Commit Terraform provider lock files | Accepted |
 | [0023](0023-openbao-ansible-userpass-login.md) | Authenticate Ansible OpenBao operations via userpass login | Accepted |
+| [0024](0024-shared-proxmox-node-inventory-for-monitoring.md) | Shared Proxmox node inventory for monitoring | Accepted |

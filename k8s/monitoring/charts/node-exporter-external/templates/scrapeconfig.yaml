@@ -9,6 +9,12 @@ spec:
   # External LAN hosts: opt out of the default cluster-prd scrape class.
   scrapeClass: external
   staticConfigs:
+    # Proxmox hypervisors come from the shared inventory (values/proxmox-nodes.yaml).
+    {{- range .Values.proxmoxNodes }}
+    - targets: ["{{ .ip }}:{{ $.Values.port }}"]
+      labels:
+        __tmp_name: {{ .name | quote }}
+    {{- end }}
     {{- range .Values.targets }}
     - targets: ["{{ .ip }}:{{ $.Values.port }}"]
       labels:
