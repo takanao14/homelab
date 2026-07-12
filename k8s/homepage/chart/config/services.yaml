@@ -2,27 +2,27 @@
 # https://gethomepage.dev/latest/configs/services/
 
 - Hypervisor:
-    - Proxmox VE Prd:
-        icon: proxmox.png
-        href: https://node1.home.butaco.net:8006
-        description: Virtualization Platform
-        widget:
-          type: proxmox
-          url: https://node1.home.butaco.net:8006
-          username: "{{HOMEPAGE_VAR_PROXMOX_PRD_TOKEN}}"
-          password: "{{HOMEPAGE_VAR_PROXMOX_PRD_SECRET}}"
-          node: node1
-
-    - Proxmox VE Dev:
+    - Proxmox VE PVE:
         icon: proxmox.png
         href: https://pve.home.butaco.net:8006
         description: Virtualization Platform
         widget:
           type: proxmox
           url: https://pve.home.butaco.net:8006
-          username: "{{HOMEPAGE_VAR_PROXMOX_DEV_TOKEN}}"
-          password: "{{HOMEPAGE_VAR_PROXMOX_DEV_SECRET}}"
+          username: "{{HOMEPAGE_VAR_PROXMOX_PVE_TOKEN}}"
+          password: "{{HOMEPAGE_VAR_PROXMOX_PVE_SECRET}}"
           node: pve
+
+    - Proxmox VE Node1:
+        icon: proxmox.png
+        href: https://node1.home.butaco.net:8006
+        description: Virtualization Platform
+        widget:
+          type: proxmox
+          url: https://node1.home.butaco.net:8006
+          username: "{{HOMEPAGE_VAR_PROXMOX_NODE1_TOKEN}}"
+          password: "{{HOMEPAGE_VAR_PROXMOX_NODE1_SECRET}}"
+          node: node1
 
     - Proxmox VE Node2:
         icon: proxmox.png
@@ -56,6 +56,17 @@
           username: "{{HOMEPAGE_VAR_PROXMOX_NODE4_TOKEN}}"
           password: "{{HOMEPAGE_VAR_PROXMOX_NODE4_SECRET}}"
           node: node4
+
+    - Proxmox VE Node5:
+        icon: proxmox.png
+        href: https://node5.home.butaco.net:8006
+        description: Virtualization Platform
+        widget:
+          type: proxmox
+          url: https://node5.home.butaco.net:8006
+          username: "{{HOMEPAGE_VAR_PROXMOX_NODE5_TOKEN}}"
+          password: "{{HOMEPAGE_VAR_PROXMOX_NODE5_SECRET}}"
+          node: node5
 
 - Storage:
     - TrueNAS:

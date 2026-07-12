@@ -11,7 +11,7 @@ useEqualHeights: true
 layout:
   Hypervisor:
     style: row
-    columns: 5
+    columns: 6
   Storage:
     style: row
     columns: 3

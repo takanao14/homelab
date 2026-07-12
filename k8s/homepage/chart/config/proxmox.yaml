@@ -1,11 +1,11 @@
 node1:
   url: https://node1.home.butaco.net:8006
-  token: "{{HOMEPAGE_VAR_PROXMOX_PRD_TOKEN}}"
-  secret: "{{HOMEPAGE_VAR_PROXMOX_PRD_SECRET}}"
+  token: "{{HOMEPAGE_VAR_PROXMOX_NODE1_TOKEN}}"
+  secret: "{{HOMEPAGE_VAR_PROXMOX_NODE1_SECRET}}"
 pve:
   url: https://pve.home.butaco.net:8006
-  token: "{{HOMEPAGE_VAR_PROXMOX_DEV_TOKEN}}"
-  secret: "{{HOMEPAGE_VAR_PROXMOX_DEV_SECRET}}"
+  token: "{{HOMEPAGE_VAR_PROXMOX_PVE_TOKEN}}"
+  secret: "{{HOMEPAGE_VAR_PROXMOX_PVE_SECRET}}"
 node2:
   url: https://node2.home.butaco.net:8006
   token: "{{HOMEPAGE_VAR_PROXMOX_NODE2_TOKEN}}"
@@ -18,3 +18,7 @@ node4:
   url: https://node4.home.butaco.net:8006
   token: "{{HOMEPAGE_VAR_PROXMOX_NODE4_TOKEN}}"
   secret: "{{HOMEPAGE_VAR_PROXMOX_NODE4_SECRET}}"
+node5:
+  url: https://node5.home.butaco.net:8006
+  token: "{{HOMEPAGE_VAR_PROXMOX_NODE5_TOKEN}}"
+  secret: "{{HOMEPAGE_VAR_PROXMOX_NODE5_SECRET}}"
