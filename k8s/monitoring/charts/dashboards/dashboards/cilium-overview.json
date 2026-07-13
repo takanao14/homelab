@@ -264,7 +264,7 @@
         }
       ],
       "title": "Hubble Lost Events (5m)",
-      "description": "Hubble observer events dropped in the last 5 minutes (ring buffer overrun).",
+      "description": "Hubble events lost at any processing stage in the last 5 minutes. See the node/source breakdown below for the cause.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -314,12 +314,68 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Drops \u0026 Policy",
+      "title": "Hubble Diagnostics",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 5
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "ceil(sum by (cluster, node, source) (increase(hubble_lost_events_total{cluster=~\"$cluster\"}[5m])))",
+          "legendFormat": "{{cluster}} {{node}} {{source}}"
+        }
+      ],
+      "title": "Hubble Lost Events by Node / Source (5m)",
+      "description": "Rolling 5-minute lost event count by node and pipeline stage. hubble_ring_buffer indicates a slow reader; observer_events_queue indicates Hubble processing backlog; perf_event_ring_buffer indicates datapath-to-userspace loss.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Drops \u0026 Policy",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
       },
       "id": 0,
       "panels": []
@@ -343,7 +399,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 6
+        "y": 15
       },
       "repeatDirection": "h",
       "options": {
@@ -386,7 +442,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 6
+        "y": 15
       },
       "repeatDirection": "h",
       "options": {
@@ -429,7 +485,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 23
       },
       "repeatDirection": "h",
       "options": {
@@ -461,7 +517,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 31
       },
       "id": 0,
       "panels": []
@@ -485,7 +541,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 23
+        "y": 32
       },
       "repeatDirection": "h",
       "options": {
@@ -528,7 +584,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 23
+        "y": 32
       },
       "repeatDirection": "h",
       "options": {
@@ -571,7 +627,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 23
+        "y": 32
       },
       "repeatDirection": "h",
       "options": {
@@ -603,7 +659,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 40
       },
       "id": 0,
       "panels": []
@@ -629,7 +685,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 32
+        "y": 41
       },
       "repeatDirection": "h",
       "options": {
@@ -698,7 +754,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 32
+        "y": 41
       },
       "repeatDirection": "h",
       "options": {
@@ -741,7 +797,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 32
+        "y": 41
       },
       "repeatDirection": "h",
       "options": {

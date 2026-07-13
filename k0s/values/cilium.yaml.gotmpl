@@ -22,6 +22,11 @@ operator:
     enabled: true
     metricsService: true
 hubble:
+  # Double the per-agent flow history so readers can tolerate roughly twice
+  # the processing delay before older events are overwritten. This startup
+  # setting requires the Cilium agents to be restarted after Helm updates the
+  # ConfigMap (rollOutCiliumPods is false by default).
+  eventBufferCapacity: 8191
   # Hubble is enabled by default; only its metrics need turning on. This exposes
   # aggregated L3/L4 flow metrics (hubble-metrics:9965). L7/http is omitted as it
   # requires Envoy L7 redirection.

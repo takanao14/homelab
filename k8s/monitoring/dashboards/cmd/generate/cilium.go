@@ -99,7 +99,7 @@ func buildCiliumOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Hubble Lost Events (5m)").
-				Description("Hubble observer events dropped in the last 5 minutes (ring buffer overrun).").
+				Description("Hubble events lost at any processing stage in the last 5 minutes. See the node/source breakdown below for the cause.").
 				Datasource(ds).
 				Span(4).Height(4).Unit("short").Min(0).
 				Thresholds(issueThresholds).
@@ -108,6 +108,19 @@ func buildCiliumOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`ceil(sum(increase(hubble_lost_events_total{` + clusterFilter + `}[5m]))) or vector(0)`).
 					LegendFormat("Lost"),
+				),
+		).
+		WithRow(dashboard.NewRowBuilder("Hubble Diagnostics")).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Hubble Lost Events by Node / Source (5m)").
+				Description("Rolling 5-minute lost event count by node and pipeline stage. hubble_ring_buffer indicates a slow reader; observer_events_queue indicates Hubble processing backlog; perf_event_ring_buffer indicates datapath-to-userspace loss.").
+				Datasource(ds).
+				Span(24).Height(8).Unit("short").Min(0).
+				Tooltip(tooltipAll).Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`ceil(sum by (cluster, node, source) (increase(hubble_lost_events_total{` + clusterFilter + `}[5m])))`).
+					LegendFormat("{{cluster}} {{node}} {{source}}"),
 				),
 		).
 		WithRow(dashboard.NewRowBuilder("Drops & Policy")).
