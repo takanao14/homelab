@@ -1,6 +1,8 @@
 ---
-# Arguments for prometheus-node-exporter, combined from two layers:
+# Arguments for prometheus-node-exporter, combined from three layers:
 #   node_exporter_base_args  - common args for all hosts (group_vars/node_exporter)
 #   node_exporter_rpi_args   - RPi-specific args (group_vars/node_exporter_rpi)
+#   node_exporter_lxc_args   - LXC-specific args (group_vars/node_exporter_lxc)
 node_exporter_base_args: []
 node_exporter_rpi_args: []
+node_exporter_lxc_args: []

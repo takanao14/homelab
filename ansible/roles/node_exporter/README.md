@@ -13,26 +13,18 @@ Installs and configures `prometheus-node-exporter` on Debian-based systems.
 
 ## Variables
 
-### `node_exporter_args`
+Command-line arguments are combined from three layers (all default to `[]`):
 
-A list of command-line arguments passed to `node_exporter`. Defined per-host in the inventory.
+| Variable | Scope | Defined in |
+|----------|-------|------------|
+| `node_exporter_base_args` | All hosts | `group_vars/node_exporter.yaml` |
+| `node_exporter_rpi_args` | Raspberry Pi hosts | `group_vars/node_exporter_rpi.yaml` |
+| `node_exporter_lxc_args` | LXC guests | `group_vars/node_exporter_lxc.yaml` |
 
-**Default:** `[]`
-
-```yaml
-# In inventories/homelab/hosts.yml
-node_exporter:
-  hosts:
-    pve:
-      node_exporter_args:
-        - '--no-collector.schedstat'
-        - '--no-collector.netstat'
-        - '--no-collector.systemd'
-    rpi4:
-      node_exporter_args:
-        - '--no-collector.btrfs'
-        - '--no-collector.edac'
-```
+The LXC layer disables hardware collectors (`thermal_zone`, `hwmon`,
+`thermal_throttle`): LXC guests share the host kernel and would otherwise
+re-report the host's sensors under their own instance name, duplicating
+temperature panels and hardware alerts.
 
 ## Dependencies
 

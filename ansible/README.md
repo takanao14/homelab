@@ -52,6 +52,7 @@ ansible/
 │   ├── forgejo.yaml
 │   ├── forgejo_runner.yaml
 │   ├── netbox.yaml
+│   ├── meshcentral.yaml
 │   ├── seaweedfs.yaml
 │   ├── log_collector.yaml
 │   ├── blackbox_exporter.yaml
@@ -86,6 +87,7 @@ ansible/
     ├── forgejo/
     ├── forgejo_runner/
     ├── netbox/
+    ├── meshcentral/
     ├── seaweedfs/
     ├── node_exporter/
     ├── blackbox_exporter/

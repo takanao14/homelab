@@ -1,0 +1,14 @@
+---
+# LXC guests share the host kernel, so sysfs exposes the HOST's hardware
+# sensors inside the container. Without these flags, each LXC guest
+# re-reports the host's CPU/NVMe temperatures and throttle counters under
+# its own instance name, which:
+#   - duplicates NodeCPUTempCrit / NodeCPUThrottlingActive alerts
+#     (one per LXC guest on an overheating host, with a misleading instance)
+#   - pollutes the node-overview Temperature & Throttling panels
+# Hardware metrics for the physical node are already scraped from the
+# Proxmox host itself.
+node_exporter_lxc_args:
+    - --no-collector.thermal_zone
+    - --no-collector.hwmon
+    - --no-collector.thermal_throttle

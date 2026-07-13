@@ -6,6 +6,20 @@
     state: present
     update_cache: true
 
+# In check mode the apt task above reports the pending package installation but
+# does not make it available to the next module in the same run. Probe the
+# library without changing the host so the dry-run can continue safely.
+- name: Check whether the python-debian library is available
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - import debian
+  register: vector_python_debian
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
 # Declarative replacement for the setup.vector.dev installer script, which
 # piped an unpinned remote script into bash. Same repository and signing key:
 # the key URL always points at Datadog's currently active apt signing key.
@@ -19,6 +33,17 @@
     signed_by: "{{ vector_repo_key_url }}"
     architectures: "{{ 'arm64' if ansible_facts['architecture'] == 'aarch64' else 'amd64' }}"
   register: vector_repo
+  when: not ansible_check_mode or vector_python_debian.rc == 0
+
+- name: Report deferred Vector repository check
+  ansible.builtin.debug:
+    msg: >-
+      Skipping the Vector deb822 repository check because python3-debian is
+      pending installation in check mode. A normal run installs the prerequisite
+      before managing the repository.
+  when:
+    - ansible_check_mode
+    - vector_python_debian.rc != 0
 
 - name: Remove legacy vector.list installed by setup.vector.dev
   become: true

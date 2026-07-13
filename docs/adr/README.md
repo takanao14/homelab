@@ -67,3 +67,4 @@ deleting it:
 | [0022](0022-commit-terraform-provider-lock-files.md) | Commit Terraform provider lock files | Accepted |
 | [0023](0023-openbao-ansible-userpass-login.md) | Authenticate Ansible OpenBao operations via userpass login | Accepted |
 | [0024](0024-shared-proxmox-node-inventory-for-monitoring.md) | Shared Proxmox node inventory for monitoring | Accepted |
+| [0025](0025-run-meshcentral-outside-managed-cluster.md) | Run MeshCentral outside the managed Proxmox and Kubernetes fleet | Accepted |
