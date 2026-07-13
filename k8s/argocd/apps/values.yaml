@@ -59,9 +59,6 @@ apps:
   longhorn-ui:
     enabled: false
     wave: "2"
-  meshcentral:
-    enabled: false
-    wave: "1"
   # monitoring differs structurally per environment (prd: central full stack,
   # sandbox: subset overlay), so its source path / namespace / helm settings
   # come from apps-values.yaml.

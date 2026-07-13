@@ -213,7 +213,7 @@
 - Remote Management:
     - MeshCentral:
         icon: si-intel-#0071C5
-        href: https://meshcentral.prd.butaco.net
+        href: https://meshcentral.home.butaco.net
         description: MeshCentral AMT remote control
 
 - Network:

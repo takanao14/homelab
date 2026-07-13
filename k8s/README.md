@@ -125,11 +125,9 @@ k8s/
 ├── homepage/             # Homepage dashboard (prd, sandbox)
 │   ├── {prd,sandbox}/values.yaml  # hostname / Gateway listener per environment
 │   └── chart/
-├── open-webui/           # Open WebUI values for the upstream chart (prd, AMD GPU)
-│   ├── values.yaml
-│   └── prd/values.yaml
-└── meshcentral/          # MeshCentral remote management (prd)
-    └── chart/
+└── open-webui/           # Open WebUI values for the upstream chart (prd, AMD GPU)
+    ├── values.yaml
+    └── prd/values.yaml
 ```
 
 ## Initial Cluster Bootstrap

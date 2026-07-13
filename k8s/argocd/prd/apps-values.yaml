@@ -25,8 +25,6 @@ apps:
     enabled: true
   lemonade-server:
     enabled: true
-  meshcentral:
-    enabled: true
   monitoring:
     enabled: true
     # Central kube-prometheus-stack app-of-apps (see k8s/monitoring).

@@ -24,7 +24,6 @@ homelab/
 │   ├── homepage/      # Homepage dashboard
 │   ├── lemonade-server/ # Lemonade LLM server (ROCm / AMD GPU)
 │   ├── longhorn-ui/   # Authenticated route for the sandbox Longhorn UI
-│   ├── meshcentral/   # MeshCentral remote management
 │   ├── monitoring/    # Prometheus, Grafana, exporters, and dashboards
 │   ├── ollama/        # Ollama LLM server deployment
 │   ├── open-webui/    # Open WebUI values for the upstream chart

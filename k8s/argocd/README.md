@@ -129,7 +129,6 @@ of cert-manager-config to create the Secret, then re-sync root-apps.
 | homepage | homepage | prd, sandbox |
 | lemonade-server | lemonade-server | prd |
 | longhorn-ui | longhorn-system | sandbox only |
-| meshcentral | meshcentral | prd |
 | monitoring | monitoring (argocd in prd) | prd, sandbox |
 | ollama | ollama | prd |
 | open-webui | open-webui | prd |
