@@ -1,14 +1,20 @@
 ---
 meshcentral_image: ghcr.io/ylianst/meshcentral:1.2.0-slim
 meshcentral_hostname: meshcentral.home.butaco.net
+meshcentral_reverse_proxy_address: "{{ hostvars['caddy1'].ansible_host }}"
 meshcentral_container_name: meshcentral
 meshcentral_listen_address: "0.0.0.0"
 meshcentral_listen_port: 8443
 meshcentral_container_port: 443
 meshcentral_memory_limit: 1g
+meshcentral_systemd_memory_max: 1G
 meshcentral_cpu_limit: "1.0"
+# Ubuntu's generated containers-default profile denies crun the TERM/KILL
+# signals required to stop this container. Scope the workaround to MeshCentral.
+meshcentral_apparmor_profile: unconfined
 
 meshcentral_data_root: /opt/meshcentral
+meshcentral_config_file: "{{ meshcentral_data_root }}/meshcentral-data/config.json"
 meshcentral_data_dirs:
   - meshcentral-data
   - meshcentral-files

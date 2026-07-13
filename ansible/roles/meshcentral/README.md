@@ -25,6 +25,16 @@ Deployment:
 The container is limited to 1 GiB RAM and one CPU so that a failure cannot
 starve Kea DHCP on the same recovery host.
 
+The MeshCentral container alone runs with `apparmor=unconfined`. Ubuntu's
+generated `containers-default-0.57.4` profile denies the crun TERM/KILL signal
+path on this host, leaving containers permanently in `stopping` state. Host
+services such as Kea keep their existing AppArmor confinement.
+
+The role also keeps `settings.cert` in the generated `config.json` aligned with
+`meshcentral_hostname`. The container's dynamic configuration is first-start
+generation and does not update this persisted value after a hostname change;
+a mismatch causes MeshCentral to reject the login WebSocket origin.
+
 ## Deployment
 
 Preview the host changes first:
@@ -54,3 +64,8 @@ outside the trusted LAN.
 The canonical hostname is `meshcentral.home.butaco.net`. It is outside the
 Kubernetes environment namespace and is managed by the existing Caddy and
 DNSControl home-zone workflow.
+
+The container receives an `/etc/hosts` entry for the canonical hostname using
+the `caddy1` inventory address. This lets MeshCentral retrieve the TLS-offload
+certificate from Caddy even when the recovery host itself does not use the
+internal `home.butaco.net` resolver.

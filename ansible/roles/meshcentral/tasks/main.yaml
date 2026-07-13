@@ -64,3 +64,29 @@
   when:
     - not ansible_check_mode
     - meshcentral_image_present.rc == 0 or meshcentral_image_present.rc == 1
+
+- name: Wait for MeshCentral to generate its configuration
+  become: true
+  ansible.builtin.wait_for:
+    path: "{{ meshcentral_config_file }}"
+    timeout: 30
+  when: not ansible_check_mode
+
+- name: Check whether the MeshCentral configuration exists
+  become: true
+  ansible.builtin.stat:
+    path: "{{ meshcentral_config_file }}"
+  register: meshcentral_config
+
+# DYNAMIC_CONFIG generates config.json only on first start; later hostname
+# changes do not rewrite the persisted settings.cert value. Keep it aligned
+# with the canonical URL because MeshCentral rejects mismatched WebSocket
+# origins after login.
+- name: Align the MeshCentral certificate hostname
+  become: true
+  ansible.builtin.replace:
+    path: "{{ meshcentral_config_file }}"
+    regexp: '("cert"\s*:\s*")[^"]+("\s*,)'
+    replace: '\1{{ meshcentral_hostname }}\2'
+  when: meshcentral_config.stat.exists
+  notify: Restart meshcentral

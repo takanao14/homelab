@@ -9,10 +9,12 @@ Type=simple
 Restart=always
 RestartSec=5s
 TimeoutStopSec=70s
-ExecStartPre=-/usr/bin/podman rm --force {{ meshcentral_container_name }}
+ExecStartPre=-/usr/bin/podman rm --force --time 60 {{ meshcentral_container_name }}
 ExecStart=/usr/bin/podman run --rm --name {{ meshcentral_container_name }} \
   --memory={{ meshcentral_memory_limit }} \
   --cpus={{ meshcentral_cpu_limit }} \
+  --security-opt=apparmor={{ meshcentral_apparmor_profile }} \
+  --add-host={{ meshcentral_hostname }}:{{ meshcentral_reverse_proxy_address }} \
   --publish={{ meshcentral_listen_address }}:{{ meshcentral_listen_port }}:{{ meshcentral_container_port }} \
   --env=HOSTNAME={{ meshcentral_hostname }} \
   --env=DYNAMIC_CONFIG=true \
@@ -28,7 +30,7 @@ ExecStart=/usr/bin/podman run --rm --name {{ meshcentral_container_name }} \
 ExecStop=/usr/bin/podman stop --time 60 {{ meshcentral_container_name }}
 
 # Keep a MeshCentral failure from starving Kea on this recovery host.
-MemoryMax={{ meshcentral_memory_limit }}
+MemoryMax={{ meshcentral_systemd_memory_max }}
 CPUQuota=100%
 
 [Install]
