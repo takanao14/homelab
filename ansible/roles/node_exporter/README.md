@@ -21,10 +21,12 @@ Command-line arguments are combined from three layers (all default to `[]`):
 | `node_exporter_rpi_args` | Raspberry Pi hosts | `group_vars/node_exporter_rpi.yaml` |
 | `node_exporter_lxc_args` | LXC guests | `group_vars/node_exporter_lxc.yaml` |
 
-The LXC layer disables hardware collectors (`thermal_zone`, `hwmon`,
-`thermal_throttle`): LXC guests share the host kernel and would otherwise
-re-report the host's sensors under their own instance name, duplicating
-temperature panels and hardware alerts.
+The LXC layer disables hardware collectors (`thermal_zone`, `hwmon`):
+LXC guests share the host kernel and would otherwise re-report the host's
+sensors under their own instance name, duplicating temperature panels and
+hardware alerts. Beware: an unknown `--no-collector.*` name makes
+node_exporter exit at startup, so only use names from
+`prometheus-node-exporter --help`.
 
 ## Dependencies
 
