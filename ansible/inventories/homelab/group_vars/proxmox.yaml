@@ -39,8 +39,8 @@ proxmox_simplezone_routes_map:
     segment: 192.168.70.0/24
     via: 192.168.10.15
 
-# Forward Proxmox host logs to the central Vector log collector.
-rsyslog_forward_host: "192.168.10.243"
+# Forward Proxmox host logs to the central Vector log collector
+# (rsyslog_forward_host comes from group_vars/all.yaml).
 rsyslog_forward_port: 514
 rsyslog_forward_protocol: tcp
 rsyslog_journal_input: true
@@ -78,7 +78,7 @@ proxmox_metric_server_manage_hosts:
 proxmox_metric_server_definitions:
   - id: alloy-otlp
     type: opentelemetry
-    server: 192.168.30.251
+    server: "{{ alloy_otlp_server }}"
     port: 4318
     otel-protocol: http
     otel-path: /v1/metrics

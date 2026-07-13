@@ -1,5 +1,5 @@
 ---
-loki_endpoint: "http://loki.prd.butaco.net:3100"
+# loki_endpoint comes from group_vars/all.yaml (fixed IP, no DNS dependency).
 
 vector_config:
   sources:

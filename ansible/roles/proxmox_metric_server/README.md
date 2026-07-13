@@ -29,7 +29,7 @@ proxmox_metric_server_manage_hosts:
 proxmox_metric_server_definitions:
   - id: alloy-otlp
     type: opentelemetry
-    server: 192.168.30.251
+    server: "{{ alloy_otlp_server }}"
     port: 4318
     otel-protocol: http
     otel-path: /v1/metrics

@@ -1,3 +1,11 @@
 ---
 ansible_python_interpreter: /usr/bin/python3
+
+# Central telemetry ingestion endpoints. The IPs are Cilium LB-IPAM addresses
+# pinned in k8s/monitoring/values (loki.yaml / alloy.yaml) — keep in sync.
+# Fixed IPs on purpose: log/metric shipping must not depend on DNS.
 loki_endpoint: "http://192.168.30.250:3100"
+alloy_otlp_server: "192.168.30.251"
+
+# Central Vector syslog relay (log1); rsyslog hosts forward here.
+rsyslog_forward_host: "192.168.10.243"

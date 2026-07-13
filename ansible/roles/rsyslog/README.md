@@ -12,7 +12,7 @@ Installs and configures rsyslog to forward logs to a remote Vector log collector
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `rsyslog_forward_host` | `192.168.10.243` | Destination syslog host |
+| `rsyslog_forward_host` | *(required)* | Destination syslog host; set in the inventory (`group_vars/all.yaml`) |
 | `rsyslog_forward_port` | `514` | Destination port |
 | `rsyslog_forward_protocol` | `udp` | Protocol (`udp` or `tcp`) |
 | `rsyslog_journal_input` | `false` | Read journald directly with `imjournal` and use an isolated forwarding ruleset |
