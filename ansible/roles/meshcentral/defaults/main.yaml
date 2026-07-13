@@ -1,0 +1,16 @@
+---
+meshcentral_image: ghcr.io/ylianst/meshcentral:1.2.0-slim
+meshcentral_hostname: meshcentral.home.butaco.net
+meshcentral_container_name: meshcentral
+meshcentral_listen_address: "0.0.0.0"
+meshcentral_listen_port: 8443
+meshcentral_container_port: 443
+meshcentral_memory_limit: 1g
+meshcentral_cpu_limit: "1.0"
+
+meshcentral_data_root: /opt/meshcentral
+meshcentral_data_dirs:
+  - meshcentral-data
+  - meshcentral-files
+  - meshcentral-backups
+  - meshcentral-web

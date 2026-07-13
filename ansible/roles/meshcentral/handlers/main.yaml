@@ -1,0 +1,12 @@
+---
+- name: Reload systemd
+  become: true
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart meshcentral
+  become: true
+  ansible.builtin.service:
+    name: meshcentral
+    state: restarted
+  when: not ansible_check_mode

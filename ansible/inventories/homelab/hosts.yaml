@@ -115,6 +115,10 @@ all:
       hosts:
         rpi4: null
 
+    meshcentral:
+      hosts:
+        rpi4: null
+
     prd_k8s:
       hosts:
         prd-cp1: null
@@ -200,6 +204,15 @@ all:
           hosts:
             rpi3: null
             rpi4: null
+        # Stateful LXC guests: Proxmox OTLP does not expose in-guest
+        # filesystem usage, so monitor disk-fill / inode / memory here.
+        # Hardware collectors are disabled (group_vars/node_exporter_lxc)
+        # because LXC sees the host's sensors and would duplicate them.
+        node_exporter_lxc:
+          hosts:
+            seaweedfs1: null
+            forgejo1: null
+            netbox1: null
       hosts:
         pve: null
         node1: null
@@ -211,11 +224,7 @@ all:
         # are not covered by the in-cluster node-exporter DaemonSet. Scrape them
         # host-level to monitor the control-plane node and kine DB disk.
         prd-cp1: null
-        # Stateful service guests: Proxmox OTLP does not expose in-guest
-        # filesystem usage, so monitor disk-fill / inode / memory here.
-        seaweedfs1: null
-        forgejo1: null
-        netbox1: null
+        # openbao1 is a VM (not LXC): no host sensor leakage, keep defaults.
         openbao1: null
 
     blackbox_exporter:

@@ -1,0 +1,35 @@
+[Unit]
+Description=MeshCentral remote management server
+Documentation=https://meshcentral.com/
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+TimeoutStopSec=70s
+ExecStartPre=-/usr/bin/podman rm --force {{ meshcentral_container_name }}
+ExecStart=/usr/bin/podman run --rm --name {{ meshcentral_container_name }} \
+  --memory={{ meshcentral_memory_limit }} \
+  --cpus={{ meshcentral_cpu_limit }} \
+  --publish={{ meshcentral_listen_address }}:{{ meshcentral_listen_port }}:{{ meshcentral_container_port }} \
+  --env=HOSTNAME={{ meshcentral_hostname }} \
+  --env=DYNAMIC_CONFIG=true \
+  --env=REVERSE_PROXY={{ meshcentral_hostname }} \
+  --env=REVERSE_PROXY_TLS_PORT=443 \
+  --env=NODE_ENV=production \
+  --env=TLS_OFFLOAD=true \
+  --env=PORT={{ meshcentral_container_port }} \
+{% for directory in meshcentral_data_dirs %}
+  --volume={{ meshcentral_data_root }}/{{ directory }}:/opt/meshcentral/{{ directory }} \
+{% endfor %}
+  {{ meshcentral_image }}
+ExecStop=/usr/bin/podman stop --time 60 {{ meshcentral_container_name }}
+
+# Keep a MeshCentral failure from starving Kea on this recovery host.
+MemoryMax={{ meshcentral_memory_limit }}
+CPUQuota=100%
+
+[Install]
+WantedBy=multi-user.target

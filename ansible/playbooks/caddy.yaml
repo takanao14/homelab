@@ -47,7 +47,7 @@
           - status
           - --porcelain
           - --
-          - dns-record/home-zone/dnsconfig.js
+          - dns-record/home-zone.js
         chdir: "{{ homelab_private_path }}"
       register: caddy_dnsconfig_git_status
       check_mode: false
@@ -60,7 +60,7 @@
           - git
           - add
           - --
-          - dns-record/home-zone/dnsconfig.js
+          - dns-record/home-zone.js
         chdir: "{{ homelab_private_path }}"
       when:
         - homelab_private_stat.stat.exists
@@ -75,7 +75,7 @@
           - -m
           - "sync: update caddy DNS records from ansible"
           - --
-          - dns-record/home-zone/dnsconfig.js
+          - dns-record/home-zone.js
         chdir: "{{ homelab_private_path }}"
       when:
         - homelab_private_stat.stat.exists

@@ -1,0 +1,66 @@
+---
+- name: Install Podman
+  become: true
+  ansible.builtin.apt:
+    name: podman
+    state: present
+    update_cache: true
+
+- name: Create MeshCentral data directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ meshcentral_data_root }}/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0750'
+  loop: "{{ meshcentral_data_dirs }}"
+
+- name: Check whether the MeshCentral image is present
+  become: true
+  ansible.builtin.command:
+    argv:
+      - podman
+      - image
+      - exists
+      - "{{ meshcentral_image }}"
+  register: meshcentral_image_present
+  changed_when: false
+  failed_when: meshcentral_image_present.rc not in [0, 1]
+  check_mode: false
+
+- name: Pull the MeshCentral image
+  become: true
+  ansible.builtin.command:
+    argv:
+      - podman
+      - pull
+      - "{{ meshcentral_image }}"
+  when:
+    - meshcentral_image_present.rc == 1
+    - not ansible_check_mode
+  changed_when: true
+  notify: Restart meshcentral
+
+- name: Deploy MeshCentral systemd unit
+  become: true
+  ansible.builtin.template:
+    src: meshcentral.service.j2
+    dest: /etc/systemd/system/meshcentral.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart meshcentral
+
+- name: Ensure MeshCentral is started and enabled
+  become: true
+  ansible.builtin.systemd:
+    name: meshcentral
+    state: started
+    enabled: true
+    daemon_reload: true
+  when:
+    - not ansible_check_mode
+    - meshcentral_image_present.rc == 0 or meshcentral_image_present.rc == 1

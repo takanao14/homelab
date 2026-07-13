@@ -5,6 +5,7 @@ vector_config:
       type: journald
       include_units:
         - kea-dhcp4-server
+        - meshcentral
         - ssh
         - tailscaled
   transforms:

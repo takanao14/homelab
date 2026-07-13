@@ -25,6 +25,8 @@ caddy_upstreams:
     backend: 192.168.50.31:8333
   - hostname: seaweedfs-ui.home.butaco.net
     backend: 192.168.50.31:23646
+  - hostname: meshcentral.home.butaco.net
+    backend: 192.168.10.241:8443
 
 vector_config:
   sources:

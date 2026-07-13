@@ -1,0 +1,12 @@
+---
+- name: Setup MeshCentral
+  hosts: meshcentral
+  serial: 1
+  any_errors_fatal: true
+  roles:
+    - role: timezone
+      tags: timezone
+    - role: meshcentral
+      tags: meshcentral
+    - role: vector
+      tags: vector
