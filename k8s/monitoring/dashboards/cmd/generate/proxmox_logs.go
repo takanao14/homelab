@@ -136,7 +136,7 @@ func buildProxmoxLogs() (*dashboard.Dashboard, error) {
 					LegendFormat("signals"),
 				),
 		).
-		WithRow(dashboard.NewRowBuilder("Errors and Warnings")).
+		WithRow(dashboard.NewRowBuilder("Errors & Warnings")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Error Rate by Node").

@@ -74,7 +74,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		WithVariable(
 			promDatasourceVariable(),
 		).
-		WithRow(dashboard.NewRowBuilder("dnsdist")).
+		WithRow(dashboard.NewRowBuilder("dnsdist Summary")).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("dnsdist QPS").
@@ -112,7 +112,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("Avg Latency"),
 				).Decimals(1),
 		).
-		WithRow(dashboard.NewRowBuilder("dnsdist Metrics")).
+		WithRow(dashboard.NewRowBuilder("dnsdist Traffic & Performance")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("dnsdist Query/Response Rate").
@@ -253,7 +253,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{instance}}"),
 				),
 		).
-		WithRow(dashboard.NewRowBuilder("pdns-auth")).
+		WithRow(dashboard.NewRowBuilder("pdns-auth Summary")).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("pdns-auth QPS").
@@ -279,7 +279,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("Avg Latency"),
 				).Decimals(1),
 		).
-		WithRow(dashboard.NewRowBuilder("pdns-auth Metrics")).
+		WithRow(dashboard.NewRowBuilder("pdns-auth Traffic & Performance")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("pdns-auth Query Rate").
@@ -425,7 +425,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("p99"),
 				),
 		).
-		WithRow(dashboard.NewRowBuilder("CoreDNS Metrics")).
+		WithRow(dashboard.NewRowBuilder("CoreDNS Traffic & Performance")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("CoreDNS QPS").
@@ -532,7 +532,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("Age"),
 				).Decimals(0),
 		).
-		WithRow(dashboard.NewRowBuilder("external-dns Metrics")).
+		WithRow(dashboard.NewRowBuilder("external-dns Sync & Records")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("external-dns Sync Age").

@@ -149,8 +149,8 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 				),
 		).
 
-		// Row 3: Errors and Warnings
-		WithRow(dashboard.NewRowBuilder("Errors and Warnings")).
+		// Row 3: Errors & Warnings
+		WithRow(dashboard.NewRowBuilder("Errors & Warnings")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Error Rate by Unit").

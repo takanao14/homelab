@@ -19,7 +19,7 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "dnsdist",
+      "title": "dnsdist Summary",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -175,7 +175,7 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "dnsdist Metrics",
+      "title": "dnsdist Traffic \u0026 Performance",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -609,7 +609,7 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "pdns-auth",
+      "title": "pdns-auth Summary",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -723,7 +723,7 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "pdns-auth Metrics",
+      "title": "pdns-auth Traffic \u0026 Performance",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1246,7 +1246,7 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "CoreDNS Metrics",
+      "title": "CoreDNS Traffic \u0026 Performance",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1619,7 +1619,7 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "external-dns Metrics",
+      "title": "external-dns Sync \u0026 Records",
       "gridPos": {
         "h": 1,
         "w": 24,

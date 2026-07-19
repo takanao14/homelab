@@ -65,8 +65,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 		WithVariable(
 			promDatasourceVariable(),
 		).
-
-		// Row 1: Summary KPIs — at-a-glance problem detection + period availability.
+		WithRow(dashboard.NewRowBuilder("Summary")).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("ICMP Devices Down").
@@ -109,6 +108,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 					LegendFormat("availability"),
 				),
 		).
+		WithRow(dashboard.NewRowBuilder("Current Status")).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("ICMP Status").
@@ -154,7 +154,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 					LegendFormat("{{instance}}"),
 				),
 		).
-		// Per-device availability over the dashboard time range.
+		WithRow(dashboard.NewRowBuilder("Availability")).
 		WithPanel(
 			bargauge.NewPanelBuilder().
 				Title("ICMP Availability by Device").
@@ -192,6 +192,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 					LegendFormat("{{instance}} Internal"),
 				),
 		).
+		WithRow(dashboard.NewRowBuilder("ICMP Diagnostics")).
 		WithPanel(
 			statetimeline.NewPanelBuilder().
 				Title("ICMP Status History").
@@ -221,6 +222,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 					LegendFormat("{{instance}}"),
 				),
 		).
+		WithRow(dashboard.NewRowBuilder("DNS Diagnostics")).
 		WithPanel(
 			statetimeline.NewPanelBuilder().
 				Title("DNS Status History").

@@ -52,7 +52,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc),
 		).
-		WithRow(dashboard.NewRowBuilder("Prometheus")).
+		WithRow(dashboard.NewRowBuilder("Prometheus Summary")).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Scrape Targets Up").
@@ -186,12 +186,12 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{integration}}"),
 				),
 		).
-		WithRow(dashboard.NewRowBuilder("Loki")).
+		WithRow(dashboard.NewRowBuilder("Loki Summary")).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Loki Active Streams").
 				Datasource(ds).
-				Span(4).Height(4).
+				Span(12).Height(4).
 				Unit("short").
 				Min(0).
 				Orientation(common.VizOrientationAuto).
@@ -204,7 +204,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Loki Chunk Utilization").
 				Datasource(ds).
-				Span(4).Height(4).
+				Span(12).Height(4).
 				Unit("percentunit").
 				Min(0).
 				Max(1).
@@ -214,7 +214,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("Utilization"),
 				),
 		).
-		WithRow(dashboard.NewRowBuilder("Prometheus Metrics")).
+		WithRow(dashboard.NewRowBuilder("Prometheus Performance & Storage")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Sample Ingestion Rate").
@@ -316,7 +316,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{cluster}} out of bounds"),
 				),
 		).
-		WithRow(dashboard.NewRowBuilder("Loki Metrics")).
+		WithRow(dashboard.NewRowBuilder("Loki Ingestion & Requests")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Log Ingestion Rate").

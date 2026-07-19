@@ -178,7 +178,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("Junction Temp"),
 				),
 		).
-		WithRow(dashboard.NewRowBuilder("Metrics")).
+		WithRow(dashboard.NewRowBuilder("Utilization & Resources")).
 		// gfx=graphics/compute, umc=memory controller, vcn=video codec engine
 		WithPanel(
 			timeseries.NewPanelBuilder().

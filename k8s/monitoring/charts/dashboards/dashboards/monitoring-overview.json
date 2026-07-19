@@ -19,7 +19,7 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Prometheus",
+      "title": "Prometheus Summary",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -495,7 +495,7 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Loki",
+      "title": "Loki Summary",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -521,7 +521,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
+        "w": 12,
         "x": 0,
         "y": 27
       },
@@ -563,8 +563,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 4,
+        "w": 12,
+        "x": 12,
         "y": 27
       },
       "repeatDirection": "h",
@@ -593,7 +593,7 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Prometheus Metrics",
+      "title": "Prometheus Performance \u0026 Storage",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -884,7 +884,7 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Loki Metrics",
+      "title": "Loki Ingestion \u0026 Requests",
       "gridPos": {
         "h": 1,
         "w": 24,
