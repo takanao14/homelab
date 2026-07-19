@@ -93,6 +93,69 @@ Guidelines when adding helpers:
   Yes → helper. "Depends on the panel" → keep it inline.
 - Name helpers by **intent, not shape** (`issueThresholds`, not `greenRedThresholds`).
 
+## Dashboard structure guidelines
+
+Dashboards should tell the same operational story from top to bottom: establish scope,
+show whether immediate action is required, provide diagnostic trends, and finish with
+high-cardinality detail. Organize panels in this order unless the dashboard has a
+clearer domain-specific investigation path:
+
+1. **Variables** narrow the dashboard scope (environment, cluster, node, service, or
+   datasource). Put broad selectors before dependent or narrower selectors.
+2. **Overview** shows the few current values needed to decide whether to investigate.
+   Prefer status and issue counters over capacity or activity metrics.
+3. **Diagnostics** groups related trends by operational domain, such as CPU, traffic,
+   storage, latency, or control-plane component.
+4. **Detail** provides tables, breakdowns, and logs used after a problem is identified.
+
+### Rows and section names
+
+- Use rows whenever a dashboard contains more than one conceptual section. Once rows
+  are used, place every panel under a row; do not leave an unnamed panel group at the
+  top or between named sections.
+- A small, single-purpose dashboard may omit rows only when all panels form one
+  uninterrupted investigation flow. Add rows as soon as a second conceptual section
+  appears.
+- Name a row for the **question or subject shared by its panels**, not for a chart type
+  (`Metrics`, `Charts`) or an implementation detail.
+- Use `Summary` for the first row of a single-subject dashboard when it mixes several
+  kinds of high-level signals. Examples: node health, utilization, and issue counts.
+- Use a more specific first-row name such as `Status` or `Cluster Health` when every
+  panel answers that narrower question. Do not add `Summary` mechanically.
+- For a dashboard covering multiple peer components, prefix every component section
+  consistently. Use `<Component> Summary` for its overview and descriptive names for
+  subsequent sections, such as `<Component> Traffic` or `<Component> Storage`.
+- Avoid a bare component name when the dashboard also contains additional sections for
+  that component; `Prometheus Summary` is clearer beside `Prometheus Metrics` than
+  `Prometheus` is.
+- Use concise English Title Case, preserve official product capitalization, and prefer
+  nouns or noun phrases. Use `&` for paired concepts (`Errors & Warnings`).
+
+### Panel layout
+
+- Grafana rows use a 24-column grid. Each visual line should total 24 columns; avoid
+  accidental trailing whitespace or a single narrow panel wrapping onto its own line.
+- Arrange panels by operational priority from left to right and top to bottom. Keep
+  directly comparable panels adjacent (for example, targets up/down or requests/errors).
+- Use equal widths for peers. Use unequal widths only to express a real hierarchy or to
+  give a dense visualization more reading space.
+- Prefer the standard spans `4`, `6`, `8`, `12`, and `24`. Summary stat panels normally
+  use height `3` or `4`; trend panels normally use height `8` unless their content needs
+  more space.
+- Keep one semantic group on one visual line when practical. If a group must wrap,
+  split it into balanced lines based on meaning rather than insertion order.
+- Do not shrink panels merely to force a one-line layout. Titles, legends, and values
+  must remain readable at the dashboard's expected viewport width.
+
+### Review checklist
+
+- Can an operator identify scope and health without scrolling?
+- Does every row name distinguish its contents from adjacent rows?
+- Is `Summary`, `Status`, or a component-qualified name chosen by the rules above?
+- Do grid spans total 24 on each intended line, with related panels kept together?
+- Does the section order support the path from detection to diagnosis to detail?
+- Are generated JSON files committed together with their Go definitions?
+
 ## Development
 
 ### Setup
