@@ -18,11 +18,23 @@ import (
 // (reallocated sectors, pending sectors, wear leveling, etc.). NVMe disks only
 // report the overall smartmon_device_smart_healthy flag, so they appear in the
 // health summary but not in the SATA-specific precursor panels.
+//
+// TrueNAS owns a passed-through SATA controller, so its disks never appear in
+// any node-exporter smartmon scrape; a smartctl_exporter app inside the TrueNAS
+// guest exposes smartctl_* series instead (per-disk `device` label, model via
+// the smartctl_device info metric). TrueNAS is not part of the
+// node-exporter-external job that feeds the $node/$instance variables, so its
+// queries filter by job statically and ignore the node variable.
 func buildDiskHealth() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
 	const (
 		instFilter = `instance=~"$instance"`
+		// truenasFilter selects the smartctl_exporter scrape (TrueNAS only).
+		truenasFilter = `job="scrapeConfig/monitoring/smartctl-exporter-external"`
+		// joinSmartctlModel copies the disk model from the smartctl_device info
+		// metric onto smartctl_* series so legends identify physical disks.
+		joinSmartctlModel = `* on(instance, device) group_left(model_name) smartctl_device`
 		// joinNodename copies nodename onto smartmon series so legends show hostnames.
 		// max by deduplicates node_uname_info if scraped by multiple jobs.
 		joinNodename = `* on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)`
@@ -81,9 +93,11 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		).
 		WithRow(dashboard.NewRowBuilder("Summary")).
 		// Cross-type unhealthy rollup, sourced consistently with the SMART Health
-		// panel: SATA from the smartctl health flag, NVMe from critical_warning.
-		// `or vector(0)` keeps each side at 0 (not "no data") when a node filter
-		// selects only one disk type.
+		// panel: SATA from the smartctl health flag, NVMe from critical_warning,
+		// TrueNAS from smartctl_exporter's smart_status. `or vector(0)` keeps each
+		// side at 0 (not "no data") when a node filter selects only one disk type.
+		// The TrueNAS term is intentionally outside the $instance filter (its
+		// instance is never a variable option), so it is always counted.
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Unhealthy Disks").
@@ -94,7 +108,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Orientation(common.VizOrientationAuto).
 				Thresholds(issueThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(sum(smartmon_device_smart_healthy{type="sat",` + instFilter + `} == bool 0) or vector(0)) + (sum(nvme_critical_warning{` + instFilter + `} > bool 0) or vector(0))`).
+					Expr(`(sum(smartmon_device_smart_healthy{type="sat",` + instFilter + `} == bool 0) or vector(0)) + (sum(nvme_critical_warning{` + instFilter + `} > bool 0) or vector(0)) + (sum(smartctl_device_smart_status{` + truenasFilter + `} == bool 0) or vector(0))`).
 					Instant().
 					LegendFormat("Unhealthy"),
 				),
@@ -113,7 +127,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 						{Value: nil, Color: "blue"},
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count(smartmon_device_smart_healthy{` + instFilter + `})`).
+					Expr(`(count(smartmon_device_smart_healthy{` + instFilter + `}) or vector(0)) + (count(smartctl_device_smart_status{` + truenasFilter + `}) or vector(0))`).
 					Instant().
 					LegendFormat("Disks"),
 				),
@@ -200,6 +214,11 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					Expr(`(nvme_critical_warning{` + instFilter + `} == bool 0) ` + joinNodename + ` ` + joinNvmeModel).Instant().
 					Instant().
 					LegendFormat("{{nodename}} {{device}} {{model}} (NVMe)"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`smartctl_device_smart_status{` + truenasFilter + `} ` + joinSmartctlModel).
+					Instant().
+					LegendFormat("{{instance}} {{device}} {{model_name}} (SATA)"),
 				),
 		).
 		// SATA-only failure precursors. These should sit flat at 0; any step up is
@@ -504,6 +523,104 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					LegendFormat("{{nodename}} {{device}} unsafe shutdowns"),
 				),
 		).
+		// TrueNAS disks behind the passed-through SATA controller, read by
+		// smartctl_exporter inside the guest. Overall health is covered by the
+		// shared SMART Health panel above; this row holds the SATA failure
+		// precursors and exporter diagnostics. attribute_value_type="raw"
+		// mirrors the smartmon *_raw_value series used for the other nodes.
+		WithRow(dashboard.NewRowBuilder("TrueNAS (smartctl_exporter)")).
+		// Nonzero exit status means smartctl could not read a disk: either a
+		// real failure or the disk was skipped in standby (powermode-check),
+		// in which case the other panels in this row go stale until it wakes.
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("smartctl Exit Status").
+				Description("0 = disk read OK. Nonzero means smartctl failed or the disk " +
+					"was skipped in standby; the series in this row then stop updating.").
+				Datasource(ds).
+				Span(24).Height(4).
+				GraphMode(common.BigValueGraphModeNone).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				TextMode(common.BigValueTextModeValueAndName).
+				Thresholds(issueThresholds()).
+				Mappings([]dashboard.ValueMapping{
+					{ValueMap: &dashboard.ValueMap{
+						Type: dashboard.MappingTypeValueToText,
+						Options: map[string]dashboard.ValueMappingResult{
+							"0": {Text: strPtr("OK"), Color: strPtr("green")},
+						},
+					}},
+				}).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`smartctl_device_smartctl_exit_status{` + truenasFilter + `}`).
+					Instant().
+					LegendFormat("{{instance}} {{device}}"),
+				),
+		).
+		WithPanel(
+			bargauge.NewPanelBuilder().
+				Title("Failure Precursors").
+				Datasource(ds).
+				Span(8).Height(8).
+				Orientation(common.VizOrientationHorizontal).
+				Text(diskHealthLabelText()).
+				Thresholds(issueThresholds()).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sort_desc(smartctl_device_attribute{` + truenasFilter + `,attribute_value_type="raw",attribute_name=~"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect"})`).
+					Instant().
+					LegendFormat("{{device}} {{attribute_name}}"),
+				),
+		).
+		// CRC errors warn (yellow) not alert (red), same as the smartmon panel.
+		WithPanel(
+			bargauge.NewPanelBuilder().
+				Title("UDMA CRC Errors").
+				Datasource(ds).
+				Span(8).Height(8).
+				Orientation(common.VizOrientationHorizontal).
+				Text(diskHealthLabelText()).
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "green"},
+						{Value: float64Ptr(1), Color: "yellow"},
+					})).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sort_desc(smartctl_device_attribute{` + truenasFilter + `,attribute_value_type="raw",attribute_name="UDMA_CRC_Error_Count"})`).
+					Instant().
+					LegendFormat("{{device}} {{attribute_name}}"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Power On Hours").
+				Datasource(ds).
+				Span(8).Height(8).
+				Unit("h").
+				GraphMode(common.BigValueGraphModeNone).
+				ColorMode(common.BigValueColorModeValue).
+				Orientation(common.VizOrientationHorizontal).
+				TextMode(common.BigValueTextModeValueAndName).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`(smartctl_device_power_on_seconds{` + truenasFilter + `} / 3600) ` + joinSmartctlModel).
+					Instant().
+					LegendFormat("{{device}} {{model_name}}"),
+				).Decimals(0),
+		).
+		// Trend view so a precursor stepping off zero is visible historically.
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Pending / Reallocated Sector Trend").
+				Datasource(ds).
+				Span(24).Height(8).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`smartctl_device_attribute{` + truenasFilter + `,attribute_value_type="raw",attribute_name=~"Reallocated_Sector_Ct|Current_Pending_Sector"}`).
+					LegendFormat("{{device}} {{attribute_name}}"),
+				),
+		).
 		WithRow(dashboard.NewRowBuilder("Temperature")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -523,6 +640,10 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`nvme_temperature_celsius{` + instFilter + `} ` + joinNodename).
 					LegendFormat("{{nodename}} {{device}} (NVMe)"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`smartctl_device_temperature{` + truenasFilter + `,temperature_type="current"}`).
+					LegendFormat("{{instance}} {{device}} (SATA)"),
 				),
 		).
 		Build()

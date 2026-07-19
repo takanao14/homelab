@@ -113,6 +113,12 @@ apps:
     path: k8s/monitoring/charts/amd-gpu-external
     valueFiles:
       - ../../values/amd-gpu-external.yaml
+  smartctl-exporter-external:
+    enabled: true
+    wave: "1"
+    path: k8s/monitoring/charts/smartctl-exporter-external
+    valueFiles:
+      - ../../values/smartctl-exporter-external.yaml
   dnsdist:
     enabled: true
     wave: "1"

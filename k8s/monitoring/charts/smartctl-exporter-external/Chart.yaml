@@ -1,0 +1,5 @@
+apiVersion: v2
+name: smartctl-exporter-external
+description: ScrapeConfig for smartctl_exporter on external hosts (TrueNAS)
+type: application
+version: 0.1.0

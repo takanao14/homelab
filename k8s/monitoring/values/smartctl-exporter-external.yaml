@@ -1,0 +1,12 @@
+port: 9633
+metricsPath: /metrics
+
+# name becomes the instance label (relabeled from __tmp_name); scraping still
+# connects by IP so monitoring does not depend on DNS resolution.
+# TrueNAS owns the passed-through SATA controller, so its disks are invisible
+# to the Proxmox host's smartmon collector; a smartctl_exporter app inside
+# TrueNAS is the only place their S.M.A.R.T. data can be read. See the chart
+# README for the TrueNAS-side app definition.
+targets:
+  - ip: "192.168.20.10"
+    name: "truenas"

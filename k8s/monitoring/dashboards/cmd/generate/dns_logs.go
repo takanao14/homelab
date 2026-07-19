@@ -19,6 +19,24 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 		baseJSON     = `{job="dns", host=~"$host"} | json | __error__=""`
 		queryJSON    = `{job="dns", host=~"$host"} | json | __error__="" | dnstap_operation="CLIENT_QUERY"`
 		responseJSON = `{job="dns", host=~"$host"} | json | __error__="" | dnstap_operation="CLIENT_RESPONSE"`
+		nxdomainJSON = responseJSON + ` | dns_rcode="NXDOMAIN"`
+
+		// Known-benign NXDOMAIN categories (LogQL regexes are fully anchored):
+		// reverse lookups for unregistered PTRs, Windows WPAD probes, unicast
+		// DNS-SD discovery, and search-domain suffixing of external names
+		// (k8s ndots:5 pods and DHCP clients appending home.butaco.net).
+		nxNoiseArpa   = `.+\\.arpa`
+		nxNoiseWpad   = `wpad\\..*`
+		nxNoiseDnssd  = `.*\\._dns-sd\\._udp\\..*`
+		nxNoiseSuffix = `.+\\..+\\.home\\.butaco\\.net`
+
+		// nxUnexpected is NXDOMAIN with every known-benign category removed;
+		// what remains (typos, stale configs, suspicious lookups) is the signal.
+		nxUnexpected = nxdomainJSON +
+			` | dns_qname!~"` + nxNoiseArpa + `"` +
+			` | dns_qname!~"` + nxNoiseWpad + `"` +
+			` | dns_qname!~"` + nxNoiseDnssd + `"` +
+			` | dns_qname!~"` + nxNoiseSuffix + `"`
 	)
 
 	tooltipAll := defaultTooltip()
@@ -59,14 +77,15 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
-				Title("NXDOMAIN Rate").
+				Title("Unexpected NXDOMAIN Rate").
+				Description("NXDOMAIN excluding known-benign noise (reverse lookups, WPAD, DNS-SD, search-domain suffixing). Total NXDOMAIN is in Response Code Distribution.").
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("reqps").
 				Min(0).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum(rate(` + responseJSON + ` | dns_rcode="NXDOMAIN" [5m]))`).
-					LegendFormat("nxdomain/s"),
+					Expr(`sum(rate(` + nxUnexpected + ` [5m])) or vector(0)`).
+					LegendFormat("unexpected nxdomain/s"),
 				),
 		).
 		WithPanel(
@@ -141,6 +160,44 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 					{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "orange"}},
 				}),
 		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("NXDOMAIN by Category").
+				Description("Known-benign noise categories vs. unexpected NXDOMAIN. Only the unexpected series is worth investigating.").
+				Datasource(ds).
+				Span(24).Height(8).
+				Unit("reqps").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				FillOpacity(10).
+				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
+				// Categories are mutually exclusive: DNS-SD is matched first so
+				// e.g. lb._dns-sd._udp.*.in-addr.arpa is not double-counted.
+				WithTarget(loki.NewDataqueryBuilder().
+					Expr(`sum(rate(`+nxdomainJSON+` | dns_qname=~"`+nxNoiseDnssd+`" [5m])) or vector(0)`).
+					LegendFormat("dns-sd discovery"),
+				).
+				WithTarget(loki.NewDataqueryBuilder().
+					Expr(`sum(rate(`+nxdomainJSON+` | dns_qname=~"`+nxNoiseArpa+`" | dns_qname!~"`+nxNoiseDnssd+`" [5m])) or vector(0)`).
+					LegendFormat("reverse lookup (PTR)"),
+				).
+				WithTarget(loki.NewDataqueryBuilder().
+					Expr(`sum(rate(`+nxdomainJSON+` | dns_qname=~"`+nxNoiseWpad+`" [5m])) or vector(0)`).
+					LegendFormat("wpad"),
+				).
+				WithTarget(loki.NewDataqueryBuilder().
+					Expr(`sum(rate(`+nxdomainJSON+` | dns_qname=~"`+nxNoiseSuffix+`" | dns_qname!~"`+nxNoiseDnssd+`" [5m])) or vector(0)`).
+					LegendFormat("search-domain suffix"),
+				).
+				WithTarget(loki.NewDataqueryBuilder().
+					Expr(`sum(rate(`+nxUnexpected+` [5m])) or vector(0)`).
+					LegendFormat("unexpected"),
+				).
+				WithOverride(dashboard.MatcherConfig{Id: "byName", Options: "unexpected"}, []dashboard.DynamicConfigValue{
+					{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "red"}},
+				}),
+		).
 		WithRow(dashboard.NewRowBuilder("Top Domains")).
 		WithPanel(
 			bargauge.NewPanelBuilder().
@@ -161,7 +218,8 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			bargauge.NewPanelBuilder().
-				Title("Top NXDOMAIN Queries (Last 5m)").
+				Title("Top Unexpected NXDOMAIN (Time Range)").
+				Description("Known-benign noise excluded; uses the full dashboard time range because unexpected NXDOMAIN is sparse.").
 				Datasource(ds).
 				Span(12).Height(10).
 				Unit("short").
@@ -170,7 +228,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 					Values(true).
 					Limit(10)).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sort_desc(topk(10, sum by (dns_qname) (count_over_time(` + responseJSON + ` | dns_qname != "" | dns_rcode="NXDOMAIN" [5m]))))`).
+					Expr(`sort_desc(topk(10, sum by (dns_qname) (count_over_time(` + nxUnexpected + ` | dns_qname != "" [$__range]))))`).
 					Instant(true).
 					Range(false).
 					LegendFormat("{{dns_qname}}"),

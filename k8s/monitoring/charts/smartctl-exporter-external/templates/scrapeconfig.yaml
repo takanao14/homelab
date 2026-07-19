@@ -1,0 +1,23 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: smartctl-exporter-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  # External LAN host: opt out of the default cluster-prd scrape class.
+  scrapeClass: external
+  staticConfigs:
+    {{- range .Values.targets }}
+    - targets: ["{{ .ip }}:{{ $.Values.port }}"]
+      labels:
+        __tmp_name: {{ .name | quote }}
+    {{- end }}
+  relabelings:
+    # Scrape by IP (no DNS dependency) but expose the hostname as instance.
+    - action: replace
+      sourceLabels: [__tmp_name]
+      targetLabel: instance
+  metricsPath: {{ .Values.metricsPath }}
+  scrapeInterval: 30s

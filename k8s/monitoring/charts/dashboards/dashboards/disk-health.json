@@ -34,7 +34,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "(sum(smartmon_device_smart_healthy{type=\"sat\",instance=~\"$instance\"} == bool 0) or vector(0)) + (sum(nvme_critical_warning{instance=~\"$instance\"} \u003e bool 0) or vector(0))",
+          "expr": "(sum(smartmon_device_smart_healthy{type=\"sat\",instance=~\"$instance\"} == bool 0) or vector(0)) + (sum(nvme_critical_warning{instance=~\"$instance\"} \u003e bool 0) or vector(0)) + (sum(smartctl_device_smart_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"} == bool 0) or vector(0))",
           "instant": true,
           "legendFormat": "Unhealthy",
           "range": false
@@ -89,7 +89,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(smartmon_device_smart_healthy{instance=~\"$instance\"})",
+          "expr": "(count(smartmon_device_smart_healthy{instance=~\"$instance\"}) or vector(0)) + (count(smartctl_device_smart_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"}) or vector(0))",
           "instant": true,
           "legendFormat": "Disks",
           "range": false
@@ -259,6 +259,12 @@
           "expr": "(nvme_critical_warning{instance=~\"$instance\"} == bool 0) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
           "instant": true,
           "legendFormat": "{{nodename}} {{device}} {{model}} (NVMe)",
+          "range": false
+        },
+        {
+          "expr": "smartctl_device_smart_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"} * on(instance, device) group_left(model_name) smartctl_device",
+          "instant": true,
+          "legendFormat": "{{instance}} {{device}} {{model_name}} (SATA)",
           "range": false
         }
       ],
@@ -1303,12 +1309,306 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Temperature",
+      "title": "TrueNAS (smartctl_exporter)",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 78
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "smartctl_device_smartctl_exit_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"}",
+          "instant": true,
+          "legendFormat": "{{instance}} {{device}}",
+          "range": false
+        }
+      ],
+      "title": "smartctl Exit Status",
+      "description": "0 = disk read OK. Nonzero means smartctl failed or the disk was skipped in standby; the series in this row then stop updating.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 79
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "value_and_name",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "OK",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sort_desc(smartctl_device_attribute{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",attribute_value_type=\"raw\",attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect\"})",
+          "instant": true,
+          "legendFormat": "{{device}} {{attribute_name}}",
+          "range": false
+        }
+      ],
+      "title": "Failure Precursors",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 83
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "text": {
+          "titleSize": 16
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sort_desc(smartctl_device_attribute{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",attribute_value_type=\"raw\",attribute_name=\"UDMA_CRC_Error_Count\"})",
+          "instant": true,
+          "legendFormat": "{{device}} {{attribute_name}}",
+          "range": false
+        }
+      ],
+      "title": "UDMA CRC Errors",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 83
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "text": {
+          "titleSize": 16
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "yellow"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "(smartctl_device_power_on_seconds{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"} / 3600) * on(instance, device) group_left(model_name) smartctl_device",
+          "instant": true,
+          "legendFormat": "{{device}} {{model_name}}",
+          "range": false
+        }
+      ],
+      "title": "Power On Hours",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 83
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "value_and_name",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "smartctl_device_attribute{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",attribute_value_type=\"raw\",attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector\"}",
+          "legendFormat": "{{device}} {{attribute_name}}"
+        }
+      ],
+      "title": "Pending / Reallocated Sector Trend",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 91
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Temperature",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 99
       },
       "id": 0,
       "panels": []
@@ -1323,6 +1623,10 @@
         {
           "expr": "nvme_temperature_celsius{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "legendFormat": "{{nodename}} {{device}} (NVMe)"
+        },
+        {
+          "expr": "smartctl_device_temperature{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",temperature_type=\"current\"}",
+          "legendFormat": "{{instance}} {{device}} (SATA)"
         }
       ],
       "title": "Disk Temperature",
@@ -1335,7 +1639,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 79
+        "y": 100
       },
       "repeatDirection": "h",
       "options": {

@@ -23,6 +23,8 @@ apps:
     enabled: false
   amd-gpu-external:
     enabled: false
+  smartctl-exporter-external:
+    enabled: false
   dnsdist:
     enabled: false
   pdns-auth:
