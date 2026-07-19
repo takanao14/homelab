@@ -57,7 +57,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Scrape Targets Up").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(4).
 				Unit("short").
 				Min(0).
 				Orientation(common.VizOrientationAuto).
@@ -70,7 +70,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Scrape Targets Down").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(4).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).
@@ -85,7 +85,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Dropped Notifications (5m)").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(8).Height(4).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).
@@ -100,7 +100,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("WAL Corruptions").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(8).Height(4).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).
@@ -116,7 +116,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Title("Config Reload Failures").
 				Description("kube-prometheus-stack config-reloader sidecars (Prometheus/Alertmanager) that failed to reload their config on the last change.").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(8).Height(4).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).

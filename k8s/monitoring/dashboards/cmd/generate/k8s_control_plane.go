@@ -55,13 +55,17 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Multi(true).
 				IncludeAll(true),
 		).
+		// Summary tiles are all "0 = healthy" issue counters, laid out Span(8) so the
+		// nine of them tile evenly as 3 columns x 3 rows. Panel order is the layout:
+		// each row of three is one concern — API serving, scheduling, then node and
+		// storage state. Keep additions in multiples of three, or the grid breaks.
 		WithRow(dashboard.NewRowBuilder("Summary")).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("API 5xx (5m)").
 				Description("API server responses with 5xx status codes in the last 5 minutes.").
 				Datasource(ds).
-				Span(3).Height(4).
+				Span(8).Height(3).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).
@@ -75,9 +79,9 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("API 429 (5m)").
-				Description("HTTP 429 responses indicate API priority and fairness throttling or overload.").
+				Description("HTTP 429 responses in the last 5 minutes. 429 indicates API priority and fairness throttling or overload.").
 				Datasource(ds).
-				Span(3).Height(4).
+				Span(8).Height(3).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).
@@ -93,7 +97,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Title("APF Queued").
 				Description("Current requests pending in API Priority and Fairness queues.").
 				Datasource(ds).
-				Span(3).Height(4).
+				Span(8).Height(3).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).
@@ -109,7 +113,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Title("DNS SERVFAIL (5m)").
 				Description("CoreDNS SERVFAIL responses in the last 5 minutes.").
 				Datasource(ds).
-				Span(3).Height(4).
+				Span(8).Height(3).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).
@@ -125,7 +129,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Title("Unschedulable Pods").
 				Description("Pods currently marked unschedulable.").
 				Datasource(ds).
-				Span(3).Height(4).
+				Span(8).Height(3).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).
@@ -141,7 +145,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Title("Failed Jobs").
 				Description("Jobs with failed pods in the selected namespaces.").
 				Datasource(ds).
-				Span(3).Height(4).
+				Span(8).Height(3).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).
@@ -157,7 +161,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Title("Cordoned Nodes").
 				Description("Nodes marked unschedulable.").
 				Datasource(ds).
-				Span(3).Height(4).
+				Span(8).Height(3).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).
@@ -173,7 +177,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Title("Node Pressure Conditions").
 				Description("Nodes currently reporting MemoryPressure, DiskPressure, PIDPressure, or NetworkUnavailable.").
 				Datasource(ds).
-				Span(3).Height(4).
+				Span(8).Height(3).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).
@@ -190,7 +194,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Title("PV Not Bound").
 				Description("PersistentVolumes not in the Bound phase.").
 				Datasource(ds).
-				Span(3).Height(4).
+				Span(8).Height(3).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).

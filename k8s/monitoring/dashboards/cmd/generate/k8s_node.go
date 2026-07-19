@@ -20,7 +20,10 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 	)
 
 	// joinNode copies nodename onto query results so legends show hostnames.
-	joinNode := `* on(instance) group_left(nodename) (node_uname_info{` + clusterFilter + `, ` + nodeFilter + `})`
+	// max by dedupes node_uname_info: a kernel upgrade + reboot leaves two series
+	// for the same instance within the dashboard window (differing release/version
+	// labels), which would otherwise fail the join with a many-to-many error.
+	joinNode := `* on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{` + clusterFilter + `, ` + nodeFilter + `})`
 
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
@@ -101,7 +104,9 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				JustifyMode(common.BigValueJustifyModeCenter).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// Join 'node' from kubelet with 'nodename' from node_uname_info.
-					Expr(`sum by (nodename) (kubelet_running_pods{` + clusterFilter + `} * on(node) group_left(nodename) (label_replace(node_uname_info{` + clusterFilter + `, ` + nodeFilter + `}, "node", "$1", "nodename", "(.*)")))`).
+					// max by runs before label_replace so the join sees one series per
+					// node; see joinNode above for why node_uname_info needs deduping.
+					Expr(`sum by (nodename) (kubelet_running_pods{` + clusterFilter + `} * on(node) group_left(nodename) (label_replace(max by (nodename) (node_uname_info{` + clusterFilter + `, ` + nodeFilter + `}), "node", "$1", "nodename", "(.*)")))`).
 					LegendFormat("{{nodename}}"),
 				),
 		).

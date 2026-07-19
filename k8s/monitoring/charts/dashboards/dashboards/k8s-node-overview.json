@@ -34,7 +34,7 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}[$__rate_interval]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})) * 100)",
+          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})) * 100)",
           "legendFormat": "{{nodename}}"
         }
       ],
@@ -85,7 +85,7 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "(1 - node_memory_MemAvailable_bytes{cluster=~\"$cluster\"} / node_memory_MemTotal_bytes{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}) * 100",
+          "expr": "(1 - node_memory_MemAvailable_bytes{cluster=~\"$cluster\"} / node_memory_MemTotal_bytes{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}) * 100",
           "legendFormat": "{{nodename}}"
         }
       ],
@@ -136,7 +136,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum by (nodename) (kubelet_running_pods{cluster=~\"$cluster\"} * on(node) group_left(nodename) (label_replace(node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}, \"node\", \"$1\", \"nodename\", \"(.*)\")))",
+          "expr": "sum by (nodename) (kubelet_running_pods{cluster=~\"$cluster\"} * on(node) group_left(nodename) (label_replace(max by (nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}), \"node\", \"$1\", \"nodename\", \"(.*)\")))",
           "legendFormat": "{{nodename}}"
         }
       ],
@@ -178,7 +178,7 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "count by (nodename) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+          "expr": "count by (nodename) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
           "legendFormat": "{{nodename}}"
         }
       ],
@@ -227,7 +227,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "node_memory_MemTotal_bytes{cluster=~\"$cluster\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "node_memory_MemTotal_bytes{cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}}"
         }
       ],
@@ -269,7 +269,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "(time() - node_boot_time_seconds{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "(time() - node_boot_time_seconds{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}}"
         }
       ],
@@ -341,7 +341,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}[$__rate_interval]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})) * 100)",
+          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})) * 100)",
           "legendFormat": "{{nodename}}"
         }
       ],
@@ -384,15 +384,15 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "node_load1{cluster=~\"$cluster\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "node_load1{cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} 1m"
         },
         {
-          "expr": "node_load5{cluster=~\"$cluster\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "node_load5{cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} 5m"
         },
         {
-          "expr": "node_load15{cluster=~\"$cluster\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "node_load15{cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} 15m"
         }
       ],
@@ -484,11 +484,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "(node_memory_MemTotal_bytes{cluster=~\"$cluster\"} - node_memory_MemAvailable_bytes{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "(node_memory_MemTotal_bytes{cluster=~\"$cluster\"} - node_memory_MemAvailable_bytes{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} Used"
         },
         {
-          "expr": "node_memory_MemAvailable_bytes{cluster=~\"$cluster\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "node_memory_MemAvailable_bytes{cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} Available"
         }
       ],
@@ -543,7 +543,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(node_pressure_cpu_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "rate(node_pressure_cpu_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}}"
         }
       ],
@@ -585,12 +585,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(node_pressure_memory_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "rate(node_pressure_memory_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} some",
           "refId": "Some"
         },
         {
-          "expr": "rate(node_pressure_memory_stalled_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "rate(node_pressure_memory_stalled_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} full",
           "refId": "Full"
         }
@@ -652,12 +652,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(node_pressure_io_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "rate(node_pressure_io_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} some",
           "refId": "Some"
         },
         {
-          "expr": "rate(node_pressure_io_stalled_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "rate(node_pressure_io_stalled_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} full",
           "refId": "Full"
         }
@@ -732,7 +732,7 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc((1 - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}) * 100)",
+          "expr": "sort_desc((1 - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}) * 100)",
           "instant": true,
           "legendFormat": "{{nodename}} {{mountpoint}}",
           "range": false
@@ -785,11 +785,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "(node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "(node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} {{mountpoint}} Used"
         },
         {
-          "expr": "node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} {{mountpoint}} Total"
         }
       ],
@@ -850,12 +850,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(node_disk_read_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[$__rate_interval]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "rate(node_disk_read_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} {{device}} Read",
           "refId": "Read"
         },
         {
-          "expr": "rate(node_disk_written_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[$__rate_interval]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "rate(node_disk_written_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} {{device}} Write",
           "refId": "Write"
         }
@@ -940,12 +940,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (nodename) (rate(node_network_receive_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*\"} [$__rate_interval]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+          "expr": "sum by (nodename) (rate(node_network_receive_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*\"} [$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
           "legendFormat": "{{nodename}} Rx",
           "refId": "Rx"
         },
         {
-          "expr": "sum by (nodename) (rate(node_network_transmit_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*\"}[$__rate_interval]) * on(instance) group_left(nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+          "expr": "sum by (nodename) (rate(node_network_transmit_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
           "legendFormat": "{{nodename}} Tx",
           "refId": "Tx"
         }
