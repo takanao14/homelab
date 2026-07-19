@@ -12,25 +12,25 @@ readonly KUBIE_VERSION="${KUBIE_VERSION:-0.28.0}"
 # renovate: datasource=github-releases depName=derailed/k9s
 readonly K9S_VERSION="${K9S_VERSION:-0.51.0}"
 # renovate: datasource=github-releases depName=helmfile/helmfile
-readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.7.0}"
+readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.7.1}"
 # renovate: datasource=github-releases depName=k0sproject/k0sctl
 readonly K0SCTL_VERSION="${K0SCTL_VERSION:-0.32.1}"
 # renovate: datasource=github-releases depName=getsops/sops
 readonly SOPS_VERSION="${SOPS_VERSION:-3.13.2}"
 # renovate: datasource=github-releases depName=gruntwork-io/terragrunt
-readonly TERRAGRUNT_VERSION="${TERRAGRUNT_VERSION:-1.1.0}"
+readonly TERRAGRUNT_VERSION="${TERRAGRUNT_VERSION:-1.1.1}"
 # renovate: datasource=github-releases depName=opentofu/opentofu
-readonly OPENTOFU_VERSION="${OPENTOFU_VERSION:-1.12.3}"
+readonly OPENTOFU_VERSION="${OPENTOFU_VERSION:-1.12.4}"
 # renovate: datasource=github-releases depName=helm/helm
-readonly HELM_VERSION="${HELM_VERSION:-4.2.2}"
+readonly HELM_VERSION="${HELM_VERSION:-4.2.3}"
 # renovate: datasource=github-releases depName=argoproj/argo-cd
-readonly ARGOCD_VERSION="${ARGOCD_VERSION:-3.4.4}"
+readonly ARGOCD_VERSION="${ARGOCD_VERSION:-3.4.5}"
 # renovate: datasource=github-releases depName=FiloSottile/age
 readonly AGE_VERSION="${AGE_VERSION:-1.3.1}"
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-readonly CILIUM_VERSION="${CILIUM_VERSION:-0.19.5}"
+readonly CILIUM_VERSION="${CILIUM_VERSION:-0.19.6}"
 # renovate: datasource=github-releases depName=eza-community/eza
-readonly EZA_VERSION="${EZA_VERSION:-0.23.4}"
+readonly EZA_VERSION="${EZA_VERSION:-0.23.5}"
 # renovate: datasource=github-releases depName=starship/starship
 readonly STARSHIP_VERSION="${STARSHIP_VERSION:-1.26.0}"
 # renovate: datasource=github-releases depName=rossmacarthur/sheldon
@@ -42,13 +42,23 @@ readonly KREW_VERSION="${KREW_VERSION:-0.5.0}"
 # renovate: datasource=github-releases depName=DNSControl/dnscontrol
 readonly DNSCONTROL_VERSION="${DNSCONTROL_VERSION:-4.42.0}"
 # renovate: datasource=pypi depName=ansible-core
-readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.21.1}"
+readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.21.2}"
 # renovate: datasource=pypi depName=ansible-lint
 readonly ANSIBLE_LINT_VERSION="${ANSIBLE_LINT_VERSION:-26.6.0}"
 # renovate: datasource=github-tags depName=aws/aws-cli
-readonly AWS_CLI_VERSION="${AWS_CLI_VERSION:-2.35.17}"
+readonly AWS_CLI_VERSION="${AWS_CLI_VERSION:-2.36.2}"
 # renovate: datasource=github-releases depName=rclone/rclone
-readonly RCLONE_VERSION="${RCLONE_VERSION:-1.74.3}"
+readonly RCLONE_VERSION="${RCLONE_VERSION:-1.74.4}"
+# renovate: datasource=github-releases depName=rhysd/actionlint
+readonly ACTIONLINT_VERSION="${ACTIONLINT_VERSION:-1.7.12}"
+# renovate: datasource=github-releases depName=cli/cli
+readonly GH_VERSION="${GH_VERSION:-2.96.0}"
+# renovate: datasource=github-releases depName=sharkdp/bat
+readonly BAT_VERSION="${BAT_VERSION:-0.26.1}"
+# renovate: datasource=github-releases depName=BurntSushi/ripgrep
+readonly RIPGREP_VERSION="${RIPGREP_VERSION:-15.2.0}"
+# renovate: datasource=github-releases depName=dalance/procs
+readonly PROCS_VERSION="${PROCS_VERSION:-0.14.12}"
 
 # Install location. Defaults to a per-user prefix. Set TOOL_BIN_DIR (and
 # TOOL_VERSION_CACHE_DIR) to a system-wide path such as /usr/local/bin to make
@@ -114,7 +124,7 @@ trap cleanup_tmp_paths EXIT
 # fail fast with a clear pointer rather than failing deep inside an install.
 local_preflight() {
     local missing=() cmd
-    for cmd in curl tar gzip unzip gpg git sha256sum awk install mktemp pipx; do
+    for cmd in curl tar gzip unzip gpg git find sha256sum awk install mktemp pipx; do
         command -v "$cmd" &>/dev/null || missing+=("$cmd")
     done
     if ! command -v python3.12 &>/dev/null && \
@@ -184,12 +194,23 @@ install_binary() {
     make_tmp_dir tmp_dir
     local archive_name
     archive_name="$(basename "$url")"
-    if [[ "$url" == *.tar.gz ]]; then
+    if [[ "$url" == *.tar.gz || "$url" == *.zip ]]; then
         local archive="${tmp_dir}/${archive_name}"
         curl -fsSL "$url" -o "$archive"
         [[ -n "$checksum_url" ]] && verify_sha256 "$archive" "$checksum_url" "$archive_name"
-        tar xz -C "$tmp_dir" -f "$archive"
-        install -m 0755 "$tmp_dir/${name}" "$output_file"
+        if [[ "$url" == *.tar.gz ]]; then
+            tar xz -C "$tmp_dir" -f "$archive"
+        else
+            unzip -q "$archive" -d "$tmp_dir"
+        fi
+
+        local extracted
+        extracted="$(find "$tmp_dir" -type f -name "$name" -print -quit)"
+        if [[ -z "$extracted" ]]; then
+            log_error "${name} not found in ${archive_name}"
+            exit 1
+        fi
+        install -m 0755 "$extracted" "$output_file"
     else
         local bin="${tmp_dir}/${archive_name}"
         curl -fsSL "$url" -o "$bin"
@@ -228,6 +249,36 @@ install_if_needed() {
 # ============================================================================
 # Shell Enhancement Tools
 # ============================================================================
+
+install_gh() {
+    local archive_name="gh_${GH_VERSION}_linux_${BIN_ARCH}.tar.gz"
+    install_binary "gh" \
+        "https://github.com/cli/cli/releases/download/v${GH_VERSION}/${archive_name}" \
+        "$BIN_DIR/gh" \
+        "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_checksums.txt"
+}
+
+install_bat() {
+    install_binary "bat" \
+        "https://github.com/sharkdp/bat/releases/download/v${BAT_VERSION}/bat-v${BAT_VERSION}-${ARCH}-unknown-linux-gnu.tar.gz" \
+        "$BIN_DIR/bat"
+}
+
+install_ripgrep() {
+    # x86_64 GNU archives are no longer published; the musl build is static and
+    # available for both supported architectures.
+    local archive_name="ripgrep-${RIPGREP_VERSION}-${ARCH}-unknown-linux-musl.tar.gz"
+    install_binary "rg" \
+        "https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/${archive_name}" \
+        "$BIN_DIR/rg" \
+        "https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/${archive_name}.sha256"
+}
+
+install_procs() {
+    install_binary "procs" \
+        "https://github.com/dalance/procs/releases/download/v${PROCS_VERSION}/procs-v${PROCS_VERSION}-${ARCH}-linux.zip" \
+        "$BIN_DIR/procs"
+}
 
 install_sheldon() {
     log_info "Installing sheldon ${SHELDON_VERSION}..."
@@ -524,6 +575,18 @@ install_rclone() {
 }
 
 # ============================================================================
+# GitHub Actions Tools
+# ============================================================================
+
+install_actionlint() {
+    local archive_name="actionlint_${ACTIONLINT_VERSION}_linux_${BIN_ARCH}.tar.gz"
+    install_binary "actionlint" \
+        "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${archive_name}" \
+        "$BIN_DIR/actionlint" \
+        "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_checksums.txt"
+}
+
+# ============================================================================
 # Python Tools (pipx)
 # ============================================================================
 
@@ -574,6 +637,21 @@ install_ansible_lint() {
     pipx_install "ansible-lint==${ANSIBLE_LINT_VERSION}"
 }
 
+# argcomplete is an ansible-core dependency, but pipx does not expose dependency
+# entrypoints by default. Publish only its completion generator so the post-apply
+# completion script can generate native zsh definitions for Ansible commands.
+ensure_argcomplete_generator() {
+    command -v register-python-argcomplete &>/dev/null && return
+
+    local generator="${PIPX_HOME_DIR}/venvs/ansible-core/bin/register-python-argcomplete"
+    if [[ ! -x "$generator" ]]; then
+        log_warn "register-python-argcomplete not found in the ansible-core venv"
+        return
+    fi
+
+    ln -sf "$generator" "$BIN_DIR/register-python-argcomplete"
+}
+
 # ============================================================================
 # Main
 # ============================================================================
@@ -587,6 +665,10 @@ main() {
     install_if_needed "starship" "$STARSHIP_VERSION" install_starship
     install_if_needed "direnv"   "$DIRENV_VERSION"   install_direnv
     install_if_needed "eza"      "$EZA_VERSION"      install_eza
+    install_if_needed "gh"       "$GH_VERSION"       install_gh
+    install_if_needed "bat"      "$BAT_VERSION"      install_bat
+    install_if_needed "rg"       "$RIPGREP_VERSION"  install_ripgrep
+    install_if_needed "procs"    "$PROCS_VERSION"    install_procs
 
     install_if_needed "fzf"    "$FZF_VERSION"    install_fzf
     install_if_needed "zellij" "$ZELLIJ_VERSION" install_zellij
@@ -610,9 +692,11 @@ main() {
 
     install_if_needed "aws" "$AWS_CLI_VERSION" install_aws_cli
     install_if_needed "rclone" "$RCLONE_VERSION" install_rclone
+    install_if_needed "actionlint" "$ACTIONLINT_VERSION" install_actionlint
 
     install_if_needed "ansible"      "$ANSIBLE_CORE_VERSION" install_ansible
     install_if_needed "ansible-lint" "$ANSIBLE_LINT_VERSION" install_ansible_lint
+    ensure_argcomplete_generator
 
     log_info "=== Installation completed ==="
 }
