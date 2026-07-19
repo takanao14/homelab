@@ -22,8 +22,10 @@ services:
     user: "0"
     command:
       # The boot disk is a QEMU virtual drive without S.M.A.R.T. support;
-      # only the passed-through SATA disks are worth scanning.
-      - "--smartctl.device-exclude=^/dev/sda$"
+      # only the passed-through SATA disks are worth scanning. The regex is
+      # matched against the device label with the /dev/ prefix stripped
+      # (buildDeviceLabel in smartctl_exporter), so "sda", not "/dev/sda".
+      - "--smartctl.device-exclude=^sda$"
     ports:
       - "9633:9633"
     volumes:
