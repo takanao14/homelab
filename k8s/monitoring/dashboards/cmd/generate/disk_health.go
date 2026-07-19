@@ -205,20 +205,25 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				// long window (e.g. 30d) would surface stale label combinations — NVMe
 				// device names (nvme0n1/nvme1n1) can swap across reboots, so joining
 				// historical device_info produces a device×model cross product.
+				//
+				// Legends omit the device model (unlike other panels below): with one
+				// tile per disk, the model string routinely overflows the tile width.
+				// The model is still available per-disk in the Wear & Lifetime and
+				// TrueNAS rows.
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`smartmon_device_smart_healthy{type="sat",` + instFilter + `} ` + joinNodename + ` ` + joinModel).
+					Expr(`smartmon_device_smart_healthy{type="sat",` + instFilter + `} ` + joinNodename).
 					Instant().
-					LegendFormat("{{nodename}} {{disk}} {{device_model}} (SATA)"),
+					LegendFormat("{{nodename}} {{disk}} (SATA)"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(nvme_critical_warning{` + instFilter + `} == bool 0) ` + joinNodename + ` ` + joinNvmeModel).Instant().
+					Expr(`(nvme_critical_warning{` + instFilter + `} == bool 0) ` + joinNodename).
 					Instant().
-					LegendFormat("{{nodename}} {{device}} {{model}} (NVMe)"),
+					LegendFormat("{{nodename}} {{device}} (NVMe)"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`smartctl_device_smart_status{` + truenasFilter + `} ` + joinSmartctlModel).
+					Expr(`smartctl_device_smart_status{` + truenasFilter + `}`).
 					Instant().
-					LegendFormat("{{instance}} {{device}} {{model_name}} (SATA)"),
+					LegendFormat("{{instance}} {{device}} (SATA)"),
 				),
 		).
 		// SATA-only failure precursors. These should sit flat at 0; any step up is
@@ -431,8 +436,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					}},
 				}).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`nvme_critical_warning{` + instFilter + `} ` + joinNodename + ` ` + joinNvmeModel).Instant().
-					LegendFormat("{{nodename}} {{device}} {{model}}"),
+					Expr(`nvme_critical_warning{` + instFilter + `} ` + joinNodename).Instant().
+					LegendFormat("{{nodename}} {{device}}"),
 				),
 		).
 		WithPanel(

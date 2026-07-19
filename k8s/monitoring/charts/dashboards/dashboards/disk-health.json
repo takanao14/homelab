@@ -250,21 +250,21 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "smartmon_device_smart_healthy{type=\"sat\",instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info",
+          "expr": "smartmon_device_smart_healthy{type=\"sat\",instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "instant": true,
-          "legendFormat": "{{nodename}} {{disk}} {{device_model}} (SATA)",
+          "legendFormat": "{{nodename}} {{disk}} (SATA)",
           "range": false
         },
         {
-          "expr": "(nvme_critical_warning{instance=~\"$instance\"} == bool 0) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+          "expr": "(nvme_critical_warning{instance=~\"$instance\"} == bool 0) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "instant": true,
-          "legendFormat": "{{nodename}} {{device}} {{model}} (NVMe)",
+          "legendFormat": "{{nodename}} {{device}} (NVMe)",
           "range": false
         },
         {
-          "expr": "smartctl_device_smart_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"} * on(instance, device) group_left(model_name) smartctl_device",
+          "expr": "smartctl_device_smart_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"}",
           "instant": true,
-          "legendFormat": "{{instance}} {{device}} {{model_name}} (SATA)",
+          "legendFormat": "{{instance}} {{device}} (SATA)",
           "range": false
         }
       ],
@@ -992,9 +992,9 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "nvme_critical_warning{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+          "expr": "nvme_critical_warning{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "instant": true,
-          "legendFormat": "{{nodename}} {{device}} {{model}}",
+          "legendFormat": "{{nodename}} {{device}}",
           "range": false
         }
       ],
