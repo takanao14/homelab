@@ -1,0 +1,3 @@
+# Vendoring tooling for web/index.html; not part of the packaged chart.
+web/sync.sh
+web/REVISION

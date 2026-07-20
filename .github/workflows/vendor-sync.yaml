@@ -1,13 +1,17 @@
 name: Vendor Sync Check
 
-# The vendored dotfiles installers under scripts/install/vendor/ must match
-# takanao14/dotfiles. Drift usually appears when dotfiles changes, not this
-# repo, so a weekly schedule is the primary trigger; the PR path filter only
-# guards edits to the vendored copies themselves.
+# Vendored third-party files must match their upstreams:
+#   - scripts/install/vendor/       tracks takanao14/dotfiles @ main
+#   - k8s/pdns-ui/chart/web/        tracks james-stevens/powerdns-webui @ a tag
+# Drift usually appears when the upstream changes, not this repo, so a weekly
+# schedule is the primary trigger; the PR path filters guard edits to the
+# vendored copies themselves. For the tag-pinned copy the PR path also catches
+# a Renovate ref bump that has not been followed by a re-sync.
 on:
   pull_request:
     paths:
       - "scripts/install/vendor/**"
+      - "k8s/pdns-ui/chart/web/**"
   schedule:
     - cron: "0 21 * * 0" # Monday 06:00 JST
   workflow_dispatch:
@@ -21,3 +25,7 @@ jobs:
 
       - name: Check vendored installers against dotfiles
         run: ./scripts/install/vendor/sync.sh --check
+
+      - name: Check vendored powerdns-webui against upstream
+        if: always()
+        run: ./k8s/pdns-ui/chart/web/sync.sh --check

@@ -34,5 +34,7 @@ apps:
     enabled: true
   open-webui:
     enabled: true
+  pdns-ui:
+    enabled: true
   reloader:
     enabled: true

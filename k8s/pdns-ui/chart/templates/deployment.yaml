@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pdns-ui
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: pdns-ui
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: pdns-ui
+  template:
+    metadata:
+      labels:
+        app: pdns-ui
+      annotations:
+        checksum/web: {{ include (print $.Template.BasePath "/configmap-web.yaml") . | sha256sum }}
+        checksum/nginx: {{ include (print $.Template.BasePath "/configmap-nginx.yaml") . | sha256sum }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        # The image's uid/gid. fsGroup is required: the entrypoint renders
+        # /etc/nginx/templates into the /etc/nginx/conf.d emptyDir, and without
+        # a group-writable mount it silently skips envsubst and nginx falls
+        # back to its stock config (no API proxy, no read-only guard).
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+      containers:
+        - name: nginx
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          ports:
+            - containerPort: 8080
+          env:
+            # Restrict envsubst to PDNS_* so nginx variables are left alone.
+            - name: NGINX_ENVSUBST_FILTER
+              value: "^PDNS_"
+            - name: PDNS_BACKEND
+              value: {{ .Values.pdns.backend | quote }}
+            - name: PDNS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: pdns-ui-api
+                  key: api-key
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          volumeMounts:
+            - name: web
+              mountPath: /usr/share/nginx/html
+              readOnly: true
+            - name: nginx-template
+              mountPath: /etc/nginx/templates
+              readOnly: true
+            # readOnlyRootFilesystem: the entrypoint writes the rendered
+            # template here, and nginx needs a scratch cache and pid dir.
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: web
+          configMap:
+            name: pdns-ui-web
+        - name: nginx-template
+          configMap:
+            name: pdns-ui-nginx
+        - name: nginx-conf
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

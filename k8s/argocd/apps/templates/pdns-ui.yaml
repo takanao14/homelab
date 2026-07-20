@@ -1,0 +1,30 @@
+{{- $app := index .Values.apps "pdns-ui" }}
+{{- if $app.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pdns-ui
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $app.wave | quote }}
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.repo.url }}
+    targetRevision: {{ .Values.repo.targetRevision }}
+    path: k8s/pdns-ui/chart
+    helm:
+      releaseName: pdns-ui
+      valueFiles:
+        - ../{{ include "argocd-apps.env" . }}/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: pdns-ui
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+{{- end }}

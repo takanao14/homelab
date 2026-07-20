@@ -71,6 +71,15 @@
       "addLabels": ["infra-core", "manual-review"]
     },
     {
+      "description": "powerdns-webui is vendored into the pdns-ui chart. Renovate only bumps the ref in REVISION; the vendored bytes must be refreshed by sync.sh, and vendor-sync CI fails until they are.",
+      "matchPackageNames": ["james-stevens/powerdns-webui"],
+      "automerge": false,
+      "addLabels": ["manual-review"],
+      "prBodyNotes": [
+        "Run `k8s/pdns-ui/chart/web/sync.sh` to refresh the vendored `index.html`, then re-verify the read-only behaviour documented in `k8s/pdns-ui/README.md`."
+      ]
+    },
+    {
       "description": "Never auto-merge major updates.",
       "matchUpdateTypes": ["major"],
       "automerge": false,
@@ -172,6 +181,16 @@
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?\\n\\w+: \"(?<currentValue>[^\"]+)\""
       ]
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)k8s/pdns-ui/chart/web/REVISION$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\nref: (?<currentValue>\\S+)"
+      ],
+      "versioningTemplate": "loose"
     },
     {
       "customType": "regex",

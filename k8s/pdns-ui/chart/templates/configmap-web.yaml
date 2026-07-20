@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pdns-ui-web
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: pdns-ui
+data:
+  index.html: |-
+{{ .Files.Get "web/index.html" | indent 4 }}

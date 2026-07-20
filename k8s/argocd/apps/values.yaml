@@ -79,6 +79,9 @@ apps:
       repoURL: https://helm.openwebui.com/
       chart: open-webui
       targetRevision: 15.2.0
+  pdns-ui:
+    enabled: false
+    wave: "1"
   reloader:
     enabled: false
     wave: "1"

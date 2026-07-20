@@ -1,0 +1,22 @@
+hostname: pdns-ui.prd.butaco.net
+namespace: pdns-ui
+
+gateway:
+  name: shared-gateway-envoy
+  namespace: gateway-system
+  sectionName: https
+
+image:
+  repository: nginxinc/nginx-unprivileged
+  tag: 1.31.3-alpine
+
+pdns:
+  # ns1, the hidden primary, is the only server holding the full zone data.
+  backend: 192.168.10.233:8081
+
+secret:
+  # ns1's API key, reused from external-dns rather than seeded a second time.
+  # PowerDNS auth has a single api-key with no scoping, so a separate KV entry
+  # would be the same credential with two rotation points.
+  key: k8s/external-dns/pdns
+  property: api-key

@@ -1,0 +1,5 @@
+apiVersion: v2
+name: pdns-ui
+description: Read-only PowerDNS record browser for the homelab zones
+type: application
+version: 0.1.0
