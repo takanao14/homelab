@@ -57,7 +57,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(1), Color: "yellow"},
+			{Value: new(float64(1)), Color: "yellow"},
 		})
 
 	d, err := dashboard.NewDashboardBuilder("Disk Health (S.M.A.R.T.)").
@@ -76,7 +76,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("node").
 				Label("Node").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm"}, nodename)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm"}, nodename)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -85,7 +85,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("instance").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm",nodename=~"$node"}, instance)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm",nodename=~"$node"}, instance)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Multi(true).
 				IncludeAll(true).
@@ -190,14 +190,14 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
 						{Value: nil, Color: "red"},
-						{Value: float64Ptr(1), Color: "green"},
+						{Value: new(float64(1)), Color: "green"},
 					})).
 				Mappings([]dashboard.ValueMapping{
 					{ValueMap: &dashboard.ValueMap{
 						Type: dashboard.MappingTypeValueToText,
 						Options: map[string]dashboard.ValueMappingResult{
-							"0": {Text: strPtr("FAIL"), Color: strPtr("red")},
-							"1": {Text: strPtr("OK"), Color: strPtr("green")},
+							"0": {Text: new("FAIL"), Color: new("red")},
+							"1": {Text: new("OK"), Color: new("green")},
 						},
 					}},
 				}).
@@ -340,8 +340,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
 						{Value: nil, Color: "red"},
-						{Value: float64Ptr(10), Color: "yellow"},
-						{Value: float64Ptr(20), Color: "green"},
+						{Value: new(float64(10)), Color: "yellow"},
+						{Value: new(float64(20)), Color: "green"},
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(` +
@@ -387,8 +387,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
 						{Value: nil, Color: "green"},
-						{Value: float64Ptr(80), Color: "yellow"},
-						{Value: float64Ptr(100), Color: "red"},
+						{Value: new(float64(80)), Color: "yellow"},
+						{Value: new(float64(100)), Color: "red"},
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(nvme_percentage_used_ratio{` + instFilter + `} * 100) ` + joinNodename + ` ` + joinNvmeModel).Instant().
@@ -407,8 +407,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
 						{Value: nil, Color: "red"},
-						{Value: float64Ptr(10), Color: "yellow"},
-						{Value: float64Ptr(20), Color: "green"},
+						{Value: new(float64(10)), Color: "yellow"},
+						{Value: new(float64(20)), Color: "green"},
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(nvme_available_spare_ratio{` + instFilter + `} * 100) ` + joinNodename + ` ` + joinNvmeModel).Instant().
@@ -431,7 +431,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					{ValueMap: &dashboard.ValueMap{
 						Type: dashboard.MappingTypeValueToText,
 						Options: map[string]dashboard.ValueMappingResult{
-							"0": {Text: strPtr("OK"), Color: strPtr("green")},
+							"0": {Text: new("OK"), Color: new("green")},
 						},
 					}},
 				}).
@@ -553,7 +553,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					{ValueMap: &dashboard.ValueMap{
 						Type: dashboard.MappingTypeValueToText,
 						Options: map[string]dashboard.ValueMappingResult{
-							"0": {Text: strPtr("OK"), Color: strPtr("green")},
+							"0": {Text: new("OK"), Color: new("green")},
 						},
 					}},
 				}).
@@ -589,7 +589,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
 						{Value: nil, Color: "green"},
-						{Value: float64Ptr(1), Color: "yellow"},
+						{Value: new(float64(1)), Color: "yellow"},
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(smartctl_device_attribute{` + truenasFilter + `,attribute_value_type="raw",attribute_name="UDMA_CRC_Error_Count"})`).

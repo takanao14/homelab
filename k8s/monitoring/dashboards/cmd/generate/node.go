@@ -49,7 +49,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("node").
 				Label("Node").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm"}, nodename)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm"}, nodename)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -60,7 +60,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("instance").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm",nodename=~"$node"}, instance)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm",nodename=~"$node"}, instance)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Multi(true).
 				IncludeAll(true).
@@ -84,14 +84,14 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
 						{Value: nil, Color: "red"},
-						{Value: float64Ptr(1), Color: "green"},
+						{Value: new(float64(1)), Color: "green"},
 					})).
 				Mappings([]dashboard.ValueMapping{
 					{ValueMap: &dashboard.ValueMap{
 						Type: dashboard.MappingTypeValueToText,
 						Options: map[string]dashboard.ValueMappingResult{
-							"0": {Text: strPtr("DOWN"), Color: strPtr("red")},
-							"1": {Text: strPtr("UP"), Color: strPtr("green")},
+							"0": {Text: new("DOWN"), Color: new("red")},
+							"1": {Text: new("UP"), Color: new("green")},
 						},
 					}},
 				}).
@@ -151,8 +151,8 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
 						{Value: nil, Color: "green"},
-						{Value: float64Ptr(0.7), Color: "yellow"},
-						{Value: float64Ptr(1.0), Color: "red"},
+						{Value: new(float64(0.7)), Color: "yellow"},
+						{Value: new(float64(1.0)), Color: "red"},
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(node_load1{` + instFilter + `} ` + normByCPU + `) ` + joinNodename).
@@ -174,8 +174,8 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
 						{Value: nil, Color: "red"},
-						{Value: float64Ptr(3600), Color: "yellow"},
-						{Value: float64Ptr(86400), Color: "green"},
+						{Value: new(float64(3600)), Color: "yellow"},
+						{Value: new(float64(86400)), Color: "green"},
 					}),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -382,8 +382,8 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					{ValueMap: &dashboard.ValueMap{
 						Type: dashboard.MappingTypeValueToText,
 						Options: map[string]dashboard.ValueMappingResult{
-							"0": {Text: strPtr("OK"), Color: strPtr("green")},
-							"1": {Text: strPtr("ISSUE"), Color: strPtr("red")},
+							"0": {Text: new("OK"), Color: new("green")},
+							"1": {Text: new("ISSUE"), Color: new("red")},
 						},
 					}},
 				}).

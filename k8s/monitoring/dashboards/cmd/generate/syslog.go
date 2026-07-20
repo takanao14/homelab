@@ -35,7 +35,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(1), Color: "yellow"},
+			{Value: new(float64(1)), Color: "yellow"},
 		})
 
 	d, err := dashboard.NewDashboardBuilder("Syslog").
@@ -52,7 +52,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("host").
 				Label("Host").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(host)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(host)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -62,7 +62,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("severity").
 				Label("Severity").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(severity)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(severity)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -72,7 +72,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("appname").
 				Label("App").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(appname)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(appname)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -149,7 +149,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (host) (rate(` + base + `[5m]))`).
@@ -166,7 +166,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				FillOpacity(10).
-				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
 					// Always break down across all severities, independent of the $severity filter.
@@ -200,7 +200,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				FillOpacity(10).
-				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (appname) (rate(` + baseApp + `[5m]))`).
@@ -217,7 +217,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				FillOpacity(10).
-				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 				WithTarget(loki.NewDataqueryBuilder().
 					// "* 0" tail keeps every host series present even at zero error rate.
 					Expr(`sum by (host) (rate(` + errSel + `[5m])) or sum by (host) (rate(` + base + `[5m])) * 0`).
@@ -234,7 +234,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				FillOpacity(10).
-				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (host) (rate(` + warnSel + `[5m])) or sum by (host) (rate(` + base + `[5m])) * 0`).
 					LegendFormat("{{host}}"),

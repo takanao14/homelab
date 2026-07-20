@@ -43,8 +43,8 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(0.8), Color: "yellow"},
-			{Value: float64Ptr(0.9), Color: "red"},
+			{Value: new(float64(0.8)), Color: "yellow"},
+			{Value: new(float64(0.9)), Color: "red"},
 		})
 
 	pctThresholds := capacityThresholds()
@@ -63,7 +63,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("node").
 				Label("Node").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(proxmox_node_cpustat_cpu_percent{` + job + `}, node)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(proxmox_node_cpustat_cpu_percent{` + job + `}, node)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -384,8 +384,8 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 						Mode(dashboard.ThresholdsModeAbsolute).
 						Steps([]dashboard.Threshold{
 							{Value: nil, Color: "red"},
-							{Value: float64Ptr(300), Color: "yellow"},
-							{Value: float64Ptr(3600), Color: "green"},
+							{Value: new(float64(300)), Color: "yellow"},
+							{Value: new(float64(3600)), Color: "green"},
 						}),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().

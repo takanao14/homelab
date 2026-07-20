@@ -29,7 +29,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(1), Color: "yellow"},
+			{Value: new(float64(1)), Color: "yellow"},
 		})
 
 	d, err := dashboard.NewDashboardBuilder("Service Logs").
@@ -46,7 +46,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("host").
 				Label("Host").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(host)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(host)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -56,7 +56,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("unit").
 				Label("Unit").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values({host=~"$host"}, unit)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values({host=~"$host"}, unit)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -124,7 +124,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (host) (rate(` + base + `[5m]))`).
@@ -141,7 +141,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (unit) (rate(` + base + `[5m]))`).
@@ -161,7 +161,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (unit) (rate(` + baseJSON + ` | PRIORITY =~ "[0-3]" [5m])) or sum by (unit) (rate(` + base + `[5m])) * 0`).
 					LegendFormat("{{unit}}"),
@@ -177,7 +177,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (unit) (rate(` + baseJSON + ` | PRIORITY = "4" [5m])) or sum by (unit) (rate(` + base + `[5m])) * 0`).
 					LegendFormat("{{unit}}"),

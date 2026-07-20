@@ -40,7 +40,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("prometheus_job").
 				Label("Prometheus Job").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(prometheus_build_info, job)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(prometheus_build_info, job)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc),
 		).
@@ -48,7 +48,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("loki_job").
 				Label("Loki Job").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(loki_build_info, job)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(loki_build_info, job)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc),
 		).

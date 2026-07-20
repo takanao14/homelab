@@ -40,7 +40,7 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 		WithVariable(
 			dashboard.NewCustomVariableBuilder("instance").
 				Label("Device").
-				Values(dashboard.StringOrMap{String: strPtr("bgw1,c1200")}).
+				Values(dashboard.StringOrMap{String: new("bgw1,c1200")}).
 				Multi(true).
 				IncludeAll(true),
 		).

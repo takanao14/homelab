@@ -30,7 +30,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "red"},
-			{Value: float64Ptr(1), Color: "green"},
+			{Value: new(float64(1)), Color: "green"},
 		})
 
 	// Availability thresholds: red below 99%, yellow 99–99.9%, green at/above 99.9%.
@@ -38,8 +38,8 @@ func buildUptime() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "red"},
-			{Value: float64Ptr(99), Color: "yellow"},
-			{Value: float64Ptr(99.9), Color: "green"},
+			{Value: new(float64(99)), Color: "yellow"},
+			{Value: new(float64(99.9)), Color: "green"},
 		})
 
 	// downThresholds: green at 0, red once any probe is down.
@@ -49,8 +49,8 @@ func buildUptime() (*dashboard.Dashboard, error) {
 		{ValueMap: &dashboard.ValueMap{
 			Type: dashboard.MappingTypeValueToText,
 			Options: map[string]dashboard.ValueMappingResult{
-				"0": {Text: strPtr("DOWN"), Color: strPtr("red")},
-				"1": {Text: strPtr("UP"), Color: strPtr("green")},
+				"0": {Text: new("DOWN"), Color: new("red")},
+				"1": {Text: new("UP"), Color: new("green")},
 			},
 		}},
 	}

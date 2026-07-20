@@ -39,7 +39,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("cluster").
 				Label("Cluster").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(kube_node_info, cluster)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(kube_node_info, cluster)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -49,7 +49,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("namespace").
 				Label("Namespace").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(kube_namespace_status_phase{` + clusterFilter + `}, namespace)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(kube_namespace_status_phase{` + clusterFilter + `}, namespace)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).

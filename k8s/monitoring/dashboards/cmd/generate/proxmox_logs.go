@@ -35,7 +35,7 @@ func buildProxmoxLogs() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(1), Color: "yellow"},
+			{Value: new(float64(1)), Color: "yellow"},
 		})
 
 	d, err := dashboard.NewDashboardBuilder("Proxmox Logs").
@@ -52,7 +52,7 @@ func buildProxmoxLogs() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("node").
 				Label("Node").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values({host=~"` + proxmoxHosts + `"}, host)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values({host=~"` + proxmoxHosts + `"}, host)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -63,7 +63,7 @@ func buildProxmoxLogs() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("appname").
 				Label("Service").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values({host=~"$node"}, appname)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values({host=~"$node"}, appname)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -73,7 +73,7 @@ func buildProxmoxLogs() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("severity").
 				Label("Severity").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values({host=~"$node"}, severity)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values({host=~"$node"}, severity)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -147,7 +147,7 @@ func buildProxmoxLogs() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (host) (rate(` + errSel + `[5m])) or sum by (host) (rate(` + base + `[5m])) * 0`).
 					LegendFormat("{{host}}"),
@@ -163,7 +163,7 @@ func buildProxmoxLogs() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (host) (rate(` + warnSel + `[5m])) or sum by (host) (rate(` + base + `[5m])) * 0`).
 					LegendFormat("{{host}}"),
@@ -179,7 +179,7 @@ func buildProxmoxLogs() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (appname) (rate(` + errSel + `[5m]))`).
 					LegendFormat("{{appname}}"),
@@ -196,7 +196,7 @@ func buildProxmoxLogs() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum by (appname) (rate({host=~"$node", appname=~"pve.*|corosync|qmeventd|vzdump"}[5m]))`).
 					LegendFormat("{{appname}}"),
@@ -214,7 +214,7 @@ func buildProxmoxLogs() (*dashboard.Dashboard, error) {
 				FillOpacity(10).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				SpanNulls(common.BoolOrFloat64{Bool: boolPtr(true)}).
+				SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum(rate(` + messageBase + ` |~ "(?i)(quorum.*(lost|error|fail)|corosync.*(error|fail)|cluster.*(lost|error|fail))" [5m]))`).
 					LegendFormat("Cluster / quorum"),

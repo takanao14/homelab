@@ -32,17 +32,17 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 	latencyThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
-			{Color: "green", Value: float64Ptr(0)},
-			{Color: "yellow", Value: float64Ptr(50000)},
-			{Color: "red", Value: float64Ptr(150000)},
+			{Color: "green", Value: new(float64(0))},
+			{Color: "yellow", Value: new(float64(50000))},
+			{Color: "red", Value: new(float64(150000))},
 		})
 
 	corednsLatencyThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
-			{Color: "green", Value: float64Ptr(0)},
-			{Color: "yellow", Value: float64Ptr(0.05)},
-			{Color: "red", Value: float64Ptr(0.15)},
+			{Color: "green", Value: new(float64(0))},
+			{Color: "yellow", Value: new(0.05)},
+			{Color: "red", Value: new(0.15)},
 		})
 
 	issueThresholds := issueThresholds()
@@ -51,7 +51,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(0.001), Color: "red"},
+			{Value: new(0.001), Color: "red"},
 		})
 
 	// external-dns syncs every minute; warn once a sync is a few intervals
@@ -60,8 +60,8 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(300), Color: "yellow"},
-			{Value: float64Ptr(900), Color: "red"},
+			{Value: new(float64(300)), Color: "yellow"},
+			{Value: new(float64(900)), Color: "red"},
 		})
 
 	d, err := dashboard.NewDashboardBuilder("DNS Overview").

@@ -33,7 +33,7 @@ func buildCiliumOverview() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("cluster").
 				Label("Cluster").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(cilium_endpoint_state, cluster)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(cilium_endpoint_state, cluster)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).

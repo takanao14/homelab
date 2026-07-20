@@ -46,8 +46,8 @@ func buildEnvoyGatewayOverview() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(250), Color: "yellow"},
-			{Value: float64Ptr(1000), Color: "red"},
+			{Value: new(float64(250)), Color: "yellow"},
+			{Value: new(float64(1000)), Color: "red"},
 		})
 
 	// Any sustained 5xx rate is an issue.
@@ -55,7 +55,7 @@ func buildEnvoyGatewayOverview() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(0.001), Color: "red"},
+			{Value: new(0.001), Color: "red"},
 		})
 
 	d, err := dashboard.NewDashboardBuilder("Envoy Gateway Overview").
@@ -70,7 +70,7 @@ func buildEnvoyGatewayOverview() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("cluster").
 				Label("Cluster").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(envoy_server_live, cluster)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(envoy_server_live, cluster)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).

@@ -35,7 +35,7 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("cluster").
 				Label("Cluster").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(argocd_app_info, cluster)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(argocd_app_info, cluster)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).

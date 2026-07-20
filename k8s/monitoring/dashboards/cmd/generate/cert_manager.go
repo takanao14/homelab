@@ -61,7 +61,7 @@ func buildCertManagerOverview() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("cluster").
 				Label("Cluster").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(kube_node_info, cluster)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(kube_node_info, cluster)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).

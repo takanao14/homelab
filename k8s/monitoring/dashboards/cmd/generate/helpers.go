@@ -65,7 +65,7 @@ func issueThresholds() *dashboard.ThresholdsConfigBuilder {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(1), Color: "red"},
+			{Value: new(float64(1)), Color: "red"},
 		})
 }
 
@@ -76,7 +76,7 @@ func watchdogAwareFiringAlertThresholds() *dashboard.ThresholdsConfigBuilder {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(2), Color: "red"},
+			{Value: new(float64(2)), Color: "red"},
 		})
 }
 
@@ -87,8 +87,8 @@ func capacityThresholds() *dashboard.ThresholdsConfigBuilder {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(80), Color: "yellow"},
-			{Value: float64Ptr(90), Color: "red"},
+			{Value: new(float64(80)), Color: "yellow"},
+			{Value: new(float64(90)), Color: "red"},
 		})
 }
 
@@ -99,7 +99,7 @@ func zeroLineThresholds() *dashboard.ThresholdsConfigBuilder {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "transparent"},
-			{Value: float64Ptr(0), Color: "white"},
+			{Value: new(float64(0)), Color: "white"},
 		})
 }
 
@@ -108,16 +108,4 @@ func zeroLineThresholds() *dashboard.ThresholdsConfigBuilder {
 func zeroLineStyle() *common.GraphThresholdsStyleConfigBuilder {
 	return common.NewGraphThresholdsStyleConfigBuilder().
 		Mode(common.GraphThresholdsStyleModeLine)
-}
-
-func strPtr(s string) *string {
-	return &s
-}
-
-func float64Ptr(f float64) *float64 {
-	return &f
-}
-
-func boolPtr(b bool) *bool {
-	return &b
 }

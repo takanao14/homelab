@@ -56,7 +56,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("host").
 				Label("Host").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: strPtr(`label_values({job="dns"}, host)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values({job="dns"}, host)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).

@@ -46,7 +46,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Label("Cluster").
 				Datasource(ds).
 				// Use node_uname_info as it is present on both k8s and external nodes.
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(node_uname_info, cluster)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(node_uname_info, cluster)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -57,7 +57,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Label("Node").
 				Datasource(ds).
 				// We prefer 'nodename' as it is the most consistent label across node_exporter metrics.
-				Query(dashboard.StringOrMap{String: strPtr(`label_values(node_uname_info{` + clusterFilter + `}, nodename)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(node_uname_info{` + clusterFilter + `}, nodename)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -152,8 +152,8 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
 						{Value: nil, Color: "red"},
-						{Value: float64Ptr(3600), Color: "yellow"},
-						{Value: float64Ptr(86400), Color: "green"},
+						{Value: new(float64(3600)), Color: "yellow"},
+						{Value: new(float64(86400)), Color: "green"},
 					}),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -227,7 +227,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 		).
 		// PSI: fraction of time at least one task was stalled ("some") or all
 		// tasks were stalled ("full") waiting on the resource. CPU has no "full"
-		// series since the kernel doesn't track fully-stalled CPU time.
+		// series since the kernel doesn't track fully stalled CPU time.
 		WithRow(dashboard.NewRowBuilder("Pressure (PSI)")).
 		WithPanel(
 			timeseries.NewPanelBuilder().

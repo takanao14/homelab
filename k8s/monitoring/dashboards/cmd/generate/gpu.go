@@ -22,8 +22,8 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(80), Color: "yellow"},
-			{Value: float64Ptr(95), Color: "red"},
+			{Value: new(float64(80)), Color: "yellow"},
+			{Value: new(float64(95)), Color: "red"},
 		})
 
 	vramThresholds := capacityThresholds()
@@ -32,8 +32,8 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(120), Color: "yellow"},
-			{Value: float64Ptr(150), Color: "red"},
+			{Value: new(float64(120)), Color: "yellow"},
+			{Value: new(float64(150)), Color: "red"},
 		})
 
 	// Edge temperature thresholds (°C): normal < 85, warm < 100, hot >= 100.
@@ -41,8 +41,8 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(85), Color: "yellow"},
-			{Value: float64Ptr(100), Color: "red"},
+			{Value: new(float64(85)), Color: "yellow"},
+			{Value: new(float64(100)), Color: "red"},
 		})
 
 	// Junction (hotspot) temperature is expected to run hotter than edge temperature.
@@ -50,8 +50,8 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "green"},
-			{Value: float64Ptr(95), Color: "yellow"},
-			{Value: float64Ptr(105), Color: "red"},
+			{Value: new(float64(95)), Color: "yellow"},
+			{Value: new(float64(105)), Color: "red"},
 		})
 
 	issueThresholds := issueThresholds()

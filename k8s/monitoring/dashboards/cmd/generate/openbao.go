@@ -31,7 +31,7 @@ func buildOpenbaoOverview() (*dashboard.Dashboard, error) {
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
 			{Value: nil, Color: "red"},
-			{Value: float64Ptr(1), Color: "green"},
+			{Value: new(float64(1)), Color: "green"},
 		})
 
 	d, err := dashboard.NewDashboardBuilder("OpenBao Overview").
@@ -54,8 +54,8 @@ func buildOpenbaoOverview() (*dashboard.Dashboard, error) {
 					{ValueMap: &dashboard.ValueMap{
 						Type: dashboard.MappingTypeValueToText,
 						Options: map[string]dashboard.ValueMappingResult{
-							"0": {Text: strPtr("DOWN"), Color: strPtr("red")},
-							"1": {Text: strPtr("UP"), Color: strPtr("green")},
+							"0": {Text: new("DOWN"), Color: new("red")},
+							"1": {Text: new("UP"), Color: new("green")},
 						},
 					}},
 				}).
@@ -78,8 +78,8 @@ func buildOpenbaoOverview() (*dashboard.Dashboard, error) {
 					{ValueMap: &dashboard.ValueMap{
 						Type: dashboard.MappingTypeValueToText,
 						Options: map[string]dashboard.ValueMappingResult{
-							"0": {Text: strPtr("Sealed"), Color: strPtr("red")},
-							"1": {Text: strPtr("Unsealed"), Color: strPtr("green")},
+							"0": {Text: new("Sealed"), Color: new("red")},
+							"1": {Text: new("Unsealed"), Color: new("green")},
 						},
 					}},
 				}).
@@ -102,8 +102,8 @@ func buildOpenbaoOverview() (*dashboard.Dashboard, error) {
 					{ValueMap: &dashboard.ValueMap{
 						Type: dashboard.MappingTypeValueToText,
 						Options: map[string]dashboard.ValueMappingResult{
-							"0": {Text: strPtr("Standby"), Color: strPtr("yellow")},
-							"1": {Text: strPtr("Active"), Color: strPtr("green")},
+							"0": {Text: new("Standby"), Color: new("yellow")},
+							"1": {Text: new("Active"), Color: new("green")},
 						},
 					}},
 				}).
