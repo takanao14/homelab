@@ -7,9 +7,6 @@ terraform {
 }
 
 locals {
-  # env.hcl is read from this directory (not the parent): this stack lives in
-  # the prd cluster tree but the VM is placed on node4, so it carries its own
-  # host binding (see also .envrc, which sources the node4 secrets).
   env    = read_terragrunt_config("${get_terragrunt_dir()}/env.hcl")
   common = read_terragrunt_config(find_in_parent_folders("common.hcl"))
 
@@ -17,20 +14,25 @@ locals {
     dns_servers = local.common.locals.dns_internal
     dns_domain  = local.common.locals.dns_domain
   })
+
 }
 
 inputs = {
   vms = {
-    "k0s-cp1" = merge(local.base_vars, {
-      cores  = 2
-      memory = 4096
-      bridge = local.common.locals.node4.net60.bridge
-      ipv4gw = local.common.locals.node4.net60.ipv4gw
-      ipv4   = "192.168.60.11/24"
+    "k0s-worker2" = merge(local.base_vars, {
+      # Leave the node5 host with ~2 threads and ~3 GiB of memory.
+      cores  = 10
+      memory = 28672
+      bridge = local.common.locals.node5.net70.bridge
+      ipv4gw = local.common.locals.node5.net70.ipv4gw
+      ipv4   = "192.168.70.13/24"
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
-          size    = 40
+          size    = 64
           file_id = local.env.locals.os_image
+        })
+        scsi1 = merge(local.env.locals.disk_defaults, {
+          size = 300
         })
       }
     })

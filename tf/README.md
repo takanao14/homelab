@@ -21,7 +21,7 @@ tf/
 ├── .env/
 │   ├── secrets.env.sample          # Secret template
 │   ├── secrets.common.enc.env      # SOPS-encrypted shared secrets (committed)
-│   └── secrets.{node1,node2,node3,node4,pve}.enc.env  # SOPS-encrypted per-host secrets (committed)
+│   └── secrets.{node1,node2,node3,node4,node5,pve}.enc.env  # SOPS-encrypted per-host secrets (committed)
 ├── modules/
 │   ├── proxmox-vm/                 # Proxmox VM module
 │   ├── proxmox-container/          # Proxmox LXC container module
@@ -30,12 +30,12 @@ tf/
 │   ├── images.hcl                  # Stock cloud image definitions (download URLs)
 │   ├── base.hcl                    # Shared stack config (module source, inputs)
 │   ├── run-all.sh                  # Download images to all nodes (serial, per-node creds)
-│   └── node1|node2|node3|node4|pve/  # Per host: thin terragrunt.hcl + node.hcl (node_name)
+│   └── node1|node2|node3|node4|node5|pve/  # Per host: thin terragrunt.hcl + node.hcl (node_name)
 ├── customimage/
 │   ├── images.hcl                  # Custom image definitions (SeaweedFS cloud-images URLs)
 │   ├── base.hcl                    # Shared stack config (module source, checksum pinning)
 │   ├── run-all.sh                  # -> ../cloudimage/run-all.sh (symlink, shared)
-│   └── node1|node2|node3|node4|pve/  # Per host: thin terragrunt.hcl + node.hcl (node_name, image_keys)
+│   └── node1|node2|node3|node4|node5|pve/  # Per host: thin terragrunt.hcl + node.hcl (node_name, image_keys)
 ├── vm/                             # Host-first: vm/<host>/<service> (non-k0s VMs)
 │   ├── pve/
 │   │   ├── env.hcl                 # pve VM defaults (storage: local-zfs, lab VMs: on_boot=false)
@@ -54,6 +54,7 @@ tf/
 │   ├── prd/
 │   │   ├── env.hcl                 # Default host binding: node1 (storage: data-nvme)
 │   │   ├── workers-node1/          # worker1 @ node1
+│   │   ├── workers-node5/          # worker2 @ node5 — own env.hcl + .envrc (host override)
 │   │   ├── cp1/                    # k0s controller @ node4 — own env.hcl + .envrc (host override)
 │   │   └── gpuvm/                  # GPU worker @ pve — own env.hcl + .envrc (host override)
 │   └── sandbox/
@@ -92,6 +93,7 @@ sops edit tf/.env/secrets.node1.enc.env
 sops edit tf/.env/secrets.node2.enc.env
 sops edit tf/.env/secrets.node3.enc.env
 sops edit tf/.env/secrets.node4.enc.env
+sops edit tf/.env/secrets.node5.enc.env
 sops edit tf/.env/secrets.pve.enc.env
 ```
 

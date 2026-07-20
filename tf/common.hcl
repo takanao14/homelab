@@ -47,6 +47,17 @@ locals {
     }
   }
 
+  node5 = {
+    net10 = {
+      bridge = "vmbr0"
+      ipv4gw = "192.168.10.1"
+    }
+    net70 = {
+      bridge = "vnets70"
+      ipv4gw = "192.168.70.1"
+    }
+  }
+
   pve = {
     net10 = {
       bridge = "vmbr0"

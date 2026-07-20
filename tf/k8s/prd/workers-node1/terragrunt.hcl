@@ -20,8 +20,6 @@ locals {
 inputs = {
   vms = {
     "k0s-worker1" = merge(local.base_vars, {
-      # node1 hosts only this worker since the CP moved to node4 (see cp1),
-      # so its freed 2 vCPU / 4GB are reclaimed here. Sized to leave the PVE
       # host ~2 threads and ~3GB on a 12-thread / 32GB node1.
       cores  = 10
       memory = 28672

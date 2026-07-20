@@ -20,9 +20,7 @@ locals {
 }
 
 # prd GPU worker (ADR-0019), moved here from tf/vm/dev/gpuvm as part of the
-# tf tree reorg: k0s node VMs live under tf/k8s/<cluster>. Do NOT apply this
-# stack before its state has been migrated from vm/dev/gpuvm (see
-# docs/plans/tf-directory-reorg.md), or it will try to create a duplicate VM.
+# tf tree reorg: k0s node VMs live under tf/k8s/<cluster>.
 inputs = {
   vms = {
     "gpuvm1" = merge(local.base_vars, {
