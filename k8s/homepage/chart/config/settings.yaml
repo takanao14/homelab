@@ -17,7 +17,7 @@ layout:
     columns: 3
   DNS:
     style: row
-    columns: 5
+    columns: 6
   Infrastructure:
     style: row
     columns: 2
