@@ -50,6 +50,8 @@ all:
       ansible_host: 192.168.60.11
     prd-worker1:
       ansible_host: 192.168.30.12
+    prd-worker2:
+      ansible_host: 192.168.70.13
     openbao1:
       ansible_host: 192.168.40.30
     seaweedfs1:
@@ -123,6 +125,7 @@ all:
       hosts:
         prd-cp1: null
         prd-worker1: null
+        prd-worker2: null
     sandbox_k8s:
       hosts:
         sandbox-cp1: null
