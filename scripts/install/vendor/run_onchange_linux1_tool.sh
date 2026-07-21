@@ -4,7 +4,7 @@ set -euo pipefail
 [[ "$(uname)" == "Linux" ]] || exit 0
 
 # renovate: datasource=github-releases depName=junegunn/fzf
-readonly FZF_VERSION="${FZF_VERSION:-0.74.0}"
+readonly FZF_VERSION="${FZF_VERSION:-0.74.1}"
 # renovate: datasource=github-releases depName=zellij-org/zellij
 readonly ZELLIJ_VERSION="${ZELLIJ_VERSION:-0.44.3}"
 # renovate: datasource=github-releases depName=sbstp/kubie

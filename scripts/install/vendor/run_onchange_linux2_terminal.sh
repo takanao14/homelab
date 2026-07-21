@@ -4,7 +4,7 @@ set -euo pipefail
 [[ "$(uname)" == "Linux" ]] || exit 0
 
 # renovate: datasource=github-releases depName=kovidgoyal/kitty
-readonly KITTY_VERSION="${KITTY_VERSION:-0.47.4}"
+readonly KITTY_VERSION="${KITTY_VERSION:-0.48.0}"
 
 # Install location. Defaults to a per-user prefix. Override TOOL_BIN_DIR /
 # TOOL_KITTY_PREFIX / TOOL_APPS_DIR / TOOL_VERSION_CACHE_DIR with system-wide
