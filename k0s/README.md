@@ -15,6 +15,7 @@ Scripts for managing the k0s cluster lifecycle using k0sctl and Helmfile.
 ```
 k0s/
 ├── create_cluster.sh              # Entry point: ./create_cluster.sh <env> <command>
+├── remove-known-hosts.sh          # Remove stale SSH host keys for every node in an environment
 ├── template_lib.sh                # Shared library: k0sctl config generation and cluster management logic
 ├── helmfile.yaml.gotmpl           # Default Helm release definitions (cilium / openebs or longhorn / cilium-config)
 ├── env/
@@ -88,9 +89,19 @@ K0S_SSH_USER=ubuntu ./create_cluster.sh prd config
 
 # Reset the cluster
 ./create_cluster.sh sandbox reset
+
+# Remove stale host keys after recreating all cluster VMs
+./remove-known-hosts.sh sandbox
 ```
 
 Kubeconfig is written to `~/.kube/<env>.yaml` (e.g. `~/.kube/prd.yaml`, `~/.kube/sandbox.yaml`).
+
+When cluster VMs are recreated with the same IP addresses, run
+`remove-known-hosts.sh` before `create_cluster.sh apply`. The script reads all
+controller, worker, and optional GPU worker addresses from the selected
+environment file and removes their entries (including hashed entries) from
+`~/.ssh/known_hosts` using `ssh-keygen -R`. Set `KNOWN_HOSTS_FILE` to target a
+different file.
 
 ## Cluster Architecture
 
