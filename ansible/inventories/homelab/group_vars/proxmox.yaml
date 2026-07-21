@@ -6,17 +6,15 @@ sysctl_settings:
   # swaps under genuine memory pressure. See roles/sysctl/README.md.
   vm.swappiness: 10
 
-# Proxmox ships chrony by default, so the chrony role only repoints its config
-# at the router: never (re)install the package, and never touch the systemd
-# state of timesyncd (it already yielded to chrony — masking/disabling it here
-# would be needless surgery on the hypervisor).
+# Proxmox ships chrony by default, so manage its NTP sources and service without
+# reinstalling the package or changing the systemd-timesyncd service state.
 chrony_install: false
 chrony_manage_timesyncd: false
 
 # Static route source of truth for per-node Proxmox SDN SimpleZone segments.
 # Each Proxmox host owns one routed SimpleZone behind its management-LAN address.
 # The proxmox_simplezone_routes role installs routes to every *other* segment on
-# each node, avoiding IX2106 hairpinning for SimpleZone-to-SimpleZone traffic.
+# each node, avoiding router hairpinning for SimpleZone-to-SimpleZone traffic.
 proxmox_simplezone_routes_interface: vmbr0
 proxmox_simplezone_routes_file: /etc/network/interfaces.d/ansible-simplezone-routes
 proxmox_simplezone_routes_map:

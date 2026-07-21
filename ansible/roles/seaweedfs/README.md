@@ -66,29 +66,6 @@ for a single-node homelab backend.
 | `seaweedfs_backup_schedule` | `*:0/15` | systemd `OnCalendar` sync interval |
 | `seaweedfs_backup_rclone_config` | `/etc/seaweedfs/rclone.conf` | rclone config path |
 
-## Post-install: provisioning the Terraform state bucket
-
-The role creates the public download buckets listed in `seaweedfs_public_buckets`
-(`firmware`, `cloud-images`, etc.). The Terraform state bucket is intentionally
-left as a post-install step until the migration target is decided. Once ready,
-create the bucket and enable versioning with any S3 client, e.g. the AWS CLI
-pointed at the gateway:
-
-```bash
-export AWS_ACCESS_KEY_ID=<seaweedfs_s3_access_key>
-export AWS_SECRET_ACCESS_KEY=<seaweedfs_s3_secret_key>
-ENDPOINT=http://<host>:8333
-
-aws --endpoint-url "$ENDPOINT" s3api create-bucket --bucket homelab-terraform-state
-aws --endpoint-url "$ENDPOINT" s3api put-bucket-versioning \
-  --bucket homelab-terraform-state \
-  --versioning-configuration Status=Enabled
-```
-
-Then point `tf/root.hcl` at the S3 backend. As with any non-AWS S3 endpoint, set
-`skip_s3_checksum = true`, `skip_credentials_validation`, `skip_region_validation`,
-and `skip_requesting_account_id`, plus `use_lockfile = true` for native locking.
-
 ## State backup (R2 -> SeaweedFS)
 
 The decided topology is **Cloudflare R2 as the primary** Terraform state backend

@@ -2,27 +2,24 @@
 # Non-secret SeaweedFS configuration. The S3 access/secret key live in
 # seaweedfs.sops.yaml.
 #
-# The role only stands the server up. Creating the Terraform state bucket and
-# enabling versioning is a post-install step, deferred until the migration
-# target is decided (see roles/seaweedfs/README.md).
-#
-# Override the advertised address here if the host has multiple interfaces:
-# seaweedfs_ip: "192.168.x.y"
-seaweedfs_ip: "{{ ansible_facts['default_ipv4']['address'] }}"
+# The role also creates public buckets and manages the admin UI and R2 backup
+# timer. The versioned backup destination bucket remains a one-time post-install
+# step (see roles/seaweedfs/README.md).
 
-# Public-download buckets (absorbed from Garage). Anonymous clients get Read-only
+# Public-download buckets. Anonymous clients get Read-only
 # (no List) on these; served over HTTPS via the central Caddy at
 # https://s3.home.butaco.net/<bucket>/<file>. The seaweedfs role creates these
 # buckets with the Admin identity.
-#   firmware     - router / PC firmware images (in use)
-#   cloud-images - custom image distribution (future; empty for now)
+#   firmware     - router / PC firmware images
+#   cloud-images - custom image distribution
 seaweedfs_public_buckets:
   - firmware
   - cloud-images
 
-# Upload identity for packer/push.sh. The script disables S3 multipart upload,
-# and this identity gets object-level S3 actions without Admin/IAM privileges.
-# SeaweedFS 4.37 rejects PutObject when these actions are bucket-scoped.
+# Upload identity for packer/push.sh. SeaweedFS 4.37 rejects PutObject when these
+# actions are bucket-scoped, so they currently apply to every bucket. This is
+# broader than the intended cloud-images scope, but excludes Admin/IAM actions.
+# The script disables S3 multipart upload to keep the required actions minimal.
 # Credentials live in seaweedfs.sops.yaml.
 seaweedfs_s3_extra_identities:
   - name: imagebuilder

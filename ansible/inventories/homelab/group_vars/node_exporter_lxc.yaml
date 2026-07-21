@@ -7,10 +7,7 @@
 # node-overview Temperature panels. Hardware metrics for the physical node
 # are already scraped from the Proxmox host itself.
 #
-# NOTE: an unknown --no-collector flag makes node_exporter exit at startup
-# (kingpin rejects it), taking the whole exporter down. Only use collector
-# names listed in `prometheus-node-exporter --help`. In particular there is
-# NO "thermal_throttle" collector: node_cpu_*_throttles_total come from the
+# NOTE: node_cpu_*_throttles_total come from the
 # "cpu" collector (sysfs), which cannot be disabled without losing
 # container CPU usage from lxcfs-virtualized /proc/stat.
 node_exporter_lxc_args:
