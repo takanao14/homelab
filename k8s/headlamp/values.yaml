@@ -1,15 +1,5 @@
 headlamp:
   namespaceOverride: headlamp
-  # Resource reservations. Without requests this runs as BestEffort, invisible
-  # to the scheduler and first to be evicted under node memory pressure.
-  #
-  # Requests only, no limits — see "Resource Requests" in k8s/README.md.
-  # Sizing basis: 7-day observed usage, mean 57Mi and high-water 111Mi, p95 CPU
-  # 0.3m.
-  resources:
-    requests:
-      cpu: 10m
-      memory: 72Mi
   httpRoute:
     parentRefs:
       - group: gateway.networking.k8s.io
