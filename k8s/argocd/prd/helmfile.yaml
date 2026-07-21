@@ -26,3 +26,19 @@ releases:
               echo "ERROR: wrong cluster — expected prd-homelab, got: $ctx" >&2
               exit 1
             fi
+
+            # This helmfile is for initial bootstrap only. Once root-apps is
+            # applied, Argo CD self-manages this release (see apps/templates/
+            # argocd.yaml) and applies with ServerSideApply, so every resource
+            # a later chart version adds is created without Helm ownership
+            # annotations. Re-running helm here then aborts on the first such
+            # resource: "invalid ownership metadata; missing key
+            # meta.helm.sh/release-name".
+            if [[ "${ARGOCD_BOOTSTRAP_FORCE:-}" != "1" ]] \
+              && kubectl -n argocd get application argocd >/dev/null 2>&1; then
+              echo "ERROR: Argo CD already self-manages this release (Application/argocd exists)." >&2
+              echo "       helmfile is for initial bootstrap only. To change values, commit them" >&2
+              echo "       and let Argo CD sync — see k8s/argocd/README.md." >&2
+              echo "       Set ARGOCD_BOOTSTRAP_FORCE=1 only to deliberately re-run bootstrap." >&2
+              exit 1
+            fi

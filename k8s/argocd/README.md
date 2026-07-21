@@ -40,6 +40,11 @@ argocd/
 
 ArgoCD is initially deployed using helmfile, and subsequently self-manages itself.
 
+> **helmfile is for bootstrap only — never run `helmfile apply` against a
+> cluster that already runs ArgoCD.** Once `root-apps.yaml` is applied, the
+> `argocd` Application takes over this release and re-running helmfile fails
+> (see [Changing values](#changing-values) below).
+
 ```bash
 # prd environment
 cd k8s/argocd/prd
@@ -49,10 +54,34 @@ helmfile apply
 kubectl apply -f k8s/argocd/prd/root-apps.yaml
 ```
 
-A helmfile hook will interrupt the deployment if the context of the target cluster is incorrect.
+Two helmfile hooks guard this step: one interrupts the deployment if the target
+cluster context is wrong, the other if ArgoCD already self-manages the release.
+The second can be overridden with `ARGOCD_BOOTSTRAP_FORCE=1`, which should only
+be needed when deliberately re-bootstrapping.
 
 For sandbox, use `k8s/argocd/sandbox`. It intentionally exposes ArgoCD over
 HTTP only and does not install cert-manager.
+
+### Changing values
+
+After bootstrap, `values-common.yaml` and `<env>/values.yaml` are read by
+ArgoCD straight from git. **Commit and push — that is the whole apply step.**
+The `argocd` Application has `selfHeal: true` and syncs on its own.
+
+Running `helmfile apply` instead fails with:
+
+```
+invalid ownership metadata; annotation validation error:
+missing key "meta.helm.sh/release-name"
+```
+
+ArgoCD applies with `ServerSideApply=true` and does not write Helm's ownership
+annotations, so every resource introduced by a chart version newer than the
+bootstrap one exists without them. Helm refuses to adopt those resources into
+its release. The Helm release record therefore stops at the bootstrap version
+while the live cluster tracks the chart version in `apps/values.yaml`; this
+divergence is expected, not a fault to repair. A fresh-cluster bootstrap is
+unaffected because no conflicting resources exist yet.
 
 ## Secrets Management
 
