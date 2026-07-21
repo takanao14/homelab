@@ -1,5 +1,21 @@
 headlamp:
   namespaceOverride: headlamp
+  # Resource reservations. Without requests this runs as BestEffort, invisible
+  # to the scheduler and first to be evicted under node memory pressure.
+  #
+  # Sizing basis: 7-day observed usage, mean 57Mi and high-water 111Mi, p95 CPU
+  # 0.3m. The figures come from container_memory_max_usage_bytes rather than
+  # container_memory_working_set_bytes: the working set is sampled every 30s and
+  # misses spikes between scrapes, which is how an earlier limit on the Argo CD
+  # application controller ended up far too low. The limit here is set well
+  # above high-water for the same reason. CPU carries requests only, to avoid
+  # CFS throttling on an otherwise idle node.
+  resources:
+    requests:
+      cpu: 10m
+      memory: 72Mi
+    limits:
+      memory: 256Mi
   httpRoute:
     parentRefs:
       - group: gateway.networking.k8s.io
