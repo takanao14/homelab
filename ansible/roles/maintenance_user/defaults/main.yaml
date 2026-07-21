@@ -1,5 +1,4 @@
 ---
-# Defaults for maintenance_user role
 maintenance_user: >- # noqa var-naming[no-role-prefix]
   {{ lookup('env', 'MAINTENANCE_USER')
      | default(lookup('vars', 'MAINTENANCE_USER', default='admin'), true) }}

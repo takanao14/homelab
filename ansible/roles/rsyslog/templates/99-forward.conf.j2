@@ -1,5 +1,5 @@
-## Managed by Ansible - forward all logs to the central log collector
-## RFC 5424 format with UTC timestamps for reliable parsing in Vector
+# Managed by Ansible - forward all logs to the central log collector
+# RFC 5424 format with UTC timestamps for reliable parsing in Vector
 template(name="ForwardRFC5424UTC" type="string"
   string="<%PRI%>1 %TIMESTAMP:::date-rfc3339% %HOSTNAME% %APP-NAME% %PROCID% %MSGID% %STRUCTURED-DATA% %MSG%\n")
 
@@ -26,18 +26,18 @@ action(
 {%- endmacro %}
 
 {% if rsyslog_journal_input %}
-## Read journald directly and forward through a dedicated ruleset, so journal
-## entries bypass the default local-file rules (imuxsock keeps writing local
-## files): no duplicate processing, and remote-forwarding failures stay
-## isolated from Proxmox services. Disk-assisted memory queue (LinkedList) keeps
-## steady-state I/O off the hypervisor disk and only spills to disk when backed
-## up; timeoutEnqueue="0" drops instead of blocking the producer when the queue
-## is full.
-##
-## NOTE: ruleset binding for imjournal is set on the input() object, NOT on the
-## module() statement (module-level `ruleset` is unsupported for imjournal). The
-## input() form requires rsyslog >= 8.2312.0, which Proxmox VE 9 ships. The
-## ruleset must be defined before the input() references it.
+# Read journald directly and forward through a dedicated ruleset, so journal
+# entries bypass the default local-file rules (imuxsock keeps writing local
+# files): no duplicate processing, and remote-forwarding failures stay
+# isolated from Proxmox services. Disk-assisted memory queue (LinkedList) keeps
+# steady-state I/O off the hypervisor disk and only spills to disk when backed
+# up; timeoutEnqueue="0" drops instead of blocking the producer when the queue
+# is full.
+#
+# NOTE: ruleset binding for imjournal is set on the input() object, NOT on the
+# module() statement (module-level `ruleset` is unsupported for imjournal). The
+# input() form requires rsyslog >= 8.2312.0, which Proxmox VE 9 ships. The
+# ruleset must be defined before the input() references it.
 module(
   load="imjournal"
   StateFile="imjournal-loki.state"
@@ -75,19 +75,19 @@ input(
 {% endif %}
 
 {% if rsyslog_file_inputs %}
-## File log collection via imfile (e.g. Proxmox /var/log files the journal does
-## not cover). Inputs are bound to their own ForwardFilesToLoki ruleset with a
-## separate disk-assisted, non-blocking queue (distinct filename), so a
-## high-volume file burst cannot starve the journal forwarding queue. inotify
-## mode (default) follows rename-based rotation; state is persisted so only the
-## current file is replayed once on first deployment. NOTE: per-line size is
-## bounded by rsyslog's global maxMessageSize default (imfile has no per-input
-## line-size cap); a global override is intentionally not set here to avoid
-## touching the hypervisor's shared rsyslog limits.
-##
-## workDirectory is required so imfile persists read-position state files in a
-## stable location (and so isolated `rsyslogd -N1` validation passes); it is set
-## to the path the main rsyslog.conf already uses, so this is idempotent.
+# File log collection via imfile (e.g. Proxmox /var/log files the journal does
+# not cover). Inputs are bound to their own ForwardFilesToLoki ruleset with a
+# separate disk-assisted, non-blocking queue (distinct filename), so a
+# high-volume file burst cannot starve the journal forwarding queue. inotify
+# mode (default) follows rename-based rotation; state is persisted so only the
+# current file is replayed once on first deployment. NOTE: per-line size is
+# bounded by rsyslog's global maxMessageSize default (imfile has no per-input
+# line-size cap); a global override is intentionally not set here to avoid
+# touching the hypervisor's shared rsyslog limits.
+#
+# workDirectory is required so imfile persists read-position state files in a
+# stable location (and so isolated `rsyslogd -N1` validation passes); it is set
+# to the path the main rsyslog.conf already uses, so this is idempotent.
 global(workDirectory="{{ rsyslog_work_directory }}")
 module(load="imfile")
 

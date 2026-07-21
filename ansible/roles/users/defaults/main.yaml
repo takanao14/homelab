@@ -1,6 +1,4 @@
 ---
-# Defaults for the users role.
-
 # List of accounts to create. Provide real values (with passwords) via a
 # SOPS-encrypted group_vars file. Each item: { name: <str>, password: <plaintext> }
 # Optional per-item keys:
