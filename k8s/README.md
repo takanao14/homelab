@@ -130,6 +130,55 @@ k8s/
     └── prd/values.yaml
 ```
 
+## Resource Requests
+
+Workloads set **memory and CPU requests, and no memory limits**. Per-chart
+values carry the observed figures behind each number; this section is the
+rationale they refer to.
+
+Requests are what matter. Both defences against a container overrunning its
+memory key off the request, not the limit:
+
+- kubelet ranks pods for eviction by how far usage exceeds the request, so the
+  container that actually overran is evicted first.
+- The kernel OOM score for a Burstable pod is
+  `1000 - (1000 * memory request / node capacity)`, so a container with an
+  accurate request is protected and one that grew far past its request is the
+  first victim.
+
+A limit takes no part in either ordering — it only caps. Setting requests is
+therefore what moves a pod out of `BestEffort`, makes it visible to the
+scheduler, and directs memory pressure at the right container.
+
+Memory limits are deliberately omitted because they cannot be sized safely from
+the metrics available here. A 1Gi limit on the Argo CD application controller,
+derived from its observed peak, put it into an OOMKill crash loop and had to be
+removed:
+
+- `container_memory_working_set_bytes` is sampled every 30s and misses spikes
+  between scrapes. The container that died under the cap recorded a high-water
+  mark of only 509Mi.
+- The cgroup counts page cache toward the limit while both exported memory
+  metrics exclude it, so readings stay low right up to the kill.
+- A container that has run uninterrupted for months has never been observed
+  through a cold start, so its "peak" describes warm operation only.
+
+Nodes have roughly 28-32Gi allocatable against about 15% actual use, so an
+uncapped container is the cheaper risk. Add a memory limit only for a workload
+with a *measured* leak, and size it from that measurement.
+
+CPU limits are omitted as well: the CFS quota throttles a container even when
+the node is idle.
+
+Two exceptions:
+
+- **GPU workloads** (`ollama`, `comfyui`, `lemonade-server`) set
+  `limits: amd.com/gpu`. Extended resources must be declared as limits —
+  removing them breaks GPU allocation. This is unrelated to memory limits.
+- **`homepage`, `pdns-ui`, `external-dns`** carry pre-existing CPU and memory
+  limits. They have run without an OOMKill, so those values are validated by
+  production in a way freshly derived ones are not, and are left alone.
+
 ## Initial Cluster Bootstrap
 
 ArgoCD is deployed first via helmfile, then manages everything else via the App of Apps pattern.

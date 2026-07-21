@@ -3,17 +3,15 @@ external-secrets:
 
   # Resource reservations. Without requests these pods run as BestEffort and
   # are evicted first under node memory pressure; losing ESO stops every
-  # ExternalSecret from syncing. Sizing basis: 7-day observed usage from
-  # Prometheus (memory requests ~= mean x 1.2, limits ~= peak x 1.5). CPU
-  # carries requests only, to avoid CFS throttling on an otherwise idle node.
+  # ExternalSecret from syncing. Requests only, no limits — see "Resource
+  # Requests" in k8s/README.md. Sizing basis: 7-day observed usage,
+  # requests ~= mean x 1.2.
   #
   # Controller. Observed: mean 42Mi, peak 45Mi, p95 CPU 1.0m.
   resources:
     requests:
       cpu: 25m
       memory: 64Mi
-    limits:
-      memory: 128Mi
 
   webhook:
     # Observed: mean 106Mi, peak 135Mi, p95 CPU 0.4m. The heaviest of the three
@@ -22,8 +20,6 @@ external-secrets:
       requests:
         cpu: 10m
         memory: 128Mi
-      limits:
-        memory: 256Mi
 
   certController:
     # Observed: mean 79Mi, peak 124Mi, p95 CPU 0.9m.
@@ -31,8 +27,6 @@ external-secrets:
       requests:
         cpu: 10m
         memory: 96Mi
-      limits:
-        memory: 192Mi
 
 openbao:
   server: "https://openbao.home.butaco.net"

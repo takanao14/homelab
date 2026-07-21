@@ -3,17 +3,15 @@ prometheus-snmp-exporter:
     reloader.stakater.com/auto: "true"
 
   # Resource reservations. Without requests this runs as BestEffort and is
-  # evicted first under node memory pressure. Sizing basis: 7-day observed usage
-  # from Prometheus (memory requests ~= mean x 1.2, limits ~= peak x 1.5). CPU
-  # carries requests only, to avoid CFS throttling on an otherwise idle node.
+  # evicted first under node memory pressure. Requests only, no limits — see
+  # "Resource Requests" in k8s/README.md. Sizing basis: 7-day observed usage,
+  # requests ~= mean x 1.2.
   #
   # Observed: mean 35Mi, peak 50Mi, p95 CPU 0.6m.
   resources:
     requests:
       cpu: 10m
       memory: 48Mi
-    limits:
-      memory: 96Mi
   extraArgs:
     - --config.file=/etc/snmp_exporter/snmp.yml
     - --config.file=/etc/snmp-exporter-auth/snmp-auth.yaml

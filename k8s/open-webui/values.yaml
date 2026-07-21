@@ -23,20 +23,12 @@ persistence:
 # 1.6Gi resident this is the largest workload in the cluster, so leaving it
 # unaccounted for skewed scheduling the most.
 #
-# Sizing basis: 7-day observed usage, mean 1644Mi and high-water 1937Mi, p95 CPU
-# 1.0m. The figures come from container_memory_max_usage_bytes rather than
-# container_memory_working_set_bytes: the working set is sampled every 30s and
-# misses spikes between scrapes, which is how an earlier limit on the Argo CD
-# application controller ended up far too low. The limit here is set well above
-# high-water for the same reason, with extra room because chat and embedding
-# workloads vary. CPU carries requests only, to avoid CFS throttling on an
-# otherwise idle node.
+# Requests only, no limits — see "Resource Requests" in k8s/README.md. Sizing
+# basis: 7-day observed usage, mean 1644Mi and high-water 1937Mi, p95 CPU 1.0m.
 resources:
   requests:
     cpu: 25m
     memory: 1792Mi
-  limits:
-    memory: 3Gi
 
 websocket:
   redis:
@@ -45,8 +37,6 @@ websocket:
       requests:
         cpu: 10m
         memory: 40Mi
-      limits:
-        memory: 96Mi
 
 ingress:
   enabled: false

@@ -1,16 +1,7 @@
-# Resource reservations.
-#
-# Without requests every Argo CD pod lands in the BestEffort QoS class, which
-# makes it invisible to the scheduler (it accounts for requests, not actual
-# usage) and first in line for eviction under node memory pressure. Losing the
-# controllers that reconcile the cluster is the worst failure to take first, so
-# they carry explicit reservations.
-#
-# Sizing basis: 7-day observed usage from Prometheus.
-#   memory requests ~= mean x 1.2, memory limits ~= peak x 1.5.
-# CPU carries requests only: limits throttle through the CFS quota even when
-# the node is idle, and measured CPU use is negligible for every component
-# except the application controller.
+# Resource reservations. Requests only, no limits — see "Resource Requests" in
+# k8s/README.md for why. Sizing basis: 7-day observed usage from Prometheus,
+# requests ~= mean x 1.2. Figures below are mean / high-water memory and p95
+# CPU.
 
 server:
   extraArgs:
@@ -27,36 +18,18 @@ server:
     requests:
       cpu: 25m
       memory: 64Mi
-    limits:
-      memory: 128Mi
 
 controller:
   metrics:
     enabled: true
-  # Observed steady state: mean 494Mi, peak 651Mi, p95 CPU 44m — by far the
-  # heaviest component, and the only one where the CPU request is meaningful.
+  # Observed: mean 494Mi, high-water 733Mi over 3.5 months and 607Mi within
+  # minutes of a cold start, p95 CPU 44m. By far the heaviest component, and
+  # the only one where the CPU request is meaningful.
   #
-  # Deliberately no memory limit, unlike every other component here. A 1Gi
-  # limit derived from the figures above sent this container into an OOMKill
-  # crash loop. Two things made that limit unsafe to derive from metrics:
-  #
-  #   - The container had run uninterrupted for months, so the observation
-  #     window only ever described warm operation and never a cold start.
-  #   - The fatal spike outran the scrape interval. The container that died
-  #     under the 1Gi cap recorded a high-water mark of just 509Mi in
-  #     container_memory_max_usage_bytes, because it died between scrapes.
-  #     The cgroup also counts page cache toward the limit while
-  #     container_memory_working_set_bytes does not, so both metrics read low
-  #     right up to the kill.
-  #
-  # High-water marks since, with no limit in force: 733Mi over 3.5 months of
-  # uptime, 607Mi within minutes of a cold start. The true transient ceiling
-  # is still unknown, and guessing it wrong here is the worst place to be
-  # wrong: this container reconciles everything else including its own values,
-  # so an OOM loop leaves Argo CD unable to sync its own fix. The node has
-  # ample headroom, which makes an unbounded controller the cheaper risk. The
-  # request still keeps it out of BestEffort, which was the point of setting
-  # resources here at all.
+  # This is the container that proved memory limits unsafe to derive here: a
+  # 1Gi cap sized from its observed peak put it into an OOMKill crash loop, and
+  # because it reconciles everything else including its own values, the loop
+  # left Argo CD unable to sync its own fix. See k8s/README.md.
   resources:
     requests:
       cpu: 100m
@@ -66,14 +39,11 @@ repoServer:
   metrics:
     enabled: true
   # Observed: mean 127Mi, peak 368Mi, p95 CPU 4m. The widest mean-to-peak gap
-  # of any component because manifest rendering is bursty, so the limit is set
-  # well above peak: an OOM here stalls rendering for every application.
+  # of any component, because manifest rendering is bursty.
   resources:
     requests:
       cpu: 50m
       memory: 192Mi
-    limits:
-      memory: 768Mi
 
 applicationSet:
   metrics:
@@ -83,8 +53,6 @@ applicationSet:
     requests:
       cpu: 10m
       memory: 64Mi
-    limits:
-      memory: 128Mi
 
 # Observed: mean 78Mi, peak 115Mi, p95 CPU 0.2m.
 dex:
@@ -92,8 +60,6 @@ dex:
     requests:
       cpu: 10m
       memory: 96Mi
-    limits:
-      memory: 192Mi
 
 # Observed: mean 57Mi, peak 120Mi, p95 CPU 0.6m.
 notifications:
@@ -101,8 +67,6 @@ notifications:
     requests:
       cpu: 10m
       memory: 96Mi
-    limits:
-      memory: 192Mi
 
 # Observed: mean 28Mi, peak 44Mi, p95 CPU 3.8m.
 redis:
@@ -110,8 +74,6 @@ redis:
     requests:
       cpu: 25m
       memory: 64Mi
-    limits:
-      memory: 128Mi
 
 configs:
   cm:

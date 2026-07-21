@@ -11,17 +11,14 @@ extraArgs:
 
 # Resource reservations. Without requests these pods run as BestEffort and are
 # evicted first under node memory pressure; a cert-manager outage silently
-# stops certificate renewal. Sizing basis: 7-day observed usage from Prometheus
-# (memory requests ~= mean x 1.2, limits ~= peak x 1.5). CPU carries requests
-# only, to avoid CFS throttling on an otherwise idle node.
+# stops certificate renewal. Requests only, no limits — see "Resource Requests"
+# in k8s/README.md. Sizing basis: 7-day observed usage, requests ~= mean x 1.2.
 #
 # Controller. Observed: mean 70Mi, peak 96Mi, p95 CPU 1.2m.
 resources:
   requests:
     cpu: 25m
     memory: 96Mi
-  limits:
-    memory: 192Mi
 
 webhook:
   # Observed: mean 62Mi, peak 65Mi, p95 CPU 0.4m.
@@ -29,18 +26,14 @@ webhook:
     requests:
       cpu: 10m
       memory: 80Mi
-    limits:
-      memory: 160Mi
 
 cainjector:
   # Observed: mean 77Mi, peak 138Mi, p95 CPU 2.4m. Memory tracks the number of
-  # CRDs it injects CA bundles into, so the limit is kept clear of peak.
+  # CRDs it injects CA bundles into.
   resources:
     requests:
       cpu: 25m
       memory: 128Mi
-    limits:
-      memory: 256Mi
 
 prometheus:
   enabled: true
