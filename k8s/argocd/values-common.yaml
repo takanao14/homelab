@@ -33,14 +33,25 @@ server:
 controller:
   metrics:
     enabled: true
-  # Observed: mean 494Mi, peak 651Mi, p95 CPU 44m — by far the heaviest
-  # component, and the only one where the CPU request is meaningful.
+  # Observed steady state: mean 494Mi, peak 651Mi, p95 CPU 44m — by far the
+  # heaviest component, and the only one where the CPU request is meaningful.
+  #
+  # Deliberately no memory limit, unlike every other component here. A 1Gi
+  # limit derived from the figures above sent this container into an OOMKill
+  # crash loop: the controller loads and diffs every Application at once on
+  # startup, and that spike is several times its steady state. The observation
+  # window never caught it because the container had run uninterrupted for
+  # months, so "peak" only ever described warm operation.
+  #
+  # Capping this container is also the worst place to be wrong: it is what
+  # reconciles everything else, including its own values, so an OOM loop
+  # leaves Argo CD unable to sync its own fix. The node has ample headroom,
+  # which makes an unbounded controller the cheaper risk. The request still
+  # keeps it out of BestEffort.
   resources:
     requests:
       cpu: 100m
       memory: 640Mi
-    limits:
-      memory: 1Gi
 
 repoServer:
   metrics:
