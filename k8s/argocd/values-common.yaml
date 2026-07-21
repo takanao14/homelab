@@ -1,3 +1,17 @@
+# Resource reservations.
+#
+# Without requests every Argo CD pod lands in the BestEffort QoS class, which
+# makes it invisible to the scheduler (it accounts for requests, not actual
+# usage) and first in line for eviction under node memory pressure. Losing the
+# controllers that reconcile the cluster is the worst failure to take first, so
+# they carry explicit reservations.
+#
+# Sizing basis: 7-day observed usage from Prometheus.
+#   memory requests ~= mean x 1.2, memory limits ~= peak x 1.5.
+# CPU carries requests only: limits throttle through the CFS quota even when
+# the node is idle, and measured CPU use is negligible for every component
+# except the application controller.
+
 server:
   extraArgs:
     - --insecure
@@ -8,18 +22,76 @@ server:
   # bundled here would fail its CRD lookup on a fresh cluster).
   metrics:
     enabled: true
+  # Observed: mean 43Mi, peak 69Mi, p95 CPU 1.2m.
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
 
 controller:
   metrics:
     enabled: true
+  # Observed: mean 494Mi, peak 651Mi, p95 CPU 44m — by far the heaviest
+  # component, and the only one where the CPU request is meaningful.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 640Mi
+    limits:
+      memory: 1Gi
 
 repoServer:
   metrics:
     enabled: true
+  # Observed: mean 127Mi, peak 368Mi, p95 CPU 4m. The widest mean-to-peak gap
+  # of any component because manifest rendering is bursty, so the limit is set
+  # well above peak: an OOM here stalls rendering for every application.
+  resources:
+    requests:
+      cpu: 50m
+      memory: 192Mi
+    limits:
+      memory: 768Mi
 
 applicationSet:
   metrics:
     enabled: true
+  # Observed: mean 33Mi, peak 49Mi, p95 CPU 1.0m.
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+# Observed: mean 78Mi, peak 115Mi, p95 CPU 0.2m.
+dex:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 96Mi
+    limits:
+      memory: 192Mi
+
+# Observed: mean 57Mi, peak 120Mi, p95 CPU 0.6m.
+notifications:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 96Mi
+    limits:
+      memory: 192Mi
+
+# Observed: mean 28Mi, peak 44Mi, p95 CPU 3.8m.
+redis:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
 
 configs:
   cm:
