@@ -129,12 +129,46 @@ kube-prometheus-stack:
           sourceLabels: [__metrics_path__]
           targetLabel: metrics_path
 
+  # Resource reservations for the stack's own components. Without requests these
+  # run as BestEffort and are evicted first under node memory pressure. Sizing
+  # basis: 7-day observed usage from Prometheus (memory requests ~= mean x 1.2,
+  # limits ~= peak x 1.5). CPU carries requests only, to avoid CFS throttling on
+  # an otherwise idle node. Prometheus and Alertmanager themselves already carry
+  # requests above.
+  #
+  # Observed: mean 48Mi, peak 85Mi, p95 CPU 2.6m.
+  prometheusOperator:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 160Mi
+
+  # Observed: mean 55Mi, peak 77Mi, p95 CPU 1.8m. Memory scales with the number
+  # of objects in the cluster, so the limit leaves room for growth.
+  kube-state-metrics:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 80Mi
+      limits:
+        memory: 160Mi
+
   nodeExporter:
     enabled: true
 
   # The node-exporter ServiceMonitor is managed by the prometheus-node-exporter subchart.
   # nodeExporter.serviceMonitor is ignored by kube-prometheus-stack v84+; use the subchart path instead.
   prometheus-node-exporter:
+    # DaemonSet: these requests are reserved on every node. Observed: mean 19Mi,
+    # peak 32Mi, p95 CPU 1.5m.
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 64Mi
     prometheus:
       monitor:
         relabelings:

@@ -37,6 +37,13 @@ loki:
     namespaced: true
 
   sidecar:
+    # Rules sidecar. Observed: mean 82Mi, peak 89Mi, p95 CPU 0.3m.
+    resources:
+      requests:
+        cpu: 10m
+        memory: 96Mi
+      limits:
+        memory: 160Mi
     rules:
       enabled: true
       folder: /rules/fake
@@ -44,6 +51,20 @@ loki:
 
   singleBinary:
     replicas: 1
+    # Resource reservations. Without requests Loki runs as BestEffort and is
+    # evicted first under node memory pressure, taking log search down at the
+    # point it is most useful. Sizing basis: 7-day observed usage from
+    # Prometheus (memory requests ~= mean x 1.2, limits ~= peak x 1.5). CPU
+    # carries requests only, to avoid CFS throttling on an otherwise idle node.
+    #
+    # Observed: mean 210Mi, peak 403Mi, p95 CPU 7.9m. Peak tracks query load,
+    # so the limit is kept clear of it.
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        memory: 768Mi
     persistence:
       enabled: true
       size: 20Gi
