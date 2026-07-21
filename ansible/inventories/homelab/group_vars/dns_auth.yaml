@@ -1,7 +1,4 @@
 ---
-# Temporarily disabled due to expired certificate on repo.powerdns.com
-pdns_repo_validate_certs: false
-
 pdns_primary_addr: "{{ primary_auth_server.split(':')[0] }}"
 pdns_primary_port: "{{ primary_auth_server.split(':')[1] }}"
 pdns_primary_nameserver: "ns2.home.butaco.net"

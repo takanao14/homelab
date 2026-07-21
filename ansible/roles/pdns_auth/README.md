@@ -57,7 +57,6 @@ tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 32 && echo
 | `pdns_primary_nameserver` | An NS record name that exists in the zone (used for autoprimary registration). Must match a zone NS record — NOT the hidden primary's own name. |
 | `pdns_webserver_port` | API/webserver listen port (default: `8081`) |
 | `pdns_webserver_allow_from` | Allowed IP ranges for API access (e.g. `192.168.10.0/24,...`) |
-| `pdns_repo_validate_certs` | Whether to validate TLS certificates when downloading the repo key (default: `true`) |
 
 ### Secondary-specific variables (from `group_vars/dns_secondary.yaml`)
 
@@ -86,7 +85,6 @@ tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 32 && echo
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `pdns_webserver_port` | `8081` | API/webserver listen port |
-| `pdns_repo_validate_certs` | `true` | Validate TLS cert when fetching repo key |
 | `pdns_repo_channel` | `auth-50` | PowerDNS APT repository channel |
 | `pdns_repo_release` | `{{ ansible_facts['distribution_release'] }}` | Ubuntu release codename |
 

@@ -40,7 +40,6 @@
     url: "{{ dnsdist_repo_key_url }}"
     dest: "{{ dnsdist_repo_key_path }}"
     mode: "0644"
-    validate_certs: "{{ dnsdist_repo_validate_certs }}"
 
 - name: Configure dnsdist apt pinning
   become: true

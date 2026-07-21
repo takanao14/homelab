@@ -5,7 +5,6 @@ pdns_repo_channel: "auth-50" # noqa var-naming[no-role-prefix]
 pdns_repo_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc" # noqa var-naming[no-role-prefix]
 pdns_repo_key_path: "/etc/apt/keyrings/auth-50-pub.asc" # noqa var-naming[no-role-prefix]
 pdns_repo_pin_path: "/etc/apt/preferences.d/auth-50" # noqa var-naming[no-role-prefix]
-pdns_repo_validate_certs: true # noqa var-naming[no-role-prefix]
 
 pdns_webserver_port: 8081 # noqa var-naming[no-role-prefix]
 

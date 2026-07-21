@@ -7,7 +7,6 @@ dnsdist_repo_base_url: "http://repo.powerdns.com/ubuntu"
 dnsdist_repo_release: "{{ ansible_facts['distribution_release'] | default('noble') }}"
 dnsdist_repo_channel: "dnsdist-20"
 dnsdist_repo_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc"
-dnsdist_repo_validate_certs: true
 dnsdist_repo_key_path: "/etc/apt/keyrings/dnsdist-20-pub.asc"
 dnsdist_repo_pin_path: "/etc/apt/preferences.d/dnsdist-20"
 

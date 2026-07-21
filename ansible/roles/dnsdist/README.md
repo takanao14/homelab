@@ -56,7 +56,6 @@ These are mapped to `dnsdist_web_password`, `dnsdist_web_api_key`, and `dnsdist_
 | `dnsdist_packet_cache_max_ttl` | `86400` | Maximum TTL for cached entries (seconds) |
 | `dnsdist_repo_channel` | `dnsdist-20` | PowerDNS APT repository channel |
 | `dnsdist_repo_release` | `{{ ansible_facts['distribution_release'] }}` | Ubuntu release codename |
-| `dnsdist_repo_validate_certs` | `true` | Validate TLS cert when fetching the repo key (set to `false` temporarily if repo.powerdns.com cert is expired) |
 
 ## Dependencies
 
