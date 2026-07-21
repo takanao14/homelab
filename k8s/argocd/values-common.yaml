@@ -38,16 +38,25 @@ controller:
   #
   # Deliberately no memory limit, unlike every other component here. A 1Gi
   # limit derived from the figures above sent this container into an OOMKill
-  # crash loop: the controller loads and diffs every Application at once on
-  # startup, and that spike is several times its steady state. The observation
-  # window never caught it because the container had run uninterrupted for
-  # months, so "peak" only ever described warm operation.
+  # crash loop. Two things made that limit unsafe to derive from metrics:
   #
-  # Capping this container is also the worst place to be wrong: it is what
-  # reconciles everything else, including its own values, so an OOM loop
-  # leaves Argo CD unable to sync its own fix. The node has ample headroom,
-  # which makes an unbounded controller the cheaper risk. The request still
-  # keeps it out of BestEffort.
+  #   - The container had run uninterrupted for months, so the observation
+  #     window only ever described warm operation and never a cold start.
+  #   - The fatal spike outran the scrape interval. The container that died
+  #     under the 1Gi cap recorded a high-water mark of just 509Mi in
+  #     container_memory_max_usage_bytes, because it died between scrapes.
+  #     The cgroup also counts page cache toward the limit while
+  #     container_memory_working_set_bytes does not, so both metrics read low
+  #     right up to the kill.
+  #
+  # High-water marks since, with no limit in force: 733Mi over 3.5 months of
+  # uptime, 607Mi within minutes of a cold start. The true transient ceiling
+  # is still unknown, and guessing it wrong here is the worst place to be
+  # wrong: this container reconciles everything else including its own values,
+  # so an OOM loop leaves Argo CD unable to sync its own fix. The node has
+  # ample headroom, which makes an unbounded controller the cheaper risk. The
+  # request still keeps it out of BestEffort, which was the point of setting
+  # resources here at all.
   resources:
     requests:
       cpu: 100m
