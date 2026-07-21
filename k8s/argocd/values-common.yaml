@@ -77,10 +77,10 @@ redis:
 
 configs:
   cm:
-    ### Argo CD >=1.8 ships no built-in health check for the Application CRD,
-    ### so app-of-apps sync waves do not gate on child app health without this.
-    ### Required so envoy-gateway-crds (wave -2) is Healthy before the
-    ### envoy-gateway controller (-1) and gateway (0) apps sync on a fresh cluster.
+    # Argo CD >=1.8 ships no built-in health check for the Application CRD,
+    # so app-of-apps sync waves do not gate on child app health without this.
+    # Required so envoy-gateway-crds (wave -2) is Healthy before the
+    # envoy-gateway controller (-1) and gateway (0) apps sync on a fresh cluster.
     resource.customizations.health.argoproj.io_Application: |
       hs = {}
       hs.status = "Progressing"
