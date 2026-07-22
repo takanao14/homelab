@@ -57,3 +57,12 @@ staleness and the availability coupling.
   this trade-off was accepted.
 - Each instance binds its ServiceAccount to `cluster-admin` (upstream chart
   default), scoped to its own cluster only.
+
+## Addendum (2026-07-22): deployed to sandbox
+
+Headlamp was added to the sandbox App of Apps tree (`k8s/headlamp/sandbox/values.yaml`),
+superseding the "sandbox stays minimal per ADR-0010" scoping above. It follows
+the sandbox HTTP-only pattern from ADR-0010: the HTTPRoute binds to
+`sectionName: http` instead of `https`, at `headlamp.sandbox.butaco.net`. No
+OpenBao secret is needed (per the in-cluster ServiceAccount model above), so
+this required no policy changes.

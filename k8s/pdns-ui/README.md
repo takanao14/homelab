@@ -1,7 +1,7 @@
 # pdns-ui
 
 Read-only browser for the PowerDNS authoritative zones, deployed on the prd
-cluster and managed by ArgoCD.
+and sandbox clusters and managed by ArgoCD.
 
 Records are owned by dnscontrol (see the private plans repo), so this app is a
 viewer only — it must never become a second source of truth. Read-only is
@@ -12,6 +12,7 @@ enforced in nginx, not merely by convention.
 ```
 pdns-ui/
 ├── prd/values.yaml         # prd overrides (hostname, Gateway https listener)
+├── sandbox/values.yaml     # sandbox overrides (hostname, Gateway http listener, ADR-0010)
 └── chart/
     ├── Chart.yaml
     ├── values.yaml         # hostname, image, PowerDNS backend, OpenBao path
@@ -31,9 +32,9 @@ pdns-ui/
 ## Architecture
 
 ```
-browser ──https──► Envoy Gateway ──► pdns-ui pod (nginx)
-                                       ├─ /        → vendored index.html
-                                       └─ /api/*   → ns1:8081, X-API-Key injected
+browser ──https (prd) / http (sandbox)──► Envoy Gateway ──► pdns-ui pod (nginx)
+                                                              ├─ /        → vendored index.html
+                                                              └─ /api/*   → ns1:8081, X-API-Key injected
 ```
 
 The webapp is pure client-side JavaScript and talks to the PowerDNS API on its
@@ -95,9 +96,10 @@ place to forget during rotation. The trade-off is that the KV path name is
 external-dns-flavoured; a neutral `k8s/shared/pdns` would read better but means
 re-seeding OpenBao and editing a working external-dns ExternalSecret.
 
-Because the prd `ClusterSecretStore` authenticates with one cluster-wide
-OpenBao role that already carries the external-dns policy, no OpenBao seeding
-or policy change is needed for this app.
+Because each environment's `ClusterSecretStore` authenticates with one
+cluster-wide OpenBao role that already carries the external-dns policy
+(prd and sandbox both do), no OpenBao seeding or policy change is needed for
+this app in either environment.
 
 The same key lives in `PDNS_PRIMARY_API_KEY` in
 `ansible/inventories/homelab/host_vars/ns1.sops.yaml`; SOPS files are not

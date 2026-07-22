@@ -1,0 +1,10 @@
+headlamp:
+  httpRoute:
+    parentRefs:
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: shared-gateway-envoy
+        namespace: gateway-system
+        sectionName: http
+    hostnames:
+      - headlamp.sandbox.butaco.net

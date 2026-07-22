@@ -13,6 +13,8 @@ apps:
     enabled: true
   gateway:
     enabled: true
+  headlamp:
+    enabled: true
   homepage:
     enabled: true
   longhorn-ui:
@@ -29,3 +31,7 @@ apps:
         - ../values/apps-sandbox.yaml
     syncOptions:
       - ServerSideApply=true
+  pdns-ui:
+    enabled: true
+  reloader:
+    enabled: true
