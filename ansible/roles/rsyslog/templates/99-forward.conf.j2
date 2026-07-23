@@ -38,6 +38,11 @@ action(
 # module() statement (module-level `ruleset` is unsupported for imjournal). The
 # input() form requires rsyslog >= 8.2312.0, which Proxmox VE 9 ships. The
 # ruleset must be defined before the input() references it.
+#
+# Proxmox VE 8 / Debian 12 ships rsyslog 8.2302, which rejects the input() form
+# in `rsyslogd -N1`. rsyslog_imjournal_input_supported (set from package facts in
+# tasks/main.yaml) selects the legacy $RuleSet binding on those hosts.
+{% if rsyslog_imjournal_input_supported | default(true) %}
 module(
   load="imjournal"
   StateFile="imjournal-loki.state"
@@ -52,6 +57,24 @@ input(
   type="imjournal"
   ruleset="ForwardJournalToLoki"
 )
+{% else %}
+# Legacy binding for rsyslog < 8.2312.0 (Proxmox VE 8 / Debian 12): imjournal has
+# no input() object and no module-level `ruleset`, so bind via the legacy $RuleSet
+# directive — imjournal attaches to the ruleset active when the module is loaded.
+# The ruleset must exist first; reset to the default ruleset afterwards so no
+# later input inherits it.
+ruleset(name="ForwardJournalToLoki") {
+{{ omfwd_loki("loki_forward", rsyslog_queue_size, rsyslog_queue_high_watermark, rsyslog_queue_low_watermark, rsyslog_queue_max_disk_space) | indent(2, true) }}
+}
+
+$RuleSet ForwardJournalToLoki
+module(
+  load="imjournal"
+  StateFile="imjournal-loki.state"
+  IgnorePreviousMessages="{{ 'on' if rsyslog_ignore_previous_journal else 'off' }}"
+)
+$RuleSet RSYSLOG_DefaultRuleset
+{% endif %}
 {% else %}
 {% if rsyslog_forward_protocol == "tcp" %}
 *.* action(
