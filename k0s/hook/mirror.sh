@@ -1,23 +1,19 @@
 #!/bin/bash
 set -euo pipefail
 
-# Color output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-# Configuration
 CONTAINERD_DIR="/etc/k0s/containerd.d"
 CERTS_DIR="/etc/k0s/certs.d/docker.io"
 REGISTRY_FILE="${CONTAINERD_DIR}/registry-path.toml"
 HOSTS_FILE="${CERTS_DIR}/hosts.toml"
 MIRROR_ENDPOINT="https://mirror.gcr.io"
 
-# Pre-flight checks
 preflight_checks() {
     echo -e "${YELLOW}→${NC} Checking prerequisites..."
 
-    # Check sudo access
     if ! sudo -n true 2>/dev/null; then
         echo -e "${YELLOW}→${NC} Authenticating with sudo..."
         sudo true
@@ -30,7 +26,6 @@ create_directories() {
     local containerd_dir="$1"
     local certs_dir="$2"
 
-    # Create containerd directory
     if [ ! -d "$containerd_dir" ]; then
         echo -e "${YELLOW}→${NC} Creating $containerd_dir..."
         sudo mkdir -p "$containerd_dir"
@@ -38,7 +33,6 @@ create_directories() {
         echo -e "${GREEN}✓${NC} $containerd_dir exists"
     fi
 
-    # Create certificate directory
     if [ ! -d "$certs_dir" ]; then
         echo -e "${YELLOW}→${NC} Creating $certs_dir..."
         sudo mkdir -p "$certs_dir"
@@ -67,7 +61,6 @@ configure_hosts() {
     local hosts_file="$1"
     local mirror_endpoint="$2"
 
-    # Create hosts configuration if not exists
     if [ -f "$hosts_file" ]; then
         echo -e "${GREEN}✓${NC} docker.io hosts configuration already exists"
     else
@@ -82,7 +75,6 @@ EOF
     fi
 }
 
-# Main execution
 echo -e "${GREEN}=== Mirror Setup Script ===${NC}"
 preflight_checks
 create_directories "$CONTAINERD_DIR" "$CERTS_DIR"
