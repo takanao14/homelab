@@ -2,9 +2,7 @@
 
 set -euo pipefail
 
-# Set timezone (can be overridden via TIMEZONE environment variable)
-# Default: Asia/Tokyo
+# Can be overridden via the TIMEZONE environment variable.
 TIMEZONE="${TIMEZONE:-Asia/Tokyo}"
 
-# Configure system timezone
 timedatectl set-timezone "${TIMEZONE}"

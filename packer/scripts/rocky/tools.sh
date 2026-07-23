@@ -1,25 +1,13 @@
 #!/bin/bash
-# Desktop and development tools installation script
-# Installs Firefox, Wireshark, VS Code, and HashiCorp tools
-# These tools are commonly used for development and system administration
-
 set -euo pipefail
 
 echo "Installing desktop and development tools..."
 
-# Update package lists
 dnf update -y
-
-# Install Firefox browser from the default AppStream repository
 dnf install -y firefox
-
-# Install Wireshark network protocol analyzer
 dnf install -y wireshark
 
-# Install Visual Studio Code
-# Reference: https://code.visualstudio.com/docs/setup/linux
-
-# Add Microsoft RPM repository for VS Code
+# https://code.visualstudio.com/docs/setup/linux
 rpm --import https://packages.microsoft.com/keys/microsoft.asc
 cat > /etc/yum.repos.d/vscode.repo << 'EOF'
 [code]
@@ -32,15 +20,12 @@ gpgcheck=1
 gpgkey=https://packages.microsoft.com/keys/microsoft.asc
 EOF
 
-# Install VS Code
 dnf update -y
 dnf install -y code
 
-# Install HashiCorp tools (Terraform, Packer, Vault)
-# Reference: https://developer.hashicorp.com/terraform/install
+# https://developer.hashicorp.com/terraform/install
 yum install -y yum-utils
 sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
 
-# Install Terraform, Packer, and Vault
 dnf update -y
 dnf install -y terraform packer vault
