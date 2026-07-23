@@ -36,6 +36,7 @@ vector_config:
         codec: json
       healthcheck:
         enabled: false
+      dangerously_allow_unconfined_template_resolution: true
       labels:
         host: !unsafe "{{ host }}"
         unit: !unsafe "{{ unit }}"

@@ -5,7 +5,7 @@
 - name: Upgrade OS packages on DNS hosts serially
   hosts: dns
   serial: 1
-  any_errors_fatal: false
+  any_errors_fatal: true
   tasks:
     - name: Run package upgrade tasks
       ansible.builtin.import_tasks: tasks/package_upgrade.yaml

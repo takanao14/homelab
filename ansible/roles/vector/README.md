@@ -9,6 +9,8 @@ Installs and configures [Vector](https://vector.dev/) as a log aggregator on Deb
   the old `setup.vector.dev` script.
 - Installs the `vector` package.
 - Deploys `/etc/vector/vector.yaml` from a Jinja2 template.
+- Validates the installed configuration on every normal run, including when a
+  package upgrade changes the Vector binary without changing the template.
 - Ensures the `vector` service is started and enabled.
 - Keeps check mode read-only when `python3-debian` is not installed yet; the
   repository task is reported as deferred until the prerequisite is applied.
@@ -60,3 +62,8 @@ None.
   bash. The declarative task writes the same repo definition
   (`deb https://apt.vector.dev/ stable vector-0`) as `vector.sources` and
   cleans up the script-generated `vector.list` on already-provisioned hosts.
+- Vector 0.57 introduced template confinement for sink fields. Loki sinks that
+  use event fields as complete label values explicitly set
+  `dangerously_allow_unconfined_template_resolution: true` in inventory to
+  preserve the existing label values. Keep this exception visible per sink;
+  adding a static prefix would change labels and break existing Loki queries.

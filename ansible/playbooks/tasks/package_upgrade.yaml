@@ -58,3 +58,20 @@
   when: >
     (ansible_facts['os_family'] == "Debian" and deb_reboot_required.stat.exists)
     or (ansible_facts['os_family'] == "RedHat" and rhel_reboot_required.rc == 1)
+
+# Package maintainer scripts may restart services even when no reboot is
+# required. Fail before the next serial host is upgraded if an updated service
+# did not come back cleanly.
+- name: Check for failed systemd services after package upgrades
+  become: true
+  ansible.builtin.command:
+    argv:
+      - systemctl
+      - list-units
+      - --state=failed
+      - --type=service
+      - --no-legend
+      - --plain
+  register: package_upgrade_failed_services
+  changed_when: false
+  failed_when: package_upgrade_failed_services.stdout_lines | length > 0

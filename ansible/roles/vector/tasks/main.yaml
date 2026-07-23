@@ -75,6 +75,21 @@
     validate: vector validate --no-environment %s
   notify: Restart vector
 
+# The template module only runs its validator when the rendered file changes.
+# Validate the installed configuration on every normal run as well, so package
+# upgrades cannot leave an unchanged configuration incompatible with the new
+# Vector binary. The command module skips this task in check mode, where the
+# template task validates the candidate configuration when it changes.
+- name: Validate installed Vector configuration
+  become: true
+  ansible.builtin.command:
+    argv:
+      - vector
+      - validate
+      - --no-environment
+      - /etc/vector/vector.yaml
+  changed_when: false
+
 - name: Ensure Vector is started and enabled
   become: true
   ansible.builtin.service:
