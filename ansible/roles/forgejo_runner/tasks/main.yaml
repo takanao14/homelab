@@ -65,6 +65,17 @@
     state: present
     update_cache: true
 
+- name: Configure Docker BuildKit garbage collection
+  become: true
+  ansible.builtin.template:
+    src: daemon.json.j2
+    dest: "{{ forgejo_runner_docker_daemon_config }}"
+    owner: root
+    group: root
+    mode: '0644'
+    validate: /usr/bin/dockerd --validate --config-file=%s
+  notify: Restart docker
+
 - name: Add runner user to docker group
   become: true
   ansible.builtin.user:

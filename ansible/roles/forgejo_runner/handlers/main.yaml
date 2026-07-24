@@ -4,6 +4,12 @@
   ansible.builtin.systemd:
     daemon_reload: true
 
+- name: Restart docker
+  become: true
+  ansible.builtin.service:
+    name: docker
+    state: restarted
+
 - name: Restart forgejo-runner
   become: true
   ansible.builtin.service:
