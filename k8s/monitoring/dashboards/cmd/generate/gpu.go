@@ -286,11 +286,11 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`amd_gpu_clock{` + gpuFilter + `, clock_type="GPU_CLOCK_TYPE_SYSTEM"} * 1000 * 1000`).
+					Expr(`amd_gpu_clock{` + gpuFilter + `, clock_type="system"} * 1000 * 1000`).
 					LegendFormat("GPU Core"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`amd_gpu_clock{` + gpuFilter + `, clock_type="GPU_CLOCK_TYPE_MEMORY"} * 1000 * 1000`).
+					Expr(`amd_gpu_clock{` + gpuFilter + `, clock_type="memory"} * 1000 * 1000`).
 					LegendFormat("Memory"),
 				),
 		).

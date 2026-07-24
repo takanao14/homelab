@@ -705,11 +705,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "amd_gpu_clock{job=\"scrapeConfig/monitoring/amd-gpu-external\", clock_type=\"GPU_CLOCK_TYPE_SYSTEM\"} * 1000 * 1000",
+          "expr": "amd_gpu_clock{job=\"scrapeConfig/monitoring/amd-gpu-external\", clock_type=\"system\"} * 1000 * 1000",
           "legendFormat": "GPU Core"
         },
         {
-          "expr": "amd_gpu_clock{job=\"scrapeConfig/monitoring/amd-gpu-external\", clock_type=\"GPU_CLOCK_TYPE_MEMORY\"} * 1000 * 1000",
+          "expr": "amd_gpu_clock{job=\"scrapeConfig/monitoring/amd-gpu-external\", clock_type=\"memory\"} * 1000 * 1000",
           "legendFormat": "Memory"
         }
       ],
