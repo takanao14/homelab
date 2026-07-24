@@ -1,13 +1,22 @@
 ---
-# renovate: datasource=custom.rocm depName=rocm
-rocm_version: "7.2.4"
+# ROCm moved off repo.radeon.com/rocm/apt/<version> to a single rolling
+# repo.amd.com/rocm/packages-multi-arch/<distro> "stable" apt repo starting
+# with 7.14. There is no version-numbered index left to scrape, so this is
+# updated manually until renovate.json's custom.rocm datasource is reworked.
+rocm_version: "7.14.0"
 rocm_package_state: latest
+# Device-specific ROCm package suffix for this host's GPU, e.g. gfx1200 for
+# RX 9060 XT. See https://rocm.docs.amd.com/en/latest/install/rocm.html for
+# the mapping from marketing name to gfx target.
+rocm_gpu_target: gfx1200
+# ROCm apt package name for this host, e.g. amdrocm7.14-gfx1200.
+rocm_package_name: "amdrocm{{ rocm_version.split('.')[:2] | join('.') }}-{{ rocm_gpu_target }}"
 rocm_ubuntu_codename: noble
 # renovate: datasource=custom.amdgpu depName=amdgpu
-rocm_amdgpu_version: "30.30.4"
+rocm_amdgpu_version: "31.40"
 rocm_amdgpu_package_state: present
 rocm_amdgpu_minimum_boot_free_mb: 300
 # Updated manually with rocm_amdgpu_version.
-rocm_udev_rules: amdgpu-insecure-instinct-udev-rules_30.30.4.0-2341068.24.04_all.deb
+rocm_udev_rules: amdgpu-insecure-instinct-udev-rules_31.40.0.0-2364437.24.04_all.deb
 # renovate: datasource=custom.amd-device-metrics-exporter depName=device-metrics-exporter
 rocm_device_metrics_exporter_version: "1.5.0"

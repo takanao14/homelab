@@ -1,21 +1,13 @@
 ---
 - name: Install prerequisites
-  # https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/prerequisites.html
+  # https://rocm.docs.amd.com/en/latest/install/rocm.html (Prerequisites, Install additional packages)
   become: true
   ansible.builtin.apt:
     name:
       - wget
       - python3-debian
-      - python3-setuptools
-      - python3-wheel
-    state: present
-    update_cache: true
-
-- name: Install optional packages
-  become: true
-  ansible.builtin.apt:
-    name:
-      - environment-modules
+      - libatomic1
+      - libquadmath0
     state: present
     update_cache: true
 
@@ -65,6 +57,22 @@
     cmd: gpg --dearmor -o /etc/apt/keyrings/rocm.gpg /tmp/rocm.gpg.key
     creates: /etc/apt/keyrings/rocm.gpg
 
+# ROCm 7.14 moved its apt repo to repo.amd.com under a separate signing key
+# from the repo.radeon.com key above, which still signs the amdgpu and
+# device-metrics-exporter repos.
+- name: Download ROCm 7.14+ apt repository GPG key
+  become: true
+  ansible.builtin.get_url:
+    url: https://repo.amd.com/rocm/packages-multi-arch/gpg/rocm.gpg
+    dest: /tmp/amdrocm.gpg.key
+    mode: '0644'
+
+- name: Add ROCm 7.14+ apt repository GPG key to keyring
+  become: true
+  ansible.builtin.command:
+    cmd: gpg --dearmor -o /etc/apt/keyrings/amdrocm.gpg /tmp/amdrocm.gpg.key
+    creates: /etc/apt/keyrings/amdrocm.gpg
+
 - name: Add ROCm apt preferences pin
   become: true
   ansible.builtin.copy:
@@ -73,6 +81,39 @@
     mode: '0644'
     owner: root
     group: root
+
+# Legacy "rocm"/"rocm-core" packages (ROCm <= 7.2.4, from the old
+# repo.radeon.com/rocm/apt/<version> repo) are not upgraded in place by the
+# new gfx-specific amdrocm<series>-<target> packages; AMD's install docs
+# require removing them before installing the new package set.
+- name: Purge legacy ROCm packages predating the repo.amd.com apt repo
+  become: true
+  ansible.builtin.apt:
+    name:
+      - rocm
+      - rocm-core
+    state: absent
+    purge: true
+    autoremove: true
+
+- name: Configure ROCm apt repository
+  become: true
+  ansible.builtin.deb822_repository:
+    name: rocm
+    types:
+      - deb
+    uris:
+      - https://repo.amd.com/rocm/packages-multi-arch/ubuntu2404
+    suites:
+      - stable
+    components:
+      - main
+    architectures:
+      - amd64
+    signed_by: /etc/apt/keyrings/amdrocm.gpg
+    state: present
+    mode: '0644'
+  register: rocm_apt_repository
 
 - name: Configure AMD Deb822 repositories
   become: true
@@ -92,15 +133,20 @@
     state: present
     mode: '0644'
   loop:
-    - name: rocm
-      uri: "https://repo.radeon.com/rocm/apt/{{ rocm_version }}"
-    - name: rocm-graphics
-      uri: "https://repo.radeon.com/graphics/{{ rocm_version }}/ubuntu"
     - name: amdgpu
       uri: "https://repo.radeon.com/amdgpu/{{ rocm_amdgpu_version }}/ubuntu"
     - name: device-metrics-exporter
       uri: "https://repo.radeon.com/device-metrics-exporter/apt/{{ rocm_device_metrics_exporter_version }}"
   register: rocm_deb822_repositories
+
+# ROCm 7.14 dropped the separate rocm-graphics apt repo; "graphics" packages
+# are now selected as an install-time option of the runfile/pip installers
+# instead of a standalone repo.
+- name: Remove obsolete rocm-graphics apt repository
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/rocm-graphics.sources
+    state: absent
 
 - name: Update apt cache after repository changes
   become: true
@@ -108,7 +154,7 @@
     update_cache: true
   when:
     - not ansible_check_mode
-    - rocm_deb822_repositories.changed
+    - rocm_apt_repository.changed or rocm_deb822_repositories.changed
 
 - name: Read available boot partition space before AMD GPU driver upgrade
   ansible.builtin.command:
@@ -158,12 +204,24 @@
 - name: Gather facts after reboot
   ansible.builtin.setup:
 
-- name: Install kernel headers for running kernel
+# Some Ubuntu kernel lines ship a single linux-modules-extra-<kernel>
+# package; others (e.g. the 7.0 HWE stack) split it into a base
+# linux-modules-<kernel> package plus per-vendor packages (nvidia, evdi,
+# ipu6/7, iwlwifi, usbio, vision) that don't apply to this AMD GPU host.
+# Check which base package actually exists instead of hardcoding one name.
+- name: Check for a linux-modules-extra package for the running kernel
+  ansible.builtin.command:
+    cmd: "apt-cache show linux-modules-extra-{{ ansible_facts['kernel'] }}"
+  register: rocm_modules_extra_check
+  changed_when: false
+  failed_when: false
+
+- name: Install kernel headers and modules for running kernel
   become: true
   ansible.builtin.apt:
     name:
       - "linux-headers-{{ ansible_facts['kernel'] }}"
-      - "linux-modules-extra-{{ ansible_facts['kernel'] }}"
+      - "{{ (rocm_modules_extra_check.rc == 0) | ternary('linux-modules-extra-', 'linux-modules-') + ansible_facts['kernel'] }}"
     state: present
     update_cache: true
 
@@ -171,22 +229,41 @@
   become: true
   ansible.builtin.apt:
     name:
-      - rocm
+      - "{{ rocm_package_name }}"
     state: "{{ rocm_package_state }}"
     update_cache: true
   async: 3600
   poll: 30
+
+# ROCm 7.14 installs each component into its own versioned subdirectory
+# under /opt/rocm (e.g. /opt/rocm/core-7.14/lib) instead of a flat
+# /opt/rocm/{lib,lib64}, and the exact set of subdirectories depends on
+# which component/gfx packages are installed. Discover them rather than
+# hardcoding names ldconfig itself cannot glob-expand.
+- name: Discover ROCm component library directories
+  ansible.builtin.command:
+    cmd: find /opt/rocm -mindepth 2 -maxdepth 2 -type d -name lib
+  register: rocm_lib_dirs
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Assert ROCm component library directories were found
+  ansible.builtin.assert:
+    that:
+      - rocm_lib_dirs.stdout_lines | length > 0
+    fail_msg: "No /opt/rocm/*/lib directories found after installing ROCm; check the amdrocm package layout."
+  when: not ansible_check_mode
 
 - name: Configure ROCm library path
   become: true
   ansible.builtin.copy:
     dest: /etc/ld.so.conf.d/rocm.conf
     content: |
-      /opt/rocm/lib
-      /opt/rocm/lib64
+      {{ rocm_lib_dirs.stdout }}
     owner: root
     group: root
     mode: '0644'
+  when: not ansible_check_mode
 
 - name: Update ldconfig
   become: true
@@ -229,7 +306,7 @@
       - dpkg-query
       - --show
       - --showformat=${Version}
-      - rocm
+      - "{{ rocm_package_name }}"
   register: rocm_installed_version
   changed_when: false
   when: not ansible_check_mode
@@ -237,20 +314,49 @@
 - name: Verify installed ROCm package version
   ansible.builtin.assert:
     that:
-      - rocm_installed_version.stdout == rocm_version or rocm_installed_version.stdout.startswith(rocm_version + '.')
+      # Debian package version carries a "-<revision>" suffix (e.g. 7.14.0-3)
+      # not present in rocm_version, so match on the upstream version prefix.
+      - rocm_installed_version.stdout.startswith(rocm_version)
     fail_msg: "Installed ROCm {{ rocm_installed_version.stdout }} does not match requested {{ rocm_version }}."
     success_msg: "ROCm {{ rocm_installed_version.stdout }} is installed."
   when: not ansible_check_mode
 
+- name: Discover ROCm component bin directories
+  ansible.builtin.command:
+    cmd: find /opt/rocm -mindepth 2 -maxdepth 2 -type d -name bin
+  register: rocm_bin_dirs
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Locate hipcc and rocminfo binaries
+  ansible.builtin.find:
+    paths: "{{ rocm_bin_dirs.stdout_lines }}"
+    patterns:
+      - hipcc
+      - rocminfo
+    file_type: file
+  register: rocm_verify_bins
+  when: not ansible_check_mode
+
+- name: Assert hipcc and rocminfo were found
+  ansible.builtin.assert:
+    that:
+      - rocm_verify_bins.files | selectattr('path', 'match', '.*/hipcc$') | list | length > 0
+      - rocm_verify_bins.files | selectattr('path', 'match', '.*/rocminfo$') | list | length > 0
+    fail_msg: >-
+      Could not locate hipcc and/or rocminfo under any /opt/rocm/*/bin directory;
+      found bin dirs: {{ rocm_bin_dirs.stdout_lines }}
+  when: not ansible_check_mode
+
 - name: Verify HIP compiler
   ansible.builtin.command:
-    cmd: /opt/rocm/bin/hipcc --version
+    cmd: "{{ (rocm_verify_bins.files | selectattr('path', 'match', '.*/hipcc$') | first).path }} --version"
   changed_when: false
   when: not ansible_check_mode
 
 - name: Verify ROCm detects a GPU
   ansible.builtin.command:
-    cmd: /opt/rocm/bin/rocminfo
+    cmd: "{{ (rocm_verify_bins.files | selectattr('path', 'match', '.*/rocminfo$') | first).path }}"
   register: rocm_info
   changed_when: false
   when: not ansible_check_mode
