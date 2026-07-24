@@ -86,6 +86,15 @@
 # repo.radeon.com/rocm/apt/<version> repo) are not upgraded in place by the
 # new gfx-specific amdrocm<series>-<target> packages; AMD's install docs
 # require removing them before installing the new package set.
+#
+# Do NOT set autoremove here: rocm is a metapackage whose dev components pull
+# in general build tooling (cmake, python3-dev, opencv, gstreamer, ...), and
+# autoremove would drag all of that out in one huge dpkg transaction. On a
+# host whose amdgpu-dkms cannot build against the running kernel, that large
+# transaction also trips a kernel-header reconfigure and leaves dpkg broken.
+# Remove only the ROCm meta-packages; orphaned old ROCm libs live under the
+# flat /opt/rocm and do not collide with the versioned /opt/rocm/*/ layout of
+# 7.14.
 - name: Purge legacy ROCm packages predating the repo.amd.com apt repo
   become: true
   ansible.builtin.apt:
@@ -94,7 +103,6 @@
       - rocm-core
     state: absent
     purge: true
-    autoremove: true
 
 - name: Configure ROCm apt repository
   become: true
