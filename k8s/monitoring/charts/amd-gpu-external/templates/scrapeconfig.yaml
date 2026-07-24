@@ -19,5 +19,12 @@ spec:
     - action: replace
       sourceLabels: [__tmp_name]
       targetLabel: instance
+  metricRelabelings:
+    # Drop the GPU process id. The exporter stamps it on every metric, so it
+    # changes on every GPU workload (llama-server) restart and breaks each
+    # series into a new one -- graphs then look like the series keeps
+    # switching. GPU hardware metrics do not need per-process identity.
+    - action: labeldrop
+      regex: kfd_process_id
   metricsPath: {{ .Values.metricsPath }}
   scrapeInterval: 30s
