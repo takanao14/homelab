@@ -20,15 +20,33 @@ spec:
     spec:
       nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
       tolerations: {{ toYaml .Values.tolerations | nindent 8 }}
+      initContainers:
+        # Pin the llamacpp backend to "system" so lemonade uses the
+        # ROCm-enabled llama-server baked into the image. The "system" backend
+        # has no GPU-family gate, unlike the built-in "rocm" backend which
+        # wrongly rejects gfx1200. Config lives on the recipe PVC and is read by
+        # lemond at startup; merged idempotently with jq (bundled in the image).
+        - name: set-llamacpp-backend
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              f=/root/.cache/lemonade/config.json
+              mkdir -p "$(dirname "$f")"
+              [ -f "$f" ] || echo '{}' > "$f"
+              tmp="$(mktemp)"
+              jq '.llamacpp.backend = "system"' "$f" > "$tmp" && mv "$tmp" "$f"
+          volumeMounts:
+            - name: recipe
+              mountPath: /root/.cache/lemonade
       containers:
         - name: lemonade-server
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           ports:
             - containerPort: 13305
           resources: {{ toYaml .Values.resources | nindent 12 }}
-          env:
-            - name: LEMONADE_LLAMACPP
-              value: rocm
           volumeMounts:
             - name: huggingface
               mountPath: /root/.cache/huggingface

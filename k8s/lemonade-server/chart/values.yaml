@@ -1,8 +1,13 @@
 replicaCount: 0
 
+# Custom image (base lemonade-server:v10.8.0 + ROCm-enabled llama.cpp) so the
+# gfx1200 (RX 9060 XT) GPU works via the "system" llamacpp backend. lemonade's
+# built-in "rocm" backend mis-detects gfx1200 as unsupported; see README.md and
+# forgejo.home.butaco.net/takanao/lemonade-docker. The tag tracks the bundled
+# llamacpp-rocm build number.
 image:
-  repository: ghcr.io/lemonade-sdk/lemonade-server
-  tag: v10.8.0
+  repository: forgejo.home.butaco.net/takanao/lemonade-docker
+  tag: b1302
 
 resources:
   limits:

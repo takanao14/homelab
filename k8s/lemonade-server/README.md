@@ -24,20 +24,35 @@ lemonade-server/
 | External | `https://lemonade.prd.butaco.net` |
 | In-cluster | `http://lemonade-server.lemonade-server.svc.cluster.local:13305` |
 
-## GPU
+## GPU / ROCm
 
-Requires one AMD GPU (`amd.com/gpu: "1"`). The node must be labeled `gpu: amd` and tainted `gpu=amd:NoSchedule`.
+Requires one AMD GPU (`amd.com/gpu: "1"`), allocated by the ROCm k8s-device-plugin. The node must be labeled `gpu: amd` and tainted `gpu=amd:NoSchedule`.
 
-Uses `ghcr.io/lemonade-sdk/lemonade-server` with `LEMONADE_LLAMACPP=rocm` to enable ROCm acceleration.
+Uses a **custom image** (`forgejo.home.butaco.net/takanao/lemonade-docker`, built from [`lemonade-docker`](https://forgejo.home.butaco.net/takanao/lemonade-docker)) with the `system` llamacpp backend, **not** the upstream image's built-in `rocm` backend.
 
-The image itself contains no ROCm: on the default `stable` ROCm channel lemonade downloads the llama.cpp ROCm build **and its own TheRock ROCm runtime** at first start, into the `lemonade-llama` PVC. It would reuse a system ROCm found via `ROCM_PATH` / `/opt/rocm`, but neither exists in this container, so the runtime is fully self-contained and **independent of the host ROCm version** (`ansible/roles/rocm`). Only the host amdgpu kernel driver has to stay within AMD's [KMD/UMD skew window](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/user-kernel-space-compat-matrix.html) (one year since ROCm 6.4). RDNA4 / `gfx1200` is a supported target on both ROCm channels.
+### Why the custom image
 
-Because the runtime is cached in the PVC, a host ROCm/driver upgrade never invalidates it automatically. If the GPU stops being detected after such an upgrade, force a re-download:
+lemonade v10.8.0 mis-detects this GPU. Its `llamacpp:rocm` backend reports `Unsupported GPU: gfx1200`: lemonade reads the card's KFD ISA name (`RADV GFX1200`), extracts the raw token `gfx1200`, and compares it for **exact equality** against the wildcard `gfx120X` its recipe table expects — so RDNA4 discrete GPUs (RX 9060 XT) are wrongly rejected. This is an upstream bug; switching the ROCm channel (stable/nightly) does **not** fix it.
+
+The `llamacpp:system` backend has **no GPU-family gate**, so we bypass the bug by:
+
+1. Baking a ROCm-enabled `llama-server` into the image (the `llamacpp-rocm` `gfx120X` build, which bundles its own ROCm 7 runtime — see the `lemonade-docker` repo). It is exposed on `PATH` with `libggml-hip.so` via `LEMONADE_GGML_HIP_PATH` + `ldconfig`.
+2. Pinning `llamacpp.backend=system` in `config.json` on the `lemonade-recipe` PVC, done by the `set-llamacpp-backend` initContainer in the Deployment.
+
+The bundled ROCm 7 userspace is **independent of the host ROCm version** (`ansible/roles/rocm`, currently 7.14). Only the host amdgpu kernel driver must stay within AMD's [KMD/UMD skew window](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/user-kernel-space-compat-matrix.html) (one year since ROCm 6.4), which the bundled ROCm 7 satisfies against the 7.14 host driver.
+
+### Verifying GPU offload
 
 ```bash
-kubectl -n lemonade-server scale deploy/lemonade-server --replicas=0
-# then delete the lemonade-llama PVC and let ArgoCD recreate it
+kubectl -n lemonade-server scale deploy/lemonade-server --replicas=1
+kubectl -n lemonade-server exec deploy/lemonade-server -- ./lemonade backends | grep -i llamacpp
+# expect: llamacpp system -> usable, no "Unsupported GPU"
+kubectl -n lemonade-server logs deploy/lemonade-server | grep -iE "ROCm|gfx|HIP|offload"
 ```
+
+### Upstream fix
+
+If lemonade fixes the gfx1200 detection (`identify_rocm_arch_from_name` / `device_matches_constraint` in `system_info.cpp`), the built-in `rocm` backend becomes usable and this custom image can be retired in favour of the upstream image + `llamacpp.backend=rocm`.
 
 ## Storage
 
@@ -53,5 +68,6 @@ kubectl -n lemonade-server scale deploy/lemonade-server --replicas=0
 |-----|---------|-------------|
 | `hostname` | `lemonade.prd.butaco.net` | HTTPRoute hostname |
 | `replicaCount` | `0` | Set to `1` to start (default off to save GPU) |
-| `image.tag` | `v10.8.0` | Lemonade server image tag |
+| `image.repository` | `forgejo.home.butaco.net/takanao/lemonade-docker` | Custom ROCm-enabled image |
+| `image.tag` | `b1302` | Bundled `llamacpp-rocm` build number |
 | `storage.storageClassName` | `openebs-hostpath` | Storage class |
