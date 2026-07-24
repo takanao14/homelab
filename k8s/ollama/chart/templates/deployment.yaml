@@ -27,8 +27,23 @@ spec:
             - containerPort: 11434
           resources: {{ toYaml .Values.resources | nindent 12 }}
           env:
-            - name: OLLAMA_NUM_CTX
+            # ollama reads OLLAMA_CONTEXT_LENGTH, NOT OLLAMA_NUM_CTX (the latter
+            # is silently ignored, leaving the 4096 default that truncates
+            # agent/tool-calling contexts).
+            - name: OLLAMA_CONTEXT_LENGTH
               value: {{ .Values.numCtx | quote }}
+            {{- if .Values.flashAttention }}
+            # Required for KV-cache quantization to take effect, and generally
+            # improves VRAM use / throughput.
+            - name: OLLAMA_FLASH_ATTENTION
+              value: "true"
+            {{- end }}
+            {{- if .Values.kvCacheType }}
+            # Quantize the KV cache (e.g. q8_0) so large contexts fit in 16 GB
+            # VRAM. Needs OLLAMA_FLASH_ATTENTION=true.
+            - name: OLLAMA_KV_CACHE_TYPE
+              value: {{ .Values.kvCacheType | quote }}
+            {{- end }}
           volumeMounts:
             - name: models
               mountPath: /root/.ollama

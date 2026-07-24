@@ -3,4 +3,9 @@ gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
   sectionName: https
-numCtx: 65536
+# Agent / tool-calling context. 32768 fits alongside a ~8-13 GB model on the
+# 16 GB RX 9060 XT when the KV cache is quantized (q8_0) with flash attention.
+# Raise toward 65536 only for <=14B models after checking VRAM headroom.
+numCtx: 32768
+flashAttention: true
+kvCacheType: q8_0

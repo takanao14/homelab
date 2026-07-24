@@ -26,7 +26,15 @@ storage:
   size: 100Gi
   storageClassName: openebs-hostpath
 
+# Default model context length (OLLAMA_CONTEXT_LENGTH). 4096 is too small for
+# agent / tool-calling use; raise it per environment (see values.yaml).
 numCtx: 4096
+
+# Flash attention + KV-cache quantization. Off by default in the chart; enable
+# per environment to fit large contexts into limited VRAM. kvCacheType requires
+# flashAttention. Valid kvCacheType: "" (f16), q8_0, q4_0.
+flashAttention: false
+kvCacheType: ""
 
 nodeSelector:
   gpu: amd
