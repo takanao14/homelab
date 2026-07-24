@@ -26,7 +26,7 @@ inputs = {
       ipv4gw = local.common.locals.node2.net10.ipv4gw
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
-          size    = 40
+          size    = 80
           file_id = "local:iso/ubuntu-24.04-custom.img"
         })
       }
