@@ -67,11 +67,14 @@ The log line should report the `gfx1200` device and the ROCm library path; a fal
 | `replicaCount` | `0` | Set to `1` to start (default off to save GPU) |
 | `image.repository` | `ollama/ollama` | Ollama image |
 | `image.tag` | `0.32.3-rocm` | ROCm-enabled image tag (bundles ROCm 7.2.1 userspace) |
-| `numCtx` | `4096` (chart) / `65536` (`values.yaml`) | Context window size (tokens) |
+| `numCtx` | `4096` (chart) / `32768` (`values.yaml`) | Context window size (tokens) |
+| `gateway.timeouts.request` | unset (chart) / `10m` (`values.yaml`) | End-to-end HTTPRoute timeout for long LLM responses |
+| `gateway.timeouts.backendRequest` | unset (chart) / `10m` (`values.yaml`) | Gateway-to-Ollama request timeout |
 | `storage.size` | `100Gi` | PVC size for model storage |
 | `storage.storageClassName` | `openebs-hostpath` | Storage class |
 
 ## Notes
 
 - `replicaCount` defaults to `0` (scaled down when not in use). ArgoCD ignores replica drift via `ignoreDifferences`.
+- The external HTTPRoute uses a 10-minute request timeout because agent/tool-calling responses can exceed Envoy Gateway's 15-second default. In-cluster clients bypass the gateway.
 - Open-WebUI is deployed as a separate ArgoCD Application (rendered by the app-of-apps chart, enabled in `k8s/argocd/prd/apps-values.yaml`) using the upstream `open-webui` Helm chart with values from `k8s/open-webui/`.

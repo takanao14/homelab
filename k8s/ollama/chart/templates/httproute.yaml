@@ -19,6 +19,15 @@ spec:
         - path:
             type: PathPrefix
             value: /
+{{- if or .Values.gateway.timeouts.request .Values.gateway.timeouts.backendRequest }}
+      timeouts:
+{{- with .Values.gateway.timeouts.request }}
+        request: {{ . | quote }}
+{{- end }}
+{{- with .Values.gateway.timeouts.backendRequest }}
+        backendRequest: {{ . | quote }}
+{{- end }}
+{{- end }}
       backendRefs:
         - group: ""
           kind: Service

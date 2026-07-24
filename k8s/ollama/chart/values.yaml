@@ -6,6 +6,9 @@ gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
   sectionName: https
+  timeouts:
+    request: ""
+    backendRequest: ""
 
 image:
   # The -rocm image bundles a self-contained ROCm userspace under
