@@ -18,7 +18,12 @@
 
 - name: Determine imjournal input() support
   ansible.builtin.set_fact:
-    rsyslog_imjournal_input_supported: "{{ (ansible_facts.packages['rsyslog'][0].version | regex_replace('-.*$', '')) is version('8.2312.0', '>=', version_type='loose') }}"
+    rsyslog_imjournal_input_supported: >-
+      {{
+        (ansible_facts.packages['rsyslog'][0].version
+          | regex_replace('-.*$', ''))
+        is version('8.2312.0', '>=', version_type='loose')
+      }}
 
 - name: Configure rsyslog forwarding
   become: true
