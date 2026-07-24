@@ -9,7 +9,7 @@ gateway:
 
 image:
   repository: ollama/ollama
-  tag: 0.32.1-rocm
+  tag: 0.32.2-rocm
 
 resources:
   limits:
