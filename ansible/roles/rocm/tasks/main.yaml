@@ -208,20 +208,30 @@
 # package; others (e.g. the 7.0 HWE stack) split it into a base
 # linux-modules-<kernel> package plus per-vendor packages (nvidia, evdi,
 # ipu6/7, iwlwifi, usbio, vision) that don't apply to this AMD GPU host.
-# Check which base package actually exists instead of hardcoding one name.
-- name: Check for a linux-modules-extra package for the running kernel
+# Check which base package is installable instead of hardcoding one name.
+# apt-cache show prints a stub record (and exits 0) for packages that only
+# exist as a dependency reference, so use apt-cache policy and read the
+# Candidate: line, which is "(none)" when the package is not installable.
+- name: Check whether linux-modules-extra is installable for the running kernel
   ansible.builtin.command:
-    cmd: "apt-cache show linux-modules-extra-{{ ansible_facts['kernel'] }}"
+    cmd: "apt-cache policy linux-modules-extra-{{ ansible_facts['kernel'] }}"
   register: rocm_modules_extra_check
   changed_when: false
-  failed_when: false
+
+- name: Select the kernel modules package name
+  ansible.builtin.set_fact:
+    rocm_modules_package: >-
+      {{ ('Candidate:' in rocm_modules_extra_check.stdout
+          and 'Candidate: (none)' not in rocm_modules_extra_check.stdout)
+         | ternary('linux-modules-extra-', 'linux-modules-')
+         + ansible_facts['kernel'] }}
 
 - name: Install kernel headers and modules for running kernel
   become: true
   ansible.builtin.apt:
     name:
       - "linux-headers-{{ ansible_facts['kernel'] }}"
-      - "{{ (rocm_modules_extra_check.rc == 0) | ternary('linux-modules-extra-', 'linux-modules-') + ansible_facts['kernel'] }}"
+      - "{{ rocm_modules_package }}"
     state: present
     update_cache: true
 
