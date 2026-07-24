@@ -67,6 +67,8 @@ If lemonade fixes the gfx1200 detection (`identify_rocm_arch_from_name` / `devic
 | Key | Default | Description |
 |-----|---------|-------------|
 | `hostname` | `lemonade.prd.butaco.net` | HTTPRoute hostname |
+| `gateway.timeouts.request` | unset (chart) / `10m` (`values.yaml`) | End-to-end HTTPRoute timeout for long LLM responses |
+| `gateway.timeouts.backendRequest` | unset (chart) / `10m` (`values.yaml`) | Gateway-to-Lemonade request timeout |
 | `replicaCount` | `0` | Set to `1` to start (default off to save GPU) |
 | `image.repository` | `forgejo.home.butaco.net/takanao/lemonade-docker` | Custom ROCm-enabled image |
 | `image.tag` | `b1302` | Bundled `llamacpp-rocm` build number |

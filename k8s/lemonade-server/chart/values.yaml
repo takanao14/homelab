@@ -39,3 +39,6 @@ gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
   sectionName: https
+  timeouts:
+    request: null
+    backendRequest: null
