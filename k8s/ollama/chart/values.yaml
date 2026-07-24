@@ -8,8 +8,13 @@ gateway:
   sectionName: https
 
 image:
+  # The -rocm image bundles a self-contained ROCm userspace under
+  # /usr/lib/ollama/rocm (ROCm 7.2.1 in 0.32.x, built for gfx1200 among
+  # others); it never loads the host's /opt/rocm. Only the host amdgpu kernel
+  # driver has to stay within AMD's KMD/UMD skew window. See README.md before
+  # bumping this alongside a host ROCm upgrade.
   repository: ollama/ollama
-  tag: 0.32.2-rocm
+  tag: 0.32.3-rocm
 
 resources:
   limits:

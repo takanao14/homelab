@@ -29,6 +29,12 @@ Requires one AMD GPU (`amd.com/gpu: "1"`). The node must be labeled `gpu: amd` a
 
 The container uses an unconfined seccomp profile and mounts `/dev/kfd` and `/dev/dri` as hostPath volumes for ROCm access.
 
+### ROCm
+
+Unlike ollama and lemonade-server (which download or bundle their own ROCm userspace), ComfyUI runs on **PyTorch ROCm wheels baked into the custom image** at build time. The [`comfyui-docker` Dockerfile](https://forgejo.home.butaco.net/takanao/comfyui-docker) installs PyTorch from the `rocm7.2` wheel index (`--index-url https://download.pytorch.org/whl/rocm7.2`); those wheels bundle their own ROCm runtime, so the container is **independent of the host ROCm version** (`ansible/roles/rocm`, currently ROCm 7.14). Only the host amdgpu kernel driver has to stay within AMD's [KMD/UMD skew window](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/user-kernel-space-compat-matrix.html) (one year since ROCm 6.4), which ROCm 7.2 wheels satisfy against the 7.14 host driver.
+
+PyTorch's `rocm7.2` wheels officially support `gfx1200`/`gfx1201` (RDNA4), so no `HSA_OVERRIDE_GFX_VERSION` is needed for the RX 9060 XT. The image was last built against `rocm7.2`; `rocm7.3`+ wheel indexes are not published yet, so this is the newest available and no bump is due for the ROCm 7.14 host upgrade. Rebuild the image only to move the PyTorch/ROCm wheel line — edit the `--index-url` in the Dockerfile, and the Forgejo Actions workflow rebuilds and pushes `:latest`.
+
 ## Storage
 
 | PVC | Default Size | Mount Path |
