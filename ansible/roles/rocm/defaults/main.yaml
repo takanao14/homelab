@@ -12,6 +12,14 @@ rocm_gpu_target: gfx1200
 # ROCm apt package name for this host, e.g. amdrocm7.14-gfx1200.
 rocm_package_name: "amdrocm{{ rocm_version.split('.')[:2] | join('.') }}-{{ rocm_gpu_target }}"
 rocm_ubuntu_codename: noble
+# ROCm/amdgpu only support specific kernels per release; for 24.04.4 that is
+# 6.8 (GA) or 6.17 (HWE). The rolling linux-generic-hwe-24.04 metapackage
+# tracks newer kernels (e.g. 7.0) that AMD does not support and on which
+# amdgpu-dkms fails to build, so pin a specific supported kernel here instead
+# of following the rolling meta. Update deliberately when AMD's support
+# matrix moves. The role asserts this is the running kernel before building
+# the driver.
+rocm_hwe_kernel: 6.17.0-35-generic
 # renovate: datasource=custom.amdgpu depName=amdgpu
 rocm_amdgpu_version: "31.40"
 rocm_amdgpu_package_state: present

@@ -164,6 +164,53 @@
     - not ansible_check_mode
     - rocm_apt_repository.changed or rocm_deb822_repositories.changed
 
+# Install the specific AMD-supported HWE kernel and its headers/modules
+# before building amdgpu-dkms. dkms builds the module for every installed
+# kernel that has headers, so an unsupported kernel left installed (e.g. a
+# 7.0 pulled in by the rolling HWE meta) would make the amdgpu build fail and
+# break dpkg. Pin one supported kernel via rocm_hwe_kernel.
+- name: Install the ROCm-supported pinned HWE kernel
+  become: true
+  ansible.builtin.apt:
+    name:
+      - "linux-image-{{ rocm_hwe_kernel }}"
+      - "linux-headers-{{ rocm_hwe_kernel }}"
+      - "linux-modules-extra-{{ rocm_hwe_kernel }}"
+    state: present
+    update_cache: true
+
+# Hold the rolling HWE metapackages so future apt upgrades don't reintroduce
+# an unsupported kernel. Removal of an already-installed unsupported kernel is
+# a one-time manual step: it can't be removed while it is the running kernel.
+- name: Hold rolling HWE metapackages at their current version
+  become: true
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - linux-generic-hwe-24.04
+    - linux-headers-generic-hwe-24.04
+    - linux-image-generic-hwe-24.04
+  failed_when: false
+
+- name: Gather kernel facts
+  ansible.builtin.setup:
+    gather_subset:
+      - kernel
+
+- name: Assert the running kernel is the ROCm-supported pinned kernel
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['kernel'] == rocm_hwe_kernel
+    fail_msg: >-
+      Running kernel {{ ansible_facts['kernel'] }} is not the ROCm-supported
+      pinned kernel {{ rocm_hwe_kernel }}. amdgpu-dkms only builds cleanly on
+      AMD-supported kernels, so boot into {{ rocm_hwe_kernel }} (set it as the
+      GRUB default and reboot, removing unsupported kernels such as 7.x) before
+      running this role.
+    success_msg: "Running the ROCm-supported kernel {{ rocm_hwe_kernel }}."
+  when: not ansible_check_mode
+
 - name: Read available boot partition space before AMD GPU driver upgrade
   ansible.builtin.command:
     argv:
@@ -191,57 +238,6 @@
     state: "{{ rocm_amdgpu_package_state }}"
     update_cache: true
   register: rocm_amdgpu_install
-
-- name: Install Ubuntu HWE kernel and headers
-  become: true
-  ansible.builtin.apt:
-    name:
-      - linux-generic-hwe-24.04
-      - linux-headers-generic-hwe-24.04
-    state: present
-  register: rocm_hwe_install
-
-- name: Reboot to apply Ubuntu HWE kernel
-  become: true
-  ansible.builtin.reboot:
-    reboot_timeout: 300
-  when:
-    - rocm_hwe_install.changed
-    - not ansible_check_mode
-
-- name: Gather facts after reboot
-  ansible.builtin.setup:
-
-# Some Ubuntu kernel lines ship a single linux-modules-extra-<kernel>
-# package; others (e.g. the 7.0 HWE stack) split it into a base
-# linux-modules-<kernel> package plus per-vendor packages (nvidia, evdi,
-# ipu6/7, iwlwifi, usbio, vision) that don't apply to this AMD GPU host.
-# Check which base package is installable instead of hardcoding one name.
-# apt-cache show prints a stub record (and exits 0) for packages that only
-# exist as a dependency reference, so use apt-cache policy and read the
-# Candidate: line, which is "(none)" when the package is not installable.
-- name: Check whether linux-modules-extra is installable for the running kernel
-  ansible.builtin.command:
-    cmd: "apt-cache policy linux-modules-extra-{{ ansible_facts['kernel'] }}"
-  register: rocm_modules_extra_check
-  changed_when: false
-
-- name: Select the kernel modules package name
-  ansible.builtin.set_fact:
-    rocm_modules_package: >-
-      {{ ('Candidate:' in rocm_modules_extra_check.stdout
-          and 'Candidate: (none)' not in rocm_modules_extra_check.stdout)
-         | ternary('linux-modules-extra-', 'linux-modules-')
-         + ansible_facts['kernel'] }}
-
-- name: Install kernel headers and modules for running kernel
-  become: true
-  ansible.builtin.apt:
-    name:
-      - "linux-headers-{{ ansible_facts['kernel'] }}"
-      - "{{ rocm_modules_package }}"
-    state: present
-    update_cache: true
 
 - name: Install ROCm
   become: true

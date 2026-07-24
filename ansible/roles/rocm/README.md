@@ -19,8 +19,10 @@ compatible with ROCm 7.2.4 and earlier.
 - Configures the ROCm apt repository (repo.amd.com) and the AMD GPU driver
   and device-metrics-exporter repositories (repo.radeon.com) in Deb822
   format; removes the now-obsolete `rocm-graphics` repo.
-- Installs the HWE kernel (`linux-generic-hwe-24.04`) and reboots when it changes.
-- Installs kernel headers for the running kernel.
+- Installs a specific AMD-supported HWE kernel (`rocm_hwe_kernel`) with its
+  headers and extra modules, holds the rolling `linux-generic-hwe-24.04`
+  metapackages so apt cannot pull an unsupported kernel, and asserts that
+  kernel is the one currently running before building the driver.
 - Installs `amdgpu-dkms` without automatically upgrading it.
 - Installs or upgrades `rocm_package_name` (e.g. `amdrocm7.14-gfx1200`; long-running
   step with 1-hour async timeout).
@@ -40,6 +42,7 @@ compatible with ROCm 7.2.4 and earlier.
 | `rocm_package_state` | `latest` | Desired state of the ROCm meta-package |
 | `rocm_gpu_target` | `gfx1200` | GPU-specific ROCm package suffix (gfx1200 = RX 9060 XT); see the [ROCm install docs](https://rocm.docs.amd.com/en/latest/install/rocm.html) for the marketing-name-to-gfx-target mapping |
 | `rocm_ubuntu_codename` | `noble` | Ubuntu codename used by the amdgpu and device-metrics-exporter repos |
+| `rocm_hwe_kernel` | `6.17.0-35-generic` | Specific AMD-supported HWE kernel to pin; the role installs this exact kernel and refuses to proceed unless it is the running kernel, because amdgpu-dkms fails to build on unsupported kernels (e.g. 7.x from the rolling HWE meta) |
 | `rocm_amdgpu_version` | `31.40` | AMD GPU driver repository version; managed independently from ROCm |
 | `rocm_amdgpu_package_state` | `present` | Desired state of `amdgpu-dkms`; use `latest` only for an explicit driver upgrade |
 | `rocm_amdgpu_minimum_boot_free_mb` | `300` | Minimum `/boot` free space required for an explicit driver upgrade |
@@ -55,6 +58,26 @@ ansible-playbook playbooks/gpuvm.yaml --tags rocm --limit gpuvm1 \
 ```
 
 Update `rocm_amdgpu_version` and `rocm_udev_rules` together.
+
+### Kernel pinning
+
+The role pins the host to `rocm_hwe_kernel` (an AMD-supported kernel) and
+holds the rolling HWE metapackages. It does **not** remove an already-installed
+unsupported kernel, because the running kernel cannot remove itself. If a host
+has been carried onto an unsupported kernel (e.g. `7.x`) by the rolling meta,
+do this one-time migration before running the role:
+
+```bash
+# On the target host, boot the supported kernel and drop the unsupported one.
+sudo apt-get install -y linux-image-6.17.0-35-generic \
+  linux-headers-6.17.0-35-generic linux-modules-extra-6.17.0-35-generic
+sudo sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux 6.17.0-35-generic"/' /etc/default/grub
+sudo update-grub
+sudo reboot
+# After it comes back on 6.17 (verify with `uname -r`), purge the 7.x kernel:
+sudo apt-get purge -y 'linux-image-7.0.0-*' 'linux-headers-7.0.0-*' \
+  'linux-modules-7.0.0-*' 'linux-hwe-7.0-*'
+```
 
 Renovate tracks `rocm_amdgpu_version` and `rocm_device_metrics_exporter_version`
 from the AMD repository indexes. AMD GPU driver updates are limited to the
