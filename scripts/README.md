@@ -220,7 +220,7 @@ Switches which single GPU workload runs on the `prd-homelab` cluster by scaling
 deployments. Only runs against the `prd-homelab` kube context.
 
 ```bash
-./gpu-switch.sh <ollama|comfyui|lemonade-server|off>
+./gpu-switch.sh <ollama|comfyui|lemonade-server|vllm|off>
 ```
 
 ## Grafana MCP

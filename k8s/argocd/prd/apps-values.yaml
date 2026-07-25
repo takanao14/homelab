@@ -38,3 +38,5 @@ apps:
     enabled: true
   reloader:
     enabled: true
+  vllm:
+    enabled: true

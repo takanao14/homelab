@@ -1,0 +1,45 @@
+replicaCount: 0
+
+hostname: ""
+
+gateway:
+  name: shared-gateway-envoy
+  namespace: gateway-system
+  sectionName: https
+  timeouts:
+    request: ""
+    backendRequest: ""
+
+image:
+  # Radeon/Navi build with gfx1200 support. Do not replace this with the CDNA
+  # image intended for AMD Instinct GPUs.
+  repository: rocm/vllm-dev
+  tag: rocm7.2.1_navi_ubuntu24.04_py3.12_pytorch_2.9_vllm_0.16.0
+
+model:
+  id: Qwen/Qwen3-4B
+  maxModelLen: 32768
+  gpuMemoryUtilization: "0.90"
+  extraArgs: []
+
+resources:
+  limits:
+    amd.com/gpu: "1"
+  requests:
+    amd.com/gpu: "1"
+
+storage:
+  size: 100Gi
+  storageClassName: openebs-hostpath
+
+sharedMemory:
+  sizeLimit: 8Gi
+
+nodeSelector:
+  gpu: amd
+
+tolerations:
+  - key: gpu
+    operator: Equal
+    value: amd
+    effect: NoSchedule

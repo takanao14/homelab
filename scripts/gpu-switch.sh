@@ -9,10 +9,11 @@ GPU_WORKLOADS=(
   "ollama/ollama"
   "comfyui/comfyui"
   "lemonade-server/lemonade-server"
+  "vllm/vllm"
 )
 
 usage() {
-  echo "Usage: $0 [ollama|comfyui|lemonade-server|off]"
+  echo "Usage: $0 [ollama|comfyui|lemonade-server|vllm|off]"
   exit 1
 }
 
@@ -35,7 +36,7 @@ case "$1" in
     scale_all_down
     echo "All GPU workloads stopped."
     ;;
-  ollama|comfyui|lemonade-server)
+  ollama|comfyui|lemonade-server|vllm)
     scale_all_down
     kubectl scale deployment "$1" -n "$1" --replicas=1
     echo "$1 started, others stopped."

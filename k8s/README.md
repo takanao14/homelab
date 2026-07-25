@@ -119,6 +119,9 @@ k8s/
 ├── ollama/               # Ollama LLM server (prd, AMD GPU)
 │   ├── values.yaml
 │   └── chart/
+├── vllm/                 # vLLM OpenAI-compatible server (prd, AMD GPU)
+│   ├── values.yaml
+│   └── chart/
 ├── headlamp/             # Headlamp Kubernetes Web UI, in-cluster for prd
 │   ├── prd/values.yaml      # hostname
 │   └── chart/            # Wrapper chart (in-cluster mode, HTTPRoute)
@@ -172,7 +175,7 @@ the node is idle.
 
 Two exceptions:
 
-- **GPU workloads** (`ollama`, `comfyui`, `lemonade-server`) set
+- **GPU workloads** (`ollama`, `comfyui`, `lemonade-server`, `vllm`) set
   `limits: amd.com/gpu`. Extended resources must be declared as limits —
   removing them breaks GPU allocation. This is unrelated to memory limits.
 - **`homepage`, `pdns-ui`, `external-dns`** carry pre-existing CPU and memory

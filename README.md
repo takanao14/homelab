@@ -27,7 +27,8 @@ homelab/
 │   ├── monitoring/    # Prometheus, Grafana, exporters, and dashboards
 │   ├── ollama/        # Ollama LLM server deployment
 │   ├── open-webui/    # Open WebUI values for the upstream chart
-│   └── reloader/      # Stakater Reloader (auto-restart on ConfigMap/Secret changes)
+│   ├── reloader/      # Stakater Reloader (auto-restart on ConfigMap/Secret changes)
+│   └── vllm/          # vLLM OpenAI-compatible server (ROCm / AMD GPU)
 ├── scripts/           # VM lifecycle, provisioning, OpenBao secret sync, GPU switching
 ├── docs/
 │   ├── adr/           # Architecture Decision Records
