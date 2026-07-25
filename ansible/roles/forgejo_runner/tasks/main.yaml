@@ -39,6 +39,15 @@
     state: present
     update_cache: true
 
+- name: Ensure apt keyring directory exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
 - name: Add Docker GPG key
   become: true
   ansible.builtin.get_url:
@@ -85,12 +94,6 @@
   when:
     - ansible_check_mode
     - forgejo_runner_python_debian.rc != 0
-
-- name: Remove legacy Docker repository list
-  become: true
-  ansible.builtin.file:
-    path: /etc/apt/sources.list.d/docker.list
-    state: absent
 
 - name: Install Docker CE
   become: true

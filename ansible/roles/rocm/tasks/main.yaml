@@ -11,6 +11,17 @@
     state: present
     update_cache: true
 
+- name: Check whether the python-debian library is available
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - import debian
+  register: rocm_python_debian
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
 - name: Add user to render and video groups
   become: true
   ansible.builtin.user:
@@ -50,12 +61,25 @@
     url: https://repo.radeon.com/rocm/rocm.gpg.key
     dest: /tmp/rocm.gpg.key
     mode: '0644'
+  register: rocm_gpg_key_download
+
+- name: Check ROCm apt keyring
+  ansible.builtin.stat:
+    path: /etc/apt/keyrings/rocm.gpg
+  register: rocm_gpg_keyring
 
 - name: Add ROCm GPG key to keyring
   become: true
   ansible.builtin.command:
-    cmd: gpg --dearmor -o /etc/apt/keyrings/rocm.gpg /tmp/rocm.gpg.key
-    creates: /etc/apt/keyrings/rocm.gpg
+    argv:
+      - gpg
+      - --dearmor
+      - --yes
+      - --output
+      - /etc/apt/keyrings/rocm.gpg
+      - /tmp/rocm.gpg.key
+  changed_when: true
+  when: rocm_gpg_key_download.changed or not rocm_gpg_keyring.stat.exists
 
 # ROCm 7.14 moved its apt repo to repo.amd.com under a separate signing key
 # from the repo.radeon.com key above, which still signs the amdgpu and
@@ -66,12 +90,25 @@
     url: https://repo.amd.com/rocm/packages-multi-arch/gpg/rocm.gpg
     dest: /tmp/amdrocm.gpg.key
     mode: '0644'
+  register: rocm_amd_gpg_key_download
+
+- name: Check ROCm multi-arch apt keyring
+  ansible.builtin.stat:
+    path: /etc/apt/keyrings/amdrocm.gpg
+  register: rocm_amd_gpg_keyring
 
 - name: Add ROCm 7.14+ apt repository GPG key to keyring
   become: true
   ansible.builtin.command:
-    cmd: gpg --dearmor -o /etc/apt/keyrings/amdrocm.gpg /tmp/amdrocm.gpg.key
-    creates: /etc/apt/keyrings/amdrocm.gpg
+    argv:
+      - gpg
+      - --dearmor
+      - --yes
+      - --output
+      - /etc/apt/keyrings/amdrocm.gpg
+      - /tmp/amdrocm.gpg.key
+  changed_when: true
+  when: rocm_amd_gpg_key_download.changed or not rocm_amd_gpg_keyring.stat.exists
 
 - name: Add ROCm apt preferences pin
   become: true
@@ -122,6 +159,7 @@
     state: present
     mode: '0644'
   register: rocm_apt_repository
+  when: not ansible_check_mode or rocm_python_debian.rc == 0
 
 - name: Configure AMD Deb822 repositories
   become: true
@@ -146,15 +184,17 @@
     - name: device-metrics-exporter
       uri: "https://repo.radeon.com/device-metrics-exporter/apt/{{ rocm_device_metrics_exporter_version }}"
   register: rocm_deb822_repositories
+  when: not ansible_check_mode or rocm_python_debian.rc == 0
 
-# ROCm 7.14 dropped the separate rocm-graphics apt repo; "graphics" packages
-# are now selected as an install-time option of the runfile/pip installers
-# instead of a standalone repo.
-- name: Remove obsolete rocm-graphics apt repository
-  become: true
-  ansible.builtin.file:
-    path: /etc/apt/sources.list.d/rocm-graphics.sources
-    state: absent
+- name: Report deferred ROCm repository check
+  ansible.builtin.debug:
+    msg: >-
+      Skipping the ROCm deb822 repository check because python3-debian is
+      pending installation in check mode. A normal run installs the prerequisite
+      before managing the repositories.
+  when:
+    - ansible_check_mode
+    - rocm_python_debian.rc != 0
 
 - name: Update apt cache after repository changes
   become: true
@@ -162,7 +202,9 @@
     update_cache: true
   when:
     - not ansible_check_mode
-    - rocm_apt_repository.changed or rocm_deb822_repositories.changed
+    - >-
+      (rocm_apt_repository.changed | default(false))
+      or (rocm_deb822_repositories.changed | default(false))
 
 # Install the specific AMD-supported HWE kernel and its headers/modules
 # before building amdgpu-dkms. dkms builds the module for every installed

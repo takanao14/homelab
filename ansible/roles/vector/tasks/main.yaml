@@ -45,18 +45,11 @@
     - ansible_check_mode
     - vector_python_debian.rc != 0
 
-- name: Remove legacy vector.list installed by setup.vector.dev
-  become: true
-  ansible.builtin.file:
-    path: /etc/apt/sources.list.d/vector.list
-    state: absent
-  register: vector_legacy_list
-
 - name: Update apt cache after repository change  # noqa no-handler
   become: true
   ansible.builtin.apt:
     update_cache: true
-  when: vector_repo.changed or vector_legacy_list.changed
+  when: vector_repo.changed | default(false)
 
 - name: Install Vector
   become: true

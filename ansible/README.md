@@ -76,6 +76,7 @@ ansible/
 │   ├── ops-openbao_configure.yaml
 │   ├── ops-openbao_configure_userpass.yaml
 │   ├── ops-openbao_register_cluster.yaml
+│   ├── ops-openbao_upgrade.yaml
 │   └── ops-openbao_seed_secrets.yaml
 └── roles/
     ├── pdns_auth/
@@ -254,6 +255,9 @@ ansible-playbook playbooks/ops-package_upgrade.yaml
 # Version audit for Renovate-managed Ansible components (read-only)
 ansible-playbook playbooks/ops-version_audit.yaml
 
+# OpenBao explicit upgrade (dry-run first; the user runs without --check)
+ansible-playbook playbooks/ops-openbao_upgrade.yaml --limit openbao --check --diff
+
 # Time synchronization (chrony -> router; physical hosts and VMs, not LXC)
 ansible-playbook playbooks/common-chrony.yaml
 
@@ -407,6 +411,7 @@ the decision behind the rebuild registration flow.
 | `ops-openbao_configure_userpass.yaml` | `openbao` | ops |
 | `ops-openbao_register_cluster.yaml` | `openbao`, localhost kubeconfig/context | ops |
 | `ops-openbao_seed_secrets.yaml` | `openbao` | ops |
+| `ops-openbao_upgrade.yaml` | `openbao` | ops |
 
 ## Secret Variables
 
