@@ -2,7 +2,9 @@
 
 Local Helm chart that configures cert-manager to issue wildcard TLS certificates via Let's Encrypt DNS-01 challenge using Cloudflare.
 
-Managed by ArgoCD with the helm-secrets plugin. Two ArgoCD Applications are used:
+Managed by ArgoCD; secrets are injected by External Secrets Operator from
+OpenBao (see [ADR-0012](../../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md)).
+Two ArgoCD Applications are used:
 - `cert-manager` — upstream chart (installs CRDs and the controller)
 - `cert-manager-config` — this local chart (ClusterIssuer, Certificate, Secret)
 

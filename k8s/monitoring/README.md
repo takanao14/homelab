@@ -1,6 +1,7 @@
 # Monitoring Stack
 
-Monitoring stack for the prd cluster. Managed by ArgoCD with the helm-secrets plugin.
+Monitoring stack for the prd cluster. Managed by ArgoCD; secrets are injected by
+External Secrets Operator from OpenBao (see [ADR-0012](../../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md)).
 
 ## Components
 
