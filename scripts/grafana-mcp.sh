@@ -7,6 +7,11 @@
 #   - Linux          -> Podman, invoked via the `podman` CLI
 # Override with GRAFANA_MCP_RUNTIME (e.g. "docker" or "podman") when needed.
 #
+# Tool exposure:
+#   - Defaults to the read-only observability categories needed by local agents.
+#   - Write tools are disabled independently of the Grafana Viewer token.
+#   - Override GRAFANA_MCP_ENABLED_TOOLS only when another category is required.
+#
 # Credentials (GRAFANA_URL, GRAFANA_SERVICE_ACCOUNT_TOKEN):
 #   - Used directly if already exported (e.g. Claude Code launched under direnv).
 #   - Otherwise self-resolved from the SOPS-encrypted .env/secrets.enc.env, so the
@@ -75,7 +80,18 @@ fi
 # stdio transport: keep stdin open (-i), never allocate a TTY (-t breaks framing).
 # Only env var names are passed (-e NAME), so values are forwarded from the host
 # without ever appearing on the command line.
+enabled_tools="${GRAFANA_MCP_ENABLED_TOOLS:-search,datasource,prometheus,loki,dashboard,navigation}"
+max_loki_log_limit="${GRAFANA_MCP_MAX_LOKI_LOG_LIMIT:-20}"
+server_args=(
+  -t stdio
+  --enabled-tools "${enabled_tools}"
+  --max-loki-log-limit "${max_loki_log_limit}"
+)
+if [ "${GRAFANA_MCP_DISABLE_WRITE:-true}" = "true" ]; then
+  server_args+=(--disable-write)
+fi
+
 exec "${runtime}" run -i --rm \
   -e GRAFANA_URL \
   -e GRAFANA_SERVICE_ACCOUNT_TOKEN \
-  "${GRAFANA_MCP_IMAGE:-mcp/grafana}" -t stdio
+  "${GRAFANA_MCP_IMAGE:-mcp/grafana}" "${server_args[@]}"

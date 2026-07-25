@@ -227,7 +227,7 @@ deployments. Only runs against the `prd-homelab` kube context.
 
 Scripts backing the Grafana MCP server registered in the repo-root `.mcp.json`.
 The server lets an MCP client (Claude Code, Codex, Cursor, …) query Grafana
-(PromQL/LogQL, dashboards, alerts) against `https://grafana.prd.butaco.net`.
+(PromQL/LogQL and dashboards) against `https://grafana.prd.butaco.net`.
 
 ### `grafana-mcp.sh`
 
@@ -235,6 +235,13 @@ Launcher invoked by the MCP client over stdio. It selects a container runtime
 per OS — `docker` on macOS when OrbStack is installed, `podman` otherwise — and
 runs the `mcp/grafana` image with `-i` (no TTY). You normally don't run this by
 hand; the client starts it.
+
+The launcher exposes only `search`, `datasource`, `prometheus`, `loki`,
+`dashboard`, and `navigation` tools by default. Alert-management tools are
+excluded from the default allowlist. It also passes
+`--disable-write` and limits Loki results to 20 lines. This keeps the tool
+schema and responses small enough for local models while enforcing read-only
+operation independently of Grafana permissions.
 
 Credentials are **self-resolving**: if `GRAFANA_SERVICE_ACCOUNT_TOKEN` is already
 exported (e.g. Claude Code launched under direnv) it is used as-is; otherwise the
@@ -247,14 +254,75 @@ Other clients just reference the absolute path, e.g. Codex (`~/.codex/config.tom
 
 ```toml
 [mcp_servers.grafana]
-command = "/Users/takanao/homelab/scripts/grafana-mcp.sh"
+command = "/Users/takanao/lab/homelab/scripts/grafana-mcp.sh"
 startup_timeout_ms = 60000   # first run pulls the mcp/grafana image
 ```
+
+### Goose workstation setup
+
+Goose is the default local-LLM agent for this repository. Run the agent on the
+workstation and keep only Ollama in the cluster. This gives the agent direct
+access to the checked-out repository and preserves interactive approval while
+avoiding another long-running in-cluster agent runtime.
+
+The validated baseline is:
+
+| Setting | Value |
+|---------|-------|
+| Agent | Goose |
+| Provider | Ollama |
+| Endpoint | `https://ollama.prd.butaco.net` |
+| Model | `qwen3:14b` |
+| Context | `32768` (configured by the Ollama deployment) |
+| Mode | `approve` |
+| Maximum turns | `10` |
+| Telemetry | disabled |
+| Grafana MCP | local stdio launcher, enabled |
+
+Install and configure the client interactively:
+
+```bash
+brew install block-goose-cli
+goose configure
+```
+
+Select the Ollama provider and set the endpoint/model above. Add a
+**Command-line Extension** named `grafana` with:
+
+```text
+/absolute/path/to/homelab/scripts/grafana-mcp.sh
+```
+
+Use a 300-second extension timeout and do not add token environment variables
+to the Goose configuration. The launcher resolves the encrypted token itself.
+Keep `GOOSE_MODE=approve` for interactive use. A one-shot `GOOSE_MODE=auto`
+override is appropriate only for a narrowly scoped task whose enabled MCP
+servers are read-only.
+
+Smoke-test the complete tool loop from Goose:
+
+```text
+Use only the Grafana MCP. List each Grafana data source name and type.
+Do not modify Grafana or any files.
+```
+
+The Grafana extension is healthy when Goose selects `list_datasources` and
+returns the Prometheus and Loki data sources. A broader read-only check can
+search for a dashboard, call `get_dashboard_summary`, and then call
+`get_dashboard_panel_queries` using the returned UID.
+
+If the MCP server does not start, run `bash -n scripts/grafana-mcp.sh`, confirm
+that Docker or Podman is running, and check that `sops` can access the AGE key.
+If model requests end at a fixed duration, inspect the Ollama HTTPRoute request
+and backend-request timeouts before changing Goose's extension timeout.
 
 | Env var | Default | Notes |
 |---------|---------|-------|
 | `GRAFANA_MCP_RUNTIME` | `docker` on macOS with OrbStack, otherwise `podman` | Force a runtime |
 | `GRAFANA_MCP_IMAGE`   | `mcp/grafana`                       | Override the image |
+| `GRAFANA_MCP_ENABLED_TOOLS` | `search,datasource,prometheus,loki,dashboard,navigation` | Comma-separated tool categories |
+| `GRAFANA_MCP_DISABLE_WRITE` | `true` | Set to `false` only for an explicitly approved write workflow |
+| `GRAFANA_MCP_MAX_LOKI_LOG_LIMIT` | `20` | Maximum log lines returned by a Loki query |
 
 On macOS, the Podman fallback expects a working Podman machine. Prefer the
 official Podman macOS installer; Homebrew builds can miss VM helper binaries
@@ -263,7 +331,7 @@ such as `krunkit`. After installing Podman, initialize the machine with
 
 ### `grafana-mcp-token.sh`
 
-Idempotently creates the `mcp-grafana` service account (Editor role) and issues
+Idempotently creates the `mcp-grafana` service account (Viewer role) and issues
 a token, printing it to stdout as a `export GRAFANA_SERVICE_ACCOUNT_TOKEN="..."`
 line (logs go to stderr). Admin auth is taken from `GRAFANA_ADMIN_USER` /
 `GRAFANA_ADMIN_PASSWORD`, or read from the in-cluster `grafana-admin` secret via
@@ -286,7 +354,7 @@ direnv allow
 | `GRAFANA_URL`           | `https://grafana.prd.butaco.net` | Target Grafana |
 | `GRAFANA_KUBE_CONTEXT`  | `prd-homelab`                    | Context for the admin secret |
 | `GRAFANA_MCP_SA_NAME`   | `mcp-grafana`                    | Service account name |
-| `GRAFANA_MCP_SA_ROLE`   | `Editor`                         | Service account role |
+| `GRAFANA_MCP_SA_ROLE`   | `Viewer`                         | Service account role |
 | `GRAFANA_MCP_TOKEN_NAME`| `mcp-grafana-<timestamp>`        | Token name |
 
 Re-running issues a **new** token while reusing the existing service account;
