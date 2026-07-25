@@ -15,7 +15,7 @@ inputs = {
   containers = {
     "ns1" = merge(local.env.locals.container_defaults, {
       cores       = 1
-      memory      = 512
+      memory      = 1024
       bridge      = local.common.locals.node2.net10.bridge
       ipv4        = "192.168.10.233/24"
       ipv4gw      = local.common.locals.node2.net10.ipv4gw
@@ -28,7 +28,7 @@ inputs = {
     })
     "dist1" = merge(local.env.locals.container_defaults, {
       cores       = 2
-      memory      = 512
+      memory      = 1024
       bridge      = local.common.locals.node2.net10.bridge
       ipv4        = "192.168.10.231/24"
       ipv4gw      = local.common.locals.node2.net10.ipv4gw
@@ -41,7 +41,7 @@ inputs = {
     })
     "ns3" = merge(local.env.locals.container_defaults, {
       cores       = 1
-      memory      = 512
+      memory      = 1024
       bridge      = local.common.locals.node2.net10.bridge
       ipv4        = "192.168.10.235/24"
       ipv4gw      = local.common.locals.node2.net10.ipv4gw
