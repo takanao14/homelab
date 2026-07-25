@@ -35,6 +35,7 @@
       - git
       - ca-certificates
       - curl
+      - python3-debian
     state: present
     update_cache: true
 
@@ -45,15 +46,51 @@
     dest: /etc/apt/keyrings/docker.asc
     mode: '0644'
 
+- name: Check whether the python-debian library is available
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - import debian
+  register: forgejo_runner_python_debian
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
 - name: Add Docker repository
   become: true
-  ansible.builtin.apt_repository:
-    repo: >-
-      deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc]
-      https://download.docker.com/linux/ubuntu
-      {{ ansible_facts["distribution_release"] }} stable
+  ansible.builtin.deb822_repository:
+    name: docker
+    types:
+      - deb
+    uris:
+      - https://download.docker.com/linux/ubuntu
+    suites:
+      - "{{ ansible_facts['distribution_release'] }}"
+    components:
+      - stable
+    architectures:
+      - amd64
+    signed_by: /etc/apt/keyrings/docker.asc
     state: present
-    filename: docker
+    mode: '0644'
+  when: not ansible_check_mode or forgejo_runner_python_debian.rc == 0
+
+- name: Report deferred Docker repository check
+  ansible.builtin.debug:
+    msg: >-
+      Skipping the Docker deb822 repository check because python3-debian is
+      pending installation in check mode. A normal run installs the prerequisite
+      before managing the repository.
+  when:
+    - ansible_check_mode
+    - forgejo_runner_python_debian.rc != 0
+
+- name: Remove legacy Docker repository list
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/docker.list
+    state: absent
 
 - name: Install Docker CE
   become: true
