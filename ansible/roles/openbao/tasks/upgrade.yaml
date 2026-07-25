@@ -1,0 +1,205 @@
+---
+- name: Require Debian-based host
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == "Debian"
+    fail_msg: "The OpenBao upgrade workflow currently supports Debian-based hosts only."
+
+- name: Refresh apt cache for OpenBao upgrade
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+  when: not ansible_check_mode
+
+- name: Read available OpenBao package versions
+  become: true
+  ansible.builtin.command:
+    argv:
+      - apt-cache
+      - madison
+      - openbao
+  register: openbao_upgrade_available_packages
+  changed_when: false
+  check_mode: false
+
+- name: Select package version matching the reviewed release
+  ansible.builtin.set_fact:
+    openbao_upgrade_package_version: >-
+      {{
+        openbao_upgrade_available_packages.stdout
+        | regex_findall('(?m)^ *openbao *[|] *([^ |]+) *[|]')
+        | select('match', '^' ~ (openbao_version | regex_escape) ~ '([+~.-].*)?$')
+        | first
+        | default('')
+      }}
+
+- name: Require reviewed OpenBao package in apt repository
+  ansible.builtin.assert:
+    that:
+      - openbao_upgrade_package_version | length > 0
+    fail_msg: >-
+      No apt package matching OpenBao {{ openbao_version }} is available.
+      `apt-cache madison openbao` returned:
+      {{ openbao_upgrade_available_packages.stdout | default('(no output)', true) }}
+
+- name: Read installed OpenBao package version
+  ansible.builtin.package_facts:
+    manager: auto
+  check_mode: false
+
+- name: Store installed OpenBao package version
+  ansible.builtin.set_fact:
+    openbao_upgrade_installed_version: >-
+      {{ (ansible_facts.packages.get('openbao', [{'version': 'not-installed'}]) | first).version }}
+
+- name: Compare installed and reviewed OpenBao package versions
+  ansible.builtin.command:
+    argv:
+      - dpkg
+      - --compare-versions
+      - "{{ openbao_upgrade_installed_version }}"
+      - le
+      - "{{ openbao_upgrade_package_version }}"
+  register: openbao_upgrade_version_comparison
+  changed_when: false
+  failed_when: openbao_upgrade_version_comparison.rc not in [0, 1]
+  check_mode: false
+  when: openbao_upgrade_installed_version != 'not-installed'
+
+- name: Prevent accidental OpenBao downgrade
+  ansible.builtin.assert:
+    that:
+      - openbao_upgrade_installed_version == 'not-installed' or openbao_upgrade_version_comparison.rc == 0
+    fail_msg: >-
+      Refusing to downgrade OpenBao from {{ openbao_upgrade_installed_version }}
+      to {{ openbao_upgrade_package_version }}.
+
+- name: Check OpenBao status before upgrade
+  become: true
+  ansible.builtin.command:
+    argv:
+      - "{{ openbao_binary }}"
+      - status
+      - -format=json
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+  register: openbao_upgrade_status_before
+  changed_when: false
+  failed_when: openbao_upgrade_status_before.rc not in [0, 2]
+  check_mode: false
+
+- name: Require initialized and unsealed OpenBao before upgrade
+  ansible.builtin.assert:
+    that:
+      - (openbao_upgrade_status_before.stdout | from_json).initialized | bool
+      - not ((openbao_upgrade_status_before.stdout | from_json).sealed | bool)
+    fail_msg: "OpenBao must be initialized and unsealed before it can be upgraded."
+
+- name: Upgrade OpenBao when the reviewed version is not installed
+  when: openbao_upgrade_installed_version != openbao_upgrade_package_version
+  block:
+    - name: Log in for Raft snapshot
+      ansible.builtin.include_tasks: login_admin.yaml
+      when: not ansible_check_mode
+
+    - name: Create OpenBao backup directory
+      become: true
+      ansible.builtin.file:
+        path: "{{ openbao_backup_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0700'
+
+    - name: Save OpenBao Raft snapshot
+      become: true
+      ansible.builtin.command:
+        argv:
+          - "{{ openbao_binary }}"
+          - operator
+          - raft
+          - snapshot
+          - save
+          - "{{ openbao_backup_dir }}/openbao-{{ openbao_upgrade_installed_version }}-{{ ansible_facts['date_time']['iso8601_basic_short'] }}.snap"
+      environment:
+        BAO_ADDR: "{{ openbao_local_addr }}"
+        BAO_TOKEN: "{{ openbao_admin_token }}"
+      changed_when: true
+      no_log: true
+      when: not ansible_check_mode
+
+    - name: Remove OpenBao package hold
+      become: true
+      ansible.builtin.dpkg_selections:
+        name: openbao
+        selection: install
+
+    - name: Install reviewed OpenBao package
+      become: true
+      ansible.builtin.apt:
+        name: "openbao={{ openbao_upgrade_package_version }}"
+        state: present
+        update_cache: true
+        allow_downgrade: false
+        allow_change_held_packages: true
+      notify: Restart openbao
+
+  always:
+    - name: Restore OpenBao package hold
+      become: true
+      ansible.builtin.dpkg_selections:
+        name: openbao
+        selection: hold
+
+- name: Ensure OpenBao package remains held
+  become: true
+  ansible.builtin.dpkg_selections:
+    name: openbao
+    selection: hold
+
+- name: Apply pending OpenBao restart
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for OpenBao API after upgrade
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ openbao_api_port }}"
+    timeout: 60
+  when: not ansible_check_mode
+
+- name: Check OpenBao status after upgrade
+  become: true
+  ansible.builtin.command:
+    argv:
+      - "{{ openbao_binary }}"
+      - status
+      - -format=json
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+  register: openbao_upgrade_status_after
+  changed_when: false
+  failed_when: openbao_upgrade_status_after.rc not in [0, 2]
+  check_mode: false
+
+- name: Require initialized and unsealed OpenBao after upgrade
+  ansible.builtin.assert:
+    that:
+      - (openbao_upgrade_status_after.stdout | from_json).initialized | bool
+      - not ((openbao_upgrade_status_after.stdout | from_json).sealed | bool)
+    fail_msg: "OpenBao did not return to an initialized and unsealed state after upgrade."
+  when: not ansible_check_mode
+
+- name: Verify installed OpenBao package version
+  ansible.builtin.package_facts:
+    manager: auto
+  check_mode: false
+  when: not ansible_check_mode
+
+- name: Require reviewed OpenBao package after upgrade
+  ansible.builtin.assert:
+    that:
+      - >-
+        (ansible_facts.packages.get('openbao', [{'version': 'unknown'}]) | first).version
+        == openbao_upgrade_package_version
+    fail_msg: "The installed OpenBao package does not match the reviewed version."
+  when: not ansible_check_mode

@@ -28,10 +28,11 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `openbao_version` | `2.5.5` | Reviewed OpenBao version used by Renovate/audit |
+| `openbao_version` | `2.6.1` | Reviewed OpenBao version used by Renovate, audit, and the explicit upgrade workflow |
 | `openbao_user` | `openbao` | System user (created by package) |
 | `openbao_group` | `openbao` | System group (created by package) |
-| `openbao_package_hold` | `true` | Hold the `openbao` apt package after install. Set `false` temporarily before an explicit package upgrade. |
+| `openbao_package_hold` | `true` | Hold the `openbao` apt package during normal service-role runs; the explicit upgrade workflow manages this hold |
+| `openbao_backup_dir` | `/var/backups/openbao` | Root-only directory for pre-upgrade Raft snapshots |
 | `openbao_config_dir` | `/etc/openbao` | Config directory |
 | `openbao_data_dir` | `/opt/openbao/data` | Raft storage directory |
 | `openbao_binary` | `/usr/bin/bao` | Binary path |
@@ -50,6 +51,34 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_k8s_host` | `""` | prd cluster API server URL (e.g. `https://192.168.60.11:6443`) |
 | `openbao_k8s_sandbox_host` | `""` | sandbox cluster API server URL (e.g. `https://192.168.20.31:6443`) |
 | `openbao_k8s_clusters` | see defaults | List of Kubernetes clusters to configure auth for. Each entry defines `name`, `mount_path`, `host`, `ca_cert_file`, `role`, and `policies`. Runtime CA data is injected by `ops-openbao_register_cluster.yaml`. |
+
+## Upgrade
+
+`openbao_version` is the reviewed upstream release. Renovate updates it, but the
+normal service role deliberately keeps the apt package held. Upgrade OpenBao
+only through the operational playbook:
+
+```bash
+# Read-only desired-versus-installed check
+ansible-playbook playbooks/ops-version_audit.yaml --limit openbao
+
+# Validate the upgrade without changing the host
+ansible-playbook playbooks/ops-openbao_upgrade.yaml --limit openbao --check --diff
+
+# The operator performs the state-changing upgrade
+ansible-playbook playbooks/ops-openbao_upgrade.yaml --limit openbao
+
+# Verify the resulting package version
+ansible-playbook playbooks/ops-version_audit.yaml --limit openbao
+```
+
+The upgrade playbook runs one OpenBao host at a time, requires an initialized
+and unsealed server, confirms that the reviewed release exists in the apt
+repository, prevents downgrades, and saves a Raft snapshot before changing the
+package. It restores the apt hold even when the package task fails, then checks
+the local API and installed package version. Snapshot files remain under
+`openbao_backup_dir`; remove them manually according to the backup retention
+policy.
 
 ## Post-install initialization
 

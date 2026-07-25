@@ -1,0 +1,10 @@
+---
+- name: Upgrade OpenBao to the reviewed version
+  hosts: openbao
+  serial: 1
+  any_errors_fatal: true
+  tasks:
+    - name: Run OpenBao upgrade tasks
+      ansible.builtin.include_role:
+        name: openbao
+        tasks_from: upgrade

@@ -4,6 +4,7 @@ openbao_version: "2.6.1"
 openbao_user: openbao
 openbao_group: openbao
 openbao_package_hold: true
+openbao_backup_dir: /var/backups/openbao
 openbao_config_dir: /etc/openbao
 openbao_data_dir: /opt/openbao/data
 openbao_binary: /usr/bin/bao
