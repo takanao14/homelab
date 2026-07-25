@@ -1,3 +1,6 @@
 [mcp_servers.grafana]
-command = "/bin/sh"
-args = ["-c", 'exec "$HOME/homelab/scripts/grafana-mcp.sh"']
+# Launched from the repo root (cwd = "."), mirroring .mcp.json. The launcher
+# resolves the repo root from its own BASH_SOURCE, so no absolute path is baked
+# in and moving/cloning the repo does not break this entry.
+command = "./scripts/grafana-mcp.sh"
+cwd = "."
