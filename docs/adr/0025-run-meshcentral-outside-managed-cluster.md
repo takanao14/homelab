@@ -26,9 +26,6 @@ application state under `/opt/meshcentral` on local storage. Caddy provides the
 public TLS endpoint after the fresh instance is configured and tested directly.
 Use `meshcentral.home.butaco.net` as the canonical hostname because the service
 is independent of the `prd` Kubernetes environment.
-Do not migrate the prd Kubernetes PVCs: the earlier dev-to-prd move did not
-preserve the MeshCentral configuration, so there is no useful server state to
-carry forward. Re-register managed devices against the standalone instance.
 
 Keep Kea and MeshCentral independently relocatable even though they share the
 host. Limit MeshCentral to 1 GiB RAM and one CPU so that application failure or
