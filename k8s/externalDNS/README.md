@@ -27,7 +27,7 @@ externalDNS/
 |-------|--------|-------------|
 | `pdns.apiUrl` | `values-common.yaml` | PowerDNS API endpoint |
 | `pdns.serverId` | `values-common.yaml` | PowerDNS server ID (`localhost`) |
-| `pdns.apiKey` | `secrets.enc.yaml` | PowerDNS API key (encrypted) |
+| `pdns.apiKey` | OpenBao via ESO | PowerDNS API key materialized as a Kubernetes Secret |
 | `domainFilter` | `{env}/values.yaml` | Target domain filter |
 
 Source is set to `gateway-httproute`, so DNS records are created automatically

@@ -23,7 +23,7 @@ Two changes broke that equivalence:
   single host-bound stack.
 
 Because every Terragrunt stack binds to exactly one Proxmox API endpoint
-(per-host credentials sourced by `.envrc` from `secrets.<name>.enc.env`),
+(per-host credentials sourced by `.envrc` from `secrets.<name>.sops.env`),
 cluster VMs on different hosts cannot share one stack. In addition, each
 tree duplicated per-host `env.hcl`/`.envrc` boilerplate (up to five copies
 per host), and `tf/common.hcl` keyed host networks by the stale names
@@ -66,6 +66,6 @@ the repo path, all eight moved stacks had their state migrated
   `run_cmd` piped `curl -fsS` into `tr`, masking download failures (the
   "fails fast" comment was ineffective) — fixed with `set -o pipefail`.
 - Deferred (tracked in the private plans repo): renaming
-  `secrets.{prd,dev}.enc.env` to host names, deduplicating per-host
+  `secrets.{prd,dev}.sops.env` to host names, deduplicating per-host
   `vm_defaults` into a single source, renaming the `prd-cluster` stack
   once the controller moves out.

@@ -17,7 +17,7 @@ build image (packer) -> register on Proxmox (terraform) -> VMs consume it
 ```
 
 The standalone `homelab-packer-proxmox` repo duplicated this repo's Terragrunt
-structure (`root.hcl`, env dirs, `.enc.env` secrets) and carried a near-duplicate
+structure (`root.hcl`, env dirs, `.sops.env` secrets) and carried a near-duplicate
 of the `proxmox-cloudimage` module. Both repos already shared the same AGE key and
 tooling baseline, so consolidation needed no secret re-encryption.
 

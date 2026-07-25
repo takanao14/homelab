@@ -2,7 +2,7 @@
 #
 # Idempotently create the Grafana service account used by the MCP server and
 # issue a token. The token (returned only once by Grafana) is printed to stdout
-# as a ready-to-encrypt export line for .env/secrets.enc.env; all logs go to
+# as a ready-to-encrypt export line for .env/secrets.sops.env; all logs go to
 # stderr so the output can be redirected cleanly.
 #
 # Admin auth is resolved in this order:
@@ -15,8 +15,8 @@
 #
 # Usage:
 #   ./scripts/grafana-mcp-token.sh                       # print export line
-#   ./scripts/grafana-mcp-token.sh >> .env/secrets.enc.env && \
-#     sops --encrypt --in-place .env/secrets.enc.env     # store encrypted
+#   ./scripts/grafana-mcp-token.sh >> .env/secrets.sops.env && \
+#     sops --encrypt --in-place .env/secrets.sops.env     # store encrypted
 #
 set -euo pipefail
 

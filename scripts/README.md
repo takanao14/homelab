@@ -190,7 +190,7 @@ Retrieves the SOPS age private key from OpenBao (`secret/sops/age`) into
 `~/.config/sops/age/keys.txt` (override with `SOPS_AGE_KEY_FILE`). The file is
 written via a temporary file and moved into place only after the value is
 fetched and validated as an age private key. This is the bootstrap key used to
-decrypt the repo's `*.sops.yaml` and `*.enc.env` files; it is intentionally
+decrypt the repo's `*.sops.yaml` and `*.sops.env` files; it is intentionally
 **not** part of the default `provision.sh` flow, so run it explicitly only where
 SOPS decryption is needed.
 
@@ -245,7 +245,7 @@ operation independently of Grafana permissions.
 
 Credentials are **self-resolving**: if `GRAFANA_SERVICE_ACCOUNT_TOKEN` is already
 exported (e.g. Claude Code launched under direnv) it is used as-is; otherwise the
-script decrypts `.env/secrets.enc.env` via `sops` itself, deriving the repo root
+script decrypts `.env/secrets.sops.env` via `sops` itself, deriving the repo root
 from its own path. This means the same launcher works from any client regardless
 of cwd or whether direnv has loaded — clients only need to point at this script,
 never embed the token. `GRAFANA_URL` defaults to the prd Grafana.
@@ -344,8 +344,8 @@ secret path).
 ./grafana-mcp-token.sh
 
 # Store it encrypted for the MCP server to consume
-./grafana-mcp-token.sh >> ../.env/secrets.enc.env
-sops --encrypt --in-place ../.env/secrets.enc.env
+./grafana-mcp-token.sh >> ../.env/secrets.sops.env
+sops --encrypt --in-place ../.env/secrets.sops.env
 direnv allow
 ```
 

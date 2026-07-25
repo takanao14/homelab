@@ -14,7 +14,7 @@
 #
 # Credentials (GRAFANA_URL, GRAFANA_SERVICE_ACCOUNT_TOKEN):
 #   - Used directly if already exported (e.g. Claude Code launched under direnv).
-#   - Otherwise self-resolved from the SOPS-encrypted .env/secrets.enc.env, so the
+#   - Otherwise self-resolved from the SOPS-encrypted .env/secrets.sops.env, so the
 #     launcher works from any MCP client (Codex, Cursor, …) regardless of cwd or
 #     whether direnv has loaded. Secrets are never hardcoded here.
 #
@@ -24,7 +24,7 @@ set -euo pipefail
 # Derive the repo root from this script's location so cwd does not matter.
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -z "${GRAFANA_SERVICE_ACCOUNT_TOKEN:-}" ]; then
-  secret_file="${script_dir}/../.env/secrets.enc.env"
+  secret_file="${script_dir}/../.env/secrets.sops.env"
   # Point sops at the age key explicitly. On macOS sops otherwise defaults to
   # ~/Library/Application Support/sops/age/keys.txt (Go's os.UserConfigDir),
   # so clients that do not inherit SOPS_AGE_KEY_FILE from the shell profile

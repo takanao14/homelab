@@ -45,7 +45,7 @@ homelab/
 
 Secrets are managed with [SOPS](https://github.com/getsops/sops) + [AGE](https://github.com/FiloSottile/age) encryption and exposed to tooling via [direnv](https://direnv.net/).
 
-- Encrypted secrets are committed as `*.enc.env` or `*.enc.yaml` files.
+- Encrypted secrets are committed as `*.sops.env` or `*.sops.yaml` files.
 - Each component directory contains a `.envrc` that decrypts secrets at shell entry using `sops --decrypt`.
 - The `.sops.yaml` at the repository root defines encryption rules by file path pattern.
 
@@ -53,7 +53,7 @@ Secrets are managed with [SOPS](https://github.com/getsops/sops) + [AGE](https:/
 
 ```bash
 # Create or edit an encrypted secrets file
-sops edit tf/.env/secrets.prd.enc.env
+sops edit tf/.env/secrets.node1.sops.env
 
 # direnv loads secrets automatically when entering a directory
 cd tf
@@ -65,11 +65,11 @@ by OpenBao and synced via External Secrets Operator (see `k8s/eso/`).
 
 ### Using this repository on a new machine
 
-The `*.enc.env` files committed in this repository are encrypted with the author's AGE key and **cannot be decrypted by anyone else**. To use this repository, replace each encrypted file with your own secrets:
+The `*.sops.env` files committed in this repository are encrypted with the author's AGE key and **cannot be decrypted by anyone else**. To use this repository, replace each encrypted file with your own secrets:
 
 ```bash
 # Remove the existing encrypted file and create your own
-sops edit tf/.env/secrets.prd.enc.env
+sops edit tf/.env/secrets.node1.sops.env
 ```
 
 Make sure your AGE key is listed in `.sops.yaml` before editing.
@@ -78,7 +78,7 @@ Make sure your AGE key is listed in `.sops.yaml` before editing.
 
 | Category | Handling |
 |----------|----------|
-| Passwords, API keys, tokens | Encrypted in `*.enc.env` |
+| Passwords, API keys, tokens | Encrypted in `*.sops.env` |
 | Usernames | Environment variables when needed; for k0s, `K0S_SSH_USER` defaults to the command runner |
 | IP addresses, domains, ports | Hardcoded in config files |
 | Shared non-secret config | Variables in group_vars or defaults |

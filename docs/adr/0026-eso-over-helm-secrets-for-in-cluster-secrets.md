@@ -51,7 +51,7 @@ plugin, and do not customise or inject tooling into the Argo CD repo-server.**
 - Argo CD runs as the upstream chart, with **no plugin and no custom image**.
 
 SOPS + AGE remains the mechanism for secrets consumed **outside** the cluster —
-Ansible `*.sops.yaml` and Terragrunt `*.enc.env` — where the decrypting process
+Ansible `*.sops.yaml` and Terragrunt `*.sops.env` — where the decrypting process
 is the operator's own shell, not a long-running platform component.
 
 ### Why this avoids the problem rather than relocating it

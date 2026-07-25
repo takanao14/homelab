@@ -8,6 +8,6 @@ creation_rules:
   - path_regex: .*\.sops\.yaml$
     age: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
 
-  # terragrunt secrets
-  - path_regex: .*\.enc\.env$
+  # dotenv secrets
+  - path_regex: .*\.sops\.env$
     age: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v

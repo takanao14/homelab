@@ -20,8 +20,8 @@ tf/
 ├── provider.tf                     # Provider constraints generated into every stack
 ├── .env/
 │   ├── secrets.env.sample          # Secret template
-│   ├── secrets.common.enc.env      # SOPS-encrypted shared secrets (committed)
-│   └── secrets.{node1,node2,node3,node4,node5,pve}.enc.env  # SOPS-encrypted per-host secrets (committed)
+│   ├── secrets.common.sops.env      # SOPS-encrypted shared secrets (committed)
+│   └── secrets.{node1,node2,node3,node4,node5,pve}.sops.env  # SOPS-encrypted per-host secrets (committed)
 ├── modules/
 │   ├── proxmox-vm/                 # Proxmox VM module
 │   ├── proxmox-container/          # Proxmox LXC container module
@@ -89,12 +89,12 @@ Secrets are managed with SOPS and loaded per directory via `direnv` (each
 component's `.envrc` decrypts the secrets file for its target node):
 
 ```bash
-sops edit tf/.env/secrets.node1.enc.env
-sops edit tf/.env/secrets.node2.enc.env
-sops edit tf/.env/secrets.node3.enc.env
-sops edit tf/.env/secrets.node4.enc.env
-sops edit tf/.env/secrets.node5.enc.env
-sops edit tf/.env/secrets.pve.enc.env
+sops edit tf/.env/secrets.node1.sops.env
+sops edit tf/.env/secrets.node2.sops.env
+sops edit tf/.env/secrets.node3.sops.env
+sops edit tf/.env/secrets.node4.sops.env
+sops edit tf/.env/secrets.node5.sops.env
+sops edit tf/.env/secrets.pve.sops.env
 ```
 
 ## Usage
