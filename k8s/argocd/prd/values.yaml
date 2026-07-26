@@ -1,3 +1,7 @@
+openbao:
+  adminPassword:
+    key: k8s/argocd/prd/admin
+
 server:
   ingress:
     hostname: argocd-ui.prd.butaco.net

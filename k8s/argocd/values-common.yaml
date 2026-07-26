@@ -75,6 +75,23 @@ redis:
       cpu: 25m
       memory: 64Mi
 
+# Consumed by k8s/argocd/chart, not by the upstream argo-cd chart (which
+# ignores unknown keys — it ships no values.schema.json).
+#
+# The admin password is injected into argocd-secret by ESO rather than set
+# through configs.secret.argocdServerAdminPassword, so no bcrypt hash lands in
+# git (ADR-0026). `key` is deliberately absent here: each environment sets its
+# own OpenBao path in <env>/values.yaml so prd and sandbox have independent
+# passwords.
+openbao:
+  secretStore:
+    name: openbao
+    kind: ClusterSecretStore
+  adminPassword:
+    enabled: true
+    passwordProperty: password
+    mtimeProperty: mtime
+
 configs:
   cm:
     # Argo CD >=1.8 ships no built-in health check for the Application CRD,

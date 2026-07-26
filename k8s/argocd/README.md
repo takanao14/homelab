@@ -7,22 +7,23 @@ ArgoCD configuration for Kubernetes cluster management via GitOps. Supports
 
 ```
 argocd/
-├── values-common.yaml        # Common Helm values (CMP plugin, insecure mode)
-├── chart/                    # Shared Helm chart for ArgoCD HTTPRoute
+├── values-common.yaml        # Common Helm values (insecure mode, ESO defaults)
+├── chart/                    # Shared Helm chart for ArgoCD HTTPRoute + admin password
 │   └── templates/
-│       └── httproute.yaml    # Uses server.ingress.hostname from values
+│       ├── httproute.yaml    # Uses server.ingress.hostname from values
+│       └── admin-external-secret.yaml  # Merges admin.password into argocd-secret
 ├── apps/                     # App-of-apps chart: one Application template per app
 │   ├── Chart.yaml
 │   ├── values.yaml           # All apps disabled by default; waves; upstream chart versions
 │   └── templates/            # Gated by apps.<name>.enabled, env via {{ .Values.env }}
 ├── prd/
 │   ├── helmfile.yaml         # Initial deployment config for prd
-│   ├── values.yaml           # server.ingress.hostname: argocd.prd.butaco.net
+│   ├── values.yaml           # Route hostname + openbao.adminPassword.key for prd
 │   ├── apps-values.yaml      # env: prd + enabled apps
 │   └── root-apps.yaml        # Bootstrap App of Apps for prd
 └── sandbox/
     ├── helmfile.yaml         # Initial deployment config for sandbox
-    ├── values.yaml           # HTTP route: argocd.sandbox.butaco.net
+    ├── values.yaml           # HTTP route + openbao.adminPassword.key for sandbox
     ├── apps-values.yaml      # env: sandbox + enabled apps
     └── root-apps.yaml        # Bootstrap App of Apps for sandbox
 ```
@@ -86,6 +87,100 @@ unaffected because no conflicting resources exist yet.
 ## Secrets Management
 
 All application secrets are managed via External Secrets Operator (ESO) backed by OpenBao — see `k8s/eso/` for the `ClusterSecretStore` configuration.
+
+### Admin password
+
+The local `admin` password is declared, not left at the value `argocd-server`
+generates on first start. `chart/templates/admin-external-secret.yaml` merges
+`admin.password` and `admin.passwordMtime` into `argocd-secret` from OpenBao.
+Each environment reads its own path, so prd and sandbox have independent
+passwords:
+
+| Environment | OpenBao key |
+|-------------|-------------|
+| prd | `k8s/argocd/prd/admin` |
+| sandbox | `k8s/argocd/sandbox/admin` |
+
+Both keys hold two properties:
+
+| Property | Value | Maintained by |
+|----------|-------|---------------|
+| `password` | bcrypt hash of the password — **never the plaintext** | operator |
+| `mtime` | RFC3339 timestamp | Ansible, automatically |
+
+Only the hash is written by hand. It lives in the `openbao_argocd_admin` list in
+the SOPS-encrypted `ansible/inventories/homelab/group_vars/openbao.sops.yaml`,
+and `ops-openbao_seed_secrets.yaml` pushes it. That playbook compares the hash
+against what OpenBao already holds and writes only on a difference, stamping
+`mtime` with the current UTC time as it does. Rotating a password therefore logs
+out every admin session for that environment, and re-running the playbook for
+any other reason changes nothing. See
+[`ansible/roles/openbao/README.md`](../../ansible/roles/openbao/README.md) for
+the entry format and the hash command.
+
+Read access comes from the `k8s-argocd-{env}` policies, which
+`ops-openbao_configure.yaml` generates per cluster so neither environment's ESO
+can read the other's hash.
+
+`argocd-server` watches `argocd-secret`, so a change propagates without a
+restart. Argo CD rejects every session token issued before `mtime` — that is the
+mechanism behind the logout above. `mtime` is optional as far as Argo CD is
+concerned: an absent or unparseable value leaves `PasswordMtime` nil and simply
+disables the check, and for the `admin` account a parse failure is swallowed
+rather than raised.
+
+Why this shape rather than `configs.secret.argocdServerAdminPassword`:
+
+- That value would put the bcrypt hash in git, which ADR-0026 rules out for
+  anything under `k8s/`. Argo CD reads these values files straight from git and
+  cannot decrypt SOPS.
+- The chart defaults `argocdServerAdminPasswordMtime` to `now()`. Argo CD
+  re-renders on every reconcile, so an unpinned mtime produces a permanent
+  diff and re-invalidates sessions on each sync.
+
+`creationPolicy: Merge` is required — `Owner` would make ESO the sole author of
+`argocd-secret` and drop `server.secretkey`, which `argocd-server` generates and
+owns. Merge needs the Secret to exist first; the helmfile bootstrap creates it
+long before `root-apps.yaml` is applied.
+
+**No bootstrap deadlock.** Argo CD does not need `admin.password` to run — it is
+only used for human login — so the fact that Argo CD deploys the ESO that
+supplies it is not circular. On a fresh cluster the bootstrap password works
+until ESO (wave 0) syncs, and the `argocd` app (wave 1) applies the
+ExternalSecret afterwards. If ESO or OpenBao is unreachable the ExternalSecret
+just retries; Argo CD assigns no health status to `ExternalSecret`, so the
+`argocd` Application does not go Degraded and later waves are not blocked. If
+`admin.password` is ever missing entirely, `argocd-server` regenerates it and
+recreates `argocd-initial-admin-secret`, so there is no lockout.
+
+#### Rollout
+
+1. Add the two `openbao_argocd_admin` entries — `env` plus the bcrypt hash
+   (`sops ansible/inventories/homelab/group_vars/openbao.sops.yaml`).
+2. Seed them and grant read access:
+
+   ```bash
+   ansible-playbook ansible/playbooks/ops-openbao_seed_secrets.yaml
+   ansible-playbook ansible/playbooks/ops-openbao_configure.yaml
+   ```
+
+   `ops-openbao_configure.yaml` writes the `k8s-argocd-{env}` policies but does
+   **not** rebind the ESO role. Run the registration playbook per cluster so
+   `k8s-eso` picks up the new policy:
+
+   ```bash
+   ansible-playbook ansible/playbooks/ops-openbao_register_cluster.yaml -e cluster=prd
+   ansible-playbook ansible/playbooks/ops-openbao_register_cluster.yaml -e cluster=sandbox
+   ```
+
+3. Commit and push — the `argocd` Application syncs on its own.
+4. Confirm the ExternalSecret resolved:
+   `kubectl -n argocd get externalsecret argocd-admin-password`
+5. Log in with the new password. **Only then** delete the now-stale
+   `argocd-initial-admin-secret` — it is the fallback if step 4 failed.
+
+Steps 1–2 must come before step 3. Pushing first only leaves the ExternalSecret
+in `SecretSyncedError` until OpenBao has the value; it does not block Argo CD.
 
 ## HTTPRoute
 

@@ -22,6 +22,7 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_root_token` | Root token from `operator init`. Used only for bootstrap and recovery. |
 | `openbao_ansible_password` | Password for the dedicated Ansible userpass account. Generate with `openssl rand -base64 24`. |
 | `openbao_secrets` | List of KV secrets to write. Each entry requires `path` and `data` (key/value pairs). |
+| `openbao_argocd_admin` | ArgoCD admin password per environment. Each entry requires `env` and `password` (bcrypt hash). Written on change only, with `mtime` stamped automatically — see [ArgoCD admin password](#argocd-admin-password). |
 | `openbao_userpass_users` | List of userpass users. Each entry requires `username`, `password`, and `policies`. |
 
 ### Non-secret variables (in `defaults/main.yaml`)
@@ -190,7 +191,14 @@ secret/k8s/headlamp/admin-token      # Headlamp login token
 secret/k8s/longhorn-ui/basic-auth    # Longhorn UI htpasswd
 secret/k8s/monitoring/grafana        # Grafana credentials
 secret/k8s/monitoring/alertmanager   # Alertmanager Discord webhook
+secret/k8s/argocd/{env}/admin        # ArgoCD admin password (per environment)
 ```
+
+`k8s/argocd/` is the one app that splits by environment, because prd and
+sandbox have independent ArgoCD admin passwords. The matching
+`k8s-argocd-{env}` policies are generated per cluster in
+`tasks/configure_policies.yaml`, so neither cluster's ESO can read the other's
+hash.
 
 ### `secret/kubeconfig/{cluster}`
 
@@ -226,6 +234,47 @@ For the Alertmanager Discord receiver, add:
   data:
     discord-webhook-url: "<Discord webhook URL>"
 ```
+
+### ArgoCD admin password
+
+This one lives in its own variable, `openbao_argocd_admin`, not in
+`openbao_secrets`. Only the bcrypt hash is stored by hand — **never the
+plaintext**:
+
+```yaml
+openbao_argocd_admin:
+  - env: prd
+    password: "$2a$10$..."
+  - env: sandbox
+    password: "$2a$10$..."
+```
+
+Generate the hash with:
+
+```bash
+htpasswd -nbBC 10 "" '<password>' | tr -d ':\n' | sed 's/$2y/$2a/'
+```
+
+The `$` characters need no escaping — the seeding tasks use
+`ansible.builtin.command`, which does not invoke a shell. Quote the value in
+YAML so it is not mistaken for an alias or tag.
+
+`env` must match an `openbao_k8s_clusters[].name`, since that is what generates
+the `k8s-argocd-<env>` read policy. The entry is written to
+`secret/k8s/argocd/<env>/admin`.
+
+`tasks/seed_argocd_admin.yaml` adds the second property, `mtime`, on its own:
+it reads the hash currently in OpenBao, and writes the entry — stamping `mtime`
+with the current UTC time — **only when the hash differs**. Rotating a password
+therefore invalidates every ArgoCD admin session for that environment, while
+re-running the playbook for any other reason changes nothing.
+
+That is why it is not part of `openbao_secrets`: the generic loop rewrites its
+whole list unconditionally, so a shared `mtime` would be re-stamped on every
+seed run and log all admins out each time.
+
+See [`k8s/argocd/README.md`](../../../k8s/argocd/README.md) for the consuming
+`ExternalSecret`.
 
 Then run:
 

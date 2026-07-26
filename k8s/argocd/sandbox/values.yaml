@@ -1,3 +1,7 @@
+openbao:
+  adminPassword:
+    key: k8s/argocd/sandbox/admin
+
 server:
   ingress:
     hostname: argocd.sandbox.butaco.net

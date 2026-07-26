@@ -1,0 +1,58 @@
+---
+# The ArgoCD admin password is seeded here rather than through openbao_secrets
+# because admin.passwordMtime must move only when the hash actually changes.
+# ArgoCD rejects every session token issued before that timestamp, so stamping
+# it on every run would log all admins out whenever an unrelated secret is
+# re-seeded — and the generic seed loop rewrites its whole list unconditionally.
+# Skipping the write when nothing changed also keeps the KV version history
+# meaningful: a new version means the password really was rotated.
+
+- name: Log in as the Ansible admin user
+  ansible.builtin.include_tasks: login_admin.yaml
+
+- name: Read the ArgoCD admin password hash currently stored in OpenBao
+  ansible.builtin.command:
+    cmd: >
+      {{ openbao_binary }} kv get
+      -field=password secret/k8s/argocd/{{ item.env }}/admin
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  loop: "{{ openbao_argocd_admin }}"
+  loop_control:
+    label: "{{ item.env }}"
+  register: openbao_argocd_admin_current
+  # An absent path is the expected first-run state, not an error. A genuine
+  # failure (OpenBao unreachable, permission denied) also lands here with empty
+  # stdout, which makes the write below run and fail loudly with the real cause.
+  failed_when: false
+  changed_when: false
+  no_log: true
+
+- name: Write the ArgoCD admin password and stamp mtime when the hash changed
+  ansible.builtin.command:
+    cmd: >
+      {{ openbao_binary }} kv put secret/k8s/argocd/{{ item.item.env }}/admin
+      password={{ item.item.password }}
+      mtime={{ '%Y-%m-%dT%H:%M:%SZ' | strftime(utc=true) }}
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  loop: "{{ openbao_argocd_admin_current.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.env }}"
+  when: (item.stdout | default('')) != item.item.password
+  changed_when: true
+  no_log: true
+  register: openbao_argocd_admin_results
+  ignore_errors: true
+
+# The write task is no_log, so failures are censored. Re-report only the
+# environment name and the bao CLI stderr, which never contain secret values.
+- name: Report ArgoCD admin seed failures without exposing secret values
+  ansible.builtin.fail:
+    msg: |
+      {% for r in openbao_argocd_admin_results.results | default([]) if r is failed %}
+      {{ r.item.item.env }}: {{ r.stderr | default(r.msg) | default('unknown error') }}
+      {% endfor %}
+  when: openbao_argocd_admin_results is failed

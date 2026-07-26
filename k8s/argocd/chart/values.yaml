@@ -1,3 +1,16 @@
+# Real values come from ../values-common.yaml and ../<env>/values.yaml, which
+# Argo CD passes to this chart as well. Defaults here only keep a bare
+# `helm template k8s/argocd/chart` renderable.
+openbao:
+  secretStore:
+    name: openbao
+    kind: ClusterSecretStore
+  adminPassword:
+    enabled: false
+    key: ""
+    passwordProperty: password
+    mtimeProperty: mtime
+
 server:
   ingress:
     hostname: ""
