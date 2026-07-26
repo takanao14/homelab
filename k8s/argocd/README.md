@@ -63,6 +63,45 @@ be needed when deliberately re-bootstrapping.
 For sandbox, use `k8s/argocd/sandbox`. It intentionally exposes ArgoCD over
 HTTP only and does not install cert-manager.
 
+### Getting in on a fresh cluster
+
+The chart creates `argocd-secret` with no `data` block, so `argocd-server` finds
+no `admin.password`, generates one, and writes the plaintext to
+`argocd-initial-admin-secret`. It does this only while `PasswordHash` is empty,
+and never deletes the secret afterwards.
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+```
+
+**That generated password is the only way in until ESO supplies the real one**,
+and ESO cannot authenticate until the rebuilt cluster is re-registered with
+OpenBao ([ADR-0012](../../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md)).
+So delete it last, in this order:
+
+1. Re-register the cluster
+   (`ops-openbao_register_cluster.yaml -e cluster=<env>`).
+2. Wait for `kubectl -n argocd get externalsecret argocd-admin-password` to
+   report `SecretSynced`.
+3. Log in with the password from OpenBao.
+4. Only then `kubectl -n argocd delete secret argocd-initial-admin-secret`.
+
+Leaving it costs nothing functionally — ESO has overwritten `admin.password`, so
+the value no longer authenticates, and a later regeneration updates the secret
+in place rather than being blocked by it. Delete it anyway: it is a plaintext
+credential with no remaining purpose, readable by anything with get access to
+the namespace, and a stale-but-plausible password is exactly what turns a login
+problem into five failed attempts and a lockout (see
+[Rotating the password](#rotating-the-password)).
+
+Deleting it is also not a one-way door. Dropping `admin.password` makes
+`argocd-server` generate a fresh one and recreate the secret — useful as a
+recovery path, though ESO overwrites it again at the next refresh:
+
+```bash
+kubectl -n argocd patch secret argocd-secret --type=json -p '[{"op":"remove","path":"/data/admin.password"}]'
+```
+
 ### Changing values
 
 After bootstrap, `values-common.yaml` and `<env>/values.yaml` are read by
@@ -181,6 +220,59 @@ recreates `argocd-initial-admin-secret`, so there is no lockout.
 
 Steps 1–2 must come before step 3. Pushing first only leaves the ExternalSecret
 in `SecretSyncedError` until OpenBao has the value; it does not block Argo CD.
+
+#### Rotating the password
+
+Replace the hash in `openbao_argocd_admin` and re-run
+`ops-openbao_seed_secrets.yaml`. Two things then delay or mask the change:
+
+**ESO refreshes hourly.** `refreshInterval: 1h`, so a rotation lands up to an
+hour later. Force it:
+
+```bash
+kubectl -n argocd annotate externalsecret argocd-admin-password force-sync=$(date +%s) --overwrite
+```
+
+Argo CD does not fight this — the annotation belongs to a different field
+manager, and ServerSideApply diffing ignores fields Argo CD does not own. The
+value is applied once `admin.passwordMtime` matches the seeding run:
+
+```bash
+kubectl -n argocd get secret argocd-secret -o jsonpath='{.data.admin\.passwordMtime}' | base64 -d
+```
+
+**Five failed logins lock the account for five minutes**, and during the lockout
+Argo CD returns `Invalid username or password` without checking the password at
+all — a correct password looks exactly like a wrong one. Worse, every attempt
+made while locked out refreshes `LastFailed`, so retrying keeps extending the
+window. Stop trying and read the logs to tell the two apart:
+
+```bash
+kubectl -n argocd logs deploy/argocd-server --since=10m | grep -E "failed login|too many failed"
+```
+
+| Log line | Meaning |
+|----------|---------|
+| `User admin failed login N time(s)` | password really was compared and did not match |
+| `User admin had too many failed logins (5)` | locked out; the password was never checked |
+
+The failure counter lives in Redis and disappears when the window expires, so
+its absence is the definitive "not locked out" check:
+
+```bash
+P=$(kubectl -n argocd get secret argocd-redis -o jsonpath='{.data.auth}' | base64 -d); kubectl -n argocd exec deploy/argocd-redis -- sh -c "REDISCLI_AUTH='$P' redis-cli --scan --pattern 'login*'"
+```
+
+No output means no recorded failures. Defaults are `defaultMaxLoginFailures = 5`
+and `defaultFailureWindow = 300` seconds.
+
+If the password genuinely does not match, check the hash against it locally
+before re-seeding — note that zsh expands `!` even inside double quotes, so
+always single-quote the password when generating the hash:
+
+```bash
+printf 'admin:%s\n' '<hash>' > /tmp/h && htpasswd -bv /tmp/h admin '<password>'; rm -f /tmp/h
+```
 
 ## HTTPRoute
 
