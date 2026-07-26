@@ -99,6 +99,11 @@
         proxmoxVMID: "100"
         proxmoxType: qemu
 
+    - Longhorn UI:
+        icon: longhorn.png
+        href: https://longhorn.sandbox.butaco.net
+        description: Distributed Storage UI (sandbox only)
+
 - DNS:
     - DNS Record:
         icon: powerdns.png
@@ -213,6 +218,21 @@
         icon: comfyui.png
         href: https://comfyui.prd.butaco.net
         description: Image Generation UI
+
+    - Ollama:
+        icon: ollama.png
+        href: https://ollama.prd.butaco.net
+        description: Local LLM Runtime
+
+    - vLLM:
+        icon: vllm.png
+        href: https://vllm.prd.butaco.net
+        description: OpenAI-compatible Inference Server
+
+    - GPU Switch:
+        icon: mdi-expansion-card-variant
+        href: https://gpu-switch.prd.butaco.net
+        description: AMD GPU Workload Switcher
 
 - Remote Management:
     - MeshCentral:
