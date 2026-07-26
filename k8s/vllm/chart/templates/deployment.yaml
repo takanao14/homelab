@@ -18,6 +18,10 @@ spec:
         app: vllm
         homelab/gpu-switchable: "true"
     spec:
+      # Kubernetes would otherwise inject VLLM_PORT=tcp://<service-ip>:8000
+      # from the same-named Service. vLLM reserves VLLM_PORT for a numeric
+      # internal communication port and refuses to start when it is a URI.
+      enableServiceLinks: false
       nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
       tolerations: {{ toYaml .Values.tolerations | nindent 8 }}
       containers:

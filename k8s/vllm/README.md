@@ -20,6 +20,11 @@ required for the RX 9060 XT (`gfx1200`); the CDNA variant targets AMD Instinct
 GPUs. Do not set `HSA_OVERRIDE_GFX_VERSION` because the GPU target is supported
 natively.
 
+The pod disables Kubernetes Service Links. Without
+`enableServiceLinks: false`, the `vllm` Service injects a
+`VLLM_PORT=tcp://<service-ip>:8000` environment variable. vLLM reserves that
+name for a numeric internal port and exits when Kubernetes supplies the URI.
+
 ## Validation
 
 The deployment defaults to zero replicas so Argo CD can create the namespace,
