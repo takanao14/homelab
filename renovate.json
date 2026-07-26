@@ -28,6 +28,12 @@
   },
   "packageRules": [
     {
+      "description": "The in-repo gpu-switch image is released intentionally and should be deployable immediately without the global release-age delay.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ghcr.io/takanao14/homelab/gpu-switch"],
+      "minimumReleaseAge": null
+    },
+    {
       "description": "Apps & auxiliary components in k8s/ansible/tf: auto-merge non-major updates. Renovate-native automerge (platformAutomerge=false) gates on lint without branch protection, so direct pushes to main stay unrestricted.",
       "matchFileNames": ["k8s/**", "ansible/**", "tf/**"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],

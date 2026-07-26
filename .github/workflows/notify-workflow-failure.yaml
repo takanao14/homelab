@@ -8,6 +8,7 @@ on:
     workflows:
       - Ansible Lint
       - Dashboard Check
+      - GPU Switch Image
       - Helm Lint
       - Image Reference Check
       - Packer Lint

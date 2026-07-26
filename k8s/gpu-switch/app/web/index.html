@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>GPU Switch</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #090b10;
+      color: #f5f7fb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top right, rgba(110, 80, 255, .18), transparent 34rem),
+        radial-gradient(circle at bottom left, rgba(0, 212, 177, .10), transparent 30rem),
+        #090b10;
+    }
+    main {
+      width: min(100% - 2rem, 46rem);
+      margin: 0 auto;
+      padding: 2.5rem 0 8rem;
+    }
+    header { margin-bottom: 1.8rem; }
+    .eyebrow {
+      margin: 0 0 .45rem;
+      color: #9ca6b7;
+      font-size: .76rem;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 8vw, 3.25rem);
+      line-height: .98;
+      letter-spacing: -.045em;
+    }
+    .lede {
+      max-width: 36rem;
+      margin: .9rem 0 0;
+      color: #aeb7c7;
+      line-height: 1.55;
+    }
+    #error {
+      display: none;
+      margin: 0 0 1rem;
+      padding: .9rem 1rem;
+      border: 1px solid #713d47;
+      border-radius: .9rem;
+      background: #2a151b;
+      color: #ffb6c1;
+      line-height: 1.4;
+    }
+    #error.visible { display: block; }
+    #workloads {
+      display: grid;
+      gap: .8rem;
+    }
+    .tile {
+      width: 100%;
+      min-height: 6.4rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.15rem;
+      border: 1px solid #252b36;
+      border-radius: 1rem;
+      background: rgba(19, 23, 31, .88);
+      color: inherit;
+      text-align: left;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, .18);
+      cursor: pointer;
+      transition: border-color .16s ease, background .16s ease, transform .16s ease;
+    }
+    .tile:active:not(:disabled) { transform: scale(.99); }
+    .tile:focus-visible {
+      outline: 3px solid #9e8cff;
+      outline-offset: 3px;
+    }
+    .tile.selected {
+      border-color: #8f7cff;
+      background: #211d37;
+    }
+    .tile.active {
+      border-color: #286d61;
+      background: #102923;
+      cursor: default;
+    }
+    .tile:disabled { opacity: 1; }
+    .tile.off {
+      margin-top: .5rem;
+      min-height: 5.25rem;
+      background: rgba(24, 20, 23, .88);
+    }
+    .tile-name {
+      display: block;
+      overflow-wrap: anywhere;
+      font-size: 1.08rem;
+      font-weight: 750;
+      letter-spacing: -.01em;
+    }
+    .tile-detail {
+      display: block;
+      margin-top: .35rem;
+      color: #929caf;
+      font-size: .88rem;
+    }
+    .state {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .42rem .65rem;
+      border-radius: 999px;
+      background: #242a35;
+      color: #c3cad6;
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: .055em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .state::before {
+      width: .48rem;
+      height: .48rem;
+      border-radius: 50%;
+      background: #727c8e;
+      content: "";
+    }
+    .state.running { background: #17483e; color: #9cf5dc; }
+    .state.running::before { background: #45e5b8; box-shadow: 0 0 0 .22rem rgba(69, 229, 184, .12); }
+    .state.starting { background: #493b16; color: #ffe08a; }
+    .state.starting::before { background: #ffc94d; }
+    .state.off { background: #382329; color: #efb3c0; }
+    .state.off::before { background: #d7778c; }
+    #empty {
+      padding: 2rem 1rem;
+      border: 1px dashed #303745;
+      border-radius: 1rem;
+      color: #929caf;
+      text-align: center;
+    }
+    #confirm-panel {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      display: none;
+      padding: .85rem max(1rem, env(safe-area-inset-right)) calc(.85rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+      border-top: 1px solid #2b3140;
+      background: rgba(10, 12, 17, .94);
+      backdrop-filter: blur(18px);
+    }
+    #confirm-panel.visible { display: block; }
+    .confirm-inner {
+      width: min(100%, 46rem);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 1rem;
+      margin: 0 auto;
+    }
+    #selection-label {
+      margin: 0;
+      color: #c2c9d5;
+      font-size: .88rem;
+      line-height: 1.35;
+    }
+    #selection-label strong {
+      display: block;
+      color: #fff;
+      font-size: 1rem;
+    }
+    #confirm {
+      min-height: 3rem;
+      padding: .7rem 1.1rem;
+      border: 0;
+      border-radius: .8rem;
+      background: #8f7cff;
+      color: #100b22;
+      font: inherit;
+      font-weight: 850;
+      cursor: pointer;
+    }
+    #confirm:disabled { opacity: .6; cursor: wait; }
+    @media (min-width: 42rem) {
+      main { padding-top: 4.5rem; }
+      #workloads { grid-template-columns: 1fr 1fr; }
+      .tile.off { grid-column: 1 / -1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .tile { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">prd cluster · one GPU</p>
+      <h1>GPU Switch</h1>
+      <p class="lede">Choose the workload that owns the GPU. Switching stops every current GPU workload before starting the selected one.</p>
+    </header>
+    <div id="error" role="alert"></div>
+    <section id="workloads" aria-label="GPU workloads"></section>
+    <p id="empty">Loading workloads…</p>
+  </main>
+
+  <aside id="confirm-panel" aria-live="polite">
+    <div class="confirm-inner">
+      <p id="selection-label"></p>
+      <button id="confirm" type="button">Confirm switch</button>
+    </div>
+  </aside>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const workloads = document.querySelector("#workloads");
+      const empty = document.querySelector("#empty");
+      const errorBanner = document.querySelector("#error");
+      const panel = document.querySelector("#confirm-panel");
+      const selectionLabel = document.querySelector("#selection-label");
+      const confirmButton = document.querySelector("#confirm");
+      const startingSince = new Map();
+      let selected;
+      let busy = false;
+      let pollTimer;
+
+      const escapeHTML = (value) => String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+      const elapsed = (milliseconds) => {
+        const seconds = Math.max(0, Math.floor(milliseconds / 1000));
+        if (seconds < 60) return `${seconds}s`;
+        const minutes = Math.floor(seconds / 60);
+        return `${minutes}m ${seconds % 60}s`;
+      };
+
+      const choose = (target) => {
+        if (busy) return;
+        selected = target;
+        renderSelection();
+        document.querySelectorAll(".tile").forEach((tile) => {
+          tile.classList.toggle("selected", tile.dataset.target === String(target));
+        });
+      };
+
+      const renderSelection = () => {
+        const hasSelection = selected !== undefined;
+        panel.classList.toggle("visible", hasSelection);
+        if (!hasSelection) return;
+        if (selected === null) {
+          selectionLabel.innerHTML = "<strong>Stop all workloads</strong>No workload will own the GPU.";
+          confirmButton.textContent = "Confirm stop";
+        } else {
+          selectionLabel.innerHTML = `<strong>Switch to ${escapeHTML(selected)}</strong>The current workload will stop first.`;
+          confirmButton.textContent = "Confirm switch";
+        }
+      };
+
+      const render = (items) => {
+        const now = Date.now();
+        const presentNames = new Set(items.map((item) => item.name));
+        const anyActive = items.some((item) => item.desired > 0);
+        for (const name of startingSince.keys()) {
+          if (!presentNames.has(name)) startingSince.delete(name);
+        }
+        if (selected !== undefined) {
+          const selectedItem = items.find((item) => item.name === selected);
+          if ((selected !== null && (!selectedItem || selectedItem.desired > 0)) ||
+              (selected === null && !anyActive)) {
+            selected = undefined;
+            renderSelection();
+          }
+        }
+
+        workloads.replaceChildren();
+        for (const item of items) {
+          if (item.state === "starting" && !startingSince.has(item.name)) {
+            startingSince.set(item.name, now);
+          }
+          if (item.state !== "starting") startingSince.delete(item.name);
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `tile${item.desired > 0 ? " active" : ""}${selected === item.name ? " selected" : ""}`;
+          button.dataset.target = item.name;
+          button.disabled = item.desired > 0 || busy;
+
+          let detail = `${item.ready}/${item.desired} replicas ready`;
+          if (item.state === "starting") {
+            detail += ` · ${elapsed(now - startingSince.get(item.name))}`;
+          }
+          button.innerHTML = `
+            <span>
+              <span class="tile-name">${escapeHTML(item.name)}</span>
+              <span class="tile-detail">${escapeHTML(detail)}</span>
+            </span>
+            <span class="state ${escapeHTML(item.state)}">${escapeHTML(item.state)}</span>`;
+          button.addEventListener("click", () => choose(item.name));
+          workloads.append(button);
+        }
+
+        const off = document.createElement("button");
+        off.type = "button";
+        off.className = `tile off${selected === null ? " selected" : ""}`;
+        off.dataset.target = "null";
+        off.disabled = !anyActive || busy;
+        off.innerHTML = `
+          <span>
+            <span class="tile-name">Power off</span>
+            <span class="tile-detail">Scale every GPU workload to zero.</span>
+          </span>
+          <span class="state off">off</span>`;
+        off.addEventListener("click", () => choose(null));
+        workloads.append(off);
+
+        empty.hidden = items.length > 0;
+      };
+
+      const refresh = async () => {
+        if (document.hidden) return;
+        try {
+          const response = await fetch("/api/state", {cache: "no-store"});
+          if (!response.ok) throw new Error(`state request returned ${response.status}`);
+          const items = await response.json();
+          errorBanner.classList.remove("visible");
+          render(items);
+        } catch (error) {
+          errorBanner.textContent = `Unable to read cluster state: ${error.message}`;
+          errorBanner.classList.add("visible");
+        }
+      };
+
+      const schedulePolling = () => {
+        clearInterval(pollTimer);
+        if (!document.hidden) pollTimer = setInterval(refresh, 3000);
+      };
+
+      confirmButton.addEventListener("click", async () => {
+        if (selected === undefined || busy) return;
+        busy = true;
+        confirmButton.disabled = true;
+        confirmButton.textContent = "Switching…";
+        try {
+          const response = await fetch("/api/switch", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({target: selected})
+          });
+          if (!response.ok) {
+            const body = await response.json().catch(() => ({}));
+            throw new Error(body.error || `switch request returned ${response.status}`);
+          }
+          selected = undefined;
+          renderSelection();
+          await refresh();
+        } catch (error) {
+          errorBanner.textContent = `Unable to switch workload: ${error.message}`;
+          errorBanner.classList.add("visible");
+        } finally {
+          busy = false;
+          confirmButton.disabled = false;
+          renderSelection();
+          await refresh();
+        }
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        schedulePolling();
+        if (!document.hidden) refresh();
+      });
+
+      refresh();
+      schedulePolling();
+    })();
+  </script>
+</body>
+</html>
