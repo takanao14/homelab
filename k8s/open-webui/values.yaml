@@ -11,8 +11,20 @@ pipelines:
 enableOpenaiApi: true
 openaiBaseApiUrls:
   - http://lemonade-server.lemonade-server.svc.cluster.local:13305/v1
+  - http://vllm.vllm.svc.cluster.local:8000/v1
 openaiApiKeys:
   - "dummy"
+  - "dummy"
+
+# Connections are GitOps-managed. Disable database-backed ConfigVar overrides
+# so Admin UI changes cannot silently take precedence over these values after
+# a restart. Only one GPU backend is active at a time, so keep model discovery
+# responsive while the other endpoints are intentionally scaled to zero.
+extraEnvVars:
+  - name: ENABLE_PERSISTENT_CONFIG
+    value: "false"
+  - name: AIOHTTP_CLIENT_TIMEOUT_MODEL_LIST
+    value: "3"
 
 persistence:
   enabled: true
