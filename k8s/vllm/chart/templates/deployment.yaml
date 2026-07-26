@@ -37,6 +37,10 @@ spec:
             - --dtype=auto
             - {{ printf "--max-model-len=%v" .Values.model.maxModelLen | quote }}
             - {{ printf "--gpu-memory-utilization=%v" .Values.model.gpuMemoryUtilization | quote }}
+            {{- if .Values.toolCalling.enabled }}
+            - --enable-auto-tool-choice
+            - {{ printf "--tool-call-parser=%s" (required "toolCalling.parser is required when tool calling is enabled" .Values.toolCalling.parser) | quote }}
+            {{- end }}
             {{- range .Values.model.extraArgs }}
             - {{ . | quote }}
             {{- end }}

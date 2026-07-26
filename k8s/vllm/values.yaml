@@ -8,3 +8,9 @@ gateway:
   timeouts:
     request: 10m
     backendRequest: 10m
+
+toolCalling:
+  enabled: true
+  # Qwen's official vLLM deployment guide specifies the Hermes parser for
+  # standard Qwen3 models. Qwen3-Coder uses a different parser.
+  parser: hermes

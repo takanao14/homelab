@@ -22,6 +22,10 @@ model:
   gpuMemoryUtilization: "0.90"
   extraArgs: []
 
+toolCalling:
+  enabled: false
+  parser: ""
+
 resources:
   limits:
     amd.com/gpu: "1"

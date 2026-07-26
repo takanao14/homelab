@@ -25,6 +25,11 @@ The pod disables Kubernetes Service Links. Without
 `VLLM_PORT=tcp://<service-ip>:8000` environment variable. vLLM reserves that
 name for a numeric internal port and exits when Kubernetes supplies the URI.
 
+Automatic tool choice is enabled with the `hermes` parser for the standard
+Qwen3 model. This is required when Open WebUI sends `tool_choice: auto`.
+Revisit the parser when changing model families; Qwen3-Coder, for example,
+uses a different parser.
+
 ## Validation
 
 The deployment defaults to zero replicas so Argo CD can create the namespace,
@@ -59,5 +64,7 @@ VRAM. Test larger or quantized models only after this baseline succeeds.
 | `model.id` | `Qwen/Qwen3-4B` | Hugging Face model ID |
 | `model.maxModelLen` | `32768` | Maximum context length |
 | `model.gpuMemoryUtilization` | `0.90` | Fraction of VRAM vLLM may reserve |
+| `toolCalling.enabled` | `false` (chart) / `true` (app values) | Accept `tool_choice: auto` |
+| `toolCalling.parser` | unset (chart) / `hermes` (app values) | Model-specific tool-call parser |
 | `storage.size` | `100Gi` | Hugging Face cache PVC |
 | `sharedMemory.sizeLimit` | `8Gi` | Memory-backed `/dev/shm` |
