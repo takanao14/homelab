@@ -56,13 +56,17 @@ OpenBao KV paths:
 
 | OpenBao path | Property | Description |
 |-------------|----------|-------------|
-| `k8s/homepage/proxmox` | `prd-token` | Proxmox VE API token ID (prd, format: `user@pam!tokenname`) |
-| `k8s/homepage/proxmox` | `prd-secret` | Proxmox VE API token secret (prd) |
-| `k8s/homepage/proxmox` | `dev-token` | Proxmox VE API token ID (dev) |
-| `k8s/homepage/proxmox` | `dev-secret` | Proxmox VE API token secret (dev) |
+| `k8s/homepage/proxmox` | `pve-token` | Proxmox VE API token ID (pve, format: `user@pam!tokenname`) |
+| `k8s/homepage/proxmox` | `pve-secret` | Proxmox VE API token secret (pve) |
+| `k8s/homepage/proxmox` | `node1-token` | Proxmox VE API token ID (node1) |
+| `k8s/homepage/proxmox` | `node1-secret` | Proxmox VE API token secret (node1) |
 | `k8s/homepage/proxmox` | `node2-token` | Proxmox VE API token ID (node2) |
 | `k8s/homepage/proxmox` | `node2-secret` | Proxmox VE API token secret (node2) |
 | `k8s/homepage/proxmox` | `node3-token` | Proxmox VE API token ID (node3) |
 | `k8s/homepage/proxmox` | `node3-secret` | Proxmox VE API token secret (node3) |
+| `k8s/homepage/proxmox` | `node4-token` | Proxmox VE API token ID (node4) |
+| `k8s/homepage/proxmox` | `node4-secret` | Proxmox VE API token secret (node4) |
+| `k8s/homepage/proxmox` | `node5-token` | Proxmox VE API token ID (node5) |
+| `k8s/homepage/proxmox` | `node5-secret` | Proxmox VE API token secret (node5) |
 | `k8s/homepage/truenas` | `key` | TrueNAS API key |
 | `k8s/homepage/grafana` | `password` | Grafana admin password |
