@@ -11,7 +11,7 @@ comfyui/
     ├── Chart.yaml
     ├── values.yaml       # Default chart values
     └── templates/
-        ├── deployment.yaml  # Recreate strategy; mounts /dev/kfd and /dev/dri for ROCm
+        ├── deployment.yaml  # Recreate strategy; GPU devices come from the device plugin
         ├── pvc.yaml
         ├── service.yaml
         └── httproute.yaml   # HTTPRoute → shared-gateway-envoy
@@ -25,9 +25,9 @@ Exposed via Gateway API HTTPRoute at `comfyui.prd.butaco.net`.
 
 ## GPU
 
-Requires one AMD GPU (`amd.com/gpu: "1"`). The node must be labeled `gpu: amd` and tainted `gpu=amd:NoSchedule` (applied automatically by the k0s cluster setup for GPU workers).
+Requires one AMD GPU (`amd.com/gpu: "1"`), allocated by the ROCm k8s-device-plugin deployed from `k0s/helmfile.yaml.gotmpl`. The node must be labeled `gpu: amd` and tainted `gpu=amd:NoSchedule` (applied automatically by the k0s cluster setup for GPU workers).
 
-The container uses an unconfined seccomp profile and mounts `/dev/kfd` and `/dev/dri` as hostPath volumes for ROCm access.
+The container uses an unconfined seccomp profile. It does **not** hostPath-mount `/dev/kfd` or `/dev/dri`: the device plugin injects `/dev/kfd` plus the allocated `/dev/dri/card<N>` and `/dev/dri/renderD<N>` in response to the `amd.com/gpu` request, and adds the matching device-cgroup rules. Bind-mounting the whole host `/dev/dri` on top would expose every card on the host while the cgroup still permits only the allocated one.
 
 ### ROCm
 

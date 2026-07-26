@@ -54,10 +54,12 @@ spec:
               mountPath: /opt/lemonade/llama
             - name: recipe
               mountPath: /root/.cache/lemonade
-            - name: kfd
-              mountPath: /dev/kfd
-            - name: dri
-              mountPath: /dev/dri
+          # /dev/kfd and the allocated /dev/dri/{card,renderD}* are injected by
+          # the ROCm k8s-device-plugin in response to the amd.com/gpu request;
+          # do NOT hostPath-mount them. A hostPath mount of the whole /dev/dri
+          # shadows the plugin's device nodes with every card on the host while
+          # the device cgroup still only permits the allocated one, so unowned
+          # cards become visible-but-EPERM.
           securityContext:
             seccompProfile:
               type: Unconfined
@@ -71,9 +73,3 @@ spec:
         - name: recipe
           persistentVolumeClaim:
             claimName: lemonade-recipe
-        - name: kfd
-          hostPath:
-            path: /dev/kfd
-        - name: dri
-          hostPath:
-            path: /dev/dri
