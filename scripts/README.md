@@ -220,8 +220,29 @@ Switches which single GPU workload runs on the `prd-homelab` cluster by scaling
 deployments. Only runs against the `prd-homelab` kube context.
 
 ```bash
-./gpu-switch.sh <ollama|comfyui|lemonade-server|vllm|off>
+./gpu-switch.sh <workload|off|status>   # e.g. ./gpu-switch.sh ollama
 ```
+
+`status` answers "which workload currently holds the GPU":
+
+```console
+$ ./gpu-switch.sh status
+  comfyui            stopped
+  lemonade-server    stopped
+* ollama             running (1/1)
+  vllm               stopped
+```
+
+`starting (0/1)` means the deployment is scaled up but its pod is not ready yet
+— on a single GPU that also covers a pod stuck `Pending` because the device is
+still held. Replica count is runtime state and is deliberately not tracked in
+Git (the Argo CD `Application`s ignore `/spec/replicas`), so the cluster is the
+only place to ask.
+
+Targets are **discovered from the cluster** by the `homelab/gpu-switchable`
+label, not hardcoded in the script, so a GPU workload becomes switchable by
+carrying that label on its `Deployment` — which it already needs for the Argo CD
+health checks (ADR-0027). Run with an unknown name to list what is available.
 
 ## Grafana MCP
 
