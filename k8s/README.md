@@ -122,6 +122,11 @@ k8s/
 ├── vllm/                 # vLLM OpenAI-compatible server (prd, AMD GPU)
 │   ├── values.yaml
 │   └── chart/
+├── gpu-switch/           # Authenticated UI for exclusive GPU workload switching (prd)
+│   ├── app/                  # Dependency-free Go backend and embedded UI
+│   ├── chart/                # Workload, scoped RBAC, HTTPRoute and Basic Auth resources
+│   ├── values.yaml           # Common resource reservations
+│   └── {prd,sandbox}/values.yaml
 ├── headlamp/             # Headlamp Kubernetes Web UI, in-cluster for prd
 │   ├── prd/values.yaml      # hostname
 │   └── chart/            # Wrapper chart (in-cluster mode, HTTPRoute)

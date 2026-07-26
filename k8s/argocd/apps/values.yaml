@@ -47,6 +47,9 @@ apps:
   gateway:
     enabled: false
     wave: "0"
+  gpu-switch:
+    enabled: false
+    wave: "1"
   headlamp:
     enabled: false
     wave: "1"

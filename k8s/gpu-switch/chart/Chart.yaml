@@ -1,0 +1,5 @@
+apiVersion: v2
+name: gpu-switch
+description: Authenticated web UI for exclusive GPU workload switching
+type: application
+version: 0.1.0

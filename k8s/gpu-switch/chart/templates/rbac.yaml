@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gpu-switch
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gpu-switch
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: gpu-switch
+subjects:
+  - kind: ServiceAccount
+    name: gpu-switch
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: gpu-switch
+{{- if not .Values.gpuWorkloads }}
+{{- fail "gpuWorkloads must contain at least one namespace/name pair" }}
+{{- end }}
+{{- $workloadsByNamespace := dict }}
+{{- range $workload := .Values.gpuWorkloads }}
+{{- $namespace := required "gpuWorkloads[].namespace is required" $workload.namespace }}
+{{- $name := required "gpuWorkloads[].name is required" $workload.name }}
+{{- $names := get $workloadsByNamespace $namespace | default (list) }}
+{{- $_ := set $workloadsByNamespace $namespace (append $names $name) }}
+{{- end }}
+{{- range $namespace, $names := $workloadsByNamespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: gpu-switch
+  namespace: {{ $namespace }}
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    resourceNames:
+      {{- toYaml (uniq (sortAlpha $names)) | nindent 6 }}
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: gpu-switch
+  namespace: {{ $namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: gpu-switch
+    namespace: {{ $.Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: gpu-switch
+{{- end }}

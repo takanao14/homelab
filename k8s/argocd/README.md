@@ -341,6 +341,7 @@ of cert-manager-config to create the Secret, then re-sync root-apps.
 | external-secrets (eso) | external-secrets | prd, sandbox |
 | external-dns | external-dns | prd, sandbox |
 | gateway | gateway-system | prd, sandbox |
+| gpu-switch | gpu-switch | prd |
 | headlamp | headlamp | prd |
 | homepage | homepage | prd, sandbox |
 | lemonade-server | lemonade-server | prd |

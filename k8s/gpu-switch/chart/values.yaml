@@ -1,0 +1,38 @@
+image:
+  repository: ghcr.io/takanao14/homelab/gpu-switch
+  tag: 0.1.0
+  pullPolicy: IfNotPresent
+
+hostname: ""
+
+gateway:
+  name: shared-gateway-envoy
+  namespace: gateway-system
+  sectionName: https
+
+# The label is the discovery source of truth, but Kubernetes RBAC cannot scope
+# deployments/scale by label. Keep this explicit list aligned with the labelled
+# Deployments to constrain write access (ADR-0027).
+gpuWorkloads:
+  - namespace: comfyui
+    name: comfyui
+  - namespace: lemonade-server
+    name: lemonade-server
+  - namespace: ollama
+    name: ollama
+  - namespace: vllm
+    name: vllm
+
+securityPolicy:
+  name: gpu-switch-basic-auth
+  secretName: gpu-switch-basic-auth
+
+openbao:
+  secretStore:
+    name: openbao
+    kind: ClusterSecretStore
+  basicAuth:
+    key: k8s/gpu-switch/basic-auth
+    property: htpasswd
+
+resources: {}

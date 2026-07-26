@@ -62,7 +62,7 @@ openbao_k8s_clusters:
     # k8s-argocd-prd is environment-scoped on purpose: it grants read on
     # secret/k8s/argocd/prd/* only, so this cluster cannot read the sandbox
     # ArgoCD admin password.
-    policies: "k8s-cert-manager,k8s-external-dns,k8s-homepage,k8s-monitoring,k8s-headlamp,k8s-argocd-prd"
+    policies: "k8s-cert-manager,k8s-external-dns,k8s-homepage,k8s-monitoring,k8s-headlamp,k8s-gpu-switch,k8s-argocd-prd"
   - name: sandbox
     mount_path: kubernetes-sandbox
     host: "{{ openbao_k8s_sandbox_host }}"

@@ -19,6 +19,8 @@ apps:
     enabled: true
   gateway:
     enabled: true
+  gpu-switch:
+    enabled: true
   headlamp:
     enabled: true
   homepage:

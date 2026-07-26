@@ -108,6 +108,15 @@ The ESO ArgoCD Application itself is rendered by the app-of-apps chart
 (`k8s/argocd/apps`) and enabled per environment in
 `k8s/argocd/<env>/apps-values.yaml`.
 
+Application policies grant read-only access to their own KV prefix. The prd ESO
+role includes `k8s-gpu-switch`, while sandbox deliberately does not because the
+gpu-switch Application is disabled there.
+
+| Policy | KV prefix | Clusters |
+|---|---|---|
+| `k8s-gpu-switch` | `secret/k8s/gpu-switch/*` | prd |
+| `k8s-longhorn-ui` | `secret/k8s/longhorn-ui/*` | sandbox |
+
 ### 1. Bootstrap Ansible userpass authentication
 
 Add the root token and a newly generated Ansible password to
@@ -187,6 +196,7 @@ Secrets consumed by Kubernetes applications via ESO. Scoped per application; not
 
 ```
 secret/k8s/cert-manager/cloudflare   # Cloudflare API token
+secret/k8s/gpu-switch/basic-auth     # GPU Switch UI htpasswd
 secret/k8s/headlamp/admin-token      # Headlamp login token
 secret/k8s/longhorn-ui/basic-auth    # Longhorn UI htpasswd
 secret/k8s/monitoring/grafana        # Grafana credentials
@@ -211,11 +221,14 @@ secret/kubeconfig/sandbox # sandbox cluster kubeconfig
 
 The distinction: `k8s/` is for secrets **used by** apps running in Kubernetes; `kubeconfig/` is for credentials **to access** Kubernetes clusters.
 
-Secrets are seeded from the SOPS-encrypted `openbao_secrets` list. For the
-Longhorn UI Basic Auth secret used by Envoy Gateway, store an htpasswd entry in
-`{SHA}` format:
+Secrets are seeded from the SOPS-encrypted `openbao_secrets` list. For Basic
+Auth secrets used by Envoy Gateway, store an htpasswd entry in `{SHA}` format:
 
 ```yaml
+- path: secret/k8s/gpu-switch/basic-auth
+  data:
+    htpasswd: "admin:{SHA}..."
+
 - path: secret/k8s/longhorn-ui/basic-auth
   data:
     htpasswd: "admin:{SHA}..."
@@ -224,8 +237,11 @@ Longhorn UI Basic Auth secret used by Envoy Gateway, store an htpasswd entry in
 Generate the value with:
 
 ```bash
-htpasswd -nbs admin '<password>'
+htpasswd -ns admin
 ```
+
+This prompts for the password instead of placing it in shell history. Copy the
+single `admin:{SHA}...` output line into the SOPS-encrypted inventory.
 
 For the Alertmanager Discord receiver, add:
 

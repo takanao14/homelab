@@ -1,0 +1,33 @@
+{{- $app := index .Values.apps "gpu-switch" }}
+{{- if $app.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gpu-switch
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $app.wave | quote }}
+spec:
+  project: default
+  sources:
+    - repoURL: {{ .Values.repo.url }}
+      targetRevision: {{ .Values.repo.targetRevision }}
+      path: k8s/gpu-switch/chart
+      helm:
+        releaseName: gpu-switch
+        valueFiles:
+          - $values/k8s/gpu-switch/values.yaml
+          - $values/k8s/gpu-switch/{{ include "argocd-apps.env" . }}/values.yaml
+    - repoURL: {{ .Values.repo.url }}
+      targetRevision: {{ .Values.repo.targetRevision }}
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gpu-switch
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+{{- end }}

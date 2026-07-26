@@ -1,0 +1,6 @@
+# Initial reservations until seven days of production observations are
+# available. Requests only, no limits — see "Resource Requests" in k8s/README.md.
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
