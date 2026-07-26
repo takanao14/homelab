@@ -1,6 +1,6 @@
 # ADR-0027: GPU workload switching through an authenticated in-cluster web UI
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-07-26
 - **Related:** [ADR-0006](0006-custom-image-pipeline-monorepo-and-seaweedfs-s3.md),
   [ADR-0009](0009-longhorn-ui-exposed-through-authenticated-gateway-route.md),
