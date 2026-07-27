@@ -70,3 +70,4 @@ deleting it:
 | [0025](0025-run-meshcentral-outside-managed-cluster.md) | Run MeshCentral outside the managed Proxmox and Kubernetes fleet | Accepted |
 | [0026](0026-eso-over-helm-secrets-for-in-cluster-secrets.md) | Inject in-cluster secrets with ESO instead of the helm-secrets plugin | Accepted |
 | [0027](0027-gpu-workload-switching-web-ui.md) | GPU workload switching through an authenticated in-cluster web UI | Accepted |
+| [0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md) | lemonade-server runs on the Vulkan backend, not ROCm, on RDNA4 | Accepted |

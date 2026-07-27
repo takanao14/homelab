@@ -22,7 +22,7 @@ homelab/
 │   ├── gateway/       # Shared Gateway API resources (GatewayClass, Gateway)
 │   ├── headlamp/      # Headlamp Kubernetes Web UI (in-cluster per environment)
 │   ├── homepage/      # Homepage dashboard
-│   ├── lemonade-server/ # Lemonade LLM server (ROCm / AMD GPU)
+│   ├── lemonade-server/ # Lemonade LLM server (Vulkan / AMD GPU, see ADR-0028)
 │   ├── longhorn-ui/   # Authenticated route for the sandbox Longhorn UI
 │   ├── monitoring/    # Prometheus, Grafana, exporters, and dashboards
 │   ├── ollama/        # Ollama LLM server deployment

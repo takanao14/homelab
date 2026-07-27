@@ -37,6 +37,8 @@ Uses the **upstream image** (`ghcr.io/lemonade-sdk/lemonade-server`) with the `v
 
 ### Why Vulkan instead of ROCm
 
+Decision and rejected alternatives: [ADR-0028](../../docs/adr/0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md).
+
 lemonade v10.8.0 mis-detects this GPU. Its `llamacpp:rocm` backend reports `Unsupported GPU: gfx1200`: lemonade reads the card's KFD ISA name (`RADV GFX1200`), extracts the raw token `gfx1200`, and compares it for **exact equality** against the wildcard `gfx120X` its recipe table expects — so RDNA4 discrete GPUs (RX 9060 XT) are wrongly rejected. This is an upstream bug; switching the ROCm channel (stable/nightly) does **not** fix it.
 
 The `llamacpp:vulkan` backend has **no GPU-family gate** and needs no custom image: lemonade downloads the matching upstream llama.cpp Vulkan release binary automatically, and the RADV (Mesa) driver already on the host picks up the GPU via the same `/dev/dri` render node the ROCm device plugin injects. Set via `llamacpp.backend=vulkan` in `config.json` on the `lemonade-recipe` PVC, done by the `set-llamacpp-backend` initContainer in the Deployment.
