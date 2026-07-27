@@ -46,3 +46,8 @@ gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
   sectionName: https
+  # The graph endpoint streams live pipeline updates indefinitely. Disable
+  # Envoy Gateway's default request timeout for this route only.
+  graphTimeouts:
+    request: 0s
+    backendRequest: 0s

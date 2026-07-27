@@ -4,6 +4,9 @@ gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
   sectionName: https
+  graphTimeouts:
+    request: ""
+    backendRequest: ""
 
 otlp:
   hostname: ""

@@ -16,6 +16,25 @@ spec:
     - matches:
         - path:
             type: PathPrefix
+            value: /api/v0/web/graph
+{{- if or .Values.gateway.graphTimeouts.request .Values.gateway.graphTimeouts.backendRequest }}
+      timeouts:
+{{- with .Values.gateway.graphTimeouts.request }}
+        request: {{ . | quote }}
+{{- end }}
+{{- with .Values.gateway.graphTimeouts.backendRequest }}
+        backendRequest: {{ . | quote }}
+{{- end }}
+{{- end }}
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: alloy
+          port: 12345
+          weight: 1
+    - matches:
+        - path:
+            type: PathPrefix
             value: /
       backendRefs:
         - group: ""
