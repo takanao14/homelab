@@ -1,0 +1,36 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: lemonade-server-rocm
+  namespace: {{ .Release.Namespace }}
+  labels:
+    homelab/gpu-switchable: "true"
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ .Values.gateway.name }}
+      namespace: {{ .Values.gateway.namespace }}
+      sectionName: {{ .Values.gateway.sectionName }}
+  hostnames:
+    - {{ .Values.rocm.hostname }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+{{- if or .Values.gateway.timeouts.request .Values.gateway.timeouts.backendRequest }}
+      timeouts:
+{{- with .Values.gateway.timeouts.request }}
+        request: {{ . | quote }}
+{{- end }}
+{{- with .Values.gateway.timeouts.backendRequest }}
+        backendRequest: {{ . | quote }}
+{{- end }}
+{{- end }}
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: lemonade-server-rocm
+          port: 13305
+          weight: 1

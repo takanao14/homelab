@@ -11,10 +11,13 @@ lemonade-server/
     ├── Chart.yaml
     ├── values.yaml       # Default chart values
     └── templates/
-        ├── deployment.yaml  # Recreate strategy; AMD GPU resource requests
-        ├── pvc.yaml         # HuggingFace cache, llama.cpp binaries, recipe cache
-        ├── service.yaml     # ClusterIP on port 13305
-        └── httproute.yaml   # HTTPRoute → shared-gateway-envoy
+        ├── deployment.yaml       # Recreate strategy; AMD GPU resource requests; vulkan backend
+        ├── deployment-rocm.yaml  # Same, but the rocm-benchmark image + system backend (see below)
+        ├── pvc.yaml              # HuggingFace cache, llama.cpp binaries, recipe cache
+        ├── service.yaml          # ClusterIP on port 13305
+        ├── service-rocm.yaml     # ClusterIP for the rocm Deployment
+        ├── httproute.yaml        # HTTPRoute → shared-gateway-envoy
+        └── httproute-rocm.yaml   # HTTPRoute for the rocm Deployment
 ```
 
 ## Access
@@ -23,6 +26,8 @@ lemonade-server/
 |--------|---------|
 | External | `https://lemonade.prd.butaco.net` |
 | In-cluster | `http://lemonade-server.lemonade-server.svc.cluster.local:13305` |
+| External (rocm benchmark variant) | `https://lemonade-rocm.prd.butaco.net` |
+| In-cluster (rocm benchmark variant) | `http://lemonade-server-rocm.lemonade-server.svc.cluster.local:13305` |
 
 ## GPU / Vulkan
 
@@ -36,7 +41,21 @@ lemonade v10.8.0 mis-detects this GPU. Its `llamacpp:rocm` backend reports `Unsu
 
 The `llamacpp:vulkan` backend has **no GPU-family gate** and needs no custom image: lemonade downloads the matching upstream llama.cpp Vulkan release binary automatically, and the RADV (Mesa) driver already on the host picks up the GPU via the same `/dev/dri` render node the ROCm device plugin injects. Set via `llamacpp.backend=vulkan` in `config.json` on the `lemonade-recipe` PVC, done by the `set-llamacpp-backend` initContainer in the Deployment.
 
-Benchmarking against the previous ROCm-backend setup (a custom image bundling a ROCm-enabled `llama-server`, since retired) showed Vulkan ~20% faster single-request and ~47% faster at 4 concurrent requests on this GPU — consistent with known RDNA4 ROCm/Vulkan gaps upstream (e.g. [ggml-org/llama.cpp#20934](https://github.com/ggml-org/llama.cpp/issues/20934)), not just an artifact of the gfx1200 workaround.
+Benchmarking against the ROCm-backend setup below showed Vulkan ~20% faster single-request and ~47% faster at 4 concurrent requests on this GPU — consistent with known RDNA4 ROCm/Vulkan gaps upstream (e.g. [ggml-org/llama.cpp#20934](https://github.com/ggml-org/llama.cpp/issues/20934)), not just an artifact of the gfx1200 workaround.
+
+### ROCm benchmark variant
+
+`lemonade-server-rocm` is a second Deployment kept around purely to re-run that comparison later (e.g. after a lemonade or ROCm upgrade). It uses the same custom image the primary Deployment used before the Vulkan switch (`forgejo.home.butaco.net/takanao/lemonade-docker`, built from [`lemonade-docker`](https://forgejo.home.butaco.net/takanao/lemonade-docker)), which bakes in a ROCm-enabled `llama-server` and drives it via the `system` backend (see `chart/templates/deployment-rocm.yaml`).
+
+It shares the `lemonade-huggingface`/`lemonade-llama`/`lemonade-recipe` PVCs with the primary Deployment, is labelled `homelab/gpu-switchable: "true"` like every other GPU workload, and defaults to `replicaCount: 0`. Start it the same way as any other GPU workload:
+
+```bash
+scripts/gpu-switch.sh lemonade-server-rocm   # stops every other GPU workload, starts this one
+scripts/gpu-switch.sh status                 # confirm it's running
+scripts/gpu-switch.sh ollama                 # switch back when done
+```
+
+Not intended as a serving option — only for comparison against the vulkan Deployment above.
 
 ### Verifying GPU offload
 
@@ -66,3 +85,7 @@ kubectl -n lemonade-server logs deploy/lemonade-server | grep -iE "vulkan|RADV|g
 | `image.repository` | `ghcr.io/lemonade-sdk/lemonade-server` | Upstream image |
 | `image.tag` | `v10.8.0` | Lemonade version |
 | `storage.storageClassName` | `openebs-hostpath` | Storage class |
+| `rocm.replicaCount` | `0` | Set to `1` to start the ROCm benchmark variant (use `gpu-switch.sh` instead in practice) |
+| `rocm.hostname` | `lemonade-rocm.prd.butaco.net` | HTTPRoute hostname for the ROCm benchmark variant |
+| `rocm.image.repository` | `forgejo.home.butaco.net/takanao/lemonade-docker` | Custom ROCm-enabled image, kept only for the benchmark variant |
+| `rocm.image.tag` | `b1302` | Bundled `llamacpp-rocm` build number |

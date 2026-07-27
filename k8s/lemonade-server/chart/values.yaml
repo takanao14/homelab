@@ -41,3 +41,16 @@ gateway:
   timeouts:
     request: null
     backendRequest: null
+
+# Second, ROCm-backend Deployment kept only for benchmarking against the
+# vulkan backend above (see README.md "Why Vulkan instead of ROCm"). Scaled
+# to 0 by default; gpu-switch.sh discovers it via homelab/gpu-switchable like
+# any other GPU workload. Shares the huggingface/llama/recipe PVCs with the
+# vulkan Deployment — safe because gpu-switch guarantees only one of the two
+# ever runs at a time.
+rocm:
+  replicaCount: 0
+  hostname: lemonade-rocm.prd.butaco.net
+  image:
+    repository: forgejo.home.butaco.net/takanao/lemonade-docker
+    tag: b1302

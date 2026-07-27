@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lemonade-server-rocm
+  namespace: {{ .Release.Namespace }}
+  labels:
+    homelab/gpu-switchable: "true"
+spec:
+  replicas: {{ .Values.rocm.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: lemonade-server-rocm
+  template:
+    metadata:
+      labels:
+        app: lemonade-server-rocm
+        homelab/gpu-switchable: "true"
+    spec:
+      nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
+      tolerations: {{ toYaml .Values.tolerations | nindent 8 }}
+      initContainers:
+        # Pin the llamacpp backend to "system" so lemonade uses the
+        # ROCm-enabled llama-server baked into the rocm image, bypassing the
+        # built-in "rocm" backend's gfx1200 detection bug (see README.md).
+        # Shares the recipe PVC with the vulkan Deployment; safe because only
+        # one of the two Deployments is ever scaled up at a time, and this
+        # initContainer re-pins the backend on every start.
+        - name: set-llamacpp-backend
+          image: {{ .Values.rocm.image.repository }}:{{ .Values.rocm.image.tag }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              f=/root/.cache/lemonade/config.json
+              mkdir -p "$(dirname "$f")"
+              [ -f "$f" ] || echo '{}' > "$f"
+              tmp="$(mktemp)"
+              jq '.llamacpp.backend = "system"' "$f" > "$tmp" && mv "$tmp" "$f"
+          volumeMounts:
+            - name: recipe
+              mountPath: /root/.cache/lemonade
+      containers:
+        - name: lemonade-server
+          image: {{ .Values.rocm.image.repository }}:{{ .Values.rocm.image.tag }}
+          ports:
+            - containerPort: 13305
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: huggingface
+              mountPath: /root/.cache/huggingface
+            - name: llama
+              mountPath: /opt/lemonade/llama
+            - name: recipe
+              mountPath: /root/.cache/lemonade
+          # See chart/templates/deployment.yaml for why /dev/kfd and
+          # /dev/dri are not hostPath-mounted here.
+          securityContext:
+            seccompProfile:
+              type: Unconfined
+      volumes:
+        - name: huggingface
+          persistentVolumeClaim:
+            claimName: lemonade-huggingface
+        - name: llama
+          persistentVolumeClaim:
+            claimName: lemonade-llama
+        - name: recipe
+          persistentVolumeClaim:
+            claimName: lemonade-recipe
