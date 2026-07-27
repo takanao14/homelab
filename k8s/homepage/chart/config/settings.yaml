@@ -17,10 +17,10 @@ layout:
     columns: 3
   DNS:
     style: row
-    columns: 6
+    columns: 5
   Infrastructure:
     style: row
-    columns: 2
+    columns: 4
   Monitoring:
     style: row
     columns: 2

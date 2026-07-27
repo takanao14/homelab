@@ -101,14 +101,10 @@
 
     - Longhorn UI:
         icon: longhorn.png
-        href: https://longhorn.sandbox.butaco.net
+        href: http://longhorn.sandbox.butaco.net
         description: Distributed Storage UI (sandbox only)
 
 - DNS:
-    - DNS Record:
-        icon: powerdns.png
-        href: https://pdns-ui.prd.butaco.net
-
     - PowerDNS origin:
         icon: powerdns.png
         href: https://pdns1.home.butaco.net
@@ -157,6 +153,14 @@
         proxmoxNode: node2
         proxmoxVMID: "106"
         proxmoxType: lxc
+
+    - DNS Record:
+        icon: powerdns.png
+        href: https://pdns-ui.prd.butaco.net
+
+    - DNS Record (sandbox):
+        icon: powerdns.png
+        href: http://pdns-ui.sandbox.butaco.net
 
 - Monitoring:
     - Grafana:
