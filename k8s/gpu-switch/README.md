@@ -48,6 +48,7 @@ The current write targets are:
 
 - `comfyui/comfyui`
 - `lemonade-server/lemonade-server`
+- `lemonade-server/lemonade-server-rocm`
 - `ollama/ollama`
 - `vllm/vllm`
 
