@@ -154,11 +154,11 @@
         proxmoxVMID: "106"
         proxmoxType: lxc
 
-    - DNS Record:
+    - DNS Record View:
         icon: powerdns.png
         href: https://pdns-ui.prd.butaco.net
 
-    - DNS Record (sandbox):
+    - DNS Record View (sandbox):
         icon: powerdns.png
         href: http://pdns-ui.sandbox.butaco.net
 
@@ -181,6 +181,25 @@
         widget:
           type: prometheus
           url: https://prometheus.prd.butaco.net
+
+    - Grafana (sandbox):
+        icon: grafana.png
+        href: http://grafana.sandbox.butaco.net
+        description: Metrics Visualization
+        widget:
+          type: grafana
+          version: 2
+          url: http://grafana.sandbox.butaco.net
+          username: admin
+          password: "{{HOMEPAGE_VAR_GRAFANA_PASSWORD}}"
+
+    - Prometheus (sandbox):
+        icon: prometheus.png
+        href: http://prometheus.sandbox.butaco.net
+        description: Monitoring System
+        widget:
+          type: prometheus
+          url: http://prometheus.sandbox.butaco.net
 
 - Development:
     - Forgejo:

@@ -14,7 +14,7 @@ layout:
     columns: 6
   Storage:
     style: row
-    columns: 3
+    columns: 4
   DNS:
     style: row
     columns: 5
@@ -32,7 +32,7 @@ layout:
     columns: 3
   AI:
     style: row
-    columns: 3
+    columns: 6
   Remote Management:
     style: row
     columns: 1
