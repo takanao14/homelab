@@ -60,6 +60,17 @@
     owner: "{{ caddy_user }}"
     group: "{{ caddy_group }}"
     mode: "0640"
+  when: caddy_acme_enabled | bool
+  notify: Restart caddy
+
+# Without ACME the Cloudflare token is not needed; drop any copy left behind by
+# a previous run so the credential does not linger on an HTTP-only host.
+- name: Remove caddy environment file when ACME is disabled
+  become: true
+  ansible.builtin.file:
+    path: "{{ caddy_env_file }}"
+    state: absent
+  when: not caddy_acme_enabled | bool
   notify: Restart caddy
 
 - name: Deploy caddy systemd unit
@@ -79,7 +90,7 @@
       Group={{ caddy_group }}
       ExecStart={{ caddy_binary }} run --config {{ caddy_config }}
       ExecReload={{ caddy_binary }} reload --config {{ caddy_config }}
-      EnvironmentFile={{ caddy_env_file }}
+      EnvironmentFile=-{{ caddy_env_file }}
       TimeoutStopSec=5s
       Restart=on-failure
 

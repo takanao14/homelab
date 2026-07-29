@@ -1,17 +1,26 @@
+{% set site_prefix = '' if caddy_acme_enabled | bool else 'http://' %}
+{% if caddy_acme_enabled | bool %}
 {
 	email {{ caddy_acme_email }}
 	acme_dns cloudflare {env.CF_API_TOKEN}
 	acme_ca {{ caddy_acme_ca }}
 }
 
+{% endif %}
 {% for upstream in caddy_upstreams %}
-{{ upstream.hostname }} {
+{{ site_prefix }}{{ upstream.hostname }} {
 	reverse_proxy {{ upstream.scheme | default('http') }}://{{ upstream.backend }}{% if upstream.tls_insecure | default(false) %} {
 		transport http {
 			tls_insecure_skip_verify
 		}
 	}{% endif %}
 
+}
+
+{% endfor %}
+{% for redirect in caddy_redirects %}
+{{ site_prefix }}{{ redirect.hostname }} {
+	redir {{ redirect.target }}{uri} {{ redirect.code | default('temporary') }}
 }
 
 {% endfor %}

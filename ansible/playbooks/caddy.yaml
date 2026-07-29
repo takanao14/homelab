@@ -35,8 +35,8 @@
         path: "{{ dnsconfig_path }}"
         marker: "    // {mark} caddy"
         block: |
-          {% for upstream in caddy_upstreams %}
-              A("{{ upstream.hostname.split('.')[0] }}", "{{ caddy_ip }}"),
+          {% for site in (caddy_upstreams | default([])) + (caddy_redirects | default([])) %}
+              A("{{ site.hostname.split('.')[0] }}", "{{ caddy_ip }}"),
           {% endfor %}
       when: homelab_private_stat.stat.exists
 
