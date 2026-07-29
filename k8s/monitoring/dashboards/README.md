@@ -160,12 +160,15 @@ clearer domain-specific investigation path:
 
 ### Setup
 
-Copy `.env.example` to `.env` and set your Prometheus URL:
+Copy `.env.example` to `.env` and set your Prometheus and Loki URLs:
 
 ```bash
 cp .env.example .env
 # Edit .env
 ```
+
+Both are required: the Loki datasource backs the log dashboards (`dns-logs`,
+`syslog`, `proxmox-logs`, `service-logs`), which render empty without it.
 
 ### Start local Grafana
 
@@ -173,9 +176,13 @@ cp .env.example .env
 make dev
 ```
 
-Opens at http://localhost:3000. Dashboards and the Prometheus datasource are provisioned automatically.
+Opens at http://localhost:3000. Dashboards and the Prometheus/Loki datasources are provisioned automatically.
 
-Edit `.go` files in `cmd/generate/`, then re-run `make dev` to reload.
+Edit `.go` files in `cmd/generate/`, then re-run `make dev` to reload. Grafana's
+file provider rescans `/var/lib/grafana/dashboards` every 10s, so regenerated
+JSON is picked up without restarting the container. Datasources are provisioned
+only at container start — after editing `.env`, `docker compose up -d` recreates
+the container, which reapplies them.
 
 ### Stop
 

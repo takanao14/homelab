@@ -7,7 +7,6 @@
 *-tfstate-backups/
 tf/.state-backups/
 **/charts/*.tgz
-k8s/monitoring/dashboards/cmd/generate/generate
 **/Chart.lock
 ansible/collections/
 # Generated k0sctl configs (create_cluster.sh mktemp leftovers / manual
