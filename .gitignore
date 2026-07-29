@@ -13,5 +13,8 @@ ansible/collections/
 # `config` output). Regenerated from env/*.sh; contain host addresses only,
 # but must not be committed as they would drift from the generator.
 k0s/k0sctl-*
+# Symlinks into separate private repos (homelab-plans / homelab-md). Each has
+# its own git history and is committed there, not here. They may be absent on
+# a fresh clone, which is fine.
 docs/plans
 docs/md
