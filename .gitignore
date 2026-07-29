@@ -14,3 +14,4 @@ ansible/collections/
 # but must not be committed as they would drift from the generator.
 k0s/k0sctl-*
 docs/plans
+docs/md
