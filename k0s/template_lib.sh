@@ -64,12 +64,16 @@ Usage: $script_name <${env_hint}> <command>
   helmfile.<name>.yaml.gotmpl).
 
 Commands:
-  apply       Full cluster setup: k0sctl apply → kubeconfig → helmfile apply
+  bootstrap   Create a new cluster: k0sctl apply (no wait) → kubeconfig → helmfile apply
+  upgrade     Upgrade an existing cluster with readiness and storage health checks
+  apply       Disabled legacy command; use bootstrap or upgrade explicitly
   reset       Reset cluster: k0sctl reset
   kubeconfig  Fetch kubeconfig to \$HOME/.kube/<env>.yaml
   helmfile    Apply helmfile only (requires kubeconfig to exist)
   smoke-test  Run smoke tests: L2LB reachability + PVC read/write (requires kubeconfig to exist)
-  config      Print generated k0sctl config to stdout
+  config      Print the bootstrap k0sctl config to stdout
+  upgrade-config
+              Print the upgrade k0sctl config to stdout
 EOF
 }
 
@@ -211,12 +215,24 @@ sync_worker_l2_labels() {
 # Storage backend is selected automatically:
 #   1 controller  → kine  (embedded SQLite, suitable for homelab single-node control plane)
 #   2+ controllers → etcd (required for HA; controllers must be an odd number for quorum)
+# Operation mode controls disruptive-operation safety:
+#   bootstrap → do not wait for Ready because the custom CNI is not installed yet
+#   upgrade   → wait for each worker and allow storage recovery during drain
 generate_k0sctl_config() {
     local k0sctl_file="$1"
+    local operation_mode="${2:-bootstrap}"
 
     validate_vars K0S_SSH_USER K0S_CONTROLLER_ADDRESSES K0S_WORKER_ADDRESSES K0S_LB_POOL
 
-    log_info "Generating k0sctl configuration..."
+    case "$operation_mode" in
+        bootstrap|upgrade) ;;
+        *)
+            log_error "Unknown k0sctl operation mode: '$operation_mode'"
+            return 1
+            ;;
+    esac
+
+    log_info "Generating k0sctl configuration for ${operation_mode}..."
 
     # Split address lists (trim spaces around commas)
     IFS=',' read -ra ctrl_list   <<< "${K0S_CONTROLLER_ADDRESSES// /}"
@@ -302,11 +318,28 @@ EOF
         # CoreDNS must explicitly tolerate the dedicated GPU worker taint.
         _render_coredns_config
 
-        cat <<EOF
+        if [[ "$operation_mode" == "upgrade" ]]; then
+            cat <<EOF
+  options:
+    wait:
+      enabled: true
+    drain:
+      enabled: true
+      gracePeriod: 2m
+      timeout: 20m
+      force: true
+      ignoreDaemonSets: true
+      deleteEmptyDirData: true
+    concurrency:
+      workerDisruptionPercent: 10
+EOF
+        else
+            cat <<EOF
   options:
     wait:
       enabled: false
 EOF
+        fi
     } > "$k0sctl_file"
 
     local gpu_count=0
@@ -314,7 +347,7 @@ EOF
         IFS=',' read -ra _gpu_list <<< "${K0S_GPU_WORKER_ADDRESSES// /}"
         gpu_count="${#_gpu_list[@]}"
     fi
-    log_success "Configuration generated — controllers: ${ctrl_count}, workers: ${worker_count}, gpu-workers: ${gpu_count}"
+    log_success "Configuration generated for ${operation_mode} — controllers: ${ctrl_count}, workers: ${worker_count}, gpu-workers: ${gpu_count}"
 }
 
 # ── kubeconfig ────────────────────────────────────────────────────────────────
@@ -364,6 +397,91 @@ wait_for_cluster() {
     log_success "Worker node registered (CNI not yet required)"
 }
 
+# ── existing-cluster health checks ───────────────────────────────────────────
+
+wait_for_nodes_ready() {
+    local timeout="${1:-5m}"
+
+    log_info "Waiting for all nodes to be Ready (timeout: ${timeout})..."
+    kubectl wait --for=condition=Ready nodes --all --timeout="$timeout"
+    log_success "All nodes are Ready"
+}
+
+wait_for_longhorn_ready() {
+    local timeout_seconds="${1:-300}"
+    local interval=10
+    local elapsed=0
+    local volume_status unhealthy_volumes
+
+    log_info "Waiting for Longhorn managers and volumes to be healthy..."
+    kubectl -n longhorn-system wait \
+        --for=condition=Ready pod \
+        --selector=app=longhorn-manager \
+        --timeout="${timeout_seconds}s"
+
+    while true; do
+        volume_status="$(
+            kubectl -n longhorn-system get volumes.longhorn.io \
+                -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.robustness}{"\n"}{end}'
+        )"
+        unhealthy_volumes="$(awk 'NF >= 2 && $2 != "healthy" { print }' <<< "$volume_status")"
+
+        if [[ -z "$unhealthy_volumes" ]]; then
+            log_success "Longhorn volumes are healthy"
+            return 0
+        fi
+
+        if [[ "$elapsed" -ge "$timeout_seconds" ]]; then
+            log_error "Longhorn volumes did not become healthy within ${timeout_seconds}s:"
+            printf '%s\n' "$unhealthy_volumes" >&2
+            return 1
+        fi
+
+        sleep "$interval"
+        elapsed=$((elapsed + interval))
+    done
+}
+
+wait_for_openebs_ready() {
+    local timeout_seconds="${1:-300}"
+
+    log_info "Waiting for OpenEBS pods to be Ready..."
+    kubectl -n openebs wait \
+        --for=condition=Ready pod \
+        --all \
+        --timeout="${timeout_seconds}s"
+    log_success "OpenEBS pods are Ready"
+}
+
+wait_for_storage_ready() {
+    local timeout_seconds="${1:-300}"
+
+    case "${K0S_STORAGE_PROVIDER:-openebs}" in
+        longhorn)
+            wait_for_longhorn_ready "$timeout_seconds"
+            ;;
+        openebs)
+            wait_for_openebs_ready "$timeout_seconds"
+            ;;
+        *)
+            log_error "Unsupported K0S_STORAGE_PROVIDER: '${K0S_STORAGE_PROVIDER:-}'"
+            return 1
+            ;;
+    esac
+}
+
+check_existing_cluster_health() {
+    local timeout="${1:-5m}"
+    local storage_timeout_seconds="${2:-300}"
+
+    log_info "Checking existing cluster health..."
+    kubectl get nodes >/dev/null
+    wait_for_nodes_ready "$timeout"
+    cilium status --wait
+    wait_for_storage_ready "$storage_timeout_seconds"
+    log_success "Existing cluster health checks passed"
+}
+
 # ── helmfile ──────────────────────────────────────────────────────────────────
 
 helmfile_apply() {
@@ -409,8 +527,8 @@ run_main() {
     trap "rm -f '$k0sctl_file'" EXIT
 
     case "$command" in
-        apply)
-            generate_k0sctl_config "$k0sctl_file"
+        bootstrap)
+            generate_k0sctl_config "$k0sctl_file" bootstrap
             log_info "Running: k0sctl apply --config $k0sctl_file"
             k0sctl apply --config "$k0sctl_file"
             generate_kubeconfig "$k0sctl_file" "$kubeconfig_out"
@@ -418,10 +536,35 @@ run_main() {
             wait_for_cluster
             helmfile_apply "$helmfile_file"
             cilium status --wait
-            log_success "Cluster setup completed successfully!"
+            wait_for_nodes_ready 5m
+            wait_for_storage_ready 1200
+            log_success "Cluster bootstrap completed successfully!"
+            ;;
+        upgrade)
+            validate_file_exists "$kubeconfig_out" "Kubeconfig"
+            export KUBECONFIG="$kubeconfig_out"
+            check_existing_cluster_health 5m 300
+
+            generate_k0sctl_config "$k0sctl_file" upgrade
+            log_info "Running: k0sctl apply --config $k0sctl_file"
+            k0sctl apply --config "$k0sctl_file"
+            generate_kubeconfig "$k0sctl_file" "$kubeconfig_out"
+
+            wait_for_nodes_ready 20m
+            wait_for_storage_ready 1200
+            helmfile_apply "$helmfile_file"
+            cilium status --wait
+            wait_for_nodes_ready 5m
+            wait_for_storage_ready 1200
+            log_success "Cluster upgrade completed successfully!"
+            ;;
+        apply)
+            log_error "The ambiguous 'apply' command is disabled."
+            log_error "Use 'bootstrap' for a new cluster or 'upgrade' for an existing cluster."
+            return 2
             ;;
         reset)
-            generate_k0sctl_config "$k0sctl_file"
+            generate_k0sctl_config "$k0sctl_file" bootstrap
             log_info "Running: k0sctl reset --config $k0sctl_file"
             k0sctl reset --config "$k0sctl_file"
             ;;
@@ -437,7 +580,11 @@ run_main() {
             "$base_dir/tests/smoke-test.sh"
             ;;
         config)
-            generate_k0sctl_config "$k0sctl_file"
+            generate_k0sctl_config "$k0sctl_file" bootstrap
+            cat "$k0sctl_file"
+            ;;
+        upgrade-config)
+            generate_k0sctl_config "$k0sctl_file" upgrade
             cat "$k0sctl_file"
             ;;
         *)

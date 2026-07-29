@@ -69,11 +69,14 @@ K0S_SSH_USER=ubuntu ./create_cluster.sh prd config
 
 | Command | Description |
 |---------|-------------|
-| `apply` | Full setup: k0sctl apply → fetch kubeconfig → helmfile apply |
+| `bootstrap` | Create a new cluster: k0sctl apply without waiting for the custom CNI → fetch kubeconfig → helmfile apply |
+| `upgrade` | Upgrade an existing cluster with node, Cilium, and storage health checks before and after k0sctl apply |
+| `apply` | Disabled legacy command; fails with guidance to select `bootstrap` or `upgrade` explicitly |
 | `reset` | Reset the cluster: k0sctl reset |
 | `kubeconfig` | Write kubeconfig to `~/.kube/<env>.yaml` |
 | `helmfile` | Apply Helmfile only (requires kubeconfig to exist) |
-| `config` | Print the generated k0sctl config to stdout (dry-run inspection) |
+| `config` | Print the bootstrap k0sctl config to stdout (dry-run inspection) |
+| `upgrade-config` | Print the upgrade k0sctl config to stdout (dry-run inspection) |
 
 ### Examples
 
@@ -81,8 +84,12 @@ K0S_SSH_USER=ubuntu ./create_cluster.sh prd config
 # Inspect the generated config
 ./create_cluster.sh prd config
 
-# Build a cluster
-./create_cluster.sh prd apply
+# Build a new cluster
+./create_cluster.sh prd bootstrap
+
+# Inspect and run an existing cluster upgrade
+./create_cluster.sh sandbox upgrade-config
+./create_cluster.sh sandbox upgrade
 
 # Re-apply Helmfile only
 ./create_cluster.sh prd helmfile
@@ -96,8 +103,29 @@ K0S_SSH_USER=ubuntu ./create_cluster.sh prd config
 
 Kubeconfig is written to `~/.kube/<env>.yaml` (e.g. `~/.kube/prd.yaml`, `~/.kube/sandbox.yaml`).
 
+### Bootstrap and upgrade safety
+
+The cluster uses a custom CNI installed by Helmfile after k0s starts. For that
+reason, `bootstrap` generates `spec.options.wait.enabled: false`; waiting for
+Ready nodes before installing Cilium would deadlock the initial build.
+
+`upgrade` is intentionally separate and requires an existing kubeconfig. It
+uses the following safety controls:
+
+- verifies that all nodes, Cilium, and the selected storage provider are healthy
+  before changing any host;
+- enables k0sctl's per-worker Ready wait;
+- limits worker disruption to 10 percent and sets the drain timeout to 20
+  minutes, allowing Longhorn replicas time to rebuild without bypassing their
+  PodDisruptionBudgets;
+- repeats node and storage health checks after k0sctl and Helmfile complete.
+
+For Longhorn, every volume must report `healthy`. For OpenEBS, all pods in the
+`openebs` namespace must be Ready. Do not use `upgrade` to create a new cluster,
+and do not bypass a failed storage check with `--no-drain`.
+
 When cluster VMs are recreated with the same IP addresses, run
-`remove-known-hosts.sh` before `create_cluster.sh apply`. The script reads all
+`remove-known-hosts.sh` before `create_cluster.sh bootstrap`. The script reads all
 controller, worker, and optional GPU worker addresses from the selected
 environment file and removes their entries (including hashed entries) from
 `~/.ssh/known_hosts` using `ssh-keygen -R`. Set `KNOWN_HOSTS_FILE` to target a
@@ -107,6 +135,6 @@ different file.
 
 - **Datastore**: kine (single controller) or etcd (multiple controllers — count must be odd for quorum); selected automatically based on `K0S_CONTROLLER_ADDRESSES`
 - **CNI**: Cilium v1.19.x (kube-proxy disabled, L2 LoadBalancer; ingress/Gateway API controllers disabled — shared ingress is Envoy Gateway, ArgoCD-managed, see ADR-0011). Workers are labeled `homelab/l2-segment=<first-three-IP-octets>` by k0s install flags and re-synced before Helmfile runs, so L2 announcements only run on nodes in the LoadBalancer pool's segment.
-- **Storage CSI**: OpenEBS v4.4.0 LocalPV or Longhorn v1.11.1 — selected via `K0S_STORAGE_PROVIDER`; both use SSD mounted at `/srv/storage/volume`
+- **Storage CSI**: OpenEBS v4.5.1 LocalPV or Longhorn v1.12.0 — selected via `K0S_STORAGE_PROVIDER`; both use SSD mounted at `/srv/storage/volume`
 - **GPU**: AMD GPU Device Plugin (enabled when `K0S_GPU_WORKER_ADDRESSES` is set; GPU workers are labeled `gpu=amd` and tainted `gpu=amd:NoSchedule`)
 - **CoreDNS**: Replica count is calculated automatically by k0s from the number of Linux nodes. When GPU workers are configured, `template_lib.sh` adds a CoreDNS-only toleration for `gpu=amd:NoSchedule`, allowing CoreDNS replicas to be distributed across standard and GPU workers without making other workloads eligible for GPU workers.
