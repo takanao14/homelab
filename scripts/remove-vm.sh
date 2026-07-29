@@ -20,13 +20,13 @@ usage() {
 Usage: $(basename "$0") <name> [node] [--keep]
 
   name      VM name
-  node      Proxmox node: dev | node2 | node3 (default: dev)
+  node      Proxmox node: pve | node2 | node3 | node4 (default: pve)
   --keep    Keep the terragrunt directory after destroy
 
 Example:
   $(basename "$0") myvm
   $(basename "$0") myvm node2
-  $(basename "$0") myvm dev --keep
+  $(basename "$0") myvm pve --keep
 EOF
   exit 1
 }
@@ -34,7 +34,7 @@ EOF
 [[ $# -lt 1 || $# -gt 3 ]] && usage
 
 VM_NAME="$1"
-NODE="dev"
+NODE="pve"
 KEEP=false
 NODE_SET=false
 
@@ -49,7 +49,7 @@ for arg in "$@"; do
     --keep)
       KEEP=true
       ;;
-    dev|node2|node3)
+    pve|node2|node3|node4)
       if [[ "$NODE_SET" == true ]]; then
         echo "Error: node can only be specified once" >&2
         exit 1
@@ -64,8 +64,8 @@ for arg in "$@"; do
 done
 
 case "$NODE" in
-  dev|node2|node3) ;;
-  *) echo "Error: node must be 'dev' or 'node2' or 'node3'" >&2; exit 1 ;;
+  pve|node2|node3|node4) ;;
+  *) echo "Error: node must be one of: pve, node2, node3, node4" >&2; exit 1 ;;
 esac
 
 TF_VM_USERNAME="${TF_VM_USERNAME:-dummy}"

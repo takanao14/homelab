@@ -1,19 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Generate a Terragrunt config under tf/vm/<node>/<name>/ and apply it to create
-# a Proxmox VM, then wait until SSH on the VM becomes ready.
+# Generate a Terragrunt config under tf/vm/<node>/<name>/.
+# Planning, applying, and provisioning are intentionally separate operations.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${SCRIPT_DIR}/../tf"
-
-ENV_FILE="${HOME}/.env"
-if [[ -f "$ENV_FILE" ]]; then
-  set -a
-  # shellcheck source=/dev/null
-  source "$ENV_FILE"
-  set +a
-fi
 
 usage() {
   cat <<EOF
@@ -21,17 +13,15 @@ Usage: $(basename "$0") <name> <ip> [node] [cores] [memory_mb] [disk_gb] [image]
 
   name      VM name (alphanumeric and hyphens only)
   ip        IPv4 address without prefix (e.g. 192.168.20.50)
-  node      Proxmox node: dev | node2 | node3 (default: dev)
+  node      Proxmox node: pve | node2 | node3 | node4 (default: pve)
   cores     vCPUs                      (default: 4)
   memory    Memory in MB               (default: 8192)
   disk      Disk size in GB            (default: 80)
   image     OS image: ubuntu24 | ubuntu24-xrdp | rocky10 | rocky9 | rocky9-xrdp | debian13  (default: ubuntu24)
 
-Required env vars: TF_VM_USERNAME, TF_VM_PASSWORD, TF_VM_SSH_PUBLIC_KEY
-
 Example:
   $(basename "$0") myvm 192.168.20.50
-  $(basename "$0") myvm 192.168.20.50 dev 4 4096 80 rocky10
+  $(basename "$0") myvm 192.168.20.50 pve 4 4096 80 rocky10
 EOF
   exit 1
 }
@@ -46,15 +36,15 @@ if [[ ! "$VM_NAME" =~ ^[a-zA-Z0-9-]+$ ]]; then
 fi
 
 IP="$2"
-NODE="${3:-dev}"
+NODE="${3:-pve}"
 CORES="${4:-4}"
 MEMORY="${5:-8192}"
 DISK="${6:-80}"
 IMAGE="${7:-ubuntu24}"
 
 case "$NODE" in
-  dev|node2|node3) ;;
-  *) echo "Error: node must be 'dev' or 'node2' or 'node3'" >&2; exit 1 ;;
+  pve|node2|node3|node4) ;;
+  *) echo "Error: node must be one of: pve, node2, node3, node4" >&2; exit 1 ;;
 esac
 
 if [[ ! "$IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
@@ -90,62 +80,36 @@ case "$IMAGE" in
   *) echo "Error: image must be one of: ubuntu24, ubuntu24-xrdp, rocky10, rocky9, rocky9-xrdp, debian13" >&2; exit 1 ;;
 esac
 
+case "$IMAGE" in
+  ubuntu24-xrdp|rocky9-xrdp)
+    if [[ "$NODE" != "pve" ]]; then
+      echo "Error: image '${IMAGE}' is only available on node 'pve'" >&2
+      exit 1
+    fi
+    ;;
+esac
+
 SUBNET=$(echo "$IP" | cut -d. -f1-3)
 case "$SUBNET" in
   192.168.10) NET_REF="local.common.locals.${NODE}.net10" ;;
-  192.168.20) NET_REF="local.common.locals.dev.net20" ;;
+  192.168.20) NET_REF="local.common.locals.pve.net20" ;;
   192.168.40) NET_REF="local.common.locals.node2.net40" ;;
   192.168.50) NET_REF="local.common.locals.node3.net50" ;;
+  192.168.60) NET_REF="local.common.locals.node4.net60" ;;
   *) echo "Error: unrecognized subnet ${SUBNET}.0/24" >&2; exit 1 ;;
 esac
 
 case "${NODE}:${SUBNET}" in
-  dev:192.168.10|dev:192.168.20|node2:192.168.10|node2:192.168.40|node3:192.168.10|node3:192.168.50) ;;
+  pve:192.168.10|pve:192.168.20|node2:192.168.10|node2:192.168.40|node3:192.168.10|node3:192.168.50|node4:192.168.10|node4:192.168.60) ;;
   *) echo "Error: subnet ${SUBNET}.0/24 is not available on node '${NODE}'" >&2; exit 1 ;;
 esac
 
-NODE_UPPER="${NODE^^}"
-_node_var() { local var="${1}_${NODE_UPPER}"; echo "${!var:-}"; }
-
-TF_VM_USERNAME_DEFAULT="${TF_VM_USERNAME:-}"
-TF_VM_PASSWORD_DEFAULT="${TF_VM_PASSWORD:-}"
-TF_VM_SSH_PUBLIC_KEY_DEFAULT="${TF_VM_SSH_PUBLIC_KEY:-}"
-
-TF_VM_USERNAME="$(_node_var TF_VM_USERNAME)"
-TF_VM_USERNAME="${TF_VM_USERNAME:-$TF_VM_USERNAME_DEFAULT}"
-TF_VM_PASSWORD="$(_node_var TF_VM_PASSWORD)"
-TF_VM_PASSWORD="${TF_VM_PASSWORD:-$TF_VM_PASSWORD_DEFAULT}"
-TF_VM_SSH_PUBLIC_KEY_NODE="$(_node_var TF_VM_SSH_PUBLIC_KEY)"
-TF_VM_SSH_PUBLIC_KEY="${TF_VM_SSH_PUBLIC_KEY_NODE:-$TF_VM_SSH_PUBLIC_KEY_DEFAULT}"
-
-if [[ -z "$TF_VM_USERNAME" ]]; then
-  TF_VM_USERNAME="$USER"
-fi
-export TF_VM_USERNAME
-
-if [[ -z "${TF_VM_SSH_PUBLIC_KEY:-}" ]]; then
-  DEFAULT_PUBKEY="${HOME}/.ssh/id_ed25519.pub"
-  [[ ! -f "$DEFAULT_PUBKEY" ]] && echo "Error: \$TF_VM_SSH_PUBLIC_KEY is not set and ${DEFAULT_PUBKEY} not found" >&2 && exit 1
-  TF_VM_SSH_PUBLIC_KEY="$(cat "$DEFAULT_PUBKEY")"
-  export TF_VM_SSH_PUBLIC_KEY
-fi
-
 OUT_DIR="${TF_DIR}/vm/${NODE}/${VM_NAME}"
+OUT_FILE="${OUT_DIR}/terragrunt.hcl"
+TMP_FILE="$(mktemp "${TMPDIR:-/tmp}/create-vm.XXXXXX")"
+trap 'rm -f "$TMP_FILE"' EXIT
 
-if [[ -d "$OUT_DIR" ]]; then
-  echo "Error: ${OUT_DIR} already exists" >&2
-  exit 1
-fi
-
-if [[ -z "$TF_VM_PASSWORD" ]]; then
-  read -rsp "VM password (${NODE}): " TF_VM_PASSWORD
-  echo ""
-fi
-export TF_VM_PASSWORD
-
-mkdir -p "$OUT_DIR"
-
-cat > "${OUT_DIR}/terragrunt.hcl" <<HCL
+cat > "$TMP_FILE" <<HCL
 include "root" {
   path = find_in_parent_folders("root.hcl")
 }
@@ -183,44 +147,27 @@ inputs = {
 }
 HCL
 
-echo ""
-echo "Generated: tf/vm/${NODE}/${VM_NAME}/terragrunt.hcl"
-echo "---"
-cat "${OUT_DIR}/terragrunt.hcl"
-echo "---"
-echo ""
-
-read -r -p "Apply? (y/N) " confirm
-if [[ "${confirm,,}" != "y" ]]; then
-  echo "Aborted. Generated file remains at tf/vm/${NODE}/${VM_NAME}/terragrunt.hcl"
-  exit 0
-fi
-
-direnv exec "$OUT_DIR" bash -c "cd '$OUT_DIR' && terragrunt apply"
-
-echo ""
-echo "Removing ${IP} from known_hosts..."
-ssh-keygen -R "${IP}" 2>/dev/null || true
-
-echo -n "Waiting for SSH on ${IP} ..."
-TIMEOUT=300
-ELAPSED=0
-while true; do
-  set +e
-  ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -o BatchMode=yes \
-      -i "${HOME}/.ssh/id_ed25519" "${TF_VM_USERNAME}@${IP}" true 2>/dev/null
-  SSH_EXIT=$?
-  set -e
-  if [[ $SSH_EXIT -eq 0 ]]; then
-    break
-  fi
-  if [[ $ELAPSED -ge $TIMEOUT ]]; then
-    echo ""
-    echo "Error: SSH on ${IP} did not become ready within ${TIMEOUT}s" >&2
+if [[ -f "$OUT_FILE" ]]; then
+  if cmp -s "$OUT_FILE" "$TMP_FILE"; then
+    echo "Already up to date: tf/vm/${NODE}/${VM_NAME}/terragrunt.hcl"
+  else
+    echo "Error: ${OUT_FILE} already exists with different content" >&2
+    diff -u "$OUT_FILE" "$TMP_FILE" || true
     exit 1
   fi
-  printf '.'
-  sleep 5
-  ELAPSED=$((ELAPSED + 5))
-done
-echo " ready (${ELAPSED}s)"
+else
+  mkdir -p "$OUT_DIR"
+  mv "$TMP_FILE" "$OUT_FILE"
+  echo "Generated: tf/vm/${NODE}/${VM_NAME}/terragrunt.hcl"
+fi
+
+echo ""
+echo "---"
+cat "$OUT_FILE"
+echo "---"
+echo ""
+echo "Next steps:"
+echo "  cd ${OUT_DIR}"
+echo "  direnv exec . terragrunt plan"
+echo "  direnv exec . terragrunt apply"
+echo "  ${SCRIPT_DIR}/provision.sh ${IP}"

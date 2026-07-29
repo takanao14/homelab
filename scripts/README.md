@@ -25,31 +25,47 @@ scripts/
 
 ### `create-vm.sh`
 
-Generates a Terragrunt config under `tf/vm/<node>/<name>/` and applies it to
-create a Proxmox VM. After apply, it waits until SSH on the VM becomes ready.
+Generates a Terragrunt config under `tf/vm/<node>/<name>/`. It does not run
+`plan`, `apply`, or wait for SSH; those steps remain separate so a failed
+operation can be inspected and resumed directly with Terragrunt.
 
 ```bash
 ./create-vm.sh <name> <ip> [node] [cores] [memory_mb] [disk_gb] [image]
 
 # Examples
 ./create-vm.sh myvm 192.168.20.50
-./create-vm.sh myvm 192.168.20.50 dev 4 4096 80 rocky10
+./create-vm.sh myvm 192.168.20.50 pve 4 4096 80 rocky10
 ```
 
 | Arg    | Default      | Notes                                                      |
 |--------|--------------|------------------------------------------------------------|
 | name   | (required)   | Alphanumeric and hyphens only                              |
 | ip     | (required)   | IPv4 without prefix; subnet selects the bridge/gateway     |
-| node   | `dev`        | `dev` \| `node2` \| `node3`                                |
+| node   | `pve`        | `pve` \| `node2` \| `node3` \| `node4`                    |
 | cores  | `4`          | vCPUs                                                      |
 | memory | `8192`       | MB                                                         |
 | disk   | `80`         | GB                                                         |
-| image  | `ubuntu24`   | `ubuntu24` \| `ubuntu24-xrdp` \| `rocky10` \| `rocky9-xrdp` |
+| image  | `ubuntu24`   | `ubuntu24[-xrdp]`, `rocky10`, `rocky9[-xrdp]`, `debian13` |
 
-Required env vars (read from `~/.env`): `TF_VM_USERNAME`, `TF_VM_PASSWORD`,
-`TF_VM_SSH_PUBLIC_KEY` (per-node overrides like `TF_VM_PASSWORD_DEV` and
-`TF_VM_SSH_PUBLIC_KEY_NODE2` are supported; falls back to a prompt /
-`~/.ssh/id_ed25519.pub`).
+The XRDP images are available only on `pve`.
+
+Re-running the command with the same arguments succeeds without changing the
+file. If the existing file differs, the script prints a diff and leaves it
+unchanged.
+
+Review and create the VM explicitly:
+
+```bash
+cd ../tf/vm/pve/myvm
+direnv exec . terragrunt plan
+direnv exec . terragrunt apply
+
+# Run from scripts/ after the VM has been created.
+./provision.sh 192.168.20.50
+```
+
+Terragrunt obtains `TF_VM_USERNAME`, `TF_VM_PASSWORD`, and
+`TF_VM_SSH_PUBLIC_KEY` through the node directory's `.envrc`.
 
 ### `remove-vm.sh`
 
@@ -60,7 +76,7 @@ Destroys a VM created by `create-vm.sh` and removes its Terragrunt directory.
 
 ./remove-vm.sh myvm
 ./remove-vm.sh myvm node2
-./remove-vm.sh myvm dev --keep   # keep the directory after destroy
+./remove-vm.sh myvm pve --keep   # keep the directory after destroy
 ```
 
 ### `provision.sh`
