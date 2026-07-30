@@ -1,5 +1,7 @@
 .idea
 .vscode
+# macOS Finder metadata, created in any directory that gets browsed.
+.DS_Store
 # Local tfstate snapshots (Phase 0 backup target if pointed inside the repo).
 # tfstate may contain secrets and must never be committed.
 **/*.tfstate
