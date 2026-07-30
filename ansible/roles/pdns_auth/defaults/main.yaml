@@ -3,6 +3,13 @@ pdns_repo_base_url: "http://repo.powerdns.com/ubuntu" # noqa var-naming[no-role-
 pdns_repo_release: "{{ ansible_facts['distribution_release'] | default('noble') }}" # noqa var-naming[no-role-prefix]
 pdns_repo_channel: "auth-50" # noqa var-naming[no-role-prefix]
 pdns_repo_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc" # noqa var-naming[no-role-prefix]
+# Same key file as the dnsdist role uses, and the same reasoning: pinning the
+# checksum verifies the APT trust anchor itself rather than only the TLS
+# connection, and it is what makes get_url skip the network when the file is
+# already in place (`force: false` alone does not — the skip is gated on a
+# checksum being set). Verified 2026-07-31; keep in step with
+# dnsdist_repo_key_sha256.
+pdns_repo_key_sha256: "efeb5b1451c76de1dac8eefaddba5af5549e8fd93484728744ea7b4923decae8" # noqa var-naming[no-role-prefix]
 pdns_repo_key_path: "/etc/apt/keyrings/auth-50-pub.asc" # noqa var-naming[no-role-prefix]
 pdns_repo_pin_path: "/etc/apt/preferences.d/auth-50" # noqa var-naming[no-role-prefix]
 

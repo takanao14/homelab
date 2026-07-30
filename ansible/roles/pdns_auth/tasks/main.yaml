@@ -61,6 +61,7 @@
     url: "{{ pdns_repo_key_url }}"
     dest: "{{ pdns_repo_key_path }}"
     mode: "0644"
+    checksum: "sha256:{{ pdns_repo_key_sha256 }}"
 
 - name: Configure pdns apt pinning
   become: true
