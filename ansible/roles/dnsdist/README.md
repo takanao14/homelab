@@ -71,6 +71,14 @@ hyphen-lowercased (`qname-suffix`) when only the PascalCase enum variant
 (`QNameSuffix`) is accepted. When a type or field name is wrong, the parse error
 enumerates every valid alternative — that list is authoritative.
 
+#### Reverting to Lua
+
+Pointing the role back at a `dnsdist.conf` template is **not** enough on its own.
+dnsdist 2.1 prefers `dnsdist.yml` and only falls back to `dnsdist.conf` when no
+YAML file exists, so a leftover `/etc/dnsdist/dnsdist.yml` would keep running
+while the `.conf` sat there looking authoritative. Any revert has to delete the
+YAML file as well.
+
 #### Rule order is load-bearing
 
 `query_rules` is a list and its order is preserved through rendering:
