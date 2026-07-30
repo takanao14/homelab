@@ -20,6 +20,7 @@ homelab/
 │   ├── eso/           # External Secrets Operator + ClusterSecretStore (OpenBao)
 │   ├── externalDNS/   # ExternalDNS (PowerDNS provider)
 │   ├── gateway/       # Shared Gateway API resources (GatewayClass, Gateway)
+│   ├── gpu-switch/    # Authenticated web UI switching the AMD GPU (ADR-0027)
 │   ├── headlamp/      # Headlamp Kubernetes Web UI (in-cluster per environment)
 │   ├── homepage/      # Homepage dashboard
 │   ├── lemonade-server/ # Lemonade LLM server (Vulkan / AMD GPU, see ADR-0028)
@@ -27,12 +28,14 @@ homelab/
 │   ├── monitoring/    # Prometheus, Grafana, exporters, and dashboards
 │   ├── ollama/        # Ollama LLM server deployment
 │   ├── open-webui/    # Open WebUI values for the upstream chart
+│   ├── pdns-ui/       # Read-only browser for the PowerDNS authoritative zones
 │   ├── reloader/      # Stakater Reloader (auto-restart on ConfigMap/Secret changes)
 │   └── vllm/          # vLLM OpenAI-compatible server (ROCm / AMD GPU)
 ├── scripts/           # VM lifecycle, provisioning, OpenBao secret sync, GPU switching
 ├── docs/
 │   ├── adr/           # Architecture Decision Records
-│   └── plans/         # Symlink to the private plans repository (may be absent)
+│   ├── plans/         # Symlink to the private plans repository (may be absent)
+│   └── md/            # Symlink to the private Marp design slides repo (may be absent)
 └── tf/                # Terraform / Terragrunt (Proxmox VMs, LXC containers, cloud images)
     ├── cloudimage/    # Stock cloud image download (proxmox_download_file)
     ├── customimage/   # Deploy of Packer-built custom images via SeaweedFS S3 (proxmox_download_file)
@@ -93,6 +96,7 @@ Make sure your AGE key is listed in `.sops.yaml` before editing.
 | `direnv` | Automatic environment variable loading |
 | `terraform` / `terragrunt` | Infrastructure provisioning |
 | `ansible` | Server configuration management |
+| `packer` | Building the custom Proxmox cloud images |
 | `k0sctl` | k0s cluster lifecycle |
 | `helmfile` / `helm` | Kubernetes workload deployments |
 | `kubectl` | Kubernetes cluster interaction |
