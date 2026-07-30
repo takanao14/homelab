@@ -3,14 +3,18 @@ name: Helm Lint
 on:
   pull_request:
     paths:
-      - "k8s/**/Chart.yaml"
-      - "k8s/**/values*.yaml"
-      - "k8s/argocd/**/*.yaml"
+      - ".github/workflows/helm-lint.yaml"
+      - "k8s/**/*.yaml"
+      - "k0s/helmfile.yaml.gotmpl"
+      - "k0s/env/*.sh"
+      - "k0s/values/**"
+      - "k0s/charts/**"
 
 jobs:
   lint:
     name: helm-lint
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
@@ -18,12 +22,47 @@ jobs:
 
       - name: Helm dependency update & lint
         run: |
-          find k8s -name "Chart.yaml" | while read chart; do
+          find k8s -name "Chart.yaml" | while IFS= read -r chart; do
             dir=$(dirname "$chart")
             if grep -q "dependencies:" "$chart"; then
               helm dependency update "$dir"
             fi
             helm lint "$dir"
+          done
+
+      - name: Install Helmfile
+        env:
+          # renovate: datasource=github-releases depName=helmfile/helmfile
+          HELMFILE_VERSION: "1.7.1"
+        run: |
+          set -euo pipefail
+          archive="helmfile_${HELMFILE_VERSION}_linux_amd64.tar.gz"
+          base_url="https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}"
+          curl -fsSL -o "${RUNNER_TEMP}/${archive}" "${base_url}/${archive}"
+          curl -fsSL -o "${RUNNER_TEMP}/helmfile_checksums.txt" \
+            "${base_url}/helmfile_${HELMFILE_VERSION}_checksums.txt"
+          expected=$(awk -v archive="$archive" '$2 == archive { print $1 }' \
+            "${RUNNER_TEMP}/helmfile_checksums.txt")
+          [ -n "$expected" ]
+          echo "${expected}  ${RUNNER_TEMP}/${archive}" | sha256sum --check -
+          tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}" helmfile
+          chmod +x "${RUNNER_TEMP}/helmfile"
+          echo "${RUNNER_TEMP}" >> "${GITHUB_PATH}"
+
+      - name: Render k0s Helmfile environments
+        working-directory: k0s
+        run: |
+          set -euo pipefail
+          for env_name in prd sandbox; do
+            echo "::group::render k0s ${env_name}"
+            (
+              set -a
+              # shellcheck source=/dev/null
+              source "env/${env_name}.sh"
+              set +a
+              helmfile --file helmfile.yaml.gotmpl template > /dev/null
+            )
+            echo "::endgroup::"
           done
 
       - name: Install yq
