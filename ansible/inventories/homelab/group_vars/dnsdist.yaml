@@ -1,14 +1,22 @@
 ---
+# health_checks is the YAML config's nested form of the old checkName/checkType
+# pair. Each resolver is probed with a name it actually answers for.
 dnsdist_default_servers:
   - name: local-forwarder
     address: "192.168.10.1:53"
-    checkName: "google.com."
+    health_checks:
+      qname: "google.com."
+      qtype: A
   - name: google-dns
     address: "8.8.8.8:53"
-    checkName: "google.com."
+    health_checks:
+      qname: "google.com."
+      qtype: A
   - name: cloudflare-dns
     address: "1.1.1.1:53"
-    checkName: "cloudflare.com."
+    health_checks:
+      qname: "cloudflare.com."
+      qtype: A
 
 vector_config:
   sources:

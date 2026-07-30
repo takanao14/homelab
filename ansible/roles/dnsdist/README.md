@@ -28,8 +28,60 @@ This is not only about queries from the LAN. The clusters' CoreDNS runs with `fa
 
 - Adds the official PowerDNS APT repository for `dnsdist`.
 - Installs the `dnsdist` package.
-- Deploys `/etc/dnsdist/dnsdist.conf` from a Jinja2 template.
+- Deploys `/etc/dnsdist/dnsdist.yml`, removing any superseded `dnsdist.conf`.
 - Enables and starts the `dnsdist` service.
+
+### Configuration format
+
+The configuration is YAML (`/etc/dnsdist/dnsdist.yml`), which dnsdist has
+preferred over `dnsdist.conf` since 2.1.
+
+`templates/dnsdist.yml.j2` contains no hand-written YAML. The whole
+configuration is the `dnsdist_config` structure in `defaults/main.yaml`, and the
+template only renders it through `to_nice_yaml`, so indentation cannot drift and
+the rules are reviewable as data. Edit `dnsdist_config`, never the template.
+
+Two non-obvious details in that template and task:
+
+- The render goes through `to_json | from_json` first. `map('combine')` merges
+  one literal dict object into every backend, so PyYAML would otherwise emit
+  anchors and aliases (`&id001` / `*id001`). The round-trip rebuilds fresh
+  objects and keeps the on-host file plain.
+- `validate` copies to a `.yml` temp name before calling
+  `dnsdist --check-config`. dnsdist picks the config format from the file
+  extension, and Ansible hands `validate` an extension-less temp file, which
+  would be parsed as Lua and fail.
+
+Note that `--check-config` validates syntax only. A YAML config can load
+cleanly and still route differently; changes need behavioural verification.
+`dnsdist -c -e "showRules()"` is the most direct check — it prints every rule
+with its match count, so two hosts can be compared rule by rule.
+
+**Trust the parser over the YAML reference.** During the migration from Lua the
+published reference was wrong twice: it documents a default for the backend
+`protocol` field that the binary actually requires, and it shows selector types
+hyphen-lowercased (`qname-suffix`) when only the PascalCase enum variant
+(`QNameSuffix`) is accepted. When a type or field name is wrong, the parse error
+enumerates every valid alternative — that list is authoritative.
+
+#### Rule order is load-bearing
+
+`query_rules` is a list and its order is preserved through rendering:
+
+1. `internal-no-recurse` — non-terminal, falls through to 2
+2. `internal-pool` — `stop_processing: true`, the routing decision is final
+3. `rfc6303-local-reverse` — terminal, these never reach a backend
+4. `dnstap-queries` — last
+
+Rules 2 and 3 are both terminal, so **dnstap only sees queries that reach the
+default pool**. Neither internal-zone queries nor locally answered RFC 6303
+NXDOMAINs are logged to dnscollector. `showRules()` confirms this on both the
+Lua and YAML configurations — rule 4's match count is lower than rule 1's by
+exactly the number of internal queries.
+
+That is inherited behaviour, not a design decision made here. If dnscollector
+should see the internal traffic, move rule 4 to the front deliberately rather
+than letting an edit change it as a side effect.
 
 ## Variables
 
@@ -50,23 +102,23 @@ These are mapped to `dnsdist_web_password`, `dnsdist_web_api_key`, and `dnsdist_
 | Variable | Description |
 |----------|-------------|
 | `secondary_auth_servers` | List of `{name, address}` dicts for all secondary auth servers (single source of truth for the `internal` pool) |
-| `dnsdist_default_servers` | List of `{name, address, checkName}` dicts for public resolvers (defined in `group_vars/dnsdist.yaml`) |
+| `dnsdist_default_servers` | List of `{name, address, health_checks}` dicts for public resolvers (defined in `group_vars/dnsdist.yaml`) |
 
-`dnsdist_internal_backends` and `dnsdist_default_backends` are derived automatically in `defaults/main.yaml` by merging the above lists with pool/checkType fields.
+`dnsdist_internal_backends` and `dnsdist_default_backends` are derived automatically in `defaults/main.yaml` by merging the above lists with a `pools` sequence. Internal backends also get a shared `health_checks` mapping built from `dnsdist_internal_check_name`; the public resolvers carry their own, because they do not all answer for the same probe name.
 
 ### Role defaults (in `defaults/main.yaml`)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `dnsdist_server_addr` | Host primary IPv4 | IP address dnsdist binds to (frontend + web UI) |
-| `dnsdist_mgmt_acl` | `127.0.0.1/32,192.168.0.0/16,10.0.0.0/8` | ACL for web UI access |
-| `dnsdist_console_acl` | `127.0.0.1/32` | ACL for console access |
+| `dnsdist_mgmt_acl` | `[127.0.0.1/32, 192.168.0.0/16, 10.0.0.0/8]` | ACL for web UI access. A list, not a comma-separated string — the YAML config takes a sequence |
+| `dnsdist_console_acl` | `[127.0.0.1/32]` | ACL for console access (list) |
 | `dnsdist_internal_domains` | `home.butaco.net.`, `prd.butaco.net.`, `sandbox.butaco.net.`, `168.192.in-addr.arpa.` | Forward and reverse zones routed to the `internal` pool (suffix match, so one reverse entry covers all `192.168.x.0/24`) |
 | `dnsdist_local_reverse_zones` | `10.`, `254.169.`, `127.`, `16.172.` … `31.172.in-addr.arpa.` | Reverse zones answered locally with NXDOMAIN instead of being forwarded (RFC 6303). Must be disjoint from `dnsdist_internal_domains` |
 | `dnsdist_internal_check_name` | `ns1.home.butaco.net.` | Health check FQDN for internal backends |
 | `dnsdist_packet_cache_size` | `10000` | Packet cache entry limit (default pool only) |
 | `dnsdist_packet_cache_max_ttl` | `86400` | Maximum TTL for cached entries (seconds) |
-| `dnsdist_repo_channel` | `dnsdist-20` | PowerDNS APT repository channel |
+| `dnsdist_repo_channel` | `dnsdist-21` | PowerDNS APT repository channel (release train, not a version pin) |
 | `dnsdist_repo_release` | `{{ ansible_facts['distribution_release'] }}` | Ubuntu release codename |
 
 ## Dependencies

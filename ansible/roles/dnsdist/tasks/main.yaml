@@ -118,12 +118,34 @@
 - name: Deploy dnsdist configuration
   become: true
   ansible.builtin.template:
-    src: dnsdist.conf.j2
-    dest: /etc/dnsdist/dnsdist.conf
+    src: dnsdist.yml.j2
+    dest: /etc/dnsdist/dnsdist.yml
     owner: root
     group: root
+    # Still 0644, as the Lua config was. The file holds the console key and the
+    # webserver password, so 0640 with the dnsdist group would be better, but
+    # that is a separate change: dnsdist runs as its own user and reads this at
+    # startup, so getting the group wrong takes the service down.
     mode: "0644"
-    validate: /usr/bin/dnsdist --check-config -C %s
+    # dnsdist picks the config format from the file extension, and Ansible hands
+    # validate an extension-less temp file — which would be parsed as Lua and
+    # fail. Copy to a .yml name first. mktemp rather than a fixed path so this
+    # cannot be pre-created by another local user.
+    validate: >-
+      /bin/sh -c 'f=$(mktemp /tmp/dnsdist-validate.XXXXXX.yml) || exit 1;
+      cp %s "$f"; /usr/bin/dnsdist --check-config -C "$f"; rc=$?; rm -f "$f"; exit $rc'
+  notify: Restart dnsdist
+
+# dnsdist 2.1 prefers dnsdist.yml but still loads a same-named .lua alongside it,
+# and falls back to dnsdist.conf only when no YAML exists. Leaving the old Lua
+# file behind would therefore not change what runs, but it would leave a
+# plausible-looking config on disk that is no longer the running one. Remove it
+# after the YAML is in place, never before.
+- name: Remove the superseded Lua configuration
+  become: true
+  ansible.builtin.file:
+    path: /etc/dnsdist/dnsdist.conf
+    state: absent
   notify: Restart dnsdist
 
 - name: Ensure dnsdist service is enabled and started
