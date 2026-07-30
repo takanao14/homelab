@@ -10,11 +10,28 @@ dnsdist_repo_release: "{{ ansible_facts['distribution_release'] | default('noble
 # critical-fixes-only when 2.1.0 shipped (2026-07-02).
 dnsdist_repo_channel: "dnsdist-21"
 dnsdist_repo_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc"
+# Checksum of the key file, verified 2026-07-31. This is the trust anchor for the
+# whole APT repository, so pinning it means the bytes are checked rather than
+# only the TLS connection to the host serving them.
+#
+# It also stops get_url touching the network on every run. Contrary to the module
+# documentation, `force: false` alone does not skip a re-fetch: the early exit is
+# gated on a checksum being set, so without one it always issues a conditional
+# GET and the role depends on external DNS and HTTPS every time it runs.
+#
+# If PowerDNS re-armours the file this fails loudly and the value needs updating.
+# A key rotation changes the URL instead (FD380FBB is the key ID).
+dnsdist_repo_key_sha256: "efeb5b1451c76de1dac8eefaddba5af5549e8fd93484728744ea7b4923decae8"
 # Deliberately free of the channel name. The signing key is the same for every
 # PowerDNS train and the pin matches on origin, not suite, so neither file has
 # any reason to be renamed when the train moves.
 dnsdist_repo_key_path: "/etc/apt/keyrings/powerdns-pub.asc"
 dnsdist_repo_pin_path: "/etc/apt/preferences.d/powerdns"
+
+# The service account the dnsdist package creates. dnsdist reads its config as
+# this user rather than as root, which is why the config cannot simply be
+# root-only. Its primary group is resolved at run time, not hard-coded.
+dnsdist_service_user: "_dnsdist"
 
 # Lists, not comma-separated strings: the YAML config takes `acl` as a sequence.
 # webserver.acl defaults to 127.0.0.1/::1 upstream, so dropping it would break the

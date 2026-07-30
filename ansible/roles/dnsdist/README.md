@@ -41,7 +41,14 @@ configuration is the `dnsdist_config` structure in `defaults/main.yaml`, and the
 template only renders it through `to_nice_yaml`, so indentation cannot drift and
 the rules are reviewable as data. Edit `dnsdist_config`, never the template.
 
-Two non-obvious details in that template and task:
+The config holds the console key and the webserver password, so it is deployed
+`0640` rather than world readable. dnsdist reads it as its own service account,
+not as root, so the owning group has to be that account's primary group. The
+role resolves it at run time with two `getent` lookups (user, then group by GID)
+instead of hard-coding a name — if the package renames or drops the account the
+lookup fails before the config is rewritten, leaving the running service alone.
+
+Three non-obvious details in that template and task:
 
 - The render goes through `to_json | from_json` first. `map('combine')` merges
   one literal dict object into every backend, so PyYAML would otherwise emit
@@ -111,6 +118,7 @@ These are mapped to `dnsdist_web_password`, `dnsdist_web_api_key`, and `dnsdist_
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `dnsdist_server_addr` | Host primary IPv4 | IP address dnsdist binds to (frontend + web UI) |
+| `dnsdist_service_user` | `_dnsdist` | Service account the package creates. Used only to resolve the group that owns the config — see below |
 | `dnsdist_mgmt_acl` | `[127.0.0.1/32, 192.168.0.0/16, 10.0.0.0/8]` | ACL for web UI access. A list, not a comma-separated string — the YAML config takes a sequence |
 | `dnsdist_console_acl` | `[127.0.0.1/32]` | ACL for console access (list) |
 | `dnsdist_internal_domains` | `home.butaco.net.`, `prd.butaco.net.`, `sandbox.butaco.net.`, `168.192.in-addr.arpa.` | Forward and reverse zones routed to the `internal` pool (suffix match, so one reverse entry covers all `192.168.x.0/24`) |
@@ -120,6 +128,7 @@ These are mapped to `dnsdist_web_password`, `dnsdist_web_api_key`, and `dnsdist_
 | `dnsdist_packet_cache_max_ttl` | `86400` | Maximum TTL for cached entries (seconds) |
 | `dnsdist_repo_channel` | `dnsdist-21` | PowerDNS APT repository channel (release train, not a version pin) |
 | `dnsdist_repo_release` | `{{ ansible_facts['distribution_release'] }}` | Ubuntu release codename |
+| `dnsdist_repo_key_sha256` | `efeb5b14…decae8` | Checksum of the repository signing key. Verifies the APT trust anchor, and is what lets `get_url` skip the network once the key is in place — `force: false` alone does not, because the skip is gated on a checksum being set. Shared with the `pdns_auth` role, which fetches the same file |
 
 ## Dependencies
 

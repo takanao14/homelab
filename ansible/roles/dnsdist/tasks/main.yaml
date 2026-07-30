@@ -71,6 +71,7 @@
     url: "{{ dnsdist_repo_key_url }}"
     dest: "{{ dnsdist_repo_key_path }}"
     mode: "0644"
+    checksum: "sha256:{{ dnsdist_repo_key_sha256 }}"
 
 - name: Configure dnsdist apt pinning
   become: true
@@ -115,18 +116,31 @@
     name: dnsdist
     state: present
 
+# The config carries the console key and the webserver password, so it is not
+# world readable. dnsdist reads it as its own service account rather than as
+# root, so it has to stay readable by that account's primary group.
+#
+# Both lookups are read-only and resolve the group by GID instead of assuming a
+# name. If the package ever renames or drops the account, these fail here —
+# before the config is rewritten — leaving the running service untouched.
+- name: Resolve the dnsdist service account
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ dnsdist_service_user }}"
+
+- name: Resolve the primary group of the dnsdist service account
+  ansible.builtin.getent:
+    database: group
+    key: "{{ ansible_facts.getent_passwd[dnsdist_service_user][2] }}"
+
 - name: Deploy dnsdist configuration
   become: true
   ansible.builtin.template:
     src: dnsdist.yml.j2
     dest: /etc/dnsdist/dnsdist.yml
     owner: root
-    group: root
-    # Still 0644, as the Lua config was. The file holds the console key and the
-    # webserver password, so 0640 with the dnsdist group would be better, but
-    # that is a separate change: dnsdist runs as its own user and reads this at
-    # startup, so getting the group wrong takes the service down.
-    mode: "0644"
+    group: "{{ ansible_facts.getent_group | list | first }}"
+    mode: "0640"
     # dnsdist picks the config format from the file extension, and Ansible hands
     # validate an extension-less temp file — which would be parsed as Lua and
     # fail. Copy to a .yml name first. mktemp rather than a fixed path so this
