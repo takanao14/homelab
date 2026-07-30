@@ -13,6 +13,9 @@ on:
       - "scripts/create-vm.sh"
       - "scripts/check-image-refs.sh"
 
+permissions:
+  contents: read
+
 jobs:
   check:
     name: image-refs

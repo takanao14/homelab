@@ -16,6 +16,9 @@ on:
     - cron: "0 21 * * 0" # Monday 06:00 JST
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   check:
     name: vendor-sync-check

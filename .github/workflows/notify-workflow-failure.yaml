@@ -17,6 +17,8 @@ on:
       - Vendor Sync Check
     types: [completed]
 
+permissions: {}
+
 jobs:
   notify:
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}

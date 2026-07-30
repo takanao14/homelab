@@ -10,6 +10,9 @@ on:
       - "k0s/values/**"
       - "k0s/charts/**"
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: helm-lint

@@ -5,6 +5,9 @@ on:
     paths:
       - "ansible/**"
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: ansible-lint

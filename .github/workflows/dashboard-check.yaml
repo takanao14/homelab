@@ -15,6 +15,9 @@ on:
       - "k8s/monitoring/charts/dashboards/**"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   check:
     name: dashboard-check
