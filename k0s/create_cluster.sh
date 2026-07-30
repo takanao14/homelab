@@ -41,6 +41,16 @@ export K0S_CLUSTER_NAME="${ENV_TARGET}-homelab"
 
 # ── load environment ──────────────────────────────────────────────────────────
 
+# Cluster topology is owned by env/<target>.sh. Clear inherited values first so
+# an optional variable omitted by one environment cannot leak from the caller.
+# K0S_SSH_USER remains an intentional caller override.
+unset K0S_VERSION \
+      K0S_CONTROLLER_ADDRESSES \
+      K0S_WORKER_ADDRESSES \
+      K0S_GPU_WORKER_ADDRESSES \
+      K0S_LB_POOL \
+      K0S_STORAGE_PROVIDER
+
 set -a
 # shellcheck disable=SC1090
 source "$ENV_FILE"
