@@ -369,7 +369,7 @@ such as `krunkit`. After installing Podman, initialize the machine with
 ### `grafana-mcp-token.sh`
 
 Idempotently creates the `mcp-grafana` service account (Viewer role) and issues
-a token, printing it to stdout as a `export GRAFANA_SERVICE_ACCOUNT_TOKEN="..."`
+a token, printing it to stdout as a `GRAFANA_SERVICE_ACCOUNT_TOKEN="..."`
 line (logs go to stderr). Admin auth is taken from `GRAFANA_ADMIN_USER` /
 `GRAFANA_ADMIN_PASSWORD`, or read from the in-cluster `grafana-admin` secret via
 `kubectl --context "${GRAFANA_KUBE_CONTEXT:-prd-homelab}"` so it never depends on
@@ -380,11 +380,15 @@ secret path).
 # Print the token line
 ./grafana-mcp-token.sh
 
-# Store it encrypted for the MCP server to consume
-./grafana-mcp-token.sh >> ../.env/secrets.sops.env
-sops --encrypt --in-place ../.env/secrets.sops.env
+# Store it: paste the printed line over the existing assignment
+sops edit ../.env/secrets.sops.env
 direnv allow
 ```
+
+`../.env/secrets.sops.env` is already encrypted, so the append-then-encrypt
+shortcut (`>> file` followed by `sops --encrypt --in-place file`) does **not**
+work — SOPS refuses with exit 203 because the file already carries its `sops_*`
+metadata. `sops edit` is the only flow that survives a rotation.
 
 | Env var | Default | Notes |
 |---------|---------|-------|

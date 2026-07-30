@@ -2,8 +2,8 @@
 #
 # Idempotently create the Grafana service account used by the MCP server and
 # issue a token. The token (returned only once by Grafana) is printed to stdout
-# as a ready-to-encrypt export line for .env/secrets.sops.env; all logs go to
-# stderr so the output can be redirected cleanly.
+# as a dotenv assignment line for .env/secrets.sops.env; all logs go to
+# stderr so the output can be captured cleanly.
 #
 # Admin auth is resolved in this order:
 #   1. GRAFANA_ADMIN_USER / GRAFANA_ADMIN_PASSWORD environment variables
@@ -14,9 +14,16 @@
 # Requirements: curl, jq, and (for option 2) kubectl with access to the prd cluster.
 #
 # Usage:
-#   ./scripts/grafana-mcp-token.sh                       # print export line
-#   ./scripts/grafana-mcp-token.sh >> .env/secrets.sops.env && \
-#     sops --encrypt --in-place .env/secrets.sops.env     # store encrypted
+#   ./scripts/grafana-mcp-token.sh          # print the assignment line
+#
+# Storing it: .env/secrets.sops.env is already SOPS-encrypted, so appending the
+# line and re-running `sops --encrypt --in-place` fails with exit 203 ("SOPS can
+# not encrypt files that already contain such an entry"). Paste the printed line
+# over the existing assignment via the editor instead:
+#
+#   ./scripts/grafana-mcp-token.sh
+#   sops edit .env/secrets.sops.env
+#   direnv allow
 #
 set -euo pipefail
 
@@ -62,4 +69,4 @@ token="$(api -X POST "${GRAFANA_URL}/api/serviceaccounts/${sa_id}/tokens" \
 [ -n "${token}" ] && [ "${token}" != "null" ] || { echo "failed to obtain token" >&2; exit 1; }
 
 echo "Service account token '${TOKEN_NAME}' created." >&2
-echo "export GRAFANA_SERVICE_ACCOUNT_TOKEN=\"${token}\""
+echo "GRAFANA_SERVICE_ACCOUNT_TOKEN=\"${token}\""
