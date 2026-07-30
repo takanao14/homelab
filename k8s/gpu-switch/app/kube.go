@@ -202,6 +202,14 @@ func (k *kubeClient) do(
 		request.Header.Set("Content-Type", contentType)
 	}
 
+	// Built per request rather than once on the client: the projected service
+	// account token expires and is rewritten in place, so a transport carrying a
+	// cached Authorization header would start failing after rotation. The CA is
+	// re-read alongside it for the same reason. The cost is a TLS handshake per
+	// request — the response body's Close calls CloseIdleConnections, so nothing
+	// is pooled — which is irrelevant at this call rate: two API calls per
+	// user-initiated switch. Do not "optimise" this into a shared transport
+	// without moving token reads into a RoundTripper.
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	if k.apiURL.Scheme == "https" {
 		token, err := os.ReadFile(k.tokenFile)
