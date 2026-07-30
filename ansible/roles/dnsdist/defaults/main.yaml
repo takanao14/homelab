@@ -20,6 +20,14 @@ dnsdist_internal_domains:
   - "home.butaco.net."
   - "prd.butaco.net."
   - "sandbox.butaco.net."
+  # LAN reverse space, served by pdns auth; PTR records managed via dnscontrol.
+  # One suffix covers every 192.168.x.0/24 segment — the management LAN plus the
+  # per-node SimpleZones in proxmox_simplezone_routes_map — matching the scope
+  # already used by dnsdist_mgmt_acl. SuffixMatchNode matches on label suffix,
+  # so listing each /24 separately would be redundant. A segment whose zone does
+  # not exist in pdns yet answers REFUSED, which is preferable to leaking
+  # internal reverse queries to the public resolvers in the default pool.
+  - "168.192.in-addr.arpa."
 dnsdist_internal_check_name: "ns1.home.butaco.net."
 
 # Secrets - loaded via community.sops.sops from group_vars/dnsdist.sops.yaml

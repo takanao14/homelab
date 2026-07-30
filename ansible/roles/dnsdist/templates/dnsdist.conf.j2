@@ -56,7 +56,11 @@ addResponseAction(AllRule(), DnstapLogResponseAction("dnsdist", dnstapLogger))
 local consoleKey="{{ dnsdist_console_key }}"
 local consoleACL="{{ dnsdist_console_acl }}"
 
-controlSocket("0.0.0.0:5199")
+-- Bound to loopback rather than 0.0.0.0: setConsoleACL already rejects every
+-- source outside dnsdist_console_acl (127.0.0.1/32), so a wildcard bind only
+-- adds a reachable port with nothing behind it. Widening the ACL to a remote
+-- host means widening this bind as well.
+controlSocket("127.0.0.1:5199")
 setKey(consoleKey)
 setConsoleACL(consoleACL)
 
@@ -66,6 +70,13 @@ local webApiKey="{{ dnsdist_web_api_key }}"
 local mgmtACL="{{ dnsdist_mgmt_acl }}"
 
 webserver("{{ dnsdist_server_addr }}:8083")
+-- statsRequireAuthentication=false is load-bearing, not an oversight: the
+-- ScrapeConfig in k8s/monitoring/charts/dnsdist scrapes
+-- http://<recursor-ip>:8083/metrics with no authorization stanza, so requiring
+-- auth here would silently blank the dnsdist dashboards. dashboardRequiresAuthentication
+-- is a separate flag covering only the HTML UI at /, kept off so the dashboard
+-- stays browsable on the LAN. Reach for both is bounded by mgmtACL; the
+-- password and apiKey above still guard the /api endpoints.
 setWebserverConfig({
     password=webPass,
     apiKey=webApiKey,

@@ -8,7 +8,7 @@ Sets up dnsdist as a DNS load balancer and forwarder: internal domain queries ar
 
 dnsdist sits in front of the authoritative DNS servers:
 
-- **Internal domains** (`home.butaco.net.`, `prd.butaco.net.`, `sandbox.butaco.net.`) → routed to the `internal` pool (PowerDNS secondaries only — the hidden primary is excluded)
+- **Internal forward and reverse zones** (`home.butaco.net.`, `prd.butaco.net.`, `sandbox.butaco.net.`, `168.192.in-addr.arpa.`) → routed to the `internal` pool (PowerDNS secondaries only — the hidden primary is excluded). The single reverse suffix covers every `192.168.x.0/24` segment: the management LAN and each per-node Proxmox SimpleZone.
 - **External domains** → routed to the default pool (public resolvers)
 
 The `internal` pool is built dynamically from `secondary_auth_servers`, so adding or removing a secondary only requires updating that list.
@@ -50,7 +50,7 @@ These are mapped to `dnsdist_web_password`, `dnsdist_web_api_key`, and `dnsdist_
 | `dnsdist_server_addr` | Host primary IPv4 | IP address dnsdist binds to (frontend + web UI) |
 | `dnsdist_mgmt_acl` | `127.0.0.1/32,192.168.0.0/16,10.0.0.0/8` | ACL for web UI access |
 | `dnsdist_console_acl` | `127.0.0.1/32` | ACL for console access |
-| `dnsdist_internal_domains` | `home.butaco.net.`, `prd.butaco.net.`, `sandbox.butaco.net.` | Domains routed to the `internal` pool |
+| `dnsdist_internal_domains` | `home.butaco.net.`, `prd.butaco.net.`, `sandbox.butaco.net.`, `168.192.in-addr.arpa.` | Forward and reverse zones routed to the `internal` pool (suffix match, so one reverse entry covers all `192.168.x.0/24`) |
 | `dnsdist_internal_check_name` | `ns1.home.butaco.net.` | Health check FQDN for internal backends |
 | `dnsdist_packet_cache_size` | `10000` | Packet cache entry limit (default pool only) |
 | `dnsdist_packet_cache_max_ttl` | `86400` | Maximum TTL for cached entries (seconds) |
