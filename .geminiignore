@@ -1,0 +1,27 @@
+# Paths withheld from AI tool context. Read by Gemini CLI; other agents in this
+# repo are scoped by their own config (.claude/, .codex/, opencode.json).
+#
+# This is not a duplicate of .gitignore. It lists paths that cost context without
+# repaying it, including some that are committed (the encrypted secrets) and some
+# that are not (vendored collections, build output).
+
+# Encrypted secrets: opaque ciphertext, nothing to read. Values are never to be
+# printed anyway (AGENTS.md), so feeding these to a model has no upside.
+.env/
+**/*.sops.env
+**/*.sops.yaml
+
+# Vendored Ansible collections: thousands of upstream files, already gitignored.
+ansible/collections/
+
+# Symlinks into separate private repos (homelab-plans / homelab-md). Each has its
+# own git history and may be absent on a fresh clone.
+docs/plans
+docs/md
+
+# Build artifacts, regenerated on demand.
+**/charts/*.tgz
+**/Chart.lock
+packer/downloads/
+packer/output-*/
+packer/packer_cache/
