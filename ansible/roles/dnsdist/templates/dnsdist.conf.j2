@@ -39,6 +39,18 @@ internal_domains:add("{{ domain }}")
 addAction(SuffixMatchNodeRule(internal_domains), SetNoRecurseAction())
 addAction(SuffixMatchNodeRule(internal_domains), PoolAction("internal"))
 
+-- locally served reverse zones (RFC 6303)
+-- Answered here instead of being forwarded to the public resolvers in the
+-- default pool, which can never hold RFC1918 PTR data. RCodeAction is terminal,
+-- so these never reach a backend and never leave the LAN. Clients see the same
+-- NXDOMAIN the public resolvers were already returning. Listed in
+-- dnsdist_local_reverse_zones; must stay disjoint from dnsdist_internal_domains.
+local local_reverse = newSuffixMatchNode()
+{% for zone in dnsdist_local_reverse_zones %}
+local_reverse:add("{{ zone }}")
+{% endfor %}
+addAction(SuffixMatchNodeRule(local_reverse), RCodeAction(DNSRCode.NXDOMAIN))
+
 -- default routing
 
 -- Frontend

@@ -24,11 +24,61 @@ dnsdist_internal_domains:
   # One suffix covers every 192.168.x.0/24 segment — the management LAN plus the
   # per-node SimpleZones in proxmox_simplezone_routes_map — matching the scope
   # already used by dnsdist_mgmt_acl. SuffixMatchNode matches on label suffix,
-  # so listing each /24 separately would be redundant. A segment whose zone does
-  # not exist in pdns yet answers REFUSED, which is preferable to leaking
-  # internal reverse queries to the public resolvers in the default pool.
+  # so listing each /24 separately would be redundant.
+  #
+  # pdns holds the same /16 as one aggregated zone, so an address that is not
+  # declared in dnscontrol still gets an authoritative NXDOMAIN rather than
+  # REFUSED. Keeping this suffix and pdns' authority identical in scope is what
+  # guarantees that: any narrower zone set in pdns would make the addresses
+  # outside it answer REFUSED instead.
   - "168.192.in-addr.arpa."
 dnsdist_internal_check_name: "ns1.home.butaco.net."
+
+# RFC 6303 locally served reverse zones. Nothing in this network is
+# authoritative for them, and the public resolvers in the default pool never can
+# be — RFC1918 PTR queries reach AS112 and come back NXDOMAIN, after the
+# upstream has seen our internal addressing. dnsdist answers them itself.
+#
+# This changes no answer: clients already receive NXDOMAIN for every zone listed
+# here. What it removes is a round trip and the disclosure. Note the disclosure
+# is not only from the LAN side — CoreDNS runs with `fallthrough in-addr.arpa`,
+# so in-cluster reverse lookups for pod addresses (Cilium's pool is 10.0.0.0/8)
+# fall through to this resolver as well. Service addresses are answered
+# authoritatively by CoreDNS and never arrive here.
+#
+# 168.192.in-addr.arpa is deliberately absent: it belongs to pdns via
+# dnsdist_internal_domains above. IPv6 zones are omitted because this network
+# has no IPv6 (no AAAA records anywhere, no IPv6 in the Cilium config).
+#
+# Hand-rolled here because RFC 6303 is a recursive-resolver responsibility and
+# dnsdist is a load balancer, not a resolver — there is no switch to flip. A
+# recursor would make this a one-liner (pdns-recursor `serve-rfc1918`, default
+# yes; BIND `empty-zones-enable`; Unbound has the zones built in), but the
+# default pool here is the router plus public resolvers, with no recursor of
+# ours in the path. If one is ever introduced, drop this list and the rule that
+# consumes it rather than keeping both.
+dnsdist_local_reverse_zones:
+  - "10.in-addr.arpa."        # RFC1918 10/8 — holds the Cilium pod CIDR
+  - "254.169.in-addr.arpa."   # link-local 169.254.0.0/16
+  - "127.in-addr.arpa."       # loopback
+  # RFC1918 172.16/12. Unused by this network, but Docker's default bridge
+  # (172.17.0.1) appears on any host that runs it.
+  - "16.172.in-addr.arpa."
+  - "17.172.in-addr.arpa."
+  - "18.172.in-addr.arpa."
+  - "19.172.in-addr.arpa."
+  - "20.172.in-addr.arpa."
+  - "21.172.in-addr.arpa."
+  - "22.172.in-addr.arpa."
+  - "23.172.in-addr.arpa."
+  - "24.172.in-addr.arpa."
+  - "25.172.in-addr.arpa."
+  - "26.172.in-addr.arpa."
+  - "27.172.in-addr.arpa."
+  - "28.172.in-addr.arpa."
+  - "29.172.in-addr.arpa."
+  - "30.172.in-addr.arpa."
+  - "31.172.in-addr.arpa."
 
 # Secrets - loaded via community.sops.sops from group_vars/dnsdist.sops.yaml
 dnsdist_web_password: "{{ DNSDIST_WEB_PASSWORD }}"
