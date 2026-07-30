@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "lemonade-rocm": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "https://lemonade-rocm.prd.butaco.net/v1"
+      },
+      "models": {
+        "gpt-oss-20b-mxfp4-GGUF": {
+          "name": "gpt-oss-20b (Lemonade ROCm)"
+        }
+      }
+    }
+  },
+  "model": "lemonade-rocm/gpt-oss-20b-mxfp4-GGUF"
+}
