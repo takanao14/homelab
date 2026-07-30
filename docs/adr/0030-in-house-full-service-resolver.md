@@ -22,12 +22,21 @@ Measurements made while evaluating this decision found:
   `dnssec-failed.org`; the router returned NOERROR. Depending on backend
   selection, DNSSEC enforcement is therefore non-deterministic.
 - CoreDNS uses `fallthrough in-addr.arpa`, so unanswered pod-address reverse
-  lookups reach dnsdist. The current hand-written NXDOMAIN rule prevents those
-  queries from leaking beyond the LAN.
+  lookups can reach dnsdist. The hand-written NXDOMAIN rule is what would stop
+  those queries leaking beyond the LAN.
+- **That rule works but is not being exercised.** Measured later on dist1
+  (`dnsdist -c -e "showRules()"`): over roughly 4.5 hours and about 22,700
+  queries, the RFC 6303 rule matched **zero** times, while the internal-zone
+  rules matched 11,420. A manual `dig -x 10.0.0.92` moved the counter from 0 to
+  1, so the rule itself is correct — the traffic simply is not arriving. Whether
+  CoreDNS' fallthrough actually forwards pod-address reverse lookups here has
+  not been confirmed.
 
 Moving recursion in-house avoids disclosing the complete query stream to a
-small set of public resolvers, makes DNSSEC enforcement deterministic and puts
-RFC 6303 handling in a recursive resolver rather than a load balancer.
+small set of public resolvers and makes DNSSEC enforcement deterministic. It
+also moves RFC 6303 handling into a recursive resolver rather than a load
+balancer — but on the measurement above that last point is a tidiness argument,
+not a leak being closed. It should not carry weight on its own.
 
 The resolver is security-sensitive DNS infrastructure. Selection therefore
 cannot be based on the convenience of an OS package alone. Distribution
@@ -184,9 +193,11 @@ recorded before either host is restarted.
   become redundant. Knot Resolver's built-in special-use and locally-served
   zone policy owns RFC 6303 behaviour. **Remove them only after both hosts'
   default pools point at Knot Resolver.** Removing them first, while the default
-  pool still holds the router and the public resolvers, restores exactly the
-  RFC1918 reverse-lookup disclosure the rule was added to stop — the ordering is
-  a safety constraint, not a matter of convenience.
+  pool still holds the router and the public resolvers, would reopen the RFC1918
+  reverse-lookup path to third parties. On the measurement in Context that path
+  currently carries no traffic, so this is precaution rather than an active leak
+  — but the ordering costs nothing and the measurement only covers one sample
+  window, so keep it.
 - `dnsdist_internal_domains` becomes load-bearing. It is the only routing layer
   preventing internal zones from reaching public recursion, so rollout tests
   must cover every configured internal forward and reverse suffix.
