@@ -73,9 +73,31 @@ Resolver receives only external recursive queries over loopback. Internal
 zones remain routed directly to the pdns secondaries; duplicating them as
 resolver forwarding policy would create two sources of routing truth.
 
-Enable Knot Resolver's DNSSEC bogus logging and Prometheus metrics. Expose the
-metrics listener only to the existing monitoring path; do not expose its
-management API generally to the LAN.
+Each host's default pool then contains exactly one backend, so dnsdist's
+behaviour when that backend is unavailable becomes load-bearing. dnsdist drops
+the query when no server in the pool is available; `setServFailWhenNoServer` is
+not set today and must stay unset. A dropped query lets the client's stub
+resolver time out and retry the other dist host, which is the failover path this
+design depends on. Setting it to `true` would return SERVFAIL — a valid answer
+that most stub resolvers do not retry elsewhere — turning a single resolver
+outage into a hard client failure. Availability still comes from two complete
+pairs, but the failover is timeout-driven: while one resolver is down, clients
+that reach its host pay the stub timeout on every external query before
+retrying.
+
+Enable Knot Resolver's DNSSEC bogus logging and Prometheus metrics. Knot
+Resolver 6 serves `/metrics/prometheus` from the management HTTP API, which has
+no authentication or authorization of any kind and can reconfigure the resolver
+at runtime; there is no separate metrics listener that could be exposed on its
+own. Keep the management API on its default unix socket in the resolver rundir
+and do not bind it to a LAN address. Bridge the metrics instead: export
+`kresctl metrics` periodically into the node_exporter textfile collector
+directory (`/var/lib/node_exporter/textfile_collector`, already present on every
+host via `common-node_exporter.yaml`), using the same atomic write-and-rename
+pattern as the existing rpi_throttled exporter. The existing node_exporter
+scrape then carries the resolver metrics, adding no LAN-reachable listener and
+no new ScrapeConfig. Note that `/metrics/prometheus` returns 404 unless the
+`prometheus-client` Python package is installed.
 
 ## Product evaluation
 
@@ -113,16 +135,41 @@ installation convenience.
 - Treat an applicable upstream security release as an operational update, not
   as a service redesign. Major-version changes remain manual design decisions.
 
-The CZ.NIC repository is not an Ubuntu `-security` origin, so the existing
-unattended-upgrades allowlist does not update it automatically. Do not imply
-otherwise. The rollout must either add a safe, staggered automatic policy for
-`knot-resolver6` or establish an explicit monitored response target for the
-serial upgrade workflow.
+The CZ.NIC repository is not an Ubuntu `-security` origin, and the deployed
+unattended-upgrades allowlist covers only the `-security` origins, so
+`knot-resolver6` is not updated automatically. Do not imply otherwise.
 
-The same current-release policy applies to dnsdist in this path. The configured
-`dnsdist-20` repository is now a critical-fixes-only train while dnsdist 2.1 is
-stable. Upgrade dnsdist to its current stable train before accepting this ADR;
-otherwise the frontend would violate the policy used to select the resolver.
+**Do not add the CZ.NIC repository to the unattended-upgrades allowlist.**
+unattended-upgrades runs on each host independently with no coordination
+between them, so both resolvers could upgrade and restart inside the same
+window — precisely the simultaneous outage that `serial: 1` in
+`ops-package_upgrade.yaml` and the two-pair design exist to prevent. Detection
+is automated instead of application:
+
+- `ops-version_audit.yaml` reports installed and APT-candidate
+  `knot-resolver6` versions on both dist hosts, so a pending upgrade is a
+  visible signal rather than something noticed by chance.
+- Application stays on the serial workflow: `ops-package_upgrade.yaml` against
+  the `dns` group, one host at a time.
+- The response target for an applicable upstream security release is one week
+  from publication. If that target is routinely missed, the
+  current-upstream-release driver is not actually being met and this decision
+  should be revisited rather than quietly relaxed.
+
+The same current-release policy applies in principle to dnsdist in this path:
+the frontend should not sit on a superseded train while the resolver behind it
+is held to a current-upstream requirement. The configured channel is
+`dnsdist_repo_channel: dnsdist-20`
+([`ansible/roles/dnsdist/defaults/main.yaml`](../../ansible/roles/dnsdist/defaults/main.yaml)).
+Whether that train is still current must be checked against PowerDNS'
+repository and EOL pages at rollout time rather than asserted here.
+
+That upgrade is **not** a prerequisite of this ADR. A dnsdist major-version move
+carries its own configuration-syntax risk and its own rollback story, and
+coupling it to the resolver introduction would block one change behind an
+unrelated migration. Track it as a separate decision. The only hard requirement
+here is that dnsdist's configuration is validated and its installed version
+recorded before either host is restarted.
 
 ## Consequences
 
@@ -135,8 +182,26 @@ otherwise the frontend would violate the policy used to select the resolver.
 - Remove the dnsdist packet cache from the default pool. Knot Resolver owns the
   recursive cache; retaining both makes TTL and failure behaviour harder to
   reason about.
+- The router at `192.168.10.1` leaves the query path along with the public
+  resolvers, not just Google and Cloudflare. Kea is configured without DDNS, so
+  no LAN hostnames are registered there and none are lost, but any name the
+  router answered from its own configuration stops resolving. Confirm during the
+  canary that nothing depends on it.
+- The dist containers themselves resolve through `dns_external`
+  (`192.168.10.1`, `8.8.8.8`) from [`tf/common.hcl`](../../tf/common.hcl), not
+  through their own dnsdist, so the resolver has no bootstrap dependency on
+  itself and package installation still works while it is down.
 - The dist hosts need outbound UDP and TCP port 53 to root, TLD and
   authoritative servers, rather than only the three current forwarders.
+- The dist hosts' Vector pipeline ships only the `dnsdist`, `dnscollector` and
+  `ssh` journald units. The Knot Resolver units must be added to
+  `vector_config.sources.journald.include_units` in
+  `ansible/inventories/homelab/group_vars/dnsdist.yaml`, otherwise the DNSSEC
+  bogus entries stay on the host and never reach Loki.
+- Losing only the resolver, with dnsdist still running, degrades that host to
+  timeout-based failover rather than a clean error. It is survivable but slow,
+  and it is a distinct failure mode from losing the whole host — both need
+  testing.
 - Cold-cache queries are slower than queries sent to a large public resolver.
   The persistent cache reduces the restart penalty but does not remove
   first-resolution latency.
@@ -154,6 +219,30 @@ otherwise the frontend would violate the policy used to select the resolver.
   balances rather than treating them as cold standby, so queries would continue
   leaving the LAN and DNSSEC behaviour could diverge by selected backend.
   Availability comes from two complete dnsdist/resolver pairs.
+- **Add the peer host's resolver as a second backend in each default pool.**
+  This would replace timeout-based failover with immediate in-dnsdist failover,
+  but it requires binding Knot Resolver to a LAN address and maintaining an ACL
+  on it, giving up the loopback-only exposure. dnsdist's drop-on-no-server
+  default already produces working client failover, so the added attack surface
+  buys only latency during a single-resolver outage. Reconsider if that outage
+  latency proves disruptive in practice.
+- **Proxy `/metrics/prometheus` through the central Caddy on caddy1.** Not
+  possible: caddy1 is a separate host and `caddy_upstreams` entries are
+  `IP:port`, so it cannot reach a unix socket on a dist host. Making it reachable
+  means binding the management API to a LAN address, and Caddy cannot stop the
+  LAN from bypassing it and hitting that unauthenticated API directly. There is
+  no host firewall layer in this repository to close that gap.
+- **Run a local Caddy on each dist host restricted to `GET
+  /metrics/prometheus`.** This does work — Caddy supports unix-socket upstreams
+  and method/path matchers, so the management API could stay on its socket while
+  only the metrics path is exposed, and it would give scrape-time freshness that
+  the textfile export cannot. Rejected on cost: the caddy role is built for one
+  central instance and its Caddyfile template emits whole-host `reverse_proxy`
+  lines with no matcher or `respond` support, so it would need generalising; and
+  it adds a resident process plus a LAN listener to the 1 GB container whose
+  memory headroom is decision driver 4. The textfile export reuses a collector
+  that is already deployed everywhere and adds neither. Revisit if the timer
+  interval's staleness ever matters.
 - **Run separate `rec1` and `rec2` containers.** The resolver and dnsdist have
   the same failure domain from a client perspective, and the dist containers
   already co-host dnscollector and vector. Separate guests add addresses,
@@ -174,21 +263,34 @@ Keep this ADR `Proposed` until all of the following are complete:
    `apt-cache policy` that `knot-resolver6` resolves to the current stable 6.x
    release.
 2. Render and validate the complete YAML configuration with `kresctl validate`.
-3. Upgrade dnsdist to its current stable release train and validate its
-   configuration before restarting either host.
+3. Validate the dnsdist configuration and record its installed version before
+   restarting either host. Upgrading dnsdist is tracked separately and does not
+   block this ADR — see *Update policy*.
 4. From both dist hosts, verify UDP and TCP reachability to root and non-root
    authoritative servers, including a large DNSSEC response.
 5. Canary one dist host at a time. Through dnsdist, test a valid signed domain,
    an unsigned domain, NXDOMAIN, `dnssec-failed.org`, all internal suffixes and
    RFC 6303 reverse space.
-6. Confirm that a bogus DNSSEC answer returns SERVFAIL and produces both the
-   expected log entry and an observable monitoring signal.
-7. Measure total resident memory with the cache active; retain at least the
-   operational headroom needed by dnsdist, dnscollector and vector.
-8. Verify client failover while either complete dnsdist/resolver pair is
-   stopped.
-9. Implement and document resolver update detection and the serial security
-   update workflow.
+6. Confirm that a bogus DNSSEC answer returns SERVFAIL, that the expected log
+   entry reaches Loki through the dist hosts' Vector pipeline — not merely
+   journald on the host — and that a monitoring signal is observable.
+7. Confirm the metrics path end to end: `prometheus-client` installed so
+   `/metrics/prometheus` does not 404, the textfile export landing in
+   `/var/lib/node_exporter/textfile_collector` and appearing in Prometheus, and
+   no LAN-facing bind of the management API on either host.
+8. Measure the container's cgroup memory usage (`memory.current`), not process
+   RSS alone, with the cache active. The persistent cache is an mmap'd LMDB file
+   whose pages are charged to the LXC memory cgroup, so RSS understates the
+   footprint against the 1 GB limit. Retain the operational headroom needed by
+   dnsdist, dnscollector and vector.
+9. Stop `knot-resolver` alone, leaving dnsdist running, and confirm the query is
+   dropped rather than answered with SERVFAIL and that clients fail over to the
+   other host. This is the failure mode the single-backend pool introduces and
+   is not covered by stopping the whole pair.
+10. Verify client failover while either complete dnsdist/resolver pair is
+    stopped.
+11. Implement and document resolver update detection (version audit extension)
+    and the serial security update workflow.
 
 ## References
 
@@ -198,6 +300,8 @@ Keep this ADR `Proposed` until all of the following are complete:
 - [Knot Resolver cache sizing](https://www.knot-resolver.cz/documentation/latest/config-cache.html)
 - [Knot Resolver DNSSEC configuration](https://www.knot-resolver.cz/documentation/latest/config-dnssec.html)
 - [Knot Resolver Prometheus metrics](https://www.knot-resolver.cz/documentation/latest/config-monitoring-stats.html)
+- [Knot Resolver management HTTP API](https://www.knot-resolver.cz/documentation/latest/manager-api.html) — unauthenticated; `/metrics/prometheus` needs `prometheus-client`
+- [dnsdist downstream servers](https://www.dnsdist.org/guides/downstreams.html) — queries are dropped when no server in the pool is available unless `setServFailWhenNoServer` is set
 - [PowerDNS repository release trains](https://repo.powerdns.com/)
 - [PowerDNS Recursor support policy](https://doc.powerdns.com/recursor/appendices/EOL.html)
 - [Unbound installation guidance](https://unbound.docs.nlnetlabs.nl/en/latest/getting-started/installation.html)
