@@ -103,6 +103,7 @@
     owner: root
     group: root
     mode: "0644"
+    validate: /usr/bin/dnsdist --check-config -C %s
   notify: Restart dnsdist
 
 - name: Ensure dnsdist service is enabled and started
