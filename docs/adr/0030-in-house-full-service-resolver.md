@@ -92,12 +92,19 @@ at runtime; there is no separate metrics listener that could be exposed on its
 own. Keep the management API on its default unix socket in the resolver rundir
 and do not bind it to a LAN address. Bridge the metrics instead: export
 `kresctl metrics` periodically into the node_exporter textfile collector
-directory (`/var/lib/node_exporter/textfile_collector`, already present on every
-host via `common-node_exporter.yaml`), using the same atomic write-and-rename
-pattern as the existing rpi_throttled exporter. The existing node_exporter
-scrape then carries the resolver metrics, adding no LAN-reachable listener and
-no new ScrapeConfig. Note that `/metrics/prometheus` returns 404 unless the
-`prometheus-client` Python package is installed.
+directory (`/var/lib/node_exporter/textfile_collector`), using the same atomic
+write-and-rename pattern as the existing rpi_throttled exporter. node_exporter
+then carries the resolver metrics over its own scrape, adding no LAN-reachable
+listener beyond one that is already a standard part of the fleet.
+
+This requires adding dist1 and dist2 to the `node_exporter_lxc` inventory group;
+today that group holds only seaweedfs1, forgejo1 and netbox1, so the dist hosts
+have no node_exporter. That addition is worth making on its own terms — the
+group exists precisely because Proxmox OTLP does not expose in-guest filesystem
+and memory usage for stateful LXC guests, which is exactly what a resolver with
+a persistent cache in a 1 GB container needs monitored. Note also that
+`/metrics/prometheus` returns 404 unless the `prometheus-client` Python package
+is installed.
 
 ## Product evaluation
 
@@ -175,7 +182,11 @@ recorded before either host is restarted.
 
 - The hand-written `dnsdist_local_reverse_zones` list and its `RCodeAction`
   become redundant. Knot Resolver's built-in special-use and locally-served
-  zone policy owns RFC 6303 behaviour.
+  zone policy owns RFC 6303 behaviour. **Remove them only after both hosts'
+  default pools point at Knot Resolver.** Removing them first, while the default
+  pool still holds the router and the public resolvers, restores exactly the
+  RFC1918 reverse-lookup disclosure the rule was added to stop — the ordering is
+  a safety constraint, not a matter of convenience.
 - `dnsdist_internal_domains` becomes load-bearing. It is the only routing layer
   preventing internal zones from reaching public recursion, so rollout tests
   must cover every configured internal forward and reverse suffix.
@@ -238,11 +249,13 @@ recorded before either host is restarted.
   only the metrics path is exposed, and it would give scrape-time freshness that
   the textfile export cannot. Rejected on cost: the caddy role is built for one
   central instance and its Caddyfile template emits whole-host `reverse_proxy`
-  lines with no matcher or `respond` support, so it would need generalising; and
-  it adds a resident process plus a LAN listener to the 1 GB container whose
-  memory headroom is decision driver 4. The textfile export reuses a collector
-  that is already deployed everywhere and adds neither. Revisit if the timer
-  interval's staleness ever matters.
+  lines with no matcher or `respond` support, so it would need generalising. The
+  textfile route also adds a resident process to the dist hosts (node_exporter
+  is not there today), so the honest difference is not "no new daemon" but which
+  daemon: node_exporter is an existing role, deployed unchanged, that brings
+  in-guest filesystem and memory metrics these containers currently lack, while
+  a per-host Caddy is a generalised role serving exactly one path. Revisit if
+  the timer interval's staleness ever matters.
 - **Run separate `rec1` and `rec2` containers.** The resolver and dnsdist have
   the same failure domain from a client perspective, and the dist containers
   already co-host dnscollector and vector. Separate guests add addresses,
@@ -274,7 +287,8 @@ Keep this ADR `Proposed` until all of the following are complete:
 6. Confirm that a bogus DNSSEC answer returns SERVFAIL, that the expected log
    entry reaches Loki through the dist hosts' Vector pipeline — not merely
    journald on the host — and that a monitoring signal is observable.
-7. Confirm the metrics path end to end: `prometheus-client` installed so
+7. Add dist1 and dist2 to the `node_exporter_lxc` inventory group and confirm
+   the metrics path end to end: `prometheus-client` installed so
    `/metrics/prometheus` does not 404, the textfile export landing in
    `/var/lib/node_exporter/textfile_collector` and appearing in Prometheus, and
    no LAN-facing bind of the management API on either host.
