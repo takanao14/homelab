@@ -71,4 +71,5 @@ deleting it:
 | [0026](0026-eso-over-helm-secrets-for-in-cluster-secrets.md) | Inject in-cluster secrets with ESO instead of the helm-secrets plugin | Accepted |
 | [0027](0027-gpu-workload-switching-web-ui.md) | GPU workload switching through an authenticated in-cluster web UI | Accepted |
 | [0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md) | lemonade-server runs on the Vulkan backend, not ROCm, on RDNA4 | Accepted |
-| [0029](0029-rocm-serving-path-for-mxfp4-models.md) | The ROCm backend serves MXFP4 models, reversing ADR-0028 for that quantization | Proposed |
+| [0029](0029-rocm-serving-path-for-mxfp4-models.md) | ROCm serves concurrent MXFP4 workloads; Vulkan remains faster for one request | Proposed |
+| [0030](0030-in-house-full-service-resolver.md) | Run a full-service resolver in-house (Unbound, co-located with dnsdist) | Proposed |

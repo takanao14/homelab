@@ -1,8 +1,8 @@
-# ADR-0029: The ROCm backend serves MXFP4 models, reversing ADR-0028 for that quantization
+# ADR-0029: ROCm serves concurrent MXFP4 workloads; Vulkan remains faster for one request
 
 - **Status:** Proposed
 - **Date:** 2026-07-30
-- **Related:** [ADR-0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md) (superseded in part),
+- **Related:** [ADR-0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md) (candidate to supersede in part),
   [ADR-0027](0027-gpu-workload-switching-web-ui.md),
   [`k8s/lemonade-server/README.md`](../../k8s/lemonade-server/README.md)
 
@@ -15,29 +15,55 @@ concurrent requests than the ROCm `system`-backend Deployment. It kept
 re-measurement trigger explicitly: "The decision rests on a measurement, and both
 sides of it move."
 
-That trigger has fired, from a direction the ADR did not anticipate. ADR-0028
-compared the two backends on one model; the comparison turns out to be
-**quantization-dependent**. On `gpt-oss-20b-mxfp4-GGUF` the ordering reverses and
-ROCm wins. llama.cpp's Vulkan backend has no MXFP4-specialised kernel path
-comparable to the HIP one, so an MXFP4 MoE dequantizes on a slower route under
-RADV than it does under ROCm.
+That trigger fired from a direction the ADR did not anticipate. ADR-0028
+compared the two backends on `Qwen3-4B-GGUF` (`Q4_K_M`); the comparison is both
+**quantization- and concurrency-dependent**. The MXFP4 result does not simply
+reverse the ordering: Vulkan still wins one request, while ROCm wins aggregate
+throughput with four concurrent requests.
 
-<!-- TODO: fill in before moving to Accepted.
-     - Measured throughput, both backends, on gpt-oss-20b-mxfp4-GGUF
-       (single-request and 4-concurrent, to match ADR-0028's methodology)
-     - Which model ADR-0028 itself benchmarked, so the two runs are comparable
-     - Whether any non-MXFP4 model is still served, i.e. whether the vulkan
-       Deployment stays primary for anything -->
+The ADR-0028 model is identified by two independent observations. Its cache was
+populated immediately before the Vulkan-switch commit, while the MXFP4 model was
+downloaded after that commit. A short re-measurement also reproduced ADR-0028:
+Qwen3-4B generated 98.72 tok/s on Vulkan versus 82.08 tok/s on ROCm (20% faster),
+and Vulkan was about 40% faster in the four-request run.
+
+## Measurement
+
+Both Deployments ran Lemonade 10.8.0 on the same RX 9060 XT and shared model
+PVCs. ROCm used the custom `b1302` image and `system` backend; Vulkan used the
+upstream image and `vulkan` backend. After a warm-up request, each single-request
+result is the median of five 256-token completions. Four-request aggregate
+throughput is the median of five batches, with a three-second cooldown between
+batches; each batch generated 1,024 completion tokens in total.
+
+| Load | Vulkan | ROCm | Result |
+|------|-------:|-----:|--------|
+| One request, server generation rate | 98.17 tok/s | 88.29 tok/s | Vulkan 11.2% faster |
+| One request, end-to-end completion throughput | 86.95 tok/s | 82.16 tok/s | Vulkan 5.8% faster |
+| Four concurrent requests, aggregate end-to-end throughput | 97.13 tok/s | 117.65 tok/s | ROCm 21.1% faster |
+
+The fixed request used 87 prompt tokens, `temperature: 0`, and
+`max_tokens: 256`. The first four-request batch varied substantially on both
+backends, so the decision uses medians rather than the best batch.
+
+No non-MXFP4 client is configured in this repository. `opencode.json` is the
+only OpenAI-compatible client configuration and selects
+`gpt-oss-20b-mxfp4-GGUF`; the Vulkan Deployment remains available for
+re-measurement and for single-request latency/throughput, not as the configured
+primary for another model.
 
 ## Decision
 
-**Point the OpenAI-compatible client at `lemonade-rocm.prd.butaco.net` for MXFP4
-models, and treat the `lemonade-server-rocm` Deployment as a serving path rather
-than a benchmark fixture.**
+**Keep this ADR Proposed: the measurement does not support a quantization-only
+backend switch.** ROCm is the serving path when four-request aggregate
+throughput is the objective; Vulkan is the faster path for a single request.
+Before accepting this ADR, the intended client workload must explicitly
+prioritize one of those two cases.
 
 `opencode.json` selects `lemonade-rocm/gpt-oss-20b-mxfp4-GGUF`. Both Deployments
 stay at `replicaCount: 0` and remain GPU-exclusive through `gpu-switch`
-(ADR-0027), so this changes which one gets scaled up, not how many run.
+(ADR-0027). The current client therefore chooses concurrent aggregate throughput
+at the cost of single-request generation speed.
 
 Backend choice still lives in `config.json` on the recipe PVC, pinned per
 Deployment by the `jq` initContainer, exactly as ADR-0028 established — so the two
@@ -46,8 +72,9 @@ Deployments can disagree about the backend without either corrupting the other.
 ## Consequences
 
 - **ADR-0028's central claim is now scoped, not wrong.** Vulkan is faster on the
-  model it measured; it is not faster universally. The backend is a per-model
-  choice on this GPU, which means neither Deployment can be deleted.
+  Qwen3-4B model it measured and on a single MXFP4 request; it is not faster
+  universally. Backend choice depends on model, quantization, and concurrency,
+  so neither Deployment can be deleted.
 - **The maintenance cost ADR-0028 refused to pay is now being paid.** The Forgejo
   image (`takanao/lemonade-docker`, `llamacpp-rocm` `b1302`, bundled ROCm 7
   userspace) sits on a serving path. Renovate cannot see the LAN registry or the
@@ -56,20 +83,24 @@ Deployments can disagree about the backend without either corrupting the other.
   called this "not acceptable under a serving path"; that judgement is being
   overridden by the measurement, and the exposure should be stated rather than
   inherited silently.
-- **ROCm host-version skew matters to lemonade again.** ADR-0028's consequence
-  "lemonade no longer exercises ROCm at all" no longer holds, so
-  [`ansible/roles/rocm`](../../ansible/roles/rocm/) upgrades gain back a consumer
-  to check alongside comfyui and ollama.
-- **`k8s/lemonade-server/README.md` needs reframing.** It currently states the
-  rocm Deployment is "Not intended as a serving option — only for comparison",
-  and labels the hostname and image as belonging to a "benchmark variant".
+- **The bundled ROCm userspace/KMD pairing matters; the host ROCm userspace
+  still does not.** The custom image supplies its own ROCm 7 libraries, so
+  lemonade does not load `/opt/rocm` from [`ansible/roles/rocm`](../../ansible/roles/rocm/).
+  Driver upgrades from that role must nevertheless re-check compatibility with
+  the image, alongside comfyui and ollama.
+- **The ROCm Deployment is no longer benchmark-only.** Its custom image is on
+  the configured serving path even while this ADR remains Proposed, so its
+  README and chart comments must describe both serving and benchmark roles.
 
 ## Alternatives considered
 
-- **Keep Vulkan and accept the MXFP4 penalty** — preserves ADR-0028 unchanged and
-  keeps the custom image off the serving path. Rejected: the penalty is on the
-  model actually in use, so this trades measured everyday throughput for a
-  documentation convenience.
+- **Keep Vulkan for MXFP4 unconditionally** — preserves ADR-0028 and avoids the
+  custom serving image. It is the correct choice for one request, but leaves
+  21.1% aggregate throughput on the table in the measured four-request case.
+- **Use ROCm for MXFP4 unconditionally** — matches the current `opencode.json`
+  endpoint and optimizes the measured concurrent case, but makes a single
+  request 11.2% slower at generation. The measurement does not justify this as
+  a universal rule.
 - **Serve MXFP4 from a non-MXFP4 quantization on Vulkan** — sidesteps the backend
   question by changing the model instead. Not evaluated; worth measuring before
   this ADR moves to Accepted, since it would let the custom image go away
