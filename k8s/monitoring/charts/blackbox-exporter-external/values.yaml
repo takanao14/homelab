@@ -5,10 +5,10 @@ scrapeInterval: 30s
 # values/proxmox-nodes.yaml through apps/values.yaml valueFiles.
 proxmoxNodes: []
 
-# DNS recursor inventory; populated by the shared
-# values/dns-recursors.yaml through apps/values.yaml valueFiles.
+# DNS frontend inventory; populated by the shared
+# values/dns-frontends.yaml through apps/values.yaml valueFiles.
 # Both DNS resolution probes (dns_external / dns_internal) derive from it.
-dnsRecursors: []
+dnsFrontends: []
 
 icmp:
   targets: []

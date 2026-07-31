@@ -1,0 +1,49 @@
+{{- if .Values.resolverAlerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: resolver-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: resolver-external
+      rules:
+        - alert: ResolverNodeExporterDown
+          expr: up{service="knot-resolver"} == 0
+          for: {{ .Values.resolverAlerts.targetDownFor }}
+          labels:
+            severity: critical
+          annotations:
+            summary: "Resolver host {{ "{{ $labels.instance }}" }} is unreachable"
+            description: >-
+              Prometheus cannot scrape node_exporter on
+              {{ "{{ $labels.instance }}" }}.
+        - alert: KnotResolverMetricsStale
+          expr: >-
+            (
+              time() -
+              node_textfile_mtime_seconds{
+                service="knot-resolver",
+                file=~".*knot_resolver\\.prom"
+              } > {{ .Values.resolverAlerts.metricsMaxAgeSeconds }}
+            )
+            or on(instance)
+            (
+              up{service="knot-resolver"} == 1
+              unless on(instance)
+              node_textfile_mtime_seconds{
+                service="knot-resolver",
+                file=~".*knot_resolver\\.prom"
+              }
+            )
+          for: {{ .Values.resolverAlerts.metricsStaleFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "Knot Resolver metrics are stale on {{ "{{ $labels.instance }}" }}"
+            description: >-
+              The Knot Resolver textfile collector has not produced fresh
+              metrics within the configured age threshold.
+{{- end }}

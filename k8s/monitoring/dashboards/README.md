@@ -13,7 +13,7 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 | `proxmox-otlp-overview` | Proxmox VE cluster (native OTLP metrics): VM/LXC counts, node and guest resources, storage, network I/O, PSI pressure |
 | `gpu-overview` | AMD RX 9060 XT: activity, VRAM, temperature, power, clock speed |
 | `disk-health` | Physical disk S.M.A.R.T.: health flag, failure precursors, SSD wear, temperature |
-| `dns-overview` | dnsdist + pdns-auth + CoreDNS + external-dns: QPS, cache hit rate, latency, response codes, record sync |
+| `dns-overview` | dnsdist + Knot Resolver + pdns-auth + CoreDNS + external-dns: QPS, cache hit rate, latency, response codes, resolver validation logs, record sync |
 | `dns-logs` | DNS query logs via Loki: query rate, response codes, top domains, per-host breakdown |
 | `network-overview` | SNMP MIB-II (bgw1/c1200): traffic, errors, discards, interface status |
 | `monitoring-overview` | Prometheus, Alertmanager, and Loki self-monitoring: alerts, scrape targets, TSDB, ingestion rate |

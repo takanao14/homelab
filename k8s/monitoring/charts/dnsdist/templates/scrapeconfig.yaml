@@ -9,8 +9,8 @@ spec:
   # External LAN hosts: opt out of the default cluster-prd scrape class.
   scrapeClass: external
   staticConfigs:
-    # Recursors come from the shared inventory (values/dns-recursors.yaml).
-    {{- range .Values.dnsRecursors }}
+    # Frontends come from the shared inventory (values/dns-frontends.yaml).
+    {{- range .Values.dnsFrontends }}
     - targets: ["{{ .ip }}:{{ $.Values.port }}"]
       labels:
         __tmp_name: {{ .name | quote }}

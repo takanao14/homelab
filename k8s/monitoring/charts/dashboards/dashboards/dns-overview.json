@@ -45,7 +45,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
+        "w": 12,
         "x": 0,
         "y": 1
       },
@@ -75,48 +75,6 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval])) / clamp_min(sum(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]) + rate(dnsdist_cache_misses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval])), 1) * 100",
-          "legendFormat": "Cache Hit Rate"
-        }
-      ],
-      "title": "dnsdist Cache Hit Rate",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 8,
-        "x": 8,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": ""
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "decimals": 2
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
           "expr": "avg(dnsdist_latency_avg100{job=\"scrapeConfig/monitoring/dnsdist-external\"})",
           "legendFormat": "Avg Latency"
         }
@@ -129,8 +87,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 16,
+        "w": 12,
+        "x": 12,
         "y": 1
       },
       "repeatDirection": "h",
@@ -401,7 +359,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
         "y": 22
       },
@@ -468,47 +426,6 @@
             ]
           }
         ]
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]) / clamp_min(rate(dnsdist_cache_hits{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]) + rate(dnsdist_cache_misses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval]), 1) * 100",
-          "legendFormat": "{{instance}}"
-        }
-      ],
-      "title": "dnsdist Cache Hit Rate",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 22
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "custom": {}
-        },
-        "overrides": []
       }
     },
     {
@@ -609,12 +526,567 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "pdns-auth Summary",
+      "title": "Knot Resolver Summary",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 46
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(resolver_request_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval]))",
+          "instant": true,
+          "legendFormat": "QPS",
+          "range": false
+        }
+      ],
+      "title": "Resolver QPS",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 47
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "decimals": 1
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "100 * sum(rate(resolver_answer_cached_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval])) / clamp_min(sum(rate(resolver_answer_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval])), 1e-9)",
+          "instant": true,
+          "legendFormat": "Hit rate",
+          "range": false
+        }
+      ],
+      "title": "Resolver Cache Hit Rate",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 47
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(resolver_response_latency_bucket{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval])))",
+          "instant": true,
+          "legendFormat": "p95",
+          "range": false
+        }
+      ],
+      "title": "Resolver Latency p95",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 47
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 0.05,
+                "color": "yellow"
+              },
+              {
+                "value": 0.15,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "max(time() - node_textfile_mtime_seconds{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\",file=~\".*knot_resolver\\\\.prom\"})",
+          "instant": true,
+          "legendFormat": "Age",
+          "range": false
+        }
+      ],
+      "title": "Resolver Metrics Age",
+      "description": "Worst age of the node_exporter textfile generated once per minute.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 47
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Knot Resolver Traffic \u0026 Performance",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 51
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (instance) (rate(resolver_request_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval]))",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "title": "Resolver Query Rate",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 52
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "100 * sum by (instance) (rate(resolver_answer_cached_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval])) / clamp_min(sum by (instance) (rate(resolver_answer_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval])), 1e-9)",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "title": "Resolver Cache Hit Rate",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 52
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(resolver_answer_rcode_noerror_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval]))",
+          "legendFormat": "NOERROR"
+        },
+        {
+          "expr": "sum(rate(resolver_answer_rcode_nodata_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval]))",
+          "legendFormat": "NODATA"
+        },
+        {
+          "expr": "sum(rate(resolver_answer_rcode_nxdomain_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval]))",
+          "legendFormat": "NXDOMAIN"
+        },
+        {
+          "expr": "sum(rate(resolver_answer_rcode_servfail_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval]))",
+          "legendFormat": "SERVFAIL"
+        }
+      ],
+      "title": "Resolver Response Codes",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 60
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "fillOpacity": 10,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (instance, le) (rate(resolver_response_latency_bucket{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval])))",
+          "legendFormat": "{{instance}} p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (instance, le) (rate(resolver_response_latency_bucket{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval])))",
+          "legendFormat": "{{instance}} p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (instance, le) (rate(resolver_response_latency_bucket{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval])))",
+          "legendFormat": "{{instance}} p99"
+        }
+      ],
+      "title": "Resolver Response Latency",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 60
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 0.05,
+                "color": "yellow"
+              },
+              {
+                "value": 0.15,
+                "color": "red"
+              }
+            ]
+          },
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}",
+          "legendFormat": "{{instance}} RSS"
+        }
+      ],
+      "title": "Resolver Process Memory",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 68
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "time() - node_textfile_mtime_seconds{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\",file=~\".*knot_resolver\\\\.prom\"}",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "title": "Resolver Metrics Freshness",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 68
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Knot Resolver DNSSEC Validation Logs",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 76
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "logs",
+      "targets": [
+        {
+          "expr": "{job=\"dns-resolver\", unit=\"knot-resolver.service\"} | json | __error__=\"\" |~ \"(?i)(bogus|dnssec|validation)\" | line_format \"{{.message}}\"",
+          "maxLines": 500
+        }
+      ],
+      "title": "DNSSEC Bogus and Validation Logs",
+      "description": "Knot Resolver journald entries shipped by Vector from resolver1 and resolver2.",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$loki_datasource"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 77
+      },
+      "repeatDirection": "h",
+      "options": {
+        "showLabels": false,
+        "showCommonLabels": false,
+        "showTime": true,
+        "showLogContextToggle": false,
+        "wrapLogMessage": false,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": ""
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "pdns-auth Summary",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 89
       },
       "id": 0,
       "panels": []
@@ -637,7 +1109,7 @@
         "h": 4,
         "w": 12,
         "x": 0,
-        "y": 47
+        "y": 90
       },
       "repeatDirection": "h",
       "options": {
@@ -679,7 +1151,7 @@
         "h": 4,
         "w": 12,
         "x": 12,
-        "y": 47
+        "y": 90
       },
       "repeatDirection": "h",
       "options": {
@@ -728,7 +1200,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 94
       },
       "id": 0,
       "panels": []
@@ -755,7 +1227,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 52
+        "y": 95
       },
       "repeatDirection": "h",
       "options": {
@@ -808,7 +1280,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 60
+        "y": 103
       },
       "repeatDirection": "h",
       "options": {
@@ -915,7 +1387,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 68
+        "y": 111
       },
       "repeatDirection": "h",
       "options": {
@@ -973,7 +1445,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 68
+        "y": 111
       },
       "repeatDirection": "h",
       "options": {
@@ -1021,7 +1493,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 76
+        "y": 119
       },
       "id": 0,
       "panels": []
@@ -1046,7 +1518,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 77
+        "y": 120
       },
       "repeatDirection": "h",
       "options": {
@@ -1090,7 +1562,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 77
+        "y": 120
       },
       "repeatDirection": "h",
       "options": {
@@ -1146,7 +1618,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 77
+        "y": 120
       },
       "repeatDirection": "h",
       "options": {
@@ -1203,7 +1675,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 77
+        "y": 120
       },
       "repeatDirection": "h",
       "options": {
@@ -1251,7 +1723,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 81
+        "y": 124
       },
       "id": 0,
       "panels": []
@@ -1275,7 +1747,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 82
+        "y": 125
       },
       "repeatDirection": "h",
       "options": {
@@ -1317,7 +1789,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 90
+        "y": 133
       },
       "repeatDirection": "h",
       "options": {
@@ -1359,7 +1831,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 90
+        "y": 133
       },
       "repeatDirection": "h",
       "options": {
@@ -1402,7 +1874,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 98
+        "y": 141
       },
       "repeatDirection": "h",
       "options": {
@@ -1433,7 +1905,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 106
+        "y": 149
       },
       "id": 0,
       "panels": []
@@ -1459,7 +1931,7 @@
         "h": 4,
         "w": 8,
         "x": 0,
-        "y": 107
+        "y": 150
       },
       "repeatDirection": "h",
       "options": {
@@ -1517,7 +1989,7 @@
         "h": 4,
         "w": 8,
         "x": 8,
-        "y": 107
+        "y": 150
       },
       "repeatDirection": "h",
       "options": {
@@ -1575,7 +2047,7 @@
         "h": 4,
         "w": 8,
         "x": 16,
-        "y": 107
+        "y": 150
       },
       "repeatDirection": "h",
       "options": {
@@ -1624,7 +2096,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 111
+        "y": 154
       },
       "id": 0,
       "panels": []
@@ -1652,7 +2124,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 112
+        "y": 155
       },
       "repeatDirection": "h",
       "options": {
@@ -1698,7 +2170,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 112
+        "y": 155
       },
       "repeatDirection": "h",
       "options": {
@@ -1744,7 +2216,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 120
+        "y": 163
       },
       "repeatDirection": "h",
       "options": {
@@ -1776,6 +2248,19 @@
         "label": "Datasource",
         "skipUrlSync": false,
         "query": "prometheus",
+        "multi": false,
+        "allowCustomValue": true,
+        "includeAll": false,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "datasource",
+        "name": "loki_datasource",
+        "label": "Loki Datasource",
+        "skipUrlSync": false,
+        "query": "loki",
         "multi": false,
         "allowCustomValue": true,
         "includeAll": false,

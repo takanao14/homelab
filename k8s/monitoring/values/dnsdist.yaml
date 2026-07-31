@@ -2,4 +2,4 @@ port: 8083
 metricsPath: /metrics
 
 # Scrape targets come from the shared recursor inventory
-# (values/dns-recursors.yaml via apps/values.yaml valueFiles).
+# (values/dns-frontends.yaml via apps/values.yaml valueFiles).

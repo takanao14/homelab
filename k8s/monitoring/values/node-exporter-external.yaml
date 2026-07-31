@@ -20,3 +20,16 @@ targets:
     name: "openbao1"
   - ip: "192.168.50.31"
     name: "seaweedfs1"
+  # Dedicated recursive DNS backends (ADR-0030).
+  - ip: "192.168.10.236"
+    name: "resolver1"
+    service: "knot-resolver"
+  - ip: "192.168.10.237"
+    name: "resolver2"
+    service: "knot-resolver"
+
+resolverAlerts:
+  enabled: true
+  targetDownFor: 5m
+  metricsStaleFor: 5m
+  metricsMaxAgeSeconds: 180

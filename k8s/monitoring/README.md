@@ -42,7 +42,7 @@ monitoring/
 │   ├── snmp-exporter.yaml
 │   ├── node-exporter-external.yaml
 │   ├── proxmox-nodes.yaml        # shared Proxmox hypervisor inventory (ADR-0024)
-│   ├── dns-recursors.yaml        # shared DNS recursor inventory (ADR-0024)
+│   ├── dns-frontends.yaml        # shared DNS frontend inventory (ADR-0024/0030)
 │   ├── control-plane-metrics.yaml # k0s controller host targets
 │   ├── amd-gpu-external.yaml
 │   ├── dnsdist.yaml
@@ -184,7 +184,7 @@ a good fit for the ownership policy above.
 | Loki | `charts/loki` | Loki SingleBinary, LoadBalancer ingestion, Proxmox LogQL ruler ConfigMap | Telemetry backend and log alerting | Correct here. Log ingestion and alert evaluation are observability control-plane concerns. |
 | Alloy | `charts/alloy` | Alloy deployment, OTLP LoadBalancer Service, HTTPRoute | Telemetry receiver/collector | Correct here. It exists to receive Proxmox OTLP metrics and remote_write them into Prometheus. |
 | SNMP exporter | `charts/snmp-exporter` | `prometheus-snmp-exporter`, SNMP auth `ExternalSecret`, network-device `Probe` via chart values | Monitoring-only exporter workload | Correct here. The exporter exists solely as monitoring infrastructure. |
-| External node exporter targets | `charts/node-exporter-external` | `ScrapeConfig` for Proxmox nodes, Raspberry Pis, and stateful service guests | External scrape contract | Correct here. Kubernetes owns only the scrape contract; exporters run outside the cluster. |
+| External node exporter targets | `charts/node-exporter-external` | `ScrapeConfig` for Proxmox nodes, Raspberry Pis, and stateful service guests; resolver-specific target-loss and textfile-freshness rules | External scrape contract | Correct here. Kubernetes owns the scrape contract and resolver monitoring policy; exporters run outside the cluster. |
 | AMD GPU exporter target | `charts/amd-gpu-external` | `ScrapeConfig` for the GPU VM exporter | External scrape contract | Correct here. The GPU exporter runs outside this cluster and is consumed centrally. |
 | Blackbox probes | `charts/blackbox-exporter-external` | ICMP and DNS `ScrapeConfig` resources through the rpi4 blackbox_exporter | External probe contract | Correct here. The probing endpoint is external; monitoring owns probe definitions and target labels. |
 | dnsdist metrics | `charts/dnsdist` | `ScrapeConfig` for external dnsdist instances | External scrape contract | Correct here. DNS service runtime stays outside this chart; monitoring owns scrape configuration. |
@@ -240,7 +240,7 @@ All secrets are fetched from OpenBao via ESO. They are not stored in this reposi
   (ADR-0024). node-exporter targets, ICMP/AMT probes, the Loki alert host
   regex, and the proxmox-logs dashboard all derive from it — add a node
   there, then run `make generate` in `dashboards/`
-- DNS recursors are listed once in `values/dns-recursors.yaml`
+- DNS frontends are listed once in `values/dns-frontends.yaml`
   (ADR-0024 addendum). dnsdist metrics targets and both blackbox DNS
   resolution probes derive from it
 - Future plan: move k0s controller-manager/scheduler scraping into an explicit local chart (`docs/plans/control-plane-metrics-chart.md`)

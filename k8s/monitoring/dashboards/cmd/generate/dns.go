@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
+	"github.com/grafana/grafana-foundation-sdk/go/logs"
+	"github.com/grafana/grafana-foundation-sdk/go/loki"
 	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
 	"github.com/grafana/grafana-foundation-sdk/go/stat"
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
@@ -13,12 +15,17 @@ import (
 // (dist1/dist2, ns1/ns2), so panels use the instance label directly.
 func buildDnsOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
+	lokiType := "loki"
+	lokiUID := "$loki_datasource"
+	lokiDS := common.DataSourceRef{Type: &lokiType, Uid: &lokiUID}
 
 	const (
-		dnsdist = `job="scrapeConfig/monitoring/dnsdist-external"`
-		pdns    = `job="scrapeConfig/monitoring/pdns-auth-external"`
-		coredns = `job="coredns"`
-		extdns  = `job="external-dns"`
+		dnsdist                = `job="scrapeConfig/monitoring/dnsdist-external"`
+		resolver               = `job="scrapeConfig/monitoring/node-exporter-external",service="knot-resolver"`
+		pdns                   = `job="scrapeConfig/monitoring/pdns-auth-external"`
+		coredns                = `job="coredns"`
+		extdns                 = `job="external-dns"`
+		resolverValidationLogs = `{job="dns-resolver", unit="knot-resolver.service"} | json | __error__="" |~ "(?i)(bogus|dnssec|validation)" | line_format "{{.message}}"`
 	)
 
 	tooltipAll := defaultTooltip()
@@ -74,35 +81,28 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		WithVariable(
 			promDatasourceVariable(),
 		).
+		WithVariable(
+			dashboard.NewDatasourceVariableBuilder("loki_datasource").
+				Label("Loki Datasource").
+				Type("loki"),
+		).
 		WithRow(dashboard.NewRowBuilder("dnsdist Summary")).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("dnsdist QPS").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(12).Height(4).
 				Unit("reqps").
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(rate(dnsdist_queries{` + dnsdist + `}[$__rate_interval]))`).
 					LegendFormat("QPS"),
 				).Decimals(1),
 		).
-		// clamp_min prevents division by zero when there are no queries yet.
-		WithPanel(
-			stat.NewPanelBuilder().
-				Title("dnsdist Cache Hit Rate").
-				Datasource(ds).
-				Span(8).Height(4).
-				Unit("percent").
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(dnsdist_cache_hits{` + dnsdist + `}[$__rate_interval])) / clamp_min(sum(rate(dnsdist_cache_hits{` + dnsdist + `}[$__rate_interval]) + rate(dnsdist_cache_misses{` + dnsdist + `}[$__rate_interval])), 1) * 100`).
-					LegendFormat("Cache Hit Rate"),
-				).Decimals(2),
-		).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("dnsdist Avg Latency").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(12).Height(4).
 				Unit("µs").
 				Thresholds(latencyThresholds).
 				ColorMode(common.BigValueColorModeBackground).
@@ -181,7 +181,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 			timeseries.NewPanelBuilder().
 				Title("dnsdist Latency").
 				Datasource(ds).
-				Span(12).Height(8).
+				Span(24).Height(8).
 				Unit("µs").
 				Tooltip(tooltipAll).
 				Legend(legend).
@@ -203,19 +203,6 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 					{Id: "drawStyle", Value: "line"},
 					{Id: "fillOpacity", Value: 10},
 				}),
-		).
-		WithPanel(
-			timeseries.NewPanelBuilder().
-				Title("dnsdist Cache Hit Rate").
-				Datasource(ds).
-				Span(12).Height(8).
-				Unit("percent").
-				Tooltip(tooltipAll).
-				Legend(legend).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(dnsdist_cache_hits{` + dnsdist + `}[$__rate_interval]) / clamp_min(rate(dnsdist_cache_hits{` + dnsdist + `}[$__rate_interval]) + rate(dnsdist_cache_misses{` + dnsdist + `}[$__rate_interval]), 1) * 100`).
-					LegendFormat("{{instance}}"),
-				),
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -251,6 +238,180 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`rate(dnsdist_queries{` + dnsdist + `}[$__rate_interval]) - rate(dnsdist_responses{` + dnsdist + `}[$__rate_interval])`).
 					LegendFormat("{{instance}}"),
+				),
+		).
+		WithRow(dashboard.NewRowBuilder("Knot Resolver Summary")).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Resolver QPS").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("reqps").
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(rate(resolver_request_total{` + resolver + `}[$__rate_interval]))`).
+					Instant().
+					LegendFormat("QPS"),
+				).
+				Decimals(1),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Resolver Cache Hit Rate").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("percent").
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`100 * sum(rate(resolver_answer_cached_total{` + resolver + `}[$__rate_interval])) / clamp_min(sum(rate(resolver_answer_total{` + resolver + `}[$__rate_interval])), 1e-9)`).
+					Instant().
+					LegendFormat("Hit rate"),
+				).
+				Decimals(1),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Resolver Latency p95").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("s").
+				Thresholds(corednsLatencyThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`histogram_quantile(0.95, sum by (le) (rate(resolver_response_latency_bucket{` + resolver + `}[$__rate_interval])))`).
+					Instant().
+					LegendFormat("p95"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Resolver Metrics Age").
+				Description("Worst age of the node_exporter textfile generated once per minute.").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("s").
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`max(time() - node_textfile_mtime_seconds{` + resolver + `,file=~".*knot_resolver\\.prom"})`).
+					Instant().
+					LegendFormat("Age"),
+				).
+				Decimals(0),
+		).
+		WithRow(dashboard.NewRowBuilder("Knot Resolver Traffic & Performance")).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Resolver Query Rate").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("reqps").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum by (instance) (rate(resolver_request_total{` + resolver + `}[$__rate_interval]))`).
+					LegendFormat("{{instance}}"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Resolver Cache Hit Rate").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("percent").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`100 * sum by (instance) (rate(resolver_answer_cached_total{` + resolver + `}[$__rate_interval])) / clamp_min(sum by (instance) (rate(resolver_answer_total{` + resolver + `}[$__rate_interval])), 1e-9)`).
+					LegendFormat("{{instance}}"),
+				).
+				Decimals(1),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Resolver Response Codes").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("reqps").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				FillOpacity(10).
+				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(rate(resolver_answer_rcode_noerror_total{` + resolver + `}[$__rate_interval]))`).
+					LegendFormat("NOERROR"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(rate(resolver_answer_rcode_nodata_total{` + resolver + `}[$__rate_interval]))`).
+					LegendFormat("NODATA"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(rate(resolver_answer_rcode_nxdomain_total{` + resolver + `}[$__rate_interval]))`).
+					LegendFormat("NXDOMAIN"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(rate(resolver_answer_rcode_servfail_total{` + resolver + `}[$__rate_interval]))`).
+					LegendFormat("SERVFAIL"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Resolver Response Latency").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("s").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				Thresholds(corednsLatencyThresholds).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`histogram_quantile(0.50, sum by (instance, le) (rate(resolver_response_latency_bucket{` + resolver + `}[$__rate_interval])))`).
+					LegendFormat("{{instance}} p50"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`histogram_quantile(0.95, sum by (instance, le) (rate(resolver_response_latency_bucket{` + resolver + `}[$__rate_interval])))`).
+					LegendFormat("{{instance}} p95"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`histogram_quantile(0.99, sum by (instance, le) (rate(resolver_response_latency_bucket{` + resolver + `}[$__rate_interval])))`).
+					LegendFormat("{{instance}} p99"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Resolver Process Memory").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("bytes").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`process_resident_memory_bytes{` + resolver + `}`).
+					LegendFormat("{{instance}} RSS"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Resolver Metrics Freshness").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("s").
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`time() - node_textfile_mtime_seconds{` + resolver + `,file=~".*knot_resolver\\.prom"}`).
+					LegendFormat("{{instance}}"),
+				),
+		).
+		WithRow(dashboard.NewRowBuilder("Knot Resolver DNSSEC Validation Logs")).
+		WithPanel(
+			logs.NewPanelBuilder().
+				Title("DNSSEC Bogus and Validation Logs").
+				Description("Knot Resolver journald entries shipped by Vector from resolver1 and resolver2.").
+				Datasource(lokiDS).
+				Span(24).Height(12).
+				ShowTime(true).
+				EnableLogDetails(true).
+				SortOrder(common.LogsSortOrderDescending).
+				WithTarget(loki.NewDataqueryBuilder().
+					Expr(resolverValidationLogs).
+					MaxLines(500),
 				),
 		).
 		WithRow(dashboard.NewRowBuilder("pdns-auth Summary")).
