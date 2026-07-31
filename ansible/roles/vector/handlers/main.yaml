@@ -2,5 +2,6 @@
 - name: Restart vector
   become: true
   ansible.builtin.service:
-    name: vector
+    name: "{{ vector_service }}"
     state: restarted
+  when: not ansible_check_mode or (vector_installed.rc | default(1)) == 0

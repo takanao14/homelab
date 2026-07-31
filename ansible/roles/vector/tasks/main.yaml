@@ -54,8 +54,31 @@
 - name: Install Vector
   become: true
   ansible.builtin.apt:
-    name: vector
+    name: "{{ vector_package }}"
     state: present
+  when: not ansible_check_mode
+
+- name: Check whether Vector is already installed
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/test
+      - -x
+      - "{{ vector_binary_path }}"
+  check_mode: false
+  changed_when: false
+  failed_when: false
+  register: vector_installed
+
+- name: Report deferred Vector package-dependent checks
+  ansible.builtin.debug:
+    msg: >-
+      Vector is not installed yet. Package installation, configuration
+      validation, and service lifecycle checks are deferred until the first
+      normal playbook run because the pending repository is not available to
+      APT in check mode.
+  when:
+    - ansible_check_mode
+    - vector_installed.rc != 0
 
 - name: Configure Vector
   become: true
@@ -65,8 +88,9 @@
     owner: root
     group: root
     mode: '0644'
-    validate: vector validate --no-environment %s
+    validate: "{{ vector_binary_path }} validate --no-environment %s"
   notify: Restart vector
+  when: not ansible_check_mode or vector_installed.rc == 0
 
 # The template module only runs its validator when the rendered file changes.
 # Validate the installed configuration on every normal run as well, so package
@@ -77,15 +101,17 @@
   become: true
   ansible.builtin.command:
     argv:
-      - vector
+      - "{{ vector_binary_path }}"
       - validate
       - --no-environment
       - /etc/vector/vector.yaml
   changed_when: false
+  when: not ansible_check_mode or vector_installed.rc == 0
 
 - name: Ensure Vector is started and enabled
   become: true
   ansible.builtin.service:
-    name: vector
+    name: "{{ vector_service }}"
     state: started
     enabled: true
+  when: not ansible_check_mode or vector_installed.rc == 0

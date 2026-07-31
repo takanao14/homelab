@@ -14,6 +14,9 @@ Installs and configures [Vector](https://vector.dev/) as a log aggregator on Deb
 - Ensures the `vector` service is started and enabled.
 - Keeps check mode read-only when `python3-debian` is not installed yet; the
   repository task is reported as deferred until the prerequisite is applied.
+- Defers package-dependent configuration and service checks on a pristine host
+  during check mode because a repository pending creation is not yet visible to
+  APT.
 
 ## Variables
 

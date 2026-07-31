@@ -2,5 +2,6 @@
 - name: Restart node_exporter
   become: true
   ansible.builtin.service:
-    name: prometheus-node-exporter
+    name: "{{ node_exporter_service }}"
     state: restarted
+  when: not ansible_check_mode or (node_exporter_installed.rc | default(1)) == 0
