@@ -18,10 +18,10 @@ locals {
 
 inputs = {
   vms = {
-    "toolbox2" = merge(local.base_vars, {
+    "toolbox1" = merge(local.base_vars, {
       cores   = 4
-      memory  = 8192
-      on_boot = false
+      memory  = 16384
+      on_boot = true
       bridge  = local.common.locals.pve.net20.bridge
       ipv4    = "192.168.20.21/24"
       ipv4gw  = local.common.locals.pve.net20.ipv4gw
