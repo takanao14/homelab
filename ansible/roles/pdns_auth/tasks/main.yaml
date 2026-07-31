@@ -164,6 +164,13 @@
   register: pdns_auth_autoprimaries
   changed_when: false
   when: pdns_role == 'secondary'
+  # The uri module does not declare check-mode support, so in check mode Ansible
+  # skips it and registers a result with no `json` key — which the next task's
+  # condition then dereferences and fails on. This is a read-only GET with
+  # changed_when: false, so running it for real in check mode is both safe and
+  # what makes the dry-run reflect reality. The POST below is deliberately left
+  # alone: it must stay skipped in check mode.
+  check_mode: false
 
 - name: Register autoprimary on secondary
   ansible.builtin.uri:

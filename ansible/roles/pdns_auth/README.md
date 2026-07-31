@@ -85,8 +85,32 @@ tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 32 && echo
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `pdns_webserver_port` | `8081` | API/webserver listen port |
-| `pdns_repo_channel` | `auth-50` | PowerDNS APT repository channel |
+| `pdns_repo_channel` | `auth-51` | PowerDNS APT repository channel. A release train, not a version pin — see below |
+| `pdns_repo_key_sha256` | `efeb5b14…decae8` | Checksum of the repository signing key. Verifies the APT trust anchor, and is what lets `get_url` skip the network once the key is in place — `force: false` alone does not, because the skip is gated on a checksum being set. Same file as the `dnsdist` role fetches; keep the two in step |
 | `pdns_repo_release` | `{{ ansible_facts['distribution_release'] }}` | Ubuntu release codename |
+
+### Moving the release train
+
+`pdns_repo_channel` selects a PowerDNS release train, not a version. Packages
+inside a train update on their own; crossing to the next train is a deliberate
+change, because PowerDNS supports a train only for about a year after its
+successor ships. Check the current state at
+<https://repo.powerdns.com/> (which channels exist and which is stable) and
+<https://doc.powerdns.com/authoritative/appendices/EOL.html> (dates), and read
+<https://doc.powerdns.com/authoritative/upgrading.html> before moving.
+
+The keyring and pin paths deliberately carry no channel name: the signing key is
+the same for every train and the pin matches on origin rather than suite, so a
+train move is a one-line change here. The `dnsdist` role follows the same
+convention and fetches the same key file.
+
+Moving the train only repoints the repository — the apt task uses
+`state: present`, so the packages themselves are upgraded separately by
+`ops-package_upgrade.yaml`, which runs the `dns` group one host at a time.
+
+The 5.0 to 5.1 move (2026-07-31) needed no database schema change and no
+configuration change; `ns1` is upgraded first because it is the hidden primary
+and is not in dnsdist's `internal` pool, so it carries almost no live query load.
 
 ## DNS Record Notes
 

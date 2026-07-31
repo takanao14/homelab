@@ -138,6 +138,26 @@ These are mapped to `dnsdist_web_password`, `dnsdist_web_api_key`, and `dnsdist_
 | `dnsdist_repo_release` | `{{ ansible_facts['distribution_release'] }}` | Ubuntu release codename |
 | `dnsdist_repo_key_sha256` | `efeb5b14…decae8` | Checksum of the repository signing key. Verifies the APT trust anchor, and is what lets `get_url` skip the network once the key is in place — `force: false` alone does not, because the skip is gated on a checksum being set. Shared with the `pdns_auth` role, which fetches the same file |
 
+## Moving the release train
+
+`dnsdist_repo_channel` selects a PowerDNS release train, not a version. Packages
+inside a train update on their own; crossing to the next train is a deliberate
+change, because PowerDNS supports a train only for about a year after its
+successor ships. Check <https://repo.powerdns.com/> for the available channels
+and which is stable, <https://www.dnsdist.org/eol.html> for the dates, and
+<https://dnsdist.org/upgrade_guide.html> before moving — the upgrade guide is
+organised by version pair, so read only the section for the hop being made.
+
+The keyring and pin paths deliberately carry no channel name: the signing key is
+the same for every train and the pin matches on origin rather than suite, so a
+train move is a one-line change here. The `pdns_auth` role follows the same
+convention and fetches the same key file.
+
+Moving the train only repoints the repository — the apt task uses
+`state: present`, so the package itself is upgraded separately by
+`ops-package_upgrade.yaml`, which runs the `dns` group one host at a time and
+stops before the second host if the first fails to come back.
+
 ## Dependencies
 
 None.
