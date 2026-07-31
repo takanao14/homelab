@@ -7,6 +7,11 @@
 #   - Linux          -> Podman, invoked via the `podman` CLI
 # Override with GRAFANA_MCP_RUNTIME (e.g. "docker" or "podman") when needed.
 #
+# Image reference:
+#   - Fully qualified on purpose. Docker resolves the bare `mcp/grafana` to
+#     Docker Hub, but Podman enforces short-name resolution and defines no
+#     unqualified-search registries, so the bare name fails on Linux.
+#
 # Tool exposure:
 #   - Defaults to the read-only observability categories needed by local agents.
 #   - Write tools are disabled independently of the Grafana Viewer token.
@@ -94,4 +99,4 @@ fi
 exec "${runtime}" run -i --rm \
   -e GRAFANA_URL \
   -e GRAFANA_SERVICE_ACCOUNT_TOKEN \
-  "${GRAFANA_MCP_IMAGE:-mcp/grafana}" "${server_args[@]}"
+  "${GRAFANA_MCP_IMAGE:-docker.io/mcp/grafana}" "${server_args[@]}"
