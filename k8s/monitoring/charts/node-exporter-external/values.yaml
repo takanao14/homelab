@@ -1,0 +1,11 @@
+port: 9100
+metricsPath: /metrics
+
+proxmoxNodes: []
+targets: []
+
+resolverAlerts:
+  enabled: false
+  targetDownFor: 5m
+  metricsStaleFor: 5m
+  metricsMaxAgeSeconds: 180
