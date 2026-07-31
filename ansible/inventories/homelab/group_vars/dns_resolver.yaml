@@ -1,14 +1,18 @@
 ---
-dnsdist_default_check_name: "dnssec.works."
-dnsdist_default_check_type: A
+knot_resolver_server_addr: "{{ ansible_host }}"
+knot_resolver_allowed_clients:
+  - "{{ hostvars['dist1']['ansible_host'] }}/32"
+  - "{{ hostvars['dist2']['ansible_host'] }}/32"
+
+node_exporter_extra_args:
+  - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
 
 vector_config:
   sources:
     journald:
       type: journald
       include_units:
-        - dnsdist
-        - dnscollector
+        - knot-resolver
         - ssh
   transforms:
     parse_journald:
@@ -32,3 +36,4 @@ vector_config:
       labels:
         host: !unsafe "{{ host }}"
         unit: !unsafe "{{ unit }}"
+        job: dns-resolver

@@ -1,0 +1,17 @@
+---
+- name: Reload Knot Resolver
+  become: true
+  ansible.builtin.systemd:
+    name: "{{ knot_resolver_service }}"
+    state: reloaded
+
+- name: Reload systemd
+  become: true
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart Knot Resolver metrics timer
+  become: true
+  ansible.builtin.systemd:
+    name: knot-resolver-metrics.timer
+    state: restarted

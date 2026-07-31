@@ -1,0 +1,14 @@
+---
+- name: Setup Knot Resolver
+  hosts: dns_resolver
+  serial: 1
+  any_errors_fatal: true
+  roles:
+    - role: timezone
+      tags: timezone
+    - role: node_exporter
+      tags: node_exporter
+    - role: knot_resolver
+      tags: knot_resolver
+    - role: lxc_logging
+      tags: logging

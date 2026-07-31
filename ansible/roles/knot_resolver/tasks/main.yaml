@@ -1,0 +1,268 @@
+---
+- name: Validate Knot Resolver role inputs
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] == "Ubuntu"
+      - ansible_facts['distribution_release'] == "noble"
+      - knot_resolver_server_addr | length > 0
+      - knot_resolver_allowed_clients | length == 2
+      - knot_resolver_workers | int > 0
+    fail_msg: >-
+      Knot Resolver requires Ubuntu Noble, one listen address, and exactly two
+      dnsdist client networks.
+
+- name: Install APT repository prerequisites
+  become: true
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - gpg
+      - python3-debian
+    state: present
+    update_cache: true
+
+- name: Create APT keyring directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install CZ.NIC Labs repository signing key
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ knot_resolver_repository_key_url }}"
+    dest: "{{ knot_resolver_repository_key_path }}"
+    checksum: "{{ knot_resolver_repository_key_checksum }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Check whether GnuPG is already installed
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/test
+      - -x
+      - /usr/bin/gpg
+  check_mode: false
+  changed_when: false
+  failed_when: false
+  register: knot_resolver_gpg
+
+- name: Check whether the repository key already exists
+  ansible.builtin.stat:
+    path: "{{ knot_resolver_repository_key_path }}"
+  register: knot_resolver_repository_key_file
+
+- name: Read CZ.NIC Labs repository key fingerprint
+  ansible.builtin.command:
+    argv:
+      - gpg
+      - --batch
+      - --show-keys
+      - --with-colons
+      - "{{ knot_resolver_repository_key_path }}"
+  check_mode: false
+  changed_when: false
+  register: knot_resolver_repository_key
+  when:
+    - not ansible_check_mode or knot_resolver_gpg.rc == 0
+    - not ansible_check_mode or knot_resolver_repository_key_file.stat.exists
+
+- name: Verify CZ.NIC Labs repository key fingerprint
+  ansible.builtin.assert:
+    that:
+      - >-
+        ('fpr:::::::::' ~ knot_resolver_repository_key_fingerprint ~ ':')
+        in knot_resolver_repository_key.stdout
+    fail_msg: "The CZ.NIC Labs repository key fingerprint does not match the pinned trust anchor."
+  when:
+    - not ansible_check_mode or knot_resolver_gpg.rc == 0
+    - not ansible_check_mode or knot_resolver_repository_key_file.stat.exists
+
+- name: Report deferred repository key fingerprint check
+  ansible.builtin.debug:
+    msg: >-
+      Skipping the CZ.NIC Labs repository key fingerprint check because GnuPG
+      or the key file is pending installation in check mode. The pinned SHA-256
+      is still checked by get_url during a normal run.
+  when:
+    - ansible_check_mode
+    - knot_resolver_gpg.rc != 0 or not knot_resolver_repository_key_file.stat.exists
+
+- name: Configure Knot Resolver package preference
+  become: true
+  ansible.builtin.copy:
+    dest: "{{ knot_resolver_repository_pin_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      Package: knot-resolver6*
+      Pin: origin pkg.labs.nic.cz
+      Pin-Priority: 600
+
+- name: Check whether the python-debian library is available
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - import debian
+  check_mode: false
+  changed_when: false
+  failed_when: false
+  register: knot_resolver_python_debian
+
+- name: Configure CZ.NIC Labs Knot Resolver repository
+  become: true
+  ansible.builtin.deb822_repository:
+    name: cznic-labs-knot-resolver
+    types: deb
+    uris: "{{ knot_resolver_repository_url }}"
+    suites: "{{ knot_resolver_repository_suite }}"
+    components: main
+    architectures: amd64
+    signed_by: "{{ knot_resolver_repository_key_path }}"
+    state: present
+  register: knot_resolver_repository
+  when: not ansible_check_mode or knot_resolver_python_debian.rc == 0
+
+- name: Report deferred Knot Resolver repository check
+  ansible.builtin.debug:
+    msg: >-
+      Skipping the Knot Resolver deb822 repository check because python3-debian
+      is pending installation in check mode. A normal run installs the
+      prerequisite before managing the repository.
+  when:
+    - ansible_check_mode
+    - knot_resolver_python_debian.rc != 0
+
+- name: Refresh APT cache after repository changes  # noqa no-handler
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+  when: knot_resolver_repository.changed | default(false)
+
+- name: Check whether Knot Resolver is already installed
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/test
+      - -x
+      - /usr/bin/kresctl
+  check_mode: false
+  changed_when: false
+  failed_when: false
+  register: knot_resolver_installed
+
+- name: Install Knot Resolver packages
+  become: true
+  ansible.builtin.apt:
+    name:
+      - "{{ knot_resolver_package }}"
+      - python3-prometheus-client
+      - dnsutils
+    state: present
+  when: not ansible_check_mode
+
+- name: Resolve the Knot Resolver service account
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ knot_resolver_user }}"
+  when: not ansible_check_mode or knot_resolver_installed.rc == 0
+
+- name: Resolve the Knot Resolver service account group
+  ansible.builtin.getent:
+    database: group
+    key: "{{ ansible_facts.getent_passwd[knot_resolver_user][2] }}"
+  when: not ansible_check_mode or knot_resolver_installed.rc == 0
+
+- name: Explain pristine check-mode limitation
+  ansible.builtin.debug:
+    msg: >-
+      Knot Resolver is not installed yet. Package-dependent configuration and
+      runtime validation are deferred until the first normal playbook run.
+  when:
+    - ansible_check_mode
+    - knot_resolver_installed.rc != 0
+
+- name: Configure Knot Resolver
+  become: true
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "{{ knot_resolver_config_path }}"
+    owner: root
+    group: "{{ ansible_facts.getent_group | list | first }}"
+    mode: "0640"
+    validate: "/usr/bin/kresctl validate %s"
+  notify: Reload Knot Resolver
+  when: not ansible_check_mode or knot_resolver_installed.rc == 0
+
+- name: Validate the installed Knot Resolver configuration
+  become: true
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/kresctl
+      - validate
+      - "{{ knot_resolver_config_path }}"
+  changed_when: false
+  when: not ansible_check_mode or knot_resolver_installed.rc == 0
+
+- name: Enable and start Knot Resolver
+  become: true
+  ansible.builtin.systemd:
+    name: "{{ knot_resolver_service }}"
+    enabled: true
+    state: started
+  when: not ansible_check_mode or knot_resolver_installed.rc == 0
+
+- name: Apply pending Knot Resolver reload
+  ansible.builtin.meta: flush_handlers
+
+- name: Install Knot Resolver metrics collector
+  become: true
+  ansible.builtin.template:
+    src: knot-resolver-metrics.sh.j2
+    dest: "{{ knot_resolver_metrics_script_path }}"
+    owner: root
+    group: root
+    mode: "0755"
+  when: not ansible_check_mode or knot_resolver_installed.rc == 0
+
+- name: Install Knot Resolver metrics service
+  become: true
+  ansible.builtin.template:
+    src: knot-resolver-metrics.service.j2
+    dest: /etc/systemd/system/knot-resolver-metrics.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart Knot Resolver metrics timer
+  when: not ansible_check_mode or knot_resolver_installed.rc == 0
+
+- name: Install Knot Resolver metrics timer
+  become: true
+  ansible.builtin.template:
+    src: knot-resolver-metrics.timer.j2
+    dest: /etc/systemd/system/knot-resolver-metrics.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart Knot Resolver metrics timer
+  when: not ansible_check_mode or knot_resolver_installed.rc == 0
+
+- name: Apply pending systemd changes
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start Knot Resolver metrics timer
+  become: true
+  ansible.builtin.systemd:
+    name: knot-resolver-metrics.timer
+    enabled: true
+    state: started
+  when: not ansible_check_mode or knot_resolver_installed.rc == 0

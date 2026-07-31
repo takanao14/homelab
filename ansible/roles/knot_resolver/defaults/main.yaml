@@ -1,0 +1,46 @@
+---
+knot_resolver_repository_url: "https://pkg.labs.nic.cz/knot-resolver"
+knot_resolver_repository_suite: "{{ ansible_facts['distribution_release'] }}"
+knot_resolver_repository_key_url: "https://pkg.labs.nic.cz/gpg"
+# Verified against the official CZ.NIC Labs documentation on 2026-07-31.
+knot_resolver_repository_key_checksum: "sha256:e82408f6c31b994e896f9c4244fa73bf92a10435289cab1f5ef5b619adae6482"
+knot_resolver_repository_key_fingerprint: "9C71D59CD4CE8BD2966A7A3EAB6A303124019B64"
+knot_resolver_repository_key_path: "/etc/apt/keyrings/cznic-labs-pkg.gpg"
+knot_resolver_repository_pin_path: "/etc/apt/preferences.d/knot-resolver"
+
+knot_resolver_package: "knot-resolver6"
+knot_resolver_service: "knot-resolver"
+knot_resolver_user: "knot-resolver"
+knot_resolver_config_path: "/etc/knot-resolver/config.yaml"
+
+knot_resolver_server_addr: "{{ ansible_host }}"
+knot_resolver_allowed_clients: []
+knot_resolver_workers: 1
+knot_resolver_cache_storage: "/var/cache/knot-resolver"
+knot_resolver_cache_size: "100M"
+
+knot_resolver_metrics_path: "/var/lib/node_exporter/textfile_collector/knot_resolver.prom"
+knot_resolver_metrics_script_path: "/usr/local/sbin/knot-resolver-metrics"
+knot_resolver_metrics_interval: "1min"
+
+knot_resolver_config:
+  workers: "{{ knot_resolver_workers | int }}"
+  network:
+    listen:
+      - interface: "{{ knot_resolver_server_addr }}"
+        port: 53
+        kind: dns
+  views:
+    - subnets:
+        - "0.0.0.0/0"
+        - "::/0"
+      answer: refused
+    - subnets: "{{ knot_resolver_allowed_clients }}"
+      answer: allow
+  cache:
+    storage: "{{ knot_resolver_cache_storage }}"
+    size-max: "{{ knot_resolver_cache_size }}"
+  dnssec:
+    log-bogus: true
+  monitoring:
+    metrics: always

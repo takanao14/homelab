@@ -2,27 +2,26 @@
 
 Installs and configures dnsdist from the official PowerDNS repository on Debian-based systems.
 
-Sets up dnsdist as a DNS load balancer and forwarder: internal domain queries are routed to the PowerDNS Authoritative secondary backends, and external queries go to public resolvers.
+Sets up dnsdist as a DNS load balancer and forwarder: internal domain queries
+are routed to the PowerDNS Authoritative secondary backends, and external
+queries go to dedicated Knot Resolver backends.
 
 ## Architecture
 
 dnsdist sits in front of the authoritative DNS servers:
 
 - **Internal forward and reverse zones** (`home.butaco.net.`, `prd.butaco.net.`, `sandbox.butaco.net.`, `168.192.in-addr.arpa.`) → routed to the `internal` pool (PowerDNS secondaries only — the hidden primary is excluded). The single reverse suffix covers every `192.168.x.0/24` segment: the management LAN and each per-node Proxmox SimpleZone.
-- **Locally served reverse zones** (`10.in-addr.arpa.`, `254.169.in-addr.arpa.`, `127.in-addr.arpa.`, `16.172.` … `31.172.in-addr.arpa.`) → answered by dnsdist itself with NXDOMAIN, never forwarded (RFC 6303)
-- **External domains** → routed to the default pool (public resolvers)
+- **Other domains, including RFC 6303 reverse zones** → routed to the default pool (resolver1/resolver2); Knot Resolver owns recursive and special-use-zone policy
 
-The `internal` pool is built dynamically from `secondary_auth_servers`, so adding or removing a secondary only requires updating that list.
+The `internal` pool is built dynamically from `secondary_auth_servers`, so
+adding or removing a secondary only requires updating that list. The default
+pool is built from `dns_resolver_servers`; each dnsdist frontend assigns order
+1 to its node-local resolver and order 2 to the peer, then uses
+`firstAvailable`.
 
-### Why RFC1918 reverse queries are answered locally
-
-The public resolvers in the default pool cannot hold RFC1918 PTR data: those queries reach AS112 and come back NXDOMAIN, after the upstream has seen the internal addressing. Answering locally returns the same NXDOMAIN clients already received, minus the round trip and the disclosure.
-
-This is not only about queries from the LAN. The clusters' CoreDNS runs with `fallthrough in-addr.arpa`, so a reverse lookup for a pod address (Cilium's pool is `10.0.0.0/8`) that its `kubernetes` plugin cannot answer is forwarded here. Service addresses are answered authoritatively by CoreDNS and never arrive.
-
-`dnsdist_internal_domains` and `dnsdist_local_reverse_zones` must stay disjoint — the first routes to pdns, the second is answered locally, and a zone cannot be both. The role asserts this before templating.
-
-`168.192.in-addr.arpa.` belongs to the first list: pdns is authoritative for that whole `/16` as one aggregated zone, so undeclared addresses inside it answer an authoritative NXDOMAIN rather than REFUSED. IPv6 zones are omitted because the network has no IPv6.
+`168.192.in-addr.arpa.` remains an explicit internal-zone exception: pdns is
+authoritative for that whole `/16` as one aggregated zone, so undeclared
+addresses inside it answer an authoritative NXDOMAIN rather than REFUSED.
 
 ## Functionality
 
@@ -48,7 +47,7 @@ role resolves it at run time with two `getent` lookups (user, then group by GID)
 instead of hard-coding a name — if the package renames or drops the account the
 lookup fails before the config is rewritten, leaving the running service alone.
 
-Three non-obvious details in that template and task:
+Two non-obvious details in that template and task:
 
 - The render goes through `to_json | from_json` first. `map('combine')` merges
   one literal dict object into every backend, so PyYAML would otherwise emit
@@ -85,18 +84,15 @@ YAML file as well.
 
 1. `internal-no-recurse` — non-terminal, falls through to 2
 2. `internal-pool` — `stop_processing: true`, the routing decision is final
-3. `rfc6303-local-reverse` — terminal, these never reach a backend
-4. `dnstap-queries` — last
+3. `dnstap-queries` — records queries sent to the default resolver pool
 
-Rules 2 and 3 are both terminal, so **dnstap only sees queries that reach the
-default pool**. Neither internal-zone queries nor locally answered RFC 6303
-NXDOMAINs are logged to dnscollector. `showRules()` confirms this on both the
-Lua and YAML configurations — rule 4's match count is lower than rule 1's by
-exactly the number of internal queries.
+Rule 2 is terminal, so **dnstap only sees queries that reach the default
+pool**. Internal-zone queries are not logged to dnscollector. RFC 6303 queries
+now reach Knot Resolver and are logged like other default-pool queries.
 
 That is inherited behaviour, not a design decision made here. If dnscollector
-should see the internal traffic, move rule 4 to the front deliberately rather
-than letting an edit change it as a side effect.
+should see the internal traffic, move the dnstap rule to the front deliberately
+rather than letting an edit change it as a side effect.
 
 ## Variables
 
@@ -117,9 +113,13 @@ These are mapped to `dnsdist_web_password`, `dnsdist_web_api_key`, and `dnsdist_
 | Variable | Description |
 |----------|-------------|
 | `secondary_auth_servers` | List of `{name, address}` dicts for all secondary auth servers (single source of truth for the `internal` pool) |
-| `dnsdist_default_servers` | List of `{name, address, health_checks}` dicts for public resolvers (defined in `group_vars/dnsdist.yaml`) |
+| `dns_resolver_servers` | Canonical resolver1/resolver2 `{name, address}` list shared by both frontends |
+| `dnsdist_preferred_resolver` | Host-specific name of the node-local preferred resolver |
 
-`dnsdist_internal_backends` and `dnsdist_default_backends` are derived automatically in `defaults/main.yaml` by merging the above lists with a `pools` sequence. Internal backends also get a shared `health_checks` mapping built from `dnsdist_internal_check_name`; the public resolvers carry their own, because they do not all answer for the same probe name.
+`dnsdist_internal_backends` and `dnsdist_default_backends` are derived
+automatically in `defaults/main.yaml`. Internal backends get a shared health
+check built from `dnsdist_internal_check_name`; resolver backends share
+`dnsdist_default_check_name` and differ only in their per-frontend order.
 
 ### Role defaults (in `defaults/main.yaml`)
 
@@ -130,10 +130,8 @@ These are mapped to `dnsdist_web_password`, `dnsdist_web_api_key`, and `dnsdist_
 | `dnsdist_mgmt_acl` | `[127.0.0.1/32, 192.168.0.0/16, 10.0.0.0/8]` | ACL for web UI access. A list, not a comma-separated string — the YAML config takes a sequence |
 | `dnsdist_console_acl` | `[127.0.0.1/32]` | ACL for console access (list) |
 | `dnsdist_internal_domains` | `home.butaco.net.`, `prd.butaco.net.`, `sandbox.butaco.net.`, `168.192.in-addr.arpa.` | Forward and reverse zones routed to the `internal` pool (suffix match, so one reverse entry covers all `192.168.x.0/24`) |
-| `dnsdist_local_reverse_zones` | `10.`, `254.169.`, `127.`, `16.172.` … `31.172.in-addr.arpa.` | Reverse zones answered locally with NXDOMAIN instead of being forwarded (RFC 6303). Must be disjoint from `dnsdist_internal_domains` |
 | `dnsdist_internal_check_name` | `ns1.home.butaco.net.` | Health check FQDN for internal backends |
-| `dnsdist_packet_cache_size` | `10000` | Packet cache entry limit (default pool only) |
-| `dnsdist_packet_cache_max_ttl` | `86400` | Maximum TTL for cached entries (seconds) |
+| `dnsdist_default_check_name` | `dnssec.works.` | Health check FQDN for resolver backends |
 | `dnsdist_repo_channel` | `dnsdist-21` | PowerDNS APT repository channel (release train, not a version pin) |
 | `dnsdist_repo_release` | `{{ ansible_facts['distribution_release'] }}` | Ubuntu release codename |
 | `dnsdist_repo_key_sha256` | `efeb5b14…decae8` | Checksum of the repository signing key. Verifies the APT trust anchor, and is what lets `get_url` skip the network once the key is in place — `force: false` alone does not, because the skip is gated on a checksum being set. Shared with the `pdns_auth` role, which fetches the same file |

@@ -1,0 +1,13 @@
+[Unit]
+Description=Collect Knot Resolver metrics
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec={{ knot_resolver_metrics_interval }}
+RandomizedDelaySec=10s
+Persistent=true
+Unit=knot-resolver-metrics.service
+
+[Install]
+WantedBy=timers.target
+

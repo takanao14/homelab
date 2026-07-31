@@ -12,6 +12,10 @@ all:
       ansible_host: 192.168.10.231
     dist2:
       ansible_host: 192.168.10.232
+    resolver1:
+      ansible_host: 192.168.10.236
+    resolver2:
+      ansible_host: 192.168.10.237
     log1:
       ansible_host: 192.168.10.243
     forgejo1:
@@ -78,6 +82,10 @@ all:
           hosts:
             dist1: null
             dist2: null
+        dns_resolver:
+          hosts:
+            resolver1: null
+            resolver2: null
 
     openbao:
       hosts:
@@ -144,6 +152,8 @@ all:
         ns3: null
         dist1: null
         dist2: null
+        resolver1: null
+        resolver2: null
         seaweedfs1: null
 
     # LXC guests where Vector reads logs directly from journald.
@@ -152,6 +162,7 @@ all:
         caddy: {}
         dns_auth: {}
         dnsdist: {}
+        dns_resolver: {}
         forgejo: {}
         netbox: {}
         seaweedfs: {}
@@ -172,6 +183,7 @@ all:
       children:
         caddy: {}
         dnsdist: {}
+        dns_resolver: {}
         dns_auth: {}
         dhcp: {}
         forgejo: {}
@@ -216,6 +228,8 @@ all:
             seaweedfs1: null
             forgejo1: null
             netbox1: null
+            resolver1: null
+            resolver2: null
       hosts:
         pve: null
         node1: null

@@ -20,6 +20,7 @@ ansible/
 │       │   ├── dns_primary.yaml     # Primary-specific pdns_auth variables
 │       │   ├── dns_secondary.yaml   # Secondary-specific pdns_auth variables
 │       │   ├── dnsdist.yaml
+│       │   ├── dns_resolver.yaml
 │       │   ├── dnsdist.sops.yaml
 │       │   ├── caddy.yaml
 │       │   ├── caddy.sops.yaml
@@ -47,6 +48,7 @@ ansible/
 │   ├── bootstrap.yaml                   # new-host baseline (imports common-* hygiene)
 │   ├── pdns_auth.yaml                   # system (no prefix)
 │   ├── dnsdist.yaml
+│   ├── knot-resolver.yaml
 │   ├── caddy.yaml
 │   ├── dhcp.yaml
 │   ├── forgejo.yaml
@@ -81,6 +83,7 @@ ansible/
 └── roles/
     ├── pdns_auth/
     ├── dnsdist/
+    ├── knot_resolver/
     ├── dnscollector/
     ├── caddy/
     ├── vector/
@@ -206,6 +209,9 @@ ansible-playbook playbooks/pdns_auth.yaml
 
 # dnsdist
 ansible-playbook playbooks/dnsdist.yaml
+
+# Knot Resolver
+ansible-playbook playbooks/knot-resolver.yaml
 
 # DHCP server
 ansible-playbook playbooks/dhcp.yaml
@@ -382,6 +388,7 @@ the decision behind the rebuild registration flow.
 |----------|-------|-------|
 | `pdns_auth.yaml` | `dns_primary`, `dns_secondary` | system |
 | `dnsdist.yaml` | `dnsdist` | system |
+| `knot-resolver.yaml` | `dns_resolver` | system |
 | `dhcp.yaml` | `dhcp` | system |
 | `caddy.yaml` | `caddy` | system |
 | `log_collector.yaml` | `log_collector` | system |
@@ -404,7 +411,8 @@ the decision behind the rebuild registration flow.
 | `common-maintenance_user.yaml` | `lxc` | cross-cutting |
 | `common-users.yaml` | `shared_vms` | cross-cutting |
 | `ops-package_upgrade.yaml` | `all:!proxmox` | ops |
-| `ops-version_audit.yaml` | `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `seaweedfs`, `openbao`, `gpuvm` | ops |
+| `ops-version_audit.yaml` | `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `dns_resolver`, `seaweedfs`, `openbao`, `gpuvm` | ops |
+| `ops-dns_failover_test.yaml` | delegated DNS hosts; orchestration on localhost | ops (state-changing failure test) |
 | `ops-pdns_sync.yaml` | `dns_primary`, `dns_secondary` | ops |
 | `ops-openbao_bootstrap.yaml` | `openbao` | ops |
 | `ops-openbao_configure.yaml` | `openbao` | ops |
@@ -412,6 +420,28 @@ the decision behind the rebuild registration flow.
 | `ops-openbao_register_cluster.yaml` | `openbao`, localhost kubeconfig/context | ops |
 | `ops-openbao_seed_secrets.yaml` | `openbao` | ops |
 | `ops-openbao_upgrade.yaml` | `openbao` | ops |
+
+### DNS failover testing
+
+`ops-dns_failover_test.yaml` automates the ADR-0030 failure matrix. It stops
+live DNS services, validates dnsdist health and DNS behavior, and restores all
+stopped units in an `always` block after each scenario. An explicit disruption
+confirmation is required:
+
+```bash
+ansible-playbook playbooks/ops-dns_failover_test.yaml \
+  -e dns_failover_scenario=node2 \
+  -e confirm_dns_disruption=true
+```
+
+Supported scenarios are `resolver1`, `resolver2`, `node2`, `node3`,
+`both_resolvers`, and `all`. If the controller is interrupted before the
+`always` block completes, run the recovery action immediately:
+
+```bash
+ansible-playbook playbooks/ops-dns_failover_test.yaml \
+  -e dns_failover_action=restore
+```
 
 ## Secret Variables
 
@@ -439,11 +469,18 @@ the decision behind the rebuild registration flow.
 
 ## Non-Secret Configuration
 
-DNS backend server addresses are defined in `inventories/homelab/group_vars/dns.yaml` and shared across `pdns_auth` and `dnsdist` roles:
+DNS backend server addresses are defined in
+`inventories/homelab/group_vars/dns.yaml` and shared across the `pdns_auth`,
+`dnsdist`, and `knot_resolver` roles:
 
 ```yaml
 primary_auth_server: "192.168.10.233:53"
 secondary_auth_server: "192.168.10.234:53"
+dns_resolver_servers:
+  - name: resolver1
+    address: "192.168.10.236:53"
+  - name: resolver2
+    address: "192.168.10.237:53"
 ```
 
 ## Tips

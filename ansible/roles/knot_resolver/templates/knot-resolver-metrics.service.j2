@@ -1,0 +1,7 @@
+[Unit]
+Description=Export Knot Resolver metrics for node_exporter
+After=knot-resolver.service
+
+[Service]
+Type=oneshot
+ExecStart={{ knot_resolver_metrics_script_path }}

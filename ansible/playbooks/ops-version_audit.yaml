@@ -1,7 +1,8 @@
 ---
-# Read-only audit for Renovate-managed Ansible components.
-# This playbook compares desired versions from role defaults with the versions
-# currently installed on hosts. It does not call service roles or change state.
+# Read-only audit for version-managed Ansible components.
+# This playbook compares desired or repository candidate versions with the
+# versions currently installed on hosts. It does not call service roles or
+# change state.
 
 - name: Audit Forgejo version
   hosts: forgejo
@@ -310,3 +311,77 @@
              or exporter_audit_installed.startswith(rocm_device_metrics_exporter_version ~ '-')
              or exporter_audit_installed.startswith(rocm_device_metrics_exporter_version ~ '+')
              or exporter_audit_installed.startswith(rocm_device_metrics_exporter_version ~ '~') }}
+
+- name: Audit Knot Resolver package version
+  hosts: dns_resolver
+  gather_facts: false
+  vars_files:
+    - ../roles/knot_resolver/defaults/main.yaml
+  tasks:
+    - name: Read Knot Resolver package policy
+      ansible.builtin.command:
+        argv:
+          - apt-cache
+          - policy
+          - "{{ knot_resolver_package }}"
+      register: knot_resolver_audit_policy
+      changed_when: false
+      failed_when: false
+
+    - name: Report Knot Resolver package version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s candidate=%-24s installed=%-24s %s' | format(
+            'knot-resolver',
+            inventory_hostname,
+            knot_resolver_audit_candidate,
+            knot_resolver_audit_installed,
+            'OK' if knot_resolver_audit_installed == knot_resolver_audit_candidate else 'DIFF'
+          ) }}
+      vars:
+        knot_resolver_audit_installed: >-
+          {{ knot_resolver_audit_policy.stdout
+             | regex_search('(?m)^\\s*Installed:\\s*(\\S+)', '\\1')
+             | default(['unknown'], true)
+             | first }}
+        knot_resolver_audit_candidate: >-
+          {{ knot_resolver_audit_policy.stdout
+             | regex_search('(?m)^\\s*Candidate:\\s*(\\S+)', '\\1')
+             | default(['unknown'], true)
+             | first }}
+
+- name: Audit dnsdist package version
+  hosts: dnsdist
+  gather_facts: false
+  tasks:
+    - name: Read dnsdist package policy
+      ansible.builtin.command:
+        argv:
+          - apt-cache
+          - policy
+          - dnsdist
+      register: dnsdist_audit_policy
+      changed_when: false
+      failed_when: false
+
+    - name: Report dnsdist package version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s candidate=%-24s installed=%-24s %s' | format(
+            'dnsdist',
+            inventory_hostname,
+            dnsdist_audit_candidate,
+            dnsdist_audit_installed,
+            'OK' if dnsdist_audit_installed == dnsdist_audit_candidate else 'DIFF'
+          ) }}
+      vars:
+        dnsdist_audit_installed: >-
+          {{ dnsdist_audit_policy.stdout
+             | regex_search('(?m)^\\s*Installed:\\s*(\\S+)', '\\1')
+             | default(['unknown'], true)
+             | first }}
+        dnsdist_audit_candidate: >-
+          {{ dnsdist_audit_policy.stdout
+             | regex_search('(?m)^\\s*Candidate:\\s*(\\S+)', '\\1')
+             | default(['unknown'], true)
+             | first }}

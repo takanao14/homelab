@@ -1,0 +1,301 @@
+---
+# Controlled DNS failure-mode tests for ADR-0030.
+#
+# Test one scenario:
+#   ansible-playbook playbooks/ops-dns_failover_test.yaml \
+#     -e dns_failover_scenario=resolver1 \
+#     -e confirm_dns_disruption=true
+#
+# Test every scenario sequentially, restoring services after each one:
+#   ansible-playbook playbooks/ops-dns_failover_test.yaml \
+#     -e dns_failover_scenario=all \
+#     -e confirm_dns_disruption=true
+#
+# Emergency recovery after controller interruption:
+#   ansible-playbook playbooks/ops-dns_failover_test.yaml \
+#     -e dns_failover_action=restore
+
+- name: Exercise DNS resolver and failure-domain failover
+  hosts: localhost
+  gather_facts: false
+  any_errors_fatal: true
+  vars:
+    dns_failover_action: test
+    dns_failover_scenario: ""
+    confirm_dns_disruption: false
+    dns_failover_health_wait_seconds: 10
+    dns_failover_blackbox_url: "http://192.168.10.241:9115/probe"
+
+    dns_failover_frontends:
+      dist1: "{{ hostvars['dist1']['ansible_host'] }}"
+      dist2: "{{ hostvars['dist2']['ansible_host'] }}"
+
+    dns_failover_all_services:
+      - host: ns2
+        service: pdns
+      - host: ns3
+        service: pdns
+      - host: resolver1
+        service: knot-resolver
+      - host: resolver2
+        service: knot-resolver
+      - host: dist1
+        service: dnsdist
+      - host: dist2
+        service: dnsdist
+
+    dns_failover_scenario_order:
+      - resolver1
+      - resolver2
+      - node2
+      - node3
+      - both_resolvers
+
+    dns_failover_scenarios:
+      resolver1:
+        description: Stop resolver1 and verify both frontends use resolver2
+        stop:
+          - host: resolver1
+            service: knot-resolver
+        restore:
+          - host: resolver1
+            service: knot-resolver
+        surviving_frontends:
+          - dist1
+          - dist2
+        expected_down:
+          - resolver1
+        expected_up:
+          - resolver2
+        external_available: true
+
+      resolver2:
+        description: Stop resolver2 and verify both frontends use resolver1
+        stop:
+          - host: resolver2
+            service: knot-resolver
+        restore:
+          - host: resolver2
+            service: knot-resolver
+        surviving_frontends:
+          - dist1
+          - dist2
+        expected_down:
+          - resolver2
+        expected_up:
+          - resolver1
+        external_available: true
+
+      node2:
+        description: Simulate loss of the node2 DNS service set
+        stop:
+          - host: resolver1
+            service: knot-resolver
+          - host: ns3
+            service: pdns
+          - host: dist1
+            service: dnsdist
+        restore:
+          - host: ns3
+            service: pdns
+          - host: resolver1
+            service: knot-resolver
+          - host: dist1
+            service: dnsdist
+        surviving_frontends:
+          - dist2
+        expected_down:
+          - resolver1
+          - ns3
+        expected_up:
+          - resolver2
+          - ns2
+        external_available: true
+
+      node3:
+        description: Simulate loss of the node3 DNS service set
+        stop:
+          - host: resolver2
+            service: knot-resolver
+          - host: ns2
+            service: pdns
+          - host: dist2
+            service: dnsdist
+        restore:
+          - host: ns2
+            service: pdns
+          - host: resolver2
+            service: knot-resolver
+          - host: dist2
+            service: dnsdist
+        surviving_frontends:
+          - dist1
+        expected_down:
+          - resolver2
+          - ns2
+        expected_up:
+          - resolver1
+          - ns3
+        external_available: true
+
+      both_resolvers:
+        description: Stop both resolvers while keeping authoritative DNS available
+        stop:
+          - host: resolver1
+            service: knot-resolver
+          - host: resolver2
+            service: knot-resolver
+        restore:
+          - host: resolver1
+            service: knot-resolver
+          - host: resolver2
+            service: knot-resolver
+        surviving_frontends:
+          - dist1
+          - dist2
+        expected_down:
+          - resolver1
+          - resolver2
+        expected_up:
+          - ns2
+          - ns3
+        external_available: false
+
+    dns_failover_selected_scenarios: >-
+      {{ dns_failover_scenario_order
+         if dns_failover_scenario == 'all'
+         else [dns_failover_scenario] }}
+
+  tasks:
+    - name: Validate failover action
+      ansible.builtin.assert:
+        that:
+          - dns_failover_action in ['test', 'restore']
+          - not ansible_check_mode
+        fail_msg: >-
+          dns_failover_action must be test or restore. This operational
+          playbook cannot run in check mode.
+
+    - name: Restore every managed DNS service
+      become: true
+      ansible.builtin.systemd:
+        name: "{{ item.service }}"
+        state: started
+      delegate_to: "{{ item.host }}"
+      loop: "{{ dns_failover_all_services }}"
+      loop_control:
+        label: "{{ item.host }}:{{ item.service }}"
+      when: dns_failover_action == 'restore'
+
+    - name: Wait for every recovered DNS service to become active
+      ansible.builtin.command:
+        argv:
+          - systemctl
+          - is-active
+          - "{{ item.service }}"
+      delegate_to: "{{ item.host }}"
+      loop: "{{ dns_failover_all_services }}"
+      loop_control:
+        label: "{{ item.host }}:{{ item.service }}"
+      check_mode: false
+      changed_when: false
+      register: dns_failover_recovery_services
+      retries: 10
+      delay: 2
+      until: dns_failover_recovery_services.rc == 0
+      when: dns_failover_action == 'restore'
+
+    - name: Confirm recovery action completed
+      ansible.builtin.debug:
+        msg: >-
+          Recovery requested. All managed DNS services have been started;
+          verify dnsdist backend health before resuming normal operations.
+      when: dns_failover_action == 'restore'
+
+    - name: End after recovery action
+      ansible.builtin.meta: end_play
+      when: dns_failover_action == 'restore'
+
+    - name: Validate requested test scenario
+      ansible.builtin.assert:
+        that:
+          - confirm_dns_disruption | bool
+          - dns_failover_scenario in (dns_failover_scenario_order + ['all'])
+        fail_msg: >-
+          Select resolver1, resolver2, node2, node3, both_resolvers, or all and
+          pass -e confirm_dns_disruption=true. This playbook stops live DNS
+          services and restores them after each scenario.
+
+    - name: Check preflight service state
+      ansible.builtin.command:
+        argv:
+          - systemctl
+          - is-active
+          - "{{ item.service }}"
+      delegate_to: "{{ item.host }}"
+      loop: "{{ dns_failover_all_services }}"
+      loop_control:
+        label: "{{ item.host }}:{{ item.service }}"
+      check_mode: false
+      changed_when: false
+      failed_when: false
+      register: dns_failover_preflight_services
+
+    - name: Report inactive preflight services
+      ansible.builtin.debug:
+        msg: >-
+          {{ item.item.host }}:{{ item.item.service }} is not active
+          (state={{ item.stdout | default('unknown', true) | trim }},
+          rc={{ item.rc }}).
+      loop: "{{ dns_failover_preflight_services.results }}"
+      loop_control:
+        label: "{{ item.item.host }}:{{ item.item.service }}"
+      when: item.rc != 0
+
+    - name: Require every managed DNS service to be active before testing
+      ansible.builtin.assert:
+        that:
+          - >-
+            dns_failover_preflight_services.results
+            | selectattr('rc', 'ne', 0)
+            | list
+            | length == 0
+        fail_msg: >-
+          At least one managed DNS service is not active. Run with
+          -e dns_failover_action=restore, verify backend health, and retry.
+
+    - name: Read metrics service dependencies
+      ansible.builtin.command:
+        argv:
+          - systemctl
+          - show
+          - knot-resolver-metrics.service
+          - --property=Requires
+          - --value
+      delegate_to: "{{ item }}"
+      loop:
+        - resolver1
+        - resolver2
+      loop_control:
+        label: "{{ item }}"
+      check_mode: false
+      changed_when: false
+      register: dns_failover_metrics_requires
+
+    - name: Ensure metrics collection cannot restart a stopped resolver
+      ansible.builtin.assert:
+        that:
+          - "'knot-resolver.service' not in item.stdout.split()"
+        fail_msg: >-
+          {{ item.item }} metrics service still requires knot-resolver.service
+          and would invalidate the stop test by restarting the resolver.
+      loop: "{{ dns_failover_metrics_requires.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Run selected DNS failover scenarios
+      ansible.builtin.include_tasks: tasks/dns-failover-scenario.yaml
+      loop: "{{ dns_failover_selected_scenarios }}"
+      loop_control:
+        loop_var: dns_failover_scenario_name
+        label: "{{ dns_failover_scenario_name }}"

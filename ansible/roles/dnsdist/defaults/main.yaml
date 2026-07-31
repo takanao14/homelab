@@ -43,9 +43,6 @@ dnsdist_mgmt_acl:
 dnsdist_console_acl:
   - "127.0.0.1/32"
 
-dnsdist_packet_cache_size: 10000
-dnsdist_packet_cache_max_ttl: 86400
-
 dnsdist_internal_domains:
   - "home.butaco.net."
   - "prd.butaco.net."
@@ -63,52 +60,6 @@ dnsdist_internal_domains:
   # outside it answer REFUSED instead.
   - "168.192.in-addr.arpa."
 dnsdist_internal_check_name: "ns1.home.butaco.net."
-
-# RFC 6303 locally served reverse zones. Nothing in this network is
-# authoritative for them, and the public resolvers in the default pool never can
-# be — RFC1918 PTR queries reach AS112 and come back NXDOMAIN, after the
-# upstream has seen our internal addressing. dnsdist answers them itself.
-#
-# This changes no answer: clients already receive NXDOMAIN for every zone listed
-# here. What it removes is a round trip and the disclosure. Note the disclosure
-# is not only from the LAN side — CoreDNS runs with `fallthrough in-addr.arpa`,
-# so in-cluster reverse lookups for pod addresses (Cilium's pool is 10.0.0.0/8)
-# fall through to this resolver as well. Service addresses are answered
-# authoritatively by CoreDNS and never arrive here.
-#
-# 168.192.in-addr.arpa is deliberately absent: it belongs to pdns via
-# dnsdist_internal_domains above. IPv6 zones are omitted because this network
-# has no IPv6 (no AAAA records anywhere, no IPv6 in the Cilium config).
-#
-# Hand-rolled here because RFC 6303 is a recursive-resolver responsibility and
-# dnsdist is a load balancer, not a resolver — there is no switch to flip. A
-# recursor would make this a one-liner (pdns-recursor `serve-rfc1918`, default
-# yes; BIND `empty-zones-enable`; Unbound has the zones built in), but the
-# default pool here is the router plus public resolvers, with no recursor of
-# ours in the path. If one is ever introduced, drop this list and the rule that
-# consumes it rather than keeping both.
-dnsdist_local_reverse_zones:
-  - "10.in-addr.arpa."        # RFC1918 10/8 — holds the Cilium pod CIDR
-  - "254.169.in-addr.arpa."   # link-local 169.254.0.0/16
-  - "127.in-addr.arpa."       # loopback
-  # RFC1918 172.16/12. Unused by this network, but Docker's default bridge
-  # (172.17.0.1) appears on any host that runs it.
-  - "16.172.in-addr.arpa."
-  - "17.172.in-addr.arpa."
-  - "18.172.in-addr.arpa."
-  - "19.172.in-addr.arpa."
-  - "20.172.in-addr.arpa."
-  - "21.172.in-addr.arpa."
-  - "22.172.in-addr.arpa."
-  - "23.172.in-addr.arpa."
-  - "24.172.in-addr.arpa."
-  - "25.172.in-addr.arpa."
-  - "26.172.in-addr.arpa."
-  - "27.172.in-addr.arpa."
-  - "28.172.in-addr.arpa."
-  - "29.172.in-addr.arpa."
-  - "30.172.in-addr.arpa."
-  - "31.172.in-addr.arpa."
 
 # Secrets - loaded via community.sops.sops from group_vars/dnsdist.sops.yaml
 dnsdist_web_password: "{{ DNSDIST_WEB_PASSWORD }}"
@@ -129,17 +80,36 @@ dnsdist_internal_backends: >-
        })
      | list }}
 
-# '' is the default pool. Each entry in dnsdist_default_servers carries its own
-# health_checks mapping, because the resolvers do not all answer for the same
-# probe name.
-#
-# `protocol` is set explicitly on every backend because dnsdist requires it, even
-# though the YAML reference documents a default for it. The binary rejects a
-# backend without it ("missing field `protocol`"), so trust the parser here.
-dnsdist_default_backends: >-
-  {{ dnsdist_default_servers
-     | map('combine', {'protocol': 'Do53', 'pools': ['']})
+# Build the default pool from the canonical resolver inventory. Each frontend
+# prefers its node-local resolver (order 1) and uses the peer resolver as a
+# standby (order 2). firstAvailable selects the lowest-order healthy server.
+dnsdist_default_health_checks:
+  qname: "{{ dnsdist_default_check_name }}"
+  qtype: "{{ dnsdist_default_check_type }}"
+
+dnsdist_preferred_backend: >-
+  {{ dns_resolver_servers
+     | selectattr('name', 'equalto', dnsdist_preferred_resolver)
+     | first
+     | combine({
+         'protocol': 'Do53',
+         'pools': [''],
+         'order': 1,
+         'health_checks': dnsdist_default_health_checks,
+       }) }}
+
+dnsdist_standby_backends: >-
+  {{ dns_resolver_servers
+     | rejectattr('name', 'equalto', dnsdist_preferred_resolver)
+     | map('combine', {
+         'protocol': 'Do53',
+         'pools': [''],
+         'order': 2,
+         'health_checks': dnsdist_default_health_checks,
+       })
      | list }}
+
+dnsdist_default_backends: "{{ [dnsdist_preferred_backend] + dnsdist_standby_backends }}"
 
 # The whole dnsdist configuration as data. templates/dnsdist.yml.j2 does nothing
 # but render this through to_nice_yaml, so there is no hand-written YAML to get
@@ -153,12 +123,10 @@ dnsdist_default_backends: >-
 # in its own section and needs no suffix to disambiguate. When a type name is
 # wrong the parse error lists every valid variant, which is the reliable source.
 #
-# Rule order is load-bearing and matches the Lua config it replaces:
+# Rule order is load-bearing and retains the relevant Lua routing order:
 #   1. internal SetNoRecurse  (non-terminal, falls through to 2)
 #   2. internal Pool          (stop_processing: routing decision is final)
-#   3. RFC 6303 RCode         (terminal: these never reach a backend)
-#   4. dnstap on everything   (last, so queries answered by 3 are NOT logged —
-#      preserving current dnscollector behaviour, see README)
+#   3. dnstap on default-pool queries
 dnsdist_config:
   # No top-level `acl`: the Lua config never set one either, so the upstream
   # default (RFC1918 + loopback + link-local + ULA) applies. Spelling it out here
@@ -169,18 +137,8 @@ dnsdist_config:
 
   backends: "{{ dnsdist_internal_backends + dnsdist_default_backends }}"
 
-  packet_caches:
-    - name: default-pool-cache
-      # `| int` is not decoration: to_nice_yaml writes whatever type it is given,
-      # and dnsdist rejects a quoted string where it wants an integer.
-      size: "{{ dnsdist_packet_cache_size | int }}"
-      max_ttl: "{{ dnsdist_packet_cache_max_ttl | int }}"
-      temporary_failure_ttl: 60
-      stale_ttl: 60
-
-  pools:
-    - name: ""
-      packet_cache: default-pool-cache
+  load_balancing_policies:
+    default_policy: firstAvailable
 
   ring_buffers:
     size: 10000
@@ -226,13 +184,6 @@ dnsdist_config:
         type: Pool
         pool_name: internal
         stop_processing: true
-    - name: rfc6303-local-reverse
-      selector:
-        type: QNameSuffix
-        suffixes: "{{ dnsdist_local_reverse_zones }}"
-      action:
-        type: RCode
-        rcode: NXDOMAIN
     - name: dnstap-queries
       selector:
         type: All

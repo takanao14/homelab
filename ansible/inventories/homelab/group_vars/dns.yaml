@@ -5,3 +5,11 @@ secondary_auth_servers:
     address: "192.168.10.234:53"
   - name: ns3
     address: "192.168.10.235:53"
+
+# Canonical recursive backend inventory. Addresses derive from host inventory
+# so dnsdist routing and resolver ACLs do not carry independent IP literals.
+dns_resolver_servers:
+  - name: resolver1
+    address: "{{ hostvars['resolver1']['ansible_host'] }}:53"
+  - name: resolver2
+    address: "{{ hostvars['resolver2']['ansible_host'] }}:53"

@@ -1,0 +1,342 @@
+---
+- name: Load scenario definition
+  ansible.builtin.set_fact:
+    dns_failover_current: "{{ dns_failover_scenarios[dns_failover_scenario_name] }}"
+
+- name: Announce failover scenario
+  ansible.builtin.debug:
+    msg: >-
+      Running {{ dns_failover_scenario_name }}:
+      {{ dns_failover_current.description }}
+
+- name: Exercise and restore failover scenario
+  block:
+    - name: Stop scenario services
+      become: true
+      ansible.builtin.systemd:
+        name: "{{ item.service }}"
+        state: stopped
+      delegate_to: "{{ item.host }}"
+      loop: "{{ dns_failover_current.stop }}"
+      loop_control:
+        label: "{{ item.host }}:{{ item.service }}"
+
+    - name: Wait for dnsdist health checks
+      ansible.builtin.pause:
+        seconds: "{{ dns_failover_health_wait_seconds | int }}"
+
+    - name: Read surviving dnsdist backend state
+      ansible.builtin.command:
+        argv:
+          - dnsdist
+          - -c
+          - -e
+          - showServers()
+      delegate_to: "{{ item }}"
+      loop: "{{ dns_failover_current.surviving_frontends }}"
+      loop_control:
+        label: "{{ item }}"
+      check_mode: false
+      changed_when: false
+      register: dns_failover_backend_state
+
+    - name: Require failed backends to be down
+      ansible.builtin.assert:
+        that:
+          - >-
+            item.0.stdout
+            | regex_search('(?m)^\\d+\\s+' ~ item.1 ~ '\\s+\\S+\\s+down\\s')
+            is not none
+        fail_msg: >-
+          {{ item.1 }} was not marked down on {{ item.0.item }}.
+      loop: >-
+        {{ dns_failover_backend_state.results
+           | product(dns_failover_current.expected_down)
+           | list }}
+      loop_control:
+        label: "{{ item.0.item }} expects {{ item.1 }} down"
+
+    - name: Require surviving backends to be up
+      ansible.builtin.assert:
+        that:
+          - >-
+            item.0.stdout
+            | regex_search('(?m)^\\d+\\s+' ~ item.1 ~ '\\s+\\S+\\s+up\\s')
+            is not none
+        fail_msg: >-
+          {{ item.1 }} was not healthy on {{ item.0.item }}.
+      loop: >-
+        {{ dns_failover_backend_state.results
+           | product(dns_failover_current.expected_up)
+           | list }}
+      loop_control:
+        label: "{{ item.0.item }} expects {{ item.1 }} up"
+
+    - name: Require zero current drop rate and TCP outstanding queries
+      ansible.builtin.assert:
+        that:
+          - (item.split()[10] | float) == 0
+          - (item.split()[13] | int) == 0
+        fail_msg: >-
+          Backend has a non-zero current drop rate or outstanding query:
+          {{ item }}
+      loop: >-
+        {{ dns_failover_backend_state.results
+           | map(attribute='stdout_lines')
+           | flatten
+           | select('match', '^\\d+\\s')
+           | list }}
+      loop_control:
+        label: "{{ item.split()[1] }}"
+
+    - name: Query valid DNSSEC name through surviving frontends
+      ansible.builtin.command:
+        argv:
+          - dig
+          - "@{{ dns_failover_frontends[item] }}"
+          - dnssec.works
+          - A
+          - +dnssec
+          - +time=10
+          - +tries=1
+          - +noall
+          - +comments
+          - +answer
+      delegate_to: "{{ item }}"
+      loop: "{{ dns_failover_current.surviving_frontends }}"
+      loop_control:
+        label: "{{ item }}"
+      check_mode: false
+      changed_when: false
+      register: dns_failover_external_valid
+      retries: 3
+      delay: 2
+      until:
+        - dns_failover_external_valid.rc == 0
+        - "'status: NOERROR' in dns_failover_external_valid.stdout"
+        - "' ad;' in dns_failover_external_valid.stdout"
+      when: dns_failover_current.external_available
+
+    - name: Query bogus DNSSEC name through surviving frontends
+      ansible.builtin.command:
+        argv:
+          - dig
+          - "@{{ dns_failover_frontends[item] }}"
+          - dnssec-failed.org
+          - A
+          - +dnssec
+          - +time=10
+          - +tries=1
+          - +noall
+          - +comments
+      delegate_to: "{{ item }}"
+      loop: "{{ dns_failover_current.surviving_frontends }}"
+      loop_control:
+        label: "{{ item }}"
+      check_mode: false
+      changed_when: false
+      register: dns_failover_external_bogus
+      failed_when: "'status: SERVFAIL' not in dns_failover_external_bogus.stdout"
+      when: dns_failover_current.external_available
+
+    - name: Require unavailable recursion to drop queries
+      ansible.builtin.command:
+        argv:
+          - dig
+          - "@{{ dns_failover_frontends[item] }}"
+          - dnssec.works
+          - A
+          - +dnssec
+          - +time=2
+          - +tries=1
+          - +noall
+          - +comments
+      delegate_to: "{{ item }}"
+      loop: "{{ dns_failover_current.surviving_frontends }}"
+      loop_control:
+        label: "{{ item }}"
+      check_mode: false
+      changed_when: false
+      failed_when: false
+      register: dns_failover_external_unavailable
+      when: not dns_failover_current.external_available
+
+    - name: Verify unavailable recursion did not return SERVFAIL
+      ansible.builtin.assert:
+        that:
+          - item.rc != 0
+          - "'status: SERVFAIL' not in item.stdout"
+          - "'status: NOERROR' not in item.stdout"
+        fail_msg: >-
+          {{ item.item }} returned a DNS response while both resolvers were
+          unavailable; the expected policy is to drop the query.
+      loop: "{{ dns_failover_external_unavailable.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: not dns_failover_current.external_available
+
+    - name: Query internal authoritative name through surviving frontends
+      ansible.builtin.command:
+        argv:
+          - dig
+          - "@{{ dns_failover_frontends[item] }}"
+          - ns1.home.butaco.net
+          - A
+          - +time=3
+          - +tries=1
+          - +noall
+          - +comments
+          - +answer
+      delegate_to: "{{ item }}"
+      loop: "{{ dns_failover_current.surviving_frontends }}"
+      loop_control:
+        label: "{{ item }}"
+      check_mode: false
+      changed_when: false
+      register: dns_failover_internal_forward
+      failed_when: >-
+        'status: NOERROR' not in dns_failover_internal_forward.stdout
+        or '192.168.10.233' not in dns_failover_internal_forward.stdout
+
+    - name: Query internal reverse name through surviving frontends
+      ansible.builtin.command:
+        argv:
+          - dig
+          - "@{{ dns_failover_frontends[item] }}"
+          - -x
+          - 192.168.10.233
+          - +time=3
+          - +tries=1
+          - +short
+      delegate_to: "{{ item }}"
+      loop: "{{ dns_failover_current.surviving_frontends }}"
+      loop_control:
+        label: "{{ item }}"
+      check_mode: false
+      changed_when: false
+      register: dns_failover_internal_reverse
+      failed_when: "'ns1.home.butaco.net.' not in dns_failover_internal_reverse.stdout"
+
+    - name: Query RFC 6303 local reverse name through surviving frontends
+      ansible.builtin.command:
+        argv:
+          - dig
+          - "@{{ dns_failover_frontends[item] }}"
+          - -x
+          - 10.0.0.92
+          - +time=3
+          - +tries=1
+          - +noall
+          - +comments
+      delegate_to: "{{ item }}"
+      loop: "{{ dns_failover_current.surviving_frontends }}"
+      loop_control:
+        label: "{{ item }}"
+      check_mode: false
+      changed_when: false
+      register: dns_failover_rfc6303
+      failed_when: "'status: NXDOMAIN' not in dns_failover_rfc6303.stdout"
+
+    - name: Probe external DNS through blackbox_exporter
+      ansible.builtin.uri:
+        url: >-
+          {{ dns_failover_blackbox_url }}?module=dns_external&target={{ dns_failover_frontends[item] }}
+        return_content: true
+      loop: "{{ dns_failover_current.surviving_frontends }}"
+      loop_control:
+        label: "{{ item }}"
+      register: dns_failover_blackbox_external
+
+    - name: Validate external blackbox result
+      ansible.builtin.assert:
+        that:
+          - >-
+            ('probe_success 1' in item.content)
+            if dns_failover_current.external_available
+            else ('probe_success 0' in item.content)
+        fail_msg: >-
+          Unexpected external DNS blackbox result for {{ item.item }}.
+      loop: "{{ dns_failover_blackbox_external.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Probe internal DNS through blackbox_exporter
+      ansible.builtin.uri:
+        url: >-
+          {{ dns_failover_blackbox_url }}?module=dns_internal&target={{ dns_failover_frontends[item] }}
+        return_content: true
+      loop: "{{ dns_failover_current.surviving_frontends }}"
+      loop_control:
+        label: "{{ item }}"
+      register: dns_failover_blackbox_internal
+
+    - name: Require internal blackbox probes to succeed
+      ansible.builtin.assert:
+        that:
+          - "'probe_success 1' in item.content"
+        fail_msg: >-
+          Internal DNS blackbox probe failed for {{ item.item }}.
+      loop: "{{ dns_failover_blackbox_internal.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+  always:
+    - name: Restore scenario services
+      become: true
+      ansible.builtin.systemd:
+        name: "{{ item.service }}"
+        state: started
+      delegate_to: "{{ item.host }}"
+      loop: "{{ dns_failover_current.restore }}"
+      loop_control:
+        label: "{{ item.host }}:{{ item.service }}"
+
+    - name: Wait for restored services to become active
+      ansible.builtin.command:
+        argv:
+          - systemctl
+          - is-active
+          - "{{ item.service }}"
+      delegate_to: "{{ item.host }}"
+      loop: "{{ dns_failover_current.restore }}"
+      loop_control:
+        label: "{{ item.host }}:{{ item.service }}"
+      check_mode: false
+      changed_when: false
+      register: dns_failover_restored_services
+      retries: 10
+      delay: 2
+      until: dns_failover_restored_services.rc == 0
+
+    - name: Wait for dnsdist health checks after restoration
+      ansible.builtin.pause:
+        seconds: "{{ dns_failover_health_wait_seconds | int }}"
+
+    - name: Verify external DNS after restoration
+      ansible.builtin.command:
+        argv:
+          - dig
+          - "@{{ dns_failover_frontends[item] }}"
+          - dnssec.works
+          - A
+          - +dnssec
+          - +time=10
+          - +tries=1
+          - +noall
+          - +comments
+          - +answer
+      delegate_to: "{{ item }}"
+      loop:
+        - dist1
+        - dist2
+      loop_control:
+        label: "{{ item }}"
+      check_mode: false
+      changed_when: false
+      register: dns_failover_recovery_query
+      retries: 3
+      delay: 2
+      until:
+        - dns_failover_recovery_query.rc == 0
+        - "'status: NOERROR' in dns_failover_recovery_query.stdout"
+        - "' ad;' in dns_failover_recovery_query.stdout"
