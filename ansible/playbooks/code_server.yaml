@@ -1,0 +1,6 @@
+---
+- name: Setup code-server
+  hosts: code_server
+  roles:
+    - role: code_server
+      tags: code_server

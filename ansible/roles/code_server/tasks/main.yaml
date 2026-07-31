@@ -1,0 +1,134 @@
+---
+- name: Assert required variables are set
+  ansible.builtin.assert:
+    that:
+      - code_server_user | length > 0
+      - code_server_hashed_password | length > 0
+    fail_msg: >-
+      code_server_user and code_server_hashed_password must be set
+      (see group_vars/code_server.yaml and group_vars/code_server.sops.yaml).
+
+- name: Verify the editor account exists
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ code_server_user }}"
+
+# Staged even under --check: the install task below needs the file to exist to
+# report anything useful, and a download into /tmp changes no managed state.
+- name: Download code-server package
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ code_server_deb_url }}"
+    dest: "{{ code_server_deb_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+  check_mode: false
+
+- name: Install code-server
+  become: true
+  ansible.builtin.apt:
+    deb: "{{ code_server_deb_path }}"
+    state: present
+  notify: Restart code-server
+
+- name: Ensure homelab version marker directory exists
+  become: true
+  ansible.builtin.file:
+    path: /usr/local/share/homelab-versions
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Record installed code-server version
+  become: true
+  ansible.builtin.copy:
+    dest: /usr/local/share/homelab-versions/code-server.version
+    content: "{{ code_server_version }}\n"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create workspace directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ code_server_workspace }}"
+    state: directory
+    owner: "{{ code_server_user }}"
+    group: "{{ code_server_group }}"
+    mode: '0755'
+
+- name: Create code-server configuration directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ code_server_config_dir }}"
+    state: directory
+    owner: "{{ code_server_user }}"
+    group: "{{ code_server_group }}"
+    mode: '0700'
+
+# no_log keeps the argon2 hash out of --diff output, terminal scrollback and
+# CI logs; it is the password verifier and is kept SOPS-encrypted at rest.
+- name: Deploy code-server configuration
+  become: true
+  no_log: true
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "{{ code_server_config }}"
+    owner: "{{ code_server_user }}"
+    group: "{{ code_server_group }}"
+    mode: '0600'
+  notify: Restart code-server
+
+- name: Create code-server user settings directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ code_server_settings_dir }}"
+    state: directory
+    owner: "{{ code_server_user }}"
+    group: "{{ code_server_group }}"
+    mode: '0755'
+
+# Seeded once and then left alone: editor preferences belong to the person
+# using the editor, so Ansible must not keep reverting their changes.
+- name: Seed code-server user settings
+  become: true
+  ansible.builtin.copy:
+    src: settings.json
+    dest: "{{ code_server_settings_dir }}/settings.json"
+    owner: "{{ code_server_user }}"
+    group: "{{ code_server_group }}"
+    mode: '0644'
+    force: false
+
+- name: Create systemd override directory
+  become: true
+  ansible.builtin.file:
+    path: "/etc/systemd/system/code-server@{{ code_server_user }}.service.d"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+# The packaged unit starts code-server with no argument, which reopens whatever
+# folder was last open. Pin the workspace so a fresh session lands in the repo
+# tree the coding agents work in.
+- name: Deploy systemd override for the workspace folder
+  become: true
+  ansible.builtin.template:
+    src: override.conf.j2
+    dest: "/etc/systemd/system/code-server@{{ code_server_user }}.service.d/override.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart code-server
+
+- name: Ensure code-server is started and enabled
+  become: true
+  ansible.builtin.service:
+    name: "code-server@{{ code_server_user }}"
+    state: started
+    enabled: true

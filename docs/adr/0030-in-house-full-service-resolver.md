@@ -1,6 +1,6 @@
 # ADR-0030: Run Knot Resolver 6 in dedicated resolver containers
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-07-31
 - **Related:** [ADR-0001](0001-service-oriented-ansible-playbook-organization.md),
   [ADR-0002](0002-dhcp-outside-proxmox-cluster-nodes.md),

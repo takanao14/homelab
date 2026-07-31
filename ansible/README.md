@@ -24,6 +24,8 @@ ansible/
 │       │   ├── dnsdist.sops.yaml
 │       │   ├── caddy.yaml
 │       │   ├── caddy.sops.yaml
+│       │   ├── code_server.yaml
+│       │   ├── code_server.sops.yaml
 │       │   ├── dhcp.sops.yaml
 │       │   ├── forgejo.yaml
 │       │   ├── forgejo.sops.yaml
@@ -55,6 +57,7 @@ ansible/
 │   ├── forgejo_runner.yaml
 │   ├── netbox.yaml
 │   ├── meshcentral.yaml
+│   ├── code_server.yaml
 │   ├── seaweedfs.yaml
 │   ├── log_collector.yaml
 │   ├── blackbox_exporter.yaml
@@ -92,6 +95,7 @@ ansible/
     ├── forgejo_runner/
     ├── netbox/
     ├── meshcentral/
+    ├── code_server/
     ├── seaweedfs/
     ├── node_exporter/
     ├── blackbox_exporter/
