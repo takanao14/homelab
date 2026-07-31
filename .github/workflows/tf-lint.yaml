@@ -25,7 +25,7 @@ jobs:
       - name: Check Terragrunt HCL formatting
         env:
           # renovate: datasource=github-releases depName=gruntwork-io/terragrunt
-          TERRAGRUNT_VERSION: "v1.1.1"
+          TERRAGRUNT_VERSION: "v1.1.2"
         run: |
           set -euo pipefail
           curl -fsSL -o "${RUNNER_TEMP}/terragrunt" \
