@@ -1,6 +1,6 @@
-module github.com/takanao/homelab/monitoring/dashboards
+module github.com/takanao14/homelab/k8s/monitoring/dashboards
 
-go 1.26.2
+go 1.26.5
 
 require github.com/grafana/grafana-foundation-sdk/go v0.0.18
 
