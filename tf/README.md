@@ -67,10 +67,12 @@ tf/
     │   ├── dnsserver/              # DNS container
     │   ├── forgejo/                # Forgejo container
     │   ├── netbox/                 # NetBox container
+    │   ├── resolver/               # Knot Resolver container (ADR-0030)
     │   └── syslog/                 # Vector log collector (syslog ingress)
     └── node3/
         ├── env.hcl                 # node3 LXC defaults (storage: local-lvm)
         ├── dnsserver/              # DNS container
+        ├── resolver/               # Knot Resolver container (ADR-0030)
         └── seaweedfs/              # SeaweedFS container
 ```
 

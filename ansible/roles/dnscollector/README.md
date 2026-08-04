@@ -14,7 +14,7 @@ Installs and configures [DNS-collector](https://github.com/dmachard/DNS-collecto
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `dnscollector_version` | `2.2.1` | Binary version to install |
-| `dnscollector_loki_url` | `http://192.168.30.134:3100` | Loki push endpoint |
+| `dnscollector_loki_url` | `{{ loki_endpoint }}` | Loki push endpoint |
 | `dnscollector_dnsdist_socket` | `/run/dnstap-dnsdist.sock` | dnstap Unix socket path (shared with dnsdist) |
 | `dnscollector_debug` | `false` | Enable debug logging |
 
@@ -27,8 +27,8 @@ Architecture is auto-detected from `ansible_facts['architecture']` (supports `x8
 ## Usage
 
 ```yaml
-- name: Setup DNS Servers
-  hosts: dns_primary
+- name: Setup dnsdist
+  hosts: dnsdist
   roles:
     - role: dnscollector
     - role: dnsdist

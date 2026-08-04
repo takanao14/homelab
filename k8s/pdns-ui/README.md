@@ -108,7 +108,7 @@ mirrored into OpenBao, so a rotation still has to update both.
 ## Notes
 
 - The upstream webapp documents testing against PowerDNS 4.2.2, while ns1 runs
-  the `auth-50` channel. Zone listing needs to be confirmed on first sync.
+  the `auth-51` channel. Zone listing needs to be confirmed on first sync.
 - `fsGroup: 101` is required. The nginx entrypoint renders
   `/etc/nginx/templates` into the `/etc/nginx/conf.d` emptyDir; without a
   group-writable mount it skips envsubst silently and nginx falls back to its

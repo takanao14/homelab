@@ -471,16 +471,22 @@ ansible-playbook playbooks/ops-dns_failover_test.yaml \
 
 DNS backend server addresses are defined in
 `inventories/homelab/group_vars/dns.yaml` and shared across the `pdns_auth`,
-`dnsdist`, and `knot_resolver` roles:
+`dnsdist`, and `knot_resolver` roles. Resolver addresses derive from host
+inventory (`hostvars[...].ansible_host`) so dnsdist routing and resolver ACLs
+do not carry independent IP literals:
 
 ```yaml
 primary_auth_server: "192.168.10.233:53"
-secondary_auth_server: "192.168.10.234:53"
+secondary_auth_servers:
+  - name: ns2
+    address: "192.168.10.234:53"
+  - name: ns3
+    address: "192.168.10.235:53"
 dns_resolver_servers:
   - name: resolver1
-    address: "192.168.10.236:53"
+    address: "{{ hostvars['resolver1']['ansible_host'] }}:53"
   - name: resolver2
-    address: "192.168.10.237:53"
+    address: "{{ hostvars['resolver2']['ansible_host'] }}:53"
 ```
 
 ## Tips
