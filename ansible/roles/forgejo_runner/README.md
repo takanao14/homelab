@@ -5,8 +5,9 @@ Installs and configures a [Forgejo Actions Runner](https://code.forgejo.org/forg
 ## Functionality
 
 - Creates a dedicated system user/group (`runner`).
-- Installs Docker CE and containerd from the upstream Docker repository.
-- Configures BuildKit garbage collection with a bounded cache size.
+- Depends on the `docker` role (installs Docker CE from the upstream Docker
+  repository, configured with BuildKit garbage collection bounded to
+  `forgejo_runner_build_cache_keep_storage`).
 - Adds the runner user to the `docker` group.
 - Downloads the forgejo-runner binary from Forgejo releases.
 - Registers the runner with the Forgejo instance (skipped if already registered).
@@ -30,7 +31,6 @@ Installs and configures a [Forgejo Actions Runner](https://code.forgejo.org/forg
 | `forgejo_runner_home` | `/var/lib/forgejo-runner` | Home directory |
 | `forgejo_runner_binary` | `/usr/local/bin/forgejo-runner` | Binary path |
 | `forgejo_runner_config` | `/etc/forgejo-runner/config.yml` | Config file path |
-| `forgejo_runner_docker_daemon_config` | `/etc/docker/daemon.json` | Docker daemon configuration path |
 | `forgejo_runner_build_cache_keep_storage` | `20GB` | BuildKit cache storage target |
 | `forgejo_runner_url` | `http://forgejo.home.butaco.net` | Forgejo instance URL |
 | `forgejo_runner_name` | `{{ inventory_hostname }}` | Runner display name |
@@ -38,7 +38,8 @@ Installs and configures a [Forgejo Actions Runner](https://code.forgejo.org/forg
 
 ## Dependencies
 
-None.
+`docker` (see `meta/main.yaml`) — installs Docker CE before this role's own
+tasks run.
 
 ## Usage
 
