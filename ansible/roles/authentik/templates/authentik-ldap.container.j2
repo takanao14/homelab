@@ -1,0 +1,21 @@
+[Unit]
+Description=Authentik LDAP Outpost
+After=network-online.target authentik-server.service
+Wants=network-online.target
+Requires=authentik-server.service
+
+[Container]
+ContainerName={{ authentik_ldap_container }}
+Image={{ authentik_ldap_image }}:{{ authentik_version }}
+Network={{ authentik_network }}.network
+EnvironmentFile={{ authentik_ldap_env_file }}
+Environment=AUTHENTIK_HOST=http://authentik-server:9000
+Environment=AUTHENTIK_INSECURE=false
+PublishPort={{ authentik_ldaps_port }}:6636
+
+[Service]
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

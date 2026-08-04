@@ -1,0 +1,5 @@
+---
+# Declared as a dependency so podman (and the root system Quadlet directory)
+# is installed before this role deploys *.container unit files into it.
+dependencies:
+  - role: podman

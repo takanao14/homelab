@@ -1,0 +1,16 @@
+---
+- name: Restart authentik containers
+  become: true
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - authentik-postgresql.service
+    - authentik-server.service
+    - authentik-worker.service
+
+- name: Restart authentik ldap outpost
+  become: true
+  ansible.builtin.systemd:
+    name: authentik-ldap.service
+    state: restarted

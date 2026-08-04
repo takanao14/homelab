@@ -1,0 +1,27 @@
+[Unit]
+Description=Authentik server
+After=network-online.target authentik-postgresql.service
+Wants=network-online.target
+Requires=authentik-postgresql.service
+
+[Container]
+ContainerName=authentik-server
+Image={{ authentik_image }}:{{ authentik_version }}
+Exec=server
+Network={{ authentik_network }}.network
+EnvironmentFile={{ authentik_env_file }}
+Environment=AUTHENTIK_POSTGRESQL__HOST={{ authentik_pg_container }}
+Environment=AUTHENTIK_POSTGRESQL__NAME={{ authentik_pg_db }}
+Environment=AUTHENTIK_POSTGRESQL__USER={{ authentik_pg_user }}
+ShmSize=512m
+PublishPort={{ authentik_http_port }}:9000
+Volume={{ authentik_data_dir }}:/data
+Volume={{ authentik_templates_dir }}:/templates
+Volume={{ authentik_blueprints_dir }}:/blueprints/local
+
+[Service]
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

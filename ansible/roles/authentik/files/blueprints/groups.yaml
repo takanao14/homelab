@@ -1,0 +1,56 @@
+version: 1
+metadata:
+  name: homelab groups
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+entries:
+  # See docs/plans/identity-authentication-architecture.md, "グループと権限".
+  # None of these are Authentik superusers (that flag controls access to
+  # Authentik's own admin interface, not Linux/Kubernetes privilege).
+  - model: authentik_core.group
+    identifiers:
+      name: lab-platform-admins
+    attrs:
+      is_superuser: false
+
+  - model: authentik_core.group
+    identifiers:
+      name: lab-linux-users
+    attrs:
+      is_superuser: false
+
+  - model: authentik_core.group
+    identifiers:
+      name: lab-linux-admins
+    attrs:
+      is_superuser: false
+
+  - model: authentik_core.group
+    identifiers:
+      name: lab-k8s-prd-viewers
+    attrs:
+      is_superuser: false
+
+  - model: authentik_core.group
+    identifiers:
+      name: lab-k8s-prd-operators
+    attrs:
+      is_superuser: false
+
+  - model: authentik_core.group
+    identifiers:
+      name: lab-k8s-prd-admins
+    attrs:
+      is_superuser: false
+
+  - model: authentik_core.group
+    identifiers:
+      name: lab-k8s-sandbox-users
+    attrs:
+      is_superuser: false
+
+  - model: authentik_core.group
+    identifiers:
+      name: lab-gpu-users
+    attrs:
+      is_superuser: false
