@@ -480,18 +480,46 @@ inventory (`hostvars[...].ansible_host`) so dnsdist routing and resolver ACLs
 do not carry independent IP literals:
 
 ```yaml
-primary_auth_server: "192.168.10.233:53"
+primary_auth_server: "{{ hostvars['ns1']['ansible_host'] }}:53"
 secondary_auth_servers:
   - name: ns2
-    address: "192.168.10.234:53"
+    address: "{{ hostvars['ns2']['ansible_host'] }}:53"
   - name: ns3
-    address: "192.168.10.235:53"
+    address: "{{ hostvars['ns3']['ansible_host'] }}:53"
 dns_resolver_servers:
   - name: resolver1
     address: "{{ hostvars['resolver1']['ansible_host'] }}:53"
   - name: resolver2
     address: "{{ hostvars['resolver2']['ansible_host'] }}:53"
 ```
+
+### IP addresses: one source of truth
+
+`inventories/homelab/hosts.yaml` is the only place a managed host's IP is a
+literal. Everywhere else that needs to reach a host — `group_vars`,
+`host_vars`, role defaults — derives it instead of repeating the literal:
+
+- Referencing another host's address: `{{ hostvars['<name>']['ansible_host'] }}`
+  (e.g. `dns.yaml`'s `dns_resolver_servers`, `proxmox.yaml`'s
+  `proxmox_simplezone_routes_map.*.via`, `caddy.yaml`'s `caddy_upstreams`).
+- Referencing the host's own address in its own `group_vars`/`host_vars`:
+  `{{ ansible_host }}` (e.g. `dns_resolver.yaml`'s `knot_resolver_server_addr`,
+  `caddy.yaml`'s `caddy_ip`).
+- `hostvars[...]` works even for hosts not targeted by the current play,
+  since `ansible_host` is an inventory variable, not a gathered fact — no
+  `gather_facts` or play membership is required for the lookup to resolve.
+
+Moving a host to a new IP then only means editing `hosts.yaml`; every
+consumer re-resolves on the next run.
+
+A literal IP is only correct when there is no corresponding inventory host to
+point at instead — a device Ansible doesn't manage (e.g. `caddy.yaml`'s
+`truenas-ui` backend), or an address that isn't a host at all, such as a
+Kubernetes LoadBalancer IP (`all.yaml`'s `loki_endpoint` /
+`alloy_otlp_server`) or a CIDR-based ACL (`dns_auth.yaml`'s
+`pdns_webserver_allow_from`). Comment on any such literal explaining why it
+can't be derived, so it doesn't get "fixed" into a broken `hostvars` lookup
+later.
 
 ## Tips
 

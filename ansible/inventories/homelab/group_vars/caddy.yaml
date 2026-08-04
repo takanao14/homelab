@@ -1,32 +1,34 @@
 ---
-caddy_ip: "192.168.10.244"
+caddy_ip: "{{ ansible_host }}"
 caddy_upstreams:
   - hostname: pdns1.home.butaco.net
-    backend: 192.168.10.233:8081
+    backend: "{{ hostvars['ns1']['ansible_host'] }}:8081"
   - hostname: pdns2.home.butaco.net
-    backend: 192.168.10.234:8081
+    backend: "{{ hostvars['ns2']['ansible_host'] }}:8081"
   - hostname: pdns3.home.butaco.net
-    backend: 192.168.10.235:8081
+    backend: "{{ hostvars['ns3']['ansible_host'] }}:8081"
   - hostname: dnsdist1.home.butaco.net
-    backend: 192.168.10.231:8083
+    backend: "{{ hostvars['dist1']['ansible_host'] }}:8083"
   - hostname: dnsdist2.home.butaco.net
-    backend: 192.168.10.232:8083
+    backend: "{{ hostvars['dist2']['ansible_host'] }}:8083"
   - hostname: forgejo.home.butaco.net
-    backend: 192.168.10.245:3000
+    backend: "{{ hostvars['forgejo1']['ansible_host'] }}:3000"
   - hostname: truenas-ui.home.butaco.net
+    # TrueNAS is not an Ansible-managed host, so no inventory entry to derive
+    # this from; it stays a literal.
     backend: 192.168.20.10:443
     scheme: https
     tls_insecure: true   # TrueNAS uses a local (self-signed) cert; verify only the internal Caddy->TrueNAS leg is skipped
   - hostname: netbox-ui.home.butaco.net
-    backend: 192.168.10.247:80
+    backend: "{{ hostvars['netbox1']['ansible_host'] }}:80"
   - hostname: openbao.home.butaco.net
-    backend: 192.168.40.30:8200
+    backend: "{{ hostvars['openbao1']['ansible_host'] }}:8200"
   - hostname: s3.home.butaco.net
-    backend: 192.168.50.31:8333
+    backend: "{{ hostvars['seaweedfs1']['ansible_host'] }}:8333"
   - hostname: seaweedfs-ui.home.butaco.net
-    backend: 192.168.50.31:23646
+    backend: "{{ hostvars['seaweedfs1']['ansible_host'] }}:23646"
   - hostname: meshcentral.home.butaco.net
-    backend: 192.168.10.241:8443
+    backend: "{{ hostvars['rpi4']['ansible_host'] }}:8443"
   - hostname: vscode.home.butaco.net
     backend: 192.168.20.21:8080
 
