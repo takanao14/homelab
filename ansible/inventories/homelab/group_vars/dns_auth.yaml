@@ -4,6 +4,8 @@ pdns_primary_port: "{{ primary_auth_server.split(':')[1] }}"
 pdns_primary_nameserver: "ns2.home.butaco.net"
 
 pdns_webserver_port: 8081
+# Subnet-wide ACL, not a per-host address, so there's no single inventory host
+# to derive it from.
 pdns_webserver_allow_from: "192.168.10.0/24,192.168.20.0/24,192.168.30.0/24,192.168.40.0/24,192.168.50.0/24,192.168.60.0/24,192.168.70.0/24"
 
 vector_config:
