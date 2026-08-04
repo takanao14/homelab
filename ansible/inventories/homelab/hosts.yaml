@@ -61,11 +61,7 @@ all:
     seaweedfs1:
       ansible_host: 192.168.50.31
     toolbox1:
-      ansible_host: 192.168.50.30
-    toolbox2:
       ansible_host: 192.168.20.21
-    toolbox3:
-      ansible_host: 192.168.20.23
   children:
     dns:
       children:
@@ -120,6 +116,12 @@ all:
     caddy:
       hosts:
         caddy1: null
+
+    # Browser-based editor for the toolbox VM, used from tablets where no
+    # desktop VS Code exists (ADR-0031).
+    code_server:
+      hosts:
+        toolbox1: null
 
     dhcp:
       hosts:
@@ -243,6 +245,9 @@ all:
         prd-cp1: null
         # openbao1 is a VM (not LXC): no host sensor leakage, keep defaults.
         openbao1: null
+        # toolbox1 is a VM running the editor server alongside coding agents;
+        # scrape it to measure whether 16 GiB is enough (ADR-0031).
+        toolbox1: null
 
     blackbox_exporter:
       hosts:

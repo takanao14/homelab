@@ -1,0 +1,5 @@
+---
+# The editor runs as the same account that runs the claude / codex CLIs on this
+# host, so the integrated terminal sees their existing credentials and config.
+# code_server_workspace defaults to <home>/lab, which is the repo tree here.
+code_server_user: takanao

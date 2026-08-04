@@ -1,0 +1,5 @@
+{
+  "terminal.integrated.enablePersistentSessions": true,
+  "terminal.integrated.persistentSessionReviveProcess": "onExitAndWindowClose",
+  "terminal.integrated.persistentSessionScrollback": 10000
+}

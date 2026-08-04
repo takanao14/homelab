@@ -39,15 +39,14 @@ tf/
 ├── vm/                             # Host-first: vm/<host>/<service> (non-k0s VMs)
 │   ├── pve/
 │   │   ├── env.hcl                 # pve VM defaults (storage: local-zfs, lab VMs: on_boot=false)
-│   │   └── toolbox2|toolbox3/      # Toolbox / scratch VMs
+│   │   └── toolbox1/               # Toolbox VM (always-on; hosts the editor server)
 │   ├── node2/
 │   │   ├── env.hcl                 # node2 VM defaults (storage: local-lvm)
 │   │   ├── openbao/                # OpenBAO VM
 │   │   ├── runner1/                # CI runner VM
 │   │   └── vpngw/                  # VPN gateway VM
 │   ├── node3/
-│   │   ├── env.hcl                 # node3 VM defaults (storage: local-lvm)
-│   │   └── toolbox/                # Toolbox VM
+│   │   └── env.hcl                 # node3 VM defaults (storage: local-lvm; no stacks)
 │   └── node4/
 │       └── env.hcl                 # node4 VM defaults (no stacks yet; EliteDesk expansion)
 ├── k8s/                            # Cluster-first: k8s/<cluster>/<stack> (k0s node VMs, ADR-0020)

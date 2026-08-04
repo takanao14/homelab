@@ -72,4 +72,5 @@ deleting it:
 | [0027](0027-gpu-workload-switching-web-ui.md) | GPU workload switching through an authenticated in-cluster web UI | Accepted |
 | [0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md) | lemonade-server runs on the Vulkan backend, not ROCm, on RDNA4 | Accepted |
 | [0029](0029-rocm-serving-path-for-mxfp4-models.md) | ROCm serves concurrent MXFP4 workloads; Vulkan remains faster for one request | Proposed |
-| [0030](0030-in-house-full-service-resolver.md) | Run Knot Resolver 6 in dedicated resolver containers | Proposed |
+| [0030](0030-in-house-full-service-resolver.md) | Run Knot Resolver 6 in dedicated resolver containers | Accepted |
+| [0031](0031-browser-editor-on-relocated-toolbox-vm.md) | Run a browser editor on toolbox1, relocated to pve | Proposed |
