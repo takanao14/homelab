@@ -1,0 +1,24 @@
+[Unit]
+Description=Authentik PostgreSQL
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+ContainerName={{ authentik_pg_container }}
+Image={{ authentik_pg_image }}
+Network={{ authentik_network }}.network
+EnvironmentFile={{ authentik_env_file }}
+Environment=POSTGRES_DB={{ authentik_pg_db }}
+Environment=POSTGRES_USER={{ authentik_pg_user }}
+Volume={{ authentik_pg_data_dir }}:/var/lib/postgresql/data
+HealthCmd=pg_isready -d {{ authentik_pg_db }} -U {{ authentik_pg_user }}
+HealthInterval=30s
+HealthRetries=5
+HealthStartPeriod=20s
+HealthTimeout=5s
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

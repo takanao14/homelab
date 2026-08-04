@@ -1,0 +1,59 @@
+[sssd]
+config_file_version = 2
+domains = {{ sssd_domain }}
+services = nss, pam, ssh
+
+[nss]
+homedir_substring = /home
+
+[pam]
+# 決定事項16: offline login is a convenience for short outages only, never a
+# break-glass substitute (local accounts + SSH keys cover that).
+offline_credentials_expiration = {{ sssd_offline_credentials_expiration }}
+
+[domain/{{ sssd_domain }}]
+id_provider = ldap
+auth_provider = ldap
+chpass_provider = none
+# `ldap` rather than `simple`: disabling a user in Authentik does NOT remove
+# them from the LDAP tree or from their groups — it only flips the Authentik-
+# specific `ak-active` attribute to FALSE. access_provider = simple only
+# looks at group membership, so a disabled user would keep logging in. The
+# filter below checks both group membership and ak-active.
+access_provider = ldap
+
+ldap_uri = {{ sssd_ldap_uri }}
+ldap_search_base = {{ sssd_ldap_search_base }}
+ldap_tls_reqcert = demand
+ldap_tls_cacert = {{ sssd_ldap_ca_cert_path }}
+
+ldap_default_bind_dn = {{ sssd_ldap_bind_dn }}
+ldap_default_authtok_type = password
+ldap_default_authtok = {{ sssd_ldap_bind_password }}
+
+# Authentik puts the login name in `cn`; `uid` is an opaque hash and must not
+# be used as the username. See roles/authentik/files/blueprints/ldap.yaml.
+ldap_schema = rfc2307bis
+ldap_user_object_class = {{ sssd_ldap_user_object_class }}
+ldap_user_name = {{ sssd_ldap_user_name_attr }}
+ldap_user_uid_number = uidNumber
+ldap_user_gid_number = gidNumber
+ldap_user_home_directory = homeDirectory
+ldap_user_ssh_public_key = sshPublicKey
+ldap_user_member_of = memberOf
+
+ldap_group_object_class = {{ sssd_ldap_group_object_class }}
+ldap_group_name = {{ sssd_ldap_group_name_attr }}
+ldap_group_gid_number = gidNumber
+ldap_group_member = member
+
+# Only members of this Authentik group who are still enabled may log in
+# (PoC pass criteria: 「linux-users以外のLDAP userはLinuxへログインできない」
+# and 「Authentik user無効化後のOIDC/LDAP/session/cacheの挙動」).
+ldap_access_order = filter
+ldap_access_filter = (&(memberOf=cn={{ sssd_allowed_login_group }},ou=groups,{{ sssd_ldap_search_base }})(ak-active=TRUE))
+
+fallback_homedir = {{ sssd_home_dir_template }}
+default_shell = {{ sssd_default_shell }}
+cache_credentials = true
+enumerate = false

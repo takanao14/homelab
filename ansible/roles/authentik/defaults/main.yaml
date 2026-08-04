@@ -1,0 +1,62 @@
+---
+# renovate: datasource=docker depName=goauthentik/server registryUrl=https://ghcr.io
+authentik_version: "2026.5.6"
+authentik_image: "ghcr.io/goauthentik/server"
+
+authentik_network: authentik
+authentik_pg_container: authentik-postgresql
+
+authentik_pg_image: docker.io/library/postgres:16-alpine
+authentik_pg_db: authentik
+authentik_pg_user: authentik
+
+authentik_base_dir: /opt/authentik
+authentik_data_dir: "{{ authentik_base_dir }}/data"
+authentik_templates_dir: "{{ authentik_base_dir }}/custom-templates"
+authentik_certs_dir: "{{ authentik_base_dir }}/certs"
+authentik_pg_data_dir: /var/lib/authentik-postgresql
+
+# Mounted at /blueprints/local. Authentik itself watches this directory and
+# auto-discovers/applies any *.yaml file placed here — this role only needs
+# to deploy the files, not register or re-apply them (see
+# https://docs.goauthentik.io/customize/blueprints/).
+authentik_blueprints_dir: "{{ authentik_base_dir }}/blueprints"
+
+authentik_env_file: /etc/authentik/authentik.env
+
+# AUTHENTIK_BOOTSTRAP_* vars are only read while no admin user exists yet
+# (effectively "first startup"). akadmin_email is not secret; the password
+# and API token are (see authentik_bootstrap_password / _token below, set
+# via SOPS group_vars).
+authentik_bootstrap_email: ""
+
+# Caddy (external TLS termination, see identity-authentication-architecture
+# plan) reaches the server container on this published HTTP port. The
+# container's self-signed HTTPS port (9443) is intentionally not published.
+authentik_http_port: 9000
+
+# Standalone LDAP Outpost (decision 18: not Docker/service-connection
+# managed). Only LDAPS is published; plaintext 389 is not exposed. The
+# outpost's AUTHENTIK_TOKEN is not a SOPS secret: it's fetched live from
+# Authentik's API each run (GET .../view_key/ on the token the "homelab
+# LDAP provider" blueprint's Outpost object owns) — see tasks/main.yaml.
+# This is Authentik's own documented mechanism for standalone outposts
+# (copy the outpost's generated token into your deployment), just done via
+# API instead of the UI.
+authentik_ldap_image: "ghcr.io/goauthentik/ldap"
+authentik_ldap_container: authentik-ldap
+authentik_ldap_outpost_name: homelab-ldap-outpost
+authentik_ldap_env_file: /etc/authentik/authentik-ldap.env
+authentik_ldaps_port: 636
+
+# LDAPS certificate. Authentik's built-in self-signed cert carries a random
+# *.self-signed.goauthentik.io SAN, so SSSD clients using
+# `ldap_tls_reqcert = demand` cannot verify it against the name they dial.
+# Generate a dedicated one whose CN/SAN is the LDAP service name instead;
+# ldap.yaml then binds it to the provider via !Find on this name.
+# Blueprints can reference an existing certificate but cannot create one —
+# generation is only exposed as an API action, hence the task in
+# tasks/main.yaml.
+authentik_ldap_cert_name: homelab-ldap
+authentik_ldap_cert_cn: ldap.home.butaco.net
+authentik_ldap_cert_validity_days: 365
