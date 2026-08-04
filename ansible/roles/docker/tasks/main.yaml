@@ -1,0 +1,92 @@
+---
+- name: Install prerequisites for Docker repo
+  become: true
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - python3-debian
+    state: present
+    update_cache: true
+
+- name: Ensure apt keyring directory exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Add Docker GPG key
+  become: true
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+
+- name: Check whether the python-debian library is available
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - import debian
+  register: docker_python_debian
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Add Docker repository
+  become: true
+  ansible.builtin.deb822_repository:
+    name: docker
+    types:
+      - deb
+    uris:
+      - https://download.docker.com/linux/ubuntu
+    suites:
+      - "{{ ansible_facts['distribution_release'] }}"
+    components:
+      - stable
+    architectures:
+      - amd64
+    signed_by: /etc/apt/keyrings/docker.asc
+    state: present
+    mode: '0644'
+  when: not ansible_check_mode or docker_python_debian.rc == 0
+
+- name: Report deferred Docker repository check
+  ansible.builtin.debug:
+    msg: >-
+      Skipping the Docker deb822 repository check because python3-debian is
+      pending installation in check mode. A normal run installs the prerequisite
+      before managing the repository.
+  when:
+    - ansible_check_mode
+    - docker_python_debian.rc != 0
+
+- name: Install Docker CE
+  become: true
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+    state: present
+    update_cache: true
+
+- name: Configure Docker daemon
+  become: true
+  ansible.builtin.template:
+    src: daemon.json.j2
+    dest: "{{ docker_daemon_config_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+    validate: /usr/bin/dockerd --validate --config-file=%s
+  when: docker_daemon_config | length > 0
+  notify: Restart docker
+
+- name: Ensure docker is started and enabled
+  become: true
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true

@@ -1,0 +1,16 @@
+---
+- name: Install Podman
+  become: true
+  ansible.builtin.apt:
+    name: "{{ podman_packages }}"
+    state: present
+    update_cache: true
+
+- name: Ensure root system Quadlet directory exists
+  become: true
+  ansible.builtin.file:
+    path: "{{ podman_quadlet_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'

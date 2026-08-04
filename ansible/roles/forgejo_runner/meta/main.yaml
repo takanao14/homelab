@@ -1,0 +1,12 @@
+---
+# Declared as a dependency so it runs before this role's own tasks (which add
+# forgejo_runner_user to the docker group and expect docker to already be
+# installed and running).
+dependencies:
+  - role: docker
+    vars:
+      docker_daemon_config:
+        builder:
+          gc:
+            enabled: true
+            defaultKeepStorage: "{{ forgejo_runner_build_cache_keep_storage }}"

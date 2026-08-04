@@ -1,0 +1,10 @@
+---
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-compose-plugin
+
+docker_daemon_config_path: /etc/docker/daemon.json
+# Merged into daemon.json when non-empty (e.g. BuildKit GC settings).
+docker_daemon_config: {}
