@@ -1,0 +1,16 @@
+sssd_ldap_bind_password: ENC[AES256_GCM,data:UWP6sFRF6MQL+vzoq/r59GibmgMroU6aBQ2tSBi6Ww==,iv:zK9T5wWr5fnPWteLpIwJBN7vUBDNzT4EKRlscjX4czA=,tag:bQGpVGAOY8O5I2ZYViXEdw==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB6S1VRb0ZLclFJeTRmVVB0
+            ckNrNVVSenRNU2t3cmR2YVU3bE9rQmdLV3c0CkJrWDhCVHhjQkZjNUJXSWxsZGlB
+            d2FlalNFSk5WQVVYU1liY0NaMHdWYlEKLS0tIGQ3Mmd0MjZwc2hjR0RWT1BHdS80
+            TDBvUWwwY1o1VHZZdy9qSG96T214cDQKtsRQ74n/Ehq0P7FDSZTHV01kwitXhe76
+            JsEoeCjMIhSxIUM/M1IXlsiSq8BzMuz7Hqq40LVFKFZNyCXyMhnkOw==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
+    lastmodified: "2026-08-03T23:08:13Z"
+    mac: ENC[AES256_GCM,data:933jIOjYsiAwyRdux4ByE0EyWcK5YQO5Gt8cP0O/yLi3u2K5Ex8OP8ddL4P28iQuw/gbDxUeSKizhNo3T7sHf62vBIbRoKc4DNqq0lMnYe0Q5y/AwjCcbR6a+A9Kks59MzZbn5EYmbJwWpovFC6Y6IbmCYOdVoJMI6OueTU6bzk=,iv:K8hMPKUUoymigQY95eDNv6cIckwMjnojfx/9cm9fi8k=,tag:h/Wfjg4tGq/YiljdxBeC1Q==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.13.3

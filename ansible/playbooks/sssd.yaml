@@ -1,0 +1,8 @@
+---
+- name: Setup SSSD LDAP client
+  hosts: sssd
+  roles:
+    - role: timezone
+      tags: timezone
+    - role: sssd
+      tags: sssd

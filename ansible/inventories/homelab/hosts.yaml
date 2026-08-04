@@ -66,6 +66,10 @@ all:
       ansible_host: 192.168.20.21
     toolbox3:
       ansible_host: 192.168.20.23
+    authentik1:
+      ansible_host: 192.168.10.248
+    sssdtest1:
+      ansible_host: 192.168.10.249
   children:
     dns:
       children:
@@ -90,6 +94,17 @@ all:
     openbao:
       hosts:
         openbao1: null
+
+    authentik:
+      hosts:
+        authentik1: null
+
+    # Disposable test VM for stage 6 of the identity-authentication-
+    # architecture PoC (SSSD/LDAP validation). Not part of the monitored
+    # fleet (node_exporter/vector) since it is expected to be torn down.
+    sssd:
+      hosts:
+        sssdtest1: null
 
     # Standalone SeaweedFS object storage: Terraform state backup target and
     # the cloud-images bucket for Packer-built images.
@@ -191,6 +206,8 @@ all:
         netbox: {}
         seaweedfs: {}
         openbao: {}
+        authentik: {}
+        sssd: {}
         gpuvm: {}
         log_collector: {}
       hosts:
@@ -243,6 +260,8 @@ all:
         prd-cp1: null
         # openbao1 is a VM (not LXC): no host sensor leakage, keep defaults.
         openbao1: null
+        # authentik1 is a VM (not LXC): no host sensor leakage, keep defaults.
+        authentik1: null
 
     blackbox_exporter:
       hosts:

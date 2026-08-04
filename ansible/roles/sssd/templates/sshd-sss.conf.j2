@@ -1,0 +1,6 @@
+# Managed by Ansible (sssd role). Do not edit manually.
+# Fetches each user's sshPublicKey attribute from Authentik via SSSD, so SSH
+# key distribution needs no per-host authorized_keys management.
+# 決定事項15: SSH公開鍵のみ、password loginは無効のまま。
+AuthorizedKeysCommand /usr/bin/sss_ssh_authorizedkeys
+AuthorizedKeysCommandUser root

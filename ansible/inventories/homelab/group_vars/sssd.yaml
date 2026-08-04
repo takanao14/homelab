@@ -1,0 +1,10 @@
+---
+# Public keys authorised for the break-glass local account (see
+# roles/sssd). Public data — intentionally not SOPS-encrypted, so that
+# recovering access never depends on being able to decrypt anything.
+#
+# This is the same operator key the VMs are built with
+# (TF_VM_SSH_PUBLIC_KEY), listed explicitly here so the break-glass path is
+# reviewable and rotatable independently of VM creation.
+sssd_breakglass_authorized_keys:
+  - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAC3V/tQIKA+06f/+2wMHWEhJMeciTFlvqcb9MwTLy9Y takanao@toolbox1"
