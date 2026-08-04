@@ -1,6 +1,6 @@
 # ADR-0030: Run Knot Resolver 6 in dedicated resolver containers
 
-- **Status:** Proposed
+- **Status:** Accepted (acceptance prerequisites verified 2026-08-04)
 - **Date:** 2026-07-31
 - **Related:** [ADR-0001](0001-service-oriented-ansible-playbook-organization.md),
   [ADR-0002](0002-dhcp-outside-proxmox-cluster-nodes.md),
@@ -331,7 +331,8 @@ recorded before either host is restarted.
 
 ## Acceptance prerequisites
 
-Keep this ADR `Proposed` until all of the following are complete:
+This ADR was kept `Proposed` until all of the following were complete; all
+items below are verified as of 2026-08-04:
 
 1. Add resolver1 under `tf/lxc/node2/resolver` and resolver2 under
    `tf/lxc/node3/resolver`; confirm unique addresses, host placement and clean
