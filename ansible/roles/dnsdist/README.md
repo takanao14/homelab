@@ -82,17 +82,28 @@ YAML file as well.
 
 `query_rules` is a list and its order is preserved through rendering:
 
-1. `internal-no-recurse` — non-terminal, falls through to 2
-2. `internal-pool` — `stop_processing: true`, the routing decision is final
-3. `dnstap-queries` — records queries sent to the default resolver pool
+1. `dnstap-queries` — `type: All`. `DnstapLogAction` has no `stop_processing`
+   field and always falls through, so this runs first deliberately: it logs
+   the query exactly as the client sent it, before rule 2 rewrites the RD bit.
+2. `internal-no-recurse` — non-terminal, falls through to 3
+3. `internal-pool` — `stop_processing: true`, the routing decision is final
 
-Rule 2 is terminal, so **dnstap only sees queries that reach the default
-pool**. Internal-zone queries are not logged to dnscollector. RFC 6303 queries
-now reach Knot Resolver and are logged like other default-pool queries.
+`response_rules` is a **separate chain** that dnsdist evaluates on every
+response regardless of what happened in `query_rules` — a `stop_processing`
+query rule only stops the query-side chain, it does not skip response
+processing for that query. Its own `dnstap-responses` rule (`type: All`)
+therefore already logs internal-zone responses, complete with the real client
+address in `network.query-ip` (dnsdist's own address is only the
+`network.response-ip`).
 
-That is inherited behaviour, not a design decision made here. If dnscollector
-should see the internal traffic, move the dnstap rule to the front deliberately
-rather than letting an edit change it as a side effect.
+This was verified against production Loki data (2026-08-05): before the
+`dnstap-queries` reorder above, internal-zone qnames appeared in Loki only as
+`CLIENT_RESPONSE` dnstap operations, never `CLIENT_QUERY`, while default-pool
+qnames appeared as matched `CLIENT_QUERY`/`CLIENT_RESPONSE` pairs — confirming
+the query and response chains are independent, and that internal-zone traffic
+was already attributable to a real client before this change. The reorder
+closes the remaining gap by also emitting the paired `CLIENT_QUERY` message
+for internal zones.
 
 ## Variables
 
