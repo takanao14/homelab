@@ -17,7 +17,7 @@ image:
   # driver has to stay within AMD's KMD/UMD skew window. See README.md before
   # bumping this alongside a host ROCm upgrade.
   repository: ollama/ollama
-  tag: 0.32.5-rocm
+  tag: 0.32.6-rocm
 
 resources:
   limits:
