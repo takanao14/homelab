@@ -217,8 +217,15 @@ and logs nothing about it — `chmod o+x "$HOME"`, or add `user: "0"` to the
 
 On Rocky, SELinux is enforcing by default and blocks a container from reading an
 unlabelled bind mount. The volumes in `docker-compose.yml` therefore carry `:z`;
-Docker and non-SELinux hosts parse and ignore it. `setup-linux.sh` checks all of
-these and warns.
+Docker and non-SELinux hosts parse and ignore it.
+
+The image is registry-qualified (`mirror.gcr.io`, the same Docker Hub mirror
+[k0s/hook/mirror.sh](../../k0s/hook/mirror.sh) configures for the clusters).
+Podman has no implicit default registry, and Ubuntu ships `registries.conf`
+without `unqualified-search-registries`, so a short name like
+`grafana/grafana:13.0` does not resolve at all.
+
+`setup-linux.sh` checks all of these and warns.
 
 Edit `.go` files in `cmd/generate/`, then re-run `make dev` to reload. Grafana's
 file provider rescans `/var/lib/grafana/dashboards` every 10s, so regenerated

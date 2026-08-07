@@ -217,9 +217,12 @@ check_rootless_prerequisites() {
     fi
   fi
 
-  if ! grep -qs 'unqualified-search-registries.*docker\.io' /etc/containers/registries.conf; then
-    warn "docker.io is not in unqualified-search-registries; podman may fail to"
-    warn "resolve the 'grafana/grafana' image. Qualify it as docker.io/grafana/grafana."
+  # Podman has no implicit default registry, and Ubuntu ships registries.conf
+  # with no unqualified-search-registries, so a short image name simply fails
+  # to resolve. The compose file spells the registry out; flag it if undone.
+  if ! grep -qE '^[[:space:]]*image:[[:space:]]*[^[:space:]/]+\.[^[:space:]/]+/' "$COMPOSE_FILE"; then
+    warn "the image in docker-compose.yml is not registry-qualified; podman"
+    warn "cannot resolve a short name without unqualified-search-registries."
   fi
 }
 
