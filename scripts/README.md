@@ -49,6 +49,17 @@ operation can be inspected and resumed directly with Terragrunt.
 
 The XRDP images are available only on `pve`.
 
+The script uses `TF_VM_USERNAME`, `TF_VM_PASSWORD`, and
+`TF_VM_SSH_PUBLIC_KEY` for the VM credentials. When they are unset, the
+username defaults to the current user, the password is read from an
+interactive hidden prompt, and the public key defaults to
+`~/.ssh/id_ed25519.pub`. The public-key file must exist. For non-interactive
+use, set `TF_VM_PASSWORD` explicitly. The resolved values are written to a
+local `.envrc` in the generated VM directory and reused on subsequent runs.
+The file is created with mode `600` and excluded by a colocated `.gitignore`;
+it contains the VM password in plaintext and must remain local. Run
+`direnv allow` once after generation.
+
 Re-running the command with the same arguments succeeds without changing the
 file. If the existing file differs, the script prints a diff and leaves it
 unchanged.
@@ -65,7 +76,8 @@ direnv exec . terragrunt apply
 ```
 
 Terragrunt obtains `TF_VM_USERNAME`, `TF_VM_PASSWORD`, and
-`TF_VM_SSH_PUBLIC_KEY` through the node directory's `.envrc`.
+`TF_VM_SSH_PUBLIC_KEY` from the generated VM directory's `.envrc`. It calls
+`source_up` first so the node and shared Terraform environment is preserved.
 
 ### `remove-vm.sh`
 

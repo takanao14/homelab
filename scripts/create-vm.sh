@@ -19,6 +19,11 @@ Usage: $(basename "$0") <name> <ip> [node] [cores] [memory_mb] [disk_gb] [image]
   disk      Disk size in GB            (default: 80)
   image     OS image: ubuntu24 | ubuntu24-xrdp | rocky10 | rocky9 | rocky9-xrdp | debian13  (default: ubuntu24)
 
+Environment:
+  TF_VM_USERNAME        VM username     (default: current username)
+  TF_VM_PASSWORD        VM password     (prompted when unset)
+  TF_VM_SSH_PUBLIC_KEY  SSH public key  (default: ~/.ssh/id_ed25519.pub)
+
 Example:
   $(basename "$0") myvm 192.168.20.50
   $(basename "$0") myvm 192.168.20.50 pve 4 4096 80 rocky10
@@ -106,8 +111,60 @@ esac
 
 OUT_DIR="${TF_DIR}/vm/${NODE}/${VM_NAME}"
 OUT_FILE="${OUT_DIR}/terragrunt.hcl"
+OUT_ENVRC="${OUT_DIR}/.envrc"
+OUT_GITIGNORE="${OUT_DIR}/.gitignore"
+
+# Reuse credentials saved by a previous run. Explicit non-empty environment
+# variables take precedence over values loaded from the local .envrc.
+if [[ -f "$OUT_ENVRC" ]]; then
+  explicit_username="${TF_VM_USERNAME:-}"
+  explicit_password="${TF_VM_PASSWORD:-}"
+  explicit_ssh_public_key="${TF_VM_SSH_PUBLIC_KEY:-}"
+
+  # The generated file calls direnv's source_up. It is unnecessary while
+  # loading only this file's saved credentials in create-vm.sh.
+  # shellcheck disable=SC2329
+  source_up() { :; }
+  # shellcheck disable=SC1090
+  source "$OUT_ENVRC"
+  unset -f source_up
+
+  [[ -z "$explicit_username" ]] || TF_VM_USERNAME="$explicit_username"
+  [[ -z "$explicit_password" ]] || TF_VM_PASSWORD="$explicit_password"
+  [[ -z "$explicit_ssh_public_key" ]] || TF_VM_SSH_PUBLIC_KEY="$explicit_ssh_public_key"
+fi
+
+TF_VM_USERNAME="${TF_VM_USERNAME:-$(id -un)}"
+TF_VM_SSH_PUBLIC_KEY="${TF_VM_SSH_PUBLIC_KEY:-${HOME}/.ssh/id_ed25519.pub}"
+
+if [[ -z "${TF_VM_PASSWORD:-}" ]]; then
+  if [[ ! -t 0 ]]; then
+    echo "Error: TF_VM_PASSWORD is unset and no terminal is available for input" >&2
+    exit 1
+  fi
+
+  read -rsp "VM password: " TF_VM_PASSWORD
+  echo
+  if [[ -z "$TF_VM_PASSWORD" ]]; then
+    echo "Error: VM password must not be empty" >&2
+    exit 1
+  fi
+fi
+
+if [[ ! -f "$TF_VM_SSH_PUBLIC_KEY" ]]; then
+  echo "Error: SSH public key not found: ${TF_VM_SSH_PUBLIC_KEY}" >&2
+  exit 1
+fi
+
+export TF_VM_USERNAME TF_VM_PASSWORD TF_VM_SSH_PUBLIC_KEY
+
 TMP_FILE="$(mktemp "${TMPDIR:-/tmp}/create-vm.XXXXXX")"
-trap 'rm -f "$TMP_FILE"' EXIT
+TMP_ENVRC=""
+cleanup() {
+  rm -f "$TMP_FILE"
+  [[ -z "$TMP_ENVRC" ]] || rm -f "$TMP_ENVRC"
+}
+trap cleanup EXIT
 
 cat > "$TMP_FILE" <<HCL
 include "root" {
@@ -159,6 +216,32 @@ else
   mkdir -p "$OUT_DIR"
   mv "$TMP_FILE" "$OUT_FILE"
   echo "Generated: tf/vm/${NODE}/${VM_NAME}/terragrunt.hcl"
+fi
+
+# Install the ignore rule before writing plaintext credentials so that an
+# interrupted run cannot leave a newly generated .envrc visible to Git.
+if [[ ! -f "$OUT_GITIGNORE" ]]; then
+  printf '.envrc\n' > "$OUT_GITIGNORE"
+  echo "Generated: tf/vm/${NODE}/${VM_NAME}/.gitignore"
+elif ! grep -Fxq '.envrc' "$OUT_GITIGNORE"; then
+  printf '\n.envrc\n' >> "$OUT_GITIGNORE"
+  echo "Updated: tf/vm/${NODE}/${VM_NAME}/.gitignore"
+fi
+
+if [[ ! -f "$OUT_ENVRC" ]]; then
+  TMP_ENVRC="$(mktemp "${TMPDIR:-/tmp}/create-vm-envrc.XXXXXX")"
+  {
+    printf 'source_up\n\n'
+    printf 'export TF_VM_USERNAME=%q\n' "$TF_VM_USERNAME"
+    printf 'export TF_VM_PASSWORD=%q\n' "$TF_VM_PASSWORD"
+    printf 'export TF_VM_SSH_PUBLIC_KEY=%q\n' "$TF_VM_SSH_PUBLIC_KEY"
+  } > "$TMP_ENVRC"
+  chmod 600 "$TMP_ENVRC"
+  mv "$TMP_ENVRC" "$OUT_ENVRC"
+  TMP_ENVRC=""
+  echo "Generated local credentials: tf/vm/${NODE}/${VM_NAME}/.envrc"
+else
+  echo "Using existing local credentials: tf/vm/${NODE}/${VM_NAME}/.envrc"
 fi
 
 echo ""
