@@ -81,7 +81,7 @@ apps:
     upstream:
       repoURL: https://helm.openwebui.com/
       chart: open-webui
-      targetRevision: 15.2.1
+      targetRevision: 16.0.0
   pdns-ui:
     enabled: false
     wave: "1"
