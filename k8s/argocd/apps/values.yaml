@@ -18,7 +18,7 @@ apps:
     upstream:
       repoURL: https://argoproj.github.io/argo-helm
       chart: argo-cd
-      targetRevision: 10.2.1
+      targetRevision: 10.3.0
   cert-manager:
     enabled: false
     wave: "0"
