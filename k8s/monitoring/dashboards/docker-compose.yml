@@ -1,6 +1,6 @@
 services:
   grafana:
-    image: grafana/grafana:13.0
+    image: mirror.gcr.io/grafana/grafana:13.0
     ports:
       - "3000:3000"
     environment:
