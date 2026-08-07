@@ -196,12 +196,10 @@ make dev
 
 Opens at http://localhost:3000. Dashboards and the Prometheus/Loki datasources are provisioned automatically.
 
-Podman has no `docker compose`, so under Podman run the two steps `make dev` wraps:
-
-```bash
-make generate
-podman-compose up -d
-```
+`make dev` picks the compose implementation itself: `docker compose` when it is
+available, otherwise `podman-compose`, then `podman compose`. Force one with
+`make dev COMPOSE=podman-compose`. The probe only runs for `dev` / `dev-stop`,
+so `generate` and `check` are unaffected.
 
 Under rootless Podman, Grafana runs as UID 472, which maps to a subuid that does
 not own the bind-mounted `provisioning/` and dashboard directories. If `$HOME` is

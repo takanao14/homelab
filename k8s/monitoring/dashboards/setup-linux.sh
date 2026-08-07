@@ -241,8 +241,7 @@ podman-compose are on PATH, then:
 
   cd ${SCRIPT_DIR}
   cp .env.example .env    # set PROMETHEUS_URL / LOKI_URL
-  make generate
-  podman-compose up -d
+  make dev
 
 Grafana: http://localhost:3000
 EOF
