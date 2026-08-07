@@ -9,5 +9,7 @@ services:
       - PROMETHEUS_URL=${PROMETHEUS_URL}
       - LOKI_URL=${LOKI_URL}
     volumes:
-      - ./provisioning:/etc/grafana/provisioning
-      - ../charts/dashboards/dashboards:/var/lib/grafana/dashboards
+      # :z relabels the mount for SELinux (enforcing by default on Rocky).
+      # Docker and non-SELinux hosts parse and ignore it.
+      - ./provisioning:/etc/grafana/provisioning:z
+      - ../charts/dashboards/dashboards:/var/lib/grafana/dashboards:z

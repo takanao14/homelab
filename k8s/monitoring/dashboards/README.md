@@ -58,6 +58,7 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 │   ├── datasources/            # Prometheus datasource
 │   └── dashboards/             # Dashboard file provider
 ├── docker-compose.yml          # Local development Grafana
+├── setup-linux.sh              # Ubuntu / Rocky toolchain setup (Go, podman-compose)
 └── Makefile
 ```
 
@@ -170,6 +171,23 @@ cp .env.example .env
 Both are required: the Loki datasource backs the log dashboards (`dns-logs`,
 `syslog`, `proxmox-logs`, `service-logs`), which render empty without it.
 
+On Linux, `./setup-linux.sh` installs the rest of the toolchain. It supports
+Ubuntu 24.04 and Rocky 9/10, and installs:
+
+- Podman and pipx from the distro (Rocky takes pipx from EPEL, which the script
+  enables).
+- podman-compose through pipx. The project recommends `pip3 install`, but
+  Ubuntu 24.04 marks the system Python as externally managed (PEP 668) and
+  refuses it, so pipx keeps both distros on one code path.
+- Go from the official go.dev tarball into `/usr/local/go`. Neither distro is a
+  usable source: Ubuntu's `golang-go` is older than this module's `go` directive
+  and is pinned to `GOTOOLCHAIN=local`, so it cannot fetch the required
+  toolchain either, and Rocky has no current Go in its base repositories.
+
+The script is idempotent and reads the minimum Go version from `go.mod`, so
+re-run it after a `go.mod` bump. It also checks the rootless Podman
+prerequisites described below and warns rather than changing anything.
+
 ### Start local Grafana
 
 ```bash
@@ -177,6 +195,24 @@ make dev
 ```
 
 Opens at http://localhost:3000. Dashboards and the Prometheus/Loki datasources are provisioned automatically.
+
+Podman has no `docker compose`, so under Podman run the two steps `make dev` wraps:
+
+```bash
+make generate
+podman-compose up -d
+```
+
+Under rootless Podman, Grafana runs as UID 472, which maps to a subuid that does
+not own the bind-mounted `provisioning/` and dashboard directories. If `$HOME` is
+not traversable by others, Grafana starts with no datasources and no dashboards
+and logs nothing about it — `chmod o+x "$HOME"`, or add `user: "0"` to the
+`grafana` service. The user also needs a `/etc/subuid` range.
+
+On Rocky, SELinux is enforcing by default and blocks a container from reading an
+unlabelled bind mount. The volumes in `docker-compose.yml` therefore carry `:z`;
+Docker and non-SELinux hosts parse and ignore it. `setup-linux.sh` checks all of
+these and warns.
 
 Edit `.go` files in `cmd/generate/`, then re-run `make dev` to reload. Grafana's
 file provider rescans `/var/lib/grafana/dashboards` every 10s, so regenerated
