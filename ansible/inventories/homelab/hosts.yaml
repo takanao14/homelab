@@ -66,7 +66,18 @@ all:
       ansible_host: 192.168.10.248
     sssdtest1:
       ansible_host: 192.168.10.249
+    vpngw:
+      ansible_host: 192.168.10.3
   children:
+    # Hosts Ansible knows about for power sequencing only — their configuration
+    # is managed outside this repo. Registered so planned-shutdown ordering can
+    # account for them, but excluded from every `all:*` configuration playbook
+    # (apt_mirror, chrony, unattended_upgrades, package_upgrade) so adding a
+    # host here never changes what gets configured or rebooted.
+    power_only:
+      hosts:
+        vpngw: null
+
     dns:
       children:
         dns_auth:

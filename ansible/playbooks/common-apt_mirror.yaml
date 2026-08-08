@@ -1,5 +1,5 @@
 ---
 - name: Configure apt mirror for Ubuntu hosts
-  hosts: all
+  hosts: all:!power_only
   roles:
     - apt_mirror

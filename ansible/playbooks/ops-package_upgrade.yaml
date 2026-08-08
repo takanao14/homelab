@@ -13,7 +13,7 @@
 # All other hosts run a single independent service each, so a simultaneous
 # reboot only takes down that one service either way — no need to serialize.
 - name: Upgrade OS packages on remaining hosts
-  hosts: all:!proxmox:!dns
+  hosts: all:!proxmox:!dns:!power_only
   any_errors_fatal: false
   tasks:
     - name: Run package upgrade tasks
