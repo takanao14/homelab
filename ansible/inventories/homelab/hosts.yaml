@@ -42,19 +42,19 @@ all:
       ansible_host: 192.168.10.240
     rpi4:
       ansible_host: 192.168.10.241
-    sandbox-cp1:
+    sandbox-k0s-cp1:
       ansible_host: 192.168.20.31
-    sandbox-worker1:
+    sandbox-k0s-worker1:
       ansible_host: 192.168.20.32
-    sandbox-worker2:
+    sandbox-k0s-worker2:
       ansible_host: 192.168.20.33
-    sandbox-worker3:
+    sandbox-k0s-worker3:
       ansible_host: 192.168.20.34
-    prd-cp1:
+    k0s-cp1:
       ansible_host: 192.168.60.11
-    prd-worker1:
+    k0s-worker1:
       ansible_host: 192.168.30.12
-    prd-worker2:
+    k0s-worker2:
       ansible_host: 192.168.70.13
     openbao1:
       ansible_host: 192.168.40.30
@@ -148,15 +148,15 @@ all:
 
     prd_k8s:
       hosts:
-        prd-cp1: null
-        prd-worker1: null
-        prd-worker2: null
+        k0s-cp1: null
+        k0s-worker1: null
+        k0s-worker2: null
     sandbox_k8s:
       hosts:
-        sandbox-cp1: null
-        sandbox-worker1: null
-        sandbox-worker2: null
-        sandbox-worker3: null
+        sandbox-k0s-cp1: null
+        sandbox-k0s-worker1: null
+        sandbox-k0s-worker2: null
+        sandbox-k0s-worker3: null
 
     lxc:
       hosts:
@@ -259,7 +259,7 @@ all:
         # k0s controllers run kine (embedded SQLite) and have no kubelet, so they
         # are not covered by the in-cluster node-exporter DaemonSet. Scrape them
         # host-level to monitor the control-plane node and kine DB disk.
-        prd-cp1: null
+        k0s-cp1: null
         # openbao1 is a VM (not LXC): no host sensor leakage, keep defaults.
         openbao1: null
         # authentik1 is a VM (not LXC): no host sensor leakage, keep defaults.

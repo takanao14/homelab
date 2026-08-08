@@ -1,6 +1,6 @@
 controllers:
   - ip: 192.168.60.11
-    name: prd-cp1
+    name: k0s-cp1
     cluster: prd
 
 nodeExporter:
