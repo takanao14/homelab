@@ -157,17 +157,49 @@ all:
       hosts:
         rpi4: null
 
+    # k0s clusters are split by node role because disruptive operations must
+    # process workers and controllers as separate plays. `serial` follows
+    # inventory order, and rebooting a controller takes down the API server
+    # that cordon/drain of the remaining nodes depends on — so workers have to
+    # be drained and restored first. Expressing the split as groups keeps that
+    # ordering in the inventory instead of in per-playbook host enumerations.
+    # Host names match the k0s node names reported by `kubectl get nodes`.
     prd_k8s:
-      hosts:
-        k0s-cp1: null
-        k0s-worker1: null
-        k0s-worker2: null
+      children:
+        prd_k8s_controller:
+          hosts:
+            k0s-cp1: null
+        prd_k8s_worker:
+          hosts:
+            k0s-worker1: null
+            k0s-worker2: null
+            # GPU worker (ADR-0019), tainted gpu=amd:NoSchedule. Also a member
+            # of `gpuvm`, which carries the GPU role playbook; membership here
+            # is cluster topology and grants the prd_k8s group_vars.
+            gpuvm1: null
     sandbox_k8s:
-      hosts:
-        sandbox-k0s-cp1: null
-        sandbox-k0s-worker1: null
-        sandbox-k0s-worker2: null
-        sandbox-k0s-worker3: null
+      children:
+        sandbox_k8s_controller:
+          hosts:
+            sandbox-k0s-cp1: null
+        sandbox_k8s_worker:
+          hosts:
+            sandbox-k0s-worker1: null
+            sandbox-k0s-worker2: null
+            sandbox-k0s-worker3: null
+
+    # Cross-cluster role groups. Target of group_vars that depend only on the
+    # node role (k0s service name, drain policy) rather than on which cluster
+    # the node belongs to; cluster-specific values (kubeconfig, storage
+    # provider) live in the prd_k8s / sandbox_k8s group_vars instead.
+    k8s_controller:
+      children:
+        prd_k8s_controller: {}
+        sandbox_k8s_controller: {}
+    k8s_worker:
+      children:
+        prd_k8s_worker: {}
+        sandbox_k8s_worker: {}
 
     lxc:
       hosts:
