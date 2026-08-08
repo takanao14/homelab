@@ -1,4 +1,23 @@
 ---
+# --- Baseline ---
+# Units that are already failed before anything is touched. Some hosts carry
+# permanently failed units that the upgrade neither caused nor can fix — an LXC
+# guest, for example, cannot start openipmi.service because IPMI needs kernel
+# modules and /dev/ipmi* that containers do not have. Only a service that was
+# healthy before and is failed afterwards indicates the upgrade broke something.
+- name: Record systemd services already failed before the upgrade
+  become: true
+  ansible.builtin.command:
+    argv:
+      - systemctl
+      - list-units
+      - --state=failed
+      - --type=service
+      - --no-legend
+      - --plain
+  register: package_upgrade_failed_services_before
+  changed_when: false
+
 # --- Debian / Ubuntu (apt) ---
 - name: Update apt cache and upgrade packages
   ansible.builtin.apt:
@@ -74,4 +93,26 @@
       - --plain
   register: package_upgrade_failed_services
   changed_when: false
-  failed_when: package_upgrade_failed_services.stdout_lines | length > 0
+
+# list-units prints "<unit> <load> <active> <sub> <description>", so the unit
+# name is the first field; comparing names rather than whole lines keeps the
+# diff stable when a description changes.
+- name: Determine which services newly failed during the upgrade
+  ansible.builtin.set_fact:
+    package_upgrade_new_failures: >-
+      {{ package_upgrade_failed_services.stdout_lines
+         | map('regex_replace', '^(\S+).*$', '\1') | list
+         | difference(package_upgrade_failed_services_before.stdout_lines
+                      | map('regex_replace', '^(\S+).*$', '\1') | list) }}
+
+- name: Fail if a service was healthy before the upgrade but is failed now
+  ansible.builtin.assert:
+    that: package_upgrade_new_failures | length == 0
+    fail_msg: >-
+      Services healthy before the upgrade are now failed:
+      {{ package_upgrade_new_failures | join(', ') }}
+    success_msg: >-
+      No service regressed during the upgrade{%- if
+      package_upgrade_failed_services.stdout_lines %} (pre-existing
+      failures left untouched: {{ package_upgrade_failed_services.stdout_lines
+      | map('regex_replace', '^(\S+).*$', '\1') | join(', ') }}){%- endif %}
