@@ -1,5 +1,5 @@
 ---
-# The dns group (dns_auth: ns1-3, dnsdist: dist1-2) is a redundant pool that
+# The dns group (dns_auth, dns_resolver, dnsdist) is a redundant pool that
 # collectively provides name resolution, so hosts are upgraded/rebooted one
 # at a time to keep resolution available throughout.
 - name: Upgrade OS packages on DNS hosts serially
