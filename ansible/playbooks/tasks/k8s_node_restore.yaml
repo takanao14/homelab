@@ -1,0 +1,73 @@
+---
+# Bring a drained k0s worker back into service after a disruptive operation, and
+# block until the cluster is healthy enough for the next node to be taken down.
+# With serial: 1 this is what keeps a rolling operation from removing a second
+# replica while the first is still rebuilding.
+
+- name: Wait for node to report Ready
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - get
+      - "node/{{ inventory_hostname }}"
+      - -o
+      - jsonpath={.status.conditions[?(@.type=="Ready")].status}
+  register: k8s_node_ready
+  until: k8s_node_ready.stdout == "True"
+  retries: 30
+  delay: 10
+  delegate_to: localhost
+  become: false
+  changed_when: false
+
+# OpenEBS LocalPV serves PVs out of a separate mount. Confirm it is back before
+# the node accepts pods, so a workload cannot bind an empty directory on the
+# root filesystem and start with no data.
+- name: Verify the LocalPV data mount is present
+  ansible.builtin.command:
+    argv:
+      - mountpoint
+      - -q
+      - "{{ k8s_storage_mountpoint }}"
+  become: true
+  changed_when: false
+  when: k8s_storage_provider == "openebs"
+
+- name: Uncordon node
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - uncordon
+      - "{{ inventory_hostname }}"
+  delegate_to: localhost
+  become: false
+  changed_when: true
+
+# Only attached volumes carry a meaningful robustness value; detached ones
+# report "unknown" forever and must not be waited on. Emitting state:robustness
+# per volume keeps the filtering readable, and an empty result (no volumes at
+# all, which is sandbox today) passes immediately.
+- name: Wait for Longhorn volumes to finish rebuilding
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - "--namespace={{ k8s_longhorn_namespace }}"
+      - get
+      - volumes.longhorn.io
+      - -o
+      - jsonpath={range .items[*]}{.status.state}:{.status.robustness}{"\n"}{end}
+  register: k8s_longhorn_volumes
+  until: >-
+    k8s_longhorn_volumes.stdout_lines
+    | select('search', '^attached:')
+    | reject('search', ':healthy$')
+    | list | length == 0
+  retries: 60
+  delay: 30
+  delegate_to: localhost
+  become: false
+  changed_when: false
+  when: k8s_storage_provider == "longhorn"

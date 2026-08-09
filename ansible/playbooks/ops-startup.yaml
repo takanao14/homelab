@@ -1,0 +1,120 @@
+---
+# Bring the homelab back after a planned outage — the counterpart to
+# ops-shutdown.yaml, but not its mirror image. Most of the fleet restarts on its
+# own: every guest in tf/ except the sandbox cluster has on_boot = true, so once
+# a hypervisor powers on its guests follow. What this playbook does is wait for
+# that to happen in dependency order, start the guests that do not, and put the
+# Kubernetes workloads back.
+#
+#   --tags hypervisors  wait for the Proxmox nodes to answer
+#   --tags guests       start non-autostart guests, wait for guests in order
+#   --tags k8s          wait for the clusters to report every node Ready
+#   --tags workloads    scale workloads back to their recorded replica counts
+#
+# Powering the hypervisors on is out of scope, and does not need to be handled
+# here: every node has its BIOS AC-power-recovery set to power on, so mains
+# returning starts the fleet. That is the only remote path for pve and node5,
+# which have no AMT; node1-node4 can also be woken over AMT (192.168.110.x, see
+# k8s/monitoring/values/proxmox-nodes.yaml) if a node stays down.
+# rpi3/rpi4 restart with mains power.
+
+# Phase 1 — hypervisors. Nothing else can be reached until these answer.
+- name: Wait for the Proxmox nodes to come back
+  hosts: proxmox
+  gather_facts: false
+  tags: hypervisors
+  tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for:
+        host: "{{ ansible_host }}"
+        port: 22
+        state: started
+        timeout: "{{ host_startup_timeout }}"
+      delegate_to: localhost
+      become: false
+
+# Phase 2a — guests that do not boot with their node. Only the sandbox cluster
+# on pve; see host_vars/pve.yaml.
+- name: Start guests that do not boot automatically
+  hosts: proxmox
+  gather_facts: false
+  tags: guests
+  tasks:
+    # qm start takes a VMID, so the configured names are resolved first. Already
+    # running is not an error: the play may be re-run after a partial recovery.
+    - name: Start the guest if it is not already running
+      become: true
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          vmid=$(qm list | awk -v n="{{ item }}" '$2 == n {print $1}')
+          if [ -z "$vmid" ]; then
+            echo "no such guest: {{ item }}" >&2
+            exit 1
+          fi
+          if [ "$(qm status "$vmid" | awk '{print $2}')" = "running" ]; then
+            echo already-running
+            exit 0
+          fi
+          qm start "$vmid" >/dev/null && echo started
+      loop: "{{ startup_manual_guests }}"
+      register: startup_guest_started
+      changed_when: startup_guest_started.stdout == "started"
+
+# Phase 2b — guests, in the reverse of the shutdown order: DNS first, because
+# everything started after it expects name resolution to work.
+- name: Wait for guests in dependency order
+  hosts: guest_shutdown_order
+  serial: 1
+  order: reverse_inventory
+  gather_facts: false
+  tags: guests
+  tasks:
+    - name: Wait for SSH
+      ansible.builtin.wait_for:
+        host: "{{ ansible_host }}"
+        port: 22
+        state: started
+        timeout: "{{ host_startup_timeout }}"
+      delegate_to: localhost
+      become: false
+
+# Phase 3 — prd, brought all the way back before sandbox is touched. The
+# clusters are split into separate plays for the same reason ops-shutdown.yaml
+# splits them: a single play over both runs them in parallel, which makes the
+# order depend on an operator passing the right --limit. The order is reversed
+# here on purpose — the shutdown leads with sandbox so a failure lands on the
+# disposable cluster first, while recovery leads with prd because that is the
+# one whose downtime costs something.
+- name: Wait for the prd cluster to be ready
+  hosts: prd_k8s_controller
+  gather_facts: false
+  tags: k8s
+  tasks:
+    - name: Wait for every node to report Ready
+      ansible.builtin.import_tasks: tasks/k8s_cluster_wait_ready.yaml
+
+- name: Restore prd application workloads
+  hosts: prd_k8s_controller
+  gather_facts: false
+  tags: workloads
+  tasks:
+    - name: Scale workloads back up
+      ansible.builtin.import_tasks: tasks/k8s_workload_start.yaml
+
+# Phase 4 — sandbox.
+- name: Wait for the sandbox cluster to be ready
+  hosts: sandbox_k8s_controller
+  gather_facts: false
+  tags: k8s
+  tasks:
+    - name: Wait for every node to report Ready
+      ansible.builtin.import_tasks: tasks/k8s_cluster_wait_ready.yaml
+
+- name: Restore sandbox application workloads
+  hosts: sandbox_k8s_controller
+  gather_facts: false
+  tags: workloads
+  tasks:
+    - name: Scale workloads back up
+      ansible.builtin.import_tasks: tasks/k8s_workload_start.yaml

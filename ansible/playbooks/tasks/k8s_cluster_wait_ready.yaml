@@ -1,0 +1,30 @@
+---
+# Block until every node of this cluster is registered and Ready. k0s starts
+# with its node, so nothing is started here — this only holds the run back until
+# workloads can actually be scheduled.
+#
+# The command fails outright while the API server is still coming up; `until`
+# retries a failed task as well as an unsatisfied one, so that is the expected
+# path rather than an error.
+
+- name: Wait for every node to report Ready
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - get
+      - nodes
+      - -o
+      - jsonpath={range .items[*]}{.status.conditions[?(@.type=="Ready")].status}{"\n"}{end}
+  register: startup_node_ready
+  until:
+    - startup_node_ready.stdout_lines | length > 0
+    - startup_node_ready.stdout_lines | reject('equalto', 'True') | list | length == 0
+  # A rehearsal restoring four hypervisors needed 39 of these; the real outage
+  # restarts six at once, so the margin is deliberately wide. Waiting costs
+  # nothing when the cluster is already up — the first attempt simply succeeds.
+  retries: 90
+  delay: 10
+  delegate_to: localhost
+  become: false
+  changed_when: false

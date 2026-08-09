@@ -9,3 +9,18 @@ alloy_otlp_server: "192.168.30.251"
 
 # Central Vector syslog relay; rsyslog hosts forward here.
 rsyslog_forward_host: "{{ hostvars['log1']['ansible_host'] }}"
+
+# How long the package upgrade reboot waits for a host to come back. Suits VMs
+# and LXC guests; slow physical hosts raise it in host_vars. A host that boots
+# more slowly than this fails the run even though the reboot itself succeeded.
+package_upgrade_reboot_timeout: 300
+
+# How long ops-shutdown.yaml waits for a host to stop answering on SSH after it
+# was told to power off. Exceeding it stops the run rather than powering off the
+# tier below a host that is still up.
+host_poweroff_timeout: 300
+
+# How long ops-startup.yaml waits for a host to answer on SSH after power is
+# restored. Generous on purpose: hypervisors run firmware checks before they
+# boot, and guests only start once their node is up.
+host_startup_timeout: 900

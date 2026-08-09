@@ -66,7 +66,18 @@ all:
       ansible_host: 192.168.10.248
     sssdtest1:
       ansible_host: 192.168.10.249
+    vpngw:
+      ansible_host: 192.168.10.3
   children:
+    # Hosts Ansible knows about for power sequencing only — their configuration
+    # is managed outside this repo. Registered so planned-shutdown ordering can
+    # account for them, but excluded from every `all:*` configuration playbook
+    # (apt_mirror, chrony, unattended_upgrades, package_upgrade) so adding a
+    # host here never changes what gets configured or rebooted.
+    power_only:
+      hosts:
+        vpngw: null
+
     dns:
       children:
         dns_auth:
@@ -146,17 +157,49 @@ all:
       hosts:
         rpi4: null
 
+    # k0s clusters are split by node role because disruptive operations must
+    # process workers and controllers as separate plays. `serial` follows
+    # inventory order, and rebooting a controller takes down the API server
+    # that cordon/drain of the remaining nodes depends on — so workers have to
+    # be drained and restored first. Expressing the split as groups keeps that
+    # ordering in the inventory instead of in per-playbook host enumerations.
+    # Host names match the k0s node names reported by `kubectl get nodes`.
     prd_k8s:
-      hosts:
-        k0s-cp1: null
-        k0s-worker1: null
-        k0s-worker2: null
+      children:
+        prd_k8s_controller:
+          hosts:
+            k0s-cp1: null
+        prd_k8s_worker:
+          hosts:
+            k0s-worker1: null
+            k0s-worker2: null
+            # GPU worker (ADR-0019), tainted gpu=amd:NoSchedule. Also a member
+            # of `gpuvm`, which carries the GPU role playbook; membership here
+            # is cluster topology and grants the prd_k8s group_vars.
+            gpuvm1: null
     sandbox_k8s:
-      hosts:
-        sandbox-k0s-cp1: null
-        sandbox-k0s-worker1: null
-        sandbox-k0s-worker2: null
-        sandbox-k0s-worker3: null
+      children:
+        sandbox_k8s_controller:
+          hosts:
+            sandbox-k0s-cp1: null
+        sandbox_k8s_worker:
+          hosts:
+            sandbox-k0s-worker1: null
+            sandbox-k0s-worker2: null
+            sandbox-k0s-worker3: null
+
+    # Cross-cluster role groups. Target of group_vars that depend only on the
+    # node role (k0s service name, drain policy) rather than on which cluster
+    # the node belongs to; cluster-specific values (kubeconfig, storage
+    # provider) live in the prd_k8s / sandbox_k8s group_vars instead.
+    k8s_controller:
+      children:
+        prd_k8s_controller: {}
+        sandbox_k8s_controller: {}
+    k8s_worker:
+      children:
+        prd_k8s_worker: {}
+        sandbox_k8s_worker: {}
 
     lxc:
       hosts:
@@ -222,6 +265,51 @@ all:
         proxmox: {}
       hosts:
         rpi3: null
+
+    # Planned-outage ordering (ops-shutdown.yaml). Ansible preserves the order
+    # hosts are declared in a group, so these groups encode the sequence itself
+    # rather than leaving it to per-playbook host enumerations.
+    #
+    # Guests are listed least-depended-upon first. DNS goes last because the
+    # services stopping ahead of it still resolve names on the way down, and the
+    # syslog collector sits just before it so the shutdown of everything above
+    # is still captured. k0s nodes are absent on purpose: they are stopped by
+    # their own play, before any of these.
+    guest_shutdown_order:
+      hosts:
+        runner1: null
+        sssdtest1: null
+        toolbox1: null
+        authentik1: null
+        forgejo1: null
+        netbox1: null
+        seaweedfs1: null
+        openbao1: null
+        vpngw: null
+        caddy1: null
+        log1: null
+        resolver1: null
+        resolver2: null
+        dist1: null
+        dist2: null
+        ns1: null
+        ns2: null
+        ns3: null
+
+    # Hypervisors, in the order they must be powered off. node2 is last because
+    # it carries the DNS, gateway and logging LXC guests the rest of the fleet
+    # depends on; pve is second to last because it hosts the sandbox cluster,
+    # the GPU worker and the toolbox VM. rpi3/rpi4 are not hypervisors and are
+    # powered off by hand afterwards, keeping DHCP and the blackbox probes alive
+    # for as long as possible.
+    proxmox_shutdown_order:
+      hosts:
+        node1: null
+        node5: null
+        node4: null
+        node3: null
+        pve: null
+        node2: null
 
     proxmox:
       hosts:

@@ -1,6 +1,5 @@
 ---
-# Non-secret SeaweedFS configuration. The S3 access/secret key live in
-# seaweedfs.sops.yaml.
+# Non-secret SeaweedFS configuration.
 #
 # The role also creates public buckets and manages the admin UI and R2 backup
 # timer. The versioned backup destination bucket remains a one-time post-install
@@ -20,7 +19,6 @@ seaweedfs_public_buckets:
 # actions are bucket-scoped, so they currently apply to every bucket. This is
 # broader than the intended cloud-images scope, but excludes Admin/IAM actions.
 # The script disables S3 multipart upload to keep the required actions minimal.
-# Credentials live in seaweedfs.sops.yaml.
 seaweedfs_s3_extra_identities:
   - name: imagebuilder
     access_key: "{{ seaweedfs_imagebuilder_access_key }}"
