@@ -8,3 +8,4 @@
 # reviewable and rotatable independently of VM creation.
 sssd_breakglass_authorized_keys:
   - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAC3V/tQIKA+06f/+2wMHWEhJMeciTFlvqcb9MwTLy9Y takanao@toolbox1"
+  - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDLUf8p8RJCzQpUpO3TYTUOPuUsQxjW4F6J6m11RY8g3 takanao"

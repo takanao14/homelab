@@ -1,0 +1,44 @@
+---
+# Cordon and drain a k0s worker before a disruptive operation (reboot, planned
+# shutdown). Without this the node is rebooted out from under its pods: kubelet
+# and containerd are killed, workloads get no SIGTERM, and Longhorn replicas are
+# marked failed and need a rebuild.
+#
+# kubectl runs on the control node via delegate_to, not on the target — the node
+# being drained is about to go away, and the inventory carries no API endpoint.
+#
+# inventory_hostname is used directly as the Kubernetes node name: inventory
+# host names were aligned with the names `kubectl get nodes` reports, so no
+# translation table is needed.
+
+- name: Cordon node
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - cordon
+      - "{{ inventory_hostname }}"
+  delegate_to: localhost
+  become: false
+  changed_when: true
+
+# Drain policy mirrors the k0sctl upgrade options in k0s/template_lib.sh so both
+# paths disrupt the cluster identically. force is required because prd runs pods
+# whose LocalPV volumes pin them to this node and cannot be evicted elsewhere;
+# the long timeout absorbs PodDisruptionBudgets, including the ones Longhorn
+# creates for its instance managers.
+- name: Drain node
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - drain
+      - "{{ inventory_hostname }}"
+      - --ignore-daemonsets
+      - --delete-emptydir-data
+      - --force
+      - --grace-period=120
+      - --timeout=20m
+  delegate_to: localhost
+  become: false
+  changed_when: true

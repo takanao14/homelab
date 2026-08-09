@@ -195,6 +195,37 @@
   changed_when: false
   when: not ansible_check_mode
 
+- name: Require the NetBox MCP token before provisioning its identity
+  ansible.builtin.assert:
+    that:
+      - netbox_mcp_token | length > 0
+      - netbox_mcp_token is match('^nbt_[A-Za-z0-9]{12}\.[A-Za-z0-9]{40}$')
+    fail_msg: >-
+      Generate NETBOX_TOKEN with scripts/netbox-mcp-token.sh, store it in
+      .env/secrets.sops.env, and reload direnv before applying this role.
+  when:
+    - netbox_mcp_identity_enabled
+  no_log: true
+
+- name: Provision the NetBox MCP user, permissions, and read-only token
+  become: true
+  ansible.builtin.command:
+    argv:
+      - "{{ netbox_venv }}/bin/python"
+      - netbox/manage.py
+      - shell
+    chdir: "{{ netbox_home }}"
+    stdin: "{{ lookup('ansible.builtin.template', 'provision_mcp_identity.py.j2') }}"
+  environment:
+    NETBOX_MCP_TOKEN: "{{ netbox_mcp_token }}"
+    NETBOX_MCP_CHECK_MODE: "{{ ansible_check_mode | ternary('true', 'false') }}"
+  register: netbox_mcp_identity_result
+  changed_when: "'\"changed\": true' in netbox_mcp_identity_result.stdout"
+  when:
+    - netbox_mcp_identity_enabled
+  check_mode: false
+  no_log: true
+
 - name: Deploy gunicorn config
   become: true
   ansible.builtin.template:

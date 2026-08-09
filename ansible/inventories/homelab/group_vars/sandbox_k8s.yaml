@@ -1,0 +1,11 @@
+---
+# See prd_k8s.yaml for why kubectl runs on the control node.
+k8s_kubeconfig: "~/.kube/sandbox.yaml"
+
+# sandbox uses Longhorn (k0s/env/sandbox.sh, k0s/values/longhorn.yaml) with
+# replicaCount 3 across exactly three workers, so every volume has a replica on
+# every worker. Rebooting a node leaves the volume degraded until its replica
+# rebuilds; the next node must not be taken down before that finishes, or the
+# volume drops to a single replica. Hence the post-reboot robustness wait.
+k8s_storage_provider: longhorn
+k8s_longhorn_namespace: longhorn-system

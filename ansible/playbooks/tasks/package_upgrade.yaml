@@ -72,7 +72,7 @@
 # --- Common reboot ---
 - name: Reboot if required
   ansible.builtin.reboot:
-    reboot_timeout: 300
+    reboot_timeout: "{{ package_upgrade_reboot_timeout }}"
   become: true
   when: >
     (ansible_facts['os_family'] == "Debian" and deb_reboot_required.stat.exists)

@@ -1,0 +1,17 @@
+---
+# kubectl for this cluster runs on the Ansible control node: the inventory has
+# no API endpoint host, and cordon/drain must keep working while the node being
+# operated on is down.
+k8s_kubeconfig: "~/.kube/prd.yaml"
+
+# prd uses OpenEBS LocalPV hostpath (k0s/env/prd.sh, k0s/values/openebs.yaml).
+# PVs are node-local directories with node affinity, so a drained pod cannot be
+# rescheduled elsewhere — draining buys a graceful SIGTERM, not availability.
+# There are no replicas to rebuild, so no post-reboot storage recovery wait.
+k8s_storage_provider: openebs
+
+# LocalPV basePath, a separate ext4 mount created by k0s/hook/ssdsetup.sh. Its
+# fstab entry has no `nofail`, so a missing disk stops the boot rather than
+# silently exposing an empty directory — but verify the mount before uncordoning
+# so a pod can never bind the root filesystem instead of its data.
+k8s_storage_mountpoint: /srv/storage/volume

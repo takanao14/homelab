@@ -1,0 +1,127 @@
+import json
+import os
+import re
+
+from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
+
+from users.models import Group, ObjectPermission, Token, User
+
+
+username = {{ netbox_mcp_username | to_json }}
+email = {{ netbox_mcp_email | to_json }}
+group_name = {{ netbox_mcp_group_name | to_json }}
+permission_name = {{ netbox_mcp_permission_name | to_json }}
+permission_description = {{ netbox_mcp_permission_description | to_json }}
+token_description = {{ netbox_mcp_token_description | to_json }}
+view_app_labels = {{ netbox_mcp_view_app_labels | to_json }}
+view_object_types = {{ netbox_mcp_view_object_types | to_json }}
+check_mode = os.environ.get("NETBOX_MCP_CHECK_MODE") == "true"
+
+
+def provision():
+    changed = False
+
+    user, created = User.objects.get_or_create(
+        username=username,
+        defaults={"email": email, "is_active": True},
+    )
+    changed |= created
+    if user.email != email or not user.is_active or user.has_usable_password():
+        user.email = email
+        user.is_active = True
+        user.set_unusable_password()
+        user.save()
+        changed = True
+
+    group, created = Group.objects.get_or_create(
+        name=group_name,
+        defaults={"description": permission_description},
+    )
+    changed |= created
+    if group.description != permission_description:
+        group.description = permission_description
+        group.save(update_fields=("description",))
+        changed = True
+    if set(user.groups.values_list("pk", flat=True)) != {group.pk}:
+        user.groups.set([group])
+        changed = True
+
+    object_types = ContentType.objects.filter(app_label__in=view_app_labels)
+    for object_type in view_object_types:
+        app_label, model = object_type.split(".", 1)
+        object_types = object_types | ContentType.objects.filter(
+            app_label=app_label,
+            model=model,
+        )
+    desired_object_type_ids = set(object_types.values_list("pk", flat=True))
+
+    permission, created = ObjectPermission.objects.get_or_create(name=permission_name)
+    changed |= created
+    if (
+        permission.description != permission_description
+        or not permission.enabled
+        or permission.actions != ["view"]
+        or permission.constraints is not None
+    ):
+        permission.description = permission_description
+        permission.enabled = True
+        permission.actions = ["view"]
+        permission.constraints = None
+        permission.save()
+        changed = True
+    if set(permission.object_types.values_list("pk", flat=True)) != desired_object_type_ids:
+        permission.object_types.set(desired_object_type_ids)
+        changed = True
+    if set(permission.groups.values_list("pk", flat=True)) != {group.pk}:
+        permission.groups.set([group])
+        changed = True
+
+    full_token = os.environ["NETBOX_MCP_TOKEN"]
+    match = re.fullmatch(r"nbt_([A-Za-z0-9]{12})\.([A-Za-z0-9]{40})", full_token)
+    if match is None:
+        raise ValueError("NETBOX_MCP_TOKEN must be a NetBox v2 token")
+
+    key, plaintext = match.groups()
+    token = Token.objects.filter(key=key).first()
+    if token is None:
+        token = Token(
+            version=2,
+            user=user,
+            key=key,
+            token=plaintext,
+            description=token_description,
+            enabled=True,
+            write_enabled=False,
+        )
+        token.full_clean()
+        token.save()
+        changed = True
+    else:
+        if token.user_id != user.pk or not token.validate(plaintext):
+            raise ValueError("NETBOX_MCP_TOKEN conflicts with an existing token")
+        if token.description != token_description or not token.enabled or token.write_enabled:
+            token.description = token_description
+            token.enabled = True
+            token.write_enabled = False
+            token.save(update_fields=("description", "enabled", "write_enabled"))
+            changed = True
+
+    stale_tokens = Token.objects.filter(
+        user=user,
+        description=token_description,
+        enabled=True,
+    ).exclude(pk=token.pk)
+    if stale_tokens.exists():
+        stale_tokens.update(enabled=False)
+        changed = True
+
+    return changed
+
+
+with transaction.atomic():
+    result = provision()
+    if check_mode:
+        transaction.set_rollback(True)
+
+print(json.dumps({"changed": result, "check_mode": check_mode}))

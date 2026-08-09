@@ -19,3 +19,23 @@ netbox_api_token_pepper: ""
 netbox_superuser_name: admin
 netbox_superuser_email: "admin@home.butaco.net"
 netbox_superuser_password: ""
+
+netbox_mcp_identity_enabled: false
+netbox_mcp_username: mcp-netbox
+netbox_mcp_email: "mcp-netbox@home.butaco.net"
+netbox_mcp_group_name: mcp-readers
+netbox_mcp_permission_name: NetBox MCP read-only
+netbox_mcp_permission_description: Read-only infrastructure access for the NetBox MCP server
+netbox_mcp_token_description: NetBox MCP
+netbox_mcp_token: ""
+netbox_mcp_view_app_labels:
+  - circuits
+  - dcim
+  - ipam
+  - tenancy
+  - virtualization
+  - vpn
+  - wireless
+netbox_mcp_view_object_types:
+  - core.objectchange
+  - extras.tag

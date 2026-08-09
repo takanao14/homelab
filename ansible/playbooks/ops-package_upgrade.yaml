@@ -10,10 +10,44 @@
     - name: Run package upgrade tasks
       ansible.builtin.import_tasks: tasks/package_upgrade.yaml
 
+# k0s workers carry the cluster's workloads and storage, so they are drained
+# before the reboot and restored afterwards. serial: 1 keeps the blast radius to
+# one node: prd has only two general workers, and sandbox's Longhorn volumes
+# have a replica on each of its three workers, so a simultaneous reboot would
+# take every replica of every volume down at once.
+#
+# tasks/k8s_node_restore.yaml blocks until the node is back and its storage has
+# recovered, which is what makes serial: 1 safe rather than merely sequential.
+- name: Upgrade OS packages on k0s workers one at a time
+  hosts: prd_k8s_worker:sandbox_k8s_worker
+  serial: 1
+  any_errors_fatal: true
+  tasks:
+    - name: Drain the node
+      ansible.builtin.import_tasks: tasks/k8s_node_drain.yaml
+
+    - name: Run package upgrade tasks
+      ansible.builtin.import_tasks: tasks/package_upgrade.yaml
+
+    - name: Restore the node to service
+      ansible.builtin.import_tasks: tasks/k8s_node_restore.yaml
+
+# Controllers run kine (embedded SQLite) and host no workloads, so there is
+# nothing to drain. They come after every worker on purpose: cordon/drain of the
+# workers talks to the API server these hosts provide, and rebooting a
+# single-controller cluster mid-run would strand the remaining nodes.
+- name: Upgrade OS packages on k0s controllers
+  hosts: prd_k8s_controller:sandbox_k8s_controller
+  serial: 1
+  any_errors_fatal: true
+  tasks:
+    - name: Run package upgrade tasks
+      ansible.builtin.import_tasks: tasks/package_upgrade.yaml
+
 # All other hosts run a single independent service each, so a simultaneous
 # reboot only takes down that one service either way — no need to serialize.
 - name: Upgrade OS packages on remaining hosts
-  hosts: all:!proxmox:!dns:!power_only
+  hosts: all:!proxmox:!dns:!power_only:!prd_k8s:!sandbox_k8s
   any_errors_fatal: false
   tasks:
     - name: Run package upgrade tasks

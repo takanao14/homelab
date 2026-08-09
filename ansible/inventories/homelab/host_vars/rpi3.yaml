@@ -1,0 +1,6 @@
+---
+# rpi3 boots from an SD card and took roughly 19 minutes to return after a
+# package upgrade reboot, far beyond the fleet default. The reboot itself
+# succeeded (the reboot module reported rebooted: true); only the wait for the
+# host to answer again timed out, which failed the run.
+package_upgrade_reboot_timeout: 1800

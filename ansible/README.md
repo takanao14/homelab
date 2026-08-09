@@ -259,7 +259,10 @@ ansible-playbook playbooks/common-maintenance_user.yaml
 # Bulk user accounts on shared VMs
 ansible-playbook playbooks/common-users.yaml
 
-# OS package upgrade (all hosts; apt on Debian/Ubuntu, dnf on Rocky/RHEL)
+# OS package upgrade (all hosts; apt on Debian/Ubuntu, dnf on Rocky/RHEL).
+# DNS hosts and k0s nodes are upgraded one at a time; k0s workers are drained
+# before the reboot and only released once storage has recovered, so a full run
+# takes considerably longer than the parallel phase suggests.
 ansible-playbook playbooks/ops-package_upgrade.yaml
 
 # Version audit for Renovate-managed Ansible components (read-only)
@@ -409,12 +412,12 @@ the decision behind the rebuild registration flow.
 | `common-timezone.yaml` | `timezone` | cross-cutting |
 | `common-rsyslog.yaml` | `rsyslog` | cross-cutting |
 | `common-node_exporter.yaml` | `node_exporter` | cross-cutting |
-| `common-chrony.yaml` | `all:!lxc` | cross-cutting |
-| `common-apt_mirror.yaml` | `all` | cross-cutting |
-| `common-unattended_upgrades.yaml` | `all:!proxmox` | cross-cutting |
+| `common-chrony.yaml` | `all:!lxc:!power_only` | cross-cutting |
+| `common-apt_mirror.yaml` | `all:!power_only` | cross-cutting |
+| `common-unattended_upgrades.yaml` | `all:!proxmox:!power_only` | cross-cutting |
 | `common-maintenance_user.yaml` | `lxc` | cross-cutting |
 | `common-users.yaml` | `shared_vms` | cross-cutting |
-| `ops-package_upgrade.yaml` | `all:!proxmox` | ops |
+| `ops-package_upgrade.yaml` | `dns` (serial), k0s workers (serial, drained), k0s controllers (serial), then `all:!proxmox:!dns:!power_only:!prd_k8s:!sandbox_k8s` | ops |
 | `ops-version_audit.yaml` | `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `dns_resolver`, `seaweedfs`, `openbao`, `gpuvm` | ops |
 | `ops-dns_failover_test.yaml` | delegated DNS hosts; orchestration on localhost | ops (state-changing failure test) |
 | `ops-pdns_sync.yaml` | `dns_primary`, `dns_secondary` | ops |
