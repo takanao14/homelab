@@ -34,10 +34,15 @@
 # Reversed so the GitOps namespace comes back first: once its controller is
 # running it reconciles everything else towards git while the remaining
 # workloads are being restored.
+#
+# splitlines() rather than split('\n'): this is a folded block scalar, where
+# YAML leaves \n as two literal characters, so splitting on it would return the
+# whole file as a single element — and every line would then be silently
+# skipped by the length check below instead of failing loudly.
 - name: Build the restore list
   ansible.builtin.set_fact:
     k8s_startup_targets: >-
-      {{ (k8s_startup_snapshot.content | b64decode).split('\n')
+      {{ (k8s_startup_snapshot.content | b64decode).splitlines()
          | reject('equalto', '') | list | reverse | list }}
 
 # A workload whose snapshot line carries no replica count had none set on the
