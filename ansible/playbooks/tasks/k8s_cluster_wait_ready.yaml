@@ -20,7 +20,10 @@
   until:
     - startup_node_ready.stdout_lines | length > 0
     - startup_node_ready.stdout_lines | reject('equalto', 'True') | list | length == 0
-  retries: 60
+  # A rehearsal restoring four hypervisors needed 39 of these; the real outage
+  # restarts six at once, so the margin is deliberately wide. Waiting costs
+  # nothing when the cluster is already up — the first attempt simply succeeds.
+  retries: 90
   delay: 10
   delegate_to: localhost
   become: false

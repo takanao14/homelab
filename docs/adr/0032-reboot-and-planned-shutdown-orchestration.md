@@ -150,13 +150,19 @@ in reverse shutdown order, starts the sandbox cluster (the only guests with
 - Every k0s node is drained on every upgrade run, even when no reboot turns out
   to be required — `/var/run/reboot-required` is only known after the upgrade,
   and maintainer scripts restart services regardless.
-- The workload and k0s phases of `ops-shutdown.yaml` / `ops-startup.yaml` are
-  verified against sandbox: sixteen workloads scaled to zero and restored from
-  the snapshot, Argo CD suspended and brought back first, k0s stopped, the nodes
-  powered off and started again through `qm start`, and the cluster waited back
-  to Ready. The guest and hypervisor phases remain unverified — sandbox cannot
-  exercise them — so a planned outage runs those for the first time in earnest.
-  Nothing here dry-runs usefully: the kubectl steps are `command` tasks, which
+- Both playbooks were rehearsed end to end against pve, node1, node4 and node5,
+  taking both clusters down entirely — 28 prd workloads and 16 sandbox ones
+  scaled to zero and restored, Argo CD suspended and brought back first, k0s
+  stopped, all eight nodes powered off, `truenas` stopped over ACPI, four
+  hypervisors powered off and started again, and every workload back with no pod
+  left outside Running. node2, node3, rpi3 and rpi4 stayed up, which kept DNS and
+  therefore the operator's own name resolution alive throughout.
+- What the rehearsal could not cover is the BIOS AC-power-recovery path: a
+  graceful `shutdown -h now` leaves the machine in soft-off with mains still
+  present, so the firmware setting never fires. Recovery used AMT for node1 and
+  node4 and the physical button for pve and node5. Whether those two — the ones
+  with no AMT — come back on their own after a real power cut is still unproven.
+- Nothing here dry-runs usefully: the kubectl steps are `command` tasks, which
   check mode skips.
 - The Longhorn detach wait is proven, not theoretical: sandbox's Prometheus
   volume went `attached/healthy` to `detached` on the way down and back to
