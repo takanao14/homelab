@@ -1,0 +1,126 @@
+---
+# Planned full shutdown of the homelab, for a scheduled power outage.
+#
+# Run from the control node (a workstation outside the fleet) — every phase
+# below removes something this playbook depends on, ending with the hypervisors
+# themselves. Phases are tagged so they can be run and reviewed one at a time:
+#
+#   --tags workloads    scale Kubernetes applications to zero
+#   --tags k8s          stop k0s on workers, then controllers
+#   --tags guests       power off VMs and LXC guests in dependency order
+#   --tags hypervisors  power off the Proxmox nodes
+#
+# Not covered, on purpose: rpi3 and rpi4 stay up to the very end so DHCP and the
+# blackbox probes outlive the fleet, and are powered off by hand afterwards.
+#
+# Coming back is not the reverse of this file — see ops-startup.yaml. Guests
+# other than the sandbox cluster have on_boot set in tf/, so most of the fleet
+# starts by itself once the hypervisors power on.
+
+# Phase 1 — applications. Scaling to zero rather than draining: with the whole
+# fleet going down there is nowhere to evict to. See tasks/k8s_workload_stop.yaml.
+- name: Stop Kubernetes application workloads
+  hosts: k8s_controller
+  gather_facts: false
+  any_errors_fatal: true
+  tags: workloads
+  tasks:
+    - name: Scale workloads down and wait for storage to release
+      ansible.builtin.import_tasks: tasks/k8s_workload_stop.yaml
+
+# Phase 2 — k0s nodes. Workers first: stopping a controller first would strand
+# the remaining nodes without an API server. Each node is stopped cleanly and
+# then powered off — these are guests like any other, and leaving the VMs up
+# would only hand them to the hypervisor's own shutdown timeout in phase 4.
+# serial is deliberately not set, since nothing here needs to stay available.
+- name: Stop and power off k0s worker nodes
+  hosts: k8s_worker
+  any_errors_fatal: true
+  tags: k8s
+  tasks:
+    - name: Stop the k0s worker service
+      become: true
+      ansible.builtin.systemd_service:
+        name: "{{ k0s_service }}"
+        state: stopped
+
+    - name: Power off the worker
+      ansible.builtin.import_tasks: tasks/host_poweroff.yaml
+
+- name: Stop and power off k0s controller nodes
+  hosts: k8s_controller
+  any_errors_fatal: true
+  tags: k8s
+  tasks:
+    # kine keeps its state in an embedded SQLite database. Stop the service and
+    # let it close the database before the host loses power.
+    - name: Stop the k0s controller service
+      become: true
+      ansible.builtin.systemd_service:
+        name: "{{ k0s_service }}"
+        state: stopped
+
+    - name: Power off the controller
+      ansible.builtin.import_tasks: tasks/host_poweroff.yaml
+
+# Phase 3 — guests, in the order declared by guest_shutdown_order. serial: 1 so
+# each host is confirmed down before the one it depends on is stopped.
+- name: Power off VMs and LXC guests
+  hosts: guest_shutdown_order
+  serial: 1
+  any_errors_fatal: true
+  tags: guests
+  tasks:
+    - name: Power off the guest
+      ansible.builtin.import_tasks: tasks/host_poweroff.yaml
+
+# Phase 4 — hypervisors, in the order declared by proxmox_shutdown_order.
+- name: Power off the Proxmox nodes
+  hosts: proxmox_shutdown_order
+  serial: 1
+  any_errors_fatal: true
+  tags: hypervisors
+  tasks:
+    # Powering nodes off past the point of quorum while HA resources are
+    # configured invites watchdog fencing: the node reboots instead of staying
+    # down. Stop rather than guess at the right ha-manager calls.
+    - name: Check whether HA resources are configured
+      become: true
+      ansible.builtin.command:
+        argv:
+          - ha-manager
+          - config
+      register: shutdown_ha_config
+      changed_when: false
+      failed_when: false
+
+    - name: Fail if HA resources are configured
+      ansible.builtin.assert:
+        that: shutdown_ha_config.stdout | trim | length == 0
+        fail_msg: >-
+          HA resources are configured on {{ inventory_hostname }}. Powering
+          nodes off past quorum with HA active can trigger watchdog fencing and
+          reboot the node instead. Disable HA for these resources first.
+        success_msg: No HA resources configured
+
+    # Proxmox stops running guests itself on shutdown, but on its own timeout
+    # and in its own order. Anything still running here escaped phase 2 or 3.
+    - name: Check for running guests
+      become: true
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          { qm list; pct list; } 2>/dev/null | awk '$3 == "running" || $2 == "running"'
+      register: shutdown_running_guests
+      changed_when: false
+
+    - name: Fail if guests are still running
+      ansible.builtin.assert:
+        that: shutdown_running_guests.stdout | trim | length == 0
+        fail_msg: >-
+          Guests are still running on {{ inventory_hostname }}:
+          {{ shutdown_running_guests.stdout }}
+        success_msg: No guests running
+
+    - name: Power off the hypervisor
+      ansible.builtin.import_tasks: tasks/host_poweroff.yaml

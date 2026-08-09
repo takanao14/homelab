@@ -10,6 +10,33 @@ k8s_kubeconfig: "~/.kube/prd.yaml"
 # There are no replicas to rebuild, so no post-reboot storage recovery wait.
 k8s_storage_provider: openebs
 
+# Scaled to zero by ops-shutdown.yaml, in this order. Application workloads
+# only: kube-system, openebs, cert-manager, external-secrets and
+# envoy-gateway-system are cluster infrastructure and are left to stop with the
+# node. monitoring is late so the shutdown of everything above it is still
+# observed, and argocd is last because scaling it early would leave nothing able
+# to reconcile the cluster back.
+k8s_shutdown_namespaces:
+  - comfyui
+  - ollama
+  - vllm
+  - lemonade-server
+  - open-webui
+  - gpu-switch
+  - homepage
+  - headlamp
+  - pdns-ui
+  - external-dns
+  - reloader
+  - monitoring
+  - argocd
+
+# Stopped before anything else is scaled: with the application controller down,
+# Argo CD cannot revert the scale-to-zero while the shutdown is in progress.
+# Cheaper and far less stateful than suspending every Application's syncPolicy.
+k8s_gitops_controller_namespace: argocd
+k8s_gitops_controller_resource: statefulset/argocd-application-controller
+
 # LocalPV basePath, a separate ext4 mount created by k0s/hook/ssdsetup.sh. Its
 # fstab entry has no `nofail`, so a missing disk stops the boot rather than
 # silently exposing an empty directory — but verify the mount before uncordoning

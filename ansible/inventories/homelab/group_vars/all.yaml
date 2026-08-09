@@ -14,3 +14,8 @@ rsyslog_forward_host: "{{ hostvars['log1']['ansible_host'] }}"
 # and LXC guests; slow physical hosts raise it in host_vars. A host that boots
 # more slowly than this fails the run even though the reboot itself succeeded.
 package_upgrade_reboot_timeout: 300
+
+# How long ops-shutdown.yaml waits for a host to stop answering on SSH after it
+# was told to power off. Exceeding it stops the run rather than powering off the
+# tier below a host that is still up.
+host_poweroff_timeout: 300

@@ -266,6 +266,51 @@ all:
       hosts:
         rpi3: null
 
+    # Planned-outage ordering (ops-shutdown.yaml). Ansible preserves the order
+    # hosts are declared in a group, so these groups encode the sequence itself
+    # rather than leaving it to per-playbook host enumerations.
+    #
+    # Guests are listed least-depended-upon first. DNS goes last because the
+    # services stopping ahead of it still resolve names on the way down, and the
+    # syslog collector sits just before it so the shutdown of everything above
+    # is still captured. k0s nodes are absent on purpose: they are stopped by
+    # their own play, before any of these.
+    guest_shutdown_order:
+      hosts:
+        runner1: null
+        sssdtest1: null
+        toolbox1: null
+        authentik1: null
+        forgejo1: null
+        netbox1: null
+        seaweedfs1: null
+        openbao1: null
+        vpngw: null
+        caddy1: null
+        log1: null
+        resolver1: null
+        resolver2: null
+        dist1: null
+        dist2: null
+        ns1: null
+        ns2: null
+        ns3: null
+
+    # Hypervisors, in the order they must be powered off. node2 is last because
+    # it carries the DNS, gateway and logging LXC guests the rest of the fleet
+    # depends on; pve is second to last because it hosts the sandbox cluster,
+    # the GPU worker and the toolbox VM. rpi3/rpi4 are not hypervisors and are
+    # powered off by hand afterwards, keeping DHCP and the blackbox probes alive
+    # for as long as possible.
+    proxmox_shutdown_order:
+      hosts:
+        node1: null
+        node5: null
+        node4: null
+        node3: null
+        pve: null
+        node2: null
+
     proxmox:
       hosts:
         pve: null

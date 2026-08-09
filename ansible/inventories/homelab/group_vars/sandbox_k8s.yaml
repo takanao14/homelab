@@ -9,3 +9,9 @@ k8s_kubeconfig: "~/.kube/sandbox.yaml"
 # volume drops to a single replica. Hence the post-reboot robustness wait.
 k8s_storage_provider: longhorn
 k8s_longhorn_namespace: longhorn-system
+
+# sandbox carries no application workloads today — only kube-system and
+# longhorn-system, both cluster infrastructure — so there is nothing to scale
+# down and no Argo CD to suspend. The shutdown play skips straight to stopping
+# k0s. Add namespaces here if workloads land on this cluster.
+k8s_shutdown_namespaces: []
