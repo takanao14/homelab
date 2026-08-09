@@ -31,6 +31,18 @@ k8s_shutdown_namespaces:
   - monitoring
   - argocd
 
+# Cluster infrastructure, deliberately left to stop with the node. Declared
+# rather than merely described so ops-shutdown.yaml can verify the split: a
+# namespace that carries workloads and appears in neither list stops the run,
+# turning a forgotten addition into a visible failure instead of a workload
+# that quietly never gets a graceful shutdown.
+k8s_infrastructure_namespaces:
+  - kube-system
+  - openebs
+  - cert-manager
+  - external-secrets
+  - envoy-gateway-system
+
 # Stopped before anything else is scaled: with the application controller down,
 # Argo CD cannot revert the scale-to-zero while the shutdown is in progress.
 # Cheaper and far less stateful than suspending every Application's syncPolicy.

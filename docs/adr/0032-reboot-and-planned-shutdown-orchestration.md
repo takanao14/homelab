@@ -89,6 +89,16 @@ declare, so a chart that leaves `replicas` unset would otherwise stay at zero.
 The snapshot is taken before the application controller is stopped, or its own
 count would be recorded as zero.
 
+**Detect namespace drift dynamically, but only ever scale what was reviewed.**
+Namespaces are classified statically into an ordered application list and an
+infrastructure exclusion list, and the shutdown verifies the split covers every
+namespace that carries a Deployment or StatefulSet. Scaling down whatever
+happens to be running instead would make a forgotten infrastructure namespace a
+casualty mid-shutdown; leaving the lists unverified would make a forgotten
+application namespace a silent omission. The check fails the run by default and
+can be waived with `-e k8s_shutdown_allow_unclassified=true`, since an outage is
+a bad time to be editing group_vars.
+
 **Compare failed systemd units before and after an upgrade** rather than
 failing on any failed unit, so chronically broken services the upgrade neither
 caused nor can fix do not abort the run.

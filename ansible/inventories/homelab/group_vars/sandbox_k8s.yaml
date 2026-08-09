@@ -10,8 +10,30 @@ k8s_kubeconfig: "~/.kube/sandbox.yaml"
 k8s_storage_provider: longhorn
 k8s_longhorn_namespace: longhorn-system
 
-# sandbox carries no application workloads today — only kube-system and
-# longhorn-system, both cluster infrastructure — so there is nothing to scale
-# down and no Argo CD to suspend. The shutdown play skips straight to stopping
-# k0s. Add namespaces here if workloads land on this cluster.
-k8s_shutdown_namespaces: []
+# Scaled to zero by ops-shutdown.yaml, in this order — same policy as prd:
+# application workloads only, monitoring late so the shutdown of everything
+# above it is still observed, argocd last because scaling it earlier would leave
+# nothing able to reconcile the cluster back. kube-system, longhorn-system,
+# external-secrets and envoy-gateway-system are cluster infrastructure and are
+# left to stop with the node.
+k8s_shutdown_namespaces:
+  - homepage
+  - headlamp
+  - pdns-ui
+  - external-dns
+  - reloader
+  - monitoring
+  - argocd
+
+# Cluster infrastructure, deliberately left to stop with the node. See
+# prd_k8s.yaml for why this is declared rather than only described.
+k8s_infrastructure_namespaces:
+  - kube-system
+  - longhorn-system
+  - external-secrets
+  - envoy-gateway-system
+
+# Same reasoning as prd: stopping the application controller suspends GitOps
+# with one resource instead of patching every Application's syncPolicy.
+k8s_gitops_controller_namespace: argocd
+k8s_gitops_controller_resource: statefulset/argocd-application-controller

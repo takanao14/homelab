@@ -8,6 +8,49 @@
 # Every task delegates to the control node — this play's hosts stand in for
 # their cluster and are never connected to.
 
+# Checked before anything is touched. Namespaces are classified statically, not
+# discovered: scaling down whatever happens to be running would let a forgotten
+# infrastructure namespace be taken out mid-shutdown, and leave the cluster
+# depending on the restore to come back whole. Detection is dynamic so drift is
+# caught; the action stays static so it can only ever touch what was reviewed.
+# Namespaces without a Deployment or StatefulSet need no classification, which
+# keeps the lists to what actually gets scaled.
+- name: List namespaces that carry scalable workloads
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - get
+      - deployment,statefulset
+      - --all-namespaces
+      - -o
+      - jsonpath={range .items[*]}{.metadata.namespace}{"\n"}{end}
+  register: k8s_shutdown_all_namespaces
+  delegate_to: localhost
+  become: false
+  changed_when: false
+
+- name: Determine which namespaces are unclassified
+  ansible.builtin.set_fact:
+    k8s_shutdown_unclassified: >-
+      {{ k8s_shutdown_all_namespaces.stdout_lines | unique
+         | difference(k8s_shutdown_namespaces)
+         | difference(k8s_infrastructure_namespaces) }}
+
+- name: Fail if a namespace is neither application nor infrastructure
+  ansible.builtin.assert:
+    that: k8s_shutdown_unclassified | length == 0
+    fail_msg: >-
+      These namespaces carry workloads but appear in neither
+      k8s_shutdown_namespaces nor k8s_infrastructure_namespaces:
+      {{ k8s_shutdown_unclassified | join(', ') }}. An application namespace
+      belongs in the ordered shutdown list; infrastructure belongs in the
+      exclusion list. To proceed without classifying them — they will stop with
+      their node instead of gracefully — re-run with
+      -e k8s_shutdown_allow_unclassified=true
+    success_msg: Every namespace carrying workloads is classified
+  when: not (k8s_shutdown_allow_unclassified | bool)
+
 - name: Record current replica counts
   ansible.builtin.command:
     argv:
