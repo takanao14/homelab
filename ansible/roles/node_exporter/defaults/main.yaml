@@ -12,3 +12,8 @@ node_exporter_base_args: []
 node_exporter_rpi_args: []
 node_exporter_lxc_args: []
 node_exporter_extra_args: []
+
+# Install lm-sensors on x86_64 hosts so the hwmon collector can read hardware
+# temperatures. Set to false where that collector is disabled anyway, so the
+# package has no consumer (see group_vars/node_exporter_lxc.yaml).
+node_exporter_install_lm_sensors: true
