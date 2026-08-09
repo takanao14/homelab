@@ -4,7 +4,18 @@
 # sets on_boot = false because the cluster is not expected to run continuously.
 # Everything else in tf/ sets on_boot = true and starts with its node.
 startup_manual_guests:
+  # truenas first: it is unmanaged storage that other guests may mount, so it
+  # should be up before anything else comes back. Listed regardless of its
+  # on_boot setting — the start task skips a guest that is already running, so
+  # this is a no-op if Proxmox brought it up on its own.
+  - truenas
   - sandbox-k0s-cp1
   - sandbox-k0s-worker1
   - sandbox-k0s-worker2
   - sandbox-k0s-worker3
+
+# truenas is not defined in tf and not in the Ansible inventory, so no earlier
+# shutdown phase touches it. Stopped over ACPI at the end of the hypervisor
+# phase, once every managed guest is already down.
+shutdown_unmanaged_guests:
+  - truenas

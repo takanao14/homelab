@@ -149,6 +149,12 @@ in reverse shutdown order, starts the sandbox cluster (the only guests with
   restoring replica counts by hand.
 - Recovery depends on the BIOS setting staying in place. If it is ever reset,
   pve and node5 need physical access — they have no AMT fallback.
+- Guests that exist on a hypervisor but in neither tf nor the inventory —
+  `truenas` on pve today — are stopped over ACPI in the hypervisor phase, listed
+  per host in `shutdown_unmanaged_guests`. Reconciling tf against the inventory
+  does not surface them; only comparing against what is actually running does,
+  and the "guests are still running" assert is what makes their absence loud
+  rather than silent.
 - Hypervisor shutdown order matters only for the guests each node carries;
   there is no quorum consideration. The `ha-manager` check is kept as cheap
   insurance should a cluster ever be formed.

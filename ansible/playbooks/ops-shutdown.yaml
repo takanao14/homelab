@@ -105,6 +105,29 @@
           instead of leaving it down. Disable HA for these resources first.
         success_msg: No HA resources configured
 
+    # Guests Ansible does not manage are absent from guest_shutdown_order, so no
+    # earlier phase touched them. Stopped over ACPI here, at the point where
+    # every managed guest is already down — the safe moment for anything that
+    # might have been serving storage to them. See group_vars/proxmox.yaml.
+    - name: Shut down guests that Ansible does not manage
+      become: true
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          vmid=$(qm list | awk -v n="{{ item }}" '$2 == n {print $1}')
+          if [ -z "$vmid" ]; then
+            echo "no such guest: {{ item }}" >&2
+            exit 1
+          fi
+          if [ "$(qm status "$vmid" | awk '{print $2}')" != "running" ]; then
+            echo already-stopped
+            exit 0
+          fi
+          qm shutdown "$vmid" --timeout {{ shutdown_unmanaged_timeout }} >/dev/null && echo stopped
+      loop: "{{ shutdown_unmanaged_guests }}"
+      register: shutdown_unmanaged
+      changed_when: shutdown_unmanaged.stdout == "stopped"
+
     # Proxmox stops running guests itself on shutdown, but on its own timeout
     # and in its own order. Anything still running here escaped phase 2 or 3.
     - name: Check for running guests

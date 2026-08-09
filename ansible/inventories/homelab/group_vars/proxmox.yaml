@@ -4,6 +4,17 @@
 # carries the sandbox cluster (see host_vars/pve.yaml).
 startup_manual_guests: []
 
+# Guests running on this hypervisor that Ansible does not manage and that are
+# therefore absent from guest_shutdown_order. ops-shutdown.yaml stops them over
+# ACPI with `qm shutdown` in the hypervisor phase — after every managed guest is
+# already down, which is the safe point for anything that might be serving
+# storage to them. Without this they survive every earlier phase and trip the
+# "guests are still running" assert.
+shutdown_unmanaged_guests: []
+
+# How long `qm shutdown` waits for an unmanaged guest to stop on its own.
+shutdown_unmanaged_timeout: 300
+
 # Kernel tuning for Proxmox hosts (consumed by the `sysctl` role).
 sysctl_settings:
   # Default 60 swaps out live VM pages too eagerly on a hypervisor; 10 only
