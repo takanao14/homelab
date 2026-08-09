@@ -265,6 +265,10 @@ ansible-playbook playbooks/common-users.yaml
 # takes considerably longer than the parallel phase suggests.
 ansible-playbook playbooks/ops-package_upgrade.yaml
 
+# Same, one phase at a time (dns / k8s / others). The phases are independent,
+# so a run that stopped partway can be resumed at the phase that failed.
+ansible-playbook playbooks/ops-package_upgrade.yaml --tags others
+
 # Planned outage: full shutdown, one phase at a time
 # (workloads -> k8s -> guests -> hypervisors; run without --tags for all four)
 ansible-playbook playbooks/ops-shutdown.yaml --tags workloads

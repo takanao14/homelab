@@ -2,10 +2,20 @@
 # The dns group (dns_auth, dns_resolver, dnsdist) is a redundant pool that
 # collectively provides name resolution, so hosts are upgraded/rebooted one
 # at a time to keep resolution available throughout.
+#
+# Phases are tagged so a run that stopped partway can be resumed at the phase
+# that failed. Unlike ops-shutdown.yaml the phases are independent — no phase
+# depends on an earlier one having run — so they are safe to invoke in any
+# order or on their own:
+#
+#   --tags dns     the redundant DNS pool, one host at a time
+#   --tags k8s     k0s workers (drained) then controllers
+#   --tags others  everything else, in parallel
 - name: Upgrade OS packages on DNS hosts serially
   hosts: dns
   serial: 1
   any_errors_fatal: true
+  tags: dns
   tasks:
     - name: Run package upgrade tasks
       ansible.builtin.import_tasks: tasks/package_upgrade.yaml
@@ -22,6 +32,7 @@
   hosts: prd_k8s_worker:sandbox_k8s_worker
   serial: 1
   any_errors_fatal: true
+  tags: k8s
   tasks:
     - name: Drain the node
       ansible.builtin.import_tasks: tasks/k8s_node_drain.yaml
@@ -40,6 +51,7 @@
   hosts: prd_k8s_controller:sandbox_k8s_controller
   serial: 1
   any_errors_fatal: true
+  tags: k8s
   tasks:
     - name: Run package upgrade tasks
       ansible.builtin.import_tasks: tasks/package_upgrade.yaml
@@ -49,6 +61,7 @@
 - name: Upgrade OS packages on remaining hosts
   hosts: all:!proxmox:!dns:!power_only:!prd_k8s:!sandbox_k8s
   any_errors_fatal: false
+  tags: others
   tasks:
     - name: Run package upgrade tasks
       ansible.builtin.import_tasks: tasks/package_upgrade.yaml

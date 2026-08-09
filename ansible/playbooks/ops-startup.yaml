@@ -11,10 +11,12 @@
 #   --tags k8s          wait for the clusters to report every node Ready
 #   --tags workloads    scale workloads back to their recorded replica counts
 #
-# Powering the hypervisors on is out of scope: node1-node4 can be woken over
-# AMT (192.168.110.x, see k8s/monitoring/values/proxmox-nodes.yaml), while pve
-# and node5 have no AMT and depend on the BIOS AC-power-recovery setting or the
-# physical button. rpi3/rpi4 restart with mains power.
+# Powering the hypervisors on is out of scope, and does not need to be handled
+# here: every node has its BIOS AC-power-recovery set to power on, so mains
+# returning starts the fleet. That is the only remote path for pve and node5,
+# which have no AMT; node1-node4 can also be woken over AMT (192.168.110.x, see
+# k8s/monitoring/values/proxmox-nodes.yaml) if a node stays down.
+# rpi3/rpi4 restart with mains power.
 
 # Phase 1 — hypervisors. Nothing else can be reached until these answer.
 - name: Wait for the Proxmox nodes to come back

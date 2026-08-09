@@ -74,3 +74,4 @@ deleting it:
 | [0029](0029-rocm-serving-path-for-mxfp4-models.md) | ROCm serves concurrent MXFP4 workloads; Vulkan remains faster for one request | Proposed |
 | [0030](0030-in-house-full-service-resolver.md) | Run Knot Resolver 6 in dedicated resolver containers | Accepted |
 | [0031](0031-browser-editor-on-relocated-toolbox-vm.md) | Run a browser editor on toolbox1, relocated to pve | Proposed |
+| [0032](0032-reboot-and-planned-shutdown-orchestration.md) | Orchestrate reboots and planned shutdowns from Ansible | Proposed |
