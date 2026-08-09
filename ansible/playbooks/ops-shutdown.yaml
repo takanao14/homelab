@@ -16,11 +16,18 @@
 # Coming back is not the reverse of this file — see ops-startup.yaml. Guests
 # other than the sandbox cluster have on_boot set in tf/, so most of the fleet
 # starts by itself once the hypervisors power on.
+#
+# The clusters are taken down one at a time, sandbox before prd, and each is
+# carried all the way to powered-off before the next is touched. Splitting them
+# into separate plays is what makes that structural: a single play over both
+# clusters runs them in parallel, so any_errors_fatal would abort only after prd
+# had already been changed, and the ordering would depend on an operator
+# remembering to pass the right --limit twice.
 
-# Phase 1 — applications. Scaling to zero rather than draining: with the whole
-# fleet going down there is nowhere to evict to. See tasks/k8s_workload_stop.yaml.
-- name: Stop Kubernetes application workloads
-  hosts: k8s_controller
+# Phase 1 — sandbox. Scaling to zero rather than draining: with the whole fleet
+# going down there is nowhere to evict to. See tasks/k8s_workload_stop.yaml.
+- name: Stop application workloads on sandbox
+  hosts: sandbox_k8s_controller
   gather_facts: false
   any_errors_fatal: true
   tags: workloads
@@ -28,13 +35,14 @@
     - name: Scale workloads down and wait for storage to release
       ansible.builtin.import_tasks: tasks/k8s_workload_stop.yaml
 
-# Phase 2 — k0s nodes. Workers first: stopping a controller first would strand
-# the remaining nodes without an API server. Each node is stopped cleanly and
-# then powered off — these are guests like any other, and leaving the VMs up
-# would only hand them to the hypervisor's own shutdown timeout in phase 4.
-# serial is deliberately not set, since nothing here needs to stay available.
-- name: Stop and power off k0s worker nodes
-  hosts: k8s_worker
+# Workers before the controller: stopping the controller first would strand the
+# remaining nodes without an API server. Each node is stopped cleanly and then
+# powered off — these are guests like any other, and leaving the VMs up would
+# only hand them to the hypervisor's own shutdown timeout in phase 4. serial is
+# deliberately not set within a cluster, since nothing there needs to stay
+# available once its workloads are down.
+- name: Stop and power off sandbox k0s workers
+  hosts: sandbox_k8s_worker
   any_errors_fatal: true
   tags: k8s
   tasks:
@@ -47,8 +55,8 @@
     - name: Power off the worker
       ansible.builtin.import_tasks: tasks/host_poweroff.yaml
 
-- name: Stop and power off k0s controller nodes
-  hosts: k8s_controller
+- name: Stop and power off the sandbox k0s controller
+  hosts: sandbox_k8s_controller
   any_errors_fatal: true
   tags: k8s
   tasks:
@@ -63,8 +71,49 @@
     - name: Power off the controller
       ansible.builtin.import_tasks: tasks/host_poweroff.yaml
 
+# Phase 2 — prd, reached only once sandbox is fully down. Identical steps; the
+# differences between the clusters live in their group_vars.
+- name: Stop application workloads on prd
+  hosts: prd_k8s_controller
+  gather_facts: false
+  any_errors_fatal: true
+  tags: workloads
+  tasks:
+    - name: Scale workloads down and wait for storage to release
+      ansible.builtin.import_tasks: tasks/k8s_workload_stop.yaml
+
+- name: Stop and power off prd k0s workers
+  hosts: prd_k8s_worker
+  any_errors_fatal: true
+  tags: k8s
+  tasks:
+    - name: Stop the k0s worker service
+      become: true
+      ansible.builtin.systemd_service:
+        name: "{{ k0s_service }}"
+        state: stopped
+
+    - name: Power off the worker
+      ansible.builtin.import_tasks: tasks/host_poweroff.yaml
+
+- name: Stop and power off the prd k0s controller
+  hosts: prd_k8s_controller
+  any_errors_fatal: true
+  tags: k8s
+  tasks:
+    - name: Stop the k0s controller service
+      become: true
+      ansible.builtin.systemd_service:
+        name: "{{ k0s_service }}"
+        state: stopped
+
+    - name: Power off the controller
+      ansible.builtin.import_tasks: tasks/host_poweroff.yaml
+
 # Phase 3 — guests, in the order declared by guest_shutdown_order. serial: 1 so
-# each host is confirmed down before the one it depends on is stopped.
+# each host is confirmed down before the one it depends on is stopped. Not split
+# per cluster: the k0s node VMs are already off by now, and what remains is
+# shared infrastructure that belongs to neither.
 - name: Power off VMs and LXC guests
   hosts: guest_shutdown_order
   serial: 1

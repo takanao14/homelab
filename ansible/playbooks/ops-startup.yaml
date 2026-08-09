@@ -79,35 +79,40 @@
       delegate_to: localhost
       become: false
 
-# Phase 3 — clusters. k0s starts with its node, so this only waits for every
-# node to register and report Ready before workloads are scheduled onto them.
-- name: Wait for the k0s clusters to be ready
-  hosts: k8s_controller
+# Phase 3 — prd, brought all the way back before sandbox is touched. The
+# clusters are split into separate plays for the same reason ops-shutdown.yaml
+# splits them: a single play over both runs them in parallel, which makes the
+# order depend on an operator passing the right --limit. The order is reversed
+# here on purpose — the shutdown leads with sandbox so a failure lands on the
+# disposable cluster first, while recovery leads with prd because that is the
+# one whose downtime costs something.
+- name: Wait for the prd cluster to be ready
+  hosts: prd_k8s_controller
   gather_facts: false
   tags: k8s
   tasks:
     - name: Wait for every node to report Ready
-      ansible.builtin.command:
-        argv:
-          - kubectl
-          - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
-          - get
-          - nodes
-          - -o
-          - jsonpath={range .items[*]}{.status.conditions[?(@.type=="Ready")].status}{"\n"}{end}
-      register: startup_node_ready
-      until:
-        - startup_node_ready.stdout_lines | length > 0
-        - startup_node_ready.stdout_lines | reject('equalto', 'True') | list | length == 0
-      retries: 60
-      delay: 10
-      delegate_to: localhost
-      become: false
-      changed_when: false
+      ansible.builtin.import_tasks: tasks/k8s_cluster_wait_ready.yaml
 
-# Phase 4 — workloads, from the snapshot ops-shutdown.yaml wrote.
-- name: Restore Kubernetes application workloads
-  hosts: k8s_controller
+- name: Restore prd application workloads
+  hosts: prd_k8s_controller
+  gather_facts: false
+  tags: workloads
+  tasks:
+    - name: Scale workloads back up
+      ansible.builtin.import_tasks: tasks/k8s_workload_start.yaml
+
+# Phase 4 — sandbox.
+- name: Wait for the sandbox cluster to be ready
+  hosts: sandbox_k8s_controller
+  gather_facts: false
+  tags: k8s
+  tasks:
+    - name: Wait for every node to report Ready
+      ansible.builtin.import_tasks: tasks/k8s_cluster_wait_ready.yaml
+
+- name: Restore sandbox application workloads
+  hosts: sandbox_k8s_controller
   gather_facts: false
   tags: workloads
   tasks:
