@@ -4,9 +4,6 @@ netbox_port: 8080
 netbox_superuser_name: admin
 netbox_superuser_email: "admin@home.butaco.net"
 
-netbox_mcp_identity_enabled: true
-netbox_mcp_token: "{{ lookup('ansible.builtin.env', 'NETBOX_TOKEN') }}"
-
 vector_config:
   sources:
     journald:

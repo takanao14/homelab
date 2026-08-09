@@ -7,8 +7,6 @@ Deploys [NetBox](https://github.com/netbox-community/netbox) IPAM/DCIM on Debian
 - Installs system dependencies (PostgreSQL, Redis, nginx, Python build tools).
 - Creates a dedicated `netbox` PostgreSQL database and user with full privileges.
 - Creates a `netbox` system user and group.
-- Optionally provisions a dedicated read-only MCP user, object permissions, and
-  deterministic v2 API token.
 - Downloads and extracts NetBox from GitHub releases to `/opt/netbox-<version>` and symlinks to `netbox_home`.
 - Creates a Python virtualenv and installs requirements including gunicorn.
 - Deploys `configuration.py` from a Jinja2 template.
@@ -27,13 +25,12 @@ Deploys [NetBox](https://github.com/netbox-community/netbox) IPAM/DCIM on Debian
 | `netbox_secret_key` | Django secret key |
 | `netbox_api_token_pepper` | Token hash pepper (optional, improves token security) |
 | `netbox_superuser_password` | Password for the initial superuser |
-| `netbox_mcp_token` | Full `nbt_<key>.<secret>` v2 token for the MCP identity |
 
 ### Non-secret variables (in `defaults/main.yaml`)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `netbox_version` | `4.6.7` | NetBox version to install |
+| `netbox_version` | `4.6.0` | NetBox version to install |
 | `netbox_user` | `netbox` | System user |
 | `netbox_group` | `netbox` | System group |
 | `netbox_home` | `/opt/netbox` | Symlink path to the active NetBox installation |
@@ -44,11 +41,6 @@ Deploys [NetBox](https://github.com/netbox-community/netbox) IPAM/DCIM on Debian
 | `netbox_db_user` | `netbox` | PostgreSQL username |
 | `netbox_superuser_name` | `admin` | Django superuser username |
 | `netbox_superuser_email` | `admin@home.butaco.net` | Django superuser email |
-| `netbox_mcp_identity_enabled` | `false` | Provision the dedicated MCP identity and token |
-| `netbox_mcp_username` | `mcp-netbox` | Dedicated API-only NetBox username |
-| `netbox_mcp_group_name` | `mcp-readers` | Group receiving read-only object permissions |
-| `netbox_mcp_view_app_labels` | infrastructure apps | App labels granted the `view` action |
-| `netbox_mcp_view_object_types` | changelog and tags | Additional individual object types granted `view` |
 
 ## Dependencies
 
@@ -62,11 +54,3 @@ Deploys [NetBox](https://github.com/netbox-community/netbox) IPAM/DCIM on Debian
   roles:
     - netbox
 ```
-
-The MCP user has an unusable password and authenticates only with its v2 API
-token. The role forces `write_enabled` off, assigns only the `view` action, and
-disables an older token with the same description when the configured token is
-rotated. In the homelab inventory, `netbox_mcp_token` is read from the
-`NETBOX_TOKEN` environment variable populated by the SOPS-managed repository
-environment file. Check mode executes the same reconciliation inside a database
-transaction and rolls it back after reporting whether a change would occur.
