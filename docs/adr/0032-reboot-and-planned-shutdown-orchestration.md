@@ -1,6 +1,6 @@
 # ADR-0032: Orchestrate reboots and planned shutdowns from Ansible
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-09
 - **Related:** [ADR-0001](0001-service-oriented-ansible-playbook-organization.md),
   [ADR-0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md),
@@ -150,11 +150,22 @@ in reverse shutdown order, starts the sandbox cluster (the only guests with
 - Every k0s node is drained on every upgrade run, even when no reboot turns out
   to be required — `/var/run/reboot-required` is only known after the upgrade,
   and maintainer scripts restart services regardless.
-- `ops-shutdown.yaml` and `ops-startup.yaml` are unverified against the real
-  fleet. They cannot be meaningfully dry-run: the kubectl steps are `command`
-  tasks, which check mode skips.
-- The Longhorn detach and robustness waits are no-ops today because sandbox has
-  no PVCs. They activate on their own when workloads land there.
+- The workload and k0s phases of `ops-shutdown.yaml` / `ops-startup.yaml` are
+  verified against sandbox: sixteen workloads scaled to zero and restored from
+  the snapshot, Argo CD suspended and brought back first, k0s stopped, the nodes
+  powered off and started again through `qm start`, and the cluster waited back
+  to Ready. The guest and hypervisor phases remain unverified — sandbox cannot
+  exercise them — so a planned outage runs those for the first time in earnest.
+  Nothing here dry-runs usefully: the kubectl steps are `command` tasks, which
+  check mode skips.
+- The Longhorn detach wait is proven, not theoretical: sandbox's Prometheus
+  volume went `attached/healthy` to `detached` on the way down and back to
+  `attached/healthy` on the way up, with no rebuild. That is the outcome the
+  whole scale-to-zero approach exists to produce.
+- Waiting on each scaled workload's `.status.replicas` rather than on the
+  namespace emptying is load-bearing, not stylistic: node-exporter DaemonSet
+  pods stay up until their node stops, so a namespace-level wait would never
+  return.
 - The replica snapshot is runtime state outside the repo. Losing it means
   restoring replica counts by hand.
 - Recovery depends on the BIOS setting staying in place. If it is ever reset,
