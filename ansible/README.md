@@ -265,6 +265,15 @@ ansible-playbook playbooks/common-users.yaml
 # takes considerably longer than the parallel phase suggests.
 ansible-playbook playbooks/ops-package_upgrade.yaml
 
+# Planned outage: full shutdown, one phase at a time
+# (workloads -> k8s -> guests -> hypervisors; run without --tags for all four)
+ansible-playbook playbooks/ops-shutdown.yaml --tags workloads
+
+# Planned outage: recovery after power is restored. Most guests have on_boot
+# set in tf/ and come back with their node; this waits for them in dependency
+# order, starts the sandbox cluster, and restores the scaled-down workloads.
+ansible-playbook playbooks/ops-startup.yaml
+
 # Version audit for Renovate-managed Ansible components (read-only)
 ansible-playbook playbooks/ops-version_audit.yaml
 
@@ -418,6 +427,8 @@ the decision behind the rebuild registration flow.
 | `common-maintenance_user.yaml` | `lxc` | cross-cutting |
 | `common-users.yaml` | `shared_vms` | cross-cutting |
 | `ops-package_upgrade.yaml` | `dns` (serial), k0s workers (serial, drained), k0s controllers (serial), then `all:!proxmox:!dns:!power_only:!prd_k8s:!sandbox_k8s` | ops |
+| `ops-shutdown.yaml` | `k8s_controller`, `k8s_worker`, `guest_shutdown_order`, `proxmox_shutdown_order` | ops (planned outage) |
+| `ops-startup.yaml` | `proxmox`, `guest_shutdown_order` (reversed), `k8s_controller` | ops (planned outage) |
 | `ops-version_audit.yaml` | `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `dns_resolver`, `seaweedfs`, `openbao`, `gpuvm` | ops |
 | `ops-dns_failover_test.yaml` | delegated DNS hosts; orchestration on localhost | ops (state-changing failure test) |
 | `ops-pdns_sync.yaml` | `dns_primary`, `dns_secondary` | ops |

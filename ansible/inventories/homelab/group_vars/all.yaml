@@ -19,3 +19,8 @@ package_upgrade_reboot_timeout: 300
 # was told to power off. Exceeding it stops the run rather than powering off the
 # tier below a host that is still up.
 host_poweroff_timeout: 300
+
+# How long ops-startup.yaml waits for a host to answer on SSH after power is
+# restored. Generous on purpose: hypervisors run firmware checks before they
+# boot, and guests only start once their node is up.
+host_startup_timeout: 900

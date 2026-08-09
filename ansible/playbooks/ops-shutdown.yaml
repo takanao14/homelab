@@ -81,9 +81,11 @@
   any_errors_fatal: true
   tags: hypervisors
   tasks:
-    # Powering nodes off past the point of quorum while HA resources are
-    # configured invites watchdog fencing: the node reboots instead of staying
-    # down. Stop rather than guess at the right ha-manager calls.
+    # These are independent Proxmox installations, not a cluster (see
+    # group_vars/proxmox.yaml), so there is no quorum to lose and HA is not
+    # expected to be configured at all. Checked anyway because it is nearly
+    # free: were a cluster ever formed, powering nodes off with HA active would
+    # invite watchdog fencing and reboot the node instead of leaving it down.
     - name: Check whether HA resources are configured
       become: true
       ansible.builtin.command:
@@ -98,9 +100,9 @@
       ansible.builtin.assert:
         that: shutdown_ha_config.stdout | trim | length == 0
         fail_msg: >-
-          HA resources are configured on {{ inventory_hostname }}. Powering
-          nodes off past quorum with HA active can trigger watchdog fencing and
-          reboot the node instead. Disable HA for these resources first.
+          HA resources are configured on {{ inventory_hostname }}. Powering the
+          node off with HA active can trigger watchdog fencing and reboot it
+          instead of leaving it down. Disable HA for these resources first.
         success_msg: No HA resources configured
 
     # Proxmox stops running guests itself on shutdown, but on its own timeout

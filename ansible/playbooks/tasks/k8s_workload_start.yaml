@@ -1,0 +1,58 @@
+---
+# Restore the workloads ops-shutdown.yaml scaled to zero, from the snapshot it
+# wrote before touching anything. Argo CD alone is not enough: it only reverts a
+# replica count that its rendered manifests actually declare, so a chart that
+# leaves replicas unset would keep the workload at zero indefinitely.
+#
+# Every task delegates to the control node — this play's hosts stand in for
+# their cluster and are never connected to.
+
+- name: Locate the replica snapshot
+  ansible.builtin.stat:
+    path: "{{ k8s_shutdown_state_dir | expanduser }}/replicas-{{ inventory_hostname }}.txt"
+  register: k8s_startup_snapshot_file
+  delegate_to: localhost
+  become: false
+
+- name: Fail if the snapshot is missing
+  ansible.builtin.assert:
+    that: k8s_startup_snapshot_file.stat.exists
+    fail_msg: >-
+      No replica snapshot at {{ k8s_startup_snapshot_file.stat.path }}. It is
+      written by ops-startup.yaml's counterpart, ops-shutdown.yaml --tags
+      workloads. Without it the original replica counts are unknown, so scale
+      the workloads back by hand rather than guessing.
+    success_msg: Replica snapshot found
+
+- name: Read the replica snapshot
+  ansible.builtin.slurp:
+    src: "{{ k8s_startup_snapshot_file.stat.path }}"
+  register: k8s_startup_snapshot
+  delegate_to: localhost
+  become: false
+
+# Reversed so the GitOps namespace comes back first: once its controller is
+# running it reconciles everything else towards git while the remaining
+# workloads are being restored.
+- name: Build the restore list
+  ansible.builtin.set_fact:
+    k8s_startup_targets: >-
+      {{ (k8s_startup_snapshot.content | b64decode).split('\n')
+         | reject('equalto', '') | list | reverse | list }}
+
+# A workload whose snapshot line carries no replica count had none set on the
+# resource either; scaling it to a guessed number would invent state.
+- name: Scale workloads back to their recorded replica counts
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - "--namespace={{ item.split()[1] }}"
+      - scale
+      - "{{ item.split()[0] | lower }}/{{ item.split()[2] }}"
+      - "--replicas={{ item.split()[3] }}"
+  loop: "{{ k8s_startup_targets }}"
+  when: item.split() | length == 4
+  delegate_to: localhost
+  become: false
+  changed_when: true

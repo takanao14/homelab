@@ -8,20 +8,6 @@
 # Every task delegates to the control node — this play's hosts stand in for
 # their cluster and are never connected to.
 
-- name: Stop the GitOps controller so it cannot revert the scale-down
-  ansible.builtin.command:
-    argv:
-      - kubectl
-      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
-      - "--namespace={{ k8s_gitops_controller_namespace }}"
-      - scale
-      - "{{ k8s_gitops_controller_resource }}"
-      - --replicas=0
-  delegate_to: localhost
-  become: false
-  changed_when: true
-  when: k8s_gitops_controller_resource is defined
-
 - name: Record current replica counts
   ansible.builtin.command:
     argv:
@@ -63,6 +49,23 @@
     mode: "0600"
   delegate_to: localhost
   become: false
+
+# Stopped only after the snapshot is on disk: scaling it first would record the
+# controller's own replica count as 0 and leave ops-startup.yaml with nothing
+# able to reconcile the cluster back.
+- name: Stop the GitOps controller so it cannot revert the scale-down
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - "--namespace={{ k8s_gitops_controller_namespace }}"
+      - scale
+      - "{{ k8s_gitops_controller_resource }}"
+      - --replicas=0
+  delegate_to: localhost
+  become: false
+  changed_when: true
+  when: k8s_gitops_controller_resource is defined
 
 - name: Scale workloads to zero
   ansible.builtin.command:

@@ -1,4 +1,9 @@
 ---
+# Guests on this hypervisor that ops-startup.yaml has to start by hand because
+# they are not set to boot with the node. Empty for every host except pve, which
+# carries the sandbox cluster (see host_vars/pve.yaml).
+startup_manual_guests: []
+
 # Kernel tuning for Proxmox hosts (consumed by the `sysctl` role).
 sysctl_settings:
   # Default 60 swaps out live VM pages too eagerly on a hypervisor; 10 only
