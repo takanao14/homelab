@@ -9,3 +9,15 @@ resolverAlerts:
   targetDownFor: 5m
   metricsStaleFor: 5m
   metricsMaxAgeSeconds: 180
+
+textfileAlerts:
+  enabled: false
+  # apt / nvme / smartmon are written by systemd timers every 15 minutes, so an
+  # hour is four missed runs and leaves room for a reboot.
+  staleFor: 15m
+  maxAgeSeconds: 3600
+  # rpi_throttled is written by a cron job every minute.
+  rpi:
+    staleFor: 5m
+    maxAgeSeconds: 180
+  scrapeErrorFor: 10m

@@ -6,11 +6,15 @@ metricsPath: /metrics
 # non-hypervisor hosts here.
 # name becomes the instance label (relabeled from __tmp_name); scraping still
 # connects by IP so monitoring does not depend on DNS resolution.
+# service is used by the PrometheusRules to assert that a host must be
+# producing a particular textfile metric (see charts/*/templates/*-rules.yaml).
 targets:
   - ip: "192.168.10.240"
     name: "rpi3"
+    service: "rpi"
   - ip: "192.168.10.241"
     name: "rpi4"
+    service: "rpi"
   # Stateful service guests (in-guest filesystem usage is not exposed by Proxmox OTLP).
   - ip: "192.168.10.245"
     name: "forgejo1"
@@ -33,3 +37,6 @@ resolverAlerts:
   targetDownFor: 5m
   metricsStaleFor: 5m
   metricsMaxAgeSeconds: 180
+
+textfileAlerts:
+  enabled: true
