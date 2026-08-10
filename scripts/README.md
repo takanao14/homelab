@@ -474,7 +474,13 @@ later launches use the uv cache.
 | `NETBOX_TOKEN` | none | Required read-only API token |
 | `VERIFY_SSL` | `true` | Keep TLS verification enabled |
 | `ENABLE_PLUGIN_DISCOVERY` | `false` | Enable only when NetBox plugin models are needed |
-| `NETBOX_MCP_SOURCE` | official repository at `v1.2.1` | Temporary source override for testing |
+| `NETBOX_MCP_VERSION` | `v1.2.1` | Pinned upstream tag; Renovate bumps this in place |
+| `NETBOX_MCP_SOURCE` | official repository at `NETBOX_MCP_VERSION` | Temporary source override for testing |
+
+Renovate tracks the pinned tag through the `# renovate:` comment above
+`netbox_mcp_version`, matched by the `scripts/*.sh` custom manager in
+[`renovate.json`](../renovate.json). Updates land as a regular PR; they are not
+automerged, since the automerge rule covers only `k8s/`, `ansible/`, and `tf/`.
 
 ## `install/`
 

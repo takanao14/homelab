@@ -235,6 +235,16 @@
         "repoURL: (?<registryUrl>https://[^\\n]+)\\n\\s+chart: (?<depName>[^\\n]+)\\n\\s+targetRevision: (?<currentValue>[^\\n]+)"
       ],
       "datasourceTemplate": "helm"
+    },
+    {
+      "description": "Version pins in the top-level scripts/ launchers (e.g. the MCP server tag in netbox-mcp.sh), written as `name=\"${OVERRIDE:-value}\"` under a renovate comment.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)scripts/[^/]+\\.sh$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?\\n\\w+=\"\\$\\{\\w+:-(?<currentValue>[^}\"]+)\\}\""
+      ]
     }
   ]
 }

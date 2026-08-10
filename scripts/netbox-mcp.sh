@@ -7,8 +7,10 @@
 #   - Otherwise resolved from the SOPS-encrypted .env/secrets.sops.env so MCP
 #     clients never need to store the token in their own configuration.
 #
-# The upstream source is pinned to a release tag for reproducibility. Override
-# NETBOX_MCP_SOURCE only while deliberately testing another version.
+# The upstream source is pinned to a release tag for reproducibility, which
+# Renovate bumps in place. Override NETBOX_MCP_VERSION (tag) or
+# NETBOX_MCP_SOURCE (whole reference) only while deliberately testing another
+# version.
 #
 set -euo pipefail
 
@@ -42,5 +44,9 @@ fi
 export NETBOX_URL NETBOX_TOKEN VERIFY_SSL ENABLE_PLUGIN_DISCOVERY
 export UV_NO_PROGRESS=1
 
-source_ref="${NETBOX_MCP_SOURCE:-git+https://github.com/netboxlabs/netbox-mcp-server.git@v1.2.1}"
+# Kept in its own variable so Renovate can track the pinned tag.
+# renovate: datasource=github-releases depName=netboxlabs/netbox-mcp-server
+netbox_mcp_version="${NETBOX_MCP_VERSION:-v1.2.1}"
+
+source_ref="${NETBOX_MCP_SOURCE:-git+https://github.com/netboxlabs/netbox-mcp-server.git@${netbox_mcp_version}}"
 exec uvx --from "${source_ref}" netbox-mcp-server
