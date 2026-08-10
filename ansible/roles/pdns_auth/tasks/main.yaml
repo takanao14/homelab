@@ -134,14 +134,18 @@
     group: pdns
     recurse: true
 
+# This file carries the API key, and pdns reads it as the pdns user, so group
+# read is all it needs. The role used to write it 0644 root:root, which would
+# have handed the key to every account on the guest; the hosts were already
+# 0640 root:pdns, so the role was the thing out of step.
 - name: Deploy pdns configuration
   become: true
   ansible.builtin.template:
     src: "pdns.conf.j2"
     dest: /etc/powerdns/pdns.conf
     owner: root
-    group: root
-    mode: "0644"
+    group: pdns
+    mode: "0640"
   notify: Restart pdns
 
 - name: Ensure pdns service is enabled and started
@@ -154,6 +158,79 @@
 
 - name: Flush handlers to ensure pdns is restarted before API calls
   ansible.builtin.meta: flush_handlers
+
+# APT creates no unit here — these files are the unit — so on a first run there
+# is nothing for the handler or the enable task to act on until they have been
+# written for real. Read the state up front and gate on it, the same way the
+# node_exporter role defers its service checks.
+- name: Check whether the zone serial timer is already installed
+  become: true
+  ansible.builtin.command:
+    argv:
+      - systemctl
+      - show
+      - --property=LoadState
+      - --value
+      - pdns-zone-serial.timer
+  register: pdns_auth_zone_serial_unit
+  check_mode: false
+  changed_when: false
+
+- name: Report deferred zone serial timer check
+  ansible.builtin.debug:
+    msg: >-
+      The zone serial timer does not exist yet. Its lifecycle tasks are
+      deferred until the first normal playbook run, because check mode does not
+      write the unit files.
+  when:
+    - ansible_check_mode
+    - pdns_auth_zone_serial_unit.stdout | trim == "not-found"
+
+- name: Install PowerDNS zone serial collector
+  become: true
+  ansible.builtin.template:
+    src: pdns-zone-serial.sh.j2
+    dest: "{{ pdns_zone_serial_script_path }}"
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Install PowerDNS zone serial service
+  become: true
+  ansible.builtin.template:
+    src: pdns-zone-serial.service.j2
+    dest: /etc/systemd/system/pdns-zone-serial.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart pdns zone serial timer
+
+- name: Install PowerDNS zone serial timer
+  become: true
+  ansible.builtin.template:
+    src: pdns-zone-serial.timer.j2
+    dest: /etc/systemd/system/pdns-zone-serial.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart pdns zone serial timer
+
+- name: Apply pending systemd changes
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start PowerDNS zone serial timer
+  become: true
+  ansible.builtin.systemd:
+    name: pdns-zone-serial.timer
+    enabled: true
+    state: started
+  when: >-
+    not ansible_check_mode
+    or pdns_auth_zone_serial_unit.stdout | trim != "not-found"
 
 - name: Get existing autoprimaries
   ansible.builtin.uri:

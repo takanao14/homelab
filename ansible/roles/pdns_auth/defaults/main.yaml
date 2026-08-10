@@ -21,6 +21,16 @@ pdns_repo_pin_path: "/etc/apt/preferences.d/powerdns" # noqa var-naming[no-role-
 
 pdns_webserver_port: 8081 # noqa var-naming[no-role-prefix]
 
+# Zone serials are exported through the node_exporter textfile collector so
+# Prometheus can compare the primary against the secondaries. Falls back to the
+# same literal the node_exporter role defaults to, so this role stays usable in
+# a play that does not include it.
+pdns_zone_serial_metrics_path: >- # noqa var-naming[no-role-prefix]
+  {{ node_exporter_textfile_dir | default('/var/lib/prometheus/node-exporter')
+  }}/pdns_zone_serial.prom
+pdns_zone_serial_script_path: "/usr/local/sbin/pdns-zone-serial" # noqa var-naming[no-role-prefix]
+pdns_zone_serial_interval: "5min" # noqa var-naming[no-role-prefix]
+
 # Secrets - loaded via community.sops.sops from group_vars/dns_{primary,secondary}.sops.yaml
 pdns_primary_api_key: "{{ PDNS_PRIMARY_API_KEY }}" # noqa var-naming[no-role-prefix]
 pdns_secondary_api_key: "{{ PDNS_SECONDARY_API_KEY }}" # noqa var-naming[no-role-prefix]

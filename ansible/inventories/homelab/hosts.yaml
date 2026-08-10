@@ -337,6 +337,14 @@ all:
             netbox1: null
             resolver1: null
             resolver2: null
+            # The authoritative servers keep their zones in a SQLite file, so
+            # they are as stateful as the guests above. They also export their
+            # zone serials through the textfile collector, which is what lets
+            # Prometheus catch a secondary serving a zone the primary has
+            # already moved past.
+            ns1: null
+            ns2: null
+            ns3: null
       hosts:
         pve: null
         node1: null

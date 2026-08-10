@@ -1,0 +1,7 @@
+[Unit]
+Description=Export PowerDNS zone serials for node_exporter
+After=pdns.service
+
+[Service]
+Type=oneshot
+ExecStart={{ pdns_zone_serial_script_path }}

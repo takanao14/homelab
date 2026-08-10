@@ -41,6 +41,18 @@ targets:
   - ip: "192.168.20.21"
     name: "toolbox1"
     service: "toolbox"
+  # Authoritative DNS. Scraped for the same reason as the guests above — the
+  # zone database is a SQLite file on disk — and for the zone serials the
+  # pdns_auth role exports through the textfile collector.
+  - ip: "192.168.10.233"
+    name: "ns1"
+    service: "pdns-auth"
+  - ip: "192.168.10.234"
+    name: "ns2"
+    service: "pdns-auth"
+  - ip: "192.168.10.235"
+    name: "ns3"
+    service: "pdns-auth"
   # Dedicated recursive DNS backends (ADR-0030).
   - ip: "192.168.10.236"
     name: "resolver1"
@@ -56,4 +68,7 @@ resolverAlerts:
   metricsMaxAgeSeconds: 180
 
 textfileAlerts:
+  enabled: true
+
+zoneSerialAlerts:
   enabled: true

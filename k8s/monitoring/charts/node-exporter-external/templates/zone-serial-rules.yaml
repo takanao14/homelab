@@ -1,0 +1,71 @@
+{{- if .Values.zoneSerialAlerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: pdns-zone-serial-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: pdns-zone-serial-external
+      rules:
+        # A secondary that never receives a transfer keeps answering, from a
+        # zone the primary has already moved past. dnsdist health checks pass,
+        # the DNS probes resolve, and pdns_auth_xfr_queue stays empty because
+        # nothing was ever queued — the answers are simply out of date. The
+        # serials are the only thing that differs.
+        #
+        # A change takes a moment to propagate, hence the delay before this
+        # counts as a fault rather than as a transfer in flight.
+        - alert: PdnsZoneSerialDiverged
+          expr: >-
+            max by (zone) (pdns_zone_serial)
+            - min by (zone) (pdns_zone_serial) > 0
+          for: {{ .Values.zoneSerialAlerts.divergedFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "Zone {{ "{{ $labels.zone }}" }} is out of sync between the nameservers"
+            description: >-
+              The newest and oldest serial held for
+              {{ "{{ $labels.zone }}" }} differ by {{ "{{ $value }}" }}. At
+              least one secondary is serving stale zone data.
+
+        # notified_serial is the serial the primary last sent a NOTIFY for, and
+        # only a primary reports it, so subtracting matching series scopes this
+        # to the primary without naming it. When it falls behind, changes still
+        # reach the secondaries — but on the SOA refresh timer rather than
+        # within seconds, which is not what also-notify is configured for.
+        - alert: PdnsZoneNotifyBehind
+          expr: pdns_zone_serial - pdns_zone_notified_serial > 0
+          for: {{ .Values.zoneSerialAlerts.notifyBehindFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "NOTIFY is behind for {{ "{{ $labels.zone }}" }} on {{ "{{ $labels.instance }}" }}"
+            description: >-
+              The primary holds a newer serial than the one it last notified
+              the secondaries of. Propagation has fallen back to the refresh
+              interval.
+
+        # The rule above compares only the servers that hold the zone, so a
+        # zone missing from a secondary entirely would not register. Count the
+        # servers holding each zone against the number reporting any serial at
+        # all: that derives the expected count instead of hard-coding it, and
+        # it does not fire when a whole nameserver stops reporting, since the
+        # divisor drops with it. That case belongs to the target-down alerts.
+        - alert: PdnsZoneMissing
+          expr: >-
+            count by (zone) (pdns_zone_serial)
+            < scalar(count(count by (instance) (pdns_zone_serial)))
+          for: {{ .Values.zoneSerialAlerts.missingFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "Zone {{ "{{ $labels.zone }}" }} is absent from a nameserver"
+            description: >-
+              Only {{ "{{ $value }}" }} of the authoritative servers hold
+              {{ "{{ $labels.zone }}" }}. A transfer has never completed there,
+              or the zone was removed.
+{{- end }}

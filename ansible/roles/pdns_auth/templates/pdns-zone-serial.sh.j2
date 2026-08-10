@@ -1,0 +1,77 @@
+#!/bin/sh
+# Ansible managed
+#
+# Export the SOA serial of every zone this server holds, so Prometheus can
+# compare the primary against the secondaries and catch a zone transfer that
+# silently never happened. pdns_auth_xfr_queue only reports transfers that are
+# queued and not draining; a transfer that never starts leaves the queue empty
+# while the secondaries keep serving stale data.
+#
+# The API key is read from pdns.conf at runtime rather than templated in here,
+# so this script does not become a second place the secret lives.
+set -eu
+
+metrics_output="{{ pdns_zone_serial_metrics_path }}"
+# The webserver binds the guest's own service address, not loopback, and
+# webserver-allow-from lists the LAN ranges rather than 127.0.0.1 — so this has
+# to use the same address pdns.conf does.
+{% if pdns_role == 'primary' %}
+api_url="http://{{ pdns_primary_addr }}:{{ pdns_webserver_port }}/api/v1/servers/localhost/zones"
+{% else %}
+api_url="http://{{ pdns_secondary_addr }}:{{ pdns_webserver_port }}/api/v1/servers/localhost/zones"
+{% endif %}
+
+api_key="$(sed -n 's/^api-key=//p' /etc/powerdns/pdns.conf | head -n 1)"
+if [ -z "${api_key}" ]; then
+  echo "no api-key in /etc/powerdns/pdns.conf" >&2
+  exit 1
+fi
+
+metrics_tmp="$(mktemp "${metrics_output}.tmp.XXXXXX")"
+
+cleanup() {
+  rm -f "${metrics_tmp}"
+}
+trap cleanup EXIT HUP INT TERM
+
+# Write and rename so node_exporter never reads a half-written file.
+{
+  echo '# HELP pdns_zone_serial SOA serial of a zone as this server holds it.'
+  echo '# TYPE pdns_zone_serial gauge'
+  echo '# HELP pdns_zone_notified_serial Highest serial this server has notified secondaries of.'
+  echo '# TYPE pdns_zone_notified_serial gauge'
+{# The Python below is emitted verbatim: its f-strings use {{ }} for literal
+   braces, which Jinja would otherwise read as an expression. #}
+{% raw %}
+  API_KEY="${api_key}" API_URL="${api_url}" python3 - <<'PY'
+import json
+import os
+import urllib.request
+
+req = urllib.request.Request(
+    os.environ["API_URL"], headers={"X-API-Key": os.environ["API_KEY"]}
+)
+with urllib.request.urlopen(req, timeout=10) as resp:
+    zones = json.load(resp)
+
+for zone in zones:
+    name = zone.get("name", "").rstrip(".")
+    if not name:
+        continue
+    label = name.replace("\\", "\\\\").replace('"', '\\"')
+    serial = zone.get("serial")
+    if serial is not None:
+        print(f'pdns_zone_serial{{zone="{label}"}} {serial}')
+    # Only a primary notifies, so this stays absent on the secondaries rather
+    # than being reported as zero.
+    notified = zone.get("notified_serial")
+    if notified:
+        print(f'pdns_zone_notified_serial{{zone="{label}"}} {notified}')
+PY
+{% endraw %}
+} > "${metrics_tmp}"
+
+chmod 0644 "${metrics_tmp}"
+mv -f "${metrics_tmp}" "${metrics_output}"
+
+trap - EXIT HUP INT TERM

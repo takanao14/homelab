@@ -1,0 +1,12 @@
+[Unit]
+Description=Collect PowerDNS zone serials
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec={{ pdns_zone_serial_interval }}
+RandomizedDelaySec=15s
+Persistent=true
+Unit=pdns-zone-serial.service
+
+[Install]
+WantedBy=timers.target

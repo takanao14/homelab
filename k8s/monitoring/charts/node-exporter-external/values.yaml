@@ -16,6 +16,15 @@ resolverAlerts:
   servfailRatioMax: 0.3
   servfailRatioFor: 5m
 
+zoneSerialAlerts:
+  enabled: false
+  # Long enough that a transfer in flight is not mistaken for a stuck one.
+  divergedFor: 30m
+  missingFor: 30m
+  # A NOTIFY goes out within seconds of a change, so anything still behind
+  # after this is not in flight.
+  notifyBehindFor: 15m
+
 textfileAlerts:
   enabled: false
   # apt / nvme / smartmon are written by systemd timers every 15 minutes, so an

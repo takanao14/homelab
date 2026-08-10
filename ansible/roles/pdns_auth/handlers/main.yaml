@@ -4,3 +4,17 @@
     name: pdns
     state: restarted
     daemon_reload: true
+
+- name: Reload systemd
+  become: true
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+# Only meaningful once the unit exists. On a first run the enable task starts
+# it instead, and in check mode the unit was never written at all.
+- name: Restart pdns zone serial timer
+  become: true
+  ansible.builtin.systemd:
+    name: pdns-zone-serial.timer
+    state: restarted
+  when: pdns_auth_zone_serial_unit.stdout | trim != "not-found"

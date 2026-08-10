@@ -20,6 +20,33 @@ This role is designed for a hidden primary setup:
 - Deploys `/etc/powerdns/pdns.conf` based on the role (`primary` or `secondary`).
 - Enables and starts the `pdns` service.
 - Registers the primary as an autoprimary on each secondary node via the PowerDNS API.
+- Exports each zone's SOA serial through the node_exporter textfile collector
+  (see below).
+
+## Zone serial export
+
+A systemd timer writes `pdns_zone_serial` and `pdns_zone_notified_serial` into
+the node_exporter textfile directory every `pdns_zone_serial_interval`.
+
+This exists to catch a zone transfer that never happens. When a secondary stops
+receiving transfers it keeps answering — from a zone the primary has already
+moved past. dnsdist health checks pass, the DNS probes resolve, and
+`pdns_auth_xfr_queue` stays empty because nothing was ever queued. Comparing
+serials across the servers is the only way to see it, and no PowerDNS metric
+carries the serial.
+
+The collector reads the API key from `/etc/powerdns/pdns.conf` at runtime
+rather than having it templated in, so the secret does not gain a second home
+on disk.
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `pdns_zone_serial_metrics_path` | `<node_exporter_textfile_dir>/pdns_zone_serial.prom` | Where the `.prom` file is written |
+| `pdns_zone_serial_script_path` | `/usr/local/sbin/pdns-zone-serial` | Collector script |
+| `pdns_zone_serial_interval` | `5min` | Timer interval |
+
+Hosts running this role must also be in the `node_exporter` group, or nothing
+reads the file.
 
 ## Variables
 
