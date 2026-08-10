@@ -1,0 +1,47 @@
+{{- if .Values.alerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: dnsdist-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: dnsdist-external
+      rules:
+        # dnsdist health-checks its own backends, so this reports a resolver or
+        # authoritative server that has stopped answering even though its host
+        # and its exporter are still up. Nothing else in the fleet sees that:
+        # node_exporter keeps reporting, and the textfile export only goes stale
+        # minutes later. Both resolvers were marked down here repeatedly before
+        # any of it was alerted on (2026-08-10 addendum to ADR-0030).
+        - alert: DnsdistBackendDown
+          expr: dnsdist_server_status == 0
+          for: {{ .Values.alerts.backendDownFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "dnsdist backend {{ "{{ $labels.server }}" }} is down on {{ "{{ $labels.instance }}" }}"
+            description: >-
+              {{ "{{ $labels.instance }}" }} has taken
+              {{ "{{ $labels.server }}" }} ({{ "{{ $labels.address }}" }}) out
+              of its pool. The remaining backend is carrying the traffic.
+
+        # Sum rather than count the healthy backends: counting
+        # `dnsdist_server_status == 1` drops the series entirely once every
+        # backend is down, and a rule comparing that count to zero would then
+        # match nothing and never fire. Summing keeps a series at 0.
+        - alert: DnsdistNoResolverAvailable
+          expr: sum by (instance) (dnsdist_server_status{server=~"resolver.*"}) == 0
+          for: {{ .Values.alerts.noResolverFor }}
+          labels:
+            severity: critical
+          annotations:
+            summary: "No recursive resolver left for {{ "{{ $labels.instance }}" }}"
+            description: >-
+              Every Knot Resolver backend is down for
+              {{ "{{ $labels.instance }}" }}. Recursive resolution through this
+              frontend has stopped; internal zones still resolve through the
+              pdns secondaries.
+{{- end }}

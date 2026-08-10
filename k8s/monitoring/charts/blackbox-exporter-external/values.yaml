@@ -12,3 +12,9 @@ dnsFrontends: []
 
 icmp:
   targets: []
+
+dnsProbeAlerts:
+  enabled: false
+  # Short: this is the client-visible symptom, and the probe runs every
+  # scrapeInterval against two independent frontends.
+  failedFor: 2m

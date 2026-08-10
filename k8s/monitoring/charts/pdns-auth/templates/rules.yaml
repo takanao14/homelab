@@ -36,4 +36,36 @@ spec:
               {{ "{{ $value | humanize }}" }} malformed packets/s against a
               baseline of zero. Expect a broken client or something mangling
               DNS on the path.
+
+        # Zones waiting to be transferred. Measured at zero for seven days, so
+        # anything that persists means transfers are not draining.
+        #
+        # This does not cover the opposite failure: a transfer that never
+        # starts leaves the queue empty while the secondaries keep serving a
+        # stale zone. Catching that needs the SOA serial compared across ns1,
+        # ns2 and ns3, and no exported metric carries the serial.
+        - alert: PdnsAuthXfrQueueStuck
+          expr: pdns_auth_xfr_queue > 0
+          for: {{ .Values.alerts.xfrQueueFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "Zone transfers are not draining on {{ "{{ $labels.instance }}" }}"
+            description: >-
+              {{ "{{ $value }}" }} zone(s) have been queued for transfer for
+              longer than expected. The secondaries may be serving stale zone
+              data.
+
+        # PowerDNS checks its own version against the vendor's security status
+        # feed: 1 is OK, 2 recommends an upgrade, 3 means a known vulnerability.
+        - alert: PdnsAuthSecurityStatusBad
+          expr: pdns_auth_security_status > 1
+          for: {{ .Values.alerts.securityStatusFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "PowerDNS reports a security problem on {{ "{{ $labels.instance }}" }}"
+            description: >-
+              security_status is {{ "{{ $value }}" }} (2 = upgrade recommended,
+              3 = known vulnerability in the running version).
 {{- end }}

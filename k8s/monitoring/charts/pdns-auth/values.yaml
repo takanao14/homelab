@@ -13,3 +13,8 @@ alerts:
   servfailFor: 10m
   corruptRate: 0.05
   corruptFor: 10m
+  # A transfer that is genuinely running clears the queue quickly, so a queue
+  # still occupied after fifteen minutes is stuck rather than busy.
+  xfrQueueFor: 15m
+  # Not urgent, but it should not be possible to miss it either.
+  securityStatusFor: 1h

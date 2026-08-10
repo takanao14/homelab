@@ -22,3 +22,6 @@ icmp:
 # DNS resolution probes (dns_external: google.com / dns_internal:
 # ns1.home.butaco.net) target the shared recursor inventory
 # (values/dns-frontends.yaml via apps/values.yaml valueFiles).
+
+dnsProbeAlerts:
+  enabled: true

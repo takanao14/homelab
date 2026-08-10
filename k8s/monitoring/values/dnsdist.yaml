@@ -3,3 +3,6 @@ metricsPath: /metrics
 
 # Scrape targets come from the shared recursor inventory
 # (values/dns-frontends.yaml via apps/values.yaml valueFiles).
+
+alerts:
+  enabled: true

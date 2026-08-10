@@ -1,0 +1,33 @@
+{{- if .Values.dnsProbeAlerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: dns-probe-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: dns-probe-external
+      rules:
+        # The only signal that says whether name resolution works at all. Every
+        # other DNS alert measures a component; this one measures the answer a
+        # client would get, through the frontend it would actually ask.
+        #
+        # dns_external resolves a public name and therefore covers the whole
+        # recursive path; dns_internal resolves an authoritative name and covers
+        # the routing to the pdns secondaries. Both run against dist1 and dist2,
+        # so one frontend failing raises one alert and a total outage raises
+        # four.
+        - alert: DnsProbeFailed
+          expr: probe_success{job=~".*/dns-(external|internal)"} == 0
+          for: {{ .Values.dnsProbeAlerts.failedFor }}
+          labels:
+            severity: critical
+          annotations:
+            summary: "DNS resolution is failing through {{ "{{ $labels.instance }}" }}"
+            description: >-
+              The {{ "{{ $labels.job }}" }} probe against
+              {{ "{{ $labels.instance }}" }} is not resolving. Clients using
+              this frontend cannot resolve names.
+{{- end }}
