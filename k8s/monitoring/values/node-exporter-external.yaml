@@ -6,8 +6,14 @@ metricsPath: /metrics
 # non-hypervisor hosts here.
 # name becomes the instance label (relabeled from __tmp_name); scraping still
 # connects by IP so monitoring does not depend on DNS resolution.
-# service is used by the PrometheusRules to assert that a host must be
-# producing a particular textfile metric (see charts/*/templates/*-rules.yaml).
+# service has two jobs, so give every target one:
+#   1. the PrometheusRules use it to assert that a host must be producing a
+#      particular textfile metric (see charts/*/templates/*-rules.yaml);
+#   2. kube-prometheus-stack's TargetDown aggregates by it —
+#      count by (cluster, job, namespace, service) (up == 0) / count(...) > 10.
+#      Every unlabelled target lands in one bucket, and a single host failing
+#      out of ten is exactly 10%, which does not clear the threshold. One
+#      service per host keeps that ratio at 100%.
 targets:
   - ip: "192.168.10.240"
     name: "rpi3"
@@ -18,12 +24,23 @@ targets:
   # Stateful service guests (in-guest filesystem usage is not exposed by Proxmox OTLP).
   - ip: "192.168.10.245"
     name: "forgejo1"
+    service: "forgejo"
   - ip: "192.168.10.247"
     name: "netbox1"
+    service: "netbox"
   - ip: "192.168.40.30"
     name: "openbao1"
+    service: "openbao"
   - ip: "192.168.50.31"
     name: "seaweedfs1"
+    service: "seaweedfs"
+  - ip: "192.168.10.248"
+    name: "authentik1"
+    service: "authentik"
+  # Scraped to check the 16 GiB sizing against measurements (ADR-0031).
+  - ip: "192.168.20.21"
+    name: "toolbox1"
+    service: "toolbox"
   # Dedicated recursive DNS backends (ADR-0030).
   - ip: "192.168.10.236"
     name: "resolver1"
