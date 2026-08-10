@@ -1,0 +1,56 @@
+---
+# kubectl for this cluster runs on the Ansible control node: the inventory has
+# no API endpoint host, and cordon/drain must keep working while the node being
+# operated on is down.
+k8s_kubeconfig: "~/.kube/prd.yaml"
+
+# prd uses OpenEBS LocalPV hostpath (k0s/env/prd.sh, k0s/values/openebs.yaml).
+# PVs are node-local directories with node affinity, so a drained pod cannot be
+# rescheduled elsewhere — draining buys a graceful SIGTERM, not availability.
+# There are no replicas to rebuild, so no post-reboot storage recovery wait.
+k8s_storage_provider: openebs
+
+# Scaled to zero by ops-shutdown.yaml, in this order. Application workloads
+# only: kube-system, openebs, cert-manager, external-secrets and
+# envoy-gateway-system are cluster infrastructure and are left to stop with the
+# node. monitoring is late so the shutdown of everything above it is still
+# observed, and argocd is last because scaling it early would leave nothing able
+# to reconcile the cluster back.
+k8s_shutdown_namespaces:
+  - comfyui
+  - ollama
+  - vllm
+  - lemonade-server
+  - open-webui
+  - gpu-switch
+  - homepage
+  - headlamp
+  - pdns-ui
+  - external-dns
+  - reloader
+  - monitoring
+  - argocd
+
+# Cluster infrastructure, deliberately left to stop with the node. Declared
+# rather than merely described so ops-shutdown.yaml can verify the split: a
+# namespace that carries workloads and appears in neither list stops the run,
+# turning a forgotten addition into a visible failure instead of a workload
+# that quietly never gets a graceful shutdown.
+k8s_infrastructure_namespaces:
+  - kube-system
+  - openebs
+  - cert-manager
+  - external-secrets
+  - envoy-gateway-system
+
+# Stopped before anything else is scaled: with the application controller down,
+# Argo CD cannot revert the scale-to-zero while the shutdown is in progress.
+# Cheaper and far less stateful than suspending every Application's syncPolicy.
+k8s_gitops_controller_namespace: argocd
+k8s_gitops_controller_resource: statefulset/argocd-application-controller
+
+# LocalPV basePath, a separate ext4 mount created by k0s/hook/ssdsetup.sh. Its
+# fstab entry has no `nofail`, so a missing disk stops the boot rather than
+# silently exposing an empty directory — but verify the mount before uncordoning
+# so a pod can never bind the root filesystem instead of its data.
+k8s_storage_mountpoint: /srv/storage/volume

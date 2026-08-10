@@ -1,0 +1,28 @@
+---
+# Power a host off and confirm it actually went. There is no poweroff module —
+# reboot is the only one that handles the connection dying — so the shutdown is
+# fired asynchronously and the disconnect is treated as the expected outcome.
+
+- name: Request power off
+  ansible.builtin.command:
+    argv:
+      - shutdown
+      - -h
+      - now
+  become: true
+  async: 1
+  poll: 0
+  failed_when: false
+  changed_when: true
+
+# Checked from the control node: the target is on its way down, so it cannot
+# report on itself. A host that stays reachable means the shutdown never took,
+# and the next tier must not be stopped on top of it.
+- name: Wait for the host to stop answering on SSH
+  ansible.builtin.wait_for:
+    host: "{{ ansible_host }}"
+    port: 22
+    state: stopped
+    timeout: "{{ host_poweroff_timeout }}"
+  delegate_to: localhost
+  become: false

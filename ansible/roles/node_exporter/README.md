@@ -11,6 +11,7 @@ Installs and configures `prometheus-node-exporter` on Debian-based systems.
 - Sets up the textfile collector directory (`/var/lib/node_exporter/textfile_collector`).
 - Supports service-specific collector flags through `node_exporter_extra_args`.
 - On ARM hosts (Raspberry Pi), installs a throttling metrics script and a cron job to collect it.
+- Masks `openipmi.service`, which APT pulls in behind the exporter (see below).
 - Ensures the service is started and enabled.
 - Defers service lifecycle checks on a pristine host during Ansible check mode;
   APT does not create the systemd unit until a normal run installs the package.

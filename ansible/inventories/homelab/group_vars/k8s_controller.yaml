@@ -1,0 +1,19 @@
+---
+k0s_service: k0scontroller
+
+# Controllers double as the per-cluster handle for plays that only talk to the
+# Kubernetes API: there is exactly one per cluster, and the prd_k8s /
+# sandbox_k8s group_vars already supply that cluster's kubeconfig. Such plays
+# delegate every task to the control node and never connect to the host itself.
+
+# Escape hatch for the namespace classification check. Left false so a namespace
+# nobody classified stops the run by default, but an outage is a bad time to be
+# editing group_vars: pass -e k8s_shutdown_allow_unclassified=true to proceed,
+# accepting that the unclassified namespaces stop with their node rather than
+# gracefully — the behaviour everything had before this playbook existed.
+k8s_shutdown_allow_unclassified: false
+
+# Where ops-shutdown.yaml records the replica counts it scales to zero, so
+# ops-startup.yaml can put them back. Kept outside the repo: it is runtime
+# state, and it must survive the fleet being powered off.
+k8s_shutdown_state_dir: "~/.local/state/homelab/shutdown"

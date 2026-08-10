@@ -1,0 +1,39 @@
+---
+# See prd_k8s.yaml for why kubectl runs on the control node.
+k8s_kubeconfig: "~/.kube/sandbox.yaml"
+
+# sandbox uses Longhorn (k0s/env/sandbox.sh, k0s/values/longhorn.yaml) with
+# replicaCount 3 across exactly three workers, so every volume has a replica on
+# every worker. Rebooting a node leaves the volume degraded until its replica
+# rebuilds; the next node must not be taken down before that finishes, or the
+# volume drops to a single replica. Hence the post-reboot robustness wait.
+k8s_storage_provider: longhorn
+k8s_longhorn_namespace: longhorn-system
+
+# Scaled to zero by ops-shutdown.yaml, in this order — same policy as prd:
+# application workloads only, monitoring late so the shutdown of everything
+# above it is still observed, argocd last because scaling it earlier would leave
+# nothing able to reconcile the cluster back. kube-system, longhorn-system,
+# external-secrets and envoy-gateway-system are cluster infrastructure and are
+# left to stop with the node.
+k8s_shutdown_namespaces:
+  - homepage
+  - headlamp
+  - pdns-ui
+  - external-dns
+  - reloader
+  - monitoring
+  - argocd
+
+# Cluster infrastructure, deliberately left to stop with the node. See
+# prd_k8s.yaml for why this is declared rather than only described.
+k8s_infrastructure_namespaces:
+  - kube-system
+  - longhorn-system
+  - external-secrets
+  - envoy-gateway-system
+
+# Same reasoning as prd: stopping the application controller suspends GitOps
+# with one resource instead of patching every Application's syncPolicy.
+k8s_gitops_controller_namespace: argocd
+k8s_gitops_controller_resource: statefulset/argocd-application-controller

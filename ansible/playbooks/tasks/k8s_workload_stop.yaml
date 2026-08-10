@@ -1,0 +1,169 @@
+---
+# Bring a cluster's application workloads down cleanly ahead of a planned
+# outage. Scaling to zero, not draining: with every node about to be powered
+# off there is nowhere to evict to, so a drain would only produce Pending pods
+# and burn the eviction timeout. Scaling gives each pod its normal SIGTERM and
+# stops the controllers from recreating it.
+#
+# Every task delegates to the control node — this play's hosts stand in for
+# their cluster and are never connected to.
+
+# Checked before anything is touched. Namespaces are classified statically, not
+# discovered: scaling down whatever happens to be running would let a forgotten
+# infrastructure namespace be taken out mid-shutdown, and leave the cluster
+# depending on the restore to come back whole. Detection is dynamic so drift is
+# caught; the action stays static so it can only ever touch what was reviewed.
+# Namespaces without a Deployment or StatefulSet need no classification, which
+# keeps the lists to what actually gets scaled.
+- name: List namespaces that carry scalable workloads
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - get
+      - deployment,statefulset
+      - --all-namespaces
+      - -o
+      - jsonpath={range .items[*]}{.metadata.namespace}{"\n"}{end}
+  register: k8s_shutdown_all_namespaces
+  delegate_to: localhost
+  become: false
+  changed_when: false
+
+- name: Determine which namespaces are unclassified
+  ansible.builtin.set_fact:
+    k8s_shutdown_unclassified: >-
+      {{ k8s_shutdown_all_namespaces.stdout_lines | unique
+         | difference(k8s_shutdown_namespaces)
+         | difference(k8s_infrastructure_namespaces) }}
+
+- name: Fail if a namespace is neither application nor infrastructure
+  ansible.builtin.assert:
+    that: k8s_shutdown_unclassified | length == 0
+    fail_msg: >-
+      These namespaces carry workloads but appear in neither
+      k8s_shutdown_namespaces nor k8s_infrastructure_namespaces:
+      {{ k8s_shutdown_unclassified | join(', ') }}. An application namespace
+      belongs in the ordered shutdown list; infrastructure belongs in the
+      exclusion list. To proceed without classifying them — they will stop with
+      their node instead of gracefully — re-run with
+      -e k8s_shutdown_allow_unclassified=true
+    success_msg: Every namespace carrying workloads is classified
+  when: not (k8s_shutdown_allow_unclassified | bool)
+
+- name: Record current replica counts
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - "--namespace={{ item }}"
+      - get
+      - deployment,statefulset
+      - -o
+      - jsonpath={range .items[*]}{.kind}{" "}{.metadata.namespace}{" "}{.metadata.name}{" "}{.spec.replicas}{"\n"}{end}
+  loop: "{{ k8s_shutdown_namespaces }}"
+  register: k8s_shutdown_snapshot
+  delegate_to: localhost
+  become: false
+  changed_when: false
+
+- name: Flatten the snapshot into one workload per line
+  ansible.builtin.set_fact:
+    k8s_shutdown_targets: >-
+      {{ k8s_shutdown_snapshot.results | map(attribute='stdout_lines')
+         | flatten | reject('equalto', '') | list }}
+
+# Written before anything is scaled, and kept outside the repo so it survives
+# the fleet being off. ops-startup.yaml reads it to restore the counts: relying
+# on Argo CD alone would silently leave a workload at zero whenever its chart
+# does not set replicas explicitly.
+- name: Ensure the shutdown state directory exists
+  ansible.builtin.file:
+    path: "{{ k8s_shutdown_state_dir | expanduser }}"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  become: false
+
+- name: Save the replica snapshot for ops-startup.yaml
+  ansible.builtin.copy:
+    content: "{{ k8s_shutdown_targets | join('\n') }}\n"
+    dest: "{{ k8s_shutdown_state_dir | expanduser }}/replicas-{{ inventory_hostname }}.txt"
+    mode: "0600"
+  delegate_to: localhost
+  become: false
+
+# Stopped only after the snapshot is on disk: scaling it first would record the
+# controller's own replica count as 0 and leave ops-startup.yaml with nothing
+# able to reconcile the cluster back.
+- name: Stop the GitOps controller so it cannot revert the scale-down
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - "--namespace={{ k8s_gitops_controller_namespace }}"
+      - scale
+      - "{{ k8s_gitops_controller_resource }}"
+      - --replicas=0
+  delegate_to: localhost
+  become: false
+  changed_when: true
+  when: k8s_gitops_controller_resource is defined
+
+- name: Scale workloads to zero
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - "--namespace={{ item.split()[1] }}"
+      - scale
+      - "{{ item.split()[0] | lower }}/{{ item.split()[2] }}"
+      - --replicas=0
+  loop: "{{ k8s_shutdown_targets }}"
+  delegate_to: localhost
+  become: false
+  changed_when: true
+
+# Waiting on "no pods in the namespace" would never finish: DaemonSet pods such
+# as node-exporter stay until the node itself stops. Watch each scaled workload
+# instead — .status.replicas disappears or reaches 0 once its pods are gone.
+- name: Wait for scaled workloads to report no running replicas
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - "--namespace={{ item.split()[1] }}"
+      - get
+      - "{{ item.split()[0] | lower }}/{{ item.split()[2] }}"
+      - -o
+      - jsonpath={.status.replicas}
+  loop: "{{ k8s_shutdown_targets }}"
+  register: k8s_shutdown_drained
+  until: k8s_shutdown_drained.stdout | default('0', true) in ['', '0']
+  retries: 30
+  delay: 10
+  delegate_to: localhost
+  become: false
+  changed_when: false
+
+# With every workload stopped, Longhorn should have detached every volume.
+# Powering nodes off while volumes are still attached is what leaves replicas
+# marked failed and forces a rebuild — or a salvage — on the way back up.
+- name: Wait for Longhorn volumes to detach
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - "--namespace={{ k8s_longhorn_namespace }}"
+      - get
+      - volumes.longhorn.io
+      - -o
+      - jsonpath={range .items[*]}{.status.state}{"\n"}{end}
+  register: k8s_longhorn_states
+  until: k8s_longhorn_states.stdout_lines | select('equalto', 'attached') | list | length == 0
+  retries: 30
+  delay: 10
+  delegate_to: localhost
+  become: false
+  changed_when: false
+  when: k8s_storage_provider == "longhorn"
