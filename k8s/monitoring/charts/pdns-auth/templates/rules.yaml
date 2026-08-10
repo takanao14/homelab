@@ -1,0 +1,39 @@
+{{- if .Values.alerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: pdns-auth-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: pdns-auth-external
+      rules:
+        # An authoritative server answers from its own zones, so SERVFAIL means
+        # the backend or the signing path is broken rather than anything
+        # upstream. The measured baseline is zero.
+        - alert: PdnsAuthServfail
+          expr: rate(pdns_auth_servfail_packets[10m]) > {{ .Values.alerts.servfailRate }}
+          for: {{ .Values.alerts.servfailFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "Authoritative DNS is answering SERVFAIL on {{ "{{ $labels.instance }}" }}"
+            description: >-
+              {{ "{{ $value | humanize }}" }} SERVFAIL/s. The baseline is zero,
+              so the backend or DNSSEC signing is failing for at least one
+              zone.
+
+        - alert: PdnsAuthCorruptPackets
+          expr: rate(pdns_auth_corrupt_packets[10m]) > {{ .Values.alerts.corruptRate }}
+          for: {{ .Values.alerts.corruptFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "Authoritative DNS is receiving corrupt packets on {{ "{{ $labels.instance }}" }}"
+            description: >-
+              {{ "{{ $value | humanize }}" }} malformed packets/s against a
+              baseline of zero. Expect a broken client or something mangling
+              DNS on the path.
+{{- end }}

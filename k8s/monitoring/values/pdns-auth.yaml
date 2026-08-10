@@ -10,3 +10,6 @@ targets:
     name: "ns2"
   - ip: "192.168.10.235"
     name: "ns3"
+
+alerts:
+  enabled: true

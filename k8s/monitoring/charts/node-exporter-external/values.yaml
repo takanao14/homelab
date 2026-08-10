@@ -9,6 +9,12 @@ resolverAlerts:
   targetDownFor: 5m
   metricsStaleFor: 5m
   metricsMaxAgeSeconds: 180
+  # Healthy is 90-99%. 60% is comfortably below normal variation and well above
+  # the 36-43% seen while the cache was being dropped and refilled.
+  cacheHitRateMin: 0.6
+  cacheHitRateFor: 15m
+  servfailRatioMax: 0.3
+  servfailRatioFor: 5m
 
 textfileAlerts:
   enabled: false
