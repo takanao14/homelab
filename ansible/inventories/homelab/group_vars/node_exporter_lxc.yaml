@@ -9,3 +9,9 @@
 node_exporter_lxc_args:
     - --no-collector.thermal_zone
     - --no-collector.hwmon
+
+# The hwmon collector disabled above is the only consumer of lm-sensors, so on
+# these guests the package is dead weight: it is installed on every x86_64 host
+# by default, but nothing here ever reads a sensor. LXC guests have no hardware
+# sensors of their own to read in the first place.
+node_exporter_install_lm_sensors: false

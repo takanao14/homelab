@@ -13,8 +13,7 @@ node_exporter_rpi_args: []
 node_exporter_lxc_args: []
 node_exporter_extra_args: []
 
-# prometheus-node-exporter recommends prometheus-node-exporter-collectors,
-# which recommends ipmitool, which pulls in openipmi. No host in this fleet has
-# a BMC, so openipmi's init script fails to load the IPMI drivers and the unit
-# sits permanently failed. Set to false on a host that does have a BMC.
-node_exporter_mask_openipmi: true
+# Install lm-sensors on x86_64 hosts so the hwmon collector can read hardware
+# temperatures. Set to false where that collector is disabled anyway, so the
+# package has no consumer (see group_vars/node_exporter_lxc.yaml).
+node_exporter_install_lm_sensors: true

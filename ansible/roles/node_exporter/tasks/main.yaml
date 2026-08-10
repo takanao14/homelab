@@ -78,7 +78,21 @@
   ansible.builtin.apt:
     name: lm-sensors
     state: present
-  when: ansible_facts['architecture'] == "x86_64"
+  when:
+    - ansible_facts['architecture'] == "x86_64"
+    - node_exporter_install_lm_sensors | bool
+
+# Removal has to be explicit so hosts that were provisioned before the flag
+# existed converge too. The autoremove in playbooks/tasks/package_upgrade.yaml
+# never reclaims lm-sensors: the task above installs it by name, which marks it
+# manual, and autoremove only collects auto-marked packages.
+- name: Remove lm-sensors where hardware sensors are unavailable
+  become: true
+  ansible.builtin.apt:
+    name: lm-sensors
+    state: absent
+    autoremove: true
+  when: not (node_exporter_install_lm_sensors | bool)
 
 - name: Configure node_exporter args
   become: true
