@@ -46,8 +46,14 @@ spec:
             summary: "NOTIFY is behind for {{ "{{ $labels.zone }}" }} on {{ "{{ $labels.instance }}" }}"
             description: >-
               The primary holds a newer serial than the one it last notified
-              the secondaries of. Propagation has fallen back to the refresh
-              interval.
+              the secondaries of, so propagation has fallen back to the refresh
+              interval. Check the zone kind first — `pdnsutil show-zone
+              {{ "{{ $labels.zone }}" }}`. PowerDNS never notifies for a Native
+              zone, and this fleet synchronises over AXFR, so Native is a
+              misconfiguration to correct rather than a reason to silence this.
+              Fix with `pdnsutil set-kind <zone> MASTER`, and make sure
+              whatever creates zones sets the kind too: dnscontrol's
+              `zone_kind` only applies at creation.
 
         # The rule above compares only the servers that hold the zone, so a
         # zone missing from a secondary entirely would not register. Count the
