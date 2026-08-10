@@ -1,0 +1,36 @@
+---
+# Read-only NetBox identity for the MCP server (scripts/netbox-mcp.sh).
+#
+# Both scripts run through `manage.py shell` on stdin: NetBox has no Ansible
+# module, and stdin keeps the token plaintext out of the process arguments.
+- name: Provision the NetBox MCP group, permission, and user
+  become: true
+  ansible.builtin.command:
+    cmd: "{{ netbox_venv }}/bin/python netbox/manage.py shell"
+    chdir: "{{ netbox_home }}"
+    stdin: "{{ lookup('template', 'mcp_identity.py.j2') }}"
+  register: netbox_mcp_identity_result
+  changed_when: "'NETBOX_MCP_CHANGED' in netbox_mcp_identity_result.stdout"
+  when: not ansible_check_mode
+
+- name: Report a missing NetBox MCP token
+  ansible.builtin.debug:
+    msg: >-
+      NETBOX_TOKEN is not set, so the MCP API token was not created. Generate
+      one with scripts/netbox-mcp-token.sh, store it in .env/secrets.sops.env
+      via `sops edit`, run `direnv allow`, then re-run this play.
+  when: netbox_mcp_token | length == 0
+
+- name: Create or rotate the read-only NetBox MCP API token
+  become: true
+  ansible.builtin.command:
+    cmd: "{{ netbox_venv }}/bin/python netbox/manage.py shell"
+    chdir: "{{ netbox_home }}"
+    stdin: "{{ lookup('template', 'mcp_token.py.j2') }}"
+  register: netbox_mcp_token_result
+  changed_when: "'NETBOX_MCP_CHANGED' in netbox_mcp_token_result.stdout"
+  # The rendered script carries the token plaintext.
+  no_log: true
+  when:
+    - not ansible_check_mode
+    - netbox_mcp_token | length > 0

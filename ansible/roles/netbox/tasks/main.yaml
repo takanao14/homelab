@@ -277,3 +277,8 @@
     name: nginx
     state: started
     enabled: true
+
+# Last, so a problem with the MCP identity cannot leave NetBox itself undeployed.
+- name: Provision the read-only MCP identity
+  ansible.builtin.import_tasks: mcp.yaml
+  when: netbox_mcp_enabled | bool

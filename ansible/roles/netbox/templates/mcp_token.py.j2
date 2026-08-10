@@ -1,0 +1,100 @@
+# Managed by Ansible (netbox role) -- do not run by hand.
+#
+# Creates or rotates the v2 API token used by the NetBox MCP server.
+#
+# NetBox stores only an HMAC of a v2 token's secret half, so the value cannot be
+# read back once created. The desired token is therefore generated outside
+# NetBox (scripts/netbox-mcp-token.sh), kept in .env/secrets.sops.env, and
+# supplied here through NETBOX_TOKEN -- the same value the MCP launcher uses.
+#
+# A v2 token is `nbt_<key>.<secret>`: `key` identifies the row and `secret` is
+# hashed with the newest API_TOKEN_PEPPERS entry and never stored.
+#
+# Executed by `manage.py shell` reading this script on stdin, so the plaintext
+# never touches the filesystem or the process arguments. The trailing
+# NETBOX_MCP_CHANGED / NETBOX_MCP_UNCHANGED line drives Ansible's changed state.
+import sys
+
+from django.db import transaction
+
+from users.constants import TOKEN_DEFAULT_LENGTH, TOKEN_KEY_LENGTH, TOKEN_PREFIX
+from users.models import Token, User
+
+USERNAME = {{ netbox_mcp_username | to_json }}
+DESCRIPTION = {{ netbox_mcp_token_description | to_json }}
+VALUE = {{ netbox_mcp_token | to_json }}
+
+value = VALUE.strip()
+
+if not value.startswith(TOKEN_PREFIX):
+    sys.stderr.write(
+        'NETBOX_TOKEN must be a v2 token starting with {}\n'.format(TOKEN_PREFIX)
+    )
+    sys.exit(1)
+
+key, separator, secret = value[len(TOKEN_PREFIX):].partition('.')
+
+if not separator or len(key) != TOKEN_KEY_LENGTH or len(secret) < TOKEN_DEFAULT_LENGTH:
+    sys.stderr.write(
+        'NETBOX_TOKEN must look like {}<{}-char key>.<{}-char secret>\n'.format(
+            TOKEN_PREFIX, TOKEN_KEY_LENGTH, TOKEN_DEFAULT_LENGTH
+        )
+    )
+    sys.exit(1)
+
+try:
+    user = User.objects.get(username=USERNAME)
+except User.DoesNotExist:
+    sys.stderr.write(
+        'User {} does not exist; run the MCP identity task first\n'.format(USERNAME)
+    )
+    sys.exit(1)
+
+changes = []
+
+with transaction.atomic():
+    existing = Token.objects.filter(key=key).first()
+
+    # `validate()` re-derives the HMAC, so a rotated pepper or a changed secret
+    # both surface as a mismatch here.
+    up_to_date = (
+        existing is not None
+        and existing.user_id == user.pk
+        and existing.enabled
+        and not existing.write_enabled
+        and existing.expires is None
+        and existing.validate(secret)
+    )
+
+    if existing is not None and not up_to_date:
+        # NetBox refuses to reassign the plaintext of a saved token, so the row
+        # has to be replaced rather than updated.
+        existing.delete()
+        existing = None
+        changes.append('removed the stale token holding key {}'.format(key))
+
+    if existing is None:
+        token = Token(
+            user=user,
+            key=key,
+            token=secret,
+            write_enabled=False,
+            description=DESCRIPTION,
+        )
+        # Surfaces a missing API_TOKEN_PEPPERS as a readable error instead of a
+        # database constraint violation.
+        token.clean()
+        token.save()
+        changes.append('created a read-only token for {}'.format(USERNAME))
+
+    # Any other token on this account is a superseded MCP credential.
+    superseded = Token.objects.filter(user=user).exclude(key=key)
+    superseded_count = superseded.count()
+    if superseded_count:
+        superseded.delete()
+        changes.append('deleted {} superseded token(s)'.format(superseded_count))
+
+for line in changes:
+    print(line)
+
+print('NETBOX_MCP_CHANGED' if changes else 'NETBOX_MCP_UNCHANGED')

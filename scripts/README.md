@@ -12,6 +12,8 @@ scripts/
 ├── check-image-refs.sh                       # CI: image filename map consistency check
 ├── grafana-mcp.sh                            # Grafana MCP server launcher (stdio)
 ├── grafana-mcp-token.sh                      # issue Grafana MCP service-account token
+├── netbox-mcp.sh                             # NetBox MCP server launcher (stdio)
+├── netbox-mcp-token.sh                       # generate the managed NetBox MCP v2 token
 ├── lib/openbao-auth.sh                       # shared OpenBao auth helper
 ├── install/                                  # CLI toolchain installers (shared with packer/)
 │   ├── tools.sh / terminal.sh / fonts.sh
@@ -412,6 +414,67 @@ metadata. `sops edit` is the only flow that survives a rotation.
 
 Re-running issues a **new** token while reusing the existing service account;
 revoke unused tokens in the Grafana UI or via the API.
+
+## NetBox MCP
+
+`netbox-mcp.sh` launches the official
+[`netboxlabs/netbox-mcp-server`](https://github.com/netboxlabs/netbox-mcp-server)
+over stdio. The upstream source is pinned to `v1.2.1`, and the server itself
+exposes read-only NetBox query tools.
+
+The launcher uses `NETBOX_URL` and `NETBOX_TOKEN` from the environment when
+available. Otherwise it decrypts `.env/secrets.sops.env` using the same
+self-resolving SOPS flow as the Grafana MCP launcher. MCP client configuration
+therefore contains no API token.
+
+Generate the desired v2 token, then store it by editing the existing encrypted
+environment file:
+
+```bash
+./scripts/netbox-mcp-token.sh
+sops edit .env/secrets.sops.env
+direnv allow
+```
+
+Add this assignment inside the decrypted editor buffer:
+
+```bash
+NETBOX_TOKEN="<read-only-api-token>"
+```
+
+The `netbox` Ansible role reads this environment variable, creates the
+`mcp-netbox` user and `mcp-readers` group, assigns infrastructure-only `view`
+permissions, and creates the matching token with API writes disabled. NetBox
+keeps only an HMAC of a v2 token, which is why the value is generated here
+rather than read back from the API. Preview and apply it with:
+
+```bash
+cd ansible
+ansible-playbook playbooks/netbox.yaml --check --diff --tags netbox
+
+# The operator performs the live change after reviewing the check output.
+ansible-playbook playbooks/netbox.yaml --tags netbox
+```
+
+The identity steps run through `manage.py` and are therefore skipped under
+`--check`, like the other `manage.py` tasks in the role; the check run confirms
+the rest of the play. Rotating the token is the same three commands as first
+setup — generate, `sops edit`, re-run the play — and the role replaces the old
+token row. See [`ansible/roles/netbox/README.md`](../ansible/roles/netbox/README.md)
+for the permission scope and the variables that adjust it.
+
+Do not commit a plaintext token or pass it in `.codex/config.toml` or
+`.mcp.json`. Start a new client session after changing MCP configuration. The
+first launch requires network access while `uvx` resolves the pinned source;
+later launches use the uv cache.
+
+| Env var | Default | Notes |
+|---------|---------|-------|
+| `NETBOX_URL` | `https://netbox-ui.home.butaco.net/` | Target NetBox instance |
+| `NETBOX_TOKEN` | none | Required read-only API token |
+| `VERIFY_SSL` | `true` | Keep TLS verification enabled |
+| `ENABLE_PLUGIN_DISCOVERY` | `false` | Enable only when NetBox plugin models are needed |
+| `NETBOX_MCP_SOURCE` | official repository at `v1.2.1` | Temporary source override for testing |
 
 ## `install/`
 

@@ -2,6 +2,9 @@
   "mcpServers": {
     "grafana": {
       "command": "./scripts/grafana-mcp.sh"
+    },
+    "netbox": {
+      "command": "./scripts/netbox-mcp.sh"
     }
   }
 }

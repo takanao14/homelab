@@ -1,0 +1,129 @@
+# Managed by Ansible (netbox role) -- do not run by hand.
+#
+# Ensures the read-only identity used by the NetBox MCP server exists:
+#   * a group that carries the single view-only ObjectPermission
+#   * that ObjectPermission, covering the configured infrastructure app labels
+#   * a service user with no usable password, holding only that group
+#
+# Executed by `manage.py shell` reading this script on stdin. The trailing
+# NETBOX_MCP_CHANGED / NETBOX_MCP_UNCHANGED line drives Ansible's changed state.
+import sys
+
+from django.contrib.contenttypes.models import ContentType
+
+from users.models import Group, ObjectPermission, User
+
+USERNAME = {{ netbox_mcp_username | to_json }}
+GROUP_NAME = {{ netbox_mcp_group | to_json }}
+GROUP_DESCRIPTION = {{ netbox_mcp_group_description | to_json }}
+PERMISSION_NAME = {{ netbox_mcp_permission_name | to_json }}
+PERMISSION_DESCRIPTION = {{ netbox_mcp_permission_description | to_json }}
+APP_LABELS = {{ netbox_mcp_permission_app_labels | to_json }}
+EXTRA_OBJECT_TYPES = {{ netbox_mcp_permission_object_types | to_json }}
+
+changes = []
+
+# Resolve the object types the permission covers. A label that matches nothing
+# is a configuration error rather than an intentionally empty grant, so fail
+# instead of silently narrowing read access.
+content_types = []
+unresolved = []
+
+for app_label in APP_LABELS:
+    matched = list(ContentType.objects.filter(app_label=app_label))
+    if not matched:
+        unresolved.append(app_label)
+    content_types.extend(matched)
+
+for label in EXTRA_OBJECT_TYPES:
+    app_label, separator, model = label.partition('.')
+    matched = None
+    if separator:
+        matched = ContentType.objects.filter(
+            app_label=app_label.lower(), model=model.lower()
+        ).first()
+    if matched is None:
+        unresolved.append(label)
+    else:
+        content_types.append(matched)
+
+if unresolved:
+    sys.stderr.write(
+        'Unknown NetBox object type(s): {}\n'.format(', '.join(unresolved))
+    )
+    sys.exit(1)
+
+group, created = Group.objects.get_or_create(
+    name=GROUP_NAME,
+    defaults={'description': GROUP_DESCRIPTION},
+)
+if created:
+    changes.append('created group {}'.format(GROUP_NAME))
+
+permission, created = ObjectPermission.objects.get_or_create(
+    name=PERMISSION_NAME,
+    defaults={
+        'description': PERMISSION_DESCRIPTION,
+        'enabled': True,
+        'actions': ['view'],
+        'constraints': None,
+    },
+)
+if created:
+    changes.append('created permission {}'.format(PERMISSION_NAME))
+elif (
+    permission.actions != ['view']
+    or not permission.enabled
+    or permission.constraints is not None
+):
+    # Anything beyond `view` was added outside this role; the MCP server is
+    # read-only by contract, so put the permission back.
+    permission.actions = ['view']
+    permission.enabled = True
+    permission.constraints = None
+    permission.save()
+    changes.append('reset permission {} to view-only'.format(PERMISSION_NAME))
+
+desired_type_ids = {content_type.pk for content_type in content_types}
+current_type_ids = set(permission.object_types.values_list('pk', flat=True))
+if desired_type_ids != current_type_ids:
+    permission.object_types.set(desired_type_ids)
+    changes.append(
+        'set {} object type(s) on {}'.format(len(desired_type_ids), PERMISSION_NAME)
+    )
+
+if not permission.groups.filter(pk=group.pk).exists():
+    permission.groups.add(group)
+    changes.append('assigned {} to {}'.format(PERMISSION_NAME, GROUP_NAME))
+
+user, created = User.objects.get_or_create(
+    username=USERNAME,
+    defaults={'is_active': True, 'is_superuser': False},
+)
+if created:
+    # The account authenticates by API token only. A freshly created User has
+    # an empty password, which Django still treats as usable.
+    user.set_unusable_password()
+    user.save()
+    changes.append('created user {}'.format(USERNAME))
+elif not user.is_active or user.is_superuser or user.has_usable_password():
+    user.is_active = True
+    user.is_superuser = False
+    user.set_unusable_password()
+    user.save()
+    changes.append('reset user {} to a token-only account'.format(USERNAME))
+
+if not user.groups.filter(pk=group.pk).exists():
+    user.groups.add(group)
+    changes.append('added {} to {}'.format(USERNAME, GROUP_NAME))
+
+# Per-user grants would move read access out of the group, which is meant to be
+# the only place it is defined.
+if user.object_permissions.exists():
+    user.object_permissions.clear()
+    changes.append('removed direct object permissions from {}'.format(USERNAME))
+
+for line in changes:
+    print(line)
+
+print('NETBOX_MCP_CHANGED' if changes else 'NETBOX_MCP_UNCHANGED')
