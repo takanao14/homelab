@@ -386,6 +386,49 @@ items below are verified as of 2026-08-04:
 14. Implement and document resolver update detection (version audit extension)
     and the serial security update workflow.
 
+## Addendum (2026-08-10): cache raised to 256 MB on measurement
+
+The Decision above sized the cache at 100 MB and said not to increase it "until
+cgroup memory, cache use and hit rate show a reason to do so". They now do.
+
+Measured over seven days on both resolvers:
+
+| Signal | Normal | During the fault |
+|---|---|---|
+| Cache hit rate | 90–99% | 36–43% |
+| SERVFAIL share of requests | 0% | 47–50% (peak 70%) |
+| SERVFAIL seen by clients at dnsdist | 0% | 29–39% |
+
+`data.mdb` sits at the configured ceiling on both guests, and
+`kresd[…]: [cache ] […] stash failed, ret = 1` appears in the journal on a
+rising curve — 573, 949, 1015, 4128, 4196 entries per day on resolver1. Once
+the LMDB map is full the cache is dropped and refills from cold, so every
+query is resolved recursively until it warms up. That overloads upstream,
+`dnsdist_downstream_timeouts` peaks near 7/s, and both frontends mark both
+resolvers down. The cycle had repeated more than fifty times in seven days
+without producing an alert.
+
+Both resolvers degrade together despite running on different hypervisors
+(resolver1 on node2, resolver2 on node3), because dnsdist splits traffic evenly
+and the two caches therefore fill at the same rate.
+
+Ruled out by measurement: DNSSEC validation (`log-bogus` recorded zero bogus
+answers in seven days), guest memory (800 MB of 1 GB still available at the
+worst point), repeated crashes (one counter reset in seven days), the
+authoritative layer (ns2/ns3 never left `dnsdist_server_status=1`), disk space
+(38% used) and a sustained upstream outage (the `dns_external` probe failed
+twice in 672 samples).
+
+Raise `knot_resolver_cache_size` to 256 MB. This stays deliberately short of
+the guest's headroom: the mmap'd cache is charged to the LXC memory cgroup, and
+the 1 GB limit exists because package updates have caused OOM failures in
+comparable 512 MB guests. Measure the hit rate and `memory.current` again
+before considering a further increase.
+
+Alert on the cache hit rate rather than on SERVFAIL alone. The hit rate falls
+first and separates cleanly — 90–99% against 36–43% — so it is the leading
+indicator; the SERVFAIL share is the outcome, and reaches clients.
+
 ## References
 
 - [Knot Resolver installation](https://www.knot-resolver.cz/documentation/latest/gettingstarted-install.html)

@@ -17,7 +17,12 @@ knot_resolver_server_addr: "{{ ansible_host }}"
 knot_resolver_allowed_clients: []
 knot_resolver_workers: 1
 knot_resolver_cache_storage: "/var/cache/knot-resolver"
-knot_resolver_cache_size: "100M"
+# Raised from the 100M default after it was measured filling up: once the LMDB
+# map is full every stash fails, the cache is dropped, and the hit rate falls
+# from ~90% to ~40% until it refills. Meanwhile every query is resolved
+# recursively, which overloads upstream and answers up to half of all requests
+# with SERVFAIL. See the 2026-08-10 addendum to ADR-0030.
+knot_resolver_cache_size: "256M"
 
 # Must land in the directory node_exporter actually reads. Falls back to the
 # same literal the node_exporter role defaults to, so this role stays usable in

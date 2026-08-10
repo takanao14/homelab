@@ -8,7 +8,8 @@ The role:
 - listens on the host's fixed service address on port 53;
 - permits recursion only from the two dnsdist hosts;
 - keeps the management API on its package-default Unix socket;
-- enables DNSSEC validation and a persistent 100 MB cache;
+- enables DNSSEC validation and a persistent cache
+  (`knot_resolver_cache_size`, 256 MB);
 - exports Prometheus metrics through the node_exporter textfile collector.
 
 The repository signing key is downloaded with a pinned SHA-256 checksum. The
