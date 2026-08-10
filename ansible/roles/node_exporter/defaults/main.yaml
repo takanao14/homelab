@@ -12,3 +12,9 @@ node_exporter_base_args: []
 node_exporter_rpi_args: []
 node_exporter_lxc_args: []
 node_exporter_extra_args: []
+
+# prometheus-node-exporter recommends prometheus-node-exporter-collectors,
+# which recommends ipmitool, which pulls in openipmi. No host in this fleet has
+# a BMC, so openipmi's init script fails to load the IPMI drivers and the unit
+# sits permanently failed. Set to false on a host that does have a BMC.
+node_exporter_mask_openipmi: true

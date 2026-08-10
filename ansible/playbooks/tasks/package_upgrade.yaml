@@ -1,10 +1,9 @@
 ---
 # --- Baseline ---
 # Units that are already failed before anything is touched. Some hosts carry
-# permanently failed units that the upgrade neither caused nor can fix — an LXC
-# guest, for example, cannot start openipmi.service because IPMI needs kernel
-# modules and /dev/ipmi* that containers do not have. Only a service that was
-# healthy before and is failed afterwards indicates the upgrade broke something.
+# permanently failed units that the upgrade neither caused nor can fix. Only a
+# service that was healthy before and is failed afterwards indicates the upgrade
+# broke something.
 - name: Record systemd services already failed before the upgrade
   become: true
   ansible.builtin.command:

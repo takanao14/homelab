@@ -27,6 +27,52 @@
     - ansible_check_mode
     - node_exporter_installed.rc != 0
 
+# Masking rather than removing the package: prometheus-node-exporter-collectors
+# produces the apt / nvme / smartmon textfile metrics that are actually scraped,
+# and its Recommends would drag ipmitool and openipmi back in on the next
+# dist-upgrade. A mask survives that, a removal does not.
+# LoadState rather than list-unit-files: openipmi ships an LSB init script that
+# systemd-sysv-generator turns into a unit, so there is no unit file to list,
+# and list-unit-files exits 0 even when nothing matches. systemctl show always
+# exits 0 and reports not-found / loaded / masked unambiguously.
+- name: Check the state of openipmi.service
+  become: true
+  ansible.builtin.command:
+    argv:
+      - systemctl
+      - show
+      - --property=LoadState
+      - --property=ActiveState
+      - openipmi.service
+  register: node_exporter_openipmi
+  check_mode: false
+  changed_when: false
+
+- name: Mask openipmi.service
+  become: true
+  ansible.builtin.systemd_service:
+    name: openipmi.service
+    state: stopped
+    masked: true
+  when:
+    - node_exporter_mask_openipmi
+    - "'LoadState=not-found' not in node_exporter_openipmi.stdout_lines"
+
+# Masking does not clear a failure that systemd has already recorded: the unit
+# stays in ActiveState=failed and keeps showing up in `systemctl list-units
+# --state=failed`, which is exactly the noise the mask is meant to remove.
+- name: Clear the recorded openipmi.service failure
+  become: true
+  ansible.builtin.command:
+    argv:
+      - systemctl
+      - reset-failed
+      - openipmi.service
+  when:
+    - node_exporter_mask_openipmi
+    - "'ActiveState=failed' in node_exporter_openipmi.stdout_lines"
+  changed_when: true
+
 - name: Install lm-sensors for temperature monitoring on amd64
   become: true
   ansible.builtin.apt:
