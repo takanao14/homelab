@@ -107,11 +107,21 @@
 - name: Ensure textfile collector directory exists
   become: true
   ansible.builtin.file:
-    path: /var/lib/node_exporter/textfile_collector
+    path: "{{ node_exporter_textfile_dir }}"
     state: directory
     owner: root
     group: root
     mode: '0755'
+
+# Migration: the role used to write .prom files to a directory of its own while
+# the exporter kept reading the package default, so anything written here was
+# never scraped. Nothing else owns this path — it only ever held .prom files
+# that are regenerated on the next timer or cron tick.
+- name: Remove the superseded textfile collector directory
+  become: true
+  ansible.builtin.file:
+    path: /var/lib/node_exporter
+    state: absent
 
 - name: Install Raspberry Pi monitoring script
   become: true
@@ -132,9 +142,9 @@
     minute: "*"
     job: >-
       /usr/local/bin/rpi_throttled_metrics.sh
-      > /var/lib/node_exporter/textfile_collector/rpi_throttled.prom.tmp
-      && mv /var/lib/node_exporter/textfile_collector/rpi_throttled.prom.tmp
-      /var/lib/node_exporter/textfile_collector/rpi_throttled.prom
+      > {{ node_exporter_textfile_dir }}/rpi_throttled.prom.tmp
+      && mv {{ node_exporter_textfile_dir }}/rpi_throttled.prom.tmp
+      {{ node_exporter_textfile_dir }}/rpi_throttled.prom
   when: ansible_facts['architecture'] in ["aarch64", "armv7l"]
 
 - name: Ensure prometheus-node-exporter is started and enabled

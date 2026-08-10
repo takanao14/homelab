@@ -4,9 +4,6 @@ knot_resolver_allowed_clients:
   - "{{ hostvars['dist1']['ansible_host'] }}/32"
   - "{{ hostvars['dist2']['ansible_host'] }}/32"
 
-node_exporter_extra_args:
-  - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
-
 vector_config:
   sources:
     journald:

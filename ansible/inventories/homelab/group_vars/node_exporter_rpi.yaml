@@ -7,4 +7,3 @@ node_exporter_rpi_args:
     - --no-collector.xfs
     - --no-collector.nfs
     - --no-collector.mdadm
-    - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector

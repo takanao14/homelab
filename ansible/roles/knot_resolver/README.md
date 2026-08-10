@@ -33,7 +33,7 @@ and primary group are resolved at runtime before the configuration is written.
 
 `knot-resolver-metrics.timer` runs once per minute. It obtains Prometheus output
 through the management Unix socket and atomically replaces
-`/var/lib/node_exporter/textfile_collector/knot_resolver.prom`; the last good
+`/var/lib/prometheus/node-exporter/knot_resolver.prom`; the last good
 file survives a failed collection. The metrics service is ordered after Knot
 Resolver when both start together, but does not require or restart the resolver;
 an intentional resolver stop must remain stopped for failover testing.

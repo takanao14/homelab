@@ -19,7 +19,10 @@ knot_resolver_workers: 1
 knot_resolver_cache_storage: "/var/cache/knot-resolver"
 knot_resolver_cache_size: "100M"
 
-knot_resolver_metrics_path: "/var/lib/node_exporter/textfile_collector/knot_resolver.prom"
+# Must land in the directory node_exporter actually reads. Falls back to the
+# same literal the node_exporter role defaults to, so this role stays usable in
+# a play that does not include it.
+knot_resolver_metrics_path: "{{ node_exporter_textfile_dir | default('/var/lib/prometheus/node-exporter') }}/knot_resolver.prom"
 knot_resolver_metrics_script_path: "/usr/local/sbin/knot-resolver-metrics"
 knot_resolver_metrics_interval: "1min"
 
