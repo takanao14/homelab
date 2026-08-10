@@ -4,3 +4,9 @@
 # in and moving/cloning the repo does not break this entry.
 command = "./scripts/grafana-mcp.sh"
 cwd = "."
+
+[mcp_servers.netbox]
+# The launcher resolves the API token from the SOPS-encrypted repository env
+# file and runs the pinned, read-only NetBox Labs MCP server over stdio.
+command = "./scripts/netbox-mcp.sh"
+cwd = "."
