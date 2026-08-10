@@ -15,6 +15,7 @@ scripts/
 ├── netbox-mcp.sh                             # NetBox MCP server launcher (stdio)
 ├── netbox-mcp-token.sh                       # generate the managed NetBox MCP v2 token
 ├── lib/openbao-auth.sh                       # shared OpenBao auth helper
+├── lib/mcp-launcher.sh                       # shared MCP launcher plumbing (SOPS env, container runtime)
 ├── install/                                  # CLI toolchain installers (shared with packer/)
 │   ├── tools.sh / terminal.sh / fonts.sh
 │   └── vendor/                               # vendored dotfiles installers
@@ -417,15 +418,31 @@ revoke unused tokens in the Grafana UI or via the API.
 
 ## NetBox MCP
 
-`netbox-mcp.sh` launches the official
+`netbox-mcp.sh` runs the official
 [`netboxlabs/netbox-mcp-server`](https://github.com/netboxlabs/netbox-mcp-server)
-over stdio. The upstream source is pinned to `v1.2.1`, and the server itself
-exposes read-only NetBox query tools.
+container over stdio. The image is pinned to `1.2.1`, and the server exposes
+read-only NetBox query tools.
 
-The launcher uses `NETBOX_URL` and `NETBOX_TOKEN` from the environment when
-available. Otherwise it decrypts `.env/secrets.sops.env` using the same
-self-resolving SOPS flow as the Grafana MCP launcher. MCP client configuration
-therefore contains no API token.
+The image carries the upstream `uv.lock`, so transitive dependencies are pinned
+alongside the release tag. (A `uvx --from git+…@tag` install pins only the tag
+and re-resolves everything below it — the two paths resolved different FastMCP
+versions in practice.) Upstream publishes multi-arch images signed with cosign.
+
+Runtime selection and SOPS credential resolution are shared with
+`grafana-mcp.sh` through `lib/mcp-launcher.sh`, so both launchers behave
+identically: `NETBOX_URL` and `NETBOX_TOKEN` are taken from the environment when
+present, otherwise decrypted from `.env/secrets.sops.env`. MCP client
+configuration therefore contains no API token, and only variable *names* are
+passed to the container (`-e NAME`), keeping values off the command line.
+
+Upstream's README states that containers require `TRANSPORT=http` because stdio
+"doesn't work" there. That applies to detached containers; `docker run -i`
+without a TTY keeps stdio framing intact, which is what this launcher uses and
+what the Grafana launcher has always done.
+
+A container runtime must be running — on macOS this is OrbStack (or Podman).
+This is the one operational cost of the container over `uvx`: if the runtime is
+cold, the server fails to start until it is up.
 
 Generate the desired v2 token, then store it by editing the existing encrypted
 environment file:
@@ -465,8 +482,8 @@ for the permission scope and the variables that adjust it.
 
 Do not commit a plaintext token or pass it in `.codex/config.toml` or
 `.mcp.json`. Start a new client session after changing MCP configuration. The
-first launch requires network access while `uvx` resolves the pinned source;
-later launches use the uv cache.
+first launch pulls the image, so it needs network access; later launches reuse
+the local image.
 
 | Env var | Default | Notes |
 |---------|---------|-------|
@@ -474,13 +491,16 @@ later launches use the uv cache.
 | `NETBOX_TOKEN` | none | Required read-only API token |
 | `VERIFY_SSL` | `true` | Keep TLS verification enabled |
 | `ENABLE_PLUGIN_DISCOVERY` | `false` | Enable only when NetBox plugin models are needed |
-| `NETBOX_MCP_VERSION` | `v1.2.1` | Pinned upstream tag; Renovate bumps this in place |
-| `NETBOX_MCP_SOURCE` | official repository at `NETBOX_MCP_VERSION` | Temporary source override for testing |
+| `NETBOX_MCP_VERSION` | `1.2.1` | Pinned image tag; Renovate bumps this in place |
+| `NETBOX_MCP_IMAGE` | `docker.io/netboxlabs/netbox-mcp-server:$NETBOX_MCP_VERSION` | Full reference override for testing |
+| `NETBOX_MCP_RUNTIME` | auto (OrbStack `docker`, else `podman`) | Force a container runtime |
 
-Renovate tracks the pinned tag through the `# renovate:` comment above
+Renovate tracks the Docker Hub tag through the `# renovate:` comment above
 `netbox_mcp_version`, matched by the `scripts/*.sh` custom manager in
 [`renovate.json`](../renovate.json). Updates land as a regular PR; they are not
 automerged, since the automerge rule covers only `k8s/`, `ansible/`, and `tf/`.
+The Grafana launcher pulls `docker.io/mcp/grafana` untagged, so nothing pins or
+tracks it — worth revisiting if that image ever breaks compatibility.
 
 ## `install/`
 
