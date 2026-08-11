@@ -207,6 +207,7 @@
         "y": 1
       },
       "repeatDirection": "h",
+      "interval": "15m",
       "options": {
         "graphMode": "area",
         "colorMode": "background",
@@ -304,7 +305,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_total{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")",
+          "expr": "sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_total{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\"))",
           "legendFormat": "{{cluster}} {{route}}"
         }
       ],
@@ -454,11 +455,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\",envoy_response_code_class=\"4\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")",
+          "expr": "sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\",envoy_response_code_class=\"4\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")) or sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_total{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")) * 0",
           "legendFormat": "{{cluster}} {{route}} 4xx"
         },
         {
-          "expr": "label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\",envoy_response_code_class=\"5\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")",
+          "expr": "sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\",envoy_response_code_class=\"5\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")) or sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_total{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")) * 0",
           "legendFormat": "{{cluster}} {{route}} 5xx"
         }
       ],
@@ -529,12 +530,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "label_replace(histogram_quantile(0.99, sum by (cluster, envoy_cluster_name, le) (rate(envoy_cluster_upstream_rq_time_bucket{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval]))), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")",
+          "expr": "histogram_quantile(0.99, sum by (cluster, route, le) (label_replace(sum by (cluster, envoy_cluster_name, le) (rate(envoy_cluster_upstream_rq_time_bucket{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")))",
           "legendFormat": "{{cluster}} {{route}}"
         }
       ],
       "title": "Upstream Latency p99 by HTTPRoute",
-      "description": "99th percentile upstream request time per HTTPRoute.",
+      "description": "99th percentile upstream request time per HTTPRoute. Routes here are sparse, so samples are drawn as points; a gap means no request was served in that window, not that the route was slow.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -547,6 +548,7 @@
         "y": 31
       },
       "repeatDirection": "h",
+      "interval": "15m",
       "options": {
         "legend": {
           "displayMode": "list",
@@ -562,7 +564,10 @@
       "fieldConfig": {
         "defaults": {
           "unit": "ms",
-          "custom": {}
+          "custom": {
+            "showPoints": "always",
+            "pointSize": 6
+          }
         },
         "overrides": []
       }
@@ -779,12 +784,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (cluster, kind) (rate(status_update_total{job=\"envoy-gateway\",cluster=~\"$cluster\"}[$__rate_interval]))",
+          "expr": "sum by (cluster, kind) (rate(status_update_total{job=\"envoy-gateway\",cluster=~\"$cluster\",status=\"success\"}[$__rate_interval]))",
           "legendFormat": "{{cluster}} {{kind}}"
         }
       ],
       "title": "Gateway API Status Updates",
-      "description": "Status updates written by the envoy-gateway controller, per resource kind.",
+      "description": "Status updates actually written by the envoy-gateway controller, per resource kind. Evaluations that concluded nothing needed writing (status=\"no_action\") are excluded.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
