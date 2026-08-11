@@ -1,4 +1,11 @@
 ---
+# One worker per core, following the LXC allocation going to cores = 2
+# (tf/lxc/node2/resolver, tf/lxc/node3/resolver). The role default of 1 is the
+# conservative choice for a role that cannot know its container's size; here the
+# size is known. Workers share the LMDB cache, so this does not affect the cache
+# sizing decided in ADR-0030.
+knot_resolver_workers: 2
+
 knot_resolver_server_addr: "{{ ansible_host }}"
 knot_resolver_allowed_clients:
   - "{{ hostvars['dist1']['ansible_host'] }}/32"

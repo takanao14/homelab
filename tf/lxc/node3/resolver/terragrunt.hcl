@@ -14,7 +14,7 @@ locals {
 inputs = {
   containers = {
     "resolver2" = merge(local.env.locals.container_defaults, {
-      cores       = 1
+      cores       = 2
       memory      = 1024
       bridge      = local.common.locals.node3.net10.bridge
       ipv4        = "192.168.10.237/24"

@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+"""Write Knot Resolver metrics for the node_exporter textfile collector.
+
+Reads the manager's Prometheus endpoint straight off its unix control socket
+rather than shelling out to kresctl. kresctl loads its whole CLI framework on
+every invocation, measured on resolver1 at 0.19s and 99% CPU against 0.02s for
+the direct request. On a container this small that 190ms is a spike contending
+with query processing, and it lands four times a minute at the 15s collection
+interval.
+
+Any failure exits non-zero and leaves the previous file untouched, so its mtime
+goes stale and KnotResolverMetricsStale reports the collector rather than the
+dashboard quietly flatlining on a truncated write.
+"""
+
+import os
+import socket
+import sys
+import tempfile
+
+SOCKET_PATH = "{{ knot_resolver_metrics_socket_path }}"
+OUTPUT_PATH = "{{ knot_resolver_metrics_path }}"
+# Plain /metrics answers 301 to /metrics/json; the Prometheus rendering is only
+# served from this path.
+REQUEST = b"GET /metrics/prometheus HTTP/1.0\r\nHost: localhost\r\n\r\n"
+TIMEOUT_SECONDS = 10.0
+
+
+def fetch():
+    chunks = []
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+        sock.settimeout(TIMEOUT_SECONDS)
+        sock.connect(SOCKET_PATH)
+        sock.sendall(REQUEST)
+        while True:
+            chunk = sock.recv(65536)
+            if not chunk:
+                break
+            chunks.append(chunk)
+
+    head, separator, body = b"".join(chunks).partition(b"\r\n\r\n")
+    if not separator:
+        raise RuntimeError("malformed response from {0}".format(SOCKET_PATH))
+
+    status = head.split(b"\r\n", 1)[0].decode(errors="replace")
+    if " 200 " not in status:
+        raise RuntimeError("unexpected status: {0}".format(status))
+    if not body:
+        raise RuntimeError("empty metrics body")
+    return body
+
+
+def deduplicate_declarations(body):
+    """Drop repeated HELP/TYPE lines for a metric name.
+
+    The manager renders one complete block per worker, so with more than one
+    worker every metric name is declared several times:
+
+        # HELP resolver_answer_total ...
+        # TYPE resolver_answer_total counter
+        resolver_answer_total{instance_id="kresd:kresd0"} 544.0
+        # HELP resolver_answer_total ...
+        # TYPE resolver_answer_total counter
+        resolver_answer_total{instance_id="kresd:kresd1"} 256.0
+
+    Repeating a declaration is invalid in the Prometheus text format, and
+    node_exporter's textfile collector rejects the entire file rather than the
+    offending line -- every metric from this host then disappears while
+    node_textfile_scrape_error goes to 1. The samples themselves are fine, since
+    the instance_id label keeps the series distinct, so only the duplicate
+    declarations are removed.
+    """
+    seen = set()
+    kept = []
+    for line in body.split(b"\n"):
+        if line.startswith(b"# HELP ") or line.startswith(b"# TYPE "):
+            parts = line.split(b" ", 3)
+            if len(parts) >= 3:
+                key = (parts[1], parts[2])
+                if key in seen:
+                    continue
+                seen.add(key)
+        kept.append(line)
+    return b"\n".join(kept)
+
+
+def write_atomically(body):
+    descriptor, temporary = tempfile.mkstemp(
+        dir=os.path.dirname(OUTPUT_PATH), prefix=".knot_resolver.", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(body)
+        os.chmod(temporary, 0o644)
+        os.replace(temporary, OUTPUT_PATH)
+    except BaseException:
+        os.unlink(temporary)
+        raise
+
+
+def main():
+    try:
+        write_atomically(deduplicate_declarations(fetch()))
+    except Exception as error:
+        print("knot-resolver-metrics: {0}".format(error), file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -4,7 +4,15 @@ Description=Collect Knot Resolver metrics
 [Timer]
 OnBootSec=1min
 OnUnitActiveSec={{ knot_resolver_metrics_interval }}
-RandomizedDelaySec=10s
+# Kept small relative to the interval. At the former 1min it was 17% jitter and
+# tolerable; against a 15s interval a 10s spread would be 67%, which reproduces
+# the phase drift the shorter interval exists to remove.
+RandomizedDelaySec=1s
+# systemd defaults AccuracySec to 1min and coalesces timer wakeups within that
+# window, which silently overrides any sub-minute interval: with the default
+# left in place OnUnitActiveSec=15s still fired 49-75s apart. This has to stay
+# well under the interval for it to mean anything.
+AccuracySec=1s
 Persistent=true
 Unit=knot-resolver-metrics.service
 

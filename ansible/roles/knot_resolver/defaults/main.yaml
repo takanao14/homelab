@@ -29,7 +29,23 @@ knot_resolver_cache_size: "256M"
 # a play that does not include it.
 knot_resolver_metrics_path: "{{ node_exporter_textfile_dir | default('/var/lib/prometheus/node-exporter') }}/knot_resolver.prom"
 knot_resolver_metrics_script_path: "/usr/local/sbin/knot-resolver-metrics"
-knot_resolver_metrics_interval: "1min"
+# The manager's control socket, which serves /metrics/prometheus. This is the
+# same endpoint kresctl talks to; the collector reads it directly to avoid
+# paying kresctl's startup cost on every run.
+knot_resolver_metrics_socket_path: "/run/knot-resolver/kres-api.sock"
+# Half the 30s Prometheus scrape interval, deliberately. The information
+# ceiling is the scrape, so writing slower than it throws resolution away: at
+# the previous 1min every other scrape re-read an unchanged counter, making the
+# effective sample period 60s while every other target in the homelab ran at
+# 30s. Grafana derives $__rate_interval from the scrape interval and floors it
+# at 4x30s=120s, which is only 2x a 60s write period -- the bare Nyquist limit,
+# with no margin -- so short-window rates aliased: measured over 7 days,
+# resolver2 produced a zero rate in 18% of 2-minute windows while it was
+# demonstrably still answering queries. Writing at 15s guarantees every scrape
+# reads a value that is both fresh and different from the last, which pins the
+# effective sample period to the 30s scrape and makes Grafana's 4x floor correct
+# by construction. Going below 15s buys nothing Prometheus can observe.
+knot_resolver_metrics_interval: "15s"
 
 knot_resolver_config:
   workers: "{{ knot_resolver_workers | int }}"

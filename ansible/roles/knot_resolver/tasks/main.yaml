@@ -223,7 +223,7 @@
 - name: Install Knot Resolver metrics collector
   become: true
   ansible.builtin.template:
-    src: knot-resolver-metrics.sh.j2
+    src: knot-resolver-metrics.py.j2
     dest: "{{ knot_resolver_metrics_script_path }}"
     owner: root
     group: root

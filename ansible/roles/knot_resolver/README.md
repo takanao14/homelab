@@ -32,12 +32,24 @@ installed files are validated with `kresctl validate`, and valid changes are
 applied with the package-supported systemd reload. The package-created account
 and primary group are resolved at runtime before the configuration is written.
 
-`knot-resolver-metrics.timer` runs once per minute. It obtains Prometheus output
-through the management Unix socket and atomically replaces
+`knot-resolver-metrics.timer` runs every 15 seconds. It reads
+`/metrics/prometheus` from the management Unix socket and atomically replaces
 `/var/lib/prometheus/node-exporter/knot_resolver.prom`; the last good
 file survives a failed collection. The metrics service is ordered after Knot
 Resolver when both start together, but does not require or restart the resolver;
 an intentional resolver stop must remain stopped for failover testing.
+
+The interval is half the 30s Prometheus scrape on purpose. Writing slower than
+the scrape discards resolution, and the previous one-minute interval made the
+effective sample period 60s: every second scrape re-read an unchanged counter,
+so short rate windows aliased and reported zero while the resolver was still
+answering. At 15s every scrape sees a value that is both fresh and distinct.
+
+The collector queries the socket directly instead of running
+`kresctl metrics --prometheus`, which is the same endpoint but loads the whole
+kresctl CLI each time — 0.19s at 99% CPU against 0.02s, four times a minute on
+a two-core container. `kresctl metrics --prometheus` remains the convenient
+form for reading metrics by hand.
 
 ## Required variables
 
