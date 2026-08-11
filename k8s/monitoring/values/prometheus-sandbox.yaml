@@ -97,5 +97,7 @@ prometheusRules:
     enabled: false
   certManager:
     enabled: false
+  cilium:
+    enabled: false
   hardware:
     enabled: false
