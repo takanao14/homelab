@@ -9,7 +9,7 @@
   "editable": true,
   "graphTooltip": 1,
   "time": {
-    "from": "now-30d",
+    "from": "now-6h",
     "to": "now"
   },
   "fiscalYearStartMonth": 0,
@@ -584,7 +584,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "100 * sum(rate(resolver_answer_cached_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval])) / clamp_min(sum(rate(resolver_answer_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval])), 1e-9)",
+          "expr": "100 * sum(rate(resolver_answer_cached_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval])) / sum(rate(resolver_answer_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval]))",
           "instant": true,
           "legendFormat": "Hit rate",
           "range": false
@@ -787,7 +787,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "100 * sum by (instance) (rate(resolver_answer_cached_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval])) / clamp_min(sum by (instance) (rate(resolver_answer_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval])), 1e-9)",
+          "expr": "100 * sum by (instance) (rate(resolver_answer_cached_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval])) / sum by (instance) (rate(resolver_answer_total{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}[$__rate_interval]))",
           "legendFormat": "{{instance}}"
         }
       ],
@@ -2201,12 +2201,12 @@
           "legendFormat": "{{cluster}} source"
         },
         {
-          "expr": "sum by (cluster) (external_dns_registry_records{job=\"external-dns\"})",
+          "expr": "sum by (cluster) (external_dns_registry_records{job=\"external-dns\",record_type!~\"ns|soa\"})",
           "legendFormat": "{{cluster}} registry"
         }
       ],
       "title": "external-dns Records",
-      "description": "Records desired by sources vs records present in the registry, grouped by cluster. A persistent gap means records are failing to sync.",
+      "description": "Records desired by sources vs records present in the registry, grouped by cluster. The two lines should sit on top of each other; a persistent gap means records are failing to sync. Zone apex records (NS, SOA) are excluded because no source can produce them.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",

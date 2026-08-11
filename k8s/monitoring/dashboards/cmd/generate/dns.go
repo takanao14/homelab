@@ -75,7 +75,11 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		Uid("dns-overview").
 		Tags([]string{"dns", "infrastructure"}).
 		Timezone("browser").
-		Time("now-30d", "now").
+		// 6h to match the traffic dashboards: QPS and latency are the subject
+		// here, and over the previous 30d default the step grew to roughly an
+		// hour, which averaged away the query spikes and latency excursions the
+		// panels exist to show -- while still re-querying every 30s.
+		Time("now-6h", "now").
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
@@ -261,7 +265,14 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				Unit("percent").
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`100 * sum(rate(resolver_answer_cached_total{` + resolver + `}[$__rate_interval])) / clamp_min(sum(rate(resolver_answer_total{` + resolver + `}[$__rate_interval])), 1e-9)`).
+					// No clamp_min on the denominator. It was there to avoid a
+					// division by zero, but it turned 0/0 into a hard 0% instead
+					// of a gap -- and 0/0 is exactly what a window with no
+					// counter change produces. With the collector writing every
+					// 15s that window no longer occurs during traffic; if the
+					// resolver really is idle, an undefined hit rate should read
+					// as absent, not as a cache that stopped working.
+					Expr(`100 * sum(rate(resolver_answer_cached_total{` + resolver + `}[$__rate_interval])) / sum(rate(resolver_answer_total{` + resolver + `}[$__rate_interval]))`).
 					Instant().
 					LegendFormat("Hit rate"),
 				).
@@ -319,7 +330,9 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`100 * sum by (instance) (rate(resolver_answer_cached_total{` + resolver + `}[$__rate_interval])) / clamp_min(sum by (instance) (rate(resolver_answer_total{` + resolver + `}[$__rate_interval])), 1e-9)`).
+					// See the summary tile: a gap is the honest rendering of an
+					// undefined ratio, a flat 0% is not.
+					Expr(`100 * sum by (instance) (rate(resolver_answer_cached_total{` + resolver + `}[$__rate_interval])) / sum by (instance) (rate(resolver_answer_total{` + resolver + `}[$__rate_interval]))`).
 					LegendFormat("{{instance}}"),
 				).
 				Decimals(1),
@@ -733,7 +746,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("external-dns Records").
-				Description("Records desired by sources vs records present in the registry, grouped by cluster. A persistent gap means records are failing to sync.").
+				Description("Records desired by sources vs records present in the registry, grouped by cluster. The two lines should sit on top of each other; a persistent gap means records are failing to sync. Zone apex records (NS, SOA) are excluded because no source can produce them.").
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("short").
@@ -744,7 +757,16 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{cluster}} source"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster) (external_dns_registry_records{` + extdns + `})`).
+					// NS and SOA belong to the zone itself, not to anything
+					// external-dns manages, so the registry reports them while no
+					// source ever will. Summing every record_type made the two
+					// lines differ by exactly that count -- prd read 19 against a
+					// source total of 17 -- so the panel permanently displayed
+					// the very gap its description calls a sync failure.
+					// Excluding the apex types is preferred over matching
+					// record_type="a": adding an AAAA or CNAME source later would
+					// silently undercount instead.
+					Expr(`sum by (cluster) (external_dns_registry_records{` + extdns + `,record_type!~"ns|soa"})`).
 					LegendFormat("{{cluster}} registry"),
 				),
 		).
