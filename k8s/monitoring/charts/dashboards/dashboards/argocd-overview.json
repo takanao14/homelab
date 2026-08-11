@@ -586,12 +586,16 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (cluster, phase) (rate(argocd_app_sync_total{cluster=~\"$cluster\"}[$__rate_interval]))",
+          "expr": "round(sum by (cluster) (increase(argocd_app_sync_total{cluster=~\"$cluster\",dry_run=\"false\",phase=\"Succeeded\"}[$__interval])))",
+          "legendFormat": "{{cluster}} Succeeded"
+        },
+        {
+          "expr": "round(sum by (cluster, phase) (increase(argocd_app_sync_total{cluster=~\"$cluster\",dry_run=\"false\",phase=~\"Error|Failed\"}[$__interval])))",
           "legendFormat": "{{cluster}} {{phase}}"
         }
       ],
       "title": "Sync Activity",
-      "description": "Sync operations per second by result phase.",
+      "description": "Completed sync operations per interval, by result phase. Dry-run syncs are excluded.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -604,6 +608,7 @@
         "y": 25
       },
       "repeatDirection": "h",
+      "interval": "10m",
       "options": {
         "legend": {
           "displayMode": "list",
@@ -618,8 +623,15 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "ops",
-          "custom": {}
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "gradientMode": "hue",
+            "fillOpacity": 100,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
         },
         "overrides": [
           {
@@ -719,12 +731,16 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (cluster, request_type) (rate(argocd_git_request_total{cluster=~\"$cluster\"}[$__rate_interval]))",
-          "legendFormat": "{{cluster}} {{request_type}}"
+          "expr": "round(sum by (cluster) (increase(argocd_git_request_total{cluster=~\"$cluster\",request_type=\"ls-remote\"}[$__interval])))",
+          "legendFormat": "{{cluster}} ls-remote"
+        },
+        {
+          "expr": "round(sum by (cluster) (increase(argocd_git_request_total{cluster=~\"$cluster\",request_type=\"fetch\"}[$__interval])))",
+          "legendFormat": "{{cluster}} fetch"
         }
       ],
       "title": "Git Requests",
-      "description": "Git requests per second from the repo-server, by request type.",
+      "description": "Git requests from the repo-server per interval, by request type. ls-remote is the polling loop and should hold a steady height; a drop to zero means polling stopped.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -737,6 +753,7 @@
         "y": 34
       },
       "repeatDirection": "h",
+      "interval": "10m",
       "options": {
         "legend": {
           "displayMode": "list",
@@ -751,8 +768,15 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "ops",
-          "custom": {}
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "gradientMode": "hue",
+            "fillOpacity": 100,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
         },
         "overrides": []
       }

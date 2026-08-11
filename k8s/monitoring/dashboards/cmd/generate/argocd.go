@@ -211,14 +211,37 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Sync Activity").
-				Description("Sync operations per second by result phase.").
+				Description("Completed sync operations per interval, by result phase. Dry-run syncs are excluded.").
 				Datasource(ds).
 				Span(12).Height(8).
-				Unit("ops").
+				Unit("short").
+				// Syncs are discrete events, roughly one an hour, so a per-second
+				// rate reads as 0.00175 ops and puts the axis in millionths.
+				// Counting them per bucket instead keeps the axis in whole syncs.
+				// The window matches the step, so buckets do not overlap; round()
+				// clears the fractions increase() extrapolation leaves behind
+				// (1.05 for a single sync), and the 10m floor keeps bars wide
+				// enough to read across the default 24h range.
+				Interval("10m").
+				DrawStyle(common.GraphDrawStyleBars).
+				// Solid, not the FillOpacity(10) the line panels use: that value
+				// tints the area under a curve, but leaves a bar as an outline.
+				FillOpacity(100).
+				GradientMode(common.GraphGradientModeHue).
+				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				Tooltip(tooltipAll).
 				Legend(legend).
+				// Split by phase into two targets so the stack order is fixed by
+				// query order rather than by however the label values happen to
+				// sort. One target would put Error and Failed underneath
+				// Succeeded alphabetically, burying the failures at the baseline;
+				// failures belong on top where they are the first thing read.
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster, phase) (rate(argocd_app_sync_total{`+clusterFilter+`}[$__rate_interval]))`).
+					Expr(`round(sum by (cluster) (increase(argocd_app_sync_total{`+clusterFilter+`,dry_run="false",phase="Succeeded"}[$__interval])))`).
+					LegendFormat("{{cluster}} Succeeded"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`round(sum by (cluster, phase) (increase(argocd_app_sync_total{`+clusterFilter+`,dry_run="false",phase=~"Error|Failed"}[$__interval])))`).
 					LegendFormat("{{cluster}} {{phase}}"),
 				).
 				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* (Error|Failed)"}, []dashboard.DynamicConfigValue{
@@ -255,15 +278,33 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Git Requests").
-				Description("Git requests per second from the repo-server, by request type.").
+				Description("Git requests from the repo-server per interval, by request type. ls-remote is the polling loop and should hold a steady height; a drop to zero means polling stopped.").
 				Datasource(ds).
 				Span(12).Height(8).
-				Unit("ops").
+				Unit("short").
+				// Counted per bucket rather than per second, for the same reason
+				// as Sync Activity: ls-remote polls every ~2.4 minutes, which as
+				// a rate is 0.007 and renders as "7 mops". The two request types
+				// differ ~47x in volume (702 vs 15 a day), so whole counts also
+				// keep fetch visible as a segment instead of a rounding error.
+				Interval("10m").
+				DrawStyle(common.GraphDrawStyleBars).
+				FillOpacity(100).
+				GradientMode(common.GraphGradientModeHue).
+				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				Tooltip(tooltipAll).
 				Legend(legend).
+				// One target per request type, so the stack order follows query
+				// order instead of the alphabetical sort of the label values,
+				// which would put the rare fetch bars underneath the tall
+				// ls-remote ones. ArgoCD only ever emits these two types.
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster, request_type) (rate(argocd_git_request_total{` + clusterFilter + `}[$__rate_interval]))`).
-					LegendFormat("{{cluster}} {{request_type}}"),
+					Expr(`round(sum by (cluster) (increase(argocd_git_request_total{` + clusterFilter + `,request_type="ls-remote"}[$__interval])))`).
+					LegendFormat("{{cluster}} ls-remote"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`round(sum by (cluster) (increase(argocd_git_request_total{` + clusterFilter + `,request_type="fetch"}[$__interval])))`).
+					LegendFormat("{{cluster}} fetch"),
 				),
 		).
 		WithPanel(
