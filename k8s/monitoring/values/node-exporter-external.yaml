@@ -66,6 +66,12 @@ resolverAlerts:
   targetDownFor: 5m
   metricsStaleFor: 5m
   metricsMaxAgeSeconds: 180
+  # Was 15m (chart default). Measured 2026-08-11: the cache hit rate dipped in
+  # and out of the 60% line, repeatedly resetting the 15m "for" timer, so
+  # KnotResolverServfailHigh (5m for) fired ~13 minutes before this leading
+  # indicator did — the opposite of its intent. Match it to the outcome
+  # alert's window so it fires at least as fast.
+  cacheHitRateFor: 5m
 
 textfileAlerts:
   enabled: true
