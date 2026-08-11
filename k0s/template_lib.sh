@@ -14,6 +14,11 @@ export GREEN='\033[0;32m'
 export YELLOW='\033[1;33m'
 export NC='\033[0m'
 
+# SSH identity for the cluster nodes. Used both for the k0sctl host entries and
+# for the direct SSH calls this library makes on its own (node reboots), so the
+# two can never drift apart. Overridable by the caller, like K0S_SSH_USER.
+export K0S_SSH_KEY_PATH="${K0S_SSH_KEY_PATH:-$HOME/.ssh/id_ed25519}"
+
 # ── logging ───────────────────────────────────────────────────────────────────
 
 # All logs go to stderr so stdout stays clean for machine-readable output
@@ -67,7 +72,7 @@ Commands:
   bootstrap   Create a new cluster: k0sctl apply (no wait) → kubeconfig → helmfile apply
   upgrade     Upgrade an existing cluster with readiness and storage health checks
   apply       Disabled legacy command; use bootstrap or upgrade explicitly
-  reset       Reset cluster: k0sctl reset
+  reset       Reset cluster: k0sctl reset → reboot every node (K0S_SKIP_REBOOT=1 to skip)
   kubeconfig  Fetch kubeconfig to \$HOME/.kube/<env>.yaml
   helmfile    Apply helmfile only (requires kubeconfig to exist)
   smoke-test  Run smoke tests: L2LB reachability + PVC read/write (requires kubeconfig to exist)
@@ -81,7 +86,7 @@ EOF
 
 preflight() {
     local cmd
-    for cmd in k0sctl helmfile helm kubectl cilium; do
+    for cmd in k0sctl helmfile helm kubectl cilium ssh; do
         if ! command -v "$cmd" &>/dev/null; then
             log_error "required command '$cmd' not found in PATH"
             exit 1
@@ -141,6 +146,30 @@ validate_storage_config() {
     fi
 }
 
+# ── node addresses ────────────────────────────────────────────────────────────
+
+# Every worker address: the standard workers plus the optional GPU workers.
+# Printed comma-separated so callers can keep using the `IFS=',' read -ra` idiom
+# the environment files themselves are written in.
+_worker_addresses() {
+    validate_vars K0S_WORKER_ADDRESSES
+
+    local addresses="${K0S_WORKER_ADDRESSES// /}"
+    if [[ -n "${K0S_GPU_WORKER_ADDRESSES:-}" ]]; then
+        addresses+=",${K0S_GPU_WORKER_ADDRESSES// /}"
+    fi
+    printf '%s' "$addresses"
+}
+
+# Every node address, workers first and controllers last — the same ordering
+# ADR-0032 encodes in the Ansible inventory, for the same reason: a worker
+# operation may still need the API server its controller provides.
+_all_node_addresses() {
+    validate_vars K0S_CONTROLLER_ADDRESSES
+
+    printf '%s,%s' "$(_worker_addresses)" "${K0S_CONTROLLER_ADDRESSES// /}"
+}
+
 # ── k0sctl configuration ──────────────────────────────────────────────────────
 
 _l2_segment_from_ip() {
@@ -174,7 +203,7 @@ _render_worker_host() {
       address: ${addr}
       user: ${K0S_SSH_USER}
       port: 22
-      keyPath: ~/.ssh/id_ed25519
+      keyPath: ${K0S_SSH_KEY_PATH}
     installFlags:
       - --labels=${labels}
 EOF
@@ -232,14 +261,9 @@ EOF
 }
 
 sync_worker_l2_labels() {
-    validate_vars K0S_WORKER_ADDRESSES
-
     local addresses node_table addr node_name l2_segment
     local -a addr_list
-    addresses="${K0S_WORKER_ADDRESSES// /}"
-    if [[ -n "${K0S_GPU_WORKER_ADDRESSES:-}" ]]; then
-        addresses="${addresses},${K0S_GPU_WORKER_ADDRESSES// /}"
-    fi
+    addresses="$(_worker_addresses)"
 
     log_info "Syncing worker L2 segment labels..."
     node_table="$(kubectl get nodes -o wide --no-headers)"
@@ -327,7 +351,7 @@ EOF
       address: ${addr}
       user: ${K0S_SSH_USER}
       port: 22
-      keyPath: ~/.ssh/id_ed25519
+      keyPath: ${K0S_SSH_KEY_PATH}
 EOF
         done
 
@@ -527,6 +551,119 @@ check_existing_cluster_health() {
     log_success "Existing cluster health checks passed"
 }
 
+# ── node reboot ───────────────────────────────────────────────────────────────
+
+_ssh_node() {
+    local addr="$1"
+    shift
+
+    # accept-new keeps the call non-interactive under BatchMode without blindly
+    # accepting a *changed* key; a recreated VM still has to go through
+    # remove-known-hosts.sh.
+    ssh -o BatchMode=yes \
+        -o StrictHostKeyChecking=accept-new \
+        -o ConnectTimeout=10 \
+        -i "$K0S_SSH_KEY_PATH" \
+        "${K0S_SSH_USER}@${addr}" "$@"
+}
+
+_node_boot_id() {
+    _ssh_node "$1" cat /proc/sys/kernel/random/boot_id
+}
+
+# Blocks until the node reports a boot id different from the one it had before
+# the reboot was triggered. Probing SSH alone cannot distinguish "already back"
+# from "has not gone down yet", because the pre-reboot sshd keeps answering
+# until the shutdown actually starts.
+wait_for_reboot() {
+    local addr="$1"
+    local previous_boot_id="$2"
+    local timeout="${3:-600}"
+    local interval=5
+    local elapsed=0
+    local boot_id
+
+    log_info "Waiting for $addr to come back..."
+    while true; do
+        boot_id="$(_node_boot_id "$addr" 2>/dev/null || true)"
+        if [[ -n "$boot_id" && "$boot_id" != "$previous_boot_id" ]]; then
+            log_success "$addr is back up"
+            return 0
+        fi
+        if [[ "$elapsed" -ge "$timeout" ]]; then
+            log_error "Timeout waiting for $addr to come back after reboot"
+            return 1
+        fi
+        sleep "$interval"
+        elapsed=$((elapsed + interval))
+    done
+}
+
+# Reboots every node of the environment and waits for all of them to return.
+#
+# `k0sctl reset` stops k0s and deletes its files, but the runtime residue
+# outlives it: the Cilium interfaces (cilium_host / cilium_net / cilium_vxlan),
+# the nftables rules they installed, and leftover kubelet bind mounts under
+# /var/lib/k0s/kubelet. A reboot is the only reliable way to clear all of that
+# before the host is bootstrapped again.
+#
+# Reboots are triggered on every node first and waited on afterwards, so the
+# nodes come back in parallel rather than one full boot at a time. There is no
+# cluster left to protect at this point, which is what makes that safe here and
+# not during the rolling reboots ADR-0032 covers.
+reboot_nodes() {
+    local timeout="${1:-600}"
+    local addr boot_id i failed=""
+    local -a addr_list boot_ids
+
+    IFS=',' read -ra addr_list <<< "$(_all_node_addresses)"
+
+    # Read every boot id before touching anything. A node unreachable at this
+    # point cannot have its reboot verified at all, and nothing has been
+    # disturbed yet, so this is the one phase that aborts rather than collects.
+    for i in "${!addr_list[@]}"; do
+        addr="${addr_list[i]}"
+        if ! boot_id="$(_node_boot_id "$addr")"; then
+            log_error "Cannot read the boot id of $addr over SSH"
+            return 1
+        fi
+        boot_ids[i]="$boot_id"
+    done
+
+    for i in "${!addr_list[@]}"; do
+        addr="${addr_list[i]}"
+        log_info "Triggering reboot on $addr"
+        # systemd-run detaches the reboot from this SSH session, so the command
+        # returns cleanly instead of the connection being torn down under it and
+        # reported as a failure.
+        if ! _ssh_node "$addr" \
+            "sudo systemd-run --on-active=3 --timer-property=AccuracySec=100ms systemctl reboot"; then
+            log_error "Failed to trigger a reboot on $addr"
+            failed+="${failed:+ }$addr"
+            # An empty boot id marks the node as nothing to wait for, so a host
+            # that never started rebooting does not burn the whole timeout.
+            boot_ids[i]=""
+        fi
+    done
+
+    # Every reachable node is waited on even after one fails, so a single run
+    # reports every node still down rather than only the first.
+    for i in "${!addr_list[@]}"; do
+        [[ -n "${boot_ids[i]}" ]] || continue
+        addr="${addr_list[i]}"
+        if ! wait_for_reboot "$addr" "${boot_ids[i]}" "$timeout"; then
+            failed+="${failed:+ }$addr"
+        fi
+    done
+
+    if [[ -n "$failed" ]]; then
+        log_error "Nodes that did not reboot cleanly: $failed"
+        return 1
+    fi
+
+    log_success "All nodes rebooted"
+}
+
 # ── helmfile ──────────────────────────────────────────────────────────────────
 
 helmfile_apply() {
@@ -618,6 +755,12 @@ run_main() {
             generate_k0sctl_config "$k0sctl_file" bootstrap
             log_info "Running: k0sctl reset --config $k0sctl_file"
             k0sctl reset --config "$k0sctl_file"
+            if [[ "${K0S_SKIP_REBOOT:-0}" == "1" ]]; then
+                log_info "K0S_SKIP_REBOOT=1 — nodes left running; reboot them before the next bootstrap"
+            else
+                reboot_nodes "${K0S_REBOOT_TIMEOUT:-600}"
+            fi
+            log_success "Cluster reset completed successfully!"
             ;;
         kubeconfig)
             generate_kubeconfig "$k0sctl_file" "$kubeconfig_out"

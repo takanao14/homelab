@@ -10,6 +10,7 @@ Scripts for managing the k0s cluster lifecycle using k0sctl and Helmfile.
 | `helmfile` / `helm` | Helm deployments for CNI, storage, and device plugins |
 | `kubectl` | Cluster readiness checks and helmfile hooks |
 | `cilium` CLI | Wait for Cilium to become ready |
+| `ssh` | Post-reset node reboots |
 ## Directory Structure
 
 ```
@@ -59,6 +60,9 @@ Cluster topology and non-secret settings live in `env/` files. `K0S_SSH_USER` ca
 | Variable | Description |
 |----------|-------------|
 | `K0S_SSH_USER` | SSH username for cluster nodes. Defaults to the command runner (`id -un`) when unset. |
+| `K0S_SSH_KEY_PATH` | SSH private key for cluster nodes, used both in the generated k0sctl config and by the post-reset reboots. Defaults to `~/.ssh/id_ed25519`. |
+| `K0S_SKIP_REBOOT` | Set to `1` to leave nodes running after `reset` instead of rebooting them. |
+| `K0S_REBOOT_TIMEOUT` | Seconds to wait for each node to come back after a reset reboot. Defaults to `600`. |
 
 ```bash
 K0S_SSH_USER=ubuntu ./create_cluster.sh prd config
@@ -75,7 +79,7 @@ K0S_SSH_USER=ubuntu ./create_cluster.sh prd config
 | `bootstrap` | Create a new cluster: k0sctl apply without waiting for the custom CNI → fetch kubeconfig → helmfile apply |
 | `upgrade` | Upgrade an existing cluster with node, Cilium, and storage health checks before and after k0sctl apply |
 | `apply` | Disabled legacy command; fails with guidance to select `bootstrap` or `upgrade` explicitly |
-| `reset` | Reset the cluster: k0sctl reset |
+| `reset` | Reset the cluster: k0sctl reset, then reboot every node and wait for it to return |
 | `kubeconfig` | Write kubeconfig to `~/.kube/<env>.yaml` |
 | `helmfile` | Apply Helmfile only (requires kubeconfig to exist) |
 | `smoke-test` | Test networking, the default PVC class, and each enabled explicit storage test |
@@ -98,8 +102,11 @@ K0S_SSH_USER=ubuntu ./create_cluster.sh prd config
 # Re-apply Helmfile only
 ./create_cluster.sh prd helmfile
 
-# Reset the cluster
+# Reset the cluster and reboot every node
 ./create_cluster.sh sandbox reset
+
+# Reset without rebooting
+K0S_SKIP_REBOOT=1 ./create_cluster.sh sandbox reset
 
 # Remove stale host keys after recreating all cluster VMs
 ./remove-known-hosts.sh sandbox
@@ -133,6 +140,26 @@ When NFS is enabled, `smoke-test` also creates an explicit `nfs` RWX claim and
 verifies data after a pod remount. The StorageClass uses `Retain`; cleanup
 deletes the released PV object but deliberately leaves the temporary directory
 on TrueNAS so retention can be inspected and reclaimed there.
+
+### Reset
+
+`k0sctl reset` stops k0s and deletes its files, but the runtime residue outlives
+it: the Cilium interfaces (`cilium_host` / `cilium_net` / `cilium_vxlan`), the
+nftables rules they installed, and leftover kubelet bind mounts under
+`/var/lib/k0s/kubelet`. `reset` therefore reboots every node afterwards, so a
+following `bootstrap` starts from a clean host.
+
+Reboots are triggered on all nodes first — workers before controllers — and
+waited on afterwards, so the nodes boot in parallel. Each node is considered
+back only once it reports a different `/proc/sys/kernel/random/boot_id`;
+probing SSH alone would return immediately against the pre-reboot sshd. Every
+reachable node is waited on even after one fails, so a run reports every node
+still down rather than only the first.
+
+Rebooting a *running* cluster is a different operation and belongs to Ansible
+(ADR-0032): use `ops-package_upgrade.yaml`, which cordons and drains each node
+first. This reboot deliberately does none of that — there is no cluster left to
+protect once `k0sctl reset` has returned.
 
 When cluster VMs are recreated with the same IP addresses, run
 `remove-known-hosts.sh` before `create_cluster.sh bootstrap`. The script reads all
