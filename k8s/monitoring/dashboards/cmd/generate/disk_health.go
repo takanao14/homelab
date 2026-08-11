@@ -15,9 +15,15 @@ import (
 // which is joined to node_uname_info to resolve a human-readable nodename.
 //
 // Only SATA/ATA disks (type="sat") expose the per-attribute SMART counters
-// (reallocated sectors, pending sectors, wear leveling, etc.). NVMe disks only
-// report the overall smartmon_device_smart_healthy flag, so they appear in the
-// health summary but not in the SATA-specific precursor panels.
+// (reallocated sectors, pending sectors, wear leveling, etc.). NVMe disks do not
+// appear in the smartmon_* series at all -- the only types emitted are sat and
+// scsi -- so every NVMe panel here is sourced from the separate nvme_* exporter.
+//
+// The smartmon type="scsi" series are VM virtual disks. SMART is not really
+// available through them, so the collector reports smart_healthy=0 for all of
+// them; treating that as a failure would mean four permanently red disks. Every
+// health panel therefore filters type="sat", and the disk counter must apply the
+// same filter or it counts disks it never evaluates.
 //
 // TrueNAS owns a passed-through SATA controller, so its disks never appear in
 // any node-exporter smartmon scrape; a smartctl_exporter app inside the TrueNAS
@@ -116,6 +122,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Disks Monitored").
+				Description("Number of disks whose health is evaluated, i.e. exactly the tiles in the SMART Health panel below.").
 				Datasource(ds).
 				Span(6).Height(4).
 				GraphMode(common.BigValueGraphModeNone).
@@ -126,8 +133,16 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					Steps([]dashboard.Threshold{
 						{Value: nil, Color: "blue"},
 					})).
+				// One term per source, matching SMART Health and Unhealthy Disks
+				// exactly, so the three tiles cannot disagree. Counting bare
+				// smartmon_device_smart_healthy instead got this wrong twice
+				// over: NVMe never appears in that metric at all (its types are
+				// only sat and scsi), so six disks went missing, while the
+				// type="scsi" virtual disks it did count are filtered out of
+				// every health panel and so were never evaluated. The tile read
+				// 12 against 15 health tiles.
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(count(smartmon_device_smart_healthy{` + instFilter + `}) or vector(0)) + (count(smartctl_device_smart_status{` + truenasFilter + `}) or vector(0))`).
+					Expr(`(count(smartmon_device_smart_healthy{type="sat",` + instFilter + `}) or vector(0)) + (count(nvme_critical_warning{` + instFilter + `}) or vector(0)) + (count(smartctl_device_smart_status{` + truenasFilter + `}) or vector(0))`).
 					Instant().
 					LegendFormat("Disks"),
 				),
@@ -142,12 +157,16 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Orientation(common.VizOrientationAuto).
 				Thresholds(issueThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
+					// or vector(0) for the same reason as Unhealthy Disks: only
+					// two of the seven SATA disks publish a wear attribute at
+					// all, so without it this tile reads "No data" on any node
+					// whose disks are HDDs or expose no vendor wear attribute.
 					Expr(`sum((` +
 						`smartmon_wear_leveling_count_value{` + instFilter + `}` +
 						` or smartmon_media_wearout_indicator_value{` + instFilter + `}` +
 						` or smartmon_ssd_life_left_value{` + instFilter + `}` +
 						` or smartmon_percent_lifetime_remain_value{` + instFilter + `}` +
-						`) < bool 10)`).
+						`) < bool 10) or vector(0)`).
 					Instant().
 					LegendFormat("Worn"),
 				),
@@ -165,7 +184,10 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Orientation(common.VizOrientationAuto).
 				Thresholds(issueThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(nvme_critical_warning{` + instFilter + `} > bool 0)`).
+					// NVMe lives on three of the nodes only, so selecting any
+					// other node leaves this tile with no series to sum; without
+					// or vector(0) it reads "No data" where it means zero.
+					Expr(`sum(nvme_critical_warning{` + instFilter + `} > bool 0) or vector(0)`).
 					Instant().
 					LegendFormat("Warnings"),
 				),

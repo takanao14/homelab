@@ -89,13 +89,14 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "(count(smartmon_device_smart_healthy{instance=~\"$instance\"}) or vector(0)) + (count(smartctl_device_smart_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"}) or vector(0))",
+          "expr": "(count(smartmon_device_smart_healthy{type=\"sat\",instance=~\"$instance\"}) or vector(0)) + (count(nvme_critical_warning{instance=~\"$instance\"}) or vector(0)) + (count(smartctl_device_smart_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"}) or vector(0))",
           "instant": true,
           "legendFormat": "Disks",
           "range": false
         }
       ],
       "title": "Disks Monitored",
+      "description": "Number of disks whose health is evaluated, i.e. exactly the tiles in the SMART Health panel below.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -140,7 +141,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum((smartmon_wear_leveling_count_value{instance=~\"$instance\"} or smartmon_media_wearout_indicator_value{instance=~\"$instance\"} or smartmon_ssd_life_left_value{instance=~\"$instance\"} or smartmon_percent_lifetime_remain_value{instance=~\"$instance\"}) \u003c bool 10)",
+          "expr": "sum((smartmon_wear_leveling_count_value{instance=~\"$instance\"} or smartmon_media_wearout_indicator_value{instance=~\"$instance\"} or smartmon_ssd_life_left_value{instance=~\"$instance\"} or smartmon_percent_lifetime_remain_value{instance=~\"$instance\"}) \u003c bool 10) or vector(0)",
           "instant": true,
           "legendFormat": "Worn",
           "range": false
@@ -195,7 +196,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(nvme_critical_warning{instance=~\"$instance\"} \u003e bool 0)",
+          "expr": "sum(nvme_critical_warning{instance=~\"$instance\"} \u003e bool 0) or vector(0)",
           "instant": true,
           "legendFormat": "Warnings",
           "range": false
