@@ -1,8 +1,8 @@
 ---
 # Bring a drained k0s worker back into service after a disruptive operation, and
-# block until the cluster is healthy enough for the next node to be taken down.
-# With serial: 1 this is what keeps a rolling operation from removing a second
-# replica while the first is still rebuilding.
+# block until its LocalPV mount and NFS client path are verified. With serial: 1
+# this prevents the next worker from being disrupted before the current worker
+# can safely accept its node-affine and shared-storage workloads again.
 
 - name: Wait for node to report Ready
   ansible.builtin.command:
@@ -30,12 +30,14 @@
       - mountpoint
       - -q
       - "{{ k8s_storage_mountpoint }}"
-  become: true
+  become: false
   changed_when: false
   when: "'openebs' in k8s_storage_providers"
 
-- name: Verify the NFS export is mountable from this node
+- name: Verify the NFS export is mountable from the restored node
   ansible.builtin.import_tasks: k8s_nfs_ready.yaml
+  vars:
+    k8s_nfs_probe_node: "{{ inventory_hostname }}"
   when: "'nfs' in k8s_storage_providers"
 
 - name: Uncordon node

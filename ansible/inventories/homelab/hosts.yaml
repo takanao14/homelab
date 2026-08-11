@@ -320,6 +320,19 @@ all:
         node4: null
         node5: null
 
+    # Hypervisors carrying each k0s cluster. ops-startup.yaml uses these groups
+    # to start a cluster's VMs explicitly, so environment-only recovery works
+    # even when the hypervisors were not rebooted and on_boot did not fire.
+    prd_k8s_hypervisor:
+      hosts:
+        node1: null
+        node4: null
+        node5: null
+        pve: null
+    sandbox_k8s_hypervisor:
+      hosts:
+        pve: null
+
     node_exporter:
       children:
         node_exporter_rpi:

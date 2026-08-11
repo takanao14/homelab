@@ -9,6 +9,8 @@
 #   --tags k8s          stop k0s on workers, then controllers
 #   --tags guests       power off VMs and LXC guests in dependency order
 #   --tags hypervisors  power off the Proxmox nodes
+#   --tags prd          stop only the prd cluster
+#   --tags sandbox      stop only the sandbox cluster
 #
 # Not covered, on purpose: rpi3 and rpi4 stay up to the very end so DHCP and the
 # blackbox probes outlive the fleet, and are powered off by hand afterwards.
@@ -30,7 +32,9 @@
   hosts: sandbox_k8s_controller
   gather_facts: false
   any_errors_fatal: true
-  tags: workloads
+  tags:
+    - workloads
+    - sandbox
   tasks:
     - name: Scale workloads down and wait for storage to release
       ansible.builtin.import_tasks: tasks/k8s_workload_stop.yaml
@@ -39,7 +43,9 @@
   hosts: sandbox_k8s
   gather_facts: false
   any_errors_fatal: true
-  tags: workloads
+  tags:
+    - workloads
+    - sandbox
   tasks:
     - name: Confirm the NFS export has no active mounts
       ansible.builtin.import_tasks: tasks/k8s_nfs_mounts_released.yaml
@@ -54,7 +60,9 @@
 - name: Stop and power off sandbox k0s workers
   hosts: sandbox_k8s_worker
   any_errors_fatal: true
-  tags: k8s
+  tags:
+    - k8s
+    - sandbox
   tasks:
     - name: Stop the k0s worker service
       become: true
@@ -68,7 +76,9 @@
 - name: Stop and power off the sandbox k0s controller
   hosts: sandbox_k8s_controller
   any_errors_fatal: true
-  tags: k8s
+  tags:
+    - k8s
+    - sandbox
   tasks:
     # kine keeps its state in an embedded SQLite database. Stop the service and
     # let it close the database before the host loses power.
@@ -87,7 +97,9 @@
   hosts: prd_k8s_controller
   gather_facts: false
   any_errors_fatal: true
-  tags: workloads
+  tags:
+    - workloads
+    - prd
   tasks:
     - name: Scale workloads down and wait for storage to release
       ansible.builtin.import_tasks: tasks/k8s_workload_stop.yaml
@@ -96,7 +108,9 @@
   hosts: prd_k8s
   gather_facts: false
   any_errors_fatal: true
-  tags: workloads
+  tags:
+    - workloads
+    - prd
   tasks:
     - name: Confirm the NFS export has no active mounts
       ansible.builtin.import_tasks: tasks/k8s_nfs_mounts_released.yaml
@@ -105,7 +119,9 @@
 - name: Stop and power off prd k0s workers
   hosts: prd_k8s_worker
   any_errors_fatal: true
-  tags: k8s
+  tags:
+    - k8s
+    - prd
   tasks:
     - name: Stop the k0s worker service
       become: true
@@ -119,7 +135,9 @@
 - name: Stop and power off the prd k0s controller
   hosts: prd_k8s_controller
   any_errors_fatal: true
-  tags: k8s
+  tags:
+    - k8s
+    - prd
   tasks:
     - name: Stop the k0s controller service
       become: true

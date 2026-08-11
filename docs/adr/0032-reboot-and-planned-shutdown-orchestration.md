@@ -8,7 +8,8 @@
   [ADR-0024](0024-shared-proxmox-node-inventory-for-monitoring.md),
   [`ansible/playbooks/ops-package_upgrade.yaml`](../../ansible/playbooks/ops-package_upgrade.yaml),
   [`ansible/playbooks/ops-shutdown.yaml`](../../ansible/playbooks/ops-shutdown.yaml),
-  [`ansible/playbooks/ops-startup.yaml`](../../ansible/playbooks/ops-startup.yaml)
+  [`ansible/playbooks/ops-startup.yaml`](../../ansible/playbooks/ops-startup.yaml),
+  [`k0s/template_lib.sh`](../../k0s/template_lib.sh)
 
 ## Context
 
@@ -104,11 +105,27 @@ a bad time to be editing group_vars.
 failing on any failed unit, so chronically broken services the upgrade neither
 caused nor can fix do not abort the run.
 
-**Recovery leans on firmware and `on_boot`, not on a playbook.** Every node has
-BIOS AC power recovery set to power on, so mains returning starts the fleet;
-guests follow via `on_boot` in tf. `ops-startup.yaml` waits for that to happen
-in reverse shutdown order, starts the sandbox cluster (the only guests with
-`on_boot = false`), and restores the workloads.
+**Full-fleet recovery leans on firmware and `on_boot`; cluster-only recovery
+explicitly starts its guests.** Every node has BIOS AC power recovery set to
+power on, so mains returning starts the fleet and most guests follow through
+`on_boot` in tf. `ops-startup.yaml` still resolves and starts every cluster VM
+by name, making that path idempotent after a full outage and functional after a
+single cluster was powered off without rebooting its hypervisors. Environment
+tags (`prd` and `sandbox`) select the corresponding guest-start, readiness and
+workload-restore path. Full recovery then waits for the remaining guests in
+reverse shutdown order before restoring the workloads.
+
+**Scope this to reboots of a *running* cluster.** The one reboot that stays
+outside Ansible is the one `k0s/create_cluster.sh <env> reset` performs after
+`k0sctl reset`, which clears the runtime residue k0sctl leaves behind — Cilium
+interfaces, their nftables rules, stale kubelet bind mounts — so the host is
+clean for the next `bootstrap`. Nothing this ADR provides applies there: the
+cluster is already gone, so there is nothing to cordon, drain, scale down or
+wait for storage on, and the only reusable piece would have been
+`ansible.builtin.reboot` itself. Routing it through Ansible would instead force
+a translation between the IP addresses `k0s/env/<env>.sh` owns and the host
+names the inventory owns, for a step that is part of the k0s lifecycle and
+belongs with it. Every reboot of a cluster that is still serving stays here.
 
 ## Alternatives considered
 
@@ -165,6 +182,11 @@ in reverse shutdown order, starts the sandbox cluster (the only guests with
   with no AMT — come back on their own after a real power cut is still unproven.
 - Nothing here dry-runs usefully: the kubectl steps are `command` tasks, which
   check mode skips.
+- Two reboot implementations now exist: `ansible.builtin.reboot` for running
+  clusters and `reboot_nodes` in `k0s/template_lib.sh` for the post-reset case.
+  The duplication is accepted because they share no wait condition — one waits
+  for a node to be Ready and its storage recovered, the other only for the host
+  to report a new boot id. A reboot added anywhere else belongs in Ansible.
 - During the original rehearsal, the former Longhorn detach wait proved that
   sandbox's Prometheus volume moved from `attached/healthy` to `detached` and
   back without a rebuild. ADR-0033 later removed Longhorn; the same

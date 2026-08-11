@@ -1,8 +1,10 @@
 ---
-# Guests on this hypervisor that ops-startup.yaml has to start by hand because
-# they are not set to boot with the node. Empty for every host except pve, which
-# carries the sandbox cluster (see host_vars/pve.yaml).
-startup_manual_guests: []
+# Cluster guests placed on this hypervisor. ops-startup.yaml explicitly ensures
+# they are running during full-fleet and environment-only recovery. This is
+# independent of tf's on_boot setting: on_boot fires only when the hypervisor
+# boots, not when a cluster alone was powered off.
+startup_prd_guests: []
+startup_sandbox_guests: []
 
 # Guests running on this hypervisor that Ansible does not manage and that are
 # therefore absent from guest_shutdown_order. ops-shutdown.yaml stops them over

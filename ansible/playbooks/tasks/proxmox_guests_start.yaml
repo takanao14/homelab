@@ -1,0 +1,22 @@
+---
+# Ensure a reviewed set of guests is running on one Proxmox host. Resolving the
+# VMID from the inventory-owned name keeps numeric Proxmox IDs out of Ansible.
+
+- name: Start the guest if it is not already running
+  become: true
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      vmid=$(qm list | awk -v n="{{ item }}" '$2 == n {print $1}')
+      if [ -z "$vmid" ]; then
+        echo "no such guest: {{ item }}" >&2
+        exit 1
+      fi
+      if [ "$(qm status "$vmid" | awk '{print $2}')" = "running" ]; then
+        echo already-running
+        exit 0
+      fi
+      qm start "$vmid" >/dev/null && echo started
+  loop: "{{ startup_guests }}"
+  register: startup_guest_started
+  changed_when: startup_guest_started.stdout == "started"

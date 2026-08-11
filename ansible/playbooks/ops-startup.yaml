@@ -2,14 +2,17 @@
 # Bring the homelab back after a planned outage — the counterpart to
 # ops-shutdown.yaml, but not its mirror image. Most of the fleet restarts on its
 # own: every guest in tf/ except the sandbox cluster has on_boot = true, so once
-# a hypervisor powers on its guests follow. What this playbook does is wait for
-# that to happen in dependency order, start the guests that do not, and put the
-# Kubernetes workloads back.
+# a hypervisor powers on its guests follow. What this playbook does is ensure
+# every cluster guest is running, wait in dependency order, and put the
+# Kubernetes workloads back. Explicit guest starts also support recovery after
+# stopping one cluster without rebooting its hypervisors.
 #
 #   --tags hypervisors  wait for the Proxmox nodes to answer
-#   --tags guests       start non-autostart guests, wait for guests in order
+#   --tags guests       ensure cluster guests run, wait in dependency order
 #   --tags k8s          wait for the clusters to report every node Ready
 #   --tags workloads    scale workloads back to their recorded replica counts
+#   --tags prd          restore only the prd cluster and its guests
+#   --tags sandbox      restore only the sandbox cluster and its guests
 #
 # Powering the hypervisors on is out of scope, and does not need to be handled
 # here: every node has its BIOS AC-power-recovery set to power on, so mains
@@ -33,33 +36,32 @@
       delegate_to: localhost
       become: false
 
-# Phase 2a — guests that do not boot with their node. Only the sandbox cluster
-# on pve; see host_vars/pve.yaml.
-- name: Start guests that do not boot automatically
-  hosts: proxmox
+# Phase 2a — explicitly ensure every cluster guest is running. This is
+# idempotent after a full outage (most prd VMs already returned through
+# on_boot), and is what makes recovery after an environment-only stop work.
+- name: Start prd cluster guests
+  hosts: prd_k8s_hypervisor
   gather_facts: false
-  tags: guests
+  tags:
+    - guests
+    - prd
   tasks:
-    # qm start takes a VMID, so the configured names are resolved first. Already
-    # running is not an error: the play may be re-run after a partial recovery.
-    - name: Start the guest if it is not already running
-      become: true
-      ansible.builtin.shell:
-        cmd: |
-          set -o pipefail
-          vmid=$(qm list | awk -v n="{{ item }}" '$2 == n {print $1}')
-          if [ -z "$vmid" ]; then
-            echo "no such guest: {{ item }}" >&2
-            exit 1
-          fi
-          if [ "$(qm status "$vmid" | awk '{print $2}')" = "running" ]; then
-            echo already-running
-            exit 0
-          fi
-          qm start "$vmid" >/dev/null && echo started
-      loop: "{{ startup_manual_guests }}"
-      register: startup_guest_started
-      changed_when: startup_guest_started.stdout == "started"
+    - name: Ensure prd guests are running
+      ansible.builtin.import_tasks: tasks/proxmox_guests_start.yaml
+      vars:
+        startup_guests: "{{ startup_prd_guests }}"
+
+- name: Start sandbox cluster and storage guests
+  hosts: sandbox_k8s_hypervisor
+  gather_facts: false
+  tags:
+    - guests
+    - sandbox
+  tasks:
+    - name: Ensure sandbox guests are running
+      ansible.builtin.import_tasks: tasks/proxmox_guests_start.yaml
+      vars:
+        startup_guests: "{{ startup_sandbox_guests }}"
 
 # Phase 2b — guests, in the reverse of the shutdown order: DNS first, because
 # everything started after it expects name resolution to work.
@@ -89,7 +91,9 @@
 - name: Wait for the prd cluster to be ready
   hosts: prd_k8s_controller
   gather_facts: false
-  tags: k8s
+  tags:
+    - k8s
+    - prd
   tasks:
     - name: Wait for every node to report Ready
       ansible.builtin.import_tasks: tasks/k8s_cluster_wait_ready.yaml
@@ -97,7 +101,9 @@
 - name: Restore prd application workloads
   hosts: prd_k8s_controller
   gather_facts: false
-  tags: workloads
+  tags:
+    - workloads
+    - prd
   tasks:
     - name: Verify NFS before restoring workloads
       ansible.builtin.import_tasks: tasks/k8s_nfs_ready.yaml
@@ -110,7 +116,9 @@
 - name: Wait for the sandbox cluster to be ready
   hosts: sandbox_k8s_controller
   gather_facts: false
-  tags: k8s
+  tags:
+    - k8s
+    - sandbox
   tasks:
     - name: Wait for every node to report Ready
       ansible.builtin.import_tasks: tasks/k8s_cluster_wait_ready.yaml
@@ -118,7 +126,9 @@
 - name: Restore sandbox application workloads
   hosts: sandbox_k8s_controller
   gather_facts: false
-  tags: workloads
+  tags:
+    - workloads
+    - sandbox
   tasks:
     - name: Verify NFS before restoring workloads
       ansible.builtin.import_tasks: tasks/k8s_nfs_ready.yaml

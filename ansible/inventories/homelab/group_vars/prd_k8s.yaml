@@ -50,9 +50,3 @@ k8s_infrastructure_namespaces:
 # Cheaper and far less stateful than suspending every Application's syncPolicy.
 k8s_gitops_controller_namespace: argocd
 k8s_gitops_controller_resource: statefulset/argocd-application-controller
-
-# LocalPV basePath, a separate ext4 mount created by k0s/hook/ssdsetup.sh. Its
-# fstab entry has no `nofail`, so a missing disk stops the boot rather than
-# silently exposing an empty directory — but verify the mount before uncordoning
-# so a pod can never bind the root filesystem instead of its data.
-k8s_storage_mountpoint: /srv/storage/volume

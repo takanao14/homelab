@@ -263,8 +263,10 @@ ansible-playbook playbooks/common-users.yaml
 
 # OS package upgrade (all hosts; apt on Debian/Ubuntu, dnf on Rocky/RHEL).
 # DNS hosts and k0s nodes are upgraded one at a time; k0s workers are drained
-# before the reboot and only released once storage has recovered, so a full run
-# takes considerably longer than the parallel phase suggests.
+# before the reboot and only uncordoned after the LocalPV mount is present. On
+# NFS-enabled clusters, a temporary probe Pod is bound to that same worker and
+# must mount the export successfully first. A full run therefore takes
+# considerably longer than the parallel phase suggests.
 ansible-playbook playbooks/ops-package_upgrade.yaml
 
 # Same, one phase at a time (dns / k8s / others). The phases are independent,
@@ -275,10 +277,20 @@ ansible-playbook playbooks/ops-package_upgrade.yaml --tags others
 # (workloads -> k8s -> guests -> hypervisors; run without --tags for all four)
 ansible-playbook playbooks/ops-shutdown.yaml --tags workloads
 
-# Planned outage: recovery after power is restored. Most guests have on_boot
-# set in tf/ and come back with their node; this waits for them in dependency
-# order, starts the sandbox cluster, and restores the scaled-down workloads.
+# Planned outage: recovery after power is restored. This explicitly ensures all
+# cluster guests are running, waits for dependencies, and restores the scaled-
+# down workloads. Explicit starts are idempotent with tf's on_boot behavior.
+# NFS-enabled clusters must pass a kubelet-backed mount probe before any
+# recorded replica count is restored.
 ansible-playbook playbooks/ops-startup.yaml
+
+# Stop and restart one cluster while leaving its hypervisors running. The
+# environment tag covers its workload, node-power, guest-start, readiness, and
+# workload-restore phases; no --limit expression is needed.
+ansible-playbook playbooks/ops-shutdown.yaml --tags sandbox
+ansible-playbook playbooks/ops-startup.yaml --tags sandbox
+ansible-playbook playbooks/ops-shutdown.yaml --tags prd
+ansible-playbook playbooks/ops-startup.yaml --tags prd
 
 # Version audit for Renovate-managed Ansible components (read-only)
 ansible-playbook playbooks/ops-version_audit.yaml
@@ -436,7 +448,7 @@ the decision behind the rebuild registration flow.
 | `ops-package_upgrade.yaml` | `dns` (serial), k0s workers (serial, drained), k0s controllers (serial), then `all:!proxmox:!dns:!power_only:!prd_k8s:!sandbox_k8s` | ops |
 | `ops-nfs_storage_check.yaml` | `prd_k8s:sandbox_k8s` (only clusters with NFS enabled) | ops |
 | `ops-shutdown.yaml` | `k8s_controller`, `k8s_worker`, `guest_shutdown_order`, `proxmox_shutdown_order` | ops (planned outage) |
-| `ops-startup.yaml` | `proxmox`, `guest_shutdown_order` (reversed), `k8s_controller` | ops (planned outage) |
+| `ops-startup.yaml` | `proxmox`, `prd_k8s_hypervisor`, `sandbox_k8s_hypervisor`, `guest_shutdown_order` (reversed), `k8s_controller` | ops (planned outage / per-cluster recovery) |
 | `ops-version_audit.yaml` | `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `dns_resolver`, `seaweedfs`, `openbao`, `gpuvm` | ops |
 | `ops-dns_failover_test.yaml` | delegated DNS hosts; orchestration on localhost | ops (state-changing failure test) |
 | `ops-pdns_sync.yaml` | `dns_primary`, `dns_secondary` | ops |
