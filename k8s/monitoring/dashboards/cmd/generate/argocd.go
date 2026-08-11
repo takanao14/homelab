@@ -47,7 +47,7 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 				Title("Apps Not Healthy").
 				Description("Applications whose health status is not Healthy.").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(8).Height(4).
 				Unit("short").Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
@@ -61,7 +61,7 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 				Title("Apps OutOfSync").
 				Description("Applications whose sync status is not Synced.").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(8).Height(4).
 				Unit("short").Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
@@ -75,7 +75,7 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 				Title("Sync Failures (1h)").
 				Description("Sync operations that ended in Error or Failed in the last hour.").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(8).Height(4).
 				Unit("short").Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
@@ -84,18 +84,37 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("Failures"),
 				),
 		).
+		// Second summary line: reachability of the things ArgoCD depends on,
+		// as opposed to the application state counters above.
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Cluster Connections Down").
 				Description("Destination clusters the application-controller cannot reach.").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(4).
 				Unit("short").Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count(argocd_cluster_connection_status{` + clusterFilter + `} == 0) or vector(0)`).
 					LegendFormat("Down"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Git ls-remote Failures (1h)").
+				Description("Failed git ls-remote calls from the repo-server in the last hour. Nonzero means ArgoCD could not reach the Git remote, so every application stops seeing new commits.").
+				Datasource(ds).
+				Span(12).Height(4).
+				Unit("short").Min(0).
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					// Aggregate away repo: on this metric the label holds the
+					// local temp clone path (/tmp/_argocd-repo/<uuid>), not the
+					// remote URL, so it churns on every repo-server restart.
+					Expr(`ceil(sum(increase(argocd_git_lsremote_fail_total{` + clusterFilter + `}[1h]))) or vector(0)`).
+					LegendFormat("Failures"),
 				),
 		).
 		WithRow(dashboard.NewRowBuilder("Applications")).
@@ -213,6 +232,11 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
+				// Reconciles arrive in bursts roughly every 2 minutes. Without a
+				// floor, $__rate_interval shrinks to ~1m when zoomed in, every
+				// bucket rate becomes 0, and histogram_quantile returns NaN --
+				// which renders as a broken line.
+				Interval("5m").
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -242,10 +266,18 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Git Request Duration p95").
-				Description("95th percentile git request duration, by request type. Slow fetches point at repo size or network issues.").
+				Description("95th percentile git request duration, by request type. Slow fetches point at repo size or network issues. Git requests are sparse, so samples are drawn as points; a gap means no request occurred, not a failure.").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
+				// ls-remote polls every ~3 minutes and fetch only fires on an
+				// actual repo change, so a short window leaves every bucket rate
+				// at 0 and histogram_quantile returns NaN. The floor keeps
+				// ls-remote continuous; fetch stays sparse by nature, hence the
+				// always-visible points.
+				Interval("15m").
+				ShowPoints(common.VisibilityModeAlways).
+				PointSize(6).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().

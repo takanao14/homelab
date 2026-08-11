@@ -47,7 +47,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
+        "w": 8,
         "x": 0,
         "y": 1
       },
@@ -103,8 +103,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 6,
+        "w": 8,
+        "x": 8,
         "y": 1
       },
       "repeatDirection": "h",
@@ -159,8 +159,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 12,
+        "w": 8,
+        "x": 16,
         "y": 1
       },
       "repeatDirection": "h",
@@ -215,9 +215,65 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 1
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "ceil(sum(increase(argocd_git_lsremote_fail_total{cluster=~\"$cluster\"}[1h]))) or vector(0)",
+          "legendFormat": "Failures"
+        }
+      ],
+      "title": "Git ls-remote Failures (1h)",
+      "description": "Failed git ls-remote calls from the repo-server in the last hour. Nonzero means ArgoCD could not reach the Git remote, so every application stops seeing new commits.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 5
       },
       "repeatDirection": "h",
       "options": {
@@ -262,7 +318,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 5
+        "y": 9
       },
       "id": 0,
       "panels": []
@@ -286,7 +342,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 6
+        "y": 10
       },
       "repeatDirection": "h",
       "options": {
@@ -379,7 +435,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 6
+        "y": 10
       },
       "repeatDirection": "h",
       "options": {
@@ -459,7 +515,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 18
       },
       "repeatDirection": "h",
       "transformations": [
@@ -521,7 +577,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 24
       },
       "id": 0,
       "panels": []
@@ -545,7 +601,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 21
+        "y": 25
       },
       "repeatDirection": "h",
       "options": {
@@ -622,9 +678,10 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 21
+        "y": 25
       },
       "repeatDirection": "h",
+      "interval": "5m",
       "options": {
         "legend": {
           "displayMode": "list",
@@ -653,7 +710,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 29
+        "y": 33
       },
       "id": 0,
       "panels": []
@@ -677,7 +734,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 30
+        "y": 34
       },
       "repeatDirection": "h",
       "options": {
@@ -709,7 +766,7 @@
         }
       ],
       "title": "Git Request Duration p95",
-      "description": "95th percentile git request duration, by request type. Slow fetches point at repo size or network issues.",
+      "description": "95th percentile git request duration, by request type. Slow fetches point at repo size or network issues. Git requests are sparse, so samples are drawn as points; a gap means no request occurred, not a failure.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -719,9 +776,10 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 30
+        "y": 34
       },
       "repeatDirection": "h",
+      "interval": "15m",
       "options": {
         "legend": {
           "displayMode": "list",
@@ -737,7 +795,10 @@
       "fieldConfig": {
         "defaults": {
           "unit": "s",
-          "custom": {}
+          "custom": {
+            "showPoints": "always",
+            "pointSize": 6
+          }
         },
         "overrides": []
       }
