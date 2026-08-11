@@ -153,6 +153,13 @@
         icon: powerdns.png
         href: https://pdns-ui.prd.butaco.net
 
+    - Caddy:
+        icon: caddy.png
+        description: Reverse Proxy for *.home.butaco.net (no web UI)
+        proxmoxNode: node2
+        proxmoxVMID: "105"
+        proxmoxType: lxc
+
 - Monitoring:
     - Grafana:
         icon: grafana.png
@@ -204,6 +211,11 @@
         proxmoxNode: node2
         proxmoxVMID: "103"
         proxmoxType: lxc
+
+    - code-server:
+        icon: code-server.png
+        href: https://vscode.home.butaco.net
+        description: Browser Editor (toolbox1)
 
     - Headlamp:
         icon: headlamp.png

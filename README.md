@@ -33,6 +33,7 @@ homelab/
 ├── scripts/           # VM lifecycle, provisioning, OpenBao secret sync, GPU switching
 ├── docs/
 │   ├── adr/           # Architecture Decision Records
+│   ├── service-routing.md # Ingress paths: Caddy / Envoy Gateway / direct
 │   ├── plans/         # Symlink to the private plans repository (may be absent)
 │   └── md/            # Symlink to the private Marp design slides repo (may be absent)
 └── tf/                # Terraform / Terragrunt (Proxmox VMs, LXC containers, cloud images)

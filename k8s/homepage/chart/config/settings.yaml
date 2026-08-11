@@ -20,7 +20,7 @@ layout:
     columns: 5
   Infrastructure:
     style: row
-    columns: 2
+    columns: 3
   Monitoring:
     style: row
     columns: 5

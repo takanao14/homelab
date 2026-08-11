@@ -10,6 +10,7 @@ scripts/
 ├── create-vm.sh / remove-vm.sh / provision.sh  # VM lifecycle (run directly)
 ├── gpu-switch.sh                             # k8s GPU workload switch
 ├── check-image-refs.sh                       # CI: image filename map consistency check
+├── check-proxy-routes.sh                     # CI: Caddy sites <-> Homepage dashboard drift check
 ├── grafana-mcp.sh                            # Grafana MCP server launcher (stdio)
 ├── grafana-mcp-token.sh                      # issue Grafana MCP service-account token
 ├── netbox-mcp.sh                             # NetBox MCP server launcher (stdio)
@@ -155,6 +156,28 @@ manually after adding or renaming an image target.
 
 ```bash
 ./check-image-refs.sh
+```
+
+### `check-proxy-routes.sh`
+
+Cross-checks the Caddy sites in
+`ansible/inventories/homelab/group_vars/caddy.yaml` against the Homepage tiles
+in `k8s/homepage/chart/config/services.yaml`, in both directions:
+
+- a `caddy_upstreams` / `caddy_redirects` hostname with no dashboard entry —
+  the service is published but invisible on the portal
+- a dashboard `https://<host>.home.butaco.net` link (no port, plain `https`)
+  that Caddy does not serve — a dead tile
+
+Entries reached without Caddy are recognised by their URL shape and skipped:
+an explicit port (Proxmox at `:8006`) or plain `http` (the network
+appliances). Machine-facing Caddy sites with no UI to link to are listed in the
+script's `NO_UI_HOSTS`. Only `home.butaco.net` is in scope; `*.prd` and
+`*.sandbox` go through the in-cluster Gateway. Run by CI on changes to either
+file (`.github/workflows/proxy-routes.yaml`).
+
+```bash
+./check-proxy-routes.sh
 ```
 
 ## Secrets / environment

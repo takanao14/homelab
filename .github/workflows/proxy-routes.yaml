@@ -1,0 +1,26 @@
+name: Proxy Route Check
+
+# The Caddy sites in the Ansible group_vars and the Homepage dashboard tiles
+# are maintained by hand in two places. This job fails when they drift: a
+# published site with no dashboard entry, or a dashboard link to a host Caddy
+# does not serve.
+on:
+  pull_request:
+    paths:
+      - "ansible/inventories/homelab/group_vars/caddy.yaml"
+      - "k8s/homepage/chart/config/services.yaml"
+      - "scripts/check-proxy-routes.sh"
+      - ".github/workflows/proxy-routes.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: proxy-routes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cross-check Caddy sites against the Homepage dashboard
+        run: ./scripts/check-proxy-routes.sh
