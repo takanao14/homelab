@@ -4,6 +4,9 @@ Installs and configures [Caddy](https://caddyserver.com/) as a reverse proxy on 
 
 Each site is either a reverse proxy (`caddy_upstreams`) or a redirect that Caddy answers itself (`caddy_redirects`).
 
+Caddy has no web UI. For the current list of sites and how they relate to the
+other ingress paths, see [`docs/service-routing.md`](../../../docs/service-routing.md).
+
 ## Functionality
 
 - Creates a dedicated system user/group (`caddy`).
