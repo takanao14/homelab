@@ -71,7 +71,7 @@
 - Storage:
     - TrueNAS:
         icon: truenas.png
-        href: https://truenas-ui.home.butaco.net
+        href: https://truenas-ui.home.butaco.net/ui/
         description: Network Storage
         proxmoxNode: node1
         proxmoxVMID: "100"
