@@ -44,6 +44,27 @@ spec:
             summary: 'Certificate {{ "{{" }} $labels.name {{ "}}" }} not Ready ({{ "{{" }} $labels.cluster {{ "}}" }})'
             description: '{{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.name {{ "}}" }} is not in the Ready state.'
 
+        # The expiry alerts above only speak up once renewal has already been
+        # failing for more than a week: a 90-day ACME cert starts renewing at 30
+        # days left, and CertManagerCertExpiringSoon waits until 21. A non-2xx
+        # from the ACME endpoint marks the first failed attempt instead, which
+        # includes the 429 rate limits Let's Encrypt applies per account and per
+        # domain. prd has returned nothing but 200 in 30 days, so there is no
+        # noise floor to tune around and any failure is worth reporting; the 1h
+        # window is wide enough to still catch retries that cert-manager has
+        # backed off.
+        - alert: CertManagerACMERequestFailing
+          expr: |
+            sum by (cluster, host, status) (
+              increase(certmanager_http_acme_client_request_count{status=~"4..|5.."}[1h])
+            ) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'ACME requests to {{ "{{" }} $labels.host {{ "}}" }} failing with HTTP {{ "{{" }} $labels.status {{ "}}" }} ({{ "{{" }} $labels.cluster {{ "}}" }})'
+            description: 'cert-manager is being rejected by the ACME endpoint, so certificate issuance and renewal cannot complete. Check for a Let''s Encrypt rate limit or an account problem before the expiry alerts start firing.'
+
         - alert: CertManagerDown
           expr: |
             up{job=~".*cert-manager.*"} == 0
