@@ -1,8 +1,7 @@
 ---
 # Cordon and drain a k0s worker before a disruptive operation (reboot, planned
 # shutdown). Without this the node is rebooted out from under its pods: kubelet
-# and containerd are killed, workloads get no SIGTERM, and Longhorn replicas are
-# marked failed and need a rebuild.
+# and containerd are killed and workloads get no SIGTERM.
 #
 # kubectl runs on the control node via delegate_to, not on the target — the node
 # being drained is about to go away, and the inventory carries no API endpoint.
@@ -25,8 +24,7 @@
 # Drain policy mirrors the k0sctl upgrade options in k0s/template_lib.sh so both
 # paths disrupt the cluster identically. force is required because prd runs pods
 # whose LocalPV volumes pin them to this node and cannot be evicted elsewhere;
-# the long timeout absorbs PodDisruptionBudgets, including the ones Longhorn
-# creates for its instance managers.
+# the long timeout absorbs PodDisruptionBudgets and slow workload termination.
 - name: Drain node
   ansible.builtin.command:
     argv:

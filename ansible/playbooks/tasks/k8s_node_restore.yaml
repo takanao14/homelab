@@ -48,30 +48,3 @@
   delegate_to: localhost
   become: false
   changed_when: true
-
-# Only attached volumes carry a meaningful robustness value; detached ones
-# report "unknown" forever and must not be waited on. Emitting state:robustness
-# per volume keeps the filtering readable, and an empty result (no volumes at
-# all, which is sandbox today) passes immediately.
-- name: Wait for Longhorn volumes to finish rebuilding
-  ansible.builtin.command:
-    argv:
-      - kubectl
-      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
-      - "--namespace={{ k8s_longhorn_namespace }}"
-      - get
-      - volumes.longhorn.io
-      - -o
-      - jsonpath={range .items[*]}{.status.state}:{.status.robustness}{"\n"}{end}
-  register: k8s_longhorn_volumes
-  until: >-
-    k8s_longhorn_volumes.stdout_lines
-    | select('search', '^attached:')
-    | reject('search', ':healthy$')
-    | list | length == 0
-  retries: 60
-  delay: 30
-  delegate_to: localhost
-  become: false
-  changed_when: false
-  when: "'longhorn' in k8s_storage_providers"

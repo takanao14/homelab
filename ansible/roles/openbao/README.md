@@ -112,10 +112,13 @@ Application policies grant read-only access to their own KV prefix. The prd ESO
 role includes `k8s-gpu-switch`, while sandbox deliberately does not because the
 gpu-switch Application is disabled there.
 
+Policies removed from the repository are listed in `openbao_absent_policies`.
+`ops-openbao_configure.yaml` deletes those server-side policy objects before it
+writes the active policies and Kubernetes roles.
+
 | Policy | KV prefix | Clusters |
 |---|---|---|
 | `k8s-gpu-switch` | `secret/k8s/gpu-switch/*` | prd |
-| `k8s-longhorn-ui` | `secret/k8s/longhorn-ui/*` | sandbox |
 
 ### 1. Bootstrap Ansible userpass authentication
 
@@ -198,7 +201,6 @@ Secrets consumed by Kubernetes applications via ESO. Scoped per application; not
 secret/k8s/cert-manager/cloudflare   # Cloudflare API token
 secret/k8s/gpu-switch/basic-auth     # GPU Switch UI htpasswd
 secret/k8s/headlamp/admin-token      # Headlamp login token
-secret/k8s/longhorn-ui/basic-auth    # Longhorn UI htpasswd
 secret/k8s/monitoring/grafana        # Grafana credentials
 secret/k8s/monitoring/alertmanager   # Alertmanager Discord webhook
 secret/k8s/argocd/{env}/admin        # ArgoCD admin password (per environment)
@@ -229,9 +231,6 @@ Auth secrets used by Envoy Gateway, store an htpasswd entry in `{SHA}` format:
   data:
     htpasswd: "admin:{SHA}..."
 
-- path: secret/k8s/longhorn-ui/basic-auth
-  data:
-    htpasswd: "admin:{SHA}..."
 ```
 
 Generate the value with:

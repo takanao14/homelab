@@ -25,7 +25,7 @@ then manages a small sandbox platform set:
 - `gateway`
 - `external-secrets`
 - `external-dns`
-- sandbox-specific workloads added intentionally, such as `longhorn-ui`
+- sandbox-specific workloads added intentionally
 
 Sandbox uses the same shared charts as dev and prd, but environment values
 select HTTP-only behavior:

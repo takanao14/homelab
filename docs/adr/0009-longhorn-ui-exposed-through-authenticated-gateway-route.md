@@ -1,8 +1,11 @@
 # ADR-0009: Longhorn UI is exposed through an authenticated Gateway route
 
-- **Status:** Accepted, amended during Envoy Gateway migration
+- **Status:** Superseded by [ADR-0033](0033-sandbox-storage-openebs-localpv-and-truenas-nfs.md)
 - **Date:** 2026-06-24
-- **Related:** [`k8s/longhorn-ui/README.md`](../../k8s/longhorn-ui/README.md), [`k8s/argocd/README.md`](../../k8s/argocd/README.md), [`k0s/README.md`](../../k0s/README.md)
+- **Related:** [`k8s/argocd/README.md`](../../k8s/argocd/README.md), [`k0s/README.md`](../../k0s/README.md)
+
+Longhorn and this UI route were removed from sandbox under ADR-0033. The
+remainder of this ADR records the historical exposure design.
 
 ## Context
 

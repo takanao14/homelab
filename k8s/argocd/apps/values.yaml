@@ -59,9 +59,6 @@ apps:
   lemonade-server:
     enabled: false
     wave: "1"
-  longhorn-ui:
-    enabled: false
-    wave: "2"
   # monitoring differs structurally per environment (prd: central full stack,
   # sandbox: subset overlay), so its source path / namespace / helm settings
   # come from apps-values.yaml.

@@ -4,6 +4,19 @@
 - name: Log in as the Ansible admin user
   ansible.builtin.include_tasks: login_admin.yaml
 
+- name: Delete retired policies
+  ansible.builtin.command:
+    argv:
+      - "{{ openbao_binary }}"
+      - policy
+      - delete
+      - "{{ item }}"
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  loop: "{{ openbao_absent_policies }}"
+  changed_when: true
+
 - name: Write policy for cert-manager namespace
   ansible.builtin.command:
     cmd: "{{ openbao_binary }} policy write k8s-cert-manager -"
@@ -78,21 +91,6 @@
         capabilities = ["read"]
       }
       path "secret/metadata/kubeconfig/*" {
-        capabilities = ["read"]
-      }
-  environment:
-    BAO_ADDR: "{{ openbao_local_addr }}"
-    BAO_TOKEN: "{{ openbao_admin_token }}"
-  changed_when: true
-
-- name: Write policy for longhorn-ui namespace
-  ansible.builtin.command:
-    cmd: "{{ openbao_binary }} policy write k8s-longhorn-ui -"
-    stdin: |
-      path "secret/data/k8s/longhorn-ui/*" {
-        capabilities = ["read"]
-      }
-      path "secret/metadata/k8s/longhorn-ui/*" {
         capabilities = ["read"]
       }
   environment:

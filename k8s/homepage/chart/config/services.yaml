@@ -99,11 +99,6 @@
         proxmoxVMID: "100"
         proxmoxType: qemu
 
-    - Longhorn UI:
-        icon: longhorn.png
-        href: http://longhorn.sandbox.butaco.net
-        description: Distributed Storage UI (sandbox only)
-
 - DNS:
     - PowerDNS origin:
         icon: powerdns.png

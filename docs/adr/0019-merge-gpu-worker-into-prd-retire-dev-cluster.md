@@ -58,7 +58,7 @@ and retire the dev cluster entirely:
 
 - **Keep the split (status quo).** *Rejected* — the only remaining benefit
   is a persistent pre-prod cluster for k0s/Cilium upgrades, and sandbox
-  covers that on demand (`K0S_STORAGE_PROVIDER=openebs` reproduces the prd
+  covers that on demand (`K0S_STORAGE_PROVIDERS=openebs` reproduces the prd
   storage configuration). The duplication tax is continuous; the benefit is
   occasional.
 - **Keep serving the apps at `*.dev.butaco.net` from prd.** *Rejected* — it

@@ -51,7 +51,7 @@ deleting it:
 | [0006](0006-custom-image-pipeline-monorepo-and-seaweedfs-s3.md) | Custom image pipeline — monorepo build + SeaweedFS S3 distribution | Accepted |
 | [0007](0007-defer-grafana-dashboard-v2-migration.md) | Defer Grafana Dashboard v2 migration | Accepted |
 | [0008](0008-caddy-https-upstream-for-self-signed-backends.md) | Caddy re-encrypts to HTTPS upstreams that enforce TLS (TrueNAS) | Accepted |
-| [0009](0009-longhorn-ui-exposed-through-authenticated-gateway-route.md) | Longhorn UI is exposed through an authenticated Gateway route | Accepted |
+| [0009](0009-longhorn-ui-exposed-through-authenticated-gateway-route.md) | Longhorn UI is exposed through an authenticated Gateway route | Superseded by ADR-0033 |
 | [0010](0010-sandbox-argocd-uses-http-only-gitops-bootstrap.md) | Sandbox Argo CD uses HTTP-only GitOps bootstrap without cert-manager | Accepted |
 | [0011](0011-cilium-gateway-to-envoy-gateway-migration.md) | Use Envoy Gateway for shared Gateway API ingress | Accepted |
 | [0012](0012-openbao-eso-cluster-rebuild-registration.md) | Re-register rebuilt clusters with OpenBao for ESO | Accepted |

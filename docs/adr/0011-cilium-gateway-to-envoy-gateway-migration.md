@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-27
-- **Related:** [`k8s/README.md`](../../k8s/README.md), [`k8s/gateway/README.md`](../../k8s/gateway/README.md), [`k8s/longhorn-ui/README.md`](../../k8s/longhorn-ui/README.md)
+- **Related:** [`k8s/README.md`](../../k8s/README.md), [`k8s/gateway/README.md`](../../k8s/gateway/README.md), [ADR-0009](0009-longhorn-ui-exposed-through-authenticated-gateway-route.md)
 
 ## Context
 

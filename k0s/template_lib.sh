@@ -106,7 +106,7 @@ validate_storage_config() {
     IFS=',' read -ra provider_list <<< "$providers"
     for provider in "${provider_list[@]}"; do
         case "$provider" in
-            openebs|longhorn|nfs) ;;
+            openebs|nfs) ;;
             *)
                 log_error "Unsupported storage provider in K0S_STORAGE_PROVIDERS: '$provider'"
                 return 1
@@ -121,7 +121,6 @@ validate_storage_config() {
 
     case "$default_class" in
         openebs-hostpath) expected_provider=openebs ;;
-        longhorn) expected_provider=longhorn ;;
         nfs) expected_provider=nfs ;;
         *)
             log_error "Unsupported K0S_DEFAULT_STORAGE_CLASS: '$default_class'"
@@ -460,41 +459,6 @@ wait_for_nodes_ready() {
     log_success "All nodes are Ready"
 }
 
-wait_for_longhorn_ready() {
-    local timeout_seconds="${1:-300}"
-    local interval=10
-    local elapsed=0
-    local volume_status unhealthy_volumes
-
-    log_info "Waiting for Longhorn managers and volumes to be healthy..."
-    kubectl -n longhorn-system wait \
-        --for=condition=Ready pod \
-        --selector=app=longhorn-manager \
-        --timeout="${timeout_seconds}s"
-
-    while true; do
-        volume_status="$(
-            kubectl -n longhorn-system get volumes.longhorn.io \
-                -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.robustness}{"\n"}{end}'
-        )"
-        unhealthy_volumes="$(awk 'NF >= 2 && $2 != "healthy" { print }' <<< "$volume_status")"
-
-        if [[ -z "$unhealthy_volumes" ]]; then
-            log_success "Longhorn volumes are healthy"
-            return 0
-        fi
-
-        if [[ "$elapsed" -ge "$timeout_seconds" ]]; then
-            log_error "Longhorn volumes did not become healthy within ${timeout_seconds}s:"
-            printf '%s\n' "$unhealthy_volumes" >&2
-            return 1
-        fi
-
-        sleep "$interval"
-        elapsed=$((elapsed + interval))
-    done
-}
-
 wait_for_openebs_ready() {
     local timeout_seconds="${1:-300}"
 
@@ -525,7 +489,6 @@ wait_for_storage_ready() {
     IFS=',' read -ra provider_list <<< "${K0S_STORAGE_PROVIDERS:-openebs}"
     for provider in "${provider_list[@]}"; do
         case "$provider" in
-            longhorn) wait_for_longhorn_ready "$timeout_seconds" ;;
             openebs) wait_for_openebs_ready "$timeout_seconds" ;;
             nfs) wait_for_nfs_ready "$timeout_seconds" ;;
         esac

@@ -28,7 +28,6 @@ k0s/
 │   ├── cilium.yaml.gotmpl         # Cilium Helm values
 │   ├── cilium-config.yaml.gotmpl  # cilium-config Helm values (IP pool range)
 │   ├── openebs.yaml.gotmpl        # OpenEBS Helm values and default-class selection
-│   ├── longhorn.yaml.gotmpl       # Longhorn Helm values and default-class selection
 │   └── nfs.yaml.gotmpl            # NFS CSI StorageClass and Helm values
 ├── hook/
 │   ├── ssdsetup.sh                # Format and mount SSD on worker node
@@ -50,8 +49,8 @@ Cluster topology and non-secret settings live in `env/` files. `K0S_SSH_USER` ca
 | `K0S_GPU_WORKER_ADDRESSES` | Comma-separated GPU worker IP addresses (optional; omit for no GPU workers) |
 | `K0S_LB_POOL` | Cilium LoadBalancer IP pool range (`start,stop`) |
 | `K0S_VERSION` | k0s version to install (optional; omits `version:` if unset) |
-| `K0S_STORAGE_PROVIDERS` | Comma-separated storage providers to deploy: `openebs`, `longhorn`, and/or `nfs` |
-| `K0S_DEFAULT_STORAGE_CLASS` | The single default class: `openebs-hostpath`, `longhorn`, or `nfs`; its provider must be enabled |
+| `K0S_STORAGE_PROVIDERS` | Comma-separated storage providers to deploy: `openebs` and/or `nfs` |
+| `K0S_DEFAULT_STORAGE_CLASS` | The single default class: `openebs-hostpath` or `nfs`; its provider must be enabled |
 | `K0S_NFS_SERVER` | NFS server IP or name; required when `nfs` is enabled |
 | `K0S_NFS_SHARE` | Absolute NFS export path; required when `nfs` is enabled |
 
@@ -121,12 +120,10 @@ uses the following safety controls:
   before changing any host;
 - enables k0sctl's per-worker Ready wait;
 - limits worker disruption to 10 percent and sets the drain timeout to 20
-  minutes, allowing Longhorn replicas time to rebuild without bypassing their
-  PodDisruptionBudgets;
+  minutes so workloads can terminate and reschedule cleanly;
 - repeats node and storage health checks after k0sctl and Helmfile complete.
 
-For Longhorn, every volume must report `healthy`. For OpenEBS, all pods in the
-`openebs` namespace must be Ready. For NFS, the CSI controller Deployment and
+For OpenEBS, all pods in the `openebs` namespace must be Ready. For NFS, the CSI controller Deployment and
 node DaemonSet must complete rollout. The workflow also refuses to run when the
 cluster already has multiple default StorageClasses and verifies the configured
 default after Helmfile completes. Do not use `upgrade` to create a new cluster,
@@ -148,8 +145,8 @@ different file.
 
 - **Datastore**: kine (single controller) or etcd (multiple controllers — count must be odd for quorum); selected automatically based on `K0S_CONTROLLER_ADDRESSES`
 - **CNI**: Cilium v1.19.x (kube-proxy disabled, L2 LoadBalancer; ingress/Gateway API controllers disabled — shared ingress is Envoy Gateway, ArgoCD-managed, see ADR-0011). Workers are labeled `homelab/l2-segment=<first-three-IP-octets>` by k0s install flags and re-synced before Helmfile runs, so L2 announcements only run on nodes in the LoadBalancer pool's segment.
-- **Storage CSI**: any configured combination of OpenEBS v4.5.1 LocalPV,
-  Longhorn v1.12.0, and NFS CSI v4.13.4. Local providers use the SSD mounted at
+- **Storage CSI**: any configured combination of OpenEBS v4.5.1 LocalPV and
+  NFS CSI v4.13.4. OpenEBS uses the SSD mounted at
   `/srv/storage/volume`; NFS uses the environment-specific external export.
 - **GPU**: AMD GPU Device Plugin (enabled when `K0S_GPU_WORKER_ADDRESSES` is set; GPU workers are labeled `gpu=amd` and tainted `gpu=amd:NoSchedule`)
 - **CoreDNS**: Replica count is calculated automatically by k0s from the number of Linux nodes. When GPU workers are configured, `template_lib.sh` adds a CoreDNS-only toleration for `gpu=amd:NoSchedule`, allowing CoreDNS replicas to be distributed across standard and GPU workers without making other workloads eligible for GPU workers.

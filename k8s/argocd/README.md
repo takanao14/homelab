@@ -318,7 +318,6 @@ Waves are defined once in `apps/values.yaml` and shared by all environments:
 | -1 | envoy-gateway | Controller after its CRDs |
 | 0 | cert-manager, eso, gateway | Foundation: CRDs, ClusterSecretStore, shared Gateway |
 | 1 | everything else | Consumers of wave 0 (ExternalSecrets, HTTPRoutes, issuers) |
-| 2 | longhorn-ui | Behind the authenticated Gateway route (ADR-0009) |
 
 Wave gating relies on the Application health check re-enabled in
 `values-common.yaml`; automated syncs never retry the same revision, so
@@ -345,7 +344,6 @@ of cert-manager-config to create the Secret, then re-sync root-apps.
 | headlamp | headlamp | prd |
 | homepage | homepage | prd, sandbox |
 | lemonade-server | lemonade-server | prd |
-| longhorn-ui | longhorn-system | sandbox only |
 | monitoring | monitoring (argocd in prd) | prd, sandbox |
 | ollama | ollama | prd |
 | open-webui | open-webui | prd |
@@ -355,6 +353,4 @@ Sandbox intentionally uses HTTP only. Its Gateway has no HTTPS listener, and
 cert-manager is not installed. ESO uses the `kubernetes-sandbox` OpenBao auth
 mount, while external-dns manages `sandbox.butaco.net.` through PowerDNS.
 Sandbox homepage is exposed at `http://homepage.sandbox.butaco.net` and reuses
-the production dashboard Secret paths for staging validation. The sandbox
-Longhorn UI is exposed through an authenticated reverse proxy instead of
-routing directly to `longhorn-frontend`.
+the production dashboard Secret paths for staging validation.

@@ -57,8 +57,9 @@ central mistake this ADR exists to prevent:
 | Argo CD        | untouched             | application controller scaled to 0 |
 
 Shared below that: node identity, k0s service names, and a storage-readiness
-wait selected by `k8s_storage_provider` — a mount check for OpenEBS, a volume
-robustness check for Longhorn. Adding a cluster adds group_vars, not tasks.
+wait selected by `k8s_storage_providers` — controller readiness for OpenEBS
+and NFS plus an endpoint mount probe for NFS. Adding a cluster adds group_vars,
+not tasks.
 
 **Align inventory host names with the k0s node names.** tf is canonical: the
 `for_each` map key is the Proxmox VM name, the cloud-init hostname, and the
@@ -164,10 +165,10 @@ in reverse shutdown order, starts the sandbox cluster (the only guests with
   with no AMT — come back on their own after a real power cut is still unproven.
 - Nothing here dry-runs usefully: the kubectl steps are `command` tasks, which
   check mode skips.
-- The Longhorn detach wait is proven, not theoretical: sandbox's Prometheus
-  volume went `attached/healthy` to `detached` on the way down and back to
-  `attached/healthy` on the way up, with no rebuild. That is the outcome the
-  whole scale-to-zero approach exists to produce.
+- During the original rehearsal, the former Longhorn detach wait proved that
+  sandbox's Prometheus volume moved from `attached/healthy` to `detached` and
+  back without a rebuild. ADR-0033 later removed Longhorn; the same
+  scale-to-zero boundary now protects OpenEBS LocalPV and NFS workloads.
 - Waiting on each scaled workload's `.status.replicas` rather than on the
   namespace emptying is load-bearing, not stylistic: node-exporter DaemonSet
   pods stay up until their node stops, so a namespace-level wait would never

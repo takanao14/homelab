@@ -22,9 +22,8 @@
 
 # k0s workers carry the cluster's workloads and storage, so they are drained
 # before the reboot and restored afterwards. serial: 1 keeps the blast radius to
-# one node: prd has only two general workers, and sandbox's Longhorn volumes
-# have a replica on each of its three workers, so a simultaneous reboot would
-# take every replica of every volume down at once.
+# one node: prd has only two general workers, while LocalPV workloads in both
+# environments must recover on the worker that owns their volume.
 #
 # tasks/k8s_node_restore.yaml blocks until the node is back and its storage has
 # recovered, which is what makes serial: 1 safe rather than merely sequential.

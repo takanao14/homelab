@@ -97,11 +97,6 @@ k8s/
 │   ├── values-common.yaml
 │   ├── prd/values.yaml
 │   └── sandbox/values.yaml
-├── longhorn-ui/          # Authenticated Gateway route for the Longhorn UI (SecurityPolicy Basic Auth)
-│   ├── Chart.yaml
-│   ├── values.yaml           # Direct route to longhorn-frontend + SecurityPolicy
-│   ├── sandbox/values.yaml   # Matches defaults; kept for the Application valueFiles contract
-│   └── templates/
 ├── monitoring/           # Prometheus stack + Loki + exporters (prd full stack; sandbox subset)
 │   ├── apps/             # Helm chart rendering the monitoring ArgoCD Applications
 │   ├── charts/           # Local Helm charts (wrappers + HTTPRoutes + dashboards)

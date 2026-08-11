@@ -1,3 +1,0 @@
-# Sandbox currently matches the chart defaults (SecurityPolicy Basic Auth,
-# direct route to longhorn-frontend, HTTP listener). This file is kept because
-# the generated ArgoCD Application always references <env>/values.yaml.

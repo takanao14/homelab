@@ -6,10 +6,6 @@ repositories:
   - name: openebs
     url: https://openebs.github.io/openebs
   {{- end }}
-  {{- if has "longhorn" $storageProviders }}
-  - name: longhorn
-    url: https://charts.longhorn.io
-  {{- end }}
   {{- if has "nfs" $storageProviders }}
   - name: csi-driver-nfs
     url: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
@@ -35,16 +31,6 @@ releases:
     version: 4.5.1
     values:
       - values/openebs.yaml.gotmpl
-  {{- end }}
-
-  {{- if has "longhorn" $storageProviders }}
-  - name: longhorn
-    namespace: longhorn-system
-    createNamespace: true
-    chart: longhorn/longhorn
-    version: 1.12.0
-    values:
-      - values/longhorn.yaml.gotmpl
   {{- end }}
 
   {{- if has "nfs" $storageProviders }}

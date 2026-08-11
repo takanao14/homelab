@@ -17,8 +17,6 @@ apps:
     enabled: true
   homepage:
     enabled: true
-  longhorn-ui:
-    enabled: true
   monitoring:
     enabled: true
     # Staging-style subset of the shared monitoring stack. External alert

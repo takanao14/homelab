@@ -145,25 +145,3 @@
   delegate_to: localhost
   become: false
   changed_when: false
-
-# With every workload stopped, Longhorn should have detached every volume.
-# Powering nodes off while volumes are still attached is what leaves replicas
-# marked failed and forces a rebuild — or a salvage — on the way back up.
-- name: Wait for Longhorn volumes to detach
-  ansible.builtin.command:
-    argv:
-      - kubectl
-      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
-      - "--namespace={{ k8s_longhorn_namespace }}"
-      - get
-      - volumes.longhorn.io
-      - -o
-      - jsonpath={range .items[*]}{.status.state}{"\n"}{end}
-  register: k8s_longhorn_states
-  until: k8s_longhorn_states.stdout_lines | select('equalto', 'attached') | list | length == 0
-  retries: 30
-  delay: 10
-  delegate_to: localhost
-  become: false
-  changed_when: false
-  when: "'longhorn' in k8s_storage_providers"

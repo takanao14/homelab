@@ -71,7 +71,13 @@ openbao_k8s_clusters:
     # k8s-monitoring covers the Grafana admin secret read by the sandbox
     # monitoring subset (secret/k8s/monitoring/grafana). k8s-argocd-sandbox is
     # environment-scoped: read on secret/k8s/argocd/sandbox/* only.
-    policies: "k8s-external-dns,k8s-homepage,k8s-longhorn-ui,k8s-monitoring,k8s-argocd-sandbox"
+    policies: "k8s-external-dns,k8s-homepage,k8s-monitoring,k8s-argocd-sandbox"
+
+# Policies retired from the repository. Keeping the deny-list declarative makes
+# configure idempotently remove server-side policy objects that are no longer
+# written or attached to any role.
+openbao_absent_policies:
+  - k8s-longhorn-ui
 
 # Secrets to write into OpenBao KV (set via group_vars with SOPS encryption)
 # Each entry requires: path (KV path) and data (key/value pairs)
