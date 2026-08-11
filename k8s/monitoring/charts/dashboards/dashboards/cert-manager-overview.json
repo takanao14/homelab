@@ -47,7 +47,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 1
       },
@@ -103,8 +103,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 6,
         "y": 1
       },
       "repeatDirection": "h",
@@ -159,8 +159,64 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "ceil(sum(increase(certmanager_http_acme_client_request_count{cluster=~\"$cluster\",status=~\"4..|5..\"}[$__range]))) or vector(0)",
+          "legendFormat": "Errors"
+        }
+      ],
+      "title": "ACME Errors",
+      "description": "Non-2xx responses from the ACME endpoint over the dashboard time range, including Let's Encrypt rate limits. Nonzero means issuance or renewal is being rejected, well before the expiry countdown reflects it.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
         "y": 1
       },
       "repeatDirection": "h",
@@ -201,7 +257,7 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Certificates",
+      "title": "Certificates \u0026 Issuers",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -244,8 +300,8 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 10,
-        "w": 24,
+        "h": 6,
+        "w": 16,
         "x": 0,
         "y": 6
       },
@@ -420,62 +476,6 @@
       }
     },
     {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "(certmanager_certificate_expiration_timestamp_seconds{cluster=~\"$cluster\"} - time()) / 86400",
-          "legendFormat": "{{cluster}} {{exported_namespace}}/{{name}}"
-        }
-      ],
-      "title": "Days Until Expiry",
-      "description": "Certificate expiry countdown. A jump upward indicates a successful renewal.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 16
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "d",
-          "min": 0,
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "ClusterIssuers",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 24
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
       "type": "table",
       "targets": [
         {
@@ -495,9 +495,9 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 24,
-        "x": 0,
-        "y": 25
+        "w": 8,
+        "x": 16,
+        "y": 6
       },
       "repeatDirection": "h",
       "transformations": [
@@ -602,6 +602,50 @@
             ]
           }
         ]
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "(max by (cluster, exported_namespace, name) (certmanager_certificate_expiration_timestamp_seconds{cluster=~\"$cluster\"}) - time()) / 86400",
+          "legendFormat": "{{cluster}} {{exported_namespace}}/{{name}}"
+        }
+      ],
+      "title": "Days Until Expiry",
+      "description": "Certificate expiry countdown. A jump upward indicates a successful renewal; below zero the certificate has already expired.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "d",
+          "custom": {
+            "axisSoftMin": 0
+          }
+        },
+        "overrides": []
       }
     }
   ],
