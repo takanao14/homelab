@@ -23,7 +23,7 @@ layout:
     columns: 2
   Monitoring:
     style: row
-    columns: 4
+    columns: 5
   Development:
     style: row
     columns: 4

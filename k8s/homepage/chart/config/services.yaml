@@ -153,10 +153,6 @@
         icon: powerdns.png
         href: https://pdns-ui.prd.butaco.net
 
-    - Alloy:
-        icon: alloy.png
-        href: https://alloy.prd.butaco.net
-
 - Monitoring:
     - Grafana:
         icon: grafana.png
@@ -176,6 +172,10 @@
         widget:
           type: prometheus
           url: https://prometheus.prd.butaco.net
+
+    - Alloy:
+        icon: alloy.png
+        href: https://alloy.prd.butaco.net
 
     - Grafana (sandbox):
         icon: grafana.png
