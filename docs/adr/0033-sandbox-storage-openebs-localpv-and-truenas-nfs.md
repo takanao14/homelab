@@ -1,6 +1,6 @@
 # ADR-0033: Use OpenEBS LocalPV and TrueNAS NFS for sandbox storage
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-11
 - **Related:** [ADR-0009](0009-longhorn-ui-exposed-through-authenticated-gateway-route.md),
   [ADR-0013](0013-truenas-nfs-for-proxmox-shared-images.md),
@@ -49,10 +49,9 @@ warning on the temporary NFS-backed sandbox PVC. Recreate the disposable PVC
 on OpenEBS without copying its metrics. Use NFS only for workloads whose
 storage engines support it, especially explicit RWX consumers.
 
-After no Longhorn volumes remain, remove Longhorn, its UI route, its OpenBao
-policy, and all provider-specific lifecycle logic. During the validation window
-Longhorn and NFS coexist; install OpenEBS and verify the replacement PVC before
-uninstalling Longhorn.
+Longhorn, its UI route, its OpenBao policy, and all provider-specific lifecycle
+logic are removed after OpenEBS and NFS validation. The uninstall follows the
+Longhorn 1.12 procedure only after no Longhorn PVC, PV, or volume remains.
 
 Keep prd on OpenEBS LocalPV. Adding NFS to prd is a later decision based on
 sandbox operating experience, performance of large model caches, monitoring
@@ -89,10 +88,15 @@ durability, and acceptance of the TrueNAS/Proxmox failure domain.
   workloads. Planned shutdown must stop those workloads and release mounts
   before stopping TrueNAS; startup must verify a real NFS mount before restoring
   them.
+- The startup mount probe runs as a temporary Kubernetes Pod with an inline NFS
+  volume. A host-side mount would require interactive sudo immediately after a
+  reboot, making unattended recovery depend on a vanished sudo timestamp.
+- The startup mount probe runs as a temporary Kubernetes Pod with an inline NFS
+  volume. A host-side mount would require interactive sudo immediately after a
+  reboot, making unattended recovery depend on a vanished sudo timestamp.
 - Requested PVC capacity is not a per-PVC TrueNAS quota. Dataset capacity,
   snapshots, replication, alerts, and recovery tests are separate TrueNAS
   responsibilities.
-- Longhorn remains installed only for the migration window. This ADR becomes
-  Accepted after the NFS export and CSI path are validated, OpenEBS is the
-  default class, and Prometheus is migrated to OpenEBS; ADR-0009 is then
-  superseded by this ADR.
+- Longhorn is fully removed after the NFS export and CSI path are validated,
+  OpenEBS becomes the default class, and Prometheus is migrated to OpenEBS.
+  ADR-0009 is superseded by this ADR.

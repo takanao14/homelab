@@ -1,21 +1,72 @@
 ---
-# Prove that the configured export is usable, not merely that the TrueNAS VM
-# or TCP port is up. The temporary read-only mount is always removed.
-- name: Probe the NFS export with a real mount
-  become: true
-  ansible.builtin.shell:
-    executable: /bin/bash
-    cmd: |
-      set -euo pipefail
-      probe_dir=$(mktemp -d /tmp/k8s-nfs-probe.XXXXXX)
-      cleanup() {
-        if mountpoint -q "$probe_dir"; then
-          umount "$probe_dir"
-        fi
-        rmdir "$probe_dir"
-      }
-      trap cleanup EXIT
-      timeout 30 mount -t nfs -o ro,vers=4.1,hard \
-        "{{ k8s_nfs_server }}:{{ k8s_nfs_share }}" "$probe_dir"
-      stat "$probe_dir" >/dev/null
-  changed_when: false
+# Prove that kubelet can mount the configured export before application
+# workloads are restored. Running the probe as a temporary Pod avoids relying
+# on an SSH sudo timestamp after every node has just rebooted.
+
+- name: Probe the NFS export through kubelet
+  block:
+    - name: Create the NFS readiness probe Pod
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+          - apply
+          - -f
+          - "-"
+        stdin: |
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: nfs-readiness-probe
+            namespace: kube-system
+          spec:
+            restartPolicy: Never
+            containers:
+              - name: probe
+                image: busybox:stable
+                command:
+                  - sh
+                  - -c
+                  - test -d /mnt/nfs && stat /mnt/nfs >/dev/null
+                volumeMounts:
+                  - name: nfs
+                    mountPath: /mnt/nfs
+                    readOnly: true
+            volumes:
+              - name: nfs
+                nfs:
+                  server: {{ k8s_nfs_server }}
+                  path: {{ k8s_nfs_share }}
+                  readOnly: true
+      delegate_to: localhost
+      become: false
+      changed_when: true
+
+    - name: Wait for the NFS readiness probe to succeed
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+          - --namespace=kube-system
+          - wait
+          - --for=jsonpath={.status.phase}=Succeeded
+          - pod/nfs-readiness-probe
+          - --timeout=120s
+      delegate_to: localhost
+      become: false
+      changed_when: false
+
+  always:
+    - name: Delete the NFS readiness probe Pod
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+          - --namespace=kube-system
+          - delete
+          - pod/nfs-readiness-probe
+          - --ignore-not-found
+          - --wait=false
+      delegate_to: localhost
+      become: false
+      changed_when: true
