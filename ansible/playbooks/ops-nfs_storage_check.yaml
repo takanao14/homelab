@@ -1,0 +1,34 @@
+---
+# Pre-deployment validation for an NFS export. This creates a uniquely named
+# probe file per node, verifies it reached stable storage, and removes it.
+- name: Validate the NFS export from every enabled cluster node
+  hosts: prd_k8s:sandbox_k8s
+  any_errors_fatal: true
+  tasks:
+    - name: Mount, write, fsync, read, and unmount the NFS export
+      become: true
+      ansible.builtin.shell:
+        executable: /bin/bash
+        cmd: |
+          set -euo pipefail
+          probe_dir=$(mktemp -d /tmp/k8s-nfs-rw-probe.XXXXXX)
+          probe_file="$probe_dir/.probe-{{ inventory_hostname }}"
+          cleanup() {
+            if mountpoint -q "$probe_dir"; then
+              rm -f "$probe_file"
+              umount "$probe_dir"
+            fi
+            rmdir "$probe_dir"
+          }
+          trap cleanup EXIT
+          timeout 30 mount -t nfs -o rw,vers=4.1,hard \
+            "{{ k8s_nfs_server }}:{{ k8s_nfs_share }}" "$probe_dir"
+          if ! printf '%s\n' '{{ inventory_hostname }}' > "$probe_file"; then
+            echo "NFS write failed; check root mapping and dataset permissions:" >&2
+            stat -c 'owner=%U group=%G mode=%a path=%n' "$probe_dir" >&2
+            exit 1
+          fi
+          sync -f "$probe_file"
+          test "$(cat "$probe_file")" = '{{ inventory_hostname }}'
+      changed_when: false
+      when: "'nfs' in k8s_storage_providers"

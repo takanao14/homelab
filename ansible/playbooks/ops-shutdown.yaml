@@ -35,6 +35,16 @@
     - name: Scale workloads down and wait for storage to release
       ansible.builtin.import_tasks: tasks/k8s_workload_stop.yaml
 
+- name: Verify sandbox NFS mounts are released
+  hosts: sandbox_k8s
+  gather_facts: false
+  any_errors_fatal: true
+  tags: workloads
+  tasks:
+    - name: Confirm the NFS export has no active mounts
+      ansible.builtin.import_tasks: tasks/k8s_nfs_mounts_released.yaml
+      when: "'nfs' in k8s_storage_providers"
+
 # Workers before the controller: stopping the controller first would strand the
 # remaining nodes without an API server. Each node is stopped cleanly and then
 # powered off — these are guests like any other, and leaving the VMs up would
@@ -81,6 +91,16 @@
   tasks:
     - name: Scale workloads down and wait for storage to release
       ansible.builtin.import_tasks: tasks/k8s_workload_stop.yaml
+
+- name: Verify prd NFS mounts are released
+  hosts: prd_k8s
+  gather_facts: false
+  any_errors_fatal: true
+  tags: workloads
+  tasks:
+    - name: Confirm the NFS export has no active mounts
+      ansible.builtin.import_tasks: tasks/k8s_nfs_mounts_released.yaml
+      when: "'nfs' in k8s_storage_providers"
 
 - name: Stop and power off prd k0s workers
   hosts: prd_k8s_worker

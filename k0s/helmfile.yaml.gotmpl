@@ -1,13 +1,18 @@
-{{- $storage := env "K0S_STORAGE_PROVIDER" | default "openebs" }}
+{{- $storageProviders := env "K0S_STORAGE_PROVIDERS" | default "openebs" | splitList "," }}
 {{- $gpuEnabled := ne (env "K0S_GPU_WORKER_ADDRESSES") "" }}
 
 repositories:
-  {{- if eq $storage "openebs" }}
+  {{- if has "openebs" $storageProviders }}
   - name: openebs
     url: https://openebs.github.io/openebs
-  {{- else if eq $storage "longhorn" }}
+  {{- end }}
+  {{- if has "longhorn" $storageProviders }}
   - name: longhorn
     url: https://charts.longhorn.io
+  {{- end }}
+  {{- if has "nfs" $storageProviders }}
+  - name: csi-driver-nfs
+    url: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
   {{- end }}
   {{- if $gpuEnabled }}
   - name: amd-gpu
@@ -22,22 +27,33 @@ releases:
     values:
       - values/cilium.yaml.gotmpl
 
-  {{- if eq $storage "openebs" }}
+  {{- if has "openebs" $storageProviders }}
   - name: openebs
     namespace: openebs
     createNamespace: true
     chart: openebs/openebs
     version: 4.5.1
     values:
-      - values/openebs.yaml
-  {{- else if eq $storage "longhorn" }}
+      - values/openebs.yaml.gotmpl
+  {{- end }}
+
+  {{- if has "longhorn" $storageProviders }}
   - name: longhorn
     namespace: longhorn-system
     createNamespace: true
     chart: longhorn/longhorn
     version: 1.12.0
     values:
-      - values/longhorn.yaml
+      - values/longhorn.yaml.gotmpl
+  {{- end }}
+
+  {{- if has "nfs" $storageProviders }}
+  - name: csi-driver-nfs
+    namespace: kube-system
+    chart: csi-driver-nfs/csi-driver-nfs
+    version: 4.13.4
+    values:
+      - values/nfs.yaml.gotmpl
   {{- end }}
 
   {{- if $gpuEnabled }}

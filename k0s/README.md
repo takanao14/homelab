@@ -17,7 +17,7 @@ k0s/
 ├── create_cluster.sh              # Entry point: ./create_cluster.sh <env> <command>
 ├── remove-known-hosts.sh          # Remove stale SSH host keys for every node in an environment
 ├── template_lib.sh                # Shared library: k0sctl config generation and cluster management logic
-├── helmfile.yaml.gotmpl           # Default Helm release definitions (cilium / openebs or longhorn / cilium-config)
+├── helmfile.yaml.gotmpl           # Helm releases (Cilium, enabled storage providers, device plugin)
 ├── env/
 │   ├── prd.sh                     # Prd non-secret variables (committed)
 │   └── sandbox.sh                 # Sandbox non-secret variables (committed)
@@ -27,8 +27,9 @@ k0s/
 │   ├── amd-device-plugin.yaml     # AMD GPU Device Plugin Helm values
 │   ├── cilium.yaml.gotmpl         # Cilium Helm values
 │   ├── cilium-config.yaml.gotmpl  # cilium-config Helm values (IP pool range)
-│   ├── openebs.yaml               # OpenEBS Helm values
-│   └── longhorn.yaml              # Longhorn Helm values
+│   ├── openebs.yaml.gotmpl        # OpenEBS Helm values and default-class selection
+│   ├── longhorn.yaml.gotmpl       # Longhorn Helm values and default-class selection
+│   └── nfs.yaml.gotmpl            # NFS CSI StorageClass and Helm values
 ├── hook/
 │   ├── ssdsetup.sh                # Format and mount SSD on worker node
 │   └── mirror.sh                  # Configure containerd docker.io mirror
@@ -49,7 +50,10 @@ Cluster topology and non-secret settings live in `env/` files. `K0S_SSH_USER` ca
 | `K0S_GPU_WORKER_ADDRESSES` | Comma-separated GPU worker IP addresses (optional; omit for no GPU workers) |
 | `K0S_LB_POOL` | Cilium LoadBalancer IP pool range (`start,stop`) |
 | `K0S_VERSION` | k0s version to install (optional; omits `version:` if unset) |
-| `K0S_STORAGE_PROVIDER` | Storage CSI to deploy: `openebs` (default) or `longhorn` |
+| `K0S_STORAGE_PROVIDERS` | Comma-separated storage providers to deploy: `openebs`, `longhorn`, and/or `nfs` |
+| `K0S_DEFAULT_STORAGE_CLASS` | The single default class: `openebs-hostpath`, `longhorn`, or `nfs`; its provider must be enabled |
+| `K0S_NFS_SERVER` | NFS server IP or name; required when `nfs` is enabled |
+| `K0S_NFS_SHARE` | Absolute NFS export path; required when `nfs` is enabled |
 
 ### Optional shell variables
 
@@ -75,6 +79,7 @@ K0S_SSH_USER=ubuntu ./create_cluster.sh prd config
 | `reset` | Reset the cluster: k0sctl reset |
 | `kubeconfig` | Write kubeconfig to `~/.kube/<env>.yaml` |
 | `helmfile` | Apply Helmfile only (requires kubeconfig to exist) |
+| `smoke-test` | Test networking, the default PVC class, and each enabled explicit storage test |
 | `config` | Print the bootstrap k0sctl config to stdout (dry-run inspection) |
 | `upgrade-config` | Print the upgrade k0sctl config to stdout (dry-run inspection) |
 
@@ -112,7 +117,7 @@ Ready nodes before installing Cilium would deadlock the initial build.
 `upgrade` is intentionally separate and requires an existing kubeconfig. It
 uses the following safety controls:
 
-- verifies that all nodes, Cilium, and the selected storage provider are healthy
+- verifies that all nodes, Cilium, and every enabled storage provider are healthy
   before changing any host;
 - enables k0sctl's per-worker Ready wait;
 - limits worker disruption to 10 percent and sets the drain timeout to 20
@@ -121,8 +126,16 @@ uses the following safety controls:
 - repeats node and storage health checks after k0sctl and Helmfile complete.
 
 For Longhorn, every volume must report `healthy`. For OpenEBS, all pods in the
-`openebs` namespace must be Ready. Do not use `upgrade` to create a new cluster,
+`openebs` namespace must be Ready. For NFS, the CSI controller Deployment and
+node DaemonSet must complete rollout. The workflow also refuses to run when the
+cluster already has multiple default StorageClasses and verifies the configured
+default after Helmfile completes. Do not use `upgrade` to create a new cluster,
 and do not bypass a failed storage check with `--no-drain`.
+
+When NFS is enabled, `smoke-test` also creates an explicit `nfs` RWX claim and
+verifies data after a pod remount. The StorageClass uses `Retain`; cleanup
+deletes the released PV object but deliberately leaves the temporary directory
+on TrueNAS so retention can be inspected and reclaimed there.
 
 When cluster VMs are recreated with the same IP addresses, run
 `remove-known-hosts.sh` before `create_cluster.sh bootstrap`. The script reads all
@@ -135,6 +148,8 @@ different file.
 
 - **Datastore**: kine (single controller) or etcd (multiple controllers — count must be odd for quorum); selected automatically based on `K0S_CONTROLLER_ADDRESSES`
 - **CNI**: Cilium v1.19.x (kube-proxy disabled, L2 LoadBalancer; ingress/Gateway API controllers disabled — shared ingress is Envoy Gateway, ArgoCD-managed, see ADR-0011). Workers are labeled `homelab/l2-segment=<first-three-IP-octets>` by k0s install flags and re-synced before Helmfile runs, so L2 announcements only run on nodes in the LoadBalancer pool's segment.
-- **Storage CSI**: OpenEBS v4.5.1 LocalPV or Longhorn v1.12.0 — selected via `K0S_STORAGE_PROVIDER`; both use SSD mounted at `/srv/storage/volume`
+- **Storage CSI**: any configured combination of OpenEBS v4.5.1 LocalPV,
+  Longhorn v1.12.0, and NFS CSI v4.13.4. Local providers use the SSD mounted at
+  `/srv/storage/volume`; NFS uses the environment-specific external export.
 - **GPU**: AMD GPU Device Plugin (enabled when `K0S_GPU_WORKER_ADDRESSES` is set; GPU workers are labeled `gpu=amd` and tainted `gpu=amd:NoSchedule`)
 - **CoreDNS**: Replica count is calculated automatically by k0s from the number of Linux nodes. When GPU workers are configured, `template_lib.sh` adds a CoreDNS-only toleration for `gpu=amd:NoSchedule`, allowing CoreDNS replicas to be distributed across standard and GPU workers without making other workloads eligible for GPU workers.

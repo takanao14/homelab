@@ -13,10 +13,18 @@ fail() { echo -e "${RED}✗ FAIL${NC} $*"; FAILURES=$((FAILURES + 1)); }
 info() { echo -e "${YELLOW}→${NC} $*" >&2; }
 
 FAILURES=0
+NFS_SMOKE_PV=""
 
+# Invoked indirectly by the EXIT trap below.
+# shellcheck disable=SC2329
 cleanup() {
     info "Cleaning up smoke-test namespace..."
     kubectl delete namespace smoke-test --ignore-not-found --timeout=60s || true
+    if [[ -n "$NFS_SMOKE_PV" ]]; then
+        # The nfs class intentionally uses Retain. Remove only the released
+        # Kubernetes object; its directory remains on TrueNAS for inspection.
+        kubectl delete "persistentvolume/${NFS_SMOKE_PV}" --ignore-not-found || true
+    fi
 }
 trap cleanup EXIT
 
@@ -167,6 +175,33 @@ if wait_job_complete "smoke-pvc-persist" "smoke-test" 60; then
     fi
 else
     fail "PVC Persistence: verification job did not complete"
+fi
+
+# ── test: explicit NFS StorageClass ──────────────────────────────────────────
+
+if [[ ",${K0S_STORAGE_PROVIDERS:-openebs}," == *",nfs,"* ]]; then
+    info "--- Test: NFS PVC (explicit non-default StorageClass) ---"
+    kubectl apply -f "$SCRIPT_DIR/nfs-pvc.yaml"
+    kubectl wait pvc/smoke-nfs-pvc -n smoke-test \
+        --for=jsonpath='{.status.phase}'=Bound \
+        --timeout=120s
+    NFS_SMOKE_PV="$(kubectl get pvc/smoke-nfs-pvc -n smoke-test -o jsonpath='{.spec.volumeName}')"
+
+    if wait_job_complete "smoke-nfs-write" "smoke-test" 60; then
+        kubectl apply -f "$SCRIPT_DIR/nfs-pvc-read-job.yaml"
+        if wait_job_complete "smoke-nfs-read" "smoke-test" 60; then
+            ACTUAL=$(get_job_log "smoke-nfs-read" "smoke-test" | tr -d '[:space:]')
+            if [[ "$ACTUAL" == "nfs-smoke-test-ok" ]]; then
+                pass "NFS PVC: explicit nfs class supports RWX write and remount"
+            else
+                fail "NFS PVC: expected 'nfs-smoke-test-ok', got '${ACTUAL}'"
+            fi
+        else
+            fail "NFS PVC: read job did not complete"
+        fi
+    else
+        fail "NFS PVC: write job did not complete"
+    fi
 fi
 
 # ── summary ───────────────────────────────────────────────────────────────────

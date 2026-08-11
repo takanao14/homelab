@@ -32,7 +32,11 @@
       - "{{ k8s_storage_mountpoint }}"
   become: true
   changed_when: false
-  when: k8s_storage_provider == "openebs"
+  when: "'openebs' in k8s_storage_providers"
+
+- name: Verify the NFS export is mountable from this node
+  ansible.builtin.import_tasks: k8s_nfs_ready.yaml
+  when: "'nfs' in k8s_storage_providers"
 
 - name: Uncordon node
   ansible.builtin.command:
@@ -70,4 +74,4 @@
   delegate_to: localhost
   become: false
   changed_when: false
-  when: k8s_storage_provider == "longhorn"
+  when: "'longhorn' in k8s_storage_providers"

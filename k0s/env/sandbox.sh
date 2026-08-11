@@ -3,4 +3,8 @@ export K0S_VERSION=v1.36.3+k0s.1
 export K0S_CONTROLLER_ADDRESSES=192.168.20.31
 export K0S_WORKER_ADDRESSES=192.168.20.32,192.168.20.33,192.168.20.34
 export K0S_LB_POOL=192.168.20.128,192.168.20.254
-export K0S_STORAGE_PROVIDER=longhorn # openebs | longhorn
+# Migration stage: keep Longhorn as the only default while NFS is validated.
+export K0S_STORAGE_PROVIDERS=longhorn,nfs
+export K0S_DEFAULT_STORAGE_CLASS=longhorn
+export K0S_NFS_SERVER=192.168.20.10
+export K0S_NFS_SHARE=/mnt/tank1/kubernetes/sandbox

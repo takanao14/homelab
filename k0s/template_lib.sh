@@ -87,6 +87,59 @@ preflight() {
             exit 1
         fi
     done
+
+    validate_storage_config
+}
+
+validate_storage_config() {
+    local providers="${K0S_STORAGE_PROVIDERS:-openebs}"
+    local default_class="${K0S_DEFAULT_STORAGE_CLASS:-openebs-hostpath}"
+    local provider expected_provider seen=","
+    local -a provider_list
+
+    if [[ "$providers" =~ [[:space:]] ]] || [[ "$providers" == ,* ]] ||
+       [[ "$providers" == *, ]] || [[ "$providers" == *,,* ]]; then
+        log_error "K0S_STORAGE_PROVIDERS must be a comma-separated list without spaces or empty entries: '$providers'"
+        return 1
+    fi
+
+    IFS=',' read -ra provider_list <<< "$providers"
+    for provider in "${provider_list[@]}"; do
+        case "$provider" in
+            openebs|longhorn|nfs) ;;
+            *)
+                log_error "Unsupported storage provider in K0S_STORAGE_PROVIDERS: '$provider'"
+                return 1
+                ;;
+        esac
+        if [[ "$seen" == *",${provider},"* ]]; then
+            log_error "Duplicate storage provider in K0S_STORAGE_PROVIDERS: '$provider'"
+            return 1
+        fi
+        seen+="${provider},"
+    done
+
+    case "$default_class" in
+        openebs-hostpath) expected_provider=openebs ;;
+        longhorn) expected_provider=longhorn ;;
+        nfs) expected_provider=nfs ;;
+        *)
+            log_error "Unsupported K0S_DEFAULT_STORAGE_CLASS: '$default_class'"
+            return 1
+            ;;
+    esac
+    if [[ ",$providers," != *",${expected_provider},"* ]]; then
+        log_error "Default StorageClass '$default_class' requires provider '$expected_provider'"
+        return 1
+    fi
+
+    if [[ ",$providers," == *",nfs,"* ]]; then
+        validate_vars K0S_NFS_SERVER K0S_NFS_SHARE
+        if [[ "${K0S_NFS_SHARE}" != /* ]]; then
+            log_error "K0S_NFS_SHARE must be an absolute export path"
+            return 1
+        fi
+    fi
 }
 
 # ── k0sctl configuration ──────────────────────────────────────────────────────
@@ -453,21 +506,50 @@ wait_for_openebs_ready() {
     log_success "OpenEBS pods are Ready"
 }
 
-wait_for_storage_ready() {
+wait_for_nfs_ready() {
     local timeout_seconds="${1:-300}"
 
-    case "${K0S_STORAGE_PROVIDER:-openebs}" in
-        longhorn)
-            wait_for_longhorn_ready "$timeout_seconds"
-            ;;
-        openebs)
-            wait_for_openebs_ready "$timeout_seconds"
-            ;;
-        *)
-            log_error "Unsupported K0S_STORAGE_PROVIDER: '${K0S_STORAGE_PROVIDER:-}'"
-            return 1
-            ;;
-    esac
+    log_info "Waiting for NFS CSI controller and node plugin to be Ready..."
+    kubectl -n kube-system rollout status deployment/csi-nfs-controller \
+        --timeout="${timeout_seconds}s"
+    kubectl -n kube-system rollout status daemonset/csi-nfs-node \
+        --timeout="${timeout_seconds}s"
+    log_success "NFS CSI pods are Ready"
+}
+
+wait_for_storage_ready() {
+    local timeout_seconds="${1:-300}"
+    local provider
+    local -a provider_list
+
+    IFS=',' read -ra provider_list <<< "${K0S_STORAGE_PROVIDERS:-openebs}"
+    for provider in "${provider_list[@]}"; do
+        case "$provider" in
+            longhorn) wait_for_longhorn_ready "$timeout_seconds" ;;
+            openebs) wait_for_openebs_ready "$timeout_seconds" ;;
+            nfs) wait_for_nfs_ready "$timeout_seconds" ;;
+        esac
+    done
+}
+
+check_default_storage_classes() {
+    local expected="${1:-}"
+    local defaults
+
+    defaults="$(
+        kubectl get storageclass --request-timeout=10s \
+            -o 'custom-columns=NAME:.metadata.name,DEFAULT:.metadata.annotations.storageclass\.kubernetes\.io/is-default-class' \
+            --no-headers | awk '$2 == "true" { print $1 }'
+    )"
+    if [[ "$(wc -l <<< "$defaults" | tr -d ' ')" -gt 1 ]]; then
+        log_error "Multiple default StorageClasses are configured:"
+        printf '%s\n' "$defaults" >&2
+        return 1
+    fi
+    if [[ -n "$expected" && "$defaults" != "$expected" ]]; then
+        log_error "Expected default StorageClass '$expected', found '${defaults:-none}'"
+        return 1
+    fi
 }
 
 check_existing_cluster_health() {
@@ -490,6 +572,11 @@ helmfile_apply() {
     base_dir="$(dirname "$helmfile_file")"
     log_info "Using KUBECONFIG: ${KUBECONFIG:-unknown}"
 
+    # Refuse to compound an already-invalid cluster state. A deliberate
+    # default-class switch first removes the old default annotation, then runs
+    # this workflow with zero current defaults.
+    check_default_storage_classes
+
     sync_worker_l2_labels
 
     # Phase 1: install Cilium first so its CRDs exist before other releases are diffed.
@@ -507,6 +594,7 @@ helmfile_apply() {
     # Phase 2: apply everything; CRDs are guaranteed to exist at this point.
     log_info "Running: helmfile apply (phase 2: all releases)"
     helmfile -f "$helmfile_file" apply
+    check_default_storage_classes "$K0S_DEFAULT_STORAGE_CLASS"
 }
 
 # ── gateway API CRDs ──────────────────────────────────────────────────────────

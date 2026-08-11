@@ -24,3 +24,5 @@
   import_playbook: common-unattended_upgrades.yaml
 - name: Baseline - node exporter
   import_playbook: common-node_exporter.yaml
+- name: Baseline - Kubernetes storage clients
+  import_playbook: common-k8s-storage-client.yaml

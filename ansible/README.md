@@ -72,9 +72,11 @@ ansible/
 │   ├── common-chrony.yaml
 │   ├── common-apt_mirror.yaml
 │   ├── common-unattended_upgrades.yaml
+│   ├── common-k8s-storage-client.yaml  # client packages for enabled k0s storage providers
 │   ├── common-maintenance_user.yaml
 │   ├── common-users.yaml
 │   ├── ops-package_upgrade.yaml        # day-2 / operational (ops- prefix)
+│   ├── ops-nfs_storage_check.yaml      # NFS mount/read-write/fsync validation
 │   ├── ops-version_audit.yaml          # read-only desired vs installed version audit
 │   ├── ops-pdns_sync.yaml
 │   ├── ops-openbao_bootstrap.yaml
@@ -150,8 +152,8 @@ Host hygiene is applied at host bring-up, before services, via `bootstrap.yaml`
 
 ```bash
 # 1. Baseline a freshly created host (apt_mirror first, then timezone, chrony,
-#    unattended_upgrades, node_exporter). Per-play host patterns + --limit select
-#    the applicable subset automatically.
+#    unattended_upgrades, node_exporter, k0s storage clients). Per-play host
+#    patterns + --limit select the applicable subset automatically.
 ansible-playbook playbooks/bootstrap.yaml --limit <newhost>
 
 # 2. Deploy the service onto the baselined host.
@@ -428,9 +430,11 @@ the decision behind the rebuild registration flow.
 | `common-chrony.yaml` | `all:!lxc:!power_only` | cross-cutting |
 | `common-apt_mirror.yaml` | `all:!power_only` | cross-cutting |
 | `common-unattended_upgrades.yaml` | `all:!proxmox:!power_only` | cross-cutting |
+| `common-k8s-storage-client.yaml` | `prd_k8s:sandbox_k8s` | cross-cutting |
 | `common-maintenance_user.yaml` | `lxc` | cross-cutting |
 | `common-users.yaml` | `shared_vms` | cross-cutting |
 | `ops-package_upgrade.yaml` | `dns` (serial), k0s workers (serial, drained), k0s controllers (serial), then `all:!proxmox:!dns:!power_only:!prd_k8s:!sandbox_k8s` | ops |
+| `ops-nfs_storage_check.yaml` | `prd_k8s:sandbox_k8s` (only clusters with NFS enabled) | ops |
 | `ops-shutdown.yaml` | `k8s_controller`, `k8s_worker`, `guest_shutdown_order`, `proxmox_shutdown_order` | ops (planned outage) |
 | `ops-startup.yaml` | `proxmox`, `guest_shutdown_order` (reversed), `k8s_controller` | ops (planned outage) |
 | `ops-version_audit.yaml` | `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `dns_resolver`, `seaweedfs`, `openbao`, `gpuvm` | ops |

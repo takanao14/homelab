@@ -13,5 +13,5 @@ alloy:
   enabled: false
 localpv-provisioner:
   hostpathClass:
-    isDefaultClass: true
+    isDefaultClass: {{ eq (env "K0S_DEFAULT_STORAGE_CLASS") "openebs-hostpath" }}
     basePath: "/srv/storage/volume"

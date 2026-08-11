@@ -75,3 +75,4 @@ deleting it:
 | [0030](0030-in-house-full-service-resolver.md) | Run Knot Resolver 6 in dedicated resolver containers | Accepted |
 | [0031](0031-browser-editor-on-relocated-toolbox-vm.md) | Run a browser editor on toolbox1, relocated to pve | Proposed |
 | [0032](0032-reboot-and-planned-shutdown-orchestration.md) | Orchestrate reboots and planned shutdowns from Ansible | Accepted |
+| [0033](0033-sandbox-storage-openebs-localpv-and-truenas-nfs.md) | Use OpenEBS LocalPV and TrueNAS NFS for sandbox storage | Proposed |

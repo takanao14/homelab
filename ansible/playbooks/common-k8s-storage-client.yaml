@@ -1,0 +1,16 @@
+---
+# Host packages required by enabled Kubernetes storage providers. Keep this
+# separate from cluster bootstrap: k0sctl owns k0s, while Ansible owns the OS.
+- name: Install Kubernetes storage client packages
+  hosts: prd_k8s:sandbox_k8s
+  any_errors_fatal: true
+  tasks:
+    - name: Install NFS client utilities
+      become: true
+      ansible.builtin.apt:
+        name: nfs-common
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      when: "'nfs' in k8s_storage_providers"
+      tags: nfs

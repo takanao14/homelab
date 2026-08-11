@@ -1,0 +1,17 @@
+---
+- name: List mounts from the cluster NFS export
+  ansible.builtin.command:
+    argv:
+      - findmnt
+      - --raw
+      - --noheadings
+      - --types
+      - nfs,nfs4
+      - --output
+      - SOURCE,TARGET
+  register: k8s_nfs_mounts
+  changed_when: false
+  failed_when: >-
+    k8s_nfs_mounts.stdout_lines
+    | select('match', '^' ~ (k8s_nfs_server | regex_escape) ~ ':' ~ (k8s_nfs_share | regex_escape) ~ '(/| |$)')
+    | list | length > 0

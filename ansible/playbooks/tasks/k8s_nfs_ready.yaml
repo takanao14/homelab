@@ -1,0 +1,21 @@
+---
+# Prove that the configured export is usable, not merely that the TrueNAS VM
+# or TCP port is up. The temporary read-only mount is always removed.
+- name: Probe the NFS export with a real mount
+  become: true
+  ansible.builtin.shell:
+    executable: /bin/bash
+    cmd: |
+      set -euo pipefail
+      probe_dir=$(mktemp -d /tmp/k8s-nfs-probe.XXXXXX)
+      cleanup() {
+        if mountpoint -q "$probe_dir"; then
+          umount "$probe_dir"
+        fi
+        rmdir "$probe_dir"
+      }
+      trap cleanup EXIT
+      timeout 30 mount -t nfs -o ro,vers=4.1,hard \
+        "{{ k8s_nfs_server }}:{{ k8s_nfs_share }}" "$probe_dir"
+      stat "$probe_dir" >/dev/null
+  changed_when: false

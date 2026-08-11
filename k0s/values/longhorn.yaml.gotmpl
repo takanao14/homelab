@@ -5,7 +5,7 @@ defaultSettings:
   defaultReplicaCount: 3
 
 persistence:
-  defaultClass: true
+  defaultClass: {{ eq (env "K0S_DEFAULT_STORAGE_CLASS") "longhorn" }}
   defaultClassReplicaCount: 3
 
 longhornUI:
