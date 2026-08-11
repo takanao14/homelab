@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/bargauge"
 	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
+	"github.com/grafana/grafana-foundation-sdk/go/gauge"
 	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
 	"github.com/grafana/grafana-foundation-sdk/go/stat"
 	"github.com/grafana/grafana-foundation-sdk/go/table"
@@ -12,6 +13,15 @@ import (
 
 // buildK8sControlPlaneOverview defines Kubernetes control-plane and DNS health.
 // It complements kubernetes-overview, which focuses on workloads and node resources.
+//
+// Range windows come in two kinds and are not interchangeable. The rate() trends
+// use $__rate_interval so the window follows the zoom: a fixed [5m] is fine at
+// the 6h default, where the step is about 30s, but breaks once the range is wide
+// enough for the step to overtake it -- at 7d the step reaches ~15m, so
+// Prometheus reads 5 minutes out of every 15 and never looks at the rest, which
+// silently drops spikes from a dashboard whose whole purpose is catching them.
+// The increase() windows in the "(5m)" and "(1h)" panels stay fixed on purpose:
+// there the interval is the quantity the panel is named for.
 func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
@@ -216,7 +226,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster, code) (rate(apiserver_request_total{` + clusterFilter + `}[5m]))`).
+					Expr(`sum by (cluster, code) (rate(apiserver_request_total{` + clusterFilter + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} {{code}}"),
 				),
 		).
@@ -231,7 +241,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`histogram_quantile(0.99, sum by (cluster, le, verb) (rate(apiserver_request_duration_seconds_bucket{` + clusterFilter + `,subresource="",verb!="WATCH"}[5m]))) and on (cluster, verb) sum by (cluster, verb) (rate(apiserver_request_duration_seconds_count{` + clusterFilter + `,subresource="",verb!="WATCH"}[5m])) > 0`).
+					Expr(`histogram_quantile(0.99, sum by (cluster, le, verb) (rate(apiserver_request_duration_seconds_bucket{` + clusterFilter + `,subresource="",verb!="WATCH"}[$__rate_interval]))) and on (cluster, verb) sum by (cluster, verb) (rate(apiserver_request_duration_seconds_count{` + clusterFilter + `,subresource="",verb!="WATCH"}[$__rate_interval])) > 0`).
 					LegendFormat("{{cluster}} {{verb}}"),
 				),
 		).
@@ -291,7 +301,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster, flow_schema, priority_level) (rate(apiserver_flowcontrol_rejected_requests_total{` + clusterFilter + `}[5m]))`).
+					Expr(`sum by (cluster, flow_schema, priority_level) (rate(apiserver_flowcontrol_rejected_requests_total{` + clusterFilter + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} {{priority_level}} {{flow_schema}}"),
 				),
 		).
@@ -306,11 +316,11 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster) (rate(apiserver_storage_decode_errors_total{` + clusterFilter + `}[5m]))`).
+					Expr(`sum by (cluster) (rate(apiserver_storage_decode_errors_total{` + clusterFilter + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} decode errors"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster) (rate(apiserver_storage_data_key_generation_failures_total{` + clusterFilter + `}[5m]))`).
+					Expr(`sum by (cluster) (rate(apiserver_storage_data_key_generation_failures_total{` + clusterFilter + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} key generation failures"),
 				),
 		).
@@ -326,7 +336,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`histogram_quantile(0.99, sum by (cluster, le, operation) (rate(etcd_request_duration_seconds_bucket{` + clusterFilter + `}[5m])))`).
+					Expr(`histogram_quantile(0.99, sum by (cluster, le, operation) (rate(etcd_request_duration_seconds_bucket{` + clusterFilter + `}[$__rate_interval])))`).
 					LegendFormat("{{cluster}} {{operation}}"),
 				),
 		).
@@ -341,7 +351,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster, operation) (rate(etcd_request_duration_seconds_count{` + clusterFilter + `}[5m]))`).
+					Expr(`sum by (cluster, operation) (rate(etcd_request_duration_seconds_count{` + clusterFilter + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} {{operation}}"),
 				),
 		).
@@ -356,7 +366,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster, operation) (rate(etcd_request_errors_total{` + clusterFilter + `}[5m]))`).
+					Expr(`sum by (cluster, operation) (rate(etcd_request_errors_total{` + clusterFilter + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} {{operation}}"),
 				),
 		).
@@ -468,7 +478,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster, rcode) (rate(coredns_dns_responses_total{` + clusterFilter + `}[5m]))`).
+					Expr(`sum by (cluster, rcode) (rate(coredns_dns_responses_total{` + clusterFilter + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} {{rcode}}"),
 				),
 		).
@@ -482,7 +492,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(coredns_dns_request_duration_seconds_bucket{` + clusterFilter + `}[5m])))`).
+					Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(coredns_dns_request_duration_seconds_bucket{` + clusterFilter + `}[$__rate_interval])))`).
 					LegendFormat("{{cluster}} p99"),
 				),
 		).
@@ -497,7 +507,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster) (rate(coredns_cache_hits_total{` + clusterFilter + `}[5m])) / clamp_min(sum by (cluster) (rate(coredns_cache_requests_total{` + clusterFilter + `}[5m])), 1e-9)`).
+					Expr(`sum by (cluster) (rate(coredns_cache_hits_total{` + clusterFilter + `}[$__rate_interval])) / clamp_min(sum by (cluster) (rate(coredns_cache_requests_total{` + clusterFilter + `}[$__rate_interval])), 1e-9)`).
 					LegendFormat("{{cluster}} hit ratio"),
 				),
 		).
@@ -511,7 +521,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`histogram_quantile(0.99, sum by (cluster, le, proxy_name, to) (rate(coredns_proxy_request_duration_seconds_bucket{` + clusterFilter + `}[5m])))`).
+					Expr(`histogram_quantile(0.99, sum by (cluster, le, proxy_name, to) (rate(coredns_proxy_request_duration_seconds_bucket{` + clusterFilter + `}[$__rate_interval])))`).
 					LegendFormat("{{cluster}} {{proxy_name}} {{to}}"),
 				),
 		).
@@ -519,7 +529,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			bargauge.NewPanelBuilder().
 				Title("Unschedulable Pods by Namespace").
-				Description("Pods currently marked unschedulable, grouped by namespace.").
+				Description("Pods currently marked unschedulable, grouped by namespace. Empty is good: kube-state-metrics only emits this series while a pod is actually unschedulable, so nothing to show means nothing is stuck.").
 				Datasource(ds).
 				Span(8).Height(8).
 				Unit("short").
@@ -553,7 +563,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			table.NewPanelBuilder().
 				Title("Container Waiting Reasons").
-				Description("Containers currently waiting, grouped by reason.").
+				Description("Containers currently waiting, grouped by reason. Empty is good: the reason label only exists while a container is waiting, so an empty table means every container is past that state.").
 				Datasource(ds).
 				Span(8).Height(8).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -590,7 +600,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			table.NewPanelBuilder().
 				Title("Failed Jobs").
-				Description("Jobs with one or more failed pods.").
+				Description("Jobs with one or more failed pods. Empty is good, and stays empty while the cluster runs no Jobs at all -- kube_job_* series exist only per Job object.").
 				Datasource(ds).
 				Span(24).Height(9).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -634,7 +644,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster, result) (rate(scheduler_schedule_attempts_total{` + clusterFilter + `}[5m]))`).
+					Expr(`sum by (cluster, result) (rate(scheduler_schedule_attempts_total{` + clusterFilter + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} {{result}}"),
 				),
 		).
@@ -664,7 +674,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(scheduler_scheduling_attempt_duration_seconds_bucket{` + clusterFilter + `}[5m])))`).
+					Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(scheduler_scheduling_attempt_duration_seconds_bucket{` + clusterFilter + `}[$__rate_interval])))`).
 					LegendFormat("{{cluster}} p99"),
 				),
 		).
@@ -695,7 +705,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(workqueue_work_duration_seconds_bucket{` + clusterFilter + `,job="kube-controller-manager"}[5m])))`).
+					Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(workqueue_work_duration_seconds_bucket{` + clusterFilter + `,job="kube-controller-manager"}[$__rate_interval])))`).
 					LegendFormat("{{cluster}} p99"),
 				),
 		).
@@ -710,13 +720,17 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster) (rate(workqueue_retries_total{` + clusterFilter + `,job="kube-controller-manager"}[5m]))`).
+					Expr(`sum by (cluster) (rate(workqueue_retries_total{` + clusterFilter + `,job="kube-controller-manager"}[$__rate_interval]))`).
 					LegendFormat("{{cluster}}"),
 				),
 		).
+		// Radial gauges rather than bar gauges: each of these is a single bounded
+		// 0-100% reading per cluster, which is what a dial is for. A bar gauge
+		// earns its keep when several items are ranked against each other, as in
+		// the Scheduling row.
 		WithRow(dashboard.NewRowBuilder("Capacity")).
 		WithPanel(
-			bargauge.NewPanelBuilder().
+			gauge.NewPanelBuilder().
 				Title("CPU Requested vs Allocatable").
 				Description("Total CPU requests as a percentage of cluster allocatable CPU.").
 				Datasource(ds).
@@ -724,8 +738,9 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Unit("percent").
 				Min(0).
 				Max(100).
-				Orientation(common.VizOrientationHorizontal).
 				Thresholds(capacityThresholds).
+				ShowThresholdMarkers(true).
+				ShowThresholdLabels(false).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(100 * sum by (cluster) (kube_pod_container_resource_requests{` + clusterFilter + `,resource="cpu",` + nsFilter + `}) / clamp_min(sum by (cluster) (kube_node_status_allocatable{` + clusterFilter + `,resource="cpu"}), 1e-9))`).
 					Instant().
@@ -734,7 +749,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Decimals(1),
 		).
 		WithPanel(
-			bargauge.NewPanelBuilder().
+			gauge.NewPanelBuilder().
 				Title("Memory Requested vs Allocatable").
 				Description("Total memory requests as a percentage of cluster allocatable memory.").
 				Datasource(ds).
@@ -742,8 +757,9 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Unit("percent").
 				Min(0).
 				Max(100).
-				Orientation(common.VizOrientationHorizontal).
 				Thresholds(capacityThresholds).
+				ShowThresholdMarkers(true).
+				ShowThresholdLabels(false).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(100 * sum by (cluster) (kube_pod_container_resource_requests{` + clusterFilter + `,resource="memory",` + nsFilter + `}) / clamp_min(sum by (cluster) (kube_node_status_allocatable{` + clusterFilter + `,resource="memory"}), 1e-9))`).
 					Instant().
@@ -752,7 +768,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Decimals(1),
 		).
 		WithPanel(
-			bargauge.NewPanelBuilder().
+			gauge.NewPanelBuilder().
 				Title("Pods Used vs Allocatable").
 				Description("Running pods as a percentage of cluster allocatable pod capacity.").
 				Datasource(ds).
@@ -760,8 +776,9 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Unit("percent").
 				Min(0).
 				Max(100).
-				Orientation(common.VizOrientationHorizontal).
 				Thresholds(capacityThresholds).
+				ShowThresholdMarkers(true).
+				ShowThresholdLabels(false).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sort_desc(100 * sum by (cluster) (kubelet_running_pods{` + clusterFilter + `}) / clamp_min(sum by (cluster) (kube_node_status_allocatable{` + clusterFilter + `,resource="pods"}), 1e-9))`).
 					Instant().
