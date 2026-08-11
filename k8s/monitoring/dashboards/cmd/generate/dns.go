@@ -296,10 +296,23 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Resolver Metrics Age").
-				Description("Worst age of the node_exporter textfile generated once per minute.").
+				Description("Worst age of the node_exporter textfile, which the collector rewrites every 15s. Healthy readings run up to about 46s because the age carries the Prometheus scrape interval on top of the write interval; red matches the KnotResolverMetricsStale alert.").
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("s").
+				ColorMode(common.BigValueColorModeBackground).
+				// 60s to agree with resolverAlerts.metricsMaxAgeSeconds, so a red
+				// tile and a firing alert always mean the same thing. There is no
+				// amber band: the metric already includes up to one scrape
+				// interval of staleness, so a healthy worst case is 15s of write
+				// interval plus 30s of scrape, and the 14s left below the
+				// threshold is too narrow to divide usefully.
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "green"},
+						{Value: new(float64(60)), Color: "red"},
+					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`max(time() - node_textfile_mtime_seconds{` + resolver + `,file=~".*knot_resolver\\.prom"})`).
 					Instant().
@@ -386,9 +399,35 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{instance}} p99"),
 				),
 		).
+		// Cache occupancy sits beside process memory because both answer "is this
+		// resolver running out of something", and it comes first because it is
+		// the one with a documented failure attached.
 		WithPanel(
 			timeseries.NewPanelBuilder().
-				Title("Resolver Process Memory").
+				Title("Resolver Cache Usage").
+				Description("LMDB pages allocated against the configured map size. When the map fills, every stash fails and the cache is dropped, which collapses the hit rate and floods upstream with recursion until it refills -- see the 2026-08-10 addendum to ADR-0030. kresd publishes no cache metric, so this is read from the database's meta page by the textfile collector; data.mdb's own size is preallocated to the map size and cannot be used.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("percent").
+				Min(0).Max(100).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "green"},
+						{Value: new(float64(70)), Color: "yellow"},
+						{Value: new(float64(85)), Color: "red"},
+					})).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`100 * knot_resolver_cache_used_bytes{` + resolver + `} / knot_resolver_cache_size_bytes{` + resolver + `}`).
+					LegendFormat("{{instance}}"),
+				).Decimals(1),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Resolver Manager Memory").
+				Description("Resident memory of the knot-resolver manager process only. The kresd workers that hold the cache and answer queries are not included -- the exporter attaches no instance_id to process_* series, so there is one reading per host regardless of worker count. Cache occupancy is in the panel beside this one.").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("bytes").
@@ -402,8 +441,12 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Resolver Metrics Freshness").
+				Description("Per-resolver textfile age, which carries up to one scrape interval on top of the real age: the collector rewrites every 15s, Prometheus scrapes every 30s, and the reading climbs between scrapes. Healthy values sweep roughly 11-45s. Zoomed in the shape is a rising sawtooth; at the default range the step equals the scrape interval and the same signal aliases into a slow drift with occasional jumps. Neither shape is a fault -- only a line that climbs past 60s and keeps going, which means the collector stopped.").
 				Datasource(ds).
-				Span(12).Height(8).
+				// Full width, alone on its line: this is collector health rather
+				// than resolver health, and the sawtooth needs the horizontal
+				// room for its shape to be readable at all.
+				Span(24).Height(8).
 				Unit("s").
 				Tooltip(tooltipAll).
 				Legend(legend).
@@ -431,11 +474,21 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("pdns-auth QPS").
+				Description("Authoritative queries per second across both transports.").
 				Datasource(ds).
 				Span(12).Height(4).
 				Unit("reqps").
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(rate(pdns_auth_udp_queries{` + pdns + `}[$__rate_interval]))`).
+					// Both transports, matching the Query Rate timeseries below,
+					// which always plotted udp and tcp while this tile counted
+					// only udp. TCP is not hypothetical for an authoritative
+					// server: it carries responses over 512 bytes and the zone
+					// transfers between ns1, ns2 and ns3, and logged 25 queries
+					// over 7 days. It is a rounding error against 5.3 udp
+					// queries a second, but a tile titled QPS should not have a
+					// different definition from the graph under it.
+					Expr(`sum(rate(pdns_auth_udp_queries{` + pdns + `}[$__rate_interval]))` +
+						` + sum(rate(pdns_auth_tcp_queries{` + pdns + `}[$__rate_interval]))`).
 					LegendFormat("QPS"),
 				).Decimals(1),
 		).
@@ -710,18 +763,29 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("external-dns Sync Age").
-				Description("Seconds since the last provider sync and source reconcile, grouped by cluster. A steadily climbing line means external-dns has stopped syncing.").
+				Description("Seconds since the last provider sync and source reconcile, worst pod per cluster. A steadily climbing line means external-dns has stopped syncing.").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
 				Tooltip(tooltipAll).
 				Legend(legend).
+				// Aggregated down to the label the legend prints. The raw metric
+				// also carries pod and instance, and both churn: over 30 days
+				// this one deployment produced seven series, including the same
+				// pod name under three different addresses. Each drew as its own
+				// broken line labelled "prd sync", so the panel accumulated
+				// identically-named fragments while the description had claimed
+				// all along that it was grouped by cluster.
+				//
+				// max, because the panel answers "how stale is the staleest
+				// replica"; it matches the Last Sync Age tile, which takes the
+				// max across everything.
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`time() - external_dns_controller_last_sync_timestamp_seconds{` + extdns + `}`).
+					Expr(`max by (cluster) (time() - external_dns_controller_last_sync_timestamp_seconds{` + extdns + `})`).
 					LegendFormat("{{cluster}} sync"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`time() - external_dns_controller_last_reconcile_timestamp_seconds{` + extdns + `}`).
+					Expr(`max by (cluster) (time() - external_dns_controller_last_reconcile_timestamp_seconds{` + extdns + `})`).
 					LegendFormat("{{cluster}} reconcile"),
 				),
 		).

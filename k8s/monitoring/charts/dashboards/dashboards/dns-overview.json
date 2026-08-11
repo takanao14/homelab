@@ -695,7 +695,7 @@
         }
       ],
       "title": "Resolver Metrics Age",
-      "description": "Worst age of the node_exporter textfile generated once per minute.",
+      "description": "Worst age of the node_exporter textfile, which the collector rewrites every 15s. Healthy readings run up to about 46s because the age carries the Prometheus scrape interval on top of the write interval; red matches the KnotResolverMetricsStale alert.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -710,7 +710,7 @@
       "repeatDirection": "h",
       "options": {
         "graphMode": "area",
-        "colorMode": "value",
+        "colorMode": "background",
         "justifyMode": "auto",
         "textMode": "auto",
         "wideLayout": true,
@@ -724,7 +724,20 @@
       "fieldConfig": {
         "defaults": {
           "unit": "s",
-          "decimals": 0
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 60,
+                "color": "red"
+              }
+            ]
+          }
         },
         "overrides": []
       }
@@ -953,11 +966,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "process_resident_memory_bytes{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}",
-          "legendFormat": "{{instance}} RSS"
+          "expr": "100 * knot_resolver_cache_used_bytes{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"} / knot_resolver_cache_size_bytes{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}",
+          "legendFormat": "{{instance}}"
         }
       ],
-      "title": "Resolver Process Memory",
+      "title": "Resolver Cache Usage",
+      "description": "LMDB pages allocated against the configured map size. When the map fills, every stash fails and the cache is dropped, which collapses the hit rate and floods upstream with recursion until it refills -- see the 2026-08-10 addendum to ADR-0030. kresd publishes no cache metric, so this is read from the database's meta page by the textfile collector; data.mdb's own size is preallocated to the map size and cannot be used.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -967,6 +981,68 @@
         "h": 8,
         "w": 12,
         "x": 0,
+        "y": 68
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 70,
+                "color": "yellow"
+              },
+              {
+                "value": 85,
+                "color": "red"
+              }
+            ]
+          },
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"scrapeConfig/monitoring/node-exporter-external\",service=\"knot-resolver\"}",
+          "legendFormat": "{{instance}} RSS"
+        }
+      ],
+      "title": "Resolver Manager Memory",
+      "description": "Resident memory of the knot-resolver manager process only. The kresd workers that hold the cache and answer queries are not included -- the exporter attaches no instance_id to process_* series, so there is one reading per host regardless of worker count. Cache occupancy is in the panel beside this one.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
         "y": 68
       },
       "repeatDirection": "h",
@@ -999,6 +1075,7 @@
         }
       ],
       "title": "Resolver Metrics Freshness",
+      "description": "Per-resolver textfile age, which carries up to one scrape interval on top of the real age: the collector rewrites every 15s, Prometheus scrapes every 30s, and the reading climbs between scrapes. Healthy values sweep roughly 11-45s. Zoomed in the shape is a rising sawtooth; at the default range the step equals the scrape interval and the same signal aliases into a slow drift with occasional jumps. Neither shape is a fault -- only a line that climbs past 60s and keeps going, which means the collector stopped.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -1006,9 +1083,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 68
+        "w": 24,
+        "x": 0,
+        "y": 76
       },
       "repeatDirection": "h",
       "options": {
@@ -1039,7 +1116,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 76
+        "y": 84
       },
       "id": 0,
       "panels": []
@@ -1063,7 +1140,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 77
+        "y": 85
       },
       "repeatDirection": "h",
       "options": {
@@ -1086,7 +1163,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 89
+        "y": 97
       },
       "id": 0,
       "panels": []
@@ -1095,11 +1172,12 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate(pdns_auth_udp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[$__rate_interval]))",
+          "expr": "sum(rate(pdns_auth_udp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[$__rate_interval])) + sum(rate(pdns_auth_tcp_queries{job=\"scrapeConfig/monitoring/pdns-auth-external\"}[$__rate_interval]))",
           "legendFormat": "QPS"
         }
       ],
       "title": "pdns-auth QPS",
+      "description": "Authoritative queries per second across both transports.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -1109,7 +1187,7 @@
         "h": 4,
         "w": 12,
         "x": 0,
-        "y": 90
+        "y": 98
       },
       "repeatDirection": "h",
       "options": {
@@ -1151,7 +1229,7 @@
         "h": 4,
         "w": 12,
         "x": 12,
-        "y": 90
+        "y": 98
       },
       "repeatDirection": "h",
       "options": {
@@ -1200,7 +1278,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 94
+        "y": 102
       },
       "id": 0,
       "panels": []
@@ -1227,7 +1305,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 95
+        "y": 103
       },
       "repeatDirection": "h",
       "options": {
@@ -1280,7 +1358,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 103
+        "y": 111
       },
       "repeatDirection": "h",
       "options": {
@@ -1387,7 +1465,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 111
+        "y": 119
       },
       "repeatDirection": "h",
       "options": {
@@ -1445,7 +1523,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 111
+        "y": 119
       },
       "repeatDirection": "h",
       "options": {
@@ -1493,7 +1571,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 119
+        "y": 127
       },
       "id": 0,
       "panels": []
@@ -1518,7 +1596,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 120
+        "y": 128
       },
       "repeatDirection": "h",
       "options": {
@@ -1562,7 +1640,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 120
+        "y": 128
       },
       "repeatDirection": "h",
       "options": {
@@ -1618,7 +1696,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 120
+        "y": 128
       },
       "repeatDirection": "h",
       "options": {
@@ -1675,7 +1753,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 120
+        "y": 128
       },
       "repeatDirection": "h",
       "options": {
@@ -1723,7 +1801,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 124
+        "y": 132
       },
       "id": 0,
       "panels": []
@@ -1747,7 +1825,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 125
+        "y": 133
       },
       "repeatDirection": "h",
       "options": {
@@ -1789,7 +1867,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 133
+        "y": 141
       },
       "repeatDirection": "h",
       "options": {
@@ -1831,7 +1909,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 133
+        "y": 141
       },
       "repeatDirection": "h",
       "options": {
@@ -1874,7 +1952,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 141
+        "y": 149
       },
       "repeatDirection": "h",
       "options": {
@@ -1905,7 +1983,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 149
+        "y": 157
       },
       "id": 0,
       "panels": []
@@ -1931,7 +2009,7 @@
         "h": 4,
         "w": 8,
         "x": 0,
-        "y": 150
+        "y": 158
       },
       "repeatDirection": "h",
       "options": {
@@ -1989,7 +2067,7 @@
         "h": 4,
         "w": 8,
         "x": 8,
-        "y": 150
+        "y": 158
       },
       "repeatDirection": "h",
       "options": {
@@ -2047,7 +2125,7 @@
         "h": 4,
         "w": 8,
         "x": 16,
-        "y": 150
+        "y": 158
       },
       "repeatDirection": "h",
       "options": {
@@ -2096,7 +2174,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 154
+        "y": 162
       },
       "id": 0,
       "panels": []
@@ -2105,16 +2183,16 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "time() - external_dns_controller_last_sync_timestamp_seconds{job=\"external-dns\"}",
+          "expr": "max by (cluster) (time() - external_dns_controller_last_sync_timestamp_seconds{job=\"external-dns\"})",
           "legendFormat": "{{cluster}} sync"
         },
         {
-          "expr": "time() - external_dns_controller_last_reconcile_timestamp_seconds{job=\"external-dns\"}",
+          "expr": "max by (cluster) (time() - external_dns_controller_last_reconcile_timestamp_seconds{job=\"external-dns\"})",
           "legendFormat": "{{cluster}} reconcile"
         }
       ],
       "title": "external-dns Sync Age",
-      "description": "Seconds since the last provider sync and source reconcile, grouped by cluster. A steadily climbing line means external-dns has stopped syncing.",
+      "description": "Seconds since the last provider sync and source reconcile, worst pod per cluster. A steadily climbing line means external-dns has stopped syncing.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -2124,7 +2202,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 155
+        "y": 163
       },
       "repeatDirection": "h",
       "options": {
@@ -2170,7 +2248,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 155
+        "y": 163
       },
       "repeatDirection": "h",
       "options": {
@@ -2216,7 +2294,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 163
+        "y": 171
       },
       "repeatDirection": "h",
       "options": {
