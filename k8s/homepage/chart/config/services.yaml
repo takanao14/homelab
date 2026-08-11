@@ -153,10 +153,6 @@
         icon: powerdns.png
         href: https://pdns-ui.prd.butaco.net
 
-    - DNS Record View (sandbox):
-        icon: powerdns.png
-        href: http://pdns-ui.sandbox.butaco.net
-
 - Monitoring:
     - Grafana:
         icon: grafana.png

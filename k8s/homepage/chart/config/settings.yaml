@@ -14,28 +14,28 @@ layout:
     columns: 6
   Storage:
     style: row
-    columns: 4
+    columns: 3
   DNS:
     style: row
     columns: 5
   Infrastructure:
     style: row
-    columns: 4
+    columns: 2
   Monitoring:
     style: row
     columns: 4
   Development:
     style: row
-    columns: 2
+    columns: 4
   CI/CD:
     style: row
-    columns: 2
+    columns: 4
   AI:
     style: row
     columns: 6
   Remote Management:
     style: row
-    columns: 1
+    columns: 4
   Network:
     style: row
     columns: 3
