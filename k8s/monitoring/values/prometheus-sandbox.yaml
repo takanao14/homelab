@@ -93,6 +93,8 @@ externalSecretAlertmanager:
   enabled: false
 
 prometheusRules:
+  argocd:
+    enabled: false
   certManager:
     enabled: false
   hardware:
