@@ -15,11 +15,18 @@ dashboard quietly flatlining on a truncated write.
 
 import os
 import socket
+import struct
 import sys
 import tempfile
 
 SOCKET_PATH = "{{ knot_resolver_metrics_socket_path }}"
 OUTPUT_PATH = "{{ knot_resolver_metrics_path }}"
+CACHE_PATH = "{{ knot_resolver_cache_storage }}/data.mdb"
+
+# LMDB meta page constants, used to validate before trusting any offset.
+LMDB_MAGIC = 0xBEEFC0DE
+LMDB_VERSION = 1
+LMDB_META_PAGES = (0, 4096)
 # Plain /metrics answers 301 to /metrics/json; the Prometheus rendering is only
 # served from this path.
 REQUEST = b"GET /metrics/prometheus HTTP/1.0\r\nHost: localhost\r\n\r\n"
@@ -84,6 +91,71 @@ def deduplicate_declarations(body):
     return b"\n".join(kept)
 
 
+def cache_metrics():
+    """Report LMDB cache occupancy, which the resolver does not export.
+
+    ADR-0030 records the failure this exists to predict: once the map fills,
+    every stash fails, the cache is dropped, and the hit rate falls from ~90% to
+    ~40% while the recursion that follows answers up to half of all queries with
+    SERVFAIL. Nothing in resolver_* sees it coming -- kresd publishes only query
+    counters, /metrics/json carries the same set, and kresctl has no cache
+    subcommand -- so the only reading available is the database itself.
+
+    The file size is not it: kresd preallocates the whole map, so data.mdb sits
+    at exactly mm_mapsize from the start and would report 100% forever. The real
+    figure is mm_last_pg, the high-water mark of allocated pages, which on this
+    deployment reads 3.9% against a file that looks completely full.
+
+    Parsing an on-disk layout by offset is the trade being made here, so it is
+    guarded: the magic and version are checked, both meta pages are read and the
+    newer transaction wins, and the page arithmetic has to agree with the map
+    size. Anything unexpected returns nothing and leaves the resolver's own
+    metrics untouched, because a missing panel beats a broken collector.
+    """
+    try:
+        with open(CACHE_PATH, "rb") as handle:
+            raw = handle.read(sum(LMDB_META_PAGES) + 4096)
+    except OSError:
+        return b""
+
+    newest = None
+    for offset in LMDB_META_PAGES:
+        base = offset + 16  # skip the page header
+        if len(raw) < base + 136:
+            continue
+        magic, version = struct.unpack_from("<II", raw, base)
+        if magic != LMDB_MAGIC or version != LMDB_VERSION:
+            continue
+        # mm_mapsize at +16, then two MDB_db of 48 bytes, then mm_last_pg and
+        # mm_txnid.
+        mapsize, last_page, txnid = (
+            struct.unpack_from("<Q", raw, base + 16)[0],
+            struct.unpack_from("<Q", raw, base + 120)[0],
+            struct.unpack_from("<Q", raw, base + 128)[0],
+        )
+        if newest is None or txnid > newest[2]:
+            newest = (mapsize, last_page, txnid)
+
+    if newest is None:
+        return b""
+    mapsize, last_page, _ = newest
+
+    page_size = os.sysconf("SC_PAGE_SIZE")
+    used = last_page * page_size
+    if page_size <= 0 or mapsize <= 0 or mapsize % page_size or used > mapsize:
+        return b""
+
+    return (
+        b"# HELP knot_resolver_cache_size_bytes Configured LMDB map size.\n"
+        b"# TYPE knot_resolver_cache_size_bytes gauge\n"
+        b"knot_resolver_cache_size_bytes %d\n"
+        b"# HELP knot_resolver_cache_used_bytes"
+        b" LMDB pages allocated, the high-water mark of cache occupancy.\n"
+        b"# TYPE knot_resolver_cache_used_bytes gauge\n"
+        b"knot_resolver_cache_used_bytes %d\n" % (mapsize, used)
+    )
+
+
 def write_atomically(body):
     descriptor, temporary = tempfile.mkstemp(
         dir=os.path.dirname(OUTPUT_PATH), prefix=".knot_resolver.", suffix=".tmp"
@@ -100,7 +172,7 @@ def write_atomically(body):
 
 def main():
     try:
-        write_atomically(deduplicate_declarations(fetch()))
+        write_atomically(deduplicate_declarations(fetch()) + cache_metrics())
     except Exception as error:
         print("knot-resolver-metrics: {0}".format(error), file=sys.stderr)
         return 1
