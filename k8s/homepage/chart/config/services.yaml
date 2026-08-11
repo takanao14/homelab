@@ -73,7 +73,7 @@
         icon: truenas.png
         href: https://truenas-ui.home.butaco.net/ui/
         description: Network Storage
-        proxmoxNode: node1
+        proxmoxNode: pve
         proxmoxVMID: "100"
         proxmoxType: qemu
         widget:
