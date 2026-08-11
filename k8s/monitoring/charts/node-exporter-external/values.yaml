@@ -8,7 +8,12 @@ resolverAlerts:
   enabled: false
   targetDownFor: 5m
   metricsStaleFor: 5m
-  metricsMaxAgeSeconds: 180
+  # 4x the 15s collector interval (knot_resolver_metrics_interval). A healthy
+  # file is never older than one interval plus the timer's 1s jitter, so this
+  # clears normal variation while still catching a dead collector inside a
+  # minute. It was 180 against the former 1min interval; leaving it there would
+  # have made it 12x and correspondingly slow to notice.
+  metricsMaxAgeSeconds: 60
   # Healthy is 90-99%. 60% is comfortably below normal variation and well above
   # the 36-43% seen while the cache was being dropped and refilled.
   cacheHitRateMin: 0.6

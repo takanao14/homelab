@@ -52,13 +52,21 @@ spec:
         # notice. It separates cleanly: 90-99% healthy against 36-43% during
         # the fault measured in the 2026-08-10 addendum to ADR-0030.
         #
-        # The rate window has to stay well above the one-minute textfile write
-        # interval, or consecutive scrapes read the same counter and the ratio
-        # alternates with zero.
+        # The rate window has to stay well above the textfile write interval, or
+        # consecutive scrapes read the same counter and the ratio alternates
+        # with zero. 10m holds with room to spare now that the collector writes
+        # every 15s rather than every minute.
+        #
+        # Summed by instance because kresd exports every resolver_* metric per
+        # worker (instance_id="kresd:kresd0", "kresd:kresd1", ...) and publishes
+        # no pre-aggregated series. Unaggregated this fires once per worker with
+        # an identical per-host summary, and judges each worker's share of the
+        # traffic rather than the host's answer rate, which is what the
+        # threshold below was calibrated against.
         - alert: KnotResolverCacheHitRateLow
           expr: >-
-            rate(resolver_answer_cached_total[10m])
-            / clamp_min(rate(resolver_answer_total[10m]), 0.001)
+            sum by (instance) (rate(resolver_answer_cached_total[10m]))
+            / clamp_min(sum by (instance) (rate(resolver_answer_total[10m])), 0.001)
             < {{ .Values.resolverAlerts.cacheHitRateMin }}
           for: {{ .Values.resolverAlerts.cacheHitRateFor }}
           labels:
@@ -73,10 +81,11 @@ spec:
               a full cache is the known cause.
 
         # Outcome indicator: this share of requests is what clients get back.
+        # Summed by instance for the same reason as the hit rate above.
         - alert: KnotResolverServfailHigh
           expr: >-
-            rate(resolver_answer_rcode_servfail_total[10m])
-            / clamp_min(rate(resolver_request_total[10m]), 0.001)
+            sum by (instance) (rate(resolver_answer_rcode_servfail_total[10m]))
+            / clamp_min(sum by (instance) (rate(resolver_request_total[10m])), 0.001)
             > {{ .Values.resolverAlerts.servfailRatioMax }}
           for: {{ .Values.resolverAlerts.servfailRatioFor }}
           labels:
