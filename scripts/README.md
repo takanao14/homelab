@@ -285,8 +285,14 @@ The server lets an MCP client (Claude Code, Codex, Cursor, …) query Grafana
 
 Launcher invoked by the MCP client over stdio. It selects a container runtime
 per OS — `docker` on macOS when OrbStack is installed, `podman` otherwise — and
-runs the `mcp/grafana` image with `-i` (no TTY). You normally don't run this by
-hand; the client starts it.
+runs the `grafana/mcp-grafana` image with `-i` (no TTY). You normally don't run
+this by hand; the client starts it.
+
+The image is the vendor's own, pinned to a release tag. Docker's curated
+`mcp/grafana` mirror publishes only a `latest` tag, so it could be neither
+pinned nor tracked by Renovate. Note that the binary reports its version as
+`(devel)` regardless — upstream does not inject version info into the Docker
+build, so the image tag is the only reliable indicator of what is running.
 
 The launcher exposes only `search`, `datasource`, `prometheus`, `loki`,
 `dashboard`, and `navigation` tools by default. Alert-management tools are
@@ -307,7 +313,7 @@ Other clients just reference the absolute path, e.g. Codex (`~/.codex/config.tom
 ```toml
 [mcp_servers.grafana]
 command = "/Users/takanao/lab/homelab/scripts/grafana-mcp.sh"
-startup_timeout_ms = 60000   # first run pulls the mcp/grafana image
+startup_timeout_ms = 60000   # first run pulls the grafana/mcp-grafana image
 ```
 
 ### Goose workstation setup
@@ -371,7 +377,8 @@ and backend-request timeouts before changing Goose's extension timeout.
 | Env var | Default | Notes |
 |---------|---------|-------|
 | `GRAFANA_MCP_RUNTIME` | `docker` on macOS with OrbStack, otherwise `podman` | Force a runtime |
-| `GRAFANA_MCP_IMAGE`   | `mcp/grafana`                       | Override the image |
+| `GRAFANA_MCP_VERSION` | `1.1.0` | Pinned image tag; Renovate bumps this in place |
+| `GRAFANA_MCP_IMAGE`   | `docker.io/grafana/mcp-grafana:$GRAFANA_MCP_VERSION` | Full reference override for testing |
 | `GRAFANA_MCP_ENABLED_TOOLS` | `search,datasource,prometheus,loki,dashboard,navigation` | Comma-separated tool categories |
 | `GRAFANA_MCP_DISABLE_WRITE` | `true` | Set to `false` only for an explicitly approved write workflow |
 | `GRAFANA_MCP_MAX_LOKI_LOG_LIMIT` | `20` | Maximum log lines returned by a Loki query |
@@ -499,8 +506,7 @@ Renovate tracks the Docker Hub tag through the `# renovate:` comment above
 `netbox_mcp_version`, matched by the `scripts/*.sh` custom manager in
 [`renovate.json`](../renovate.json). Updates land as a regular PR; they are not
 automerged, since the automerge rule covers only `k8s/`, `ansible/`, and `tf/`.
-The Grafana launcher pulls `docker.io/mcp/grafana` untagged, so nothing pins or
-tracks it — worth revisiting if that image ever breaks compatibility.
+The Grafana launcher is tracked the same way, against `grafana/mcp-grafana`.
 
 ## `install/`
 

@@ -7,9 +7,13 @@
 # (e.g. "docker" or "podman") when needed.
 #
 # Image reference:
-#   - Fully qualified on purpose. Docker resolves the bare `mcp/grafana` to
-#     Docker Hub, but Podman enforces short-name resolution and defines no
-#     unqualified-search registries, so the bare name fails on Linux.
+#   - The vendor's own `grafana/mcp-grafana`, not Docker's curated `mcp/grafana`
+#     mirror: the latter publishes only a `latest` tag, so it cannot be pinned
+#     or tracked by Renovate.
+#   - Pinned to a release tag, bumped in place by Renovate.
+#   - Fully qualified on purpose. Docker resolves a bare name to Docker Hub, but
+#     Podman enforces short-name resolution and defines no unqualified-search
+#     registries, so the bare name fails on Linux.
 #
 # Tool exposure:
 #   - Defaults to the read-only observability categories needed by local agents.
@@ -51,7 +55,10 @@ if [ "${GRAFANA_MCP_DISABLE_WRITE:-true}" = "true" ]; then
   server_args+=(--disable-write)
 fi
 
+# renovate: datasource=docker depName=grafana/mcp-grafana
+grafana_mcp_version="${GRAFANA_MCP_VERSION:-1.1.0}"
+
 exec "${runtime}" run -i --rm \
   -e GRAFANA_URL \
   -e GRAFANA_SERVICE_ACCOUNT_TOKEN \
-  "${GRAFANA_MCP_IMAGE:-docker.io/mcp/grafana}" "${server_args[@]}"
+  "${GRAFANA_MCP_IMAGE:-docker.io/grafana/mcp-grafana:${grafana_mcp_version}}" "${server_args[@]}"
