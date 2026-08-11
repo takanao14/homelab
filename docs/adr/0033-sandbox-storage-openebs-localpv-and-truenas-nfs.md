@@ -42,11 +42,17 @@ changing ownership. Isolation is provided by mounting only the selected PVC
 subdirectory into a pod; every authorized node is already trusted to mount the
 cluster export directly.
 
-Migrate sandbox Prometheus by recreating its disposable PVC with
-`storageClassName: nfs`; do not copy its metrics. After no Longhorn volumes
-remain, remove Longhorn, its UI route, its OpenBao policy, and all provider-
-specific lifecycle logic. Until that gate passes, Longhorn and NFS coexist and
-Longhorn remains the only default.
+Keep Prometheus TSDB on `openebs-hostpath`. Prometheus explicitly does not
+support NFS for local storage because filesystem semantics can cause
+unrecoverable corruption. This was also confirmed by the Prometheus process
+warning on the temporary NFS-backed sandbox PVC. Recreate the disposable PVC
+on OpenEBS without copying its metrics. Use NFS only for workloads whose
+storage engines support it, especially explicit RWX consumers.
+
+After no Longhorn volumes remain, remove Longhorn, its UI route, its OpenBao
+policy, and all provider-specific lifecycle logic. During the validation window
+Longhorn and NFS coexist; install OpenEBS and verify the replacement PVC before
+uninstalling Longhorn.
 
 Keep prd on OpenEBS LocalPV. Adding NFS to prd is a later decision based on
 sandbox operating experience, performance of large model caches, monitoring
@@ -76,6 +82,9 @@ durability, and acceptance of the TrueNAS/Proxmox failure domain.
 
 - NFS-backed pods can move between workers and can use RWX without Longhorn
   replica rebuild waits.
+- Prometheus remains bound to the worker that owns its OpenEBS LocalPV. NFS is
+  not a supported way to make its local TSDB movable; durable or highly
+  available metrics require a Prometheus remote-storage architecture instead.
 - TrueNAS and its Proxmox host become single failure points for NFS-backed
   workloads. Planned shutdown must stop those workloads and release mounts
   before stopping TrueNAS; startup must verify a real NFS mount before restoring
@@ -84,5 +93,6 @@ durability, and acceptance of the TrueNAS/Proxmox failure domain.
   snapshots, replication, alerts, and recovery tests are separate TrueNAS
   responsibilities.
 - Longhorn remains installed only for the migration window. This ADR becomes
-  Accepted after the NFS export and CSI path are validated and Prometheus is
-  migrated; ADR-0009 is then superseded by this ADR.
+  Accepted after the NFS export and CSI path are validated, OpenEBS is the
+  default class, and Prometheus is migrated to OpenEBS; ADR-0009 is then
+  superseded by this ADR.

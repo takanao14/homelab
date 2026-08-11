@@ -43,7 +43,7 @@ kube-prometheus-stack:
           spec:
             accessModes:
               - ReadWriteOnce
-            storageClassName: nfs
+            storageClassName: openebs-hostpath
             resources:
               requests:
                 storage: 5Gi

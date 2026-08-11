@@ -2,25 +2,18 @@
 # See prd_k8s.yaml for why kubectl runs on the control node.
 k8s_kubeconfig: "~/.kube/sandbox.yaml"
 
-# During migration sandbox uses Longhorn and NFS
-# (k0s/env/sandbox.sh, k0s/values/{longhorn,nfs}.yaml.gotmpl). Longhorn has
-# replicaCount 3 across exactly three workers, so every volume has a replica on
-# every worker. Rebooting a node leaves the volume degraded until its replica
-# rebuilds; the next node must not be taken down before that finishes, or the
-# volume drops to a single replica. Hence the post-reboot robustness wait.
+# Keep this list aligned with K0S_STORAGE_PROVIDERS in k0s/env/sandbox.sh.
 k8s_storage_providers:
-  - longhorn
+  - openebs
   - nfs
-k8s_longhorn_namespace: longhorn-system
 k8s_nfs_server: 192.168.20.10
 k8s_nfs_share: /mnt/tank1/kubernetes/sandbox
 
 # Scaled to zero by ops-shutdown.yaml, in this order — same policy as prd:
 # application workloads only, monitoring late so the shutdown of everything
 # above it is still observed, argocd last because scaling it earlier would leave
-# nothing able to reconcile the cluster back. kube-system, longhorn-system,
-# external-secrets and envoy-gateway-system are cluster infrastructure and are
-# left to stop with the node.
+# nothing able to reconcile the cluster back. Storage controllers and the other
+# infrastructure namespaces are left to stop with the node.
 k8s_shutdown_namespaces:
   - homepage
   - headlamp
@@ -34,7 +27,7 @@ k8s_shutdown_namespaces:
 # prd_k8s.yaml for why this is declared rather than only described.
 k8s_infrastructure_namespaces:
   - kube-system
-  - longhorn-system
+  - openebs
   - external-secrets
   - envoy-gateway-system
 
