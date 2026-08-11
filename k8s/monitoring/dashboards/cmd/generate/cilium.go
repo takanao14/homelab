@@ -11,10 +11,29 @@ import (
 
 // buildCiliumOverview defines Cilium CNI health: agent/operator status, packet
 // drops, policy verdicts, BPF datapath pressure, endpoint health, and Hubble flows.
+//
+// Two kinds of range window appear below and they are not interchangeable. The
+// rate() trends use $__rate_interval so the window grows with the zoom level:
+// they previously used a fixed [5m], which is fine at the default 6h but breaks
+// once the step exceeds it. At 7d the step is 15m, so Prometheus only ever
+// looked at 5 minutes out of every 15 and the remaining two thirds of the data
+// were never read -- the largest drop spike in a 7-day view read 0.278 with
+// [5m] against 0.606 with a step-sized window, and shorter bursts disappeared
+// outright. The increase() windows in the "(5m)" panels stay fixed on purpose:
+// there the five minutes is the quantity the panel is named for, not a
+// rendering detail.
 func buildCiliumOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
 	const clusterFilter = `cluster=~"$cluster"`
+
+	// Cilium's drop counters are overwhelmingly one benign reason: over 30 days
+	// prd logged 33,143 "Unsupported L3 protocol" drops (non-IP frames the
+	// datapath does not handle) against 3 "Policy denied". Left on the default
+	// palette the noise takes a colour and the three drops that matter do not,
+	// so the benign series is pinned to grey and policy denials to red. The
+	// panel then reads by colour alone: grey only means nothing happened.
+	const benignDropColor = "#808080"
 
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
@@ -127,14 +146,20 @@ func buildCiliumOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Drop Rate by Reason").
-				Description("Packets dropped by the datapath, by reason. Some reasons (e.g. unsupported L3 protocol) are benign background noise.").
+				Description("Packets dropped by the datapath, by reason. Unsupported L3 protocol is benign background noise and is drawn in grey; any coloured line is worth reading.").
 				Datasource(ds).
 				Span(12).Height(8).Unit("pps").Min(0).
 				Tooltip(tooltipAll).Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster, reason) (rate(cilium_drop_count_total{` + clusterFilter + `}[5m]))`).
+					Expr(`sum by (cluster, reason) (rate(cilium_drop_count_total{`+clusterFilter+`}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} {{reason}}"),
-				),
+				).
+				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* Unsupported L3 protocol"}, []dashboard.DynamicConfigValue{
+					{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": benignDropColor}},
+				}).
+				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* Policy denied"}, []dashboard.DynamicConfigValue{
+					{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "red"}},
+				}),
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -144,21 +169,27 @@ func buildCiliumOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).Unit("pps").Min(0).
 				Tooltip(tooltipAll).Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster, verdict) (rate(hubble_flows_processed_total{` + clusterFilter + `}[5m]))`).
+					Expr(`sum by (cluster, verdict) (rate(hubble_flows_processed_total{` + clusterFilter + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} {{verdict}}"),
 				),
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Hubble Drops by Reason").
-				Description("Dropped flows observed by Hubble, grouped by reason.").
+				Description("Dropped flows observed by Hubble, grouped by reason. Same colour rule as Drop Rate by Reason: grey is benign, coloured is not. Hubble spells the reasons in upper snake case.").
 				Datasource(ds).
 				Span(24).Height(8).Unit("pps").Min(0).
 				Tooltip(tooltipAll).Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster, reason) (rate(hubble_drop_total{` + clusterFilter + `}[5m]))`).
+					Expr(`sum by (cluster, reason) (rate(hubble_drop_total{`+clusterFilter+`}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} {{reason}}"),
-				),
+				).
+				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* UNSUPPORTED_L3_PROTOCOL"}, []dashboard.DynamicConfigValue{
+					{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": benignDropColor}},
+				}).
+				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* POLICY_DENIED"}, []dashboard.DynamicConfigValue{
+					{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "red"}},
+				}),
 		).
 		WithRow(dashboard.NewRowBuilder("Endpoints & Agent Health")).
 		WithPanel(
@@ -181,7 +212,7 @@ func buildCiliumOverview() (*dashboard.Dashboard, error) {
 				Span(8).Height(8).Unit("ops").Min(0).
 				Tooltip(tooltipAll).Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster) (rate(cilium_endpoint_regenerations_total{` + clusterFilter + `}[5m]))`).
+					Expr(`sum by (cluster) (rate(cilium_endpoint_regenerations_total{` + clusterFilter + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}}"),
 				),
 		).
@@ -193,14 +224,19 @@ func buildCiliumOverview() (*dashboard.Dashboard, error) {
 				Span(8).Height(8).Unit("ops").Min(0).
 				Tooltip(tooltipAll).Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster, level) (rate(cilium_errors_warnings_total{` + clusterFilter + `}[5m]))`).
+					Expr(`sum by (cluster, level) (rate(cilium_errors_warnings_total{` + clusterFilter + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} {{level}}"),
 				),
 		).
 		WithRow(dashboard.NewRowBuilder("BPF Datapath & Hubble Flows")).
 		WithPanel(
 			bargauge.NewPanelBuilder().
-				Title("BPF Map Pressure (Top 10)").
+				// topk is a cardinality guard, not a promise of ten bars: prd
+				// currently exposes seven maps, and enabling features such as
+				// Egress Gateway or L7 policy adds more. Naming a count in the
+				// title would misdescribe every environment but the one that
+				// happens to hit it.
+				Title("BPF Map Pressure").
 				Description("Fill ratio of the busiest eBPF maps. Sustained high pressure (>80%) risks map exhaustion and packet drops.").
 				Datasource(ds).
 				Span(8).Height(8).Unit("percent").Min(0).Max(100).
@@ -233,7 +269,7 @@ func buildCiliumOverview() (*dashboard.Dashboard, error) {
 				Span(8).Height(8).Unit("pps").Min(0).
 				Tooltip(tooltipAll).Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (cluster, type) (rate(hubble_flows_processed_total{` + clusterFilter + `}[5m]))`).
+					Expr(`sum by (cluster, type) (rate(hubble_flows_processed_total{` + clusterFilter + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} {{type}}"),
 				),
 		).

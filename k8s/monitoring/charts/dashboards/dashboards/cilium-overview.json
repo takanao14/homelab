@@ -384,12 +384,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (cluster, reason) (rate(cilium_drop_count_total{cluster=~\"$cluster\"}[5m]))",
+          "expr": "sum by (cluster, reason) (rate(cilium_drop_count_total{cluster=~\"$cluster\"}[$__rate_interval]))",
           "legendFormat": "{{cluster}} {{reason}}"
         }
       ],
       "title": "Drop Rate by Reason",
-      "description": "Packets dropped by the datapath, by reason. Some reasons (e.g. unsupported L3 protocol) are benign background noise.",
+      "description": "Packets dropped by the datapath, by reason. Unsupported L3 protocol is benign background noise and is drawn in grey; any coloured line is worth reading.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -420,14 +420,45 @@
           "min": 0,
           "custom": {}
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* Unsupported L3 protocol"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#808080",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* Policy denied"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       }
     },
     {
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (cluster, verdict) (rate(hubble_flows_processed_total{cluster=~\"$cluster\"}[5m]))",
+          "expr": "sum by (cluster, verdict) (rate(hubble_flows_processed_total{cluster=~\"$cluster\"}[$__rate_interval]))",
           "legendFormat": "{{cluster}} {{verdict}}"
         }
       ],
@@ -470,12 +501,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (cluster, reason) (rate(hubble_drop_total{cluster=~\"$cluster\"}[5m]))",
+          "expr": "sum by (cluster, reason) (rate(hubble_drop_total{cluster=~\"$cluster\"}[$__rate_interval]))",
           "legendFormat": "{{cluster}} {{reason}}"
         }
       ],
       "title": "Hubble Drops by Reason",
-      "description": "Dropped flows observed by Hubble, grouped by reason.",
+      "description": "Dropped flows observed by Hubble, grouped by reason. Same colour rule as Drop Rate by Reason: grey is benign, coloured is not. Hubble spells the reasons in upper snake case.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -506,7 +537,38 @@
           "min": 0,
           "custom": {}
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* UNSUPPORTED_L3_PROTOCOL"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#808080",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* POLICY_DENIED"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -569,7 +631,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (cluster) (rate(cilium_endpoint_regenerations_total{cluster=~\"$cluster\"}[5m]))",
+          "expr": "sum by (cluster) (rate(cilium_endpoint_regenerations_total{cluster=~\"$cluster\"}[$__rate_interval]))",
           "legendFormat": "{{cluster}}"
         }
       ],
@@ -612,7 +674,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (cluster, level) (rate(cilium_errors_warnings_total{cluster=~\"$cluster\"}[5m]))",
+          "expr": "sum by (cluster, level) (rate(cilium_errors_warnings_total{cluster=~\"$cluster\"}[$__rate_interval]))",
           "legendFormat": "{{cluster}} {{level}}"
         }
       ],
@@ -674,7 +736,7 @@
           "range": false
         }
       ],
-      "title": "BPF Map Pressure (Top 10)",
+      "title": "BPF Map Pressure",
       "description": "Fill ratio of the busiest eBPF maps. Sustained high pressure (\u003e80%) risks map exhaustion and packet drops.",
       "transparent": false,
       "datasource": {
@@ -782,7 +844,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (cluster, type) (rate(hubble_flows_processed_total{cluster=~\"$cluster\"}[5m]))",
+          "expr": "sum by (cluster, type) (rate(hubble_flows_processed_total{cluster=~\"$cluster\"}[$__rate_interval]))",
           "legendFormat": "{{cluster}} {{type}}"
         }
       ],
