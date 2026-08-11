@@ -94,6 +94,27 @@ Guidelines when adding helpers:
   Yes → helper. "Depends on the panel" → keep it inline.
 - Name helpers by **intent, not shape** (`issueThresholds`, not `greenRedThresholds`).
 
+### Environments and the cluster variable
+
+`prd` and `sandbox` each run their own Prometheus and Grafana, and the
+`dashboards` chart is deployed to both with no per-environment values (see
+`monitoring.dashboards` in [values/apps-sandbox.yaml](../values/apps-sandbox.yaml)).
+Both environments therefore render byte-identical JSON against separate
+datasources, and **a dashboard never shows two clusters at once** — in the prd
+Grafana the `cluster` variable resolves to exactly one value.
+
+This is why the `cluster` variable, `by (cluster)` groupings, and `{{cluster}}`
+legend prefixes are not a way to compare environments. They exist so that one
+definition works unchanged in both, and so a legend still says which
+environment the browser tab is showing. Keep them: dropping them makes the two
+deployments' panels indistinguishable side by side, and breaks the day a
+cluster does scrape a second one.
+
+The corollary is that missing data for the *other* environment is never a gap
+to fix here. Do not write Go comments or panel descriptions implying a
+dashboard spans prd and sandbox — describe what the panel shows, and leave the
+environment to the datasource.
+
 ## Dashboard structure guidelines
 
 Dashboards should tell the same operational story from top to bottom: establish scope,
@@ -155,6 +176,7 @@ clearer domain-specific investigation path:
 - Is `Summary`, `Status`, or a component-qualified name chosen by the rules above?
 - Do grid spans total 24 on each intended line, with related panels kept together?
 - Does the section order support the path from detection to diagnosis to detail?
+- Do comments and descriptions avoid implying a dashboard spans environments?
 - Are generated JSON files committed together with their Go definitions?
 
 ## Development

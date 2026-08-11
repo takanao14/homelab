@@ -10,10 +10,13 @@ import (
 )
 
 // buildArgocdOverview defines ArgoCD application health, sync activity, and
-// repo-server performance across prd and sandbox.
+// repo-server performance.
 //
 // Metrics come from the four per-component ServiceMonitors
 // (job="argocd-<component>-metrics", see docs/plans/prometheus-scrape-gaps.md).
+// Each environment renders this against its own Prometheus, so the dashboard
+// only ever shows one cluster -- see "Environments and the cluster variable"
+// in the README.
 func buildArgocdOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
