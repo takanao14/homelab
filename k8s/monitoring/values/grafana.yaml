@@ -1,6 +1,9 @@
 grafana:
   podAnnotations:
     reloader.stakater.com/auto: "true"
+  grafana.ini:
+    server:
+      root_url: https://grafana.prd.butaco.net/
   admin:
     existingSecret: grafana-admin
     userKey: admin-user
@@ -51,8 +54,6 @@ grafana:
   service:
     type: ClusterIP
   defaultDashboardsEnabled: false
-
-hostname: grafana.prd.butaco.net
 
 gateway:
   name: shared-gateway-envoy

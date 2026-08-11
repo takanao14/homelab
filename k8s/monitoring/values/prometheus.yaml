@@ -55,6 +55,7 @@ kube-prometheus-stack:
 
   prometheus:
     prometheusSpec:
+      externalUrl: https://prometheus.prd.butaco.net/
       serviceMonitorSelectorNilUsesHelmValues: false
       serviceMonitorSelector:
         matchLabels:
@@ -200,9 +201,6 @@ kube-prometheus-stack:
   # kube-proxy is disabled cluster-wide (Cilium kube-proxy replacement).
   kubeProxy:
     enabled: false
-
-prometheus:
-  hostname: prometheus.prd.butaco.net
 
 gateway:
   name: shared-gateway-envoy

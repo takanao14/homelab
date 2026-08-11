@@ -1,3 +1,10 @@
+{{- $hostname := .Values.hostname -}}
+{{- $grafanaIni := index .Values.grafana "grafana.ini" | default dict -}}
+{{- $server := index $grafanaIni "server" | default dict -}}
+{{- $rootURL := index $server "root_url" | default "" -}}
+{{- if $rootURL -}}
+{{- $hostname = (urlParse $rootURL).host -}}
+{{- end -}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -11,7 +18,7 @@ spec:
       namespace: {{ .Values.gateway.namespace }}
       sectionName: {{ .Values.gateway.sectionName }}
   hostnames:
-    - {{ .Values.hostname }}
+    - {{ $hostname }}
   rules:
     - matches:
         - path:
