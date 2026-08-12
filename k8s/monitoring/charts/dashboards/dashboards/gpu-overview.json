@@ -33,7 +33,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "amd_gpu_gfx_activity{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "expr": "max by (gpu_id) (amd_gpu_gfx_activity{job=\"scrapeConfig/monitoring/amd-gpu-external\"})",
           "legendFormat": "GFX Activity"
         }
       ],
@@ -92,7 +92,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "amd_gpu_used_vram{job=\"scrapeConfig/monitoring/amd-gpu-external\"} / amd_gpu_total_vram{job=\"scrapeConfig/monitoring/amd-gpu-external\"} * 100",
+          "expr": "max by (gpu_id) (amd_gpu_used_vram{job=\"scrapeConfig/monitoring/amd-gpu-external\"}) / max by (gpu_id) (amd_gpu_total_vram{job=\"scrapeConfig/monitoring/amd-gpu-external\"}) * 100",
           "legendFormat": "VRAM Usage"
         }
       ],
@@ -152,7 +152,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "amd_gpu_edge_temperature{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "expr": "max by (gpu_id) (amd_gpu_edge_temperature{job=\"scrapeConfig/monitoring/amd-gpu-external\"})",
           "legendFormat": "Edge Temp"
         }
       ],
@@ -210,7 +210,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "amd_gpu_average_package_power{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "expr": "max by (gpu_id) (amd_gpu_average_package_power{job=\"scrapeConfig/monitoring/amd-gpu-external\"})",
           "legendFormat": "Power"
         }
       ],
@@ -282,7 +282,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(amd_gpu_health{job=\"scrapeConfig/monitoring/amd-gpu-external\"} != 1) or vector(0)",
+          "expr": "count(max by (gpu_id) (amd_gpu_health{job=\"scrapeConfig/monitoring/amd-gpu-external\"}) != 1) or vector(0)",
           "instant": true,
           "legendFormat": "Health Issues",
           "range": false
@@ -340,7 +340,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(amd_gpu_ecc_uncorrect_total{job=\"scrapeConfig/monitoring/amd-gpu-external\"}) or vector(0)",
+          "expr": "sum(max by (gpu_id) (amd_gpu_ecc_uncorrect_total{job=\"scrapeConfig/monitoring/amd-gpu-external\"})) or vector(0)",
           "instant": true,
           "legendFormat": "ECC Errors",
           "range": false
@@ -398,7 +398,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "amd_gpu_junction_temperature{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "expr": "max by (gpu_id) (amd_gpu_junction_temperature{job=\"scrapeConfig/monitoring/amd-gpu-external\"})",
           "instant": true,
           "legendFormat": "Junction Temp",
           "range": false
@@ -472,15 +472,15 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "amd_gpu_gfx_activity{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "expr": "max by (gpu_id) (amd_gpu_gfx_activity{job=\"scrapeConfig/monitoring/amd-gpu-external\"})",
           "legendFormat": "GFX"
         },
         {
-          "expr": "amd_gpu_umc_activity{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "expr": "max by (gpu_id) (amd_gpu_umc_activity{job=\"scrapeConfig/monitoring/amd-gpu-external\"})",
           "legendFormat": "Memory Controller"
         },
         {
-          "expr": "amd_gpu_vcn_activity{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "expr": "max by (gpu_id) (amd_gpu_vcn_activity{job=\"scrapeConfig/monitoring/amd-gpu-external\"})",
           "legendFormat": "Video Codec"
         }
       ],
@@ -512,6 +512,8 @@
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
+          "min": 0,
+          "max": 100,
           "custom": {}
         },
         "overrides": []
@@ -521,11 +523,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "amd_gpu_used_vram{job=\"scrapeConfig/monitoring/amd-gpu-external\"} * 1024 * 1024",
+          "expr": "max by (gpu_id) (amd_gpu_used_vram{job=\"scrapeConfig/monitoring/amd-gpu-external\"}) * 1024 * 1024",
           "legendFormat": "Used"
         },
         {
-          "expr": "amd_gpu_total_vram{job=\"scrapeConfig/monitoring/amd-gpu-external\"} * 1024 * 1024",
+          "expr": "max by (gpu_id) (amd_gpu_total_vram{job=\"scrapeConfig/monitoring/amd-gpu-external\"}) * 1024 * 1024",
           "legendFormat": "Total"
         }
       ],
@@ -566,11 +568,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "amd_gpu_used_gtt{job=\"scrapeConfig/monitoring/amd-gpu-external\"} * 1024 * 1024",
+          "expr": "max by (gpu_id) (amd_gpu_used_gtt{job=\"scrapeConfig/monitoring/amd-gpu-external\"}) * 1024 * 1024",
           "legendFormat": "Used"
         },
         {
-          "expr": "amd_gpu_total_gtt{job=\"scrapeConfig/monitoring/amd-gpu-external\"} * 1024 * 1024",
+          "expr": "max by (gpu_id) (amd_gpu_total_gtt{job=\"scrapeConfig/monitoring/amd-gpu-external\"}) * 1024 * 1024",
           "legendFormat": "Total"
         }
       ],
@@ -611,15 +613,15 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "amd_gpu_edge_temperature{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "expr": "max by (gpu_id) (amd_gpu_edge_temperature{job=\"scrapeConfig/monitoring/amd-gpu-external\"})",
           "legendFormat": "Edge"
         },
         {
-          "expr": "amd_gpu_junction_temperature{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "expr": "max by (gpu_id) (amd_gpu_junction_temperature{job=\"scrapeConfig/monitoring/amd-gpu-external\"})",
           "legendFormat": "Junction (Hotspot)"
         },
         {
-          "expr": "amd_gpu_memory_temperature{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
+          "expr": "max by (gpu_id) (amd_gpu_memory_temperature{job=\"scrapeConfig/monitoring/amd-gpu-external\"})",
           "legendFormat": "Memory"
         }
       ],
@@ -660,15 +662,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "amd_gpu_power_usage{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
-          "legendFormat": "Current"
-        },
-        {
-          "expr": "amd_gpu_average_package_power{job=\"scrapeConfig/monitoring/amd-gpu-external\"}",
-          "legendFormat": "Average"
+          "expr": "max by (gpu_id) (amd_gpu_average_package_power{job=\"scrapeConfig/monitoring/amd-gpu-external\"})",
+          "legendFormat": "Average package power"
         }
       ],
       "title": "Power",
+      "description": "Average package power. The exporter publishes no instantaneous figure, so this is the only power reading available.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -705,11 +704,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "amd_gpu_clock{job=\"scrapeConfig/monitoring/amd-gpu-external\", clock_type=\"system\"} * 1000 * 1000",
+          "expr": "max by (gpu_id) (amd_gpu_clock{job=\"scrapeConfig/monitoring/amd-gpu-external\", clock_type=\"system\"}) * 1000 * 1000",
           "legendFormat": "GPU Core"
         },
         {
-          "expr": "amd_gpu_clock{job=\"scrapeConfig/monitoring/amd-gpu-external\", clock_type=\"memory\"} * 1000 * 1000",
+          "expr": "max by (gpu_id) (amd_gpu_clock{job=\"scrapeConfig/monitoring/amd-gpu-external\", clock_type=\"memory\"}) * 1000 * 1000",
           "legendFormat": "Memory"
         }
       ],
