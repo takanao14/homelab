@@ -48,7 +48,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
+        "w": 8,
         "x": 0,
         "y": 1
       },
@@ -91,8 +91,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 6,
+        "w": 8,
+        "x": 8,
         "y": 1
       },
       "repeatDirection": "h",
@@ -134,12 +134,13 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(count_over_time({host=~\"$host\", severity=~\"warning|warn|4\"} [1h])) or vector(0)",
+          "expr": "sum(count_over_time({host=~\"$host\", severity=~\"warning|warn|4\", host!~\"bgw1|wifi-ap1|lab-sw1\"} [1h])) or vector(0)",
           "legendFormat": "warnings",
           "instant": true
         }
       ],
-      "title": "Warnings (1h)",
+      "title": "Host Warnings (1h)",
+      "description": "Linux hosts only: node1-5, pve, rpi3. Zero in most hours and one to three in the rest, almost all pvestatd, so yellow here is worth a look rather than the permanent state it used to be. The network appliances are counted separately below and the two tiles together are every warning-severity line.",
       "transparent": false,
       "datasource": {
         "type": "loki",
@@ -147,8 +148,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 12,
+        "w": 8,
+        "x": 16,
         "y": 1
       },
       "repeatDirection": "h",
@@ -190,12 +191,13 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(count_over_time({host=~\"$host\"} | json | __error__!=\"\" [1h])) or vector(0)",
-          "legendFormat": "errors",
+          "expr": "sum(count_over_time({host=~\"$host\", severity=~\"warning|warn|4\", host=~\"bgw1|wifi-ap1|lab-sw1\"} [1h])) or vector(0)",
+          "legendFormat": "warnings",
           "instant": true
         }
       ],
-      "title": "Parse Errors (1h)",
+      "title": "Network Device Warnings (1h)",
+      "description": "bgw1, wifi-ap1 and lab-sw1, which log routine packet-level events at warning severity: ICMP redirect discards, TCP resets, DHCP leases not found. Watch the level, not the presence -- the steady state is around 78 an hour, so this tile is deliberately uncoloured.",
       "transparent": false,
       "datasource": {
         "type": "loki",
@@ -203,9 +205,62 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 1
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "text"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({host=~\"$host\", severity=~\".+\"} | json | __error__!=\"\" [1h])) or vector(0)",
+          "legendFormat": "errors",
+          "instant": true
+        }
+      ],
+      "title": "Parse Errors (1h)",
+      "description": "Empty is good: syslog lines this dashboard could not parse as JSON. Zero over the last day.",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 5
       },
       "repeatDirection": "h",
       "options": {
@@ -250,7 +305,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 5
+        "y": 9
       },
       "id": 0,
       "panels": []
@@ -259,7 +314,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({host=~\"$host\", severity=~\"$severity\"}[5m]))",
+          "expr": "sum by (host) (rate({host=~\"$host\", severity=~\"$severity\"}[$__auto])) or sum by (host) (count_over_time({host=~\"$host\", severity=~\"$severity\"}[$__range])) * 0",
           "legendFormat": "{{host}}"
         }
       ],
@@ -273,9 +328,10 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 6
+        "y": 10
       },
       "repeatDirection": "h",
+      "interval": "1m",
       "options": {
         "legend": {
           "displayMode": "list",
@@ -307,7 +363,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (severity) (rate({host=~\"$host\", severity=~\".+\"}[5m]))",
+          "expr": "sum by (severity) (rate({host=~\"$host\", severity=~\".+\"}[$__auto])) or sum by (severity) (count_over_time({host=~\"$host\", severity=~\".+\"}[$__range])) * 0",
           "legendFormat": "{{severity}}"
         }
       ],
@@ -321,9 +377,10 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 6
+        "y": 10
       },
       "repeatDirection": "h",
+      "interval": "1m",
       "options": {
         "legend": {
           "displayMode": "list",
@@ -420,7 +477,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 18
       },
       "id": 0,
       "panels": []
@@ -429,7 +486,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (appname) (rate({host=~\"$host\", severity=~\"$severity\"} | json | __error__=\"\" | appname=~\"$appname\"[5m]))",
+          "expr": "sum by (appname) (rate({host=~\"$host\", severity=~\"$severity\"} | json | __error__=\"\" | appname=~\"$appname\"[$__auto])) or sum by (appname) (count_over_time({host=~\"$host\", severity=~\"$severity\"} | json | __error__=\"\" | appname=~\"$appname\"[$__range])) * 0",
           "legendFormat": "{{appname}}"
         }
       ],
@@ -443,9 +500,10 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 15
+        "y": 19
       },
       "repeatDirection": "h",
+      "interval": "1m",
       "options": {
         "legend": {
           "displayMode": "list",
@@ -477,11 +535,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({host=~\"$host\", severity=~\"emerg|alert|crit|err|error|[0-3]\"}[5m])) or sum by (host) (rate({host=~\"$host\", severity=~\"$severity\"}[5m])) * 0",
+          "expr": "sum by (host) (count_over_time({host=~\"$host\", severity=~\"emerg|alert|crit|err|error|[0-3]\"}[$__auto])) or sum by (host) (count_over_time({host=~\"$host\", severity=~\"$severity\"}[$__range])) * 0",
           "legendFormat": "{{host}}"
         }
       ],
-      "title": "Error Rate by Host",
+      "title": "Errors by Host",
+      "description": "Empty is good. The whole estate logs error severity on the order of ten lines a day, so a flat set of zero bars is the normal reading.",
       "transparent": false,
       "datasource": {
         "type": "loki",
@@ -491,9 +550,10 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 15
+        "y": 19
       },
       "repeatDirection": "h",
+      "interval": "1m",
       "options": {
         "legend": {
           "displayMode": "list",
@@ -508,11 +568,15 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "cps",
+          "unit": "short",
           "min": 0,
           "custom": {
-            "fillOpacity": 10,
-            "spanNulls": true
+            "drawStyle": "bars",
+            "gradientMode": "hue",
+            "fillOpacity": 100,
+            "stacking": {
+              "mode": "normal"
+            }
           }
         },
         "overrides": []
@@ -522,11 +586,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({host=~\"$host\", severity=~\"warning|warn|4\"}[5m])) or sum by (host) (rate({host=~\"$host\", severity=~\"$severity\"}[5m])) * 0",
+          "expr": "sum by (host) (count_over_time({host=~\"$host\", severity=~\"warning|warn|4\"}[$__auto])) or sum by (host) (count_over_time({host=~\"$host\", severity=~\"$severity\"}[$__range])) * 0",
           "legendFormat": "{{host}}"
         }
       ],
-      "title": "Warning Rate by Host",
+      "title": "Warnings by Host",
       "transparent": false,
       "datasource": {
         "type": "loki",
@@ -536,9 +600,10 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 27
       },
       "repeatDirection": "h",
+      "interval": "1m",
       "options": {
         "legend": {
           "displayMode": "list",
@@ -553,11 +618,15 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "cps",
+          "unit": "short",
           "min": 0,
           "custom": {
-            "fillOpacity": 10,
-            "spanNulls": true
+            "drawStyle": "bars",
+            "gradientMode": "hue",
+            "fillOpacity": 100,
+            "stacking": {
+              "mode": "normal"
+            }
           }
         },
         "overrides": []
@@ -571,7 +640,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 35
       },
       "id": 0,
       "panels": []
@@ -594,19 +663,21 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 36
       },
       "repeatDirection": "h",
       "options": {
         "showLabels": false,
         "showCommonLabels": false,
         "showTime": true,
-        "showLogContextToggle": false,
+        "showLogContextToggle": true,
         "wrapLogMessage": false,
         "prettifyLogMessage": false,
         "enableLogDetails": true,
         "sortOrder": "Descending",
-        "dedupStrategy": ""
+        "dedupStrategy": "",
+        "showControls": true,
+        "showFieldSelector": true
       }
     }
   ],
@@ -630,7 +701,7 @@
         "name": "host",
         "label": "Host",
         "skipUrlSync": false,
-        "query": "label_values(host)",
+        "query": "label_values({severity=~\".+\"}, host)",
         "datasource": {
           "type": "loki",
           "uid": "$datasource"
@@ -640,6 +711,7 @@
         "refresh": 2,
         "sort": 1,
         "includeAll": true,
+        "allValue": ".+",
         "auto": false,
         "auto_min": "10s",
         "auto_count": 30
@@ -649,7 +721,7 @@
         "name": "severity",
         "label": "Severity",
         "skipUrlSync": false,
-        "query": "label_values(severity)",
+        "query": "label_values({host=~\"$host\"}, severity)",
         "datasource": {
           "type": "loki",
           "uid": "$datasource"
@@ -659,6 +731,7 @@
         "refresh": 2,
         "sort": 1,
         "includeAll": true,
+        "allValue": ".+",
         "auto": false,
         "auto_min": "10s",
         "auto_count": 30
@@ -668,7 +741,7 @@
         "name": "appname",
         "label": "App",
         "skipUrlSync": false,
-        "query": "label_values(appname)",
+        "query": "label_values({host=~\"$host\"}, appname)",
         "datasource": {
           "type": "loki",
           "uid": "$datasource"
@@ -678,6 +751,7 @@
         "refresh": 2,
         "sort": 1,
         "includeAll": true,
+        "allValue": ".+",
         "auto": false,
         "auto_min": "10s",
         "auto_count": 30
