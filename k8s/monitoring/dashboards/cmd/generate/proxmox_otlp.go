@@ -29,6 +29,17 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 	const (
 		job        = `job="proxmox-ve"`
 		nodeFilter = `job="proxmox-ve", node=~"$node"`
+		// zfsActive keeps only nodes with a pool actually imported, the same
+		// condition node-overview applies to node_zfs_arc_size and for the same
+		// reason -- this is the same fleet seen through a different exporter, and
+		// the readings agree down to the byte. Every Proxmox host loads the module,
+		// only pve has a pool, and an ARC with nothing in it holds a few header
+		// structs: 2880 bytes on node1 and node5, 1440 on node2 through node4,
+		// against 6.2 GiB on pve. A megabyte is nowhere near either figure.
+		//
+		// Gated on the metric itself rather than on a list of hostnames, so a host
+		// that gains a pool appears here without anyone editing this file.
+		zfsActive = ` and (proxmox_node_memory_arcsize_bytes{` + nodeFilter + `} > 1024 * 1024)`
 	)
 
 	tooltipAll := defaultTooltip()
@@ -251,8 +262,22 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Rx").
-					// Exclude loopback, per-VM tap, and firewall internal interfaces.
-					// Keep physical NICs (nic*), bridges (vmbr*), and SDN vnets (vnets*).
+					// Excludes loopback, the per-guest tap and veth interfaces, the
+					// firewall bridge internals, and nic0. Keeps nic1, the vmbr*
+					// bridges, and the SDN vnets.
+					//
+					// nic0 is named like a physical NIC and is one, but it is not
+					// cabled on any host in this fleet: measured across all six nodes
+					// it moves 0 B/s while nic1 carries everything, so it contributed
+					// six flat lines at zero. An earlier version of this comment said
+					// the filter kept "physical NICs (nic*)", which the pattern beside
+					// it had never done.
+					//
+					// nic1 and vmbr0 report nearly the same rate on each host -- on
+					// node1, 122.7 against 118.3 kB/s -- because the bridge carries
+					// what the NIC under it carries. That is not double counting here:
+					// the panel draws a line per device rather than summing, so the
+					// two are visible as the same traffic seen at two layers.
 					Expr(`rate(proxmox_node_network_receive_bytes_total{`+nodeFilter+`, device!~"lo|tap.*|fwbr.*|fwpr.*|fwln.*|veth.*|nic0"}[$__rate_interval])`).
 					LegendFormat("{{node}} {{device}} RX"),
 				).
@@ -320,11 +345,16 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().
-				Title("Node Load Average (normalized by CPU count)").
+				Title("Node Load Average per CPU").
+				Description("Run-queue length divided by the node's CPU count, so 100% is a saturated node whatever its size. The hosts here run from 6 to 16 CPUs, which is why the raw averages are not comparable between them.").
 				Datasource(ds).
 				Span(24).Height(8).
-				// Values above 1.0 indicate saturation (more runnable tasks than CPUs).
-				Unit("short").
+				// percentunit, matching the same quantity on node-overview and
+				// k8s-node-overview. All three divide a load average by a CPU count;
+				// this one was the last still printing a bare 0.038 where the others
+				// read 3.8%, which invites three views of one fleet to be compared as
+				// though they measured different things.
+				Unit("percentunit").
 				Min(0).
 				Tooltip(tooltipSingle).
 				Legend(legend).
@@ -353,6 +383,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Node ZFS ARC Size").
+				Description("Only nodes with a pool imported appear; the others load the ZFS module but hold an empty ARC of about a kilobyte, which on a bytes axis beside a multi-gigabyte ARC is indistinguishable from zero while still occupying the legend. A node that gains a pool shows up here on its own.").
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("bytes").
@@ -360,7 +391,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`proxmox_node_memory_arcsize_bytes{` + nodeFilter + `}`).
+					Expr(`proxmox_node_memory_arcsize_bytes{` + nodeFilter + `}` + zfsActive).
 					LegendFormat("{{node}} ARC"),
 				),
 		).
@@ -483,12 +514,20 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Guest CPU Pressure (PSI some)").
+				Description("Percentage of time at least one task was stalled waiting for CPU. The axis grows to 100 only if a reading approaches it; on this fleet the busiest moment in 30 days was 2%, and a fixed 0-100 axis flattened all of that into the bottom pixel.").
 				Datasource(ds).
 				Span(24).Height(8).
 				// pressurecpusome_percent: % of time at least one task was stalled on CPU.
 				Unit("percent").
 				Min(0).
-				Max(100).
+				// AxisSoftMax rather than Max, unlike the I/O pressure panel below.
+				// Both are on the same 0-100 scale, but they occupy different parts
+				// of it: over 30 days I/O pressure peaked at 93.2% while CPU pressure
+				// peaked at 1.99%. A hard ceiling of 100 suits the first and erases
+				// the second, so the ceiling here is a soft one -- the normal range
+				// stays legible, and a genuine stall still pushes the axis out to the
+				// full scale rather than running off the top.
+				AxisSoftMax(100).
 				Tooltip(tooltipSingle).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().

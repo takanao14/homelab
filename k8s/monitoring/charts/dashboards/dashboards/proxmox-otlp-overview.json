@@ -772,7 +772,8 @@
           "refId": "Avg15"
         }
       ],
-      "title": "Node Load Average (normalized by CPU count)",
+      "title": "Node Load Average per CPU",
+      "description": "Run-queue length divided by the node's CPU count, so 100% is a saturated node whatever its size. The hosts here run from 6 to 16 CPUs, which is why the raw averages are not comparable between them.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -799,7 +800,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "percentunit",
           "min": 0,
           "custom": {}
         },
@@ -847,11 +848,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "proxmox_node_memory_arcsize_bytes{job=\"proxmox-ve\", node=~\"$node\"}",
+          "expr": "proxmox_node_memory_arcsize_bytes{job=\"proxmox-ve\", node=~\"$node\"} and (proxmox_node_memory_arcsize_bytes{job=\"proxmox-ve\", node=~\"$node\"} \u003e 1024 * 1024)",
           "legendFormat": "{{node}} ARC"
         }
       ],
       "title": "Node ZFS ARC Size",
+      "description": "Only nodes with a pool imported appear; the others load the ZFS module but hold an empty ARC of about a kilobyte, which on a bytes axis beside a multi-gigabyte ARC is indistinguishable from zero while still occupying the legend. A node that gains a pool shows up here on its own.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -1233,6 +1235,7 @@
         }
       ],
       "title": "Guest CPU Pressure (PSI some)",
+      "description": "Percentage of time at least one task was stalled waiting for CPU. The axis grows to 100 only if a reading approaches it; on this fleet the busiest moment in 30 days was 2%, and a fixed 0-100 axis flattened all of that into the bottom pixel.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -1261,8 +1264,9 @@
         "defaults": {
           "unit": "percent",
           "min": 0,
-          "max": 100,
-          "custom": {}
+          "custom": {
+            "axisSoftMax": 100
+          }
         },
         "overrides": []
       }
