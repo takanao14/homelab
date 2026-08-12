@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=coder/code-server
-code_server_version: "4.131.0"
+code_server_version: "4.132.0"
 
 # Account that owns the editor session. code-server runs as this user so the
 # integrated terminal inherits the same ~/.claude, ~/.codex, SSH keys, git
