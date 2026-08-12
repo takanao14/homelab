@@ -80,23 +80,23 @@ Make sure your AGE key is listed in `.sops.yaml` before editing.
 
 ### What is encrypted vs. hardcoded
 
-| Category | Handling |
-|----------|----------|
-| Passwords, API keys, tokens | Encrypted in `*.sops.env` |
-| Usernames | Environment variables when needed; for k0s, `K0S_SSH_USER` defaults to the command runner |
-| IP addresses, domains, ports | Hardcoded in config files |
-| Shared non-secret config | Variables in group_vars or defaults |
+| Category                     | Handling                                                                                  |
+|------------------------------|-------------------------------------------------------------------------------------------|
+| Passwords, API keys, tokens  | Encrypted in `*.sops.env`                                                                 |
+| Usernames                    | Environment variables when needed; for k0s, `K0S_SSH_USER` defaults to the command runner |
+| IP addresses, domains, ports | Hardcoded in config files                                                                 |
+| Shared non-secret config     | Variables in group_vars or defaults                                                       |
 
 ## Tools Required
 
-| Tool | Purpose |
-|------|---------|
-| `sops` | Secret encryption/decryption |
-| `age` | Encryption backend for SOPS |
-| `direnv` | Automatic environment variable loading |
-| `terraform` / `terragrunt` | Infrastructure provisioning |
-| `ansible` | Server configuration management |
-| `packer` | Building the custom Proxmox cloud images |
-| `k0sctl` | k0s cluster lifecycle |
-| `helmfile` / `helm` | Kubernetes workload deployments |
-| `kubectl` | Kubernetes cluster interaction |
+| Tool                       | Purpose                                  |
+|----------------------------|------------------------------------------|
+| `sops`                     | Secret encryption/decryption             |
+| `age`                      | Encryption backend for SOPS              |
+| `direnv`                   | Automatic environment variable loading   |
+| `terraform` / `terragrunt` | Infrastructure provisioning              |
+| `ansible`                  | Server configuration management          |
+| `packer`                   | Building the custom Proxmox cloud images |
+| `k0sctl`                   | k0s cluster lifecycle                    |
+| `helmfile` / `helm`        | Kubernetes workload deployments          |
+| `kubectl`                  | Kubernetes cluster interaction           |
