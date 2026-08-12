@@ -141,6 +141,7 @@
         }
       ],
       "title": "Pods Running",
+      "description": "Worker nodes only. k0s controllers do not run a kubelet unless started with --enable-worker, so a control-plane node is absent here rather than reading zero: the metric this counts does not exist on it.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -175,7 +176,7 @@
       }
     },
     {
-      "type": "bargauge",
+      "type": "stat",
       "targets": [
         {
           "expr": "count by (nodename) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
@@ -183,6 +184,7 @@
         }
       ],
       "title": "CPU Cores",
+      "description": "Logical cores per node. Inventory, not a measurement -- it changes only when a VM is resized.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -196,23 +198,16 @@
       },
       "repeatDirection": "h",
       "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
         "reduceOptions": {
           "calcs": []
         },
-        "maxVizHeight": 300,
+        "percentChangeColorMode": "standard",
         "orientation": "auto"
       },
       "fieldConfig": {
@@ -384,19 +379,20 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "node_load1{cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "node_load1{cluster=~\"$cluster\"} / on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} 1m"
         },
         {
-          "expr": "node_load5{cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "node_load5{cluster=~\"$cluster\"} / on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} 5m"
         },
         {
-          "expr": "node_load15{cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
+          "expr": "node_load15{cluster=~\"$cluster\"} / on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})",
           "legendFormat": "{{nodename}} 15m"
         }
       ],
-      "title": "Load Average",
+      "title": "Load Average per CPU",
+      "description": "Run-queue length divided by the node's CPU count, so 100% is a saturated node whatever its size and the red line marks it. Raw load averages are not comparable across this cluster: k0s-cp1 has 2 CPUs against 10 on the workers, so the same load1 of 0.08 is 13.5% per CPU on cp1 and 0.9% on worker1. Read a value here as the fraction of the node's CPUs that had work waiting.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -423,9 +419,26 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "percentunit",
           "min": 0,
-          "custom": {}
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "transparent"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          }
         },
         "overrides": [
           {
@@ -523,7 +536,26 @@
           "min": 0,
           "custom": {}
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* Available$"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    2,
+                    4
+                  ],
+                  "fill": "dot"
+                }
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -940,17 +972,18 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (nodename) (rate(node_network_receive_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*\"} [$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+          "expr": "sum by (nodename) (rate(node_network_receive_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*|lxc.*|cilium_.*\"} [$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
           "legendFormat": "{{nodename}} Rx",
           "refId": "Rx"
         },
         {
-          "expr": "sum by (nodename) (rate(node_network_transmit_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+          "expr": "sum by (nodename) (rate(node_network_transmit_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*|lxc.*|cilium_.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
           "legendFormat": "{{nodename}} Tx",
           "refId": "Tx"
         }
       ],
       "title": "Network I/O",
+      "description": "Traffic across each node's physical interfaces. The CNI's per-pod veths and Cilium's own devices are excluded, so pod traffic is counted once, where it leaves the node, rather than again on every virtual hop.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
