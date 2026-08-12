@@ -31,8 +31,19 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 		Uid("network-overview").
 		Tags([]string{"network", "infrastructure"}).
 		Timezone("browser").
-		Time("now-30d", "now").
-		Refresh("60s"). // SNMP scrapes are expensive; 60s is a reasonable interval.
+		// 24h, not the 30d this used to open at. The rate windows follow the zoom:
+		// at 30d $__rate_interval resolved to roughly 63 minutes, which averages a
+		// link's busiest minute into an hour of quiet either side. bgw1 peaked at
+		// 427 Mbps over the last 30 days measured in 10-minute windows and idles
+		// near 1.8 Mbps, so the panel that exists to show how hard the line is
+		// working was smoothing away the only part worth seeing. At 24h the window
+		// is about 4 minutes -- $__interval of 2 minutes against a 60s scrape, so
+		// the 4 x scrape floor decides it -- and bursts survive. The 30-day view is
+		// still one zoom away when the question is a monthly trend.
+		Time("now-24h", "now").
+		// Matches the 60s SNMP scrape interval: refreshing faster would redraw the
+		// same points, and slower would leave the newest scrape off the screen.
+		Refresh("60s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
 			promDatasourceVariable(),
