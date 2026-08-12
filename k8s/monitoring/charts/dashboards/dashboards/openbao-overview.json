@@ -247,14 +247,14 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(vault_token_count{job=\"scrapeConfig/monitoring/openbao\"})",
+          "expr": "sum(last_over_time(vault_token_count{job=\"scrapeConfig/monitoring/openbao\"}[15m]))",
           "instant": true,
           "legendFormat": "Tokens",
           "range": false
         }
       ],
       "title": "Service Tokens",
-      "description": "Number of live service tokens in the token store.",
+      "description": "Live service tokens in the token store. OpenBao recomputes this every ten minutes rather than on each scrape, so the reading here can be up to that old.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -406,12 +406,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(vault_raft_apply{job=\"scrapeConfig/monitoring/openbao\"}[$__rate_interval])",
+          "expr": "vault_raft_apply{job=\"scrapeConfig/monitoring/openbao\"}",
           "legendFormat": "applies"
         }
       ],
-      "title": "Raft Apply Rate",
-      "description": "Raft log entries applied to the FSM per second (write activity).",
+      "title": "Raft Applies per Collection Interval",
+      "description": "Raft log entries applied to the FSM, as counted by OpenBao over its own metrics interval. Not a per-second rate: the value is already a count, and it is republished rather than accumulated, so a step up means more writes in that interval and not a rising total.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -438,7 +438,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "ops",
+          "unit": "short",
+          "min": 0,
           "custom": {}
         },
         "overrides": []
@@ -607,16 +608,16 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum(vault_token_count{job=\"scrapeConfig/monitoring/openbao\"})",
+          "expr": "sum(last_over_time(vault_token_count{job=\"scrapeConfig/monitoring/openbao\"}[15m]))",
           "legendFormat": "tokens"
         },
         {
-          "expr": "vault_identity_num_entities{job=\"scrapeConfig/monitoring/openbao\"}",
+          "expr": "last_over_time(vault_identity_num_entities{job=\"scrapeConfig/monitoring/openbao\"}[15m])",
           "legendFormat": "entities"
         }
       ],
       "title": "Tokens \u0026 Identity Entities",
-      "description": "Service token count and identity entities over time. A runaway token count points at a login loop (e.g. an ESO auth misconfiguration).",
+      "description": "Service token count and identity entities over time. Both are recomputed every ten minutes, not per scrape, so each step repeats the last collected value instead of drawing a line between two distant points. A runaway token count points at a login loop (e.g. an ESO auth misconfiguration).",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -644,6 +645,7 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
+          "min": 0,
           "custom": {}
         },
         "overrides": []

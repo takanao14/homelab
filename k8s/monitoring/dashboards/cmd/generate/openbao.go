@@ -23,6 +23,25 @@ func buildOpenbaoOverview() (*dashboard.Dashboard, error) {
 
 	const openbao = `job="scrapeConfig/monitoring/openbao"`
 
+	// usageGauge holds a metric from OpenBao's periodic usage-gauge collection.
+	//
+	// vault_token_count and vault_identity_num_entities are not emitted on every
+	// scrape. They come from a background loop that runs every ten minutes, so the
+	// series exists for one scrape and is then absent until the loop runs again:
+	// sampled at one-minute resolution over six hours, vault_token_count was
+	// present for 36 of 360 minutes and vault_identity_num_entities the same. An
+	// instant query only reaches back five minutes, so the stat that reads it went
+	// blank for roughly half of every ten-minute cycle, and the timeseries drew a
+	// point every ten minutes with line segments guessing at the gaps.
+	//
+	// A fifteen-minute window is longer than the ten-minute period by enough to
+	// always contain a sample, without being so long that a genuinely stopped
+	// collector goes unnoticed for an hour. Metrics that are emitted every scrape,
+	// vault_expire_num_leases among them, need none of this and do not get it.
+	usageGauge := func(expr string) string {
+		return `last_over_time(` + expr + `[15m])`
+	}
+
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
 
@@ -118,12 +137,12 @@ func buildOpenbaoOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Service Tokens").
-				Description("Number of live service tokens in the token store.").
+				Description("Live service tokens in the token store. OpenBao recomputes this every ten minutes rather than on each scrape, so the reading here can be up to that old.").
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("short").Min(0).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(vault_token_count{` + openbao + `})`).
+					Expr(`sum(` + usageGauge(`vault_token_count{`+openbao+`}`) + `)`).
 					Instant().
 					LegendFormat("Tokens"),
 				),
@@ -164,15 +183,25 @@ func buildOpenbaoOverview() (*dashboard.Dashboard, error) {
 		WithRow(dashboard.NewRowBuilder("Raft Storage")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
-				Title("Raft Apply Rate").
-				Description("Raft log entries applied to the FSM per second (write activity).").
+				Title("Raft Applies per Collection Interval").
+				Description("Raft log entries applied to the FSM, as counted by OpenBao over its own metrics interval. Not a per-second rate: the value is already a count, and it is republished rather than accumulated, so a step up means more writes in that interval and not a rising total.").
 				Datasource(ds).
 				Span(8).Height(8).
-				Unit("ops").
+				Unit("short").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(vault_raft_apply{` + openbao + `}[$__rate_interval])`).
+					// Plotted raw, without rate(). vault_raft_apply is a go-metrics
+					// counter reaching Prometheus through the go-metrics sink, which
+					// publishes the count for the last collection interval and then
+					// starts over -- it is a gauge in everything but name and does not
+					// increase monotonically. Observed over two hours it read
+					// 11,11,11,11,11,27,11,11,11,11,11,27,11. rate() treats each fall
+					// back to 11 as a counter reset and adds the 11 again as fresh
+					// increase, which is how the panel arrived at 0.0588 ops from a
+					// series whose real meaning is "11 applies in that interval".
+					Expr(`vault_raft_apply{` + openbao + `}`).
 					LegendFormat("applies"),
 				),
 		).
@@ -229,18 +258,19 @@ func buildOpenbaoOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Tokens & Identity Entities").
-				Description("Service token count and identity entities over time. A runaway token count points at a login loop (e.g. an ESO auth misconfiguration).").
+				Description("Service token count and identity entities over time. Both are recomputed every ten minutes, not per scrape, so each step repeats the last collected value instead of drawing a line between two distant points. A runaway token count points at a login loop (e.g. an ESO auth misconfiguration).").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
+				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum(vault_token_count{` + openbao + `})`).
+					Expr(`sum(` + usageGauge(`vault_token_count{`+openbao+`}`) + `)`).
 					LegendFormat("tokens"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`vault_identity_num_entities{` + openbao + `}`).
+					Expr(usageGauge(`vault_identity_num_entities{` + openbao + `}`)).
 					LegendFormat("entities"),
 				),
 		).
