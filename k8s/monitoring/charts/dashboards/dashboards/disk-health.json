@@ -196,13 +196,14 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(nvme_critical_warning{instance=~\"$instance\"} \u003e bool 0) or vector(0)",
+          "expr": "(count(max by (instance, disk) (smartmon_reallocated_sector_ct_raw_value{instance=~\"$instance\"} or smartmon_current_pending_sector_raw_value{instance=~\"$instance\"} or smartmon_offline_uncorrectable_raw_value{instance=~\"$instance\"} or smartmon_reported_uncorrect_raw_value{instance=~\"$instance\"}) \u003e 0) or vector(0)) + (count(max by (instance, device) (smartctl_device_attribute{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",attribute_value_type=\"raw\",attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect\"}) \u003e 0) or vector(0))",
           "instant": true,
-          "legendFormat": "Warnings",
+          "legendFormat": "Precursors",
           "range": false
         }
       ],
-      "title": "NVMe Warnings",
+      "title": "Disks with Failure Precursors",
+      "description": "Disks reporting any reallocated, pending, offline-uncorrectable or reported-uncorrectable sectors. A nonzero count is not an outage: it means those disks have remapped or failed to read sectors at some point. Growth is what matters, and is alerted separately.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -239,7 +240,7 @@
               },
               {
                 "value": 1,
-                "color": "red"
+                "color": "yellow"
               }
             ]
           }
@@ -336,7 +337,7 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Failure Precursors (SATA)",
+      "title": "Failure Precursors",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -356,7 +357,7 @@
           "range": false
         }
       ],
-      "title": "Reallocated Sectors",
+      "title": "Reallocated Sectors (SATA)",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -421,7 +422,7 @@
           "range": false
         }
       ],
-      "title": "Current Pending Sectors",
+      "title": "Current Pending Sectors (SATA)",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -486,7 +487,7 @@
           "range": false
         }
       ],
-      "title": "Offline Uncorrectable",
+      "title": "Offline Uncorrectable (SATA)",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -551,7 +552,7 @@
           "range": false
         }
       ],
-      "title": "Reported Uncorrectable",
+      "title": "Reported Uncorrectable (SATA)",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -616,7 +617,7 @@
           "range": false
         }
       ],
-      "title": "UDMA CRC Errors",
+      "title": "UDMA CRC Errors (SATA)",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -683,7 +684,7 @@
           "legendFormat": "{{nodename}} {{disk}} pending"
         }
       ],
-      "title": "Pending / Reallocated Sector Trend",
+      "title": "Pending / Reallocated Sector Trend (SATA)",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -716,6 +717,54 @@
       }
     },
     {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "max by (nodename, model, serial) (nvme_media_errors_total{instance=~\"$instance\"} * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
+          "legendFormat": "{{nodename}} {{model}} media errors"
+        },
+        {
+          "expr": "max by (nodename, model, serial) (nvme_num_err_log_entries_total{instance=~\"$instance\"} * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
+          "legendFormat": "{{nodename}} {{model}} err-log entries"
+        },
+        {
+          "expr": "max by (nodename, model, serial) (nvme_unsafe_shutdowns_total{instance=~\"$instance\"} * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
+          "legendFormat": "{{nodename}} {{model}} unsafe shutdowns"
+        }
+      ],
+      "title": "Media \u0026 Error-Log Entries (NVMe)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
       "type": "row",
       "collapsed": false,
       "title": "Wear \u0026 Lifetime",
@@ -723,7 +772,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 36
+        "y": 44
       },
       "id": 0,
       "panels": []
@@ -738,8 +787,8 @@
           "range": false
         }
       ],
-      "title": "SSD Life Remaining (vendor wear attr)",
-      "description": "Normalized SSD wear (100 = new). Sourced from whichever vendor attribute a disk exposes (wear_leveling_count, media_wearout_indicator, ssd_life_left, percent_lifetime_remain). SSDs that expose none, plus all HDDs, do not appear; NVMe endurance is shown in the NVMe row.",
+      "title": "SSD Life Remaining (SATA)",
+      "description": "Normalized SSD wear (100 = new). Sourced from whichever vendor attribute a disk exposes (wear_leveling_count, media_wearout_indicator, ssd_life_left, percent_lifetime_remain). SSDs that expose none, plus all HDDs, do not appear; NVMe endurance is the panel to the right.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -747,9 +796,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
-        "y": 37
+        "y": 45
       },
       "repeatDirection": "h",
       "options": {
@@ -761,6 +810,10 @@
         "showPercentChange": false,
         "reduceOptions": {
           "calcs": []
+        },
+        "text": {
+          "titleSize": 16,
+          "valueSize": 32
         },
         "percentChangeColorMode": "standard",
         "orientation": "auto"
@@ -791,63 +844,6 @@
       }
     },
     {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "smartmon_power_on_hours_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
-          "range": false
-        }
-      ],
-      "title": "Power On Hours",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 37
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "value_and_name",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "h",
-          "decimals": 0
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "NVMe",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 45
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
       "type": "bargauge",
       "targets": [
         {
@@ -857,7 +853,8 @@
           "range": false
         }
       ],
-      "title": "Endurance Used (%)",
+      "title": "Endurance Used (NVMe)",
+      "description": "The drive's own estimate of write endurance consumed. Counts up, unlike the SATA panel to the left, which counts down.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -866,8 +863,8 @@
       "gridPos": {
         "h": 8,
         "w": 8,
-        "x": 0,
-        "y": 46
+        "x": 8,
+        "y": 45
       },
       "repeatDirection": "h",
       "options": {
@@ -928,7 +925,7 @@
           "range": false
         }
       ],
-      "title": "Available Spare (%)",
+      "title": "Available Spare (NVMe)",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -937,8 +934,8 @@
       "gridPos": {
         "h": 8,
         "w": 8,
-        "x": 8,
-        "y": 46
+        "x": 16,
+        "y": 45
       },
       "repeatDirection": "h",
       "options": {
@@ -993,6 +990,83 @@
       "type": "stat",
       "targets": [
         {
+          "expr": "smartmon_power_on_hours_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info",
+          "instant": true,
+          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+          "range": false
+        },
+        {
+          "expr": "nvme_power_on_hours_total{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+          "instant": true,
+          "legendFormat": "{{nodename}} {{device}} {{model}}",
+          "range": false
+        }
+      ],
+      "title": "Power On Hours",
+      "description": "How long each disk has been powered on. A figure to plan replacements against, not a health signal, so it carries no threshold colour: nothing here is good or bad on its own.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 53
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "value_and_name",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "text": {
+          "titleSize": 16,
+          "valueSize": 32
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "NVMe",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 63
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
           "expr": "nvme_critical_warning{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "instant": true,
           "legendFormat": "{{nodename}} {{device}}",
@@ -1008,8 +1082,8 @@
       "gridPos": {
         "h": 8,
         "w": 8,
-        "x": 16,
-        "y": 46
+        "x": 0,
+        "y": 64
       },
       "repeatDirection": "h",
       "options": {
@@ -1077,8 +1151,8 @@
       "gridPos": {
         "h": 8,
         "w": 8,
-        "x": 0,
-        "y": 54
+        "x": 8,
+        "y": 64
       },
       "repeatDirection": "h",
       "options": {
@@ -1100,7 +1174,16 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
-          "decimals": 1
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
         },
         "overrides": []
       }
@@ -1124,8 +1207,8 @@
       "gridPos": {
         "h": 8,
         "w": 8,
-        "x": 8,
-        "y": 54
+        "x": 16,
+        "y": 64
       },
       "repeatDirection": "h",
       "options": {
@@ -1147,54 +1230,16 @@
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
-          "decimals": 1
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "nvme_power_on_hours_total{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{device}} {{model}}",
-          "range": false
-        }
-      ],
-      "title": "Power On Hours",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 54
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "h",
-          "decimals": 0
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
         },
         "overrides": []
       }
@@ -1203,13 +1248,13 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "(rate(nvme_data_units_written_total{instance=~\"$instance\"}[$__rate_interval]) * 512000) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{device}} Write",
+          "expr": "max by (nodename, model, serial) ((rate(nvme_data_units_written_total{instance=~\"$instance\"}[$__rate_interval]) * 512000) * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
+          "legendFormat": "{{nodename}} {{model}} Write",
           "refId": "Write"
         },
         {
-          "expr": "(rate(nvme_data_units_read_total{instance=~\"$instance\"}[$__rate_interval]) * 512000) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{device}} Read",
+          "expr": "max by (nodename, model, serial) ((rate(nvme_data_units_read_total{instance=~\"$instance\"}[$__rate_interval]) * 512000) * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
+          "legendFormat": "{{nodename}} {{model}} Read",
           "refId": "Read"
         }
       ],
@@ -1223,7 +1268,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 62
+        "y": 72
       },
       "repeatDirection": "h",
       "options": {
@@ -1260,62 +1305,14 @@
       }
     },
     {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "nvme_media_errors_total{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{device}} media errors"
-        },
-        {
-          "expr": "nvme_num_err_log_entries_total{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{device}} err-log entries"
-        },
-        {
-          "expr": "nvme_unsafe_shutdowns_total{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{device}} unsafe shutdowns"
-        }
-      ],
-      "title": "Media \u0026 Error-Log Entries",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 70
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
       "type": "row",
       "collapsed": false,
-      "title": "TrueNAS (smartctl_exporter)",
+      "title": "TrueNAS Disks",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 78
+        "y": 80
       },
       "id": 0,
       "panels": []
@@ -1341,7 +1338,7 @@
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 79
+        "y": 81
       },
       "repeatDirection": "h",
       "options": {
@@ -1407,7 +1404,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 83
+        "y": 85
       },
       "repeatDirection": "h",
       "options": {
@@ -1462,7 +1459,7 @@
           "range": false
         }
       ],
-      "title": "UDMA CRC Errors",
+      "title": "UDMA CRC Errors (TrueNAS)",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -1472,7 +1469,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 83
+        "y": 85
       },
       "repeatDirection": "h",
       "options": {
@@ -1527,7 +1524,7 @@
           "range": false
         }
       ],
-      "title": "Power On Hours",
+      "title": "Power On Hours (TrueNAS)",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -1537,7 +1534,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 83
+        "y": 85
       },
       "repeatDirection": "h",
       "options": {
@@ -1550,13 +1547,25 @@
         "reduceOptions": {
           "calcs": []
         },
+        "text": {
+          "titleSize": 16
+        },
         "percentChangeColorMode": "standard",
         "orientation": "horizontal"
       },
       "fieldConfig": {
         "defaults": {
           "unit": "h",
-          "decimals": 0
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
         },
         "overrides": []
       }
@@ -1569,7 +1578,7 @@
           "legendFormat": "{{device}} {{attribute_name}}"
         }
       ],
-      "title": "Pending / Reallocated Sector Trend",
+      "title": "Pending / Reallocated Sector Trend (TrueNAS)",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -1579,7 +1588,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 91
+        "y": 93
       },
       "repeatDirection": "h",
       "options": {
@@ -1609,7 +1618,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 99
+        "y": 101
       },
       "id": 0,
       "panels": []
@@ -1622,8 +1631,8 @@
           "legendFormat": "{{nodename}} {{disk}} (SATA)"
         },
         {
-          "expr": "nvme_temperature_celsius{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{device}} (NVMe)"
+          "expr": "max by (nodename, model, serial) (nvme_temperature_celsius{instance=~\"$instance\"} * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
+          "legendFormat": "{{nodename}} {{model}} (NVMe)"
         },
         {
           "expr": "smartctl_device_temperature{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",temperature_type=\"current\"}",
@@ -1640,7 +1649,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 100
+        "y": 102
       },
       "repeatDirection": "h",
       "options": {
@@ -1684,7 +1693,7 @@
         "name": "node",
         "label": "Node",
         "skipUrlSync": false,
-        "query": "label_values(node_uname_info{job=\"scrapeConfig/monitoring/node-exporter-external\",nodename!=\"gpuvm\"}, nodename)",
+        "query": "label_values(node_uname_info{job=\"scrapeConfig/monitoring/node-exporter-external\"}, nodename)",
         "datasource": {
           "type": "prometheus",
           "uid": "$datasource"
@@ -1703,7 +1712,7 @@
         "name": "instance",
         "hide": 2,
         "skipUrlSync": false,
-        "query": "label_values(node_uname_info{job=\"scrapeConfig/monitoring/node-exporter-external\",nodename!=\"gpuvm\",nodename=~\"$node\"}, instance)",
+        "query": "label_values(node_uname_info{job=\"scrapeConfig/monitoring/node-exporter-external\",nodename=~\"$node\"}, instance)",
         "datasource": {
           "type": "prometheus",
           "uid": "$datasource"

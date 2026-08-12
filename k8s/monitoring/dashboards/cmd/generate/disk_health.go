@@ -65,6 +65,46 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 			{Value: nil, Color: "green"},
 			{Value: new(float64(1)), Color: "yellow"},
 		})
+	// Yellow from one, for a Summary counter reporting a condition to plan around
+	// rather than a fault. Red is reserved for Unhealthy Disks.
+	noticeThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "green"},
+			{Value: new(float64(1)), Color: "yellow"},
+		})
+
+	// byNvmeDisk re-keys an NVMe series from its kernel device name to the drive's
+	// serial, for the range panels only.
+	//
+	// nvmeXnY is assigned in controller probe order and is not stable across
+	// reboots. On node1, at the 2026-08-09 17:52 JST boot, the two drives swapped:
+	// power_on_hours on nvme0n1 went 4159 -> 2313 while nvme1n1 went 2312 -> 4162.
+	// Powered-on hours cannot decrease, so that is one name pointing at a different
+	// disk, and the error-log counters crossed in the same scrape (0 -> 2349 and
+	// 2346 -> 0). Plotted by device, one drive's history is drawn as two half-lines
+	// with a cliff between them, which reads as a fault on a panel whose whole job
+	// is to show faults.
+	//
+	// Dropping `device` from the output is the part that matters. Joining
+	// nvme_device_info while keeping device does not help -- over a long range both
+	// {device=nvme0n1, model=A} and {device=nvme0n1, model=B} exist and two disks
+	// draw four half-empty lines, which is the cross product the instant panels
+	// below were written to avoid. Grouping by serial collapses that back to one
+	// line per physical drive; verified across the node1 swap, where the Samsung
+	// reads a continuous 2346 -> 2349.
+	//
+	// model rides along so the legend stays readable -- a serial is not something
+	// anyone recognises -- but serial, not model, is what holds identity, so two
+	// identical models in one host would still be told apart.
+	//
+	// Not applied to the instant panels. Those evaluate now, when the device name
+	// is correct and is the name to type into smartctl, so they keep {{device}}.
+	byNvmeDisk := func(expr string) string {
+		return `max by (nodename, model, serial) (` + expr +
+			` * on(instance, device) group_left(model, serial) nvme_device_info ` +
+			joinNodename + `)`
+	}
 
 	d, err := dashboard.NewDashboardBuilder("Disk Health (S.M.A.R.T.)").
 		Uid("disk-health").
@@ -82,7 +122,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("node").
 				Label("Node").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: new(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm"}, nodename)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external"}, nodename)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -91,7 +131,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("instance").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: new(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm",nodename=~"$node"}, instance)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename=~"$node"}, instance)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Multi(true).
 				IncludeAll(true).
@@ -171,25 +211,52 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					LegendFormat("Worn"),
 				),
 		).
-		// NVMe counterpart to "SSDs Worn": critical_warning is a bitfield, so any
-		// nonzero bit (>0) on any NVMe device is surfaced here for parity with the
-		// SATA wear tile. The per-disk SMART Health panel below covers both types.
+		// This slot used to hold "NVMe Warnings", which summed
+		// nvme_critical_warning > 0 -- the exact second term of Unhealthy Disks
+		// beside it. One of four Summary tiles restated part of another, while the
+		// only nonzero health signal this fleet actually has sat two rows down in
+		// the Failure Precursors bar gauges and could not be seen without
+		// scrolling. NVMe is not losing coverage: a warning bit still shows in
+		// Unhealthy Disks, in SMART Health per disk, and in the NVMe row's own
+		// Critical Warning panel.
+		//
+		// max by (instance, disk) collapses the four attributes to one value per
+		// disk, so a disk carrying damage in two of them still counts once. The
+		// `or` chain is a vector union, not a max -- each attribute keeps its own
+		// smart_id label, so all four survive into the max.
+		//
+		// Yellow, not red, and it reads 2 today: pve /dev/sdc and /dev/sdd are
+		// Seagate ST2000DM001s carrying 24 reallocated sectors and 1, and 5,
+		// reported-uncorrectables respectively. All of it has been flat for the
+		// whole retention window, so this is a standing fact to plan replacements
+		// around rather than an incident. DiskFailurePrecursorGrowing in
+		// charts/prometheus alerts on the counts moving, which is the event.
 		WithPanel(
 			stat.NewPanelBuilder().
-				Title("NVMe Warnings").
+				Title("Disks with Failure Precursors").
+				Description("Disks reporting any reallocated, pending, offline-uncorrectable or " +
+					"reported-uncorrectable sectors. A nonzero count is not an outage: it means " +
+					"those disks have remapped or failed to read sectors at some point. Growth is " +
+					"what matters, and is alerted separately.").
 				Datasource(ds).
 				Span(6).Height(4).
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
-				Thresholds(issueThresholds()).
+				Thresholds(noticeThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// NVMe lives on three of the nodes only, so selecting any
-					// other node leaves this tile with no series to sum; without
-					// or vector(0) it reads "No data" where it means zero.
-					Expr(`sum(nvme_critical_warning{` + instFilter + `} > bool 0) or vector(0)`).
+					Expr(`(count(max by (instance, disk) (` +
+						`smartmon_reallocated_sector_ct_raw_value{` + instFilter + `}` +
+						` or smartmon_current_pending_sector_raw_value{` + instFilter + `}` +
+						` or smartmon_offline_uncorrectable_raw_value{` + instFilter + `}` +
+						` or smartmon_reported_uncorrect_raw_value{` + instFilter + `}` +
+						`) > 0) or vector(0))` +
+						` + (count(max by (instance, device) (` +
+						`smartctl_device_attribute{` + truenasFilter + `,attribute_value_type="raw",` +
+						`attribute_name=~"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect"}` +
+						`) > 0) or vector(0))`).
 					Instant().
-					LegendFormat("Warnings"),
+					LegendFormat("Precursors"),
 				),
 		).
 		// Per-disk health. SATA uses the smartctl overall-health flag. NVMe is
@@ -248,12 +315,28 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					LegendFormat("{{instance}} {{device}} (SATA)"),
 				),
 		).
-		// SATA-only failure precursors. These should sit flat at 0; any step up is
-		// the signal that the disk is starting to fail.
-		WithRow(dashboard.NewRowBuilder("Failure Precursors (SATA)")).
+		// "Is any medium going bad?" for every disk the $node variable can select.
+		// These should sit flat at 0; any step up is the signal that the disk is
+		// starting to fail.
+		//
+		// The row was named "Failure Precursors (SATA)" and the NVMe answer to the
+		// same question -- Media & Error-Log Entries -- sat at the bottom of the
+		// NVMe row, roughly 1,700 pixels further down. Splitting one question
+		// across the page by disk technology is the same mistake node-overview
+		// made with Filesystem Usage. The row now asks the question and each panel
+		// says which technology it can speak for, because the two sources report
+		// genuinely different things: SATA counts remapped and unreadable sectors,
+		// NVMe has no such attribute and reports media errors instead.
+		//
+		// TrueNAS answers this question too, with the identical attribute names,
+		// and is deliberately not merged in: its instance is not a value of $node
+		// (it runs smartctl_exporter as an app, not node-exporter), so its disks
+		// would keep appearing here after filtering down to one node. It keeps its
+		// own row for that reason -- a separate scope, not a separate technology.
+		WithRow(dashboard.NewRowBuilder("Failure Precursors")).
 		WithPanel(
 			bargauge.NewPanelBuilder().
-				Title("Reallocated Sectors").
+				Title("Reallocated Sectors (SATA)").
 				Datasource(ds).
 				Span(8).Height(8).
 				Orientation(common.VizOrientationHorizontal).
@@ -266,7 +349,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			bargauge.NewPanelBuilder().
-				Title("Current Pending Sectors").
+				Title("Current Pending Sectors (SATA)").
 				Datasource(ds).
 				Span(8).Height(8).
 				Orientation(common.VizOrientationHorizontal).
@@ -279,7 +362,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			bargauge.NewPanelBuilder().
-				Title("Offline Uncorrectable").
+				Title("Offline Uncorrectable (SATA)").
 				Datasource(ds).
 				Span(8).Height(8).
 				Orientation(common.VizOrientationHorizontal).
@@ -292,7 +375,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			bargauge.NewPanelBuilder().
-				Title("Reported Uncorrectable").
+				Title("Reported Uncorrectable (SATA)").
 				Datasource(ds).
 				Span(12).Height(8).
 				Orientation(common.VizOrientationHorizontal).
@@ -305,7 +388,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			bargauge.NewPanelBuilder().
-				Title("UDMA CRC Errors").
+				Title("UDMA CRC Errors (SATA)").
 				Datasource(ds).
 				Span(12).Height(8).
 				Orientation(common.VizOrientationHorizontal).
@@ -319,7 +402,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		// Trend view so a precursor stepping off zero is visible historically.
 		WithPanel(
 			timeseries.NewPanelBuilder().
-				Title("Pending / Reallocated Sector Trend").
+				Title("Pending / Reallocated Sector Trend (SATA)").
 				Datasource(ds).
 				Span(24).Height(8).
 				Tooltip(tooltipAll).
@@ -333,31 +416,77 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					LegendFormat("{{nodename}} {{disk}} pending"),
 				),
 		).
-		// Vendor-normalized SSD wear indicators. Each vendor exposes a different
-		// attribute, but all are normalized values where 100 = new and the number
-		// decreases toward 0 with use, so they can be unioned with `or`. Only SSDs
-		// that publish one of these appear here; HDDs have no wear concept and NVMe
-		// is covered by nvme_percentage_used_ratio in the NVMe row below. Referencing
-		// an attribute that no disk reports is harmless (it just yields no series).
+		// The NVMe answer to this row's question. There is no NVMe equivalent of a
+		// reallocated or pending sector: the controller remaps internally and
+		// reports only the outcome, so media_errors (uncorrected data errors) and
+		// the error-log entry count are what stand in for the bar gauges above.
+		//
+		// Keyed by serial (see byNvmeDisk): this is the panel the device-name swap
+		// damaged most, because a renamed drive draws a cliff and a cliff here
+		// reads as a fault. media_errors is 0 on all six drives; the error-log
+		// count is not a fault on its own, since smartctl's own probing lands in
+		// that log.
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Media & Error-Log Entries (NVMe)").
+				Datasource(ds).
+				Span(24).Height(8).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(byNvmeDisk(`nvme_media_errors_total{` + instFilter + `}`)).
+					LegendFormat("{{nodename}} {{model}} media errors"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(byNvmeDisk(`nvme_num_err_log_entries_total{` + instFilter + `}`)).
+					LegendFormat("{{nodename}} {{model}} err-log entries"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(byNvmeDisk(`nvme_unsafe_shutdowns_total{` + instFilter + `}`)).
+					LegendFormat("{{nodename}} {{model}} unsafe shutdowns"),
+				),
+		).
+		// "How much life is left?" for every disk the $node variable can select.
+		// SATA and NVMe measure it on opposite scales -- SATA counts down from 100
+		// remaining, NVMe counts up to 100 used -- so they stay in separate panels
+		// rather than being forced into one number that means two things. They are
+		// on the same line because the question is the same; the NVMe pair used to
+		// open the NVMe row instead, which meant answering "how worn is this fleet?"
+		// took two rows.
+		//
+		// Vendor-normalized SATA wear: each vendor exposes a different attribute,
+		// all normalized so 100 = new, so they can be unioned with `or`. Only SSDs
+		// publishing one appear; HDDs have no wear concept. Referencing an
+		// attribute no disk reports is harmless (it just yields no series).
 		WithRow(dashboard.NewRowBuilder("Wear & Lifetime")).
 		// Rendered as a stat (not bargauge): this metric usually has a single
 		// reporting disk. TextMode value_and_name forces the device name to show
 		// even for one series, which "auto" mode would otherwise hide. Each disk
 		// appears as its own colored tile (red <10, yellow <20, green).
+		//
+		// Auto orientation, with both text sizes pinned. Left to size text itself,
+		// Grafana gives the value the whole tile and shrinks the name to fit
+		// whatever is left -- measured at roughly 70px against 10px, with the name
+		// wrapping to two lines, because these names are long ("node3 /dev/sdb
+		// Moment SSD 2.5" SSD 240GB"). Naming an explicit value size is what buys
+		// the name its room back; the same 16/32 pairing is what SMART Health uses,
+		// for the same reason.
 		WithPanel(
 			stat.NewPanelBuilder().
-				Title("SSD Life Remaining (vendor wear attr)").
+				Title("SSD Life Remaining (SATA)").
 				Description("Normalized SSD wear (100 = new). Sourced from whichever vendor " +
 					"attribute a disk exposes (wear_leveling_count, media_wearout_indicator, " +
 					"ssd_life_left, percent_lifetime_remain). SSDs that expose none, plus all " +
-					"HDDs, do not appear; NVMe endurance is shown in the NVMe row.").
+					"HDDs, do not appear; NVMe endurance is the panel to the right.").
 				Datasource(ds).
-				Span(12).Height(8).
+				Span(8).Height(8).
 				Unit("percent").
 				GraphMode(common.BigValueGraphModeNone).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				TextMode(common.BigValueTextModeValueAndName).
+				Text(common.NewVizTextDisplayOptionsBuilder().
+					TitleSize(16).ValueSize(32)).
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
@@ -377,29 +506,10 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				).Decimals(0),
 		).
 		WithPanel(
-			stat.NewPanelBuilder().
-				Title("Power On Hours").
-				Datasource(ds).
-				Span(12).Height(8).
-				Unit("h").
-				GraphMode(common.BigValueGraphModeNone).
-				ColorMode(common.BigValueColorModeValue).
-				Orientation(common.VizOrientationHorizontal).
-				TextMode(common.BigValueTextModeValueAndName).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`smartmon_power_on_hours_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel).
-					Instant().
-					LegendFormat("{{nodename}} {{disk}} {{device_model}}"),
-				).Decimals(0),
-		).
-		// NVMe drives don't expose the SATA SMART attributes; instead the nvme-cli
-		// exporter publishes nvme_* series keyed by `device` (e.g. nvme0n1).
-		// "Data Units Written/Read" follow the NVMe spec unit of 1000 x 512 bytes,
-		// so bytes = value * 512000 (a documented approximation, not exact host I/O).
-		WithRow(dashboard.NewRowBuilder("NVMe")).
-		WithPanel(
 			bargauge.NewPanelBuilder().
-				Title("Endurance Used (%)").
+				Title("Endurance Used (NVMe)").
+				Description("The drive's own estimate of write endurance consumed. Counts up, " +
+					"unlike the SATA panel to the left, which counts down.").
 				Datasource(ds).
 				Span(8).Height(8).
 				Unit("percent").
@@ -419,7 +529,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			bargauge.NewPanelBuilder().
-				Title("Available Spare (%)").
+				Title("Available Spare (NVMe)").
 				Datasource(ds).
 				Span(8).Height(8).
 				Unit("percent").
@@ -437,6 +547,53 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 					LegendFormat("{{nodename}} {{device}} {{model}}"),
 				).Decimals(0),
 		).
+		// Power-on hours unifies where wear does not: it is the same quantity from
+		// both exporters, so the two targets share one panel rather than sitting a
+		// row apart under the same title. TrueNAS keeps its own, in its own row,
+		// for the scoping reason given above.
+		//
+		// Twelve tiles, not the six this panel held as SATA-only, so the layout had
+		// to change with it. Horizontal stacks one full-width row per disk, which
+		// meant twelve rows in the height that used to hold six -- about 20px each,
+		// small enough to be unreadable. Doubling the width bought nothing, because
+		// what horizontal consumes is height. Auto lays the tiles out as a grid
+		// across the full span instead, and the explicit sizes stop Grafana
+		// shrinking the names to fit the values.
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Power On Hours").
+				Description("How long each disk has been powered on. A figure to plan " +
+					"replacements against, not a health signal, so it carries no threshold " +
+					"colour: nothing here is good or bad on its own.").
+				Datasource(ds).
+				Span(24).Height(10).
+				Unit("h").
+				GraphMode(common.BigValueGraphModeNone).
+				ColorMode(common.BigValueColorModeValue).
+				Orientation(common.VizOrientationAuto).
+				TextMode(common.BigValueTextModeValueAndName).
+				Text(common.NewVizTextDisplayOptionsBuilder().
+					TitleSize(16).ValueSize(32)).
+				Thresholds(measurementThresholds()).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`smartmon_power_on_hours_raw_value{` + instFilter + `} ` + joinNodename + ` ` + joinModel).
+					Instant().
+					LegendFormat("{{nodename}} {{disk}} {{device_model}}"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`nvme_power_on_hours_total{` + instFilter + `} ` + joinNodename + ` ` + joinNvmeModel).
+					Instant().
+					LegendFormat("{{nodename}} {{device}} {{model}}"),
+				).Decimals(0),
+		).
+		// What is left is NVMe-only because the metrics are NVMe-only, not because
+		// the dashboard chose to group by disk technology: the SATA collector
+		// exposes no I/O counters worth plotting (host_writes_32mib is published by
+		// exactly one of the seven disks), and critical_warning is a bitfield with
+		// no SATA analogue. "Data Units Written/Read" follow the NVMe spec unit of
+		// 1000 x 512 bytes, so bytes = value * 512000 (a documented approximation,
+		// not exact host I/O).
+		WithRow(dashboard.NewRowBuilder("NVMe")).
 		// critical_warning is a bitfield; any nonzero bit indicates a fault.
 		WithPanel(
 			stat.NewPanelBuilder().
@@ -472,6 +629,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				ColorMode(common.BigValueColorModeValue).
 				Orientation(common.VizOrientationAuto).
 				Text(diskHealthLabelText()).
+				Thresholds(measurementThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(nvme_data_units_written_total{` + instFilter + `} * 512000) ` + joinNodename + ` ` + joinNvmeModel).Instant().
 					LegendFormat("{{nodename}} {{device}} {{model}}"),
@@ -487,26 +645,20 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				ColorMode(common.BigValueColorModeValue).
 				Orientation(common.VizOrientationAuto).
 				Text(diskHealthLabelText()).
+				Thresholds(measurementThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(nvme_data_units_read_total{` + instFilter + `} * 512000) ` + joinNodename + ` ` + joinNvmeModel).Instant().
 					LegendFormat("{{nodename}} {{device}} {{model}}"),
 				).Decimals(1),
 		).
-		WithPanel(
-			stat.NewPanelBuilder().
-				Title("Power On Hours").
-				Datasource(ds).
-				Span(8).Height(8).
-				Unit("h").
-				GraphMode(common.BigValueGraphModeNone).
-				ColorMode(common.BigValueColorModeValue).
-				Orientation(common.VizOrientationAuto).
-				Text(diskHealthLabelText()).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`nvme_power_on_hours_total{` + instFilter + `} ` + joinNodename + ` ` + joinNvmeModel).Instant().
-					LegendFormat("{{nodename}} {{device}} {{model}}"),
-				).Decimals(0),
-		).
+		// Keyed by serial like the panels above, but with one caveat the others do
+		// not have: rate() is evaluated on the device-keyed series before anything
+		// is relabelled, so at a swap it differences one drive's counter against
+		// the other's. Measured on the node1 swap, that put a single sample at
+		// 1.55 MB/s against a surrounding ~110 kB/s. The line identity is fixed,
+		// the one-sample spike is not, and it cannot be -- a range selector cannot
+		// be relabelled from the outside. Clamping it would hide real bursts, so it
+		// is left visible; a spike at the instant of a reboot is what it looks like.
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Write / Read Throughput").
@@ -517,45 +669,29 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Write").
-					Expr(`(rate(nvme_data_units_written_total{`+instFilter+`}[$__rate_interval]) * 512000) `+joinNodename).
-					LegendFormat("{{nodename}} {{device}} Write"),
+					Expr(byNvmeDisk(`(rate(nvme_data_units_written_total{`+instFilter+`}[$__rate_interval]) * 512000)`)).
+					LegendFormat("{{nodename}} {{model}} Write"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Read").
-					Expr(`(rate(nvme_data_units_read_total{`+instFilter+`}[$__rate_interval]) * 512000) `+joinNodename).
-					LegendFormat("{{nodename}} {{device}} Read"),
+					Expr(byNvmeDisk(`(rate(nvme_data_units_read_total{`+instFilter+`}[$__rate_interval]) * 512000)`)).
+					LegendFormat("{{nodename}} {{model}} Read"),
 				).
 				OverrideByQuery("Read", []dashboard.DynamicConfigValue{
 					{Id: "custom.transform", Value: "negative-Y"},
 				}),
-		).
-		// Media errors and error-log entries should stay flat; any growth is a fault.
-		WithPanel(
-			timeseries.NewPanelBuilder().
-				Title("Media & Error-Log Entries").
-				Datasource(ds).
-				Span(24).Height(8).
-				Tooltip(tooltipAll).
-				Legend(legend).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`nvme_media_errors_total{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} {{device}} media errors"),
-				).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`nvme_num_err_log_entries_total{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} {{device}} err-log entries"),
-				).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`nvme_unsafe_shutdowns_total{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} {{device}} unsafe shutdowns"),
-				),
 		).
 		// TrueNAS disks behind the passed-through SATA controller, read by
 		// smartctl_exporter inside the guest. Overall health is covered by the
 		// shared SMART Health panel above; this row holds the SATA failure
 		// precursors and exporter diagnostics. attribute_value_type="raw"
 		// mirrors the smartmon *_raw_value series used for the other nodes.
-		WithRow(dashboard.NewRowBuilder("TrueNAS (smartctl_exporter)")).
+		//
+		// The row is named for its subject, not its exporter -- which host these
+		// disks are in is what distinguishes them from the rows above; that they
+		// are read by smartctl_exporter is an implementation detail, and the
+		// panels that need it say so in their own titles.
+		WithRow(dashboard.NewRowBuilder("TrueNAS Disks")).
 		// Nonzero exit status means smartctl could not read a disk: either a
 		// real failure or the disk was skipped in standby (powermode-check),
 		// in which case the other panels in this row go stale until it wakes.
@@ -602,7 +738,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		// CRC errors warn (yellow) not alert (red), same as the smartmon panel.
 		WithPanel(
 			bargauge.NewPanelBuilder().
-				Title("UDMA CRC Errors").
+				Title("UDMA CRC Errors (TrueNAS)").
 				Datasource(ds).
 				Span(8).Height(8).
 				Orientation(common.VizOrientationHorizontal).
@@ -621,7 +757,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
-				Title("Power On Hours").
+				Title("Power On Hours (TrueNAS)").
 				Datasource(ds).
 				Span(8).Height(8).
 				Unit("h").
@@ -629,6 +765,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				ColorMode(common.BigValueColorModeValue).
 				Orientation(common.VizOrientationHorizontal).
 				TextMode(common.BigValueTextModeValueAndName).
+				Text(diskHealthLabelText()).
+				Thresholds(measurementThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`(smartctl_device_power_on_seconds{` + truenasFilter + `} / 3600) ` + joinSmartctlModel).
 					Instant().
@@ -638,7 +776,7 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		// Trend view so a precursor stepping off zero is visible historically.
 		WithPanel(
 			timeseries.NewPanelBuilder().
-				Title("Pending / Reallocated Sector Trend").
+				Title("Pending / Reallocated Sector Trend (TrueNAS)").
 				Datasource(ds).
 				Span(24).Height(8).
 				Tooltip(tooltipAll).
@@ -657,16 +795,19 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 				Unit("celsius").
 				Tooltip(tooltipAll).
 				Legend(legend).
-				// Timeseries join nodename only (no model): a model join over a long
-				// range cross-products with stale device_info, like the throughput and
-				// media-error panels above.
+				// SATA joins nodename only. A model join here would cross-product with
+				// stale device_info over a long range, and /dev/sdX has stayed put on
+				// this fleet, so there is nothing to buy with the extra join.
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`smartmon_temperature_celsius_raw_value{` + instFilter + `} ` + joinNodename).
 					LegendFormat("{{nodename}} {{disk}} (SATA)"),
 				).
+				// NVMe does need it, for the naming reason in byNvmeDisk: without it a
+				// legend entry reading nvme0n1 means one drive early in the range and
+				// another one later.
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`nvme_temperature_celsius{` + instFilter + `} ` + joinNodename).
-					LegendFormat("{{nodename}} {{device}} (NVMe)"),
+					Expr(byNvmeDisk(`nvme_temperature_celsius{` + instFilter + `}`)).
+					LegendFormat("{{nodename}} {{model}} (NVMe)"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`smartctl_device_temperature{` + truenasFilter + `,temperature_type="current"}`).

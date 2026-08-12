@@ -80,6 +80,23 @@ func watchdogAwareFiringAlertThresholds() *dashboard.ThresholdsConfigBuilder {
 		})
 }
 
+// measurementThresholds returns a single neutral step, for panels whose number is
+// a measurement rather than a verdict -- power-on hours, bytes written, a count of
+// things that exist.
+//
+// It has to be said explicitly. A stat panel with a colorMode but no thresholds
+// does not render uncoloured: Grafana falls back to its own default of green below
+// 80 and red at or above it, which is a judgement nobody wrote. On a panel reading
+// in thousands of hours or terabytes that means permanently red, and on a panel
+// reading a percentage it means a healthy 95% shown in red.
+func measurementThresholds() *dashboard.ThresholdsConfigBuilder {
+	return dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "blue"},
+		})
+}
+
 // capacityThresholds returns the standard utilization thresholds for percent-based
 // capacity panels: green below 80, yellow at 80, red at 90.
 func capacityThresholds() *dashboard.ThresholdsConfigBuilder {
