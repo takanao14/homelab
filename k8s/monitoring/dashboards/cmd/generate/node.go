@@ -12,6 +12,13 @@ import (
 func buildNodeOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
+	// The hypervisor list, reused from the same inventory proxmox_logs.go reads.
+	// Only needed by the throttling panel; see the comment there.
+	proxmoxHosts, err := loadProxmoxHostRegex()
+	if err != nil {
+		return nil, err
+	}
+
 	// Two-stage variable resolution: node_* metrics carry instance (IP:port) but
 	// display names come from node_uname_info which has nodename. We expose $node
 	// (nodename) in the UI and hide $instance (IP:port) resolved from it.
@@ -53,8 +60,49 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
 
+	// denseTooltip is defaultTooltip for the panels that carry more series than a
+	// screen can hold. Disk I/O draws 54 -- 27 devices, read and write -- and
+	// Network I/O draws 66, so the shared multi-series tooltip listed every one of
+	// them and ran off the bottom of the window, which meant the series under the
+	// cursor could be the one you could not see.
+	//
+	// Sorting descending is the part that does the work: with the busiest series
+	// at the top, the rows that fit are the rows worth reading.
+	//
+	// MaxHeight bounds the box at 400px, against a Grafana default of 600. The
+	// remainder is not lost -- hovering and then clicking pins the tooltip in
+	// place, and a pinned tooltip scrolls (confirmed on this Grafana, 13.1.3).
+	// That interaction is worth knowing about, because a capped tooltip otherwise
+	// looks like truncation.
+	//
+	// HideZeros drops devices idle at that instant. It earns less than it sounds:
+	// measured, only 5 of the 54 disk series and 16 of the 66 network ones sit at
+	// exactly zero, because nearly everything here carries some traffic. A row
+	// reading 0 B/s is still never the row being looked for.
+	//
+	// A fresh builder per call: panels must not share one, and the tooltipAll
+	// above is already shared by several.
+	denseTooltip := func() *common.VizTooltipOptionsBuilder {
+		return common.NewVizTooltipOptionsBuilder().
+			Mode(common.TooltipDisplayModeMulti).
+			Sort(common.SortOrderDescending).
+			MaxHeight(400).
+			HideZeros(true)
+	}
+
 	zeroLineThresholds := zeroLineThresholds()
 	zeroLineStyle := zeroLineStyle()
+
+	// Yellow from one, for the Summary counters that report a condition worth
+	// looking at rather than a fault. Only "Nodes Down" gets red: a node that
+	// stopped answering is broken, whereas a saturated CPU, a full-ish memory or a
+	// reboot are all states this fleet reaches in normal operation.
+	noticeThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "green"},
+			{Value: new(float64(1)), Color: "yellow"},
+		})
 
 	d, err := dashboard.NewDashboardBuilder("Node Overview").
 		Uid("node-overview").
@@ -96,7 +144,146 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				IncludeAll(true).
 				Hide(dashboard.VariableHideHideVariable),
 		).
+		// Counts of how many things are in a state worth knowing about, and nothing
+		// else. The row used to be five strips of one value per node -- status,
+		// CPU, memory, load, uptime -- which at nineteen nodes came to 95 tiles and
+		// about 600 pixels, so the answer to "is anything wrong" arrived only after
+		// reading all of them, and the first screen held nothing else.
+		// dashboards/README.md asks whether an operator can identify scope and
+		// health without scrolling, and describes Summary as mixing health,
+		// utilization and issue counts; every other dashboard here counts, and this
+		// one enumerated. The strips are not gone, they are one row down, which is
+		// where you go once a count is not zero.
+		//
+		// Two lines by meaning rather than by insertion order: node lifecycle
+		// first at 12 each, then resource pressure at 8 each.
+		//
+		// Thresholds were checked against 30 days of history so that none of these
+		// is a tile that can only ever read zero: nodes down peaked at 1, load per
+		// CPU above 1.0 at 2, memory above 80% at 1, and reboots within the hour at
+		// 10. Memory above 90% was tried and dropped -- it has not happened once,
+		// and the 80% tile already covers the same resource.
+		//
+		// Filesystems are the exception to that rule and are counted anyway. The
+		// fleet's fullest sits at 49.9% and has never crossed 70%, so by the test
+		// above the tile would have been cut. It is here because the test is the
+		// wrong one for this signal: CPU saturation, memory pressure and reboots
+		// are transients that come back down by themselves, whereas a filesystem
+		// only moves one way, and "has not happened yet" says nothing about whether
+		// it will. A counter that sits at zero for months and then does not is
+		// exactly what a summary counter is for.
 		WithRow(dashboard.NewRowBuilder("Summary")).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Nodes Down").
+				Description("Scrape targets not answering. Red from one, unlike the other tiles here: this is the only one that is a fault rather than a state.").
+				Datasource(ds).
+				Span(12).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(issueThresholds()).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				JustifyMode(common.BigValueJustifyModeCenter).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`count(up{job="scrapeConfig/monitoring/node-exporter-external", ` + instFilter + `} == 0) or vector(0)`).
+					Instant().
+					LegendFormat("down"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Rebooted (1h)").
+				Description("Nodes that booted within the last hour. Not a fault, but it explains gaps and resets elsewhere on this dashboard; a maintenance window showed 10 at once.").
+				Datasource(ds).
+				Span(12).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(noticeThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				JustifyMode(common.BigValueJustifyModeCenter).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`count((time() - node_boot_time_seconds{` + instFilter + `}) < 3600) or vector(0)`).
+					Instant().
+					LegendFormat("rebooted"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Nodes Saturated").
+				Description("Nodes whose 1-minute load average exceeds their CPU count, meaning work was queuing. Same quantity as the Load Average panels below and on node/k8s-node/proxmox-otlp, so a figure here can be compared with any of them.").
+				Datasource(ds).
+				Span(8).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(noticeThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				JustifyMode(common.BigValueJustifyModeCenter).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`count((node_load1{` + instFilter + `} ` + normByCPU + `) > 1) or vector(0)`).
+					Instant().
+					LegendFormat("saturated"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Nodes Over 80% Memory").
+				Description("Counted at 80% because that is where capacityThresholds turns yellow everywhere else in this repo. 90% was tried and has not happened once in 30 days.").
+				Datasource(ds).
+				Span(8).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(noticeThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				JustifyMode(common.BigValueJustifyModeCenter).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`count(((1 - node_memory_MemAvailable_bytes{` + instFilter + `} / node_memory_MemTotal_bytes{` + instFilter + `}) * 100) > 80) or vector(0)`).
+					Instant().
+					LegendFormat("over 80%"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Filesystems Over 85%").
+				Description("Counts filesystems, not nodes: one host can have several, and on pve they share a ZFS pool. 85% is where NodeFilesystemSpaceFillingUp starts looking at the trend, so a non-zero count here is the level that alert needs before it will fire -- it is the earlier and weaker of the two signals, and does not by itself mean anything is alerting.").
+				Datasource(ds).
+				Span(8).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(noticeThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				JustifyMode(common.BigValueJustifyModeCenter).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`count(((1 - node_filesystem_avail_bytes{` + instFilter + `,` + fsFilter + `} / node_filesystem_size_bytes{` + instFilter + `,` + fsFilter + `}) * 100) > 85) or vector(0)`).
+					Instant().
+					LegendFormat("over 85%"),
+				),
+		).
+
+		// The per-node strips the Summary used to carry. Current values, one tile
+		// or bar per node; the rows below chart the same quantities over time.
+		//
+		// The pairing is the organising rule of this dashboard: a current-value
+		// gauge here, its trend in the row named for the subject. CPU Usage pairs
+		// with CPU Usage (%), Memory Usage with Memory Usage, Load Average per CPU
+		// with Load Average per CPU (1m). Filesystem Usage was the one that did not
+		// follow it -- both halves sat together down in the Disk row -- so the
+		// Summary's "Filesystems Over 85%" count had nowhere to resolve to a name
+		// without scrolling past everything else. Its trend stayed behind.
+		//
+		// All three capacity gauges sort_desc. Nineteen nodes, and twenty-seven
+		// filesystems, do not fit the ten grid rows they are given, so the panel
+		// scrolls and only the first few bars are visible without dragging. Sorted
+		// by value the visible ones are the ones worth seeing; in label order they
+		// were whichever hostnames happened to sort first. The sort wraps the whole
+		// expression rather than an inner part of it: order does survive the
+		// nodename join in practice -- checked against the live series -- but
+		// nothing documents that it must, and there is no reason to depend on it.
+		WithRow(dashboard.NewRowBuilder("Current State by Node")).
 		// up{job=...} is always recorded by Prometheus for every configured scrape
 		// target, returning 0 when the target is unreachable. Joining with
 		// last_over_time(node_uname_info[1d]) resolves nodenames even while a node
@@ -134,66 +321,16 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				),
 		).
 		WithPanel(
-			bargauge.NewPanelBuilder().
-				Title("CPU Usage").
-				Datasource(ds).
-				Span(12).Height(8).
-				Unit("percent").
-				Min(0).
-				Max(100).
-				Orientation(common.VizOrientationAuto).
-				Thresholds(capacityThresholds()).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + instFilter + `}[$__rate_interval]) ` + joinNodename + `) * 100)`).
-					Instant().
-					LegendFormat("{{nodename}}"),
-				).
-				Decimals(1),
-		).
-		// MemAvailable includes reclaimable cache, giving a more realistic usage figure than MemFree.
-		WithPanel(
-			bargauge.NewPanelBuilder().
-				Title("Memory Usage").
-				Datasource(ds).
-				Span(12).Height(8).
-				Unit("percent").
-				Min(0).
-				Max(100).
-				Orientation(common.VizOrientationAuto).
-				Thresholds(capacityThresholds()).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(1 - node_memory_MemAvailable_bytes{` + instFilter + `} / node_memory_MemTotal_bytes{` + instFilter + `}) ` + joinNodename + ` * 100`).
-					Instant().
-					LegendFormat("{{nodename}}"),
-				).Decimals(1),
-		).
-		WithPanel(
-			stat.NewPanelBuilder().
-				Title("Load Average (1m) per CPU").
-				Datasource(ds).
-				Span(24).Height(4).
-				Unit("percentunit").
-				Min(0).
-				Orientation(common.VizOrientationAuto).
-				JustifyMode(common.BigValueJustifyModeCenter).
-				ColorMode(common.BigValueColorModeBackground).
-				Thresholds(dashboard.NewThresholdsConfigBuilder().
-					Mode(dashboard.ThresholdsModeAbsolute).
-					Steps([]dashboard.Threshold{
-						{Value: nil, Color: "green"},
-						{Value: new(float64(0.7)), Color: "yellow"},
-						{Value: new(float64(1.0)), Color: "red"},
-					})).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(node_load1{` + instFilter + `} ` + normByCPU + `) ` + joinNodename).
-					LegendFormat("{{nodename}}"),
-				).Decimals(0),
-		).
-		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Uptime").
 				Datasource(ds).
-				Span(24).Height(4).
+				// Height 6 rather than the 4 the neighbouring stats use. A stat panel
+				// sizes its text to whatever box it is given, and nineteen values
+				// across a full-width row leave each about 74px wide; at height 4
+				// there was so little left after the node name that the figures came
+				// out barely legible. Node Exporter Status keeps height 4 beside it
+				// because "UP" survives being small in a way "3 week" does not.
+				Span(24).Height(6).
 				Unit("s").
 				Min(0).
 				GraphMode(common.BigValueGraphModeNone).
@@ -221,6 +358,99 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		// figure over time. The Disk row keeps the pair that answer different
 		// questions, current level and trend; Summary is for reading at a glance
 		// and a full-width duplicate was the largest thing on it.
+		WithPanel(
+			bargauge.NewPanelBuilder().
+				Title("CPU Usage").
+				Datasource(ds).
+				Span(8).Height(10).
+				Unit("percent").
+				Min(0).
+				Max(100).
+				// Horizontal in Grafana's naming, which draws each bar running left to
+				// right with the node name beside it and stacks them down the panel.
+				// Auto chose the other layout here: at span 8 the panel is wider than
+				// tall, so it stood nineteen bars up side by side and had nowhere to put
+				// the names. Matches Filesystem Usage next to it, so the three capacity
+				// gauges on this line are read the same way.
+				Orientation(common.VizOrientationHorizontal).
+				Thresholds(capacityThresholds()).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sort_desc(100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", ` + instFilter + `}[$__rate_interval]) ` + joinNodename + `) * 100))`).
+					Instant().
+					LegendFormat("{{nodename}}"),
+				).
+				Decimals(1),
+		).
+		// MemAvailable includes reclaimable cache, giving a more realistic usage figure than MemFree.
+		WithPanel(
+			bargauge.NewPanelBuilder().
+				Title("Memory Usage").
+				Datasource(ds).
+				Span(8).Height(10).
+				Unit("percent").
+				Min(0).
+				Max(100).
+				// Horizontal in Grafana's naming, which draws each bar running left to
+				// right with the node name beside it and stacks them down the panel.
+				// Auto chose the other layout here: at span 8 the panel is wider than
+				// tall, so it stood nineteen bars up side by side and had nowhere to put
+				// the names. Matches Filesystem Usage next to it, so the three capacity
+				// gauges on this line are read the same way.
+				Orientation(common.VizOrientationHorizontal).
+				Thresholds(capacityThresholds()).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sort_desc((1 - node_memory_MemAvailable_bytes{` + instFilter + `} / node_memory_MemTotal_bytes{` + instFilter + `}) ` + joinNodename + ` * 100)`).
+					Instant().
+					LegendFormat("{{nodename}}"),
+				).Decimals(1),
+		).
+		WithPanel(
+			bargauge.NewPanelBuilder().
+				Title("Filesystem Usage").
+				Description("Every filesystem in scope, fullest first. This is where the \"Filesystems Over 85%\" count in the Summary resolves to a name.").
+				Datasource(ds).
+				Span(8).Height(10).
+				Unit("percent").
+				Min(0).
+				Max(100).
+				Orientation(common.VizOrientationHorizontal).
+				Thresholds(capacityThresholds()).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + instFilter + `,` + fsFilter + `} / node_filesystem_size_bytes{` + instFilter + `,` + fsFilter + `}) * 100 ` + joinNodename + `)`).
+					Instant().
+					LegendFormat("{{nodename}} {{mountpoint}}"),
+				).
+				Decimals(1),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Load Average (1m) per CPU").
+				Datasource(ds).
+				Span(24).Height(4).
+				Unit("percentunit").
+				Min(0).
+				// No sparkline, matching Node Exporter Status and Uptime above it.
+				// This row answers "what is each node doing right now"; the trend
+				// belongs to "Load Average per CPU (1m)" in the CPU row, which has a
+				// full panel and a legend for it. Squeezed behind nineteen values in
+				// a strip four grid rows tall, the same curve was decoration over a
+				// number that is the point of the panel.
+				GraphMode(common.BigValueGraphModeNone).
+				Orientation(common.VizOrientationAuto).
+				JustifyMode(common.BigValueJustifyModeCenter).
+				ColorMode(common.BigValueColorModeBackground).
+				Thresholds(dashboard.NewThresholdsConfigBuilder().
+					Mode(dashboard.ThresholdsModeAbsolute).
+					Steps([]dashboard.Threshold{
+						{Value: nil, Color: "green"},
+						{Value: new(float64(0.7)), Color: "yellow"},
+						{Value: new(float64(1.0)), Color: "red"},
+					})).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`(node_load1{` + instFilter + `} ` + normByCPU + `) ` + joinNodename).
+					LegendFormat("{{nodename}}"),
+				).Decimals(0),
+		).
 		WithRow(dashboard.NewRowBuilder("CPU")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -374,6 +604,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("CPU Throttling Rate").
+				Description("Package thermal throttling on the machines that own their CPUs. LXC guests are excluded: the counter reaches them from the shared kernel and describes the hypervisor, not the container. Only the Intel hypervisors report it -- pve is AMD and the Raspberry Pis are ARM, and neither exposes this counter.").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("ops").
@@ -381,7 +612,17 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(rate(node_cpu_package_throttles_total{` + instFilter + `}[$__rate_interval])) ` + joinNodename).
+					// Restricted to the hypervisors. node_cpu_package_throttles_total
+					// comes from the cpu collector, which cannot be turned off on the
+					// LXC guests without losing their CPU usage as well (see
+					// group_vars/node_exporter_lxc.yaml), so unlike thermal_zone and
+					// hwmon it still leaks the host's reading into each container:
+					// thirteen series were being drawn for five physical CPUs, and
+					// ns1's "throttling" was node2's. The other temperature panels need
+					// no such guard -- their collectors are disabled on the guests, and
+					// the nvme and smartmon figures come from the textfile collector on
+					// the physical host itself.
+					Expr(`(rate(node_cpu_package_throttles_total{` + instFilter + `, instance=~"` + proxmoxHosts + `"}[$__rate_interval])) ` + joinNodename).
 					LegendFormat("{{nodename}} Throttles"),
 				),
 		).
@@ -437,7 +678,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("Bps").
-				Tooltip(tooltipAll).
+				Tooltip(denseTooltip()).
 				Legend(legend).
 				Thresholds(zeroLineThresholds).
 				ThresholdsStyle(zeroLineStyle).
@@ -463,7 +704,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("Bps").
-				Tooltip(tooltipAll).
+				Tooltip(denseTooltip()).
 				Legend(legend).
 				Thresholds(zeroLineThresholds).
 				ThresholdsStyle(zeroLineStyle).
@@ -481,27 +722,10 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				}),
 		).
 		WithPanel(
-			bargauge.NewPanelBuilder().
-				Title("Filesystem Usage").
-				Datasource(ds).
-				Span(12).Height(10).
-				Unit("percent").
-				Min(0).
-				Max(100).
-				Orientation(common.VizOrientationHorizontal).
-				Thresholds(capacityThresholds()).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + instFilter + `,` + fsFilter + `} / node_filesystem_size_bytes{` + instFilter + `,` + fsFilter + `}) * 100) ` + joinNodename).
-					Instant().
-					LegendFormat("{{nodename}} {{mountpoint}}"),
-				).
-				Decimals(1),
-		).
-		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Filesystem Usage Trend").
 				Datasource(ds).
-				Span(12).Height(10).
+				Span(24).Height(10).
 				Unit("percent").
 				Min(0).
 				Max(100).

@@ -33,6 +33,309 @@
       "type": "stat",
       "targets": [
         {
+          "expr": "count(up{job=\"scrapeConfig/monitoring/node-exporter-external\", instance=~\"$instance\"} == 0) or vector(0)",
+          "instant": true,
+          "legendFormat": "down",
+          "range": false
+        }
+      ],
+      "title": "Nodes Down",
+      "description": "Scrape targets not answering. Red from one, unlike the other tiles here: this is the only one that is a fault rather than a state.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count((time() - node_boot_time_seconds{instance=~\"$instance\"}) \u003c 3600) or vector(0)",
+          "instant": true,
+          "legendFormat": "rebooted",
+          "range": false
+        }
+      ],
+      "title": "Rebooted (1h)",
+      "description": "Nodes that booted within the last hour. Not a fault, but it explains gaps and resets elsewhere on this dashboard; a maintenance window showed 10 at once.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "yellow"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count((node_load1{instance=~\"$instance\"} / on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"})) \u003e 1) or vector(0)",
+          "instant": true,
+          "legendFormat": "saturated",
+          "range": false
+        }
+      ],
+      "title": "Nodes Saturated",
+      "description": "Nodes whose 1-minute load average exceeds their CPU count, meaning work was queuing. Same quantity as the Load Average panels below and on node/k8s-node/proxmox-otlp, so a figure here can be compared with any of them.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 5
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "yellow"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count(((1 - node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"}) * 100) \u003e 80) or vector(0)",
+          "instant": true,
+          "legendFormat": "over 80%",
+          "range": false
+        }
+      ],
+      "title": "Nodes Over 80% Memory",
+      "description": "Counted at 80% because that is where capacityThresholds turns yellow everywhere else in this repo. 90% was tried and has not happened once in 30 days.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 5
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "yellow"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count(((1 - node_filesystem_avail_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / node_filesystem_size_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * 100) \u003e 85) or vector(0)",
+          "instant": true,
+          "legendFormat": "over 85%",
+          "range": false
+        }
+      ],
+      "title": "Filesystems Over 85%",
+      "description": "Counts filesystems, not nodes: one host can have several, and on pve they share a ZFS pool. 85% is where NodeFilesystemSpaceFillingUp starts looking at the trend, so a non-zero count here is the level that alert needs before it will fire -- it is the earlier and weaker of the two signals, and does not by itself mean anything is alerting.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 5
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "yellow"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Current State by Node",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
           "expr": "up{job=\"scrapeConfig/monitoring/node-exporter-external\", instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (last_over_time(node_uname_info{job=\"scrapeConfig/monitoring/node-exporter-external\"}[1d]))",
           "legendFormat": "{{nodename}}"
         }
@@ -47,7 +350,7 @@
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 1
+        "y": 10
       },
       "repeatDirection": "h",
       "options": {
@@ -98,10 +401,70 @@
       }
     },
     {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "(time() - node_boot_time_seconds{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "legendFormat": "{{nodename}}"
+        }
+      ],
+      "title": "Uptime",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "background",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 0,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 3600,
+                "color": "yellow"
+              },
+              {
+                "value": 86400,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
       "type": "bargauge",
       "targets": [
         {
-          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)) * 100)",
+          "expr": "sort_desc(100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$instance\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)) * 100))",
           "instant": true,
           "legendFormat": "{{nodename}}",
           "range": false
@@ -114,10 +477,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 10,
+        "w": 8,
         "x": 0,
-        "y": 5
+        "y": 20
       },
       "repeatDirection": "h",
       "options": {
@@ -138,7 +501,7 @@
           "calcs": []
         },
         "maxVizHeight": 300,
-        "orientation": "auto"
+        "orientation": "horizontal"
       },
       "fieldConfig": {
         "defaults": {
@@ -171,7 +534,7 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "(1 - node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * 100",
+          "expr": "sort_desc((1 - node_memory_MemAvailable_bytes{instance=~\"$instance\"} / node_memory_MemTotal_bytes{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * 100)",
           "instant": true,
           "legendFormat": "{{nodename}}",
           "range": false
@@ -184,10 +547,10 @@
         "uid": "$datasource"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 5
+        "h": 10,
+        "w": 8,
+        "x": 8,
+        "y": 20
       },
       "repeatDirection": "h",
       "options": {
@@ -208,7 +571,78 @@
           "calcs": []
         },
         "maxVizHeight": 300,
-        "orientation": "auto"
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sort_desc((1 - node_filesystem_avail_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / node_filesystem_size_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
+          "instant": true,
+          "legendFormat": "{{nodename}} {{mountpoint}}",
+          "range": false
+        }
+      ],
+      "title": "Filesystem Usage",
+      "description": "Every filesystem in scope, fullest first. This is where the \"Filesystems Over 85%\" count in the Summary resolves to a name.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 8,
+        "x": 16,
+        "y": 20
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
       },
       "fieldConfig": {
         "defaults": {
@@ -255,11 +689,11 @@
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 13
+        "y": 30
       },
       "repeatDirection": "h",
       "options": {
-        "graphMode": "area",
+        "graphMode": "none",
         "colorMode": "background",
         "justifyMode": "center",
         "textMode": "auto",
@@ -298,66 +732,6 @@
       }
     },
     {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "(time() - node_boot_time_seconds{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}}"
-        }
-      ],
-      "title": "Uptime",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 24,
-        "x": 0,
-        "y": 17
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "background",
-        "justifyMode": "center",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "decimals": 0,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "red"
-              },
-              {
-                "value": 3600,
-                "color": "yellow"
-              },
-              {
-                "value": 86400,
-                "color": "green"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
       "type": "row",
       "collapsed": false,
       "title": "CPU",
@@ -365,7 +739,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 34
       },
       "id": 0,
       "panels": []
@@ -388,7 +762,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 35
       },
       "repeatDirection": "h",
       "options": {
@@ -448,7 +822,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 30
+        "y": 43
       },
       "repeatDirection": "h",
       "options": {
@@ -480,7 +854,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 51
       },
       "id": 0,
       "panels": []
@@ -503,7 +877,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 39
+        "y": 52
       },
       "repeatDirection": "h",
       "options": {
@@ -545,7 +919,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 39
+        "y": 52
       },
       "repeatDirection": "h",
       "options": {
@@ -595,7 +969,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 47
+        "y": 60
       },
       "id": 0,
       "panels": []
@@ -618,7 +992,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 48
+        "y": 61
       },
       "repeatDirection": "h",
       "options": {
@@ -666,7 +1040,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 56
+        "y": 69
       },
       "repeatDirection": "h",
       "options": {
@@ -733,7 +1107,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 56
+        "y": 69
       },
       "repeatDirection": "h",
       "options": {
@@ -784,7 +1158,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 64
+        "y": 77
       },
       "id": 0,
       "panels": []
@@ -815,7 +1189,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 65
+        "y": 78
       },
       "repeatDirection": "h",
       "options": {
@@ -842,11 +1216,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "(rate(node_cpu_package_throttles_total{instance=~\"$instance\"}[$__rate_interval])) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+          "expr": "(rate(node_cpu_package_throttles_total{instance=~\"$instance\", instance=~\"pve|node1|node2|node3|node4|node5\"}[$__rate_interval])) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
           "legendFormat": "{{nodename}} Throttles"
         }
       ],
       "title": "CPU Throttling Rate",
+      "description": "Package thermal throttling on the machines that own their CPUs. LXC guests are excluded: the counter reaches them from the shared kernel and describes the hypervisor, not the container. Only the Intel hypervisors report it -- pve is AMD and the Raspberry Pis are ARM, and neither exposes this counter.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -856,7 +1231,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 73
+        "y": 86
       },
       "repeatDirection": "h",
       "options": {
@@ -918,7 +1293,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 73
+        "y": 86
       },
       "repeatDirection": "h",
       "options": {
@@ -983,7 +1358,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 81
+        "y": 94
       },
       "id": 0,
       "panels": []
@@ -1012,7 +1387,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 82
+        "y": 95
       },
       "repeatDirection": "h",
       "options": {
@@ -1024,7 +1399,9 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": ""
+          "sort": "desc",
+          "maxHeight": 400,
+          "hideZeros": true
         }
       },
       "fieldConfig": {
@@ -1073,7 +1450,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 90
+        "y": 103
       },
       "id": 0,
       "panels": []
@@ -1101,7 +1478,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 91
+        "y": 104
       },
       "repeatDirection": "h",
       "options": {
@@ -1113,7 +1490,9 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": ""
+          "sort": "desc",
+          "maxHeight": 400,
+          "hideZeros": true
         }
       },
       "fieldConfig": {
@@ -1155,76 +1534,6 @@
       }
     },
     {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "sort_desc((1 - node_filesystem_avail_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / node_filesystem_size_bytes{instance=~\"$instance\",fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{mountpoint}}",
-          "range": false
-        }
-      ],
-      "title": "Filesystem Usage",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 12,
-        "x": 0,
-        "y": 99
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "decimals": 1,
-          "min": 0,
-          "max": 100,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 80,
-                "color": "yellow"
-              },
-              {
-                "value": 90,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
       "type": "timeseries",
       "targets": [
         {
@@ -1240,9 +1549,9 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 12,
-        "x": 12,
-        "y": 99
+        "w": 24,
+        "x": 0,
+        "y": 112
       },
       "repeatDirection": "h",
       "options": {
@@ -1292,7 +1601,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 109
+        "y": 122
       },
       "id": 0,
       "panels": []
@@ -1327,7 +1636,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 110
+        "y": 123
       },
       "repeatDirection": "h",
       "options": {
