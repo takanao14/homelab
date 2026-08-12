@@ -65,13 +65,25 @@ spec:
             summary: 'ACME requests to {{ "{{" }} $labels.host {{ "}}" }} failing with HTTP {{ "{{" }} $labels.status {{ "}}" }} ({{ "{{" }} $labels.cluster {{ "}}" }})'
             description: 'cert-manager is being rejected by the ACME endpoint, so certificate issuance and renewal cannot complete. Check for a Let''s Encrypt rate limit or an account problem before the expiry alerts start firing.'
 
-        - alert: CertManagerDown
+        # kube-prometheus-stack's TargetDown already covers a discovered target
+        # that returns up=0. This rule covers the complementary failure mode: the
+        # cert-manager Application exists, but its target has disappeared from
+        # service discovery entirely, so no up series remains for TargetDown to
+        # evaluate. Sandbox omits the Application and therefore stays silent.
+        - alert: CertManagerMetricsTargetMissing
           expr: |
-            up{job=~".*cert-manager.*"} == 0
+            group by (cluster) (
+              argocd_app_info{name="cert-manager"}
+            )
+            unless on (cluster)
+            group by (cluster) (
+              up{job="cert-manager"}
+            )
           for: 15m
           labels:
             severity: warning
+            namespace: cert-manager
           annotations:
-            summary: 'cert-manager metrics target down ({{ "{{" }} $labels.cluster {{ "}}" }})'
-            description: 'cert-manager is not being scraped; certificate expiry can no longer be monitored.'
+            summary: 'cert-manager metrics target missing ({{ "{{" }} $labels.cluster {{ "}}" }})'
+            description: 'ArgoCD expects cert-manager to be deployed, but Prometheus has no matching scrape target; certificate health and expiry alerts are blind.'
 {{- end }}
