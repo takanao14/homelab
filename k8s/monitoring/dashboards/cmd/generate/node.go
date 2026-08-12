@@ -25,6 +25,29 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		normByCPU = `/ on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode="idle", ` + instFilter + `})`
 		// fsFilter excludes pseudo/boot filesystems that don't need capacity monitoring.
 		fsFilter = `fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*|/boot/efi|/boot/firmware"`
+		// zfsActive keeps only nodes with a pool actually imported.
+		//
+		// The Proxmox hosts all load the ZFS module and only pve has a pool, so
+		// node1-5 publish an ARC holding a few header structs. It does not scale
+		// with the machine -- 2880 bytes on a 31 GiB node, 1440 on a 1 GiB one --
+		// against 6.3 GiB of real ARC on pve. A megabyte sits 350x above the empty
+		// case and six thousand times below a working one, so the boundary is not
+		// close to anything.
+		//
+		// Gating on size alone would not have been enough. arc_c_max and arc_c_min
+		// are GiB-scale even with no pool -- 0.75 to 6.3 GiB, comparable to pve's
+		// actual ARC -- so the limit lines are gated on the same condition rather
+		// than left to be filtered by their own magnitude.
+		//
+		// The collector stays enabled on those hosts deliberately. The readings are
+		// genuinely theirs, unlike the LXC guests where /proc/spl/kstat/zfs is the
+		// hypervisor's and each guest was republishing its host's ARC under its own
+		// name (see group_vars/node_exporter_lxc.yaml, where the collector is now
+		// switched off for exactly that reason). Any of these hosts could gain a
+		// pool, and when one does it crosses this threshold and appears here on its
+		// own -- which is why the filter belongs in the query rather than in a list
+		// of hostnames anywhere.
+		zfsActive = ` and on(instance) (node_zfs_arc_size{` + instFilter + `} > 1024 * 1024)`
 	)
 
 	tooltipAll := defaultTooltip()
@@ -43,13 +66,20 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		WithVariable(
 			promDatasourceVariable(),
 		).
-		// Bare-metal nodes only: filtered by scrapeConfig job to exclude k8s/VM nodes.
-		// nodename!="gpuvm" is required to filter out stale data from when gpuvm was misconfigured.
+		// Bare-metal and LXC/VM guests scraped over the external scrapeConfig job;
+		// the k8s cluster nodes have their own dashboard and their own job.
+		//
+		// A nodename!="gpuvm" term used to hang off each of these, added to hide
+		// stale series from a period when that host was misconfigured. Nothing has
+		// matched it for the whole retention window, and the host is now scraped as
+		// gpuvm1 by the in-cluster job, which this job selector already excludes, so
+		// the term could only ever have hidden something unrelated that happened to
+		// be named gpuvm.
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("node").
 				Label("Node").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: new(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm"}, nodename)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external"}, nodename)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -60,7 +90,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("instance").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: new(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm",nodename=~"$node"}, instance)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename=~"$node"}, instance)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Multi(true).
 				IncludeAll(true).
@@ -99,7 +129,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					// max by dedupes node_uname_info when a kernel upgrade + reboot leaves
 					// two series (differing only in "release") for the same instance
 					// within the last_over_time lookback window.
-					Expr(`up{job="scrapeConfig/monitoring/node-exporter-external", ` + instFilter + `} * on(instance) group_left(nodename) max by (instance, nodename) (last_over_time(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external",nodename!="gpuvm"}[1d]))`).
+					Expr(`up{job="scrapeConfig/monitoring/node-exporter-external", ` + instFilter + `} * on(instance) group_left(nodename) max by (instance, nodename) (last_over_time(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external"}[1d]))`).
 					LegendFormat("{{nodename}}"),
 				),
 		).
@@ -183,23 +213,14 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{nodename}}"),
 				).Decimals(0),
 		).
-		WithPanel(
-			bargauge.NewPanelBuilder().
-				Title("Filesystem Usage (Current)").
-				Datasource(ds).
-				Span(24).Height(8).
-				Unit("percent").
-				Min(0).
-				Max(100).
-				Orientation(common.VizOrientationVertical).
-				Thresholds(capacityThresholds()).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sort_desc((1 - node_filesystem_avail_bytes{` + instFilter + `,` + fsFilter + `} / node_filesystem_size_bytes{` + instFilter + `,` + fsFilter + `}) * 100 ` + joinNodename + `)`).
-					Instant().
-					LegendFormat("{{nodename}} {{mountpoint}}"),
-				).
-				Decimals(1),
-		).
+		// A "Filesystem Usage (Current)" bar gauge used to sit here, span 24. It ran
+		// the same query as "Filesystem Usage" in the Disk row -- the only textual
+		// difference was whether the nodename join fell inside or outside
+		// sort_desc(), which does not change the result -- so the same bars were
+		// drawn twice on one dashboard, and a third panel below charts the same
+		// figure over time. The Disk row keeps the pair that answer different
+		// questions, current level and trend; Summary is for reading at a glance
+		// and a full-width duplicate was the largest thing on it.
 		WithRow(dashboard.NewRowBuilder("CPU")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -423,12 +444,12 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Rx").
 					// Keep physical NICs and vmbr (Proxmox bridges); exclude per-VM/LXC virtual interfaces.
-					Expr(`rate(node_network_receive_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*|vnets.*"}[$__rate_interval]) `+joinNodename).
+					Expr(`rate(node_network_receive_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|podman.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*|vnets.*"}[$__rate_interval]) `+joinNodename).
 					LegendFormat("{{nodename}} Rx {{device}}"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Tx").
-					Expr(`rate(node_network_transmit_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*|vnets.*"}[$__rate_interval]) `+joinNodename).
+					Expr(`rate(node_network_transmit_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|podman.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*|vnets.*"}[$__rate_interval]) `+joinNodename).
 					LegendFormat("{{nodename}} Tx {{device}}"),
 				).
 				OverrideByQuery("Tx", []dashboard.DynamicConfigValue{
@@ -492,55 +513,35 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{nodename}} {{mountpoint}}"),
 				),
 		).
-		// ZFS ARC metrics: pve (has ZFS pools) shown as solid lines; other nodes
-		// that have the ZFS module loaded but no pools are shown as dashed lines.
 		WithRow(dashboard.NewRowBuilder("ZFS")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("ZFS ARC Size").
+				Description("Only nodes with a pool imported appear; see zfsActive in the source for how they are told apart from the ones that merely have the module loaded. A node that gains a pool will show up here on its own, with no change needed to this panel.").
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("bytes").
 				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
+				// Min and Max are the ARC's configured bounds, so they are drawn
+				// dashed against the solid line of the size that moves between them.
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("A").
-					Expr(`node_zfs_arc_size{`+instFilter+`} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{nodename="pve"})`).
+					Expr(`(node_zfs_arc_size{`+instFilter+`}`+zfsActive+`) `+joinNodename).
 					LegendFormat("{{nodename}} ARC Size"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("B").
-					Expr(`node_zfs_arc_c_max{`+instFilter+`} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{nodename="pve"})`).
+					Expr(`(node_zfs_arc_c_max{`+instFilter+`}`+zfsActive+`) `+joinNodename).
 					LegendFormat("{{nodename}} ARC Max"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("C").
-					Expr(`node_zfs_arc_c_min{`+instFilter+`} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{nodename="pve"})`).
+					Expr(`(node_zfs_arc_c_min{`+instFilter+`}`+zfsActive+`) `+joinNodename).
 					LegendFormat("{{nodename}} ARC Min"),
 				).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					RefId("D").
-					Expr(`node_zfs_arc_size{`+instFilter+`} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{nodename!="pve"})`).
-					LegendFormat("{{nodename}} ARC Size"),
-				).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					RefId("E").
-					Expr(`node_zfs_arc_c_max{`+instFilter+`} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{nodename!="pve"})`).
-					LegendFormat("{{nodename}} ARC Max"),
-				).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					RefId("F").
-					Expr(`node_zfs_arc_c_min{`+instFilter+`} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{nodename!="pve"})`).
-					LegendFormat("{{nodename}} ARC Min"),
-				).
-				OverrideByQuery("D", []dashboard.DynamicConfigValue{
-					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
-				}).
-				OverrideByQuery("E", []dashboard.DynamicConfigValue{
-					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
-				}).
-				OverrideByQuery("F", []dashboard.DynamicConfigValue{
+				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* ARC (Max|Min)$"}, []dashboard.DynamicConfigValue{
 					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
 				}),
 		).
