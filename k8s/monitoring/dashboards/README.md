@@ -115,6 +115,46 @@ to fix here. Do not write Go comments or panel descriptions implying a
 dashboard spans prd and sandbox — describe what the panel shows, and leave the
 environment to the datasource.
 
+### Query idioms
+
+These three are here because getting each of them wrong produced a panel that
+looked right. None of them is caught by `make check`, which only compares
+generated JSON against the Go source.
+
+**Key a zero baseline on the unfiltered selector.** LogQL emits no sample at all
+for an empty window, so a series with nothing to report disappears from a stack
+instead of reading zero. The fix is a second term pinned to `$__range` and
+multiplied by zero:
+
+```go
+Expr(`sum by (host) (count_over_time(` + errSel + `[$__auto]))` +
+    ` or sum by (host) (count_over_time(` + base + `[$__range])) * 0`)
+```
+
+The baseline must be built from the **selector before the condition being
+counted** (`base`), never from the filtered one (`errSel`). Keying it on the
+filtered selector appears to work, because it does whenever anything matched,
+and collapses to "No data" in exactly the case the baseline exists for — both
+terms are empty together. That was a real regression in `syslog`'s error
+breakdown. Where a stat reduces to a single value there is no label to preserve
+and `or vector(0)` is the correct form.
+
+**Size log windows with `$__auto`, not a literal.** A hardcoded `[5m]` reads
+five minutes out of every step once the range is widened, so the panel
+under-reports the more you zoom out. `$__auto` tracks the step; `Interval("1m")`
+floors it, and because a Min interval raises the step itself the buckets tile
+exactly rather than overlapping and counting an event twice. The instant stat
+tiles are the exception — their `[1h]` is the quantity the tile reports, not an
+artifact of the zoom.
+
+**Plot discrete events as counts, not rates.** A per-second rate suits a volume
+panel; it does not suit events arriving ten times a day. One error in a
+one-minute bucket is 0.0167, which Grafana renders as `16.7 mc/s`, and the same
+single error reads 8.3 mc/s over a day and 1.4 mc/s over a week because the
+bucket follows the zoom. `count_over_time` drawn as bars is the same number at
+every zoom level for the bucket it sits in, and needs no `round()`: unlike
+`increase()` it does not extrapolate.
+
 ## Dashboard structure guidelines
 
 Dashboards should tell the same operational story from top to bottom: establish scope,
@@ -169,6 +209,28 @@ clearer domain-specific investigation path:
 - Do not shrink panels merely to force a one-line layout. Titles, legends, and values
   must remain readable at the dashboard's expected viewport width.
 
+### Panels that hold more series than the panel
+
+A panel whose series count exceeds the space it was given is still readable, but only
+if the ordering is chosen rather than incidental. Two cases recur:
+
+- **Bar gauges that scroll.** Wrap the expression in `sort_desc()` so the bars visible
+  without dragging are the ones worth seeing; unsorted, they arrive in label order,
+  which is whichever hostnames happen to sort first. `node-overview` draws nineteen
+  nodes and twenty-seven filesystems into ten grid rows. Sort the whole expression, not
+  an inner part of it — order does survive a `group_left` join in practice, but nothing
+  documents that it must.
+- **Multi-series tooltips.** `defaultTooltip()` lists every series, which runs off the
+  bottom of the window past roughly thirty; the series under the cursor can then be the
+  one you cannot see. Add `Sort(common.SortOrderDescending)` and a `MaxHeight` below the
+  Grafana default of 600. Nothing is lost to the cap: hovering and then clicking pins
+  the tooltip, and a pinned tooltip scrolls (confirmed on Grafana 13.1.3).
+  `HideZeros(true)` helps less than it sounds — measured on `node-overview`, only 5 of
+  54 disk series and 16 of 66 network series sit at exactly zero.
+
+Keep these inline. Which panels are dense is a per-dashboard fact, so this is a pattern
+to copy, not a helper to extract (see the litmus test under Conventions).
+
 ### Review checklist
 
 - Can an operator identify scope and health without scrolling?
@@ -176,6 +238,11 @@ clearer domain-specific investigation path:
 - Is `Summary`, `Status`, or a component-qualified name chosen by the rules above?
 - Do grid spans total 24 on each intended line, with related panels kept together?
 - Does the section order support the path from detection to diagnosis to detail?
+- Is every zero baseline keyed on the unfiltered selector, so a quiet series still
+  reads zero when the filtered one matches nothing?
+- Do log windows use `$__auto` except where a fixed window is the reported quantity,
+  and do discrete events use `count_over_time` rather than `rate()`?
+- Does every panel with more series than it can display order them by value?
 - Do comments and descriptions avoid implying a dashboard spans environments?
 - Are generated JSON files committed together with their Go definitions?
 
