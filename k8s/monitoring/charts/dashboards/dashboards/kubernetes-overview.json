@@ -214,11 +214,12 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(kube_deployment_status_replicas_available{cluster=~\"$cluster\",namespace=~\"$namespace\"} == kube_deployment_spec_replicas{cluster=~\"$cluster\",namespace=~\"$namespace\"}) or vector(0)",
+          "expr": "count((kube_deployment_status_replicas_available{cluster=~\"$cluster\",namespace=~\"$namespace\"} == kube_deployment_spec_replicas{cluster=~\"$cluster\",namespace=~\"$namespace\"}) and (kube_deployment_spec_replicas{cluster=~\"$cluster\",namespace=~\"$namespace\"} \u003e 0)) or vector(0)",
           "legendFormat": "Healthy"
         }
       ],
       "title": "Deployments Healthy",
+      "description": "Deployments meant to be running that are. Ones deliberately scaled to zero are not counted, so this plus Degraded is less than the total whenever something is parked.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -481,6 +482,7 @@
         }
       ],
       "title": "OOMKilled Containers",
+      "description": "Containers that exist right now and whose last exit was an OOM kill -- a standing state, not a rate, so unlike the (1h) tiles around it there is no window. It clears when the pod is replaced, which in practice is quick: over the last 30 days this read non-zero for one hour out of 720. For OOM activity within a window, use \"Container OOM Events (1h)\" below, which counts cgroup events instead and can legitimately disagree with this.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -954,14 +956,14 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc(topk(10, (100 * sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[$__rate_interval])) / clamp_min(sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[$__rate_interval])), 1e-9)) \u003e 0)) or on() label_replace(vector(0), \"cluster\", \"No throttling\", \"\", \"\")",
+          "expr": "sort_desc(topk(10, (100 * sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[5m])) / clamp_min(sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[5m])), 1e-9)) \u003e 0)) or on() label_replace(vector(0), \"cluster\", \"No throttling\", \"\", \"\")",
           "instant": true,
           "legendFormat": "{{cluster}} {{namespace}}/{{pod}}/{{container}}",
           "range": false
         }
       ],
       "title": "Top CPU Throttled Containers (5m)",
-      "description": "Percentage of CPU scheduling periods throttled in the last 5 minutes. Idle containers and zero values are excluded.",
+      "description": "Percentage of CPU scheduling periods throttled in the last 5 minutes. Idle containers and zero values are excluded. The window is fixed at 5 minutes and does not follow the dashboard range.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -1104,11 +1106,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "count by (cluster, phase) (kube_pod_status_phase{cluster=~\"$cluster\",namespace=~\"$namespace\"} == 1)",
+          "expr": "sum by (cluster, phase) (kube_pod_status_phase{cluster=~\"$cluster\",namespace=~\"$namespace\"})",
           "legendFormat": "{{cluster}} {{phase}}"
         }
       ],
       "title": "Pod Phase Count",
+      "description": "Every phase is drawn, including the ones at zero, so a flat line at zero means no pods are Pending or Failed rather than that nobody is looking.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",

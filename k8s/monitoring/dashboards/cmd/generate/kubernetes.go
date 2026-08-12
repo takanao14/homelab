@@ -117,13 +117,19 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Deployments Healthy").
+				Description("Deployments meant to be running that are. Ones deliberately scaled to zero are not counted, so this plus Degraded is less than the total whenever something is parked.").
 				Datasource(ds).
 				Span(8).Height(4).
 				Unit("short").
 				Min(0).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count(kube_deployment_status_replicas_available{` + clusterFilter + `,` + nsFilter + `} == kube_deployment_spec_replicas{` + clusterFilter + `,` + nsFilter + `}) or vector(0)`).
+					// "and ... > 0" drops deployments scaled to zero. Without it a parked
+					// deployment satisfied available == spec as 0 == 0 and was counted as
+					// healthy: 4 of the 35 here are at spec=0, so the tile read 35 healthy
+					// out of 35 while 31 were actually running. Degraded needs no such
+					// guard, since 0 < 0 is false.
+					Expr(`count((kube_deployment_status_replicas_available{` + clusterFilter + `,` + nsFilter + `} == kube_deployment_spec_replicas{` + clusterFilter + `,` + nsFilter + `}) and (kube_deployment_spec_replicas{` + clusterFilter + `,` + nsFilter + `} > 0)) or vector(0)`).
 					LegendFormat("Healthy"),
 				),
 		).
@@ -190,6 +196,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("OOMKilled Containers").
+				Description("Containers that exist right now and whose last exit was an OOM kill -- a standing state, not a rate, so unlike the (1h) tiles around it there is no window. It clears when the pod is replaced, which in practice is quick: over the last 30 days this read non-zero for one hour out of 720. For OOM activity within a window, use \"Container OOM Events (1h)\" below, which counts cgroup events instead and can legitimately disagree with this.").
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("short").
@@ -353,7 +360,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			bargauge.NewPanelBuilder().
 				Title("Top CPU Throttled Containers (5m)").
-				Description("Percentage of CPU scheduling periods throttled in the last 5 minutes. Idle containers and zero values are excluded.").
+				Description("Percentage of CPU scheduling periods throttled in the last 5 minutes. Idle containers and zero values are excluded. The window is fixed at 5 minutes and does not follow the dashboard range.").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("percent").
@@ -369,7 +376,19 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// clamp_min avoids NaN when an idle container has no scheduling periods.
-					Expr(`sort_desc(topk(10, (100 * sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[$__rate_interval])) / clamp_min(sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[$__rate_interval])), 1e-9)) > 0)) or on() label_replace(vector(0), "cluster", "No throttling", "", "")`).
+					//
+					// The window is a literal [5m], not $__rate_interval. Grafana derives
+					// $__rate_interval from the dashboard range even for an instant query,
+					// so the window this panel measured used to change with the zoom while
+					// the title kept promising five minutes. Throttling arrives in bursts,
+					// which makes that difference decisive rather than cosmetic: measured
+					// at one instant on the homepage container, [5m] read 63.6%, [15m]
+					// (a 7d view) read 55.4%, and [2m30s] -- what the 1d default resolved
+					// to -- read 0. The panel reported no throttling at the range it opens
+					// at, while the container was in fact throttled about two thirds of
+					// its scheduling periods. A window a panel is named for has to be
+					// fixed; the same is already true of the two "(1h)" panels beside it.
+					Expr(`sort_desc(topk(10, (100 * sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[5m])) / clamp_min(sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[5m])), 1e-9)) > 0)) or on() label_replace(vector(0), "cluster", "No throttling", "", "")`).
 					Instant().
 					LegendFormat("{{cluster}} {{namespace}}/{{pod}}/{{container}}"),
 				).
@@ -396,6 +415,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Pod Phase Count").
+				Description("Every phase is drawn, including the ones at zero, so a flat line at zero means no pods are Pending or Failed rather than that nobody is looking.").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
@@ -403,7 +423,14 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count by (cluster, phase) (kube_pod_status_phase{` + clusterFilter + `,` + nsFilter + `} == 1)`).
+					// sum over the raw gauge rather than count(... == 1). kube-state-metrics
+					// publishes one series per pod per phase, carrying 1 for the phase the
+					// pod is in and 0 for the rest, so summing gives the same counts while
+					// keeping a series for phases nothing is in. Filtering on == 1 dropped
+					// those series entirely: over six hours this panel drew Running alone,
+					// and Pending and Failed were absent rather than zero -- indistinguishable
+					// from the query being broken.
+					Expr(`sum by (cluster, phase) (kube_pod_status_phase{` + clusterFilter + `,` + nsFilter + `})`).
 					LegendFormat("{{cluster}} {{phase}}"),
 				),
 		).
