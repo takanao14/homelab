@@ -607,7 +607,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(prometheus_tsdb_head_samples_appended_total{job=\"$prometheus_job\"}[$__rate_interval])",
+          "expr": "rate(prometheus_tsdb_head_samples_appended_total{job=\"$prometheus_job\", type=\"float\"}[$__rate_interval])",
           "legendFormat": "{{cluster}} samples/s"
         }
       ],
@@ -653,11 +653,12 @@
           "legendFormat": "{{cluster}} Blocks"
         },
         {
-          "expr": "prometheus_tsdb_head_chunks{job=\"$prometheus_job\"} * 1024",
-          "legendFormat": "{{cluster}} Head (est.)"
+          "expr": "prometheus_tsdb_head_chunks_storage_size_bytes{job=\"$prometheus_job\"}",
+          "legendFormat": "{{cluster}} Head"
         }
       ],
       "title": "TSDB Size",
+      "description": "Bytes on disk: compacted blocks, plus the head chunks not yet compacted into them.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -737,11 +738,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum by (le, slice) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{job=\"$prometheus_job\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.99, sum by (le, slice) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{job=\"$prometheus_job\"}[$__rate_interval]))) and on (slice) sum by (slice) (rate(prometheus_engine_query_duration_histogram_seconds_count{job=\"$prometheus_job\"}[$__rate_interval])) \u003e 0",
           "legendFormat": "{{cluster}} {{slice}}"
         }
       ],
       "title": "Query Duration p99",
+      "description": "A slice is drawn only while queries are passing through it; a gap means no traffic in that phase, not a slow one.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",

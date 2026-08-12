@@ -225,13 +225,21 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(prometheus_tsdb_head_samples_appended_total{` + promJob + `}[$__rate_interval])`).
+					// type="float" only. The counter is split by sample type, and the
+					// histogram series is flat at zero because nothing here writes
+					// native histograms. Both rendered under the identical legend
+					// "prd samples/s", so the panel drew two indistinguishable lines,
+					// one of which was always zero. Should native histograms ever be
+					// ingested, this needs a second target rather than a wider matcher,
+					// so the two stay separable in the legend.
+					Expr(`rate(prometheus_tsdb_head_samples_appended_total{` + promJob + `, type="float"}[$__rate_interval])`).
 					LegendFormat("{{cluster}} samples/s"),
 				),
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("TSDB Size").
+				Description("Bytes on disk: compacted blocks, plus the head chunks not yet compacted into them.").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("bytes").
@@ -243,8 +251,16 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{cluster}} Blocks"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`prometheus_tsdb_head_chunks{` + promJob + `} * 1024`).
-					LegendFormat("{{cluster}} Head (est.)"),
+					// This read prometheus_tsdb_head_chunks * 1024 and was labelled
+					// "Head (est.)". head_chunks is a count of chunks, and 1024 was an
+					// assumed size per chunk: 401378 chunks came out as 411 MB against
+					// the 80.9 MB the head actually occupied, high by a factor of five.
+					// prometheus_tsdb_head_chunks_storage_size_bytes is the measurement
+					// and was available the whole time, so there was never a reason to
+					// estimate. A guess on a bytes axis beside a real 13.4 GB figure
+					// reads as a measurement whatever the legend says.
+					Expr(`prometheus_tsdb_head_chunks_storage_size_bytes{` + promJob + `}`).
+					LegendFormat("{{cluster}} Head"),
 				),
 		).
 		WithPanel(
@@ -264,6 +280,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Query Duration p99").
+				Description("A slice is drawn only while queries are passing through it; a gap means no traffic in that phase, not a slow one.").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
@@ -271,7 +288,15 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`histogram_quantile(0.99, sum by (le, slice) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{` + promJob + `}[$__rate_interval])))`).
+					// The "and on (slice) ... > 0" guard is the same one the two other
+					// p99 panels on this dashboard already carry, and this was the only
+					// one without it. histogram_quantile returns NaN when every bucket
+					// rate in a window is zero, which for a quiet slice is most of the
+					// time: over seven days at a five-minute step, result_sort was NaN
+					// in 1883 of 2016 samples. The line was absent 93% of the time and
+					// nothing said whether that meant idle or broken.
+					Expr(`histogram_quantile(0.99, sum by (le, slice) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{` + promJob + `}[$__rate_interval])))` +
+						` and on (slice) sum by (slice) (rate(prometheus_engine_query_duration_histogram_seconds_count{` + promJob + `}[$__rate_interval])) > 0`).
 					LegendFormat("{{cluster}} {{slice}}"),
 				),
 		).
