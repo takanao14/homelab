@@ -73,6 +73,9 @@ resolverAlerts:
   # alert's window so it fires at least as fast.
   cacheHitRateFor: 5m
 
+filesystemAlerts:
+  enabled: true
+
 textfileAlerts:
   enabled: true
 

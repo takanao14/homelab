@@ -30,6 +30,33 @@ zoneSerialAlerts:
   # after this is not in flight.
   notifyBehindFor: 15m
 
+filesystemAlerts:
+  enabled: false
+  job: scrapeConfig/monitoring/node-exporter-external
+  # Kept identical to fsFilter in dashboards/cmd/generate/node.go, so the set
+  # that alerts is the set the dashboard draws. /boot/efi and /boot/firmware are
+  # excluded because they are near-static and sized for exactly what they hold;
+  # /boot itself is not, since a failed kernel upgrade fills it.
+  fstypes: ext[234]|xfs|btrfs|zfs|vfat
+  excludeMountpoints: /var/lib/docker/.*|/boot/efi|/boot/firmware
+  # Upstream kube-prometheus-stack numbers, unchanged. The fleet's tightest
+  # filesystem sits at 50% free and none has been above 50% used in 30 days, so
+  # there is nothing here to tune against; picking different numbers would only
+  # make these disagree with the identical rules that cover the in-cluster nodes.
+  #
+  # The pairing is deliberate: the trend rule is meant to fire, the level rule is
+  # the backstop. predict_linear over a 6h window ignores a single large write
+  # and needs a sustained slope, and the free-space floor stops it firing while
+  # there is still plenty of room.
+  fillingUpFreePercent: 15
+  fillingUpHorizonHours: 24
+  fillingUpFor: 1h
+  almostOutFreePercent: 5
+  almostOutFor: 30m
+  # Inodes: worst on this fleet is netbox1 at 26% used, so 20% free is far off.
+  inodesFreePercent: 20
+  inodesFor: 1h
+
 textfileAlerts:
   enabled: false
   # apt / nvme / smartmon are written by systemd timers every 15 minutes, so an
