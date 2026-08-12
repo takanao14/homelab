@@ -48,5 +48,8 @@ Notes:
 
 - `disk-health` dashboard: "TrueNAS (smartctl_exporter)" row plus the shared
   SMART Health / Summary / Temperature panels.
-- `hardware-alerts` PrometheusRule: `SmartctlDiskUnhealthy` and the shared
-  disk-temperature alert.
+- `hardware-alerts` PrometheusRule, `hardware-disk.rules` group: these disks are
+  one of the three sources unioned by `DiskSmartUnhealthy`,
+  `DiskFailurePrecursorGrowing` and `DiskPendingSectors`, alongside the shared
+  `NodeDiskTempHigh`. (Until 2026-08 the only SMART health alert was
+  `SmartctlDiskUnhealthy`, which matched these two disks and nothing else.)
