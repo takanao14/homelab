@@ -19,6 +19,21 @@ func buildCertManagerOverview() (*dashboard.Dashboard, error) {
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
 	issueThresholds := issueThresholds()
+	targetThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "red"},
+			{Value: new(float64(1)), Color: "green"},
+		})
+	targetMappings := []dashboard.ValueMapping{
+		{ValueMap: &dashboard.ValueMap{
+			Type: dashboard.MappingTypeValueToText,
+			Options: map[string]dashboard.ValueMappingResult{
+				"0": {Text: new("DOWN"), Color: new("red")},
+				"1": {Text: new("UP"), Color: new("green")},
+			},
+		}},
+	}
 
 	// expiryThresholds colors the "Days Until Expiry" table column:
 	// red below 7 d (critical), orange below 21 d (renewal failing), green otherwise.
@@ -70,10 +85,30 @@ func buildCertManagerOverview() (*dashboard.Dashboard, error) {
 		WithRow(dashboard.NewRowBuilder("Summary")).
 		WithPanel(
 			stat.NewPanelBuilder().
+				Title("Scrape Target").
+				Description("Whether Prometheus can reach the cert-manager metrics endpoint. No data means the cert-manager ArgoCD application is not present in this cluster.").
+				Datasource(ds).
+				Span(8).Height(4).
+				Thresholds(targetThresholds).
+				Mappings(targetMappings).
+				ColorMode(common.BigValueColorModeBackground).
+				GraphMode(common.BigValueGraphModeNone).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					// ArgoCD defines whether this cluster is expected to run cert-manager.
+					// The zero fallback catches a target that disappears from service
+					// discovery without marking clusters that intentionally omit the app
+					// as DOWN.
+					Expr(`min by (cluster) (up{job="cert-manager",` + clusterFilter + `}) or (0 * max by (cluster) (argocd_app_info{` + clusterFilter + `,name="cert-manager"}))`).
+					Instant().
+					LegendFormat("Target"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
 				Title("Certs Not Ready").
 				Description("Certificates where the Ready condition is not True.").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(8).Height(4).
 				Unit("short").Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
@@ -88,7 +123,7 @@ func buildCertManagerOverview() (*dashboard.Dashboard, error) {
 				Title("ClusterIssuers Not Ready").
 				Description("ClusterIssuers where the Ready condition is not True.").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(8).Height(4).
 				Unit("short").Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
@@ -103,7 +138,7 @@ func buildCertManagerOverview() (*dashboard.Dashboard, error) {
 				Title("Sync Errors (1h)").
 				Description("cert-manager controller reconciliation errors in the last hour.").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(4).
 				Unit("short").Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
@@ -118,7 +153,7 @@ func buildCertManagerOverview() (*dashboard.Dashboard, error) {
 				Title("ACME Errors").
 				Description("Non-2xx responses from the ACME endpoint over the dashboard time range, including Let's Encrypt rate limits. Nonzero means issuance or renewal is being rejected, well before the expiry countdown reflects it.").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(12).Height(4).
 				Unit("short").Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).

@@ -34,6 +34,77 @@
       "type": "stat",
       "targets": [
         {
+          "expr": "min by (cluster) (up{job=\"cert-manager\",cluster=~\"$cluster\"}) or (0 * max by (cluster) (argocd_app_info{cluster=~\"$cluster\",name=\"cert-manager\"}))",
+          "instant": true,
+          "legendFormat": "Target",
+          "range": false
+        }
+      ],
+      "title": "Scrape Target",
+      "description": "Whether Prometheus can reach the cert-manager metrics endpoint. No data means the cert-manager ArgoCD application is not present in this cluster.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "none",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 1,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
           "expr": "count(certmanager_certificate_ready_status{cluster=~\"$cluster\",condition=\"True\"} != 1) or vector(0)",
           "legendFormat": "Not Ready"
         }
@@ -47,8 +118,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 0,
+        "w": 8,
+        "x": 8,
         "y": 1
       },
       "repeatDirection": "h",
@@ -103,8 +174,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 6,
+        "w": 8,
+        "x": 16,
         "y": 1
       },
       "repeatDirection": "h",
@@ -159,9 +230,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 1
+        "w": 12,
+        "x": 0,
+        "y": 5
       },
       "repeatDirection": "h",
       "options": {
@@ -215,9 +286,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 1
+        "w": 12,
+        "x": 12,
+        "y": 5
       },
       "repeatDirection": "h",
       "options": {
@@ -262,7 +333,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 5
+        "y": 9
       },
       "id": 0,
       "panels": []
@@ -303,7 +374,7 @@
         "h": 6,
         "w": 16,
         "x": 0,
-        "y": 6
+        "y": 10
       },
       "repeatDirection": "h",
       "transformations": [
@@ -497,7 +568,7 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 6
+        "y": 10
       },
       "repeatDirection": "h",
       "transformations": [
@@ -623,7 +694,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 16
       },
       "repeatDirection": "h",
       "options": {
