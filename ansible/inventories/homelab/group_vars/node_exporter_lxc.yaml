@@ -3,12 +3,24 @@
 # sensors inside the container. Hardware metrics for the physical node
 # are already scraped from the Proxmox host itself.
 #
+# The zfs collector is the same problem one directory over: it reads
+# /proc/spl/kstat/zfs, which lxcfs does not virtualise, so every guest
+# republished its hypervisor's ARC statistics under its own instance label.
+# The values were not merely useless, they were wrong about whose they were:
+# ns1 reported node2's ARC, ns2 and resolver2 reported the figure shared by
+# node3 and node4, and none of these guests has a pool of its own. That is 322
+# metric names per guest, roughly 2400 series across the eight of them.
+#
+# The Proxmox hosts keep the collector. pve has a real pool, and the others
+# could gain one at any time, where the reading would be theirs and correct.
+#
 # NOTE: node_cpu_*_throttles_total come from the
 # "cpu" collector (sysfs), which cannot be disabled without losing
 # container CPU usage from lxcfs-virtualized /proc/stat.
 node_exporter_lxc_args:
     - --no-collector.thermal_zone
     - --no-collector.hwmon
+    - --no-collector.zfs
 
 # The hwmon collector disabled above is the only consumer of lm-sensors, so on
 # these guests the package is dead weight: it is installed on every x86_64 host
