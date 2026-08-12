@@ -4,31 +4,33 @@ set -euo pipefail
 [[ "$(uname)" == "Linux" ]] || exit 0
 
 # renovate: datasource=github-releases depName=junegunn/fzf
-readonly FZF_VERSION="${FZF_VERSION:-0.74.1}"
+readonly FZF_VERSION="${FZF_VERSION:-0.74.2}"
 # renovate: datasource=github-releases depName=zellij-org/zellij
 readonly ZELLIJ_VERSION="${ZELLIJ_VERSION:-0.44.3}"
 # renovate: datasource=github-releases depName=sbstp/kubie
 readonly KUBIE_VERSION="${KUBIE_VERSION:-0.28.0}"
 # renovate: datasource=github-releases depName=derailed/k9s
 readonly K9S_VERSION="${K9S_VERSION:-0.51.0}"
+# renovate: datasource=github-releases depName=kdash-rs/kdash
+readonly KDASH_VERSION="${KDASH_VERSION:-2.1.1}"
 # renovate: datasource=github-releases depName=helmfile/helmfile
-readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.7.1}"
+readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.7.3}"
 # renovate: datasource=github-releases depName=k0sproject/k0sctl
-readonly K0SCTL_VERSION="${K0SCTL_VERSION:-0.32.1}"
+readonly K0SCTL_VERSION="${K0SCTL_VERSION:-0.32.2}"
 # renovate: datasource=github-releases depName=getsops/sops
-readonly SOPS_VERSION="${SOPS_VERSION:-3.13.2}"
+readonly SOPS_VERSION="${SOPS_VERSION:-3.13.3}"
 # renovate: datasource=github-releases depName=gruntwork-io/terragrunt
-readonly TERRAGRUNT_VERSION="${TERRAGRUNT_VERSION:-1.1.1}"
+readonly TERRAGRUNT_VERSION="${TERRAGRUNT_VERSION:-1.1.2}"
 # renovate: datasource=github-releases depName=opentofu/opentofu
 readonly OPENTOFU_VERSION="${OPENTOFU_VERSION:-1.12.5}"
 # renovate: datasource=github-releases depName=helm/helm
 readonly HELM_VERSION="${HELM_VERSION:-4.2.3}"
 # renovate: datasource=github-releases depName=argoproj/argo-cd
-readonly ARGOCD_VERSION="${ARGOCD_VERSION:-3.4.5}"
+readonly ARGOCD_VERSION="${ARGOCD_VERSION:-3.5.0}"
 # renovate: datasource=github-releases depName=FiloSottile/age
 readonly AGE_VERSION="${AGE_VERSION:-1.3.1}"
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-readonly CILIUM_VERSION="${CILIUM_VERSION:-0.19.6}"
+readonly CILIUM_VERSION="${CILIUM_VERSION:-0.19.7}"
 # renovate: datasource=github-releases depName=eza-community/eza
 readonly EZA_VERSION="${EZA_VERSION:-0.23.5}"
 # renovate: datasource=github-releases depName=starship/starship
@@ -40,25 +42,29 @@ readonly DIRENV_VERSION="${DIRENV_VERSION:-2.37.1}"
 # renovate: datasource=github-releases depName=kubernetes-sigs/krew
 readonly KREW_VERSION="${KREW_VERSION:-0.5.0}"
 # renovate: datasource=github-releases depName=DNSControl/dnscontrol
-readonly DNSCONTROL_VERSION="${DNSCONTROL_VERSION:-4.43.3}"
+readonly DNSCONTROL_VERSION="${DNSCONTROL_VERSION:-4.46.0}"
+# renovate: datasource=github-releases depName=prometheus/prometheus
+readonly PROMETHEUS_VERSION="${PROMETHEUS_VERSION:-3.13.2}"
 # renovate: datasource=pypi depName=ansible-core
-readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.21.2}"
+readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.21.3}"
 # renovate: datasource=pypi depName=ansible-lint
 readonly ANSIBLE_LINT_VERSION="${ANSIBLE_LINT_VERSION:-26.6.0}"
 # renovate: datasource=github-tags depName=aws/aws-cli
-readonly AWS_CLI_VERSION="${AWS_CLI_VERSION:-2.36.6}"
+readonly AWS_CLI_VERSION="${AWS_CLI_VERSION:-2.36.20}"
 # renovate: datasource=github-releases depName=rclone/rclone
-readonly RCLONE_VERSION="${RCLONE_VERSION:-1.74.4}"
+readonly RCLONE_VERSION="${RCLONE_VERSION:-1.75.0}"
 # renovate: datasource=github-releases depName=rhysd/actionlint
 readonly ACTIONLINT_VERSION="${ACTIONLINT_VERSION:-1.7.12}"
 # renovate: datasource=github-releases depName=cli/cli
-readonly GH_VERSION="${GH_VERSION:-2.96.0}"
+readonly GH_VERSION="${GH_VERSION:-2.97.0}"
 # renovate: datasource=github-releases depName=sharkdp/bat
 readonly BAT_VERSION="${BAT_VERSION:-0.26.1}"
 # renovate: datasource=github-releases depName=BurntSushi/ripgrep
 readonly RIPGREP_VERSION="${RIPGREP_VERSION:-15.2.0}"
 # renovate: datasource=github-releases depName=dalance/procs
 readonly PROCS_VERSION="${PROCS_VERSION:-0.14.12}"
+# renovate: datasource=github-releases depName=mikefarah/yq
+readonly YQ_VERSION="${YQ_VERSION:-4.53.3}"
 
 # Install location. Defaults to a per-user prefix. Set TOOL_BIN_DIR (and
 # TOOL_VERSION_CACHE_DIR) to a system-wide path such as /usr/local/bin to make
@@ -280,6 +286,17 @@ install_procs() {
         "$BIN_DIR/procs"
 }
 
+# Install the raw binary asset rather than the tarball: the tarball names the
+# binary yq_linux_<arch>, which install_binary's find-by-name cannot locate. yq's
+# `checksums` file is a custom filename-first table with one column per hash
+# algorithm (the sha256 column is identified by a separate checksums_hashes_order
+# file), so verify_sha256 cannot parse it and no checksum is passed.
+install_yq() {
+    install_binary "yq" \
+        "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_${BIN_ARCH}" \
+        "$BIN_DIR/yq"
+}
+
 install_sheldon() {
     log_info "Installing sheldon ${SHELDON_VERSION}..."
     # sheldon release tags have no 'v' prefix.
@@ -389,6 +406,22 @@ install_k9s() {
         "https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/checksums.sha256"
 }
 
+install_kdash() {
+    local asset_name
+    case "$ARCH" in
+        x86_64) asset_name="kdash-linux" ;;
+        aarch64) asset_name="kdash-aarch64-gnu" ;;
+        *)
+            log_error "Unsupported architecture for kdash: ${ARCH}"
+            exit 1
+            ;;
+    esac
+    install_binary "kdash" \
+        "https://github.com/kdash-rs/kdash/releases/download/v${KDASH_VERSION}/${asset_name}.tar.gz" \
+        "$BIN_DIR/kdash" \
+        "https://github.com/kdash-rs/kdash/releases/download/v${KDASH_VERSION}/${asset_name}.sha256"
+}
+
 install_helmfile() {
     install_binary "helmfile" \
         "https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_${BIN_ARCH}.tar.gz" \
@@ -492,13 +525,29 @@ install_helm_diff_plugin() {
 }
 
 # ============================================================================
+# Monitoring Tools
+# ============================================================================
+
+# promtool validates prometheus.yml and alerting/recording rules, and runs rule
+# unit tests. Prometheus publishes no standalone promtool asset, so the full
+# server tarball (~100MB) is downloaded and install_binary extracts only promtool
+# -- the prometheus server binary is discarded with the temp dir.
+install_promtool() {
+    local archive_name="prometheus-${PROMETHEUS_VERSION}.linux-${BIN_ARCH}.tar.gz"
+    install_binary "promtool" \
+        "https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/${archive_name}" \
+        "$BIN_DIR/promtool" \
+        "https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/sha256sums.txt"
+}
+
+# ============================================================================
 # AWS Tools
 # ============================================================================
 
 # AWS CLI v2 installer zips are signed only with the AWS CLI Team PGP key (AWS
 # publishes no sha256 file), so verify the .sig against this embedded key. The
 # key is imported into a throwaway keyring holding only it, so a good signature
-# already proves the zip came from AWS. The key currently expires 2026-07-07 --
+# already proves the zip came from AWS. The key currently expires 2027-07-01 --
 # if verification later fails with an expired-key error, refresh the block from
 # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
 install_aws_cli() {
@@ -527,19 +576,19 @@ EEUJYOlb2XrSuPWml39beWdKM8kzr1OjnlOm6+lpTRCBfo0wa9F8YZRhHPAkwKkX
 XDeOGpWRj4ohOx0d2GWkyV5xyN14p2tQOCdOODmz80yUTgRpPVQUtOEhXQARAQAB
 tCFBV1MgQ0xJIFRlYW0gPGF3cy1jbGlAYW1hem9uLmNvbT6JAlQEEwEIAD4CGwMF
 CwkIBwIGFQoJCAsCBBYCAwECHgECF4AWIQT7Xbd/1cEYuAURraimMQrMRnJHXAUC
-aGveYQUJDMpiLAAKCRCmMQrMRnJHXKBYD/9Ab0qQdGiO5hObchG8xh8Rpb4Mjyf6
-0JrVo6m8GNjNj6BHkSc8fuTQJ/FaEhaQxj3pjZ3GXPrXjIIVChmICLlFuRXYzrXc
-Pw0lniybypsZEVai5kO0tCNBCCFuMN9RsmmRG8mf7lC4FSTbUDmxG/QlYK+0IV/l
-uJkzxWa+rySkdpm0JdqumjegNRgObdXHAQDWlubWQHWyZyIQ2B4U7AxqSpcdJp6I
-S4Zds4wVLd1WE5pquYQ8vS2cNlDm4QNg8wTj58e3lKN47hXHMIb6CHxRnb947oJa
-pg189LLPR5koh+EorNkA1wu5mAJtJvy5YMsppy2y/kIjp3lyY6AmPT1posgGk70Z
-CmToEZ5rbd7ARExtlh76A0cabMDFlEHDIK8RNUOSRr7L64+KxOUegKBfQHb9dADY
-qqiKqpCbKgvtWlds909Ms74JBgr2KwZCSY1HaOxnIr4CY43QRqAq5YHOay/mU+6w
-hhmdF18vpyK0vfkvvGresWtSXbag7Hkt3XjaEw76BzxQH21EBDqU8WJVjHgU6ru+
-DJTs+SxgJbaT3hb/vyjlw0lK+hFfhWKRwgOXH8vqducF95NRSUxtS4fpqxWVaw3Q
-V2OWSjbne99A5EPEySzryFTKbMGwaTlAwMCwYevt4YT6eb7NmFhTx0Fis4TalUs+
-j+c7Kg92pDx2uQ==
-=OBAt
+akV0ygUJDqP4lQAKCRCmMQrMRnJHXFHjD/9eyZLYcKuQOlLvtqSDtUBiEZf6ZZjM
+i3ygYH8rJNtuToUH+HvSpe819urJCquXhDrlK6N+aqW0hCLtNABJG/vsafIgvIYJ
+hSGgpgtNnQyMV1jViRWqPjbouw8OkYKBThUfT1i2Y+wn58ifs6ODBCmTexWtXspA
+Si+Gt49xDOW0APmbOPnI+a4HJW6tVEo6MWS0WjzpiBayR3d1A4pt4YrPfSdDgpLo
+h2SLQqlRqvvVZJaWBjhkErNFpfsBA06sDcPEOb0G8LBUbR4WOcdvhe5LubJbZuxC
+AG9kNPCVeQP1ixwjgjXKysaxeQ6rv0VzIQgRp6tLVLWhy6AKDNvLjFSsmXZ1Wl08
+Y/RlOHXlzLuQMRE6sR1wOdRxc9TsrNWTGiBK65cvSWOy03JeBkQQ8pesqltiyxI9
+U21kkgiXtTSKNGfKK8pO27D81YANhRqPK7iTp6kuFiY2WtOg90KTMNlIT+Ff85Y2
+b1rHj6Z0SrCkJujhWk3IBPic/wJgz01LEc/OAdUPlby90RJZcIBhSlWhT7mXnXIO
+c0HWlNQrns2s3CTyYwZSiSlYe9ApeLwhjDo8NhbFuCAy61l6O5UsR4AfZxx/rGKv
+2wFb1/RN/P4gNe6vmxZAPjR0AQcwD3tc2McimOLr/22kmPz8IH3I0X7WoSFr0Biz
+E91G7bb0hOb/cA==
+=knv7
 -----END PGP PUBLIC KEY BLOCK-----
 AWS_CLI_PGP_KEY
     if ! gpg --homedir "$gnupg_home" --batch --verify "${zip}.sig" "$zip" 2>&1; then
@@ -669,6 +718,7 @@ main() {
     install_if_needed "bat"      "$BAT_VERSION"      install_bat
     install_if_needed "rg"       "$RIPGREP_VERSION"  install_ripgrep
     install_if_needed "procs"    "$PROCS_VERSION"    install_procs
+    install_if_needed "yq"       "$YQ_VERSION"       install_yq
 
     install_if_needed "fzf"    "$FZF_VERSION"    install_fzf
     install_if_needed "zellij" "$ZELLIJ_VERSION" install_zellij
@@ -684,11 +734,14 @@ main() {
     install_krew_if_needed
     install_if_needed "kubie"    "$KUBIE_VERSION"    install_kubie
     install_if_needed "k9s"      "$K9S_VERSION"      install_k9s
+    install_if_needed "kdash"    "$KDASH_VERSION"    install_kdash
     install_if_needed "helmfile" "$HELMFILE_VERSION" install_helmfile
     install_if_needed "k0sctl"   "$K0SCTL_VERSION"   install_k0sctl
     install_if_needed "sops"     "$SOPS_VERSION"     install_sops
     install_if_needed "cilium"   "$CILIUM_VERSION"   install_cilium
     install_if_needed "dnscontrol" "$DNSCONTROL_VERSION" install_dnscontrol
+
+    install_if_needed "promtool" "$PROMETHEUS_VERSION" install_promtool
 
     install_if_needed "aws" "$AWS_CLI_VERSION" install_aws_cli
     install_if_needed "rclone" "$RCLONE_VERSION" install_rclone
