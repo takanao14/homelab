@@ -45,7 +45,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 1
       },
@@ -100,8 +100,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 6,
         "y": 1
       },
       "repeatDirection": "h",
@@ -148,6 +148,7 @@
         }
       ],
       "title": "ICMP Availability (range)",
+      "description": "Mean probe success across all ICMP targets over the dashboard's time range, so it moves with the zoom.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -155,8 +156,69 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 99,
+                "color": "yellow"
+              },
+              {
+                "value": 99.9,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "avg(avg_over_time(probe_success{job=~\"scrapeConfig/monitoring/dns-(external|internal)\"}[$__range])) * 100",
+          "legendFormat": "availability"
+        }
+      ],
+      "title": "DNS Availability (range)",
+      "description": "Mean probe success across all DNS probes, external and internal together, over the dashboard's time range.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
         "y": 1
       },
       "repeatDirection": "h",
@@ -668,11 +730,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "probe_duration_seconds{job=\"scrapeConfig/monitoring/icmp-network-devices\"}",
+          "expr": "probe_icmp_duration_seconds{job=\"scrapeConfig/monitoring/icmp-network-devices\", phase=\"rtt\"}",
           "legendFormat": "{{instance}}"
         }
       ],
       "title": "ICMP Response Time",
+      "description": "Round-trip time of the echo request itself, excluding the time blackbox spent resolving the target name and opening its socket.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -803,15 +866,16 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "probe_dns_lookup_time_seconds{job=\"scrapeConfig/monitoring/dns-external\"}",
+          "expr": "probe_duration_seconds{job=\"scrapeConfig/monitoring/dns-external\"}",
           "legendFormat": "{{instance}} External"
         },
         {
-          "expr": "probe_dns_lookup_time_seconds{job=\"scrapeConfig/monitoring/dns-internal\"}",
+          "expr": "probe_duration_seconds{job=\"scrapeConfig/monitoring/dns-internal\"}",
           "legendFormat": "{{instance}} Internal"
         }
       ],
       "title": "DNS Response Time",
+      "description": "How long each resolver took to answer the test query. External resolves a public name, internal an in-fleet one, so the two are expected to differ.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",

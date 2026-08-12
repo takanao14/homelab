@@ -70,7 +70,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("ICMP Devices Down").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(6).Height(4).
 				Unit("short").
 				Min(0).
 				Thresholds(downThresholds).
@@ -84,7 +84,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("DNS Devices Down").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(6).Height(4).
 				Unit("short").
 				Min(0).
 				Thresholds(downThresholds).
@@ -97,14 +97,35 @@ func buildUptime() (*dashboard.Dashboard, error) {
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("ICMP Availability (range)").
+				Description("Mean probe success across all ICMP targets over the dashboard's time range, so it moves with the zoom.").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(6).Height(4).
 				Unit("percent").
 				Min(0).Max(100).
 				Thresholds(availabilityThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`avg(avg_over_time(probe_success{` + icmpJob + `}[$__range])) * 100`).
+					LegendFormat("availability"),
+				),
+		).
+		// The Summary row was three tiles of span 8, with a headline availability
+		// figure for ICMP and none for DNS -- the two "Devices Down" tiles beside it
+		// treat the probe families as equals, so answering "how has DNS been?"
+		// meant scrolling to the per-device bar gauge further down. Four tiles of
+		// span 6 make the row symmetric and still total 24.
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("DNS Availability (range)").
+				Description("Mean probe success across all DNS probes, external and internal together, over the dashboard's time range.").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("percent").
+				Min(0).Max(100).
+				Thresholds(availabilityThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`avg(avg_over_time(probe_success{` + dnsJobs + `}[$__range])) * 100`).
 					LegendFormat("availability"),
 				),
 		).
@@ -211,6 +232,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("ICMP Response Time").
+				Description("Round-trip time of the echo request itself, excluding the time blackbox spent resolving the target name and opening its socket.").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
@@ -218,7 +240,13 @@ func buildUptime() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`probe_duration_seconds{` + icmpJob + `}`).
+					// phase="rtt", not probe_duration_seconds. The latter is the sum of
+					// every phase, and the other two are not network latency: averaged
+					// across the fifteen targets, probe_duration read 2.53 ms against an
+					// actual rtt of 1.10 ms, with 0.58 ms of setup and 0.07 ms of
+					// resolve making up the difference. A panel named for response time
+					// was reporting 2.3x the round trip.
+					Expr(`probe_icmp_duration_seconds{` + icmpJob + `, phase="rtt"}`).
 					LegendFormat("{{instance}}"),
 				),
 		).
@@ -245,18 +273,28 @@ func buildUptime() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("DNS Response Time").
+				Description("How long each resolver took to answer the test query. External resolves a public name, internal an in-fleet one, so the two are expected to differ.").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
 				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
+				// probe_duration_seconds, not probe_dns_lookup_time_seconds. The
+				// lookup_time metric is emitted by every blackbox prober and times the
+				// resolution of the target's own hostname; for the dns prober that is
+				// a step before the query under test, not the query. Measured together
+				// it was 36 to 249 times smaller: dist2's external probe answered in
+				// 16.0 ms while lookup_time reported 0.064 ms. That gap matters here,
+				// because 16 ms against roughly 3 ms everywhere else is the one real
+				// difference between these four probes, and the old metric flattened
+				// it out of sight.
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`probe_dns_lookup_time_seconds{` + dnsExtJob + `}`).
+					Expr(`probe_duration_seconds{` + dnsExtJob + `}`).
 					LegendFormat("{{instance}} External"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`probe_dns_lookup_time_seconds{` + dnsIntJob + `}`).
+					Expr(`probe_duration_seconds{` + dnsIntJob + `}`).
 					LegendFormat("{{instance}} Internal"),
 				),
 		).
