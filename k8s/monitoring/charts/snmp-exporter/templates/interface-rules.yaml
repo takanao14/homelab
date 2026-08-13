@@ -1,0 +1,48 @@
+{{- if .Values.interfaceAlerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: snmp-interface
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: snmp-interface.rules
+      rules:
+        # The switch and router had no interface alerting at all: a port could go
+        # dark and the only trace was a red tile on network-overview that someone
+        # had to be looking at.
+        #
+        # The ifAdminStatus join is what makes this rule usable rather than noisy.
+        # ifOperStatus alone cannot tell "nobody has enabled this port" from "the
+        # link died", and c1200 keeps a couple of ports shut at any time, so a bare
+        # ifOperStatus != 1 would page for the switch's normal configuration.
+        # ifAdminStatus is a separate series, so this has to be a set intersection
+        # on ifIndex -- it cannot be folded into the selector.
+        #
+        # The same expression backs Interfaces Down on the dashboard, and
+        # Interfaces Shutdown beside it keeps the excluded ports visible, so a port
+        # disabled by mistake still shows up somewhere instead of silently leaving
+        # both counts.
+        #
+        # If this fires, do not widen it. An enabled port with no link is a cable,
+        # a far end, or the port -- shut the port if the state is intended, so that
+        # the intent is recorded on the switch rather than in a silence.
+        - alert: NetworkInterfaceDown
+          expr: >-
+            ifOperStatus{ifDescr=~"{{ .Values.interfaceAlerts.ifDescr }}"} != 1
+            and on(instance, ifIndex)
+            (ifAdminStatus{ifDescr=~"{{ .Values.interfaceAlerts.ifDescr }}"} == 1)
+          for: {{ .Values.interfaceAlerts.downFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Interface down on {{ "{{ $labels.instance }}" }}'
+            description: >-
+              {{ "{{ $labels.ifDescr }}" }}
+              {{ "{{ if $labels.ifAlias }}({{ $labels.ifAlias }}) {{ end }}" }}on
+              {{ "{{ $labels.instance }}" }} is administratively enabled but has no
+              link. A port shut down on purpose does not reach this alert, so this
+              is either a cable, the far end, or the port itself.
+{{- end }}

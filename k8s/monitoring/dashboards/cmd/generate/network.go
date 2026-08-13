@@ -27,12 +27,14 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 	// comparison operators, and it sits inside sum by (instance) because the
 	// aggregation is what drops ifIndex.
 	//
-	// Without it, Interfaces Down counted three ports on c1200 when only one was a
-	// fault: gi6 and gi7 are shut down on purpose, while gi1 (vlan100_nw) is
-	// enabled and simply has no link. Those are different facts and only the last
-	// one is worth reacting to. Interfaces Up does not change value -- a shut port
-	// is never operationally up -- but carries the filter so the pair means the
-	// same thing.
+	// Without it, Interfaces Down conflates two different facts: a port nobody has
+	// enabled, and a port that is enabled and has lost its link. Only the second is
+	// worth reacting to. c1200 keeps a couple of ports shut at any given time and
+	// they were being counted as faults; which ports those are changes as the
+	// switch is reconfigured, so no port is named here on purpose.
+	//
+	// Interfaces Up does not change value -- a shut port is never operationally up
+	// -- but carries the filter so the pair means the same thing.
 	const adminUp = ` and on(instance, ifIndex) (ifAdminStatus{` + ifFilter + `} == 1)`
 
 	// Min interval for every rate() panel here. SNMP is probed once a minute
