@@ -14,52 +14,71 @@ metricsPath: /metrics
 #      Every unlabelled target lands in one bucket, and a single host failing
 #      out of ten is exactly 10%, which does not clear the threshold. One
 #      service per host keeps that ratio at 100%.
+# kind is lxc, vm or metal, and is required: the dashboard generator reads it to
+# decide which hosts own the kernel they are reporting on. An LXC guest shares
+# its host's kernel, so IO pressure and boot time come straight from the host --
+# five guests on node2 all publish node2's numbers under their own name. Panels
+# built on those values exclude kind: lxc. Adding a target without kind fails
+# `make generate` on purpose; either default would fail silently instead.
 targets:
   - ip: "192.168.10.240"
     name: "rpi3"
     service: "rpi"
+    kind: "metal"
   - ip: "192.168.10.241"
     name: "rpi4"
     service: "rpi"
+    kind: "metal"
   # Stateful service guests (in-guest filesystem usage is not exposed by Proxmox OTLP).
   - ip: "192.168.10.245"
     name: "forgejo1"
     service: "forgejo"
+    kind: "lxc"
   - ip: "192.168.10.247"
     name: "netbox1"
     service: "netbox"
+    kind: "lxc"
   - ip: "192.168.40.30"
     name: "openbao1"
     service: "openbao"
+    kind: "vm"
   - ip: "192.168.50.31"
     name: "seaweedfs1"
     service: "seaweedfs"
+    kind: "lxc"
   - ip: "192.168.10.248"
     name: "authentik1"
     service: "authentik"
+    kind: "vm"
   # Scraped to check the 16 GiB sizing against measurements (ADR-0031).
   - ip: "192.168.20.21"
     name: "toolbox1"
     service: "toolbox"
+    kind: "vm"
   # Authoritative DNS. Scraped for the same reason as the guests above — the
   # zone database is a SQLite file on disk — and for the zone serials the
   # pdns_auth role exports through the textfile collector.
   - ip: "192.168.10.233"
     name: "ns1"
     service: "pdns-auth"
+    kind: "lxc"
   - ip: "192.168.10.234"
     name: "ns2"
     service: "pdns-auth"
+    kind: "lxc"
   - ip: "192.168.10.235"
     name: "ns3"
     service: "pdns-auth"
+    kind: "lxc"
   # Dedicated recursive DNS backends (ADR-0030).
   - ip: "192.168.10.236"
     name: "resolver1"
     service: "knot-resolver"
+    kind: "lxc"
   - ip: "192.168.10.237"
     name: "resolver2"
     service: "knot-resolver"
+    kind: "lxc"
 
 resolverAlerts:
   enabled: true

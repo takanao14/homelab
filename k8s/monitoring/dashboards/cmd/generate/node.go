@@ -18,7 +18,10 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	lxcGuests, err := loadLxcGuestRegex()
+	if err != nil {
+		return nil, err
+	}
 	// Two-stage variable resolution: node_* metrics carry instance (IP:port) but
 	// display names come from node_uname_info which has nodename. We expose $node
 	// (nodename) in the UI and hide $instance (IP:port) resolved from it.
@@ -56,6 +59,13 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		// of hostnames anywhere.
 		zfsActive = ` and on(instance) (node_zfs_arc_size{` + instFilter + `} > 1024 * 1024)`
 	)
+
+	// ownKernel excludes the LXC guests, for the panels whose metric is read
+	// straight out of /proc and is therefore the host's. See loadLxcGuestRegex:
+	// IO pressure and boot time are the two measured cases, and five guests on
+	// node2 publish node2's values under their own names. CPU and memory PSI are
+	// not affected -- lxcfs virtualises those -- so their panels keep instFilter.
+	ownKernel := instFilter + `, instance!~"` + lxcGuests + `"`
 
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
@@ -204,7 +214,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Orientation(common.VizOrientationAuto).
 				JustifyMode(common.BigValueJustifyModeCenter).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count((time() - node_boot_time_seconds{` + instFilter + `}) < 3600) or vector(0)`).
+					Expr(`count((time() - node_boot_time_seconds{` + ownKernel + `}) < 3600) or vector(0)`).
 					Instant().
 					LegendFormat("rebooted"),
 				),
@@ -346,7 +356,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					}),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(time() - node_boot_time_seconds{` + instFilter + `}) ` + joinNodename).
+					Expr(`(time() - node_boot_time_seconds{` + ownKernel + `}) ` + joinNodename).
 					LegendFormat("{{nodename}}"),
 				).Decimals(0),
 		).
@@ -566,12 +576,12 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Some").
-					Expr(`rate(node_pressure_io_waiting_seconds_total{`+instFilter+`}[$__rate_interval]) * 100 `+joinNodename).
+					Expr(`rate(node_pressure_io_waiting_seconds_total{`+ownKernel+`}[$__rate_interval]) * 100 `+joinNodename).
 					LegendFormat("{{nodename}} some"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Full").
-					Expr(`rate(node_pressure_io_stalled_seconds_total{`+instFilter+`}[$__rate_interval]) * 100 `+joinNodename).
+					Expr(`rate(node_pressure_io_stalled_seconds_total{`+ownKernel+`}[$__rate_interval]) * 100 `+joinNodename).
 					LegendFormat("{{nodename}} full"),
 				).
 				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* full$"}, []dashboard.DynamicConfigValue{
