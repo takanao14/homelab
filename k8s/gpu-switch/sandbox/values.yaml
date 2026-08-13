@@ -1,5 +1,4 @@
-# The sandbox Application remains disabled because no GPU worker exists there.
-# Keep the environment contract complete for a future explicit enablement.
+# Disabled without a GPU worker; retain the future environment contract.
 hostname: gpu-switch.sandbox.butaco.net
 
 gateway:

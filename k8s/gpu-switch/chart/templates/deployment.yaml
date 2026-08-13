@@ -10,8 +10,7 @@ spec:
   replicas: 1
   revisionHistoryLimit: 1
   strategy:
-    # The switch mutex is process-local. Never allow two serving Pods during
-    # an update.
+    # The process-local switch mutex requires single-Pod replacement.
     type: Recreate
   selector:
     matchLabels:

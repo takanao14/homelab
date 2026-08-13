@@ -1,12 +1,10 @@
 # gpu-switch
 
-Authenticated web UI for switching the single AMD GPU between the prd
-workloads. The backend discovers switchable Deployments by label, scales every
-one to zero, and then scales the selected target to one. See
+Authenticated UI for assigning the single prd AMD GPU. It discovers labelled
+Deployments, scales all down, then starts the selected target. See
 [ADR-0027](../../docs/adr/0027-gpu-workload-switching-web-ui.md).
 
-The app-of-apps chart deploys gpu-switch to prd at sync wave 1, after ESO and
-the shared Gateway. It remains disabled in sandbox.
+App of Apps deploys it to prd at wave 1; sandbox remains disabled.
 
 ## Layout
 
@@ -39,10 +37,8 @@ The ServiceAccount is intentionally not cluster-admin:
 | Cluster | `deployments` | Label-filtered by the application | `list` |
 | Each GPU namespace | `deployments/scale` | Explicit `resourceNames` | `get`, `patch` |
 
-Kubernetes RBAC cannot constrain `deployments/scale` by label. Therefore
-`chart/values.yaml` contains the one explicit `gpuWorkloads` list. Keep it
-aligned with the labelled Deployments. The template groups entries by namespace
-and creates one Role and RoleBinding per namespace.
+RBAC cannot label-scope `deployments/scale`, so `gpuWorkloads` explicitly
+allowlists writes. Keep it aligned with labels; templates create namespace Roles.
 
 The current write targets are:
 
@@ -54,16 +50,13 @@ The current write targets are:
 
 ## Authentication
 
-Envoy Gateway enforces Basic Auth through a `SecurityPolicy` targeting this
-chart's `HTTPRoute`. ESO reads the htpasswd content from:
+Envoy Gateway applies Basic Auth to the HTTPRoute. ESO reads htpasswd from:
 
 ```text
 secret/k8s/gpu-switch/basic-auth
 ```
 
-The KV property is `htpasswd`, projected into Secret key `.htpasswd`. The value
-must use the `{SHA}` htpasswd format required by Envoy Gateway. OpenBao policy
-and secret provisioning are implemented separately in Phase 4.
+Property `htpasswd` becomes `.htpasswd` and must use Envoy's `{SHA}` format.
 
 ## Image release
 
@@ -73,14 +66,11 @@ The Deployment uses:
 ghcr.io/takanao14/homelab/gpu-switch:0.1.0
 ```
 
-The public package requires no `imagePullSecret`. Image releases are immutable
-and triggered by tags such as `gpu-switch/v0.1.0`; Renovate updates the tag in
-`chart/values.yaml`.
+The public immutable image needs no pull Secret; Renovate updates its tag.
 
 ## Render
 
-Render with the same common and environment values that the future Argo CD
-Application will reference:
+Render with the same values used by Argo CD:
 
 ```bash
 helm lint k8s/gpu-switch/chart \
@@ -93,8 +83,7 @@ helm template gpu-switch k8s/gpu-switch/chart \
   -f k8s/gpu-switch/prd/values.yaml
 ```
 
-After Argo CD registration, verify the live value-file contract before changing
-values:
+Before changing values, verify the live Argo CD value-file contract:
 
 ```bash
 kubectl -n argocd get application gpu-switch \
