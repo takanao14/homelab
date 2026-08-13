@@ -1,4 +1,4 @@
-# Initial requests only; replace after seven days of observations (README).
+# Replace initial requests after seven days of observations.
 resources:
   requests:
     cpu: 10m

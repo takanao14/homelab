@@ -6,25 +6,20 @@ Argo CD GitOps configuration for `prd` and `sandbox`.
 
 ```
 argocd/
-├── values-common.yaml        # Common Helm values (insecure mode, ESO defaults)
-├── chart/                    # Shared Helm chart for ArgoCD HTTPRoute + admin password
+├── values-common.yaml        # Shared upstream and local-chart values
+├── chart/                    # HTTPRoute and admin ExternalSecret
 │   └── templates/
-│       ├── httproute.yaml    # Uses server.ingress.hostname from values
-│       └── admin-external-secret.yaml  # Merges admin.password into argocd-secret
-├── apps/                     # App-of-apps chart: one Application template per app
+├── apps/                     # App-of-apps chart
 │   ├── Chart.yaml
-│   ├── values.yaml           # All apps disabled by default; waves; upstream chart versions
-│   └── templates/            # Gated by apps.<name>.enabled, env via {{ .Values.env }}
+│   ├── values.yaml           # Defaults, waves, and upstream versions
+│   └── templates/
 ├── prd/
-│   ├── helmfile.yaml         # Initial deployment config for prd
-│   ├── values.yaml           # Route hostname + openbao.adminPassword.key for prd
-│   ├── apps-values.yaml      # env: prd + enabled apps
-│   └── root-apps.yaml        # Bootstrap App of Apps for prd
+│   ├── helmfile.yaml         # Bootstrap only
+│   ├── values.yaml           # Environment values
+│   ├── apps-values.yaml      # Enabled apps
+│   └── root-apps.yaml        # Root Application
 └── sandbox/
-    ├── helmfile.yaml         # Initial deployment config for sandbox
-    ├── values.yaml           # HTTP route + openbao.adminPassword.key for sandbox
-    ├── apps-values.yaml      # env: sandbox + enabled apps
-    └── root-apps.yaml        # Bootstrap App of Apps for sandbox
+    └── ...                   # Same layout as prd
 ```
 
 ## Environments
@@ -38,12 +33,8 @@ argocd/
 
 ## Initial Deployment
 
-Helmfile bootstraps Argo CD; App of Apps then takes ownership.
-
-> **helmfile is for bootstrap only — never run `helmfile apply` against a
-> cluster that already runs ArgoCD.** Once `root-apps.yaml` is applied, the
-> `argocd` Application takes over this release and re-running helmfile fails
-> (see [Changing values](#changing-values) below).
+Helmfile bootstraps Argo CD; App of Apps then takes ownership. Do not rerun
+`helmfile apply` after applying `root-apps.yaml`.
 
 ```bash
 # prd environment
@@ -54,24 +45,22 @@ helmfile apply
 kubectl apply -f k8s/argocd/prd/root-apps.yaml
 ```
 
-Hooks reject the wrong context or an already self-managed release. Use
-`ARGOCD_BOOTSTRAP_FORCE=1` only for deliberate re-bootstrap.
+Hooks reject the wrong context and self-managed releases.
+`ARGOCD_BOOTSTRAP_FORCE=1` permits deliberate re-bootstrap.
 
 For sandbox, use `k8s/argocd/sandbox`. It intentionally exposes ArgoCD over
 HTTP only and does not install cert-manager.
 
 ### Getting in on a fresh cluster
 
-Without `admin.password`, the server generates a bootstrap password in
-`argocd-initial-admin-secret` and does not later delete it.
+Without `admin.password`, the server creates `argocd-initial-admin-secret`:
 
 ```bash
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
 ```
 
-It is the only login until ESO syncs after OpenBao cluster registration
-([ADR-0012](../../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md)).
-Delete it last:
+Keep it until ESO syncs after OpenBao cluster registration
+([ADR-0012](../../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md)):
 
 1. Re-register the cluster
    (`ops-openbao_register_cluster.yaml -e cluster=<env>`).
@@ -80,11 +69,8 @@ Delete it last:
 3. Log in with the password from OpenBao.
 4. Only then `kubectl -n argocd delete secret argocd-initial-admin-secret`.
 
-After ESO overwrites the hash, the bootstrap value no longer authenticates, but
-delete the stale plaintext credential to prevent misleading login attempts.
-
-For recovery, removing `admin.password` regenerates the bootstrap secret until
-ESO overwrites it:
+For recovery, remove `admin.password`; the server regenerates the bootstrap
+secret until ESO overwrites it:
 
 ```bash
 kubectl -n argocd patch secret argocd-secret --type=json -p '[{"op":"remove","path":"/data/admin.password"}]'
@@ -93,17 +79,15 @@ kubectl -n argocd patch secret argocd-secret --type=json -p '[{"op":"remove","pa
 ### Changing values
 
 After bootstrap, commit and push value changes; `selfHeal` applies them.
-
-Running `helmfile apply` instead fails with:
+`helmfile apply` fails because SSA-managed resources lack Helm ownership:
 
 ```
 invalid ownership metadata; annotation validation error:
 missing key "meta.helm.sh/release-name"
 ```
 
-Server-side apply creates later resources without Helm ownership annotations,
-so Helm cannot adopt them. The Helm release remains at its bootstrap version
-while Git tracks the live chart version; this divergence is expected.
+The bootstrap Helm release may remain behind the Git-managed chart version;
+this is expected.
 
 ## Secrets Management
 
@@ -119,7 +103,7 @@ ESO merges each environment's OpenBao-backed `admin.password` and
 | prd | `k8s/argocd/prd/admin` |
 | sandbox | `k8s/argocd/sandbox/admin` |
 
-Both keys hold two properties:
+Each key holds:
 
 | Property | Value | Maintained by |
 |----------|-------|---------------|
@@ -127,32 +111,26 @@ Both keys hold two properties:
 | `mtime` | RFC3339 timestamp | Ansible, automatically |
 
 Store only the hash in the SOPS-encrypted `openbao_argocd_admin` list.
-`ops-openbao_seed_secrets.yaml` writes changes and stamps UTC `mtime`, logging
-out existing sessions only on rotation. See
+`ops-openbao_seed_secrets.yaml` writes it and stamps UTC `mtime`. See
 [`ansible/roles/openbao/README.md`](../../ansible/roles/openbao/README.md) for
 the entry format and the hash command.
 
-Per-cluster `k8s-argocd-{env}` policies isolate hash access.
-
-The server watches the Secret and rejects sessions older than `mtime` without a
-restart. Missing or invalid `mtime` disables that cutoff.
+Per-cluster `k8s-argocd-{env}` policies isolate access. The server rejects
+sessions older than `mtime` without restarting; invalid or missing `mtime`
+disables the cutoff.
 
 Why this shape rather than `configs.secret.argocdServerAdminPassword`:
 
 - It exposes the bcrypt hash in Git, prohibited by ADR-0026.
 - Its default `now()` mtime creates permanent drift and repeated logout.
 
-`creationPolicy: Merge` preserves the server-owned `server.secretkey`; helmfile
-creates the Secret before the ExternalSecret.
-
-There is no bootstrap deadlock: the password is only for human login, failed
-ExternalSecrets retry without blocking waves, and the server regenerates a
-missing bootstrap password.
+`creationPolicy: Merge` preserves `server.secretkey`. Password sync does not
+block waves; failed ExternalSecrets retry.
 
 #### Rollout
 
-1. Add the two `openbao_argocd_admin` entries — `env` plus the bcrypt hash
-   (`sops ansible/inventories/homelab/group_vars/openbao.sops.yaml`).
+1. Add each environment and bcrypt hash to `openbao_argocd_admin` in
+   `openbao.sops.yaml`.
 2. Seed them and grant read access:
 
    ```bash
@@ -160,28 +138,24 @@ missing bootstrap password.
    ansible-playbook ansible/playbooks/ops-openbao_configure.yaml
    ```
 
-   `ops-openbao_configure.yaml` writes the `k8s-argocd-{env}` policies but does
-   **not** rebind the ESO role. Run the registration playbook per cluster so
-   `k8s-eso` picks up the new policy:
+   Re-register each cluster so the ESO role receives the new policy:
 
    ```bash
    ansible-playbook ansible/playbooks/ops-openbao_register_cluster.yaml -e cluster=prd
    ansible-playbook ansible/playbooks/ops-openbao_register_cluster.yaml -e cluster=sandbox
    ```
 
-3. Commit and push — the `argocd` Application syncs on its own.
+3. Commit and push; the `argocd` Application syncs automatically.
 4. Confirm the ExternalSecret resolved:
    `kubectl -n argocd get externalsecret argocd-admin-password`
-5. Log in with the new password. **Only then** delete the now-stale
-   `argocd-initial-admin-secret` — it is the fallback if step 4 failed.
+5. Log in, then delete `argocd-initial-admin-secret`.
 
 Complete OpenBao steps before pushing; otherwise the ExternalSecret waits in
 `SecretSyncedError` without blocking Argo CD.
 
 #### Rotating the password
 
-Replace the hash and rerun `ops-openbao_seed_secrets.yaml`. Two behaviors can
-delay or mask rotation:
+Replace the hash and rerun `ops-openbao_seed_secrets.yaml`.
 
 **Hourly ESO refresh.** Force immediate synchronization with:
 
@@ -195,8 +169,8 @@ Confirm `admin.passwordMtime` matches the seeding run:
 kubectl -n argocd get secret argocd-secret -o jsonpath='{.data.admin\.passwordMtime}' | base64 -d
 ```
 
-**Five failures lock the account for five minutes.** Attempts during lockout
-extend it and return the same error as a wrong password; stop and inspect logs:
+Five failures lock the account for five minutes. Further attempts extend it;
+stop and inspect logs:
 
 ```bash
 kubectl -n argocd logs deploy/argocd-server --since=10m | grep -E "failed login|too many failed"
@@ -207,13 +181,11 @@ kubectl -n argocd logs deploy/argocd-server --since=10m | grep -E "failed login|
 | `User admin failed login N time(s)` | password really was compared and did not match |
 | `User admin had too many failed logins (5)` | locked out; the password was never checked |
 
-No Redis login key means the lockout has expired:
+No Redis login key means the lockout expired:
 
 ```bash
 P=$(kubectl -n argocd get secret argocd-redis -o jsonpath='{.data.auth}' | base64 -d); kubectl -n argocd exec deploy/argocd-redis -- sh -c "REDISCLI_AUTH='$P' redis-cli --scan --pattern 'login*'"
 ```
-
-Defaults are five failures and 300 seconds.
 
 If the password is wrong, verify locally before reseeding. Single-quote it to
 prevent zsh history expansion:
@@ -235,8 +207,8 @@ The Application combines:
 
 ## App of Apps
 
-Each root points at the shared `apps/` chart and its environment values. The
-chart renders enabled Applications and their per-app overrides (ADR-0014).
+Each root renders enabled Applications from the shared `apps/` chart and its
+environment values (ADR-0014).
 
 To deploy an app to another environment:
 

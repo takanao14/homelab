@@ -29,16 +29,15 @@ externalDNS/
 | `pdns.apiKey` | OpenBao via ESO | PowerDNS API key materialized as a Kubernetes Secret |
 | `domainFilter` | `{env}/values.yaml` | Target domain filter |
 
-The `gateway-httproute` source creates records automatically. Environments use
-distinct TXT owner IDs.
+The `gateway-httproute` source creates records; environments use distinct TXT
+owner IDs.
 
 > `butaco.net` is a personal domain. Replace it in each environment values file.
 
 ## Secrets
 
-ESO fetches the PowerDNS API key from OpenBao; plaintext is never committed.
-
-OpenBao KV path: `k8s/external-dns/pdns`
+ESO fetches the PowerDNS API key from `k8s/external-dns/pdns`; plaintext is
+never committed.
 
 | Property | Description |
 |----------|-------------|

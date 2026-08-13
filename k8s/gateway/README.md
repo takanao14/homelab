@@ -1,9 +1,7 @@
 # gateway
 
-Local Helm chart that creates shared Gateway API Gateway resources.
-
-App of Apps manages the chart. Shared definitions live in `values.yaml` and
-environment files set the domain and HTTPS toggle.
+Creates shared Gateway API resources. `values.yaml` defines them; environment
+files set the domain and HTTPS toggle.
 
 ## Directory Structure
 
@@ -27,7 +25,7 @@ gateway/
 
 ### Gateway
 
-The shared Gateway is rendered from `gateway`:
+The shared Gateway is:
 
 ```yaml
 name: shared-gateway-envoy
@@ -40,13 +38,12 @@ gatewayClassName: envoy-gateway
 | https | 443 | HTTPS | `wildcard-{domain-dashes}-tls` in `cert-manager` |
 | http | 80 | HTTP | — |
 
-cert-manager grants cross-namespace TLS Secret access. Environment values toggle
-listeners; sandbox disables HTTPS.
+cert-manager grants cross-namespace Secret access. Sandbox disables HTTPS.
 
 ### EnvoyProxy
 
-`gateway.infrastructure.parametersRef` attaches `envoyProxy`. Its LoadBalancer
-uses Cluster traffic policy to avoid Cilium L2 advertisement blackholes.
+`gateway.infrastructure.parametersRef` attaches `envoyProxy`. Cluster traffic
+policy avoids Cilium L2 advertisement blackholes.
 
 ## Values
 
@@ -63,11 +60,9 @@ uses Cluster traffic policy to avoid Cilium L2 advertisement blackholes.
 
 ## Notes
 
-- `GatewayClass/cilium` no longer exists: Cilium's ingress and Gateway API
-  controllers are disabled in `k0s/values/cilium.yaml.gotmpl`.
-- Gateway API CRDs are owned by the `envoy-gateway-crds` ArgoCD app
-  (`k8s/envoy-gateway/crds`), which bundles the version matching the pinned
-  Envoy Gateway chart (1.8.x → Gateway API v1.5.1 experimental).
+- Cilium ingress and Gateway controllers are disabled; `GatewayClass/cilium`
+  is retired.
+- `envoy-gateway-crds` owns the CRDs matching the pinned controller version.
 - Both environments reference `shared-gateway-envoy`.
 - See
   [`ADR-0011`](../../docs/adr/0011-cilium-gateway-to-envoy-gateway-migration.md)

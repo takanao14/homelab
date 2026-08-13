@@ -2,7 +2,7 @@ reloader:
   reloader:
     watchGlobally: false
     deployment:
-      # Requests only (README): 7-day mean/peak 51/55 Mi, p95 CPU 0.4m.
+      # Requests only: 7-day mean/peak 51/55 Mi, p95 CPU 0.4m.
       resources:
         requests:
           cpu: 10m

@@ -2,8 +2,7 @@
 
 Read-only PowerDNS authoritative-zone browser for prd and sandbox.
 
-dnscontrol owns records; nginx enforces viewer-only access to prevent a second
-source of truth.
+dnscontrol owns records; nginx permits read-only access.
 
 ## Directory Structure
 
@@ -39,11 +38,8 @@ The client calls its own origin; nginx injects the API key in-pod.
 
 ## Read-only enforcement
 
-Both locations allow only GET/HEAD. The key is unscoped, so never relax this
-guard without revisiting dnscontrol ownership.
-
-Verified: write verbs return 403, API reads are proxied, and served content does
-not expose the key.
+Both locations allow only GET/HEAD. The API key is unscoped, so changing this
+guard requires revisiting dnscontrol ownership. Write verbs must return 403.
 
 ## Vendoring
 
@@ -61,8 +57,8 @@ REF=v3.7 k8s/pdns-ui/chart/web/sync.sh   # move to a new tag
 k8s/pdns-ui/chart/web/sync.sh --check    # what CI runs
 ```
 
-Renovate bumps `ref:`; vendor-sync CI then requires refreshed matching bytes and
-also detects retagged upstream releases.
+Renovate bumps `ref:`; vendor-sync CI requires matching bytes and detects
+retagged releases.
 
 Do not edit `index.html` by hand; `--check` rejects drift.
 
@@ -74,10 +70,8 @@ After any update, re-verify the read-only behaviour below before merging.
 |--------------|----------|-------------|
 | `k8s/external-dns/pdns` | `api-key` | ns1's PowerDNS API key |
 
-This reuses external-dns's unscoped key to avoid duplicate rotation points.
-
-Both environment roles already carry the external-dns policy, so no new OpenBao
-seed or policy is required.
+This reuses external-dns's unscoped key; both environment roles already have
+the required policy.
 
 Rotation must update both OpenBao and `ns1.sops.yaml`; SOPS is not mirrored.
 

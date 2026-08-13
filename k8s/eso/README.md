@@ -17,10 +17,10 @@ eso/
 
 ## How It Works
 
-1. ESO is installed from the upstream `external-secrets` Helm chart (included as dependency).
-2. A `ClusterSecretStore` named `openbao` is created, pointing to the OpenBao server using Kubernetes auth.
-3. The ESO ServiceAccount is bound to `system:auth-delegator`, allowing OpenBao to validate Kubernetes tokens using the client's login token.
-4. All other charts in the cluster use `ExternalSecret` resources referencing the `openbao` ClusterSecretStore.
+1. The upstream chart installs ESO.
+2. `ClusterSecretStore/openbao` uses Kubernetes authentication.
+3. `system:auth-delegator` lets OpenBao validate ESO tokens.
+4. Workloads reference the store through `ExternalSecret` resources.
 
 ## Values
 
@@ -33,19 +33,17 @@ eso/
 
 Each environment overrides `mountPath` through its Argo CD value file.
 
-After rebuilding a cluster, re-register its new CA with OpenBao. See
-[`ADR-0012`](../../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md)
-and the OpenBao registration runbook in `ansible/README.md`.
+After rebuilding a cluster, re-register its CA with OpenBao; see
+[`ADR-0012`](../../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md).
 
 ## Dependencies
 
-- OpenBao must be deployed and configured before ESO can sync secrets.
-  See `ansible/roles/openbao/README.md` for setup steps.
+- OpenBao must be configured before ESO can sync secrets.
 - The `ClusterSecretStore` syncs at ArgoCD sync-wave `1` (after ESO CRDs are ready).
 
 ## Usage
 
-App of Apps enables ESO per environment and passes its override (ADR-0014):
+App of Apps passes the environment override (ADR-0014):
 
 ```yaml
 source:

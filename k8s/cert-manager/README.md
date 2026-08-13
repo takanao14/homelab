@@ -1,10 +1,9 @@
 # cert-manager
 
-Configures cert-manager wildcard certificates through Let's Encrypt DNS-01 and Cloudflare.
+Issues wildcard certificates through Let's Encrypt DNS-01 and Cloudflare.
 
-Managed by ArgoCD; secrets are injected by External Secrets Operator from
-OpenBao (see [ADR-0012](../../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md)).
-Two Argo CD Applications are used:
+Argo CD uses two Applications; ESO injects secrets from OpenBao
+([ADR-0012](../../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md)):
 
 - `cert-manager` — upstream chart (installs CRDs and the controller)
 - `cert-manager-config` — this local chart (ClusterIssuer, Certificate, Secret)
@@ -29,10 +28,9 @@ cert-manager/
 
 ## How It Works
 
-1. `ClusterIssuer` uses Cloudflare DNS-01 challenge to prove domain ownership
-2. `Certificate` requests `*.{domain}` from letsencrypt-production
-3. The issued certificate is stored as a Secret in `cert-manager` namespace
-4. `ReferenceGrant` allows the shared Gateway in `gateway-system` to use the Secret for TLS termination
+1. `ClusterIssuer` completes Cloudflare DNS-01 validation.
+2. `Certificate` stores `*.{domain}` in the `cert-manager` namespace.
+3. `ReferenceGrant` permits the shared Gateway to use the TLS Secret.
 
 ## Certificate
 
@@ -47,9 +45,8 @@ cert-manager/
 
 ## Secrets
 
-ESO fetches the Cloudflare API token from OpenBao; plaintext is never committed.
-
-OpenBao KV path: `k8s/cert-manager/cloudflare`
+ESO fetches the Cloudflare API token from
+`k8s/cert-manager/cloudflare`; plaintext is never committed.
 
 | Property | Description |
 |----------|-------------|
@@ -60,5 +57,5 @@ Seed it through the encrypted Ansible `openbao_secrets` list and
 
 ## Notes
 
-- `--dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53` is set in the upstream cert-manager App to bypass internal DNS (PowerDNS) during ACME validation
-- Both staging and production ClusterIssuers are created; the Certificate uses production
+- Public recursive resolvers bypass internal DNS during ACME validation.
+- Both issuers are created; the Certificate uses production.

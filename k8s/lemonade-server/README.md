@@ -11,13 +11,10 @@ lemonade-server/
     ├── Chart.yaml
     ├── values.yaml       # Default chart values
     └── templates/
-        ├── deployment.yaml       # Recreate strategy; AMD GPU resource requests; vulkan backend
-        ├── deployment-rocm.yaml  # Same, but the custom ROCm image + system backend (see below)
-        ├── pvc.yaml              # HuggingFace cache, llama.cpp binaries, recipe cache
-        ├── service.yaml          # ClusterIP on port 13305
-        ├── service-rocm.yaml     # ClusterIP for the rocm Deployment
-        ├── httproute.yaml        # HTTPRoute → shared-gateway-envoy
-        └── httproute-rocm.yaml   # HTTPRoute for the rocm Deployment
+        ├── deployment*.yaml  # Vulkan and ROCm variants
+        ├── pvc.yaml          # Shared caches
+        ├── service*.yaml
+        └── httproute*.yaml
 ```
 
 ## Access
@@ -31,33 +28,24 @@ lemonade-server/
 
 ## GPU backends
 
-Both backends request one `amd.com/gpu` on the labelled and tainted GPU node.
-
-The primary uses the upstream image with llamacpp `vulkan`, not built-in `rocm`.
+Both backends request one `amd.com/gpu`. The primary uses upstream llamacpp
+`vulkan`; the comparison variant uses the custom ROCm system backend.
 
 ### Why Vulkan instead of ROCm
 
 Decision and rejected alternatives: [ADR-0028](../../docs/adr/0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md).
 
-Lemonade v10.8.0's built-in ROCm recipe compares gfx1200 against literal
-`gfx120X` and rejects RDNA4. Changing ROCm channels does not fix this upstream bug.
-
-Vulkan has no family gate and uses host RADV through plugin-injected `/dev/dri`.
-An init container pins it in the recipe PVC.
-
-Vulkan measured ~20% faster for one request and ~47% faster at four concurrent
-requests in the original comparison.
+Lemonade v10.8.0 rejects gfx1200 through a faulty `gfx120X` family check.
+Vulkan avoids this gate, uses plugin-injected RADV devices, and is pinned in the
+recipe PVC by an init container.
 
 ### ROCm serving and benchmark variant
 
-`lemonade-server-rocm` retains the custom ROCm `llama-server` image and `system`
-backend for MXFP4 serving and repeatable comparisons.
+`lemonade-server-rocm` retains the custom ROCm `llama-server` for MXFP4 and
+repeatable comparisons ([ADR-0029](../../docs/adr/0029-rocm-serving-path-for-mxfp4-models.md)).
 
-For MXFP4, Vulkan won one request by 11.2%, while ROCm delivered 21.1% more
-four-request throughput ([ADR-0029](../../docs/adr/0029-rocm-serving-path-for-mxfp4-models.md)). Retain both paths.
-
-Both variants share PVCs safely because gpu-switch runs only one. The ROCm
-variant is labelled switchable and defaults to zero replicas:
+gpu-switch runs only one variant, making their shared PVCs safe. Both default
+to zero replicas:
 
 ```bash
 scripts/gpu-switch.sh lemonade-server-rocm   # stops every other GPU workload, starts this one
@@ -89,11 +77,11 @@ kubectl -n lemonade-server logs deploy/lemonade-server | grep -iE "vulkan|RADV|g
 | `hostname` | `lemonade.prd.butaco.net` | HTTPRoute hostname |
 | `gateway.timeouts.request` | unset (chart) / `10m` (`values.yaml`) | End-to-end HTTPRoute timeout for long LLM responses |
 | `gateway.timeouts.backendRequest` | unset (chart) / `10m` (`values.yaml`) | Gateway-to-Lemonade request timeout |
-| `replicaCount` | `0` | Set to `1` to start (default off to save GPU) |
+| `replicaCount` | `0` | Started through gpu-switch |
 | `image.repository` | `ghcr.io/lemonade-sdk/lemonade-server` | Upstream image |
 | `image.tag` | `v10.8.0` | Lemonade version |
 | `storage.storageClassName` | `openebs-hostpath` | Storage class |
-| `rocm.replicaCount` | `0` | Set to `1` to start the ROCm serving/benchmark variant (use `gpu-switch.sh` instead in practice) |
+| `rocm.replicaCount` | `0` | ROCm variant, started through gpu-switch |
 | `rocm.hostname` | `lemonade-rocm.prd.butaco.net` | HTTPRoute hostname for the ROCm variant |
-| `rocm.image.repository` | `forgejo.home.butaco.net/takanao/lemonade-docker` | Custom ROCm-enabled image for the serving/benchmark variant |
+| `rocm.image.repository` | `forgejo.home.butaco.net/takanao/lemonade-docker` | Custom ROCm image |
 | `rocm.image.tag` | `b1302` | Bundled `llamacpp-rocm` build number |

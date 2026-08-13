@@ -1,4 +1,4 @@
-# Shared upstream controller values; local issuer/certificate config lives one level up.
+# Shared controller values; issuer and certificate config lives one level up.
 crds:
   enabled: true
 
@@ -6,7 +6,7 @@ extraArgs:
   - --dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53
   - --dns01-recursive-nameservers-only
 
-# Requests only (README), about 1.2x 7-day mean. Controller: 70/96 Mi, p95 1.2m.
+# Requests are about 1.2x the 7-day mean. Controller: 70/96 Mi, p95 1.2m.
 resources:
   requests:
     cpu: 25m
