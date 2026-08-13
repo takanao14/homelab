@@ -5,13 +5,11 @@ locals {
     username         = get_env("TF_VM_USERNAME")
     scsi_hardware    = "virtio-scsi-single"
     qemu_guest_agent = true
-    # k0s worker VM (ADR-0019): must start with the host, unlike the lab VMs
-    # on this host.
+    # k0s workers start with the host (ADR-0019).
     on_boot = true
     os_type = "l26"
   }
-  # Kept identical to the disks as originally created on pve (no ssd/discard
-  # flags): adding them here would show up as a plan diff on the live VM.
+  # Preserve the live pve disk settings; ssd/discard would create drift.
   disk_defaults = {
     datastore_id = "local-zfs"
     cache        = "writeback"

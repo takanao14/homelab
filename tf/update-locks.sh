@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 #
-# Refresh provider lock files for every Terragrunt stack under tf/.
-#
-# Each stack is executed through direnv so host-scoped Proxmox credentials are
-# loaded from the nearest .envrc. Use this after changing provider constraints.
+# Refresh all provider locks using each stack's direnv credentials.
 #
 set -euo pipefail
 

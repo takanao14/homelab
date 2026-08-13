@@ -86,8 +86,7 @@ tf/
 | `PROXMOX_VE_USERNAME` | Proxmox API username |
 | `PROXMOX_VE_PASSWORD` | Proxmox API password |
 
-Secrets are managed with SOPS and loaded per directory via `direnv` (each
-component's `.envrc` decrypts the secrets file for its target node):
+Each stack's `.envrc` loads its node-specific SOPS secrets through `direnv`:
 
 ```bash
 sops edit tf/.env/secrets.node1.sops.env
@@ -111,10 +110,8 @@ terragrunt apply
 
 ### Provider lock files
 
-Commit `.terraform.lock.hcl` for every Terragrunt stack. The lock files keep
-provider versions and package hashes consistent across local macOS operations
-and Linux automation. They intentionally include hashes for both
-`darwin_arm64` and `linux_amd64`.
+Commit each stack's `.terraform.lock.hcl` with `darwin_arm64` and `linux_amd64`
+hashes for consistent local and automated runs.
 
 When provider constraints change, refresh all stack locks from the repository
 root:
@@ -123,26 +120,20 @@ root:
 ./tf/update-locks.sh
 ```
 
-The helper discovers every `terragrunt.hcl` under `tf/`, loads each stack's
-environment with `direnv exec`, runs `terragrunt run -- init -upgrade`, and
-then records provider hashes with `terragrunt run -- providers lock`. Review
-the resulting lock diff together with the provider constraint change, and run
-representative `terragrunt plan` checks before merging.
+The helper discovers stacks, loads each direnv environment, upgrades providers,
+and records both platform hashes. Review the lock diff and representative plans.
 
 ### Log collector resource rename
 
-The central Vector collector was renamed from `syslog1` to `log1`. Its
-`for_each` resource address was migrated on 2026-06-20. The component directory
-remains `syslog/` so the existing backend state key does not change.
+The Vector collector moved from `syslog1` to `log1` on 2026-06-20. Its directory
+remains `syslog/` to preserve the backend state key.
 
 ```bash
 cd tf/lxc/node2/syslog
 terragrunt plan
 ```
 
-The plan must preserve the existing container and IP address
-(`192.168.10.243`). Do not apply if it proposes creating or replacing the
-container.
+The plan must preserve container `192.168.10.243`; reject replacement plans.
 
 To apply all components in an environment at once:
 
@@ -153,13 +144,9 @@ terragrunt run-all apply
 
 ### Distributing images to all nodes
 
-`cloudimage/` downloads stock cloud images (public mirrors) and `customimage/`
-downloads Packer-built `.img` files from the SeaweedFS `cloud-images` bucket.
-Both target every Proxmox node, but each node uses its own credentials (loaded
-from its `.envrc` via SOPS), so `terragrunt run-all` cannot be used across nodes
-— it would reuse a single node's credentials. Use the `run-all.sh` helper in
-each directory instead, which runs `direnv exec <node>` per node to load the
-right environment:
+`cloudimage/` downloads stock images; `customimage/` downloads Packer images
+from SeaweedFS. Because nodes use separate credentials, use `run-all.sh` instead
+of cross-node `terragrunt run-all`:
 
 ```bash
 cd tf/cloudimage     # or tf/customimage (symlinked to the same script)
@@ -167,23 +154,16 @@ cd tf/cloudimage     # or tf/customimage (symlinked to the same script)
 ./run-all.sh apply   # auto-approved
 ```
 
-Each Proxmox node fetches the image directly from the URL
-(`proxmox_download_file`). Running many large downloads at once can overwhelm the
-source (the single-node SeaweedFS LXC) and time out, so `run-all.sh` pins
-terraform's parallelism to `1` by default (one download at a time) and runs
-nodes serially. `customimage/` additionally enforces `-parallelism=1` via
-`extra_arguments` in its shared `base.hcl`, so even a plain `terragrunt apply`
-there is serial. Override when the source can take it:
+Images download directly to each node. To protect the SeaweedFS source,
+`run-all.sh` defaults to serial nodes and Terraform parallelism `1`;
+`customimage/base.hcl` also serializes direct applies. Override when safe:
 
 ```bash
 PARALLELISM=4 ./run-all.sh apply   # relax terraform parallelism per node
 PARALLEL=1   ./run-all.sh apply    # run nodes in parallel
 ```
 
-> The script issues `terragrunt run -- <command> -parallelism=1`. The explicit
-> `run --` form is required because Terragrunt 1.0 parses a trailing
-> `-parallelism` flag itself and never forwards it to tofu/terraform, leaving
-> downloads at the default parallelism of 10.
+> Terragrunt 1.0 requires `run --` to forward `-parallelism` to Terraform.
 
 To deploy a single image instead of all of them, target its instance key:
 
@@ -194,27 +174,20 @@ terragrunt apply -target='proxmox_download_file.image["ubuntu-24.04-custom"]'
 
 ### FreeBSD cloud images
 
-FreeBSD official VM images are currently published as `.qcow2.xz` / `.raw.xz`
-archives. Do not add those URLs directly to `tf/cloudimage/images.hcl`: Proxmox
-will store the compressed archive, and the bpg/proxmox `proxmox_download_file`
-decompression option does not support `xz` (only `gz`, `lzo`, `zst`, and `bz2`).
+FreeBSD images use unsupported `xz` compression, so do not add their URLs
+directly to `tf/cloudimage/images.hcl`.
 
-To use a FreeBSD cloud image, import it through `packer/import-upstream.sh`.
-That script downloads the official `.qcow2.xz`, verifies the upstream checksum,
-decompresses it to `packer/images/freebsd-15.1-cloudinit-ufs.img`, and writes a
-sidecar checksum for the decompressed object. Then publish it with
-`packer/push.sh freebsd151` and consume it through `tf/customimage`.
+Use `packer/import-upstream.sh` to verify, decompress, and checksum it; publish
+with `packer/push.sh freebsd151`, then consume it through `tf/customimage`.
 
 ## Architecture
 
 - **Backend**: Cloudflare R2 (S3-compatible) remote state with native lockfile
   locking (`use_lockfile`); one state object per component directory
 - **Providers**: bpg/proxmox ~> 0.111, hashicorp/local ~> 2.9
-- **Tree axes (ADR-0020)**: first level = host name for `vm/` `lxc/`
-  `cloudimage/` `customimage/` (pve, node1–node4), cluster name for `k8s/`
-  (prd, sandbox). Each stack binds to exactly one Proxmox endpoint via its
-  `.envrc` (per-host SOPS secrets); `k8s/` stacks whose VM lives on another
-  host carry their own `env.hcl` + `.envrc`
+- **Tree axes (ADR-0020)**: hosts for `vm/`, `lxc/`, and image trees; clusters
+  for `k8s/`. Each stack binds one Proxmox endpoint through `.envrc`; cross-host
+  k8s stacks carry their own `env.hcl` and `.envrc`
 - **Networking**: Configured via `common.hcl` per host (e.g. `vmbr0`, `vnets001`)
-- **Storage**: pve=local-zfs, node1=data-nvme, node2/node3/node4=local-lvm; SeaweedFS data volume on node3 uses usb-ssd
-```
+- **Storage**: pve=local-zfs, node1=data-nvme, node2/node3/node4=local-lvm;
+  SeaweedFS data on node3 uses usb-ssd

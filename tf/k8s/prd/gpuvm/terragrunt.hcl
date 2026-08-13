@@ -7,9 +7,7 @@ terraform {
 }
 
 locals {
-  # env.hcl is read from this directory (not the parent): this stack lives in
-  # the prd cluster tree but the VM is placed on pve, so it carries its own
-  # host binding (see also .envrc, which sources the pve secrets).
+  # This stack overrides the cluster default with pve host binding and secrets.
   env    = read_terragrunt_config("${get_terragrunt_dir()}/env.hcl")
   common = read_terragrunt_config(find_in_parent_folders("common.hcl"))
 
@@ -19,8 +17,7 @@ locals {
   })
 }
 
-# prd GPU worker (ADR-0019), moved here from tf/vm/dev/gpuvm as part of the
-# tf tree reorg: k0s node VMs live under tf/k8s/<cluster>.
+# prd GPU worker under the cluster-first tree (ADR-0019).
 inputs = {
   vms = {
     "gpuvm1" = merge(local.base_vars, {

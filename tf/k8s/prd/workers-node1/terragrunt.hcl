@@ -20,7 +20,7 @@ locals {
 inputs = {
   vms = {
     "k0s-worker1" = merge(local.base_vars, {
-      # host ~2 threads and ~3GB on a 12-thread / 32GB node1.
+      # Leave the host about 2 threads and 3 GiB.
       cores  = 10
       memory = 28672
       bridge = local.common.locals.node1.net30.bridge

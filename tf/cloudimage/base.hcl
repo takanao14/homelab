@@ -1,6 +1,4 @@
-# Shared config for every node stack in this directory. Each node directory
-# holds a minimal terragrunt.hcl (root + base includes) and a node.hcl
-# declaring the Proxmox `node_name`. All stock images are deployed to every node.
+# Shared stock-image config; node.hcl selects the Proxmox node.
 terraform {
   source = "${dirname(find_in_parent_folders("root.hcl"))}/modules/proxmox-cloudimage"
 }

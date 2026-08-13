@@ -7,9 +7,7 @@ variable "images" {
     node_name           = string
     datastore_id        = string
     overwrite_unmanaged = optional(bool)
-    # Optional integrity check. When set, a changing digest re-triggers the
-    # download. Custom images pass the sha256 published next to the object (see
-    # tf/customimage); stock images omit it.
+    # Custom images provide a sidecar SHA-256; stock images omit it.
     checksum           = optional(string)
     checksum_algorithm = optional(string, "sha256")
   }))

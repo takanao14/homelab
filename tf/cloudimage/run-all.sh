@@ -1,22 +1,11 @@
 #!/usr/bin/env bash
 #
-# Run a Terragrunt command across every Proxmox node in this directory.
-#
-# Each node has its own `.envrc` that injects node-specific Proxmox
-# credentials via sops. `terragrunt run-all` does not trigger direnv, so we
-# use `direnv exec <dir>` to load each node's environment in isolation.
-#
-# tofu/terraform flags are passed via `terragrunt run -- <command> <flags>`,
-# the explicit form that guarantees flags reach the underlying binary. With
-# the shortcut form (`terragrunt apply -parallelism=1`) Terragrunt 1.0 parses
-# `-parallelism` itself and never forwards it, so uploads run at the default
-# parallelism of 10 (looks parallel) and exhaust RAM.
+# Run Terragrunt across nodes with each node's direnv credentials.
+# `terragrunt run --` is required to forward Terraform flags on Terragrunt 1.0.
 #
 # Behavior:
 #   - `apply` is auto-approved (-auto-approve).
-#   - plan/apply/destroy/refresh pin terraform parallelism to PARALLELISM
-#     (default 1), because each image is expanded into memory during upload
-#     and parallel uploads can exhaust RAM. Override with PARALLELISM=N.
+#   - Image operations use PARALLELISM (default 1) to limit memory use.
 #   - Nodes run serially by default; set PARALLEL=1 to run them in parallel.
 #
 # Usage:
@@ -30,9 +19,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PARALLELISM="${PARALLELISM:-1}"
 
-# Discover node stacks: every direct subdirectory holding a terragrunt.hcl.
-# The script is symlinked into customimage/, so discovery follows the symlink's
-# own directory and picks up that stack's nodes.
+# Discover direct child stacks; symlink location determines the stack root.
 NODES=()
 for dir in "${SCRIPT_DIR}"/*/; do
   [[ -f "${dir}terragrunt.hcl" ]] && NODES+=("$(basename "${dir}")")
@@ -47,7 +34,7 @@ if [[ $# -eq 0 ]]; then
   exit 1
 fi
 
-# Build the tofu/terraform argument list: <command> <user args> <injected flags>.
+# Build <command> <user args> <injected flags>.
 tf_cmd="$1"
 shift
 tofu_args=("${tf_cmd}" "$@")
@@ -66,8 +53,7 @@ run_node() {
   local node="$1"
   local dir="${SCRIPT_DIR}/${node}"
   echo "=== ${node} ==="
-  # `direnv exec` loads the .envrc but does not change cwd, so cd into the
-  # node directory first to let terragrunt find its terragrunt.hcl.
+  # direnv loads the environment but does not change directory.
   (cd "${dir}" && direnv exec "${dir}" terragrunt run -- "${tofu_args[@]}")
 }
 

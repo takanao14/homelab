@@ -14,8 +14,7 @@ variable "containers" {
     os_type     = string
     cores       = number
     memory      = number
-    # Swap (MB) backing the container's memory cgroup. Defaults to 0 (no swap),
-    # matching the previous behavior for all existing containers.
+    # Memory-cgroup swap in MB; default preserves the previous no-swap behavior.
     swap    = optional(number, 0)
     on_boot = bool
     disks = map(object({

@@ -9,9 +9,7 @@ resource "proxmox_download_file" "image" {
   overwrite           = true
   overwrite_unmanaged = each.value.overwrite_unmanaged
 
-  # Optional integrity check. A changing checksum forces Proxmox to re-download
-  # even when the URL is unchanged, so rebuilt custom images are detected.
-  # checksum_algorithm must only be set when a checksum is present.
+  # A changed checksum re-downloads same-URL rebuilds; set the algorithm only with it.
   checksum           = each.value.checksum
   checksum_algorithm = each.value.checksum != null ? each.value.checksum_algorithm : null
 }

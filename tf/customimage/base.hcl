@@ -1,11 +1,8 @@
-# Shared config for every node stack in this directory. Each node directory
-# holds a minimal terragrunt.hcl (root + base includes) and a node.hcl
-# declaring `node_name` and the `image_keys` deployed to that node.
+# Shared custom-image config; node.hcl selects the node and image keys.
 terraform {
   source = "${dirname(find_in_parent_folders("root.hcl"))}/modules/proxmox-cloudimage"
 
-  # Image downloads are large; running them in parallel overwhelms the Proxmox
-  # node / S3 path and times out. Force serial downloads.
+  # Serialize large downloads to protect the Proxmox/S3 path.
   extra_arguments "serial_download" {
     commands  = ["apply", "destroy"]
     arguments = ["-parallelism=1"]
@@ -26,10 +23,7 @@ inputs = {
       url          = "${local.base_url}/${local.images_common.locals.image_definitions[name].file_name}"
       file_name    = local.images_common.locals.image_definitions[name].file_name
       content_type = local.images_common.locals.image_definitions[name].content_type
-      # Pin the sha256 published next to the object so a rebuilt image (same URL,
-      # new content) is re-downloaded. Fails fast if the image is not yet pushed
-      # (pipefail: without it the trailing tr masks curl's failure and the
-      # checksum silently becomes an empty string).
+      # Detect same-URL rebuilds; pipefail prevents curl errors becoming empty checksums.
       checksum            = run_cmd("--terragrunt-quiet", "sh", "-c", "set -o pipefail; curl -fsS '${local.base_url}/${local.images_common.locals.image_definitions[name].file_name}.sha256' | tr -d '[:space:]'")
       node_name           = local.node.locals.node_name
       datastore_id        = local.datastore_id

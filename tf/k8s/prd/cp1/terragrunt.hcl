@@ -7,9 +7,7 @@ terraform {
 }
 
 locals {
-  # env.hcl is read from this directory (not the parent): this stack lives in
-  # the prd cluster tree but the VM is placed on node4, so it carries its own
-  # host binding (see also .envrc, which sources the node4 secrets).
+  # This stack overrides the cluster default with node4 host binding and secrets.
   env    = read_terragrunt_config("${get_terragrunt_dir()}/env.hcl")
   common = read_terragrunt_config(find_in_parent_folders("common.hcl"))
 
