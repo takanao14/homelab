@@ -21,8 +21,7 @@ cleanup() {
     info "Cleaning up smoke-test namespace..."
     kubectl delete namespace smoke-test --ignore-not-found --timeout=60s || true
     if [[ -n "$NFS_SMOKE_PV" ]]; then
-        # The nfs class intentionally uses Retain. Remove only the released
-        # Kubernetes object; its directory remains on TrueNAS for inspection.
+        # Retain the TrueNAS directory; remove only the released PV object.
         kubectl delete "persistentvolume/${NFS_SMOKE_PV}" --ignore-not-found || true
     fi
 }
@@ -66,8 +65,7 @@ get_job_log() {
 
 info "=== Smoke Test ==="
 
-# Apply base resources upfront; netpol-jobs and pvc jobs are applied in each test
-# after their dependencies are confirmed ready.
+# Apply jobs only after their base resources are ready.
 kubectl apply -f "$SCRIPT_DIR/l2lb.yaml"
 kubectl apply -f "$SCRIPT_DIR/pvc.yaml"
 kubectl apply -f "$SCRIPT_DIR/netpol.yaml"
@@ -83,7 +81,7 @@ else
     info "EXTERNAL-IP assigned: ${EXTERNAL_IP}"
     kubectl rollout status deployment/smoke-nginx -n smoke-test --timeout=60s
 
-    # L2 announcement may take a few seconds to propagate; retry up to ~30s.
+    # Allow ~30s for L2 announcement propagation.
     HTTP_CODE="000"
     for i in $(seq 1 6); do
         HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 --max-time 10 \
@@ -115,8 +113,7 @@ fi
 
 info "--- Test: NetworkPolicy ---"
 
-# Wait for the dedicated server to be ready before launching client jobs,
-# so that a "connection refused" from an unready server doesn't cause a false negative.
+# Wait for the server to avoid false connection-refused failures.
 kubectl rollout status deployment/netpol-server -n smoke-test --timeout=60s
 kubectl apply -f "$SCRIPT_DIR/netpol-jobs.yaml"
 
@@ -163,8 +160,7 @@ fi
 
 info "--- Test: PVC Persistence (data survives pod lifecycle) ---"
 
-# A third, independent pod mounts the same PVC and verifies the data written by
-# the first pod is still intact after that pod has been terminated.
+# Verify persisted data from a new pod after the writer exits.
 kubectl apply -f "$SCRIPT_DIR/pvc-persist-job.yaml"
 if wait_job_complete "smoke-pvc-persist" "smoke-test" 60; then
     ACTUAL=$(get_job_log "smoke-pvc-persist" "smoke-test" | tr -d '[:space:]')

@@ -5,14 +5,8 @@ l2announcements:
   enabled: true
 externalIPs:
   enabled: true
-# Ingress and Gateway API controllers are intentionally disabled: shared
-# ingress is served by Envoy Gateway (ArgoCD-managed, see ADR-0011). Cilium
-# stays responsible for CNI, LB IPAM, and L2 announcement only.
-# Expose Cilium metrics for Prometheus. metricsService creates the metrics
-# Services (cilium-agent:9962, cilium-operator:9963) without requiring the
-# ServiceMonitor CRD, so this stays bootstrap-safe (helmfile installs Cilium
-# before the kube-prometheus-stack CRDs exist). ServiceMonitors are defined in
-# the monitoring stack instead.
+# Envoy Gateway owns ingress (ADR-0011); Cilium owns CNI, LB IPAM and L2.
+# metricsService is bootstrap-safe before monitoring CRDs; ServiceMonitors live there.
 prometheus:
   enabled: true
   metricsService: true
@@ -22,14 +16,9 @@ operator:
     enabled: true
     metricsService: true
 hubble:
-  # Double the per-agent flow history so readers can tolerate roughly twice
-  # the processing delay before older events are overwritten. This startup
-  # setting requires the Cilium agents to be restarted after Helm updates the
-  # ConfigMap (rollOutCiliumPods is false by default).
+  # Double flow history; restart agents after this startup setting changes.
   eventBufferCapacity: 8191
-  # Hubble is enabled by default; only its metrics need turning on. This exposes
-  # aggregated L3/L4 flow metrics (hubble-metrics:9965). L7/http is omitted as it
-  # requires Envoy L7 redirection.
+  # Expose L3/L4 metrics only; L7 requires Envoy redirection.
   metrics:
     enabled:
       - dns

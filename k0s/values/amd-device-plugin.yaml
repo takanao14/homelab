@@ -1,16 +1,6 @@
-# Confine the plugin to GPU workers. Without this the DaemonSet lands on every
-# node (it only carries tolerations) and runs a no-op copy on the CPU workers.
-#
-# The chart's own node_selector default targets the NFD label
-# feature.node.kubernetes.io/pci-0300_1002.present, which does not exist here:
-# nfd.enabled is false and the GPU worker is labelled gpu=amd by the k0s
-# cluster setup instead. Select on that label rather than turning NFD on.
-#
-# node_selector is a map, so Helm MERGES these keys over the chart defaults
-# rather than replacing them. The NFD key must be explicitly nulled out or the
-# DaemonSet requires a label no node carries and schedules nowhere, silently
-# withdrawing amd.com/gpu from the cluster. Verify with `helm template` after
-# any chart bump — a renamed default key would reintroduce the same trap.
+# Schedule only on k0s-labelled GPU workers; NFD is disabled.
+# Helm merges node_selector, so null the chart's NFD default explicitly.
+# Recheck rendered selectors after chart bumps to avoid silently losing amd.com/gpu.
 node_selector_enabled: true
 node_selector:
   feature.node.kubernetes.io/pci-0300_1002.present: null

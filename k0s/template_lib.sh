@@ -376,9 +376,7 @@ ${K0S_VERSION:+    version: ${K0S_VERSION}
       spec:
         storage:
           type: ${storage_type} ${storage_comment}
-        # Expose the controller-manager/scheduler secure metrics ports on a
-        # routable address (default is 127.0.0.1) so Prometheus can scrape them
-        # from off-node. See k8s/monitoring/values/prometheus.yaml.
+        # Bind control-plane metrics off-loopback for Prometheus.
         controllerManager:
           extraArgs:
             bind-address: 0.0.0.0

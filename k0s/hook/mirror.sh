@@ -45,8 +45,7 @@ configure_registry() {
     local registry_file="$1"
     local certs_base_path="/etc/k0s/certs.d"
 
-    # k0s v1.36 ships containerd 2.x, which requires config version 3 and the
-    # containerd v2 CRI plugin namespace.
+    # containerd 2.x requires config v3 and the v2 CRI namespace.
     echo -e "${YELLOW}→${NC} Writing registry configuration..."
     sudo tee "$registry_file" > /dev/null <<EOF
 version = 3

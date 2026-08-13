@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# create_cluster.sh — Entry point for k0s cluster management
+# k0s cluster management entry point.
 # Usage: ./create_cluster.sh <prd|sandbox> <command>
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -27,8 +27,7 @@ _ENV_HELMFILE="$SCRIPT_DIR/helmfile.$ENV_TARGET.yaml.gotmpl"
 HELMFILE_FILE="$( [[ -f "$_ENV_HELMFILE" ]] && echo "$_ENV_HELMFILE" || echo "$SCRIPT_DIR/helmfile.yaml.gotmpl" )"
 KUBECONFIG_OUT="$HOME/.kube/$ENV_TARGET.yaml"
 
-# Validate environment by checking whether the env file exists.
-# To add a new environment, simply create env/<name>.sh — no code changes needed.
+# Environments are discovered from env/<name>.sh.
 if [[ ! -f "$ENV_FILE" ]]; then
     log_error "Unknown environment: '$ENV_TARGET' (env file not found: $ENV_FILE)"
     usage
@@ -41,9 +40,7 @@ export K0S_CLUSTER_NAME="${ENV_TARGET}-homelab"
 
 # ── load environment ──────────────────────────────────────────────────────────
 
-# Cluster topology is owned by env/<target>.sh. Clear inherited values first so
-# an optional variable omitted by one environment cannot leak from the caller.
-# K0S_SSH_USER remains an intentional caller override.
+# Clear inherited topology before loading env/<target>.sh; preserve SSH user override.
 unset K0S_VERSION \
       K0S_CONTROLLER_ADDRESSES \
       K0S_WORKER_ADDRESSES \

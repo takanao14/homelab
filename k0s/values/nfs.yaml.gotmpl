@@ -1,8 +1,7 @@
 controller:
   enableSnapshotter: false
 
-# k0s keeps kubelet state below /var/lib/k0s, not the upstream default
-# /var/lib/kubelet. Both the controller and node plugin mount this host path.
+# k0s kubelet path mounted by controller and node plugins.
 kubeletDir: /var/lib/k0s/kubelet
 
 storageClass:
@@ -14,9 +13,7 @@ storageClass:
     server: {{ requiredEnv "K0S_NFS_SERVER" | quote }}
     share: {{ requiredEnv "K0S_NFS_SHARE" | quote }}
     subDir: ${pvc.metadata.namespace}/${pvc.metadata.name}-${pv.metadata.name}
-    # Pods use different UIDs/GIDs and NFS root squashing can prevent kubelet
-    # from changing ownership. PVC subdirectories are isolated by Kubernetes
-    # mounts; make each one writable without relying on server-side UID parity.
+    # Support varied pod IDs despite root squash; mounts isolate PVC subdirectories.
     mountPermissions: "0777"
     onDelete: retain
   reclaimPolicy: Retain

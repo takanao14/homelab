@@ -1,6 +1,6 @@
 # k0s Cluster Management
 
-Scripts for managing the k0s cluster lifecycle using k0sctl and Helmfile.
+Manage k0s cluster lifecycle with k0sctl and Helmfile.
 
 ## Prerequisites
 
@@ -11,6 +11,7 @@ Scripts for managing the k0s cluster lifecycle using k0sctl and Helmfile.
 | `kubectl` | Cluster readiness checks and helmfile hooks |
 | `cilium` CLI | Wait for Cilium to become ready |
 | `ssh` | Post-reset node reboots |
+
 ## Directory Structure
 
 ```
@@ -39,7 +40,8 @@ k0s/
 
 ## Environment Variables
 
-Cluster topology and non-secret settings live in `env/` files. `K0S_SSH_USER` can be provided as an environment variable; when it is unset, `create_cluster.sh` uses the user running the command (`id -un`).
+Cluster topology and non-secret settings live in `env/`. Shell variables may
+override operator-specific behavior.
 
 ### Environment files (`env/prd.sh` / `env/sandbox.sh`)
 
@@ -76,9 +78,9 @@ K0S_SSH_USER=ubuntu ./create_cluster.sh prd config
 
 | Command | Description |
 |---------|-------------|
-| `bootstrap` | Create a new cluster: k0sctl apply without waiting for the custom CNI → fetch kubeconfig → helmfile apply |
+| `bootstrap` | Create a cluster: k0sctl apply without CNI wait → kubeconfig → Helmfile |
 | `upgrade` | Upgrade an existing cluster with node, Cilium, and storage health checks before and after k0sctl apply |
-| `apply` | Disabled legacy command; fails with guidance to select `bootstrap` or `upgrade` explicitly |
+| `apply` | Disabled legacy command; select `bootstrap` or `upgrade` |
 | `reset` | Reset the cluster: k0sctl reset, then reboot every node and wait for it to return |
 | `kubeconfig` | Write kubeconfig to `~/.kube/<env>.yaml` |
 | `helmfile` | Apply Helmfile only (requires kubeconfig to exist) |
@@ -112,13 +114,12 @@ K0S_SKIP_REBOOT=1 ./create_cluster.sh sandbox reset
 ./remove-known-hosts.sh sandbox
 ```
 
-Kubeconfig is written to `~/.kube/<env>.yaml` (e.g. `~/.kube/prd.yaml`, `~/.kube/sandbox.yaml`).
+Kubeconfig is written to `~/.kube/<env>.yaml`.
 
 ### Bootstrap and upgrade safety
 
-The cluster uses a custom CNI installed by Helmfile after k0s starts. For that
-reason, `bootstrap` generates `spec.options.wait.enabled: false`; waiting for
-Ready nodes before installing Cilium would deadlock the initial build.
+Helmfile installs the custom CNI after k0s starts. `bootstrap` therefore sets
+`spec.options.wait.enabled: false`; waiting for Ready before Cilium would deadlock.
 
 `upgrade` is intentionally separate and requires an existing kubeconfig. It
 uses the following safety controls:
@@ -130,50 +131,40 @@ uses the following safety controls:
   minutes so workloads can terminate and reschedule cleanly;
 - repeats node and storage health checks after k0sctl and Helmfile complete.
 
-For OpenEBS, all pods in the `openebs` namespace must be Ready. For NFS, the CSI controller Deployment and
-node DaemonSet must complete rollout. The workflow also refuses to run when the
-cluster already has multiple default StorageClasses and verifies the configured
-default after Helmfile completes. Do not use `upgrade` to create a new cluster,
-and do not bypass a failed storage check with `--no-drain`.
+OpenEBS requires all namespace pods Ready; NFS requires controller and node
+rollouts. The workflow rejects multiple default StorageClasses and verifies the
+configured default after Helmfile. Do not bootstrap with `upgrade` or bypass a
+failed storage check with `--no-drain`.
 
-When NFS is enabled, `smoke-test` also creates an explicit `nfs` RWX claim and
-verifies data after a pod remount. The StorageClass uses `Retain`; cleanup
-deletes the released PV object but deliberately leaves the temporary directory
-on TrueNAS so retention can be inspected and reclaimed there.
+With NFS, `smoke-test` verifies an explicit RWX claim across a remount. Cleanup
+removes the retained PV object but leaves its TrueNAS directory for inspection.
 
 ### Reset
 
-`k0sctl reset` stops k0s and deletes its files, but the runtime residue outlives
-it: the Cilium interfaces (`cilium_host` / `cilium_net` / `cilium_vxlan`), the
-nftables rules they installed, and leftover kubelet bind mounts under
-`/var/lib/k0s/kubelet`. `reset` therefore reboots every node afterwards, so a
-following `bootstrap` starts from a clean host.
+`k0sctl reset` leaves Cilium interfaces, nftables rules and kubelet bind mounts.
+`reset` reboots every node so the next `bootstrap` starts cleanly.
 
-Reboots are triggered on all nodes first — workers before controllers — and
-waited on afterwards, so the nodes boot in parallel. Each node is considered
-back only once it reports a different `/proc/sys/kernel/random/boot_id`;
-probing SSH alone would return immediately against the pre-reboot sshd. Every
-reachable node is waited on even after one fails, so a run reports every node
-still down rather than only the first.
+Reboots start on all workers, then controllers, and complete in parallel. A new
+`boot_id` confirms reboot; SSH alone cannot distinguish a pre-reboot daemon.
+The run waits for every reachable node and reports all failures.
 
-Rebooting a *running* cluster is a different operation and belongs to Ansible
-(ADR-0032): use `ops-package_upgrade.yaml`, which cordons and drains each node
-first. This reboot deliberately does none of that — there is no cluster left to
-protect once `k0sctl reset` has returned.
+Running-cluster reboots belong to Ansible (ADR-0032), which drains first. A
+post-reset reboot needs no drain because the cluster no longer exists.
 
-When cluster VMs are recreated with the same IP addresses, run
-`remove-known-hosts.sh` before `create_cluster.sh bootstrap`. The script reads all
-controller, worker, and optional GPU worker addresses from the selected
-environment file and removes their entries (including hashed entries) from
-`~/.ssh/known_hosts` using `ssh-keygen -R`. Set `KNOWN_HOSTS_FILE` to target a
-different file.
+After recreating VMs at the same addresses, run `remove-known-hosts.sh` before
+bootstrap. It removes all environment node keys, including hashed entries. Use
+`KNOWN_HOSTS_FILE` to select another file.
 
 ## Cluster Architecture
 
 - **Datastore**: kine (single controller) or etcd (multiple controllers — count must be odd for quorum); selected automatically based on `K0S_CONTROLLER_ADDRESSES`
-- **CNI**: Cilium v1.19.x (kube-proxy disabled, L2 LoadBalancer; ingress/Gateway API controllers disabled — shared ingress is Envoy Gateway, ArgoCD-managed, see ADR-0011). Workers are labeled `homelab/l2-segment=<first-three-IP-octets>` by k0s install flags and re-synced before Helmfile runs, so L2 announcements only run on nodes in the LoadBalancer pool's segment.
+- **CNI**: Cilium v1.19.x with kube-proxy replacement and L2 LoadBalancer.
+  Envoy Gateway owns ingress (ADR-0011). Worker segment labels restrict L2
+  announcements to the LoadBalancer pool's network.
 - **Storage CSI**: any configured combination of OpenEBS v4.5.1 LocalPV and
   NFS CSI v4.13.4. OpenEBS uses the SSD mounted at
   `/srv/storage/volume`; NFS uses the environment-specific external export.
-- **GPU**: AMD GPU Device Plugin (enabled when `K0S_GPU_WORKER_ADDRESSES` is set; GPU workers are labeled `gpu=amd` and tainted `gpu=amd:NoSchedule`)
-- **CoreDNS**: Replica count is calculated automatically by k0s from the number of Linux nodes. When GPU workers are configured, `template_lib.sh` adds a CoreDNS-only toleration for `gpu=amd:NoSchedule`, allowing CoreDNS replicas to be distributed across standard and GPU workers without making other workloads eligible for GPU workers.
+- **GPU**: AMD device plugin when GPU workers exist; nodes use label `gpu=amd`
+  and taint `gpu=amd:NoSchedule`.
+- **CoreDNS**: k0s calculates replicas from Linux nodes. A CoreDNS-only GPU
+  toleration permits distribution without admitting other workloads.
