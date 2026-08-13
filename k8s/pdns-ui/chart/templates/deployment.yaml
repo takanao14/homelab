@@ -21,10 +21,7 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-        # The image's uid/gid. fsGroup is required: the entrypoint renders
-        # /etc/nginx/templates into the /etc/nginx/conf.d emptyDir, and without
-        # a group-writable mount it silently skips envsubst and nginx falls
-        # back to its stock config (no API proxy, no read-only guard).
+        # fsGroup lets the entrypoint render the guarded config into emptyDir.
         runAsUser: 101
         runAsGroup: 101
         fsGroup: 101
@@ -34,7 +31,7 @@ spec:
           ports:
             - containerPort: 8080
           env:
-            # Restrict envsubst to PDNS_* so nginx variables are left alone.
+            # Preserve nginx variables during envsubst.
             - name: NGINX_ENVSUBST_FILTER
               value: "^PDNS_"
             - name: PDNS_BACKEND
@@ -76,8 +73,7 @@ spec:
             - name: nginx-template
               mountPath: /etc/nginx/templates
               readOnly: true
-            # readOnlyRootFilesystem: the entrypoint writes the rendered
-            # template here, and nginx needs a scratch cache and pid dir.
+            # Writable config, cache, and pid paths for a read-only root.
             - name: nginx-conf
               mountPath: /etc/nginx/conf.d
             - name: nginx-cache

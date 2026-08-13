@@ -1,20 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Sync the vendored powerdns-webui single-page app.
-#
-# The app is vendored instead of fetched at runtime so the third-party
-# JavaScript that reads the homelab zone data is reviewable in git. This script
-# is the only place that talks to GitHub; run it to refresh the local copy.
+# Sync the reviewable, vendored powerdns-webui app.
 #
 # Usage:
 #   sync.sh            Fetch the ref recorded in REVISION and overwrite index.html.
-#   sync.sh --check    Fetch into a temp dir and diff against the vendored copy.
-#                      Exits non-zero on drift (used by CI).
+#   sync.sh --check    Check the vendored copy for drift.
 #   REF=<tag> sync.sh  Fetch a different ref and record it.
 #
-# Renovate bumps the ref in REVISION; CI then fails until this script is re-run,
-# so the recorded version and the vendored bytes cannot drift apart.
+# Renovate ref bumps fail CI until the vendored bytes are refreshed.
 
 REPO="${REPO:-james-stevens/powerdns-webui}"
 SRC_PATH="htdocs/index.html"
@@ -35,8 +29,7 @@ field_of() {
   sed -n "s/^$1:[[:space:]]*//p" "$REVISION_FILE"
 }
 
-# Default to the ref already recorded, so a Renovate bump of REVISION drives
-# the next fetch.
+# Default to the Renovate-managed recorded ref.
 recorded_ref=""
 [[ -f "$REVISION_FILE" ]] && recorded_ref="$(field_of ref)"
 REF="${REF:-${recorded_ref}}"
@@ -55,9 +48,7 @@ trap cleanup EXIT
 curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/${SRC_PATH}" \
   -o "${tmp_dir}/index.html"
 
-# The app is served same-origin with an nginx proxy that injects a PowerDNS API
-# key, so any external resource load would be a new path for zone data to leave
-# the network. Refuse to vendor a version that gained one.
+# Reject new external resource loads that could exfiltrate zone data.
 if grep -qE '(src|href)="https?://' "${tmp_dir}/index.html"; then
   echo "Error: ${REPO}@${REF} loads external resources; review it before vendoring." >&2
   exit 1
@@ -88,9 +79,7 @@ fi
 install -m 0644 "${tmp_dir}/index.html" "$TARGET"
 
 cat > "$REVISION_FILE" <<EOF
-# Vendored from ${REPO}, synced by sync.sh. Do not edit index.html by hand;
-# re-run sync.sh to update it. Bumping the ref alone fails CI until the
-# vendored bytes are refreshed.
+# Vendored from ${REPO}; update with sync.sh, not by hand.
 repo: ${REPO}
 # renovate: datasource=github-tags depName=james-stevens/powerdns-webui
 ref: ${REF}

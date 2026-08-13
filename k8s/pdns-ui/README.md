@@ -1,11 +1,9 @@
 # pdns-ui
 
-Read-only browser for the PowerDNS authoritative zones, deployed on the prd
-and sandbox clusters and managed by ArgoCD.
+Read-only PowerDNS authoritative-zone browser for prd and sandbox.
 
-Records are owned by dnscontrol (see the private plans repo), so this app is a
-viewer only — it must never become a second source of truth. Read-only is
-enforced in nginx, not merely by convention.
+dnscontrol owns records; nginx enforces viewer-only access to prevent a second
+source of truth.
 
 ## Directory Structure
 
@@ -37,32 +35,23 @@ browser ──https (prd) / http (sandbox)──► Envoy Gateway ──► pdns
                                                               └─ /api/*   → ns1:8081, X-API-Key injected
 ```
 
-The webapp is pure client-side JavaScript and talks to the PowerDNS API on its
-own origin. nginx injects the API key server-side, so the credential stays in
-the pod and never reaches the browser.
+The client calls its own origin; nginx injects the API key in-pod.
 
 ## Read-only enforcement
 
-`limit_except GET HEAD { deny all; }` on both locations. The injected key grants
-full write access to PowerDNS, so this guard is the only thing standing between
-the UI and zone modification — do not relax it to make an edit feature work. If
-editing is ever wanted, that is a design decision to take against dnscontrol
-ownership first.
+Both locations allow only GET/HEAD. The key is unscoped, so never relax this
+guard without revisiting dnscontrol ownership.
 
-Verified against the real image before deployment: `POST`/`PUT`/`PATCH`/`DELETE`
-return `403` on both `/` and `/api/*`, `GET /api/*` is proxied with the key
-attached, and the key does not appear in any served content.
+Verified: write verbs return 403, API reads are proxied, and served content does
+not expose the key.
 
 ## Vendoring
 
-`chart/web/index.html` is [james-stevens/powerdns-webui](https://github.com/james-stevens/powerdns-webui)
-(MIT), vendored rather than pulled at runtime so the third-party JavaScript that
-reads the zone data is reviewable in git. The pinned tag and the SHA256 of the
-vendored bytes live in `chart/web/REVISION`.
+`chart/web/index.html` vendors MIT-licensed
+[powerdns-webui](https://github.com/james-stevens/powerdns-webui) for review.
+`REVISION` pins its tag and SHA-256.
 
-The app is self-contained: no external scripts, styles, or fonts, and exactly
-one `fetch()`, to the PowerDNS API on its own origin. `sync.sh` refuses to
-vendor a version that gained an external resource load.
+The app is self-contained and same-origin; `sync.sh` rejects external resources.
 
 ### Updating
 
@@ -72,14 +61,10 @@ REF=v3.7 k8s/pdns-ui/chart/web/sync.sh   # move to a new tag
 k8s/pdns-ui/chart/web/sync.sh --check    # what CI runs
 ```
 
-Renovate watches the tag via the `# renovate:` comment in `REVISION` and opens a
-PR that bumps `ref:` alone. That PR is deliberately incomplete: `vendor-sync` CI
-compares the vendored bytes against the new ref and fails until `sync.sh` has
-been run, so the recorded version and the actual file cannot drift apart. The
-same check runs weekly, which also catches an upstream tag being re-pointed.
+Renovate bumps `ref:`; vendor-sync CI then requires refreshed matching bytes and
+also detects retagged upstream releases.
 
-Do not edit `index.html` by hand — `--check` treats that as drift, which is the
-point.
+Do not edit `index.html` by hand; `--check` rejects drift.
 
 After any update, re-verify the read-only behaviour below before merging.
 
@@ -89,29 +74,16 @@ After any update, re-verify the read-only behaviour below before merging.
 |--------------|----------|-------------|
 | `k8s/external-dns/pdns` | `api-key` | ns1's PowerDNS API key |
 
-This reuses the entry external-dns already reads rather than seeding a second
-copy. PowerDNS authoritative has a single, unscoped `api-key`, so a dedicated
-`k8s/pdns-ui/*` path would hold the identical credential and create a second
-place to forget during rotation. The trade-off is that the KV path name is
-external-dns-flavoured; a neutral `k8s/shared/pdns` would read better but means
-re-seeding OpenBao and editing a working external-dns ExternalSecret.
+This reuses external-dns's unscoped key to avoid duplicate rotation points.
 
-Because each environment's `ClusterSecretStore` authenticates with one
-cluster-wide OpenBao role that already carries the external-dns policy
-(prd and sandbox both do), no OpenBao seeding or policy change is needed for
-this app in either environment.
+Both environment roles already carry the external-dns policy, so no new OpenBao
+seed or policy is required.
 
-The same key lives in `PDNS_PRIMARY_API_KEY` in
-`ansible/inventories/homelab/host_vars/ns1.sops.yaml`; SOPS files are not
-mirrored into OpenBao, so a rotation still has to update both.
+Rotation must update both OpenBao and `ns1.sops.yaml`; SOPS is not mirrored.
 
 ## Notes
 
-- The upstream webapp documents testing against PowerDNS 4.2.2, while ns1 runs
-  the `auth-51` channel. Zone listing needs to be confirmed on first sync.
-- `fsGroup: 101` is required. The nginx entrypoint renders
-  `/etc/nginx/templates` into the `/etc/nginx/conf.d` emptyDir; without a
-  group-writable mount it skips envsubst silently and nginx falls back to its
-  stock config, dropping both the API proxy and the read-only guard.
+- Upstream tested 4.2.2 while ns1 uses `auth-51`; verify zone listing after updates.
+- `fsGroup: 101` lets nginx render the proxy and read-only guard into emptyDir.
 - `NGINX_ENVSUBST_FILTER=^PDNS_` keeps envsubst away from nginx's own `$host` /
   `$uri` variables.
