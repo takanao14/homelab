@@ -69,11 +69,7 @@ all:
     vpngw:
       ansible_host: 192.168.10.3
   children:
-    # Hosts Ansible knows about for power sequencing only — their configuration
-    # is managed outside this repo. Registered so planned-shutdown ordering can
-    # account for them, but excluded from every `all:*` configuration playbook
-    # (apt_mirror, chrony, unattended_upgrades, package_upgrade) so adding a
-    # host here never changes what gets configured or rebooted.
+    # Power sequencing only; configuration is managed outside this repo.
     power_only:
       hosts:
         vpngw: null
@@ -106,15 +102,12 @@ all:
       hosts:
         authentik1: null
 
-    # Disposable test VM for stage 6 of the identity-authentication-
-    # architecture PoC (SSSD/LDAP validation). Not part of the monitored
-    # fleet (node_exporter/vector) since it is expected to be torn down.
+    # Disposable SSSD/LDAP PoC VM; excluded from monitoring.
     sssd:
       hosts:
         sssdtest1: null
 
-    # Standalone SeaweedFS object storage: Terraform state backup target and
-    # the cloud-images bucket for Packer-built images.
+    # Object storage for Terraform state backups and Packer images.
     seaweedfs:
       hosts:
         seaweedfs1: null
@@ -143,8 +136,7 @@ all:
       hosts:
         caddy1: null
 
-    # Browser-based editor for the toolbox VM, used from tablets where no
-    # desktop VS Code exists (ADR-0031).
+    # Browser editor for toolbox1 (ADR-0031).
     code_server:
       hosts:
         toolbox1: null
@@ -157,13 +149,7 @@ all:
       hosts:
         rpi4: null
 
-    # k0s clusters are split by node role because disruptive operations must
-    # process workers and controllers as separate plays. `serial` follows
-    # inventory order, and rebooting a controller takes down the API server
-    # that cordon/drain of the remaining nodes depends on — so workers have to
-    # be drained and restored first. Expressing the split as groups keeps that
-    # ordering in the inventory instead of in per-playbook host enumerations.
-    # Host names match the k0s node names reported by `kubectl get nodes`.
+    # Split k0s by role so workers drain before controllers; names match Kubernetes nodes.
     prd_k8s:
       children:
         prd_k8s_controller:
@@ -173,9 +159,7 @@ all:
           hosts:
             k0s-worker1: null
             k0s-worker2: null
-            # GPU worker (ADR-0019), tainted gpu=amd:NoSchedule. Also a member
-            # of `gpuvm`, which carries the GPU role playbook; membership here
-            # is cluster topology and grants the prd_k8s group_vars.
+            # GPU worker topology; GPU roles come from gpuvm (ADR-0019).
             gpuvm1: null
     sandbox_k8s:
       children:
@@ -188,10 +172,7 @@ all:
             sandbox-k0s-worker2: null
             sandbox-k0s-worker3: null
 
-    # Cross-cluster role groups. Target of group_vars that depend only on the
-    # node role (k0s service name, drain policy) rather than on which cluster
-    # the node belongs to; cluster-specific values (kubeconfig, storage
-    # provider) live in the prd_k8s / sandbox_k8s group_vars instead.
+    # Cross-cluster node roles; cluster-specific values stay in environment groups.
     k8s_controller:
       children:
         prd_k8s_controller: {}
@@ -216,7 +197,7 @@ all:
         resolver2: null
         seaweedfs1: null
 
-    # LXC guests where Vector reads logs directly from journald.
+    # LXC guests read directly by Vector from journald.
     vector_lxc:
       children:
         caddy: {}
@@ -228,17 +209,13 @@ all:
         seaweedfs: {}
         log_collector: {}
 
-    # All hosts running the Vector agent: the journald-reading LXC guests plus
-    # the rpi4 DHCP host (outside vector_lxc). Target of common-vector.yaml for
-    # fleet-wide Vector version bumps.
+    # All Vector agents; targeted by common-vector.yaml.
     vector:
       children:
         vector_lxc: {}
         dhcp: {}
 
-    # Hosts whose system timezone is managed by Ansible (the set that previously
-    # carried the per-playbook `timezone` role). Target of common-timezone.yaml.
-    # Intentionally NOT all:!proxmox, to avoid newly touching k0s nodes/toolboxes.
+    # Timezone-managed hosts; explicit scope avoids k0s nodes and toolboxes.
     timezone:
       children:
         caddy: {}
@@ -258,23 +235,15 @@ all:
       hosts:
         rpi3: null
 
-    # Hosts forwarding syslog via the rsyslog role: the Proxmox nodes plus rpi3.
-    # Target of common-rsyslog.yaml.
+    # Rsyslog forwarders targeted by common-rsyslog.yaml.
     rsyslog:
       children:
         proxmox: {}
       hosts:
         rpi3: null
 
-    # Planned-outage ordering (ops-shutdown.yaml). Ansible preserves the order
-    # hosts are declared in a group, so these groups encode the sequence itself
-    # rather than leaving it to per-playbook host enumerations.
-    #
-    # Guests are listed least-depended-upon first. DNS goes last because the
-    # services stopping ahead of it still resolve names on the way down, and the
-    # syslog collector sits just before it so the shutdown of everything above
-    # is still captured. k0s nodes are absent on purpose: they are stopped by
-    # their own play, before any of these.
+    # Planned shutdown order: least-dependent first, logging and DNS last.
+    # k0s nodes stop earlier in their own play.
     guest_shutdown_order:
       hosts:
         runner1: null
@@ -296,12 +265,7 @@ all:
         ns2: null
         ns3: null
 
-    # Hypervisors, in the order they must be powered off. node2 is last because
-    # it carries the DNS, gateway and logging LXC guests the rest of the fleet
-    # depends on; pve is second to last because it hosts the sandbox cluster,
-    # the GPU worker and the toolbox VM. rpi3/rpi4 are not hypervisors and are
-    # powered off by hand afterwards, keeping DHCP and the blackbox probes alive
-    # for as long as possible.
+    # Hypervisor shutdown order; dependency-heavy node2 and pve stop last.
     proxmox_shutdown_order:
       hosts:
         node1: null
@@ -320,9 +284,7 @@ all:
         node4: null
         node5: null
 
-    # Hypervisors carrying each k0s cluster. ops-startup.yaml uses these groups
-    # to start a cluster's VMs explicitly, so environment-only recovery works
-    # even when the hypervisors were not rebooted and on_boot did not fire.
+    # Cluster hypervisors used for environment-only startup recovery.
     prd_k8s_hypervisor:
       hosts:
         node1: null
@@ -339,10 +301,7 @@ all:
           hosts:
             rpi3: null
             rpi4: null
-        # Stateful LXC guests: Proxmox OTLP does not expose in-guest
-        # filesystem usage, so monitor disk-fill / inode / memory here.
-        # Hardware collectors are disabled (group_vars/node_exporter_lxc)
-        # because LXC sees the host's sensors and would duplicate them.
+        # Stateful LXC metrics unavailable through Proxmox OTLP; omit duplicate host sensors.
         node_exporter_lxc:
           hosts:
             seaweedfs1: null
@@ -350,11 +309,7 @@ all:
             netbox1: null
             resolver1: null
             resolver2: null
-            # The authoritative servers keep their zones in a SQLite file, so
-            # they are as stateful as the guests above. They also export their
-            # zone serials through the textfile collector, which is what lets
-            # Prometheus catch a secondary serving a zone the primary has
-            # already moved past.
+            # Monitor SQLite zone storage and exported primary/secondary serials.
             ns1: null
             ns2: null
             ns3: null
@@ -365,24 +320,20 @@ all:
         node3: null
         node4: null
         node5: null
-        # k0s controllers run kine (embedded SQLite) and have no kubelet, so they
-        # are not covered by the in-cluster node-exporter DaemonSet. Scrape them
-        # host-level to monitor the control-plane node and kine DB disk.
+        # No kubelet on k0s controllers; scrape the host and kine DB disk directly.
         k0s-cp1: null
-        # openbao1 is a VM (not LXC): no host sensor leakage, keep defaults.
+        # VM: keep default hardware collectors.
         openbao1: null
-        # authentik1 is a VM (not LXC): no host sensor leakage, keep defaults.
+        # VM: keep default hardware collectors.
         authentik1: null
-        # toolbox1 is a VM running the editor server alongside coding agents;
-        # scrape it to measure whether 16 GiB is enough (ADR-0031).
+        # Track toolbox1 capacity for editor and coding agents (ADR-0031).
         toolbox1: null
 
     blackbox_exporter:
       hosts:
         rpi4: null
 
-    # Shared VMs that receive bulk user accounts (see playbooks/common-users.yaml).
-    # Add target VM hostnames here (they must also exist under all.hosts).
+    # VMs receiving bulk users; hosts must also exist under all.hosts.
     shared_vms:
       hosts: {}
         # devvm01: null

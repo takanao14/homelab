@@ -3,16 +3,13 @@ startup_prd_guests:
   - gpuvm1
 
 startup_sandbox_guests:
-  # TrueNAS first: sandbox mounts its NFS export. The start task is idempotent,
-  # so this is a no-op if Proxmox already brought the guest up.
+  # Start TrueNAS first for the sandbox NFS mount; already-running is a no-op.
   - truenas
   - sandbox-k0s-cp1
   - sandbox-k0s-worker1
   - sandbox-k0s-worker2
   - sandbox-k0s-worker3
 
-# truenas is not defined in tf and not in the Ansible inventory, so no earlier
-# shutdown phase touches it. Stopped over ACPI at the end of the hypervisor
-# phase, once every managed guest is already down.
+# TrueNAS is unmanaged; stop it via ACPI after managed guests.
 shutdown_unmanaged_guests:
   - truenas
