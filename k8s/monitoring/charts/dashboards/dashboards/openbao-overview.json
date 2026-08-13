@@ -314,16 +314,16 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(vault_core_handle_request_count{job=\"scrapeConfig/monitoring/openbao\"}[$__rate_interval])",
+          "expr": "sum(vault_core_handle_request_count{job=\"scrapeConfig/monitoring/openbao\"}) or sum(up{job=\"scrapeConfig/monitoring/openbao\"}) * 0",
           "legendFormat": "requests"
         },
         {
-          "expr": "rate(vault_core_handle_login_request_count{job=\"scrapeConfig/monitoring/openbao\"}[$__rate_interval])",
+          "expr": "sum(vault_core_handle_login_request_count{job=\"scrapeConfig/monitoring/openbao\"}) or sum(up{job=\"scrapeConfig/monitoring/openbao\"}) * 0",
           "legendFormat": "logins"
         }
       ],
-      "title": "Request Rate",
-      "description": "Core request and login-request throughput.",
+      "title": "Requests per Collection Interval",
+      "description": "Core requests and login requests, as counted by OpenBao over its own metrics interval (prometheus_retention_time, 60s). Not a per-second rate: the value is already a count and is republished rather than accumulated, so a step up means more requests in that interval.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -350,7 +350,8 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "ops",
+          "unit": "short",
+          "min": 0,
           "custom": {}
         },
         "overrides": []
@@ -365,7 +366,7 @@
         }
       ],
       "title": "Request Latency",
-      "description": "Core request handling latency percentiles (summary quantiles; gaps mean no requests in the window).",
+      "description": "Core request handling latency percentiles. The summary reports NaN for an interval with no requests, so the markers are the real readings and the line only joins them across gaps shorter than 15 minutes.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -393,7 +394,11 @@
       "fieldConfig": {
         "defaults": {
           "unit": "ms",
-          "custom": {}
+          "custom": {
+            "showPoints": "always",
+            "pointSize": 5,
+            "spanNulls": 900000
+          }
         },
         "overrides": []
       }
@@ -415,7 +420,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "vault_raft_apply{job=\"scrapeConfig/monitoring/openbao\"}",
+          "expr": "sum(vault_raft_apply{job=\"scrapeConfig/monitoring/openbao\"}) or sum(up{job=\"scrapeConfig/monitoring/openbao\"}) * 0",
           "legendFormat": "applies"
         }
       ],
@@ -463,7 +468,7 @@
         }
       ],
       "title": "Raft Commit Time",
-      "description": "Time to commit a raft log entry (summary quantiles).",
+      "description": "Time to commit a raft log entry. Reported only for intervals that had writes, so the markers are the real readings (see Request Latency).",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -491,7 +496,11 @@
       "fieldConfig": {
         "defaults": {
           "unit": "ms",
-          "custom": {}
+          "custom": {
+            "showPoints": "always",
+            "pointSize": 5,
+            "spanNulls": 900000
+          }
         },
         "overrides": []
       }
@@ -505,7 +514,7 @@
         }
       ],
       "title": "BoltDB Store Logs Time",
-      "description": "Time to persist raft log entries to BoltDB — the usual disk-latency bottleneck.",
+      "description": "Time to persist raft log entries to BoltDB — the usual disk-latency bottleneck. Reported only for intervals that had writes (see Request Latency).",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -533,7 +542,11 @@
       "fieldConfig": {
         "defaults": {
           "unit": "ms",
-          "custom": {}
+          "custom": {
+            "showPoints": "always",
+            "pointSize": 5,
+            "spanNulls": 900000
+          }
         },
         "overrides": []
       }
