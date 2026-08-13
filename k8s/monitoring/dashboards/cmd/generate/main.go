@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 )
@@ -42,10 +43,7 @@ func main() {
 		outputDir = os.Args[1]
 	}
 
-	if err := os.MkdirAll(outputDir, 0o755); err != nil {
-		log.Fatalf("failed to create output dir: %v", err)
-	}
-
+	generated := make(map[string][]byte, len(dashboards))
 	for name, build := range dashboards {
 		d, err := build()
 		if err != nil {
@@ -56,9 +54,24 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to marshal dashboard %s: %v", name, err)
 		}
+		if err := validateDashboardJSON(name, out); err != nil {
+			log.Fatalf("invalid dashboard: %v", err)
+		}
+		generated[name] = out
+	}
 
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		log.Fatalf("failed to create output dir: %v", err)
+	}
+
+	names := make([]string, 0, len(generated))
+	for name := range generated {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
 		path := filepath.Join(outputDir, name+".json")
-		if err := os.WriteFile(path, out, 0o644); err != nil {
+		if err := os.WriteFile(path, generated[name], 0o644); err != nil {
 			log.Fatalf("failed to write %s: %v", path, err)
 		}
 		fmt.Printf("generated: %s\n", path)

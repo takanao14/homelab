@@ -60,6 +60,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(4).
 				Unit("short").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count(up == 1)`).
@@ -194,6 +195,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(4).
 				Unit("short").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(loki_ingester_memory_streams{` + lokiJob + `})`).
@@ -208,6 +210,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Unit("percentunit").
 				Min(0).
 				Max(1).
+				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(loki_ingester_chunk_utilization_sum{` + lokiJob + `}) / sum(loki_ingester_chunk_utilization_count{` + lokiJob + `})`).

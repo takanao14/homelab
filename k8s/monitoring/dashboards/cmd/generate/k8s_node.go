@@ -144,6 +144,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(4).
 				Unit("short").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				JustifyMode(common.BigValueJustifyModeCenter).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -162,6 +163,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(4).
 				Unit("short").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				JustifyMode(common.BigValueJustifyModeCenter).
 				// A stat rather than a bar gauge, matching Memory Total beside it.
@@ -181,6 +183,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(4).
 				Unit("bytes").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				JustifyMode(common.BigValueJustifyModeCenter).
 				WithTarget(prometheus.NewDataqueryBuilder().

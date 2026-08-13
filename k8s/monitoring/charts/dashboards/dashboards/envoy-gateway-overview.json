@@ -124,7 +124,16 @@
       "fieldConfig": {
         "defaults": {
           "unit": "reqps",
-          "decimals": 2
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
         },
         "overrides": []
       }

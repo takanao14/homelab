@@ -141,6 +141,7 @@ func buildOpenbaoOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("short").Min(0).
+				Thresholds(measurementThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(` + usageGauge(`vault_token_count{`+openbao+`}`) + `)`).
 					Instant().

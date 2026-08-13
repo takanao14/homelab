@@ -34,6 +34,8 @@ Grafana dashboards are defined as Go code using [grafana-foundation-sdk](https:/
 ├── cmd/generate/               # Dashboard definitions (Go)
 │   ├── main.go                 # Entrypoint (dashboard registry + JSON output)
 │   ├── helpers.go              # Shared house-style helpers (see Conventions)
+│   ├── validate.go             # Generated-dashboard invariant checks
+│   ├── validate_test.go        # Invariant check tests
 │   ├── node.go                 # node-overview
 │   ├── k8s_node.go             # k8s-node-overview
 │   ├── kubernetes.go           # kubernetes-overview
@@ -75,8 +77,8 @@ Shared helpers therefore keep reuse to two levels and no further:
 - **L1 — fragment factories.** Repeated style/config defaults live as functions in
   `helpers.go` that **return a fresh builder on every call**: `defaultTooltip()`,
   `defaultLegend()`, `zeroLineThresholds()`, `zeroLineStyle()`, `issueThresholds()`,
-  `promDatasource()` / `lokiDatasource()`, `promDatasourceVariable()` /
-  `lokiDatasourceVariable()`.
+  `measurementThresholds()`, `promDatasource()` / `lokiDatasource()`,
+  `promDatasourceVariable()` / `lokiDatasourceVariable()`.
 
 We deliberately **do not introduce L2 panel factories** (helpers that assemble whole
 panels from parameters). They accrete arguments to absorb per-panel differences and
@@ -93,6 +95,14 @@ Guidelines when adding helpers:
 - Litmus test: *"If I change this helper, do I want every call site to change?"*
   Yes → helper. "Depends on the panel" → keep it inline.
 - Name helpers by **intent, not shape** (`issueThresholds`, not `greenRedThresholds`).
+
+Use `issueThresholds()` when the value itself is a verdict: zero is healthy and any
+nonzero count is an issue. Use `measurementThresholds()` for quantities whose absolute
+value has no universal good/bad meaning, such as throughput, inventory, and total
+counts. The latter deliberately supplies one blue step; omitting `Thresholds` is not
+equivalent, because a coloured Grafana panel then inherits Grafana's green-below-80 /
+red-at-80 default. The generator rejects every non-`none` `ColorMode` that has no
+explicit threshold steps.
 
 ### Environments and the cluster variable
 
@@ -243,6 +253,8 @@ to copy, not a helper to extract (see the litmus test under Conventions).
 - Do log windows use `$__auto` except where a fixed window is the reported quantity,
   and do discrete events use `count_over_time` rather than `rate()`?
 - Does every panel with more series than it can display order them by value?
+- Does every panel with `ColorMode` explicitly define thresholds? An omission applies
+  Grafana's unrelated default of green below 80 and red at or above 80.
 - Do comments and descriptions avoid implying a dashboard spans environments?
 - Are generated JSON files committed together with their Go definitions?
 

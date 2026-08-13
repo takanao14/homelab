@@ -159,6 +159,7 @@ func buildSyslog() (*dashboard.Dashboard, error) {
 				Span(8).Height(4).
 				Unit("cps").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum(rate(` + base + `[5m])) or vector(0)`).
 					Instant(true).

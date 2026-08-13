@@ -65,6 +65,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				Unit("short").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count(kube_node_status_condition{` + clusterFilter + `,condition="Ready",status="true"})`).
@@ -78,6 +79,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				Unit("short").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count(kube_node_info{` + clusterFilter + `})`).
@@ -91,6 +93,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				Unit("short").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// == 1 filters to the active phase only; other phases exist as 0-valued series.
@@ -122,6 +125,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Span(8).Height(4).
 				Unit("short").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// "and ... > 0" drops deployments scaled to zero. Without it a parked

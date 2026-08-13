@@ -135,6 +135,7 @@ func buildEnvoyGatewayOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("reqps").
+				Thresholds(measurementThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(rate(envoy_http_downstream_rq_total{` + proxyJob + `,` + clusterFilter + `,` + trafficListeners + `}[$__rate_interval]))`).
 					LegendFormat("RPS"),

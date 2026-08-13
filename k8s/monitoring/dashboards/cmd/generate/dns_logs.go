@@ -109,6 +109,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Span(12).Height(4).
 				Unit("reqps").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum(rate(` + queryJSON + `[$__auto]))`).
 					LegendFormat("queries/s"),
@@ -146,6 +147,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Span(12).Height(4).
 				Unit("short").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				WithTarget(loki.NewDataqueryBuilder().
 					// count(sum by ...) counts distinct IPs, not log lines.
 					Expr(`count(sum by (network_query_ip) (count_over_time(` + queryJSON + ` | network_query_ip != "" [$__range])))`).

@@ -63,6 +63,7 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				Unit("short").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count by (instance) (ifOperStatus{` + ifFilter + `} == 1)`).
@@ -91,6 +92,7 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(4).
 				Unit("bps").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum by (instance) (rate(ifHCInOctets{` + ifFilter + `}[$__rate_interval]) * 8)`).

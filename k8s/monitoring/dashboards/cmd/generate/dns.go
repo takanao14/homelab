@@ -54,6 +54,17 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 
 	issueThresholds := issueThresholds()
 
+	// Keep the red boundary aligned with resolverAlerts.cacheHitRateMin (0.6)
+	// in charts/node-exporter-external/values.yaml. This panel reports percent,
+	// so the alert ratio becomes 60 here; 90 is the documented healthy floor.
+	resolverCacheHitRateThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "red"},
+			{Value: new(float64(60)), Color: "yellow"},
+			{Value: new(float64(90)), Color: "green"},
+		})
+
 	servfailThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
@@ -97,6 +108,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(4).
 				Unit("reqps").
+				Thresholds(measurementThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(rate(dnsdist_queries{` + dnsdist + `}[$__rate_interval]))`).
 					LegendFormat("QPS"),
@@ -251,6 +263,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("reqps").
+				Thresholds(measurementThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(rate(resolver_request_total{` + resolver + `}[$__rate_interval]))`).
 					Instant().
@@ -264,6 +277,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("percent").
+				Thresholds(resolverCacheHitRateThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// No clamp_min on the denominator. It was there to avoid a
 					// division by zero, but it turned 0/0 into a hard 0% instead
@@ -478,6 +492,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(4).
 				Unit("reqps").
+				Thresholds(measurementThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// Both transports, matching the Query Rate timeseries below,
 					// which always plotted udp and tcp while this tile counted
@@ -599,6 +614,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(6).Height(4).
 				Unit("reqps").
+				Thresholds(measurementThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(rate(coredns_dns_requests_total{` + coredns + `}[$__rate_interval]))`).
 					Instant().

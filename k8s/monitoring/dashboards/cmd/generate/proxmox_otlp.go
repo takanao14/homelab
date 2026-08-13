@@ -91,6 +91,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(4).
 				Unit("short").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count by (node) (proxmox_vm_cpu_percent{` + nodeFilter + `, type="qemu"}) or on(node) count by (node) (proxmox_node_cpustat_cpu_percent{` + nodeFilter + `}) * 0`).
@@ -105,6 +106,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(4).
 				Unit("short").
 				Min(0).
+				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count by (node) (proxmox_vm_cpu_percent{` + nodeFilter + `, type="lxc"}) or on(node) count by (node) (proxmox_node_cpustat_cpu_percent{` + nodeFilter + `}) * 0`).
