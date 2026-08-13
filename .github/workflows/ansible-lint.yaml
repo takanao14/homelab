@@ -22,7 +22,7 @@ jobs:
       - name: Install ansible-lint
         env:
           # renovate: datasource=pypi depName=ansible-lint
-          ANSIBLE_LINT_VERSION: "26.6.0"
+          ANSIBLE_LINT_VERSION: "26.8.0"
         run: pip install "ansible-lint==${ANSIBLE_LINT_VERSION}"
 
       - name: Install Ansible collections
