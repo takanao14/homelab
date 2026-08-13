@@ -1,10 +1,11 @@
 # cert-manager
 
-Local Helm chart that configures cert-manager to issue wildcard TLS certificates via Let's Encrypt DNS-01 challenge using Cloudflare.
+Configures cert-manager wildcard certificates through Let's Encrypt DNS-01 and Cloudflare.
 
 Managed by ArgoCD; secrets are injected by External Secrets Operator from
 OpenBao (see [ADR-0012](../../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md)).
-Two ArgoCD Applications are used:
+Two Argo CD Applications are used:
+
 - `cert-manager` — upstream chart (installs CRDs and the controller)
 - `cert-manager-config` — this local chart (ClusterIssuer, Certificate, Secret)
 
@@ -46,7 +47,7 @@ cert-manager/
 
 ## Secrets
 
-The Cloudflare API token is fetched from OpenBao via ESO. It is not stored in this repository.
+ESO fetches the Cloudflare API token from OpenBao; plaintext is never committed.
 
 OpenBao KV path: `k8s/cert-manager/cloudflare`
 
@@ -54,9 +55,8 @@ OpenBao KV path: `k8s/cert-manager/cloudflare`
 |----------|-------------|
 | `api-token` | Cloudflare API token with `Zone:DNS:Edit` permission |
 
-To seed the secret into OpenBao, add it to the encrypted Ansible
-`openbao_secrets` list and run `ops-openbao_seed_secrets.yaml`. Do not run
-`bao kv put` manually; Ansible is the source of truth for seeded values.
+Seed it through the encrypted Ansible `openbao_secrets` list and
+`ops-openbao_seed_secrets.yaml`; do not use manual `bao kv put`.
 
 ## Notes
 

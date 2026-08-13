@@ -1,7 +1,4 @@
-# Common values for the upstream cert-manager controller chart
-# (https://charts.jetstack.io). Per-env overrides live in <env>/values.yaml.
-# The local config chart (ClusterIssuer/Certificate) lives one level up and
-# has its own values.yaml / <env>/values.yaml.
+# Shared upstream controller values; local issuer/certificate config lives one level up.
 crds:
   enabled: true
 
@@ -9,27 +6,21 @@ extraArgs:
   - --dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53
   - --dns01-recursive-nameservers-only
 
-# Resource reservations. Without requests these pods run as BestEffort and are
-# evicted first under node memory pressure; a cert-manager outage silently
-# stops certificate renewal. Requests only, no limits — see "Resource Requests"
-# in k8s/README.md. Sizing basis: 7-day observed usage, requests ~= mean x 1.2.
-#
-# Controller. Observed: mean 70Mi, peak 96Mi, p95 CPU 1.2m.
+# Requests only (README), about 1.2x 7-day mean. Controller: 70/96 Mi, p95 1.2m.
 resources:
   requests:
     cpu: 25m
     memory: 96Mi
 
 webhook:
-  # Observed: mean 62Mi, peak 65Mi, p95 CPU 0.4m.
+  # Webhook: 62/65 Mi, p95 0.4m.
   resources:
     requests:
       cpu: 10m
       memory: 80Mi
 
 cainjector:
-  # Observed: mean 77Mi, peak 138Mi, p95 CPU 2.4m. Memory tracks the number of
-  # CRDs it injects CA bundles into.
+  # CA injector: 77/138 Mi, p95 2.4m; memory tracks watched CRDs.
   resources:
     requests:
       cpu: 25m
