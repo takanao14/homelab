@@ -127,7 +127,7 @@ environment to the datasource.
 
 ### Query idioms
 
-These three are here because getting each of them wrong produced a panel that
+These four are here because getting each of them wrong produced a panel that
 looked right. None of them is caught by `make check`, which only compares
 generated JSON against the Go source.
 
@@ -164,6 +164,35 @@ single error reads 8.3 mc/s over a day and 1.4 mc/s over a week because the
 bucket follows the zoom. `count_over_time` drawn as bars is the same number at
 every zoom level for the bucket it sits in, and needs no `round()`: unlike
 `increase()` it does not extrapolate.
+
+**Floor `$__rate_interval` on anything scraped slower than 30s.** `rate()` needs
+two samples inside its window, and `$__rate_interval` is not derived from the
+real scrape interval — it is
+`max($__interval + timeInterval, 4 x timeInterval)`, where `timeInterval` is the
+value configured on the *datasource*. Ours has none set, so Grafana assumes its
+15s default and the window bottoms out at 60s. On a 60s scrape that does not
+reliably hold two samples, and the panel renders "No data".
+
+```go
+const snmpMinInterval = "2m" // SNMP is probed once a minute
+...
+    Interval(snmpMinInterval).
+```
+
+What makes this one expensive to diagnose is that `$__interval` is roughly
+range ÷ panel pixel width, so the same dashboard fails differently per panel:
+network-overview's full-width `Traffic (bps)` was empty at the default 24h while
+the half-width `Total Traffic` beside it, running a byte-identical query, still
+worked — and then failed too once the range was pulled below a day. Measured,
+`rate(ifHCInOctets[60s])` returned no series at any step while `[2m]` returned
+all of them.
+
+Only jobs slower than 30s are exposed: at 30s the 60s floor still holds two
+samples. Fixed windows (`[1h]`, `[$__range]`) are immune, which is why
+cert-manager's `increase(...)` panels are fine on a 60s scrape. Setting
+`timeInterval` on the datasource would raise the floor globally, but this fleet
+scrapes anywhere from 10s to 60s and no single value is right for all of it, so
+the floor belongs on the panels that need it.
 
 ## Dashboard structure guidelines
 
@@ -252,6 +281,8 @@ to copy, not a helper to extract (see the litmus test under Conventions).
   reads zero when the filtered one matches nothing?
 - Do log windows use `$__auto` except where a fixed window is the reported quantity,
   and do discrete events use `count_over_time` rather than `rate()`?
+- Does every `rate()` over a job scraped slower than 30s carry a Min interval, so
+  `$__rate_interval` cannot collapse below two samples?
 - Does every panel with more series than it can display order them by value?
 - Does every panel with `ColorMode` explicitly define thresholds? An omission applies
   Grafana's unrelated default of green below 80 and red at or above 80.
