@@ -1,25 +1,18 @@
 #!/usr/bin/env bash
 #
-# Idempotently create the Grafana service account used by the MCP server and
-# issue a token. The token (returned only once by Grafana) is printed to stdout
-# as a dotenv assignment line for .env/secrets.sops.env; all logs go to
-# stderr so the output can be captured cleanly.
+# Create or reuse the Grafana MCP service account and issue a token.
+# Only the dotenv assignment is written to stdout; diagnostics use stderr.
 #
 # Admin auth is resolved in this order:
 #   1. GRAFANA_ADMIN_USER / GRAFANA_ADMIN_PASSWORD environment variables
-#   2. The in-cluster `grafana-admin` secret, read via
-#      `kubectl --context "${GRAFANA_KUBE_CONTEXT:-prd-homelab}"` so the result
-#      does not depend on whatever context happens to be currently selected.
+#   2. The in-cluster grafana-admin secret using an explicit context
 #
-# Requirements: curl, jq, and (for option 2) kubectl with access to the prd cluster.
+# Requires curl, jq, and kubectl when using in-cluster credentials.
 #
 # Usage:
 #   ./scripts/grafana-mcp-token.sh          # print the assignment line
 #
-# Storing it: .env/secrets.sops.env is already SOPS-encrypted, so appending the
-# line and re-running `sops --encrypt --in-place` fails with exit 203 ("SOPS can
-# not encrypt files that already contain such an entry"). Paste the printed line
-# over the existing assignment via the editor instead:
+# Replace the assignment through `sops edit`; do not re-encrypt the existing file:
 #
 #   ./scripts/grafana-mcp-token.sh
 #   sops edit .env/secrets.sops.env
@@ -49,7 +42,7 @@ fi
 auth=(-u "${admin_user}:${admin_pass}")
 api() { curl -fsSk "${auth[@]}" -H 'Content-Type: application/json' "$@"; }
 
-# 1. Find or create the service account (idempotent on name).
+# Find or create the service account.
 sa_id="$(api "${GRAFANA_URL}/api/serviceaccounts/search?query=${SA_NAME}" \
   | jq -r --arg n "${SA_NAME}" '.serviceAccounts[]? | select(.name==$n) | .id' | head -n1)"
 
@@ -62,7 +55,7 @@ else
   echo "Reusing existing service account '${SA_NAME}' (id=${sa_id})." >&2
 fi
 
-# 2. Issue a token (the secret value is only returned at creation time).
+# Issue a token; Grafana returns its value only once.
 token="$(api -X POST "${GRAFANA_URL}/api/serviceaccounts/${sa_id}/tokens" \
   -d "$(jq -nc --arg n "${TOKEN_NAME}" '{name:$n}')" | jq -r '.key')"
 

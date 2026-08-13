@@ -5,8 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/../../lib/openbao-auth.sh"
 
-# Push the contents of ~/.env back into secret/provision/env (admin user).
-# Runs both locally and remotely (over ssh).
+# Store ~/.env in OpenBao as an admin, locally or over SSH.
 
 ENV_FILE="${HOME}/.env"
 
@@ -55,7 +54,7 @@ parse_env_value() {
   fi
 }
 
-# Build key=value args from .env, skipping comments and empty lines.
+# Build key=value arguments, skipping comments and blank lines.
 kv_args=()
 while IFS= read -r line || [[ -n "$line" ]]; do
   [[ "$line" =~ ^[[:space:]]*# ]] && continue

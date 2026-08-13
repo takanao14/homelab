@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 #
-# Generate the desired NetBox v2 API token for the MCP identity.
-#
-# This script only prints a dotenv assignment. Store it in the existing
-# SOPS-encrypted .env/secrets.sops.env, load it with direnv, and then run the
-# NetBox Ansible playbook. The role creates or rotates the matching read-only
-# token without exposing the plaintext in Ansible output.
+# Print a NetBox v2 MCP token as a dotenv assignment for the SOPS environment.
+# The NetBox role installs or rotates the matching read-only token.
 #
 set -euo pipefail
 

@@ -5,8 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/../../lib/openbao-auth.sh"
 
-# Store kubeconfig files from ~/.kube in OpenBao.
-# Runs both locally and remotely (over ssh).
+# Store ~/.kube configs in OpenBao locally or over SSH.
 
 BAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
 export BAO_ADDR

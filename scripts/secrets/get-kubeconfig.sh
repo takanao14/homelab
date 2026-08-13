@@ -5,8 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/../lib/openbao-auth.sh"
 
-# Retrieve kubeconfig files from OpenBao into ~/.kube.
-# Runs both locally and remotely (over ssh).
+# Write OpenBao kubeconfigs to ~/.kube locally or over SSH.
 
 BAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
 export BAO_ADDR
@@ -23,7 +22,6 @@ echo "Retrieving kubeconfig from OpenBao..."
 KUBE_DIR="${HOME}/.kube"
 mkdir -p "$KUBE_DIR"
 
-# Environments to fetch kubeconfig for.
 ENVS=(prd sandbox)
 
 declare -A tmp_files

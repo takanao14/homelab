@@ -1,18 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Sync the vendored dotfiles installer scripts into this directory.
-#
-# The install wrappers (packages.sh, tools.sh, terminal.sh, fonts.sh under install/)
-# run these vendored copies instead of fetching them from GitHub at provision
-# time, so provisioning does not depend on GitHub API rate limits or network
-# reachability of raw.githubusercontent.com. This script is the only place that
-# talks to GitHub; run it to refresh the local copies.
+# Sync dotfiles installers used by the offline-friendly install wrappers.
 #
 # Usage:
 #   sync.sh            Fetch the latest main and overwrite the vendored copies.
-#   sync.sh --check    Fetch into a temp dir and diff against the vendored copies.
-#                      Exits non-zero if they drift (use in CI).
+#   sync.sh --check    Check vendored copies for drift.
 #   REF=<sha|tag> sync.sh   Pin to a specific ref instead of main.
 
 REPO="${REPO:-takanao14/dotfiles}"

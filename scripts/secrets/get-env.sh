@@ -5,8 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/../lib/openbao-auth.sh"
 
-# Fetch secret/provision/env from OpenBao and write it to ~/.env.
-# Runs both locally and remotely (over ssh).
+# Write OpenBao provision secrets to ~/.env locally or over SSH.
 
 ENV_FILE="${HOME}/.env"
 

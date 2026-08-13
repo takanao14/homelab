@@ -73,8 +73,7 @@ for value_name in CORES MEMORY DISK; do
   fi
 done
 
-# Image names must match tf/customimage/images.hcl file_name entries; CI
-# verifies this via scripts/check-image-refs.sh.
+# CI verifies these filenames against the Terraform image definitions.
 case "$IMAGE" in
   ubuntu24) FILE_ID="local:iso/ubuntu-24.04-custom.img" ;;
   ubuntu24-xrdp) FILE_ID="local:iso/ubuntu-24.04-xrdp.img" ;;
@@ -114,15 +113,13 @@ OUT_FILE="${OUT_DIR}/terragrunt.hcl"
 OUT_ENVRC="${OUT_DIR}/.envrc"
 OUT_GITIGNORE="${OUT_DIR}/.gitignore"
 
-# Reuse credentials saved by a previous run. Explicit non-empty environment
-# variables take precedence over values loaded from the local .envrc.
+# Reuse saved credentials; explicit environment values take precedence.
 if [[ -f "$OUT_ENVRC" ]]; then
   explicit_username="${TF_VM_USERNAME:-}"
   explicit_password="${TF_VM_PASSWORD:-}"
   explicit_ssh_public_key="${TF_VM_SSH_PUBLIC_KEY:-}"
 
-  # The generated file calls direnv's source_up. It is unnecessary while
-  # loading only this file's saved credentials in create-vm.sh.
+  # Ignore the generated direnv parent lookup while loading credentials.
   # shellcheck disable=SC2329
   source_up() { :; }
   # shellcheck disable=SC1090
@@ -218,8 +215,7 @@ else
   echo "Generated: tf/vm/${NODE}/${VM_NAME}/terragrunt.hcl"
 fi
 
-# Install the ignore rule before writing plaintext credentials so that an
-# interrupted run cannot leave a newly generated .envrc visible to Git.
+# Ignore .envrc before writing plaintext credentials.
 if [[ ! -f "$OUT_GITIGNORE" ]]; then
   printf '.envrc\n' > "$OUT_GITIGNORE"
   echo "Generated: tf/vm/${NODE}/${VM_NAME}/.gitignore"

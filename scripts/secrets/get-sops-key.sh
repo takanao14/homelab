@@ -5,8 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/../lib/openbao-auth.sh"
 
-# Retrieve the SOPS age private key from OpenBao into the local keys file.
-# Runs both locally and remotely (over ssh).
+# Write the OpenBao SOPS age key locally or over SSH.
 
 BAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
 export BAO_ADDR
