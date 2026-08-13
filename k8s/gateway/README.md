@@ -2,11 +2,8 @@
 
 Local Helm chart that creates shared Gateway API Gateway resources.
 
-Managed by ArgoCD. The `gateway` Application is rendered by the app-of-apps
-chart (`k8s/argocd/apps`) and enabled per environment in
-`k8s/argocd/<env>/apps-values.yaml`. Shared definitions live in this chart's
-`values.yaml`; per-environment differences (`domain`, and the HTTPS listener
-toggle for sandbox) live in `{env}/values.yaml`.
+App of Apps manages the chart. Shared definitions live in `values.yaml` and
+environment files set the domain and HTTPS toggle.
 
 ## Directory Structure
 
@@ -43,17 +40,13 @@ gatewayClassName: envoy-gateway
 | https | 443 | HTTPS | `wildcard-{domain-dashes}-tls` in `cert-manager` |
 | http | 80 | HTTP | — |
 
-The TLS secret is referenced cross-namespace via a `ReferenceGrant` created by
-the `cert-manager` chart. Listeners are toggled per environment via
-`gateway.listeners.{http,https}.enabled` (sandbox disables https).
+cert-manager grants cross-namespace TLS Secret access. Environment values toggle
+listeners; sandbox disables HTTPS.
 
 ### EnvoyProxy
 
-Envoy Gateway proxy settings are rendered from `envoyProxy` and attached to the
-Gateway through `gateway.infrastructure.parametersRef`. The generated Envoy
-proxy LoadBalancer Service uses `externalTrafficPolicy: Cluster`, avoiding
-Cilium L2 announcement problems when the VIP is advertised by a node that does
-not host the Envoy proxy pod.
+`gateway.infrastructure.parametersRef` attaches `envoyProxy`. Its LoadBalancer
+uses Cluster traffic policy to avoid Cilium L2 advertisement blackholes.
 
 ## Values
 
@@ -64,7 +57,7 @@ not host the Envoy proxy pod.
 | `envoyProxy` | EnvoyProxy definition for Envoy Gateway infrastructure settings. |
 | `gateway` | Gateway definition: name, namespace, class, infrastructure, and listener toggles. |
 
-`domain` has no default value and must be explicitly provided. It is used to construct the TLS secret name.
+`domain` is required and determines the TLS Secret name.
 
 > `butaco.net` is a personal domain. Replace it in `k8s/gateway/{env}/values.yaml`.
 
@@ -75,8 +68,7 @@ not host the Envoy proxy pod.
 - Gateway API CRDs are owned by the `envoy-gateway-crds` ArgoCD app
   (`k8s/envoy-gateway/crds`), which bundles the version matching the pinned
   Envoy Gateway chart (1.8.x → Gateway API v1.5.1 experimental).
-- Sandbox and prd HTTPRoutes reference `shared-gateway-envoy` after the
-  migration.
+- Both environments reference `shared-gateway-envoy`.
 - See
   [`ADR-0011`](../../docs/adr/0011-cilium-gateway-to-envoy-gateway-migration.md)
   for the migration decision and rejected alternatives.

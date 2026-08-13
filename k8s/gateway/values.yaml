@@ -1,5 +1,4 @@
-# Base domain for the environment (e.g. prd.butaco.net). No default — each
-# environment must set it; used to construct the wildcard TLS secret name.
+# Required environment domain used for the wildcard TLS secret.
 domain: ""
 
 gatewayClass:
@@ -14,9 +13,7 @@ envoyProxy:
       type: Kubernetes
       kubernetes:
         envoyService:
-          # Cilium L2 announcement can advertise the VIP from a node that does
-          # not host the Envoy proxy pod, so Local traffic policy would
-          # blackhole traffic.
+          # Cluster policy avoids blackholes when Cilium advertises from another node.
           externalTrafficPolicy: Cluster
 
 gateway:
