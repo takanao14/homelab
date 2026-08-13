@@ -1,8 +1,7 @@
 # Headlamp
 
-Kubernetes Web UI, deployed in-cluster for prd and sandbox. Each
-cluster runs its own Headlamp instance authenticated via ServiceAccount RBAC —
-no cross-cluster kubeconfig secrets. See the design change note below.
+In-cluster Kubernetes UI for each environment, authenticated by ServiceAccount
+RBAC without cross-cluster kubeconfig Secrets.
 
 ## Directory Structure
 
@@ -15,8 +14,7 @@ headlamp/
 └── sandbox/values.yaml   # hostname: headlamp.sandbox.butaco.net, http listener (ADR-0010)
 ```
 
-Deployed via the app-of-apps chart (`k8s/argocd/apps/templates/headlamp.yaml`);
-enable per environment in `k8s/argocd/<env>/apps-values.yaml`.
+App of Apps enables Headlamp per environment.
 
 ## Access
 
@@ -25,9 +23,7 @@ enable per environment in `k8s/argocd/<env>/apps-values.yaml`.
 
 ## Login Token (per cluster)
 
-The Helm chart creates a ServiceAccount `headlamp` with a `cluster-admin`
-binding. After ArgoCD syncs, create a long-lived token Secret for login on
-each cluster:
+The chart binds `headlamp` to `cluster-admin`. After sync, create its login token:
 
 ```bash
 kubectl apply -f - <<EOF
@@ -54,12 +50,7 @@ kubectl delete secret headlamp-token -n headlamp
 
 ## Design Note
 
-Headlamp originally ran only in prd, mounting ESO-synced kubeconfigs to show
-multiple clusters in one UI. It now runs in-cluster per cluster — no kubeconfig
-secrets, so a rebuilt cluster gets a working Headlamp from the app-of-apps
-bootstrap alone. See
+Headlamp moved from a prd multi-cluster kubeconfig design to per-cluster
+instances, allowing App of Apps alone to restore it. See
 [ADR-0015](../../docs/adr/0015-headlamp-per-cluster-in-cluster-deployment.md)
-for the rationale and rejected alternatives (including the addendum on the
-sandbox deployment). The OpenBao `kubeconfig/*` entries remain in use for
-workstation kubeconfig sync (`scripts/secrets/get-kubeconfig.sh`); Headlamp no
-longer reads them.
+for the rationale. OpenBao kubeconfigs remain workstation-only.

@@ -1,13 +1,7 @@
-# Common values for all environments. Headlamp runs in-cluster (upstream
-# chart default): ServiceAccount RBAC only, no kubeconfig secrets. Per-env
-# differences (hostname) live in k8s/headlamp/<env>/values.yaml.
+# In-cluster defaults; environment files set hostnames.
 headlamp:
   namespaceOverride: headlamp
-  # Resource reservations. Without requests this runs as BestEffort, invisible
-  # to the scheduler and first to be evicted under node memory pressure.
-  # Requests only, no limits — see "Resource Requests" in k8s/README.md.
-  # Sizing basis: 7-day observed usage, mean 57Mi and high-water 111Mi, p95 CPU
-  # 0.3m.
+  # Requests only (README): 7-day mean/peak 57/111 Mi, p95 CPU 0.3m.
   resources:
     requests:
       cpu: 10m
