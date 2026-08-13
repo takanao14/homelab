@@ -4,10 +4,6 @@ interfaceAlerts:
   ifDescr: GigaEthernet[0-9]+|GigabitEthernet[0-9]+
   # Ten 1m misses tolerate renegotiation/reboot while catching real link loss.
   downFor: 10m
-  # Every physical port held at exactly zero errors and zero discards for seven
-  # days, so any movement is new. 10/hour ignores a stray frame while catching a
-  # bad cable or a congested link, both of which produce a steady stream.
-  # Note this covers ifDescr above, i.e. physical ports only. bgw1's logical
-  # sub-interfaces are excluded and do carry growing out-errors; see the README.
+  # Seven-day physical-port baseline is zero; tolerate fewer than 10 stray frames/hour.
   errorsPerHour: 10
   errorsFor: 15m

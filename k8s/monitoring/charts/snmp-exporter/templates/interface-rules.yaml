@@ -28,8 +28,7 @@ spec:
               link. A port shut down on purpose does not reach this alert, so this
               is either a cable, the far end, or the port itself.
 
-        # Physical-layer faults: CRC, framing, duplex mismatch. Separate from
-        # discards because the response differs -- this one is the cable.
+        # Physical-layer faults such as CRC, framing, or duplex errors.
         - alert: NetworkInterfaceErrors
           expr: >-
             increase(ifInErrors{ifDescr=~"{{ .Values.interfaceAlerts.ifDescr }}"}[1h])
@@ -48,8 +47,7 @@ spec:
               a seven-day baseline of zero. Suspect the cable, the transceiver, or
               a duplex mismatch.
 
-        # Queue drops rather than corruption: congestion, or a policy dropping
-        # traffic on purpose. Same threshold, different thing to go and look at.
+        # Queue or policy drops, distinct from corrupted frames.
         - alert: NetworkInterfaceDiscards
           expr: >-
             increase(ifInDiscards{ifDescr=~"{{ .Values.interfaceAlerts.ifDescr }}"}[1h])
