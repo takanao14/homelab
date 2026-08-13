@@ -1,28 +1,21 @@
 external-secrets:
   installCRDs: true
 
-  # Resource reservations. Without requests these pods run as BestEffort and
-  # are evicted first under node memory pressure; losing ESO stops every
-  # ExternalSecret from syncing. Requests only, no limits — see "Resource
-  # Requests" in k8s/README.md. Sizing basis: 7-day observed usage,
-  # requests ~= mean x 1.2.
-  #
-  # Controller. Observed: mean 42Mi, peak 45Mi, p95 CPU 1.0m.
+  # Requests only (README), about 1.2x 7-day mean. Controller: 42/45 Mi, p95 1m.
   resources:
     requests:
       cpu: 25m
       memory: 64Mi
 
   webhook:
-    # Observed: mean 106Mi, peak 135Mi, p95 CPU 0.4m. The heaviest of the three
-    # despite the lowest CPU use; it holds the conversion/validation caches.
+    # Webhook: 106/135 Mi, p95 0.4m; includes conversion/validation caches.
     resources:
       requests:
         cpu: 10m
         memory: 128Mi
 
   certController:
-    # Observed: mean 79Mi, peak 124Mi, p95 CPU 0.9m.
+    # Cert controller: 79/124 Mi, p95 0.9m.
     resources:
       requests:
         cpu: 10m

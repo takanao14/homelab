@@ -1,6 +1,6 @@
 # eso — External Secrets Operator
 
-Deploys [External Secrets Operator](https://external-secrets.io/) (ESO) and configures a `ClusterSecretStore` backed by OpenBao. Managed by ArgoCD.
+Deploys ESO and an OpenBao-backed `ClusterSecretStore` through Argo CD.
 
 ## Directory Structure
 
@@ -31,11 +31,9 @@ eso/
 | `openbao.role` | `k8s-eso` | OpenBao Kubernetes auth role |
 | `openbao.mountPath` | `kubernetes` | Kubernetes auth mount path in OpenBao |
 
-The `mountPath` is overridden per environment in `{env}/values.yaml`, which the
-ArgoCD Application references via `valueFiles`.
+Each environment overrides `mountPath` through its Argo CD value file.
 
-After rebuilding a k0s cluster, re-register that cluster with OpenBao so ESO can
-authenticate with the new cluster CA. See
+After rebuilding a cluster, re-register its new CA with OpenBao. See
 [`ADR-0012`](../../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md)
 and the OpenBao registration runbook in `ansible/README.md`.
 
@@ -47,10 +45,7 @@ and the OpenBao registration runbook in `ansible/README.md`.
 
 ## Usage
 
-The ESO Application is rendered by the app-of-apps chart
-(`k8s/argocd/apps/templates/`) and enabled per environment in
-`k8s/argocd/<env>/apps-values.yaml` (ADR-0014). The generated Application
-sources this chart with the per-environment values override:
+App of Apps enables ESO per environment and passes its override (ADR-0014):
 
 ```yaml
 source:
