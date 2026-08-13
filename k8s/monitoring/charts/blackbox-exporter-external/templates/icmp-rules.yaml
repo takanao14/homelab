@@ -1,0 +1,39 @@
+{{- if .Values.icmpProbeAlerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: icmp-probe-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: icmp-probe-external
+      rules:
+        # Check each host directly; TargetDown's job ratio can hide one outage.
+        # AMT is a management path and is handled separately.
+        - alert: IcmpProbeFailed
+          expr: probe_success{job="scrapeConfig/monitoring/icmp-network-devices", instance!~".*-amt"} == 0
+          for: {{ .Values.icmpProbeAlerts.downFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ "{{ $labels.instance }}" }} is not answering ICMP"
+            description: >-
+              {{ "{{ $labels.instance }}" }} has stopped responding to ping. For a
+              hypervisor this takes its guests with it; for a network device it
+              takes everything behind it.
+
+        # Verify the recovery path, tolerating routine brief drops.
+        - alert: AmtUnreachable
+          expr: probe_success{job="scrapeConfig/monitoring/icmp-network-devices", instance=~".*-amt"} == 0
+          for: {{ .Values.icmpProbeAlerts.amtDownFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "Out-of-band management unreachable on {{ "{{ $labels.instance }}" }}"
+            description: >-
+              The AMT interface for {{ "{{ $labels.instance }}" }} is not
+              answering. The node itself may be fine, but the path used to power
+              cycle it remotely is not available.
+{{- end }}

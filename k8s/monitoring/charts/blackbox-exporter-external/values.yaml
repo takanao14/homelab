@@ -18,3 +18,10 @@ dnsProbeAlerts:
   # Short: this is the client-visible symptom, and the probe runs every
   # scrapeInterval against two independent frontends.
   failedFor: 2m
+
+icmpProbeAlerts:
+  enabled: false
+  # Ignore minute-scale blips; sustained outages exceeded this threshold.
+  downFor: 10m
+  # AMT is a recovery path; tolerate routine brief drops.
+  amtDownFor: 1h
