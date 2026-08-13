@@ -1,7 +1,6 @@
 # ExternalDNS
 
-Automatically registers DNS records in PowerDNS from Kubernetes HTTPRoute
-resources. Managed by ArgoCD, with the PowerDNS API key supplied by ESO.
+Registers PowerDNS records from HTTPRoutes; ESO supplies the API key.
 
 ## Directory Structure
 
@@ -30,15 +29,14 @@ externalDNS/
 | `pdns.apiKey` | OpenBao via ESO | PowerDNS API key materialized as a Kubernetes Secret |
 | `domainFilter` | `{env}/values.yaml` | Target domain filter |
 
-Source is set to `gateway-httproute`, so DNS records are created automatically
-when HTTPRoute resources are applied. Each environment uses a distinct TXT
-owner ID.
+The `gateway-httproute` source creates records automatically. Environments use
+distinct TXT owner IDs.
 
 > `butaco.net` is a personal domain. Replace it in each environment values file.
 
 ## Secrets
 
-The PowerDNS API key is fetched from OpenBao via ESO. It is not stored in this repository.
+ESO fetches the PowerDNS API key from OpenBao; plaintext is never committed.
 
 OpenBao KV path: `k8s/external-dns/pdns`
 
@@ -46,13 +44,13 @@ OpenBao KV path: `k8s/external-dns/pdns`
 |----------|-------------|
 | `api-key` | PowerDNS HTTP API key |
 
-To seed the secret into OpenBao:
+Seed it through the encrypted Ansible `openbao_secrets` list:
 
 ```bash
-bao kv put secret/k8s/external-dns/pdns api-key=<key>
+ansible-playbook ansible/playbooks/ops-openbao_seed_secrets.yaml
 ```
 
 ## Notes
 
-- RBAC includes `gateway.networking.k8s.io` group and `namespaces` resource, required for `gateway-httproute` source
-- Deployment has a checksum annotation on the Secret so it restarts automatically when credentials change
+- RBAC includes Gateway API and namespace access required by the source.
+- A Secret checksum restarts the Deployment after credential changes.
