@@ -9,34 +9,22 @@
 
 ## Context
 
-Argo CD originally rendered charts whose values files were SOPS-encrypted, using
-the **helm-secrets** plugin to decrypt them at render time. This kept the
-existing SOPS + AGE workflow (already used by Ansible and Terragrunt) as the
-single mechanism for every secret in the repo.
+Argo CD originally used **helm-secrets** to decrypt SOPS values during chart
+rendering, extending the Ansible and Terragrunt SOPS + AGE workflow to Kubernetes.
 
-Argo CD does not ship helm-secrets. Making the plugin available to the
-repo-server requires either **injecting the tooling into the container at
-startup** or **maintaining a custom image / CMP sidecar**. Both were implemented
-here, and both were abandoned (see *What was actually tried* below).
+Argo CD does not ship helm-secrets. We tried both startup injection and a custom
+CMP sidecar image, then abandoned both (see *What was actually tried*).
 
-The recurring problems were the same in either shape:
+Both approaches had the same problems:
 
-- **The rendering toolchain became part of the platform's build surface.**
-  Argo CD upgrades had to be validated against the injection script or the
-  custom image, not just against Argo CD.
-- **Failures surfaced as render-time errors inside the repo-server**, far from
-  the application being deployed. Diagnosing "why did this app fail to sync"
-  meant reading repo-server logs and reproducing plugin behaviour rather than
-  looking at the workload. The debugging loop was slow and the failure mode was
-  unintuitive.
-- **The workarounds were brittle**, depending on the internal file layout of an
-  upstream plugin rather than on a supported interface.
+- Argo CD upgrades also required validating the injection or custom image.
+- Failures appeared as remote repo-server render errors rather than workload status.
+- Startup injection depended on the plugin's internal file layout.
 - The AGE key had to be present in the repo-server, widening where the master
   decryption key lives.
 
-Meanwhile External Secrets Operator (ESO) was already deployed and registered
-against OpenBao (ADR-0012), covering the same requirement through a different
-mechanism — and doing so **outside** the rendering path.
+ESO was already registered with OpenBao (ADR-0012) and resolves secrets outside
+the rendering path.
 
 ## Decision
 
@@ -67,11 +55,9 @@ repo-server**. ESO moves it to **runtime, inside a controller of its own**:
 | **What must be installed in Argo CD** | sops / age / helm-secrets | nothing |
 | **Where the AGE key must exist** | in the repo-server | not in the cluster at all |
 
-Because the rendered manifests are ordinary YAML, Argo CD needs no extra
-tooling, and a failure to obtain a secret is visible **on the resource that
-needs it** — `kubectl describe externalsecret` — instead of in the logs of a
-shared component. Authentication uses the ESO ServiceAccount via Kubernetes
-auth, so no long-lived credential is stored in the repo either (ADR-0012).
+Argo CD therefore renders ordinary YAML. Secret failures appear on the
+`ExternalSecret` resource, and Kubernetes auth avoids repository credentials
+(ADR-0012).
 
 ## What was actually tried
 
@@ -89,10 +75,8 @@ apk add --no-cache curl bash
 sed -i '/^command:/d' /custom-tools/helm-plugins/helm-secrets/plugin.yaml
 ```
 
-That one line went through **five iterations in a single day** (2026-04-03),
-cycling between `sed`, `awk`, and an inline `python3` script — each attempt
-requiring a pod restart to find out whether rendering worked. The dependency was
-not on a documented interface but on the **line layout of an upstream file**.
+That patch went through five iterations on 2026-04-03, each requiring a pod
+restart. It depended on upstream file layout rather than a documented interface.
 
 ### 2. CMP sidecar with a purpose-built image (abandoned)
 
@@ -107,12 +91,8 @@ USER 999
 ENTRYPOINT ["/usr/local/bin/argocd-cmp-server"]
 ```
 
-This is the supported extension point and removed the startup patching, but it
-**pinned two upstream versions together** — the helmfile base image and the
-`argocd-cmp-server` binary copied out of a specific Argo CD release. Every Argo
-CD upgrade meant rebuilding and revalidating the image, and the CI workflow
-itself needed its own iterations. The maintenance cost simply moved from pod
-startup to the release pipeline.
+This removed startup patching but coupled the helmfile base image to a specific
+Argo CD binary. Every Argo CD upgrade required rebuilding and validating the image.
 
 ### 3. Removal (2026-05-03 → 2026-05-05)
 
@@ -148,9 +128,5 @@ finally the CMP image and its build workflow were deleted.
   in-cluster consumers use ESO; operator-run tooling (Ansible, Terragrunt) uses
   SOPS + AGE. New secrets should follow that boundary rather than reintroducing
   encrypted values files under `k8s/`.
-- **Do not re-litigate this with a new plugin mechanism.** Both the injection and
-  the CMP-sidecar shapes were built and run here; the cost was not in choosing
-  between them but in *having decryption inside the rendering path at all*. A
-  future proposal to put tooling back into the repo-server should supersede this
-  ADR explicitly, with an argument for why the debugging and upgrade cost is
-  different this time.
+- Reintroducing repo-server decryption requires an explicit superseding ADR that
+  addresses the observed debugging and upgrade costs.

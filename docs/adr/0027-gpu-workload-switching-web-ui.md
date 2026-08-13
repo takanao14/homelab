@@ -23,8 +23,7 @@ deployment to 0 and then the selected one to 1. It requires a kubeconfig, a
 checkout of this repository, and a shell — so the switch cannot be made from a
 phone or from a machine that is not set up as an operator workstation.
 
-The groundwork for driving this from anywhere already exists and was built for
-other reasons:
+Existing controls already support remote switching:
 
 - Every GPU workload's `Deployment`, `PersistentVolumeClaim`, and `HTTPRoute`
   carries `homelab/gpu-switchable: "true"`.
@@ -37,9 +36,8 @@ other reasons:
   that label to report a scaled-to-zero workload — and its unbound PVC and
   backend-less HTTPRoute — as `Healthy` rather than `Degraded`.
 
-What is missing is a UI and, more importantly, somewhere for the **exclusivity
-rule** to live. `gpu-switch.sh` enforces it by construction; a UI that merely
-exposes "scale this deployment" does not.
+The missing pieces are a UI and a server-side exclusivity rule equivalent to
+`gpu-switch.sh`.
 
 ## Decision
 
@@ -62,13 +60,9 @@ Four properties define the decision:
 1. **The exclusivity rule lives server-side.** `POST /api/switch` performs the
    whole "all down, then one up" sequence. The browser chooses a target, never a
    replica count, so the invariant cannot be violated by a partial interaction.
-2. **The application is a real container image, built from source in this
-   project and published to a registry** — not code injected into a stock image
-   at runtime — and it is built from **its own source and nothing else**: no
-   Kubernetes client library, no frontend framework, no build step for the
-   browser assets. The source lives in this repository at
-   `k8s/gpu-switch/app/`, and CI publishes an immutable version tag to
-   `ghcr.io`. See *Backend*, *Frontend*, and *Building the image* below.
+2. **Build the project-owned source as a container image.** Source lives at
+   `k8s/gpu-switch/app/`; CI publishes immutable tags to `ghcr.io`. It uses no
+   Kubernetes client library, frontend framework, or browser build step.
 3. **Write access is scoped to the four workloads.** The ServiceAccount gets
    cluster-wide `list` on `deployments` — needed to discover them by label — and
    `patch` on `deployments/scale` only through per-namespace `Role`s with
@@ -78,36 +72,19 @@ Four properties define the decision:
    ADR-0009 established for the Longhorn UI. The htpasswd value must be `{SHA}`
    format.
 
-The implementation language is **Go**, chosen for the artifact it produces
-rather than for how the code reads: a static binary runs on
-`distroless/static`, which has no OS package layer and therefore no stream of
-base-image CVEs to rebuild against on an application that is otherwise finished.
-That matters more here than usual because this process holds credentials that
-can scale cluster workloads. Go is also already a first-class language in this
-project — [`k8s/monitoring/dashboards`](../../k8s/monitoring/dashboards/) is a Go
-module with its own CI job — so nothing new enters the toolchain.
-
-The language is the least consequential part of this section. The commitments
-that actually constrain the design are the two dependency rules below.
+Use **Go** for a static binary on `distroless/static`, minimizing the runtime
+surface of a credentialed process. Go already exists in the project toolchain.
 
 ### Why a backend at all, and not an nginx-only proxy
 
 [`k8s/pdns-ui`](../../k8s/pdns-ui/README.md) needs no application code: nginx
 proxies to PowerDNS and injects a static API key. That shape does not work here.
 
-The ordering requirement is the first reason: "scale all to 0, then scale one to
-1" is a sequence of API calls with a dependency between them, which a reverse
-proxy cannot express. Pushing it into client-side JavaScript would put the
-invariant back in the browser, where a closed tab mid-sequence leaves the GPU
-claimed by nothing or by two workloads.
+The required "scale all to 0, then one to 1" sequence cannot be expressed by a
+proxy and must not depend on a browser completing multiple calls.
 
-The credential is the second. The projected ServiceAccount token rotates roughly
-hourly, and nginx reads its configuration once at startup — so a proxy-only
-design would need a long-lived token `Secret` created out of band (the manual
-step ADR-0015 documents for Headlamp login) and would then hold a non-expiring
-credential in the cluster. A process that reads
-`/var/run/secrets/kubernetes.io/serviceaccount/token` per request gets rotation
-for free.
+A backend can also read the rotating projected ServiceAccount token per request;
+nginx configuration would otherwise require a long-lived token Secret.
 
 ### Backend: the Kubernetes API over the standard library, not a client library
 
@@ -120,12 +97,8 @@ PATCH /apis/apps/v1/namespaces/{ns}/deployments/{name}/scale
       Content-Type: application/merge-patch+json     {"spec":{"replicas":N}}
 ```
 
-`client-go` would pull in a large dependency tree and, more importantly, **couple
-this artifact to Kubernetes minor versions** — so upgrading k0s would create
-pressure to rebuild and revalidate an application that has not changed. That is
-the ADR-0026 failure mode in miniature: an image whose maintenance is driven by
-another product's release cadence. Against two requests, the library buys
-nothing that justifies it. The `go.mod` should have no `require` block at all.
+For two requests, `client-go` adds an unjustified dependency tree and Kubernetes
+version coupling. `go.mod` therefore has no `require` block.
 
 Credentials come from `/var/run/secrets/kubernetes.io/serviceaccount/{token,ca.crt}`
 and are re-read rather than cached for the process lifetime — this is the token
@@ -167,12 +140,8 @@ The page is one `index.html` with inline CSS and plain JavaScript, embedded in
 the binary with `embed.FS`. There is no npm, no bundler, and no second build
 stage.
 
-The requirement is four tiles, a state readout, and a poll loop. A framework
-would add a dependency stream to be tracked and rebuilt forever, against a page
-that will not grow. It would also break a property
-[`k8s/pdns-ui`](../../k8s/pdns-ui/README.md) established and documented
-deliberately: no external scripts, styles, or fonts. A LAN troubleshooting tool
-should not need the internet to render.
+Four tiles, state, and polling do not justify a framework. The page uses no
+external scripts, styles, or fonts and renders without internet access.
 
 The interaction rules that follow from what this actually does:
 
@@ -195,33 +164,15 @@ for a cosmetic feature.
 
 ### Building the image
 
-No container image is built **from this repository** today, and that is not an
-accident: ADR-0026 removed a CMP image and its GitHub Actions workflow. That
-decision must not be quietly reversed here, so the distinction is stated
-explicitly.
+ADR-0026 removed a CMP image from this repository. This image differs because it
+packages project-owned application source rather than another product's tooling.
 
-The homelab does build one image, elsewhere: `comfyui-docker`, in a Forgejo
-repository on the LAN, built by Forgejo Actions on the self-hosted runner from
-[`ansible/roles/forgejo_runner`](../../ansible/roles/forgejo_runner/README.md)
-and published to the LAN registry as
-`forgejo.home.butaco.net/takanao/comfyui-docker:latest`. That placement was
-forced by size, not chosen as policy: the image bakes PyTorch ROCm wheels and
-runs to tens of gigabytes, which does not fit in the ~14 GB of free disk on a
-GitHub-hosted runner — hence a self-hosted runner with a 20 GB BuildKit cache.
-The constraint does not generalise, and in particular does not reach a Go binary
-on `distroless/static`.
+`comfyui-docker` remains in Forgejo because its multi-gigabyte ROCm build needs a
+self-hosted runner. That capacity constraint does not apply to this small Go image.
 
-The image ADR-0026 abandoned was a **derivative of another product's release
-artifacts** — a helmfile base image with the `argocd-cmp-server` binary copied
-out of a pinned Argo CD release. Its cost was structural: every Argo CD upgrade
-required rebuilding and revalidating the image, because the image existed only to
-extend a component the project did not own.
-
-The image here is **our own application**. Its only upstream coupling is a base
-image tag, which is exactly the kind of dependency Renovate already bumps across
-this repository. Nothing about upgrading Argo CD, Envoy Gateway, or k0s requires
-rebuilding it. ADR-0026's prohibition — do not put tooling inside the Argo CD
-rendering path — is untouched by this decision.
+Its only upstream coupling is a Renovate-managed base image. Argo CD, Envoy
+Gateway, and k0s upgrades do not require rebuilding it, and it does not enter
+Argo CD's rendering path.
 
 Shipping the code in a `ConfigMap` on a stock interpreter image, as `pdns-ui`
 does with its vendored `index.html`, was considered and rejected; see
@@ -251,54 +202,22 @@ Concretely:
   [`notify-workflow-failure.yaml`](../../.github/workflows/notify-workflow-failure.yaml),
   or its failures are silent.
 
-This preserves the property ADR-0006 valued when it routed Packer output through
-S3: **build and deploy stay decoupled.** Publishing an image does not touch the
-cluster; the cluster references a published, checksummed artifact.
+Build and deploy remain decoupled: publishing does not change the cluster.
 
 #### The source lives in this repository, at `k8s/gpu-switch/app/`
 
-The deciding factor is **supply-chain visibility for a credentialed
-application**, not developer convenience.
+The source stays here for supply-chain visibility.
 
-Renovate reaches a dependency only where it can see it. With the `Dockerfile` in
-this repository, the `FROM golang:…` and `FROM …/distroless/static` lines are
-tracked by the dockerfile manager and arrive as ordinary bump PRs, and the
-published tag in `values.yaml` is tracked by the docker datasource. In a Forgejo
-repository neither is visible: `renovate.json` disables the LAN registry outright
-("unreachable from Mend cloud"), and Mend never sees a repository that is not on
-GitHub at all.
+Here Renovate sees both `Dockerfile` base images and the deployed tag. It cannot
+see the Forgejo repository or LAN registry, which would make updates manual.
 
-Having argued above that a minimal base image matters *because this process holds
-credentials that can scale cluster workloads*, it would be incoherent to then put
-that base image where nobody is told it needs updating. `comfyui-docker` already
-lives with exactly this — its README instructs a human to edit the PyTorch
-`--index-url` by hand — which is tolerable for an image whose GPU-driver skew a
-human must judge anyway, and not tolerable as the general case.
+Compared with a separate GitHub repository:
 
-Between this repository and a separate GitHub repository, the difference is
-smaller than it first appears:
+- Immutable tags already require merge, publish, then values bump in either layout.
+- A separate repository duplicates Renovate, notifications, lint, and automerge setup.
+- `k8s/monitoring/dashboards` already establishes an in-tree Go module convention.
 
-- **Atomic review of chart + app is not available either way.** With immutable
-  version tags the chart cannot reference a tag that does not yet exist, so the
-  sequence is always: merge the app change, cut a tag, let CI publish, then bump
-  `values.yaml`. Two steps in one repo or two steps across two — same shape.
-- **A separate repository duplicates operational setup**, if not code: its own
-  Renovate onboarding, its own Discord webhook secret for the
-  `notify-workflow-failure` convention, its own lint workflows and automerge
-  rules. That is the same class of harm ADR-0006 cited when it folded the Packer
-  repo in — there it was Terragrunt structure and SOPS, here it is CI
-  convention — even though the code itself would not be duplicated.
-- **The directory convention already exists.**
-  [`k8s/monitoring/dashboards`](../../k8s/monitoring/dashboards/) is a Go module
-  with its own `go.mod`, `Makefile`, and CI job, sitting inside the `k8s/` tree
-  beside what it serves. `k8s/gpu-switch/app/` matches it. The objection that
-  the dashboards module generates build-time artifacts while this one is a
-  runtime service is real but thin: both are Go modules this repository's CI
-  builds.
-
-The choice is also **cheap to reverse** — moving the source out later is a
-`git filter-repo` and a registry name change in one values file. A decision that
-is cheap to undo should start from the simpler arrangement.
+Moving the source later remains cheap, so start with the simpler layout.
 
 Two Renovate details follow from this and constrain the implementation:
 
@@ -311,9 +230,8 @@ Two Renovate details follow from this and constrain the implementation:
 
 ### The label is the source of truth
 
-`gpu-switch.sh` currently hardcodes the namespace/deployment pairs. Introducing a
-second list in the chart would create two places to update when a GPU workload is
-added or removed.
+`gpu-switch.sh` currently hardcodes namespace/deployment pairs, which would
+duplicate a chart list.
 
 Since `homelab/gpu-switchable` is already present on every GPU workload and is
 already load-bearing for Argo CD health, **discovery moves to the label on both
@@ -329,9 +247,7 @@ write, not a silently broken invariant.
 
 ### The CLI stays
 
-`gpu-switch.sh` is not replaced. It is the path that works when the Gateway,
-ESO, or the UI itself is broken, and it is what an operator already at a
-terminal will reach for.
+Keep `gpu-switch.sh` as the terminal and recovery path when the UI stack is down.
 
 Its `status` subcommand reports the same three states as `GET /api/state`
 (`running` / `starting` / `stopped`), from the same label query. The two
@@ -341,98 +257,37 @@ deliberately cannot.
 
 ## Alternatives considered
 
-- **Ship the application in a `ConfigMap` on a stock interpreter image**, as
-  `pdns-ui` ships its vendored `index.html` — avoids reintroducing an image
-  build entirely, which is why it was the first candidate. Rejected because the
-  `pdns-ui` precedent does not transfer: that `ConfigMap` holds a *vendored
-  third-party artifact* that is never edited here, pinned by SHA256 and checked
-  by the `vendor-sync` job. Code that is actually developed in this project wants
-  what a build gives it — dependency resolution, a compile or lint step that runs
-  before deploy, and a reviewable diff that is not a YAML string blob. It would
-  also silently constrain the language choice to whatever runtime the base image
-  happens to carry. *Rejected.*
-- **Build in Forgejo and publish to the LAN registry**, as `comfyui-docker`
-  does — the existing practice in this homelab, reusing a runner and registry
-  that already exist and adding no public supply-chain surface. Rejected because
-  Renovate can see neither the `Dockerfile` nor the published tag there, leaving
-  the base image of a credentialed application on manual watch, and because
-  the LAN registry's untracked images end up on `:latest`, which puts the
-  deployed version outside Git and makes rollback something other than a values
-  change. The precedent does not carry: `comfyui-docker` is in Forgejo because a
-  tens-of-gigabytes ROCm image cannot be built on a GitHub-hosted runner, a
-  constraint absent for a ~20 MB Go image. *Rejected.*
-- **A separate GitHub application repository** — enforces the
-  infrastructure/application boundary rather than leaving it to convention, and
-  would keep this repository free of a runtime artifact. Rejected because the
-  boundary buys little here (the release sequence is identical either way) while
-  the second repository duplicates Renovate onboarding, notification secrets,
-  and lint conventions. *Rejected, cheaply reversible if this repository turns
-  out to be the wrong home.*
-- **Use `client-go` for the Kubernetes calls** — the obvious choice, and the one
-  that would need no defending in most projects. It brings typed objects,
-  retries, and informers. But this app issues two requests and needs none of
-  that, while the library's version skew policy would tie the image's rebuild
-  cadence to Kubernetes upgrades. *Rejected*, and worth re-examining only if the
-  app ever needs to watch resources rather than poll them.
-- **A framework-based frontend (React/Vite or similar)** — better ergonomics if
-  the UI grows. It will not grow: the feature is four buttons and a status line,
-  bounded by the number of GPU workloads. The cost is a bundler stage in the
-  image build and a permanent JavaScript dependency stream. *Rejected.*
-- **Use the existing Headlamp UI as-is** (scale each `Deployment` by hand from
-  `headlamp.prd.butaco.net`) — costs nothing and works today, so it remains the
-  fallback until this is built. But it is four manual operations with no
-  exclusivity guarantee, and Headlamp's login is a `cluster-admin` token: a
-  routine daily action would be performed with unrestricted cluster credentials.
-  *Rejected as the primary interface.*
-- **A Headlamp plugin providing a GPU Switch page** — the best UX, and it reuses
-  a deployed component. Now that an image build is accepted, its packaging cost
-  is no longer disqualifying on its own; what remains is that the plugin is
-  coupled to Headlamp's plugin API and must be revalidated on Headlamp upgrades —
-  precisely the failure mode ADR-0026 recorded — and that it inherits Headlamp's
-  `cluster-admin` session rather than the scoped ServiceAccount above.
-  *Rejected.*
-- **A button on the Homepage dashboard** — Homepage is a read-only dashboard; its
-  `customapi` widget issues GET requests for display and cannot perform an
-  action. Not technically possible on its own. Homepage remains useful as the
-  link to the new UI and, via `customapi` against `/api/state`, as a place to
-  show which workload currently holds the GPU. *Rejected as the mechanism,
-  retained as a surface.*
-- **An Argo CD custom resource action or Application parameter override** — Argo
-  CD actions operate on a single resource, so "start this one and stop the other
-  three" cannot be expressed; and driving replicas through Argo CD contradicts
-  the `ignoreDifferences` decision that deliberately removed replica count from
-  GitOps ownership. *Rejected.*
-- **A ConfigMap or CRD holding the desired workload, reconciled by a controller**
-  — the most Kubernetes-native shape, and it would let the switch be made by
-  editing one object in Headlamp. But it requires writing and operating a
-  controller for a four-value enum, and the editing experience (typing a name
-  into a YAML field) is worse than a page with four buttons. *Rejected as
-  disproportionate.*
+- **Application source in a `ConfigMap` on a stock interpreter.** Unlike
+  `pdns-ui`'s pinned vendor artifact, project-owned code benefits from compile,
+  lint, and normal source diffs. *Rejected.*
+- **Build in Forgejo and publish to the LAN registry.** Renovate cannot see the
+  source or tag there, and the small image needs no self-hosted runner. *Rejected.*
+- **A separate GitHub repository.** The release sequence is unchanged, while
+  Renovate, notification, and lint setup are duplicated. *Rejected; reversible.*
+- **Use `client-go`.** Two requests do not justify its dependency tree and
+  Kubernetes version coupling. Reconsider if polling becomes watching. *Rejected.*
+- **A frontend framework.** Four buttons and status do not justify a bundler or
+  JavaScript dependency stream. *Rejected.*
+- **Use Headlamp as-is.** It requires four unrestricted `cluster-admin` actions
+  and does not enforce exclusivity. *Rejected as the primary interface.*
+- **A Headlamp plugin.** It couples upgrades to Headlamp's plugin API and
+  inherits its `cluster-admin` session. *Rejected.*
+- **A Homepage button.** Homepage is read-only; retain it only as a link/status
+  surface. *Rejected as the mechanism.*
+- **An Argo CD action or parameter override.** Actions cannot atomically switch
+  multiple resources, and replicas are intentionally outside GitOps. *Rejected.*
+- **A desired-workload ConfigMap/CRD and controller.** Operating a controller
+  for a four-value choice is disproportionate. *Rejected.*
 
 ## Consequences
 
-- A UI that can stop and start workloads becomes reachable from the LAN. Basic
-  Auth at the Gateway is what stands between the network and the GPU workloads,
-  so the `SecurityPolicy` is not optional and the route must never be exposed
-  without it. Basic Auth was judged sufficient for this threat model — a
-  LAN-reachable, single-operator homelab — matching ADR-0009 rather than
-  introducing a second authentication mechanism.
-- **This project resumes publishing a container image**, roughly three months
-  after ADR-0026 removed the last one. The build must stay a build of our own
-  source with an upstream base image and nothing else; an image that repackages
-  another product's release artifacts is what ADR-0026 rejected, and that
-  boundary should be defended in review.
-- **The homelab now has two image build paths, and the split needs a stated
-  criterion or it will be decided by whoever goes first.** Large images that
-  cannot be built on a hosted runner — GPU/ROCm workloads like `comfyui-docker` —
-  belong in Forgejo on the self-hosted runner. Small images belong in GitHub
-  Actions publishing to `ghcr.io`, where Renovate can see the base image. Size
-  and runner capacity are the criterion; convenience is not.
-- **The no-dependency rule is the thing to hold in review**, not the language.
-  A `require` line in `go.mod` or a `package.json` appearing later is not a
-  detail — it reintroduces exactly the rebuild-and-revalidate cost this ADR and
-  ADR-0026 were both written to avoid. Adding one should be an explicit decision
-  with a reason, not a convenience taken during implementation.
+- The LAN-reachable route requires Gateway `SecurityPolicy`; Basic Auth matches
+  the single-operator threat model from ADR-0009.
+- The project resumes publishing an image, limited to project-owned source and
+  upstream base images; repackaging product artifacts remains out of scope.
+- Large GPU images use Forgejo/self-hosted runners; small Renovate-visible images
+  use GitHub Actions and `ghcr.io`.
+- New Go or frontend dependencies require explicit justification in review.
 - The UI cannot restart the workload that is already running, because its tile is
   inert by design. `./gpu-switch.sh <name>` remains the way to do that — one more
   reason the CLI is not redundant.

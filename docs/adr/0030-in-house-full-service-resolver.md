@@ -34,27 +34,17 @@ Measurements made while evaluating this decision found:
   CoreDNS' fallthrough actually forwards pod-address reverse lookups here has
   not been confirmed.
 
-Moving recursion in-house avoids disclosing the complete query stream to a
-small set of public resolvers and makes DNSSEC enforcement deterministic. It
-also moves RFC 6303 handling into a recursive resolver rather than a load
-balancer — but on the measurement above that last point is a tidiness argument,
-not a leak being closed. It should not carry weight on its own.
+In-house recursion reduces third-party query disclosure and makes DNSSEC
+enforcement deterministic. Moving RFC 6303 handling out of dnsdist is cleaner,
+but measurements show no current leak, so it is not a primary driver.
 
-The resolver is security-sensitive DNS infrastructure. Selection therefore
-cannot be based on the convenience of an OS package alone. Distribution
-packages may backport known CVEs while remaining several upstream release
-trains behind, omitting correctness fixes, hardening and changed defaults that
-DNS operators expect to deploy. The resolver must follow an upstream-supported
-stable release train through a signed, automatable package channel.
+The security-sensitive resolver must follow an upstream-supported stable train
+through a signed, automatable package channel; distribution CVE backports alone
+do not provide current correctness and hardening changes.
 
-The resolver and dnsdist are also separate services with different
-responsibilities and lifecycles. dnsdist owns the client-facing address, ACLs,
-internal-zone routing, dnstap and backend health; the resolver owns iterative
-resolution, DNSSEC validation and a persistent cache. Co-locating them would
-put the CZ.NIC package trust, cache memory, filesystem and service failures in
-the same LXC as dnsdist's credentials and internal DNS routing. Vector,
-journald and node_exporter are fleet infrastructure and may remain co-located,
-but application services should otherwise have a single clear purpose.
+dnsdist owns client routing, ACLs, dnstap and backend health; the resolver owns
+recursion, DNSSEC and cache. Separate LXCs isolate their package trust, state,
+memory and failures. Fleet logging and monitoring agents remain co-located.
 
 ## Decision drivers
 
@@ -88,35 +78,22 @@ default unix socket and is never bound to a LAN address. Resolver addresses are
 backend infrastructure: do not publish them through DHCP or use them directly
 as client resolvers.
 
-Both dist hosts place resolver1 and resolver2 in the default pool. Use dnsdist's
-`firstAvailable` policy with per-frontend ordering: dist1 prefers resolver1 and
-uses resolver2 as standby; dist2 prefers resolver2 and uses resolver1 as standby. Health checks
-remove an unavailable resolver from selection, so a resolver-only outage fails
-over inside dnsdist rather than waiting for a client stub timeout. Keep
-`setServFailWhenNoServer` unset. If neither resolver is reachable, dnsdist must
-drop the query rather than return SERVFAIL; this still permits a client to try
-the other frontend when the failure is an asymmetric network or dnsdist-host
-failure.
+Both frontends use both resolvers with `firstAvailable`: dist1 prefers resolver1
+and dist2 prefers resolver2. Health checks fail over internally. Keep
+`setServFailWhenNoServer` unset so an empty pool drops queries, allowing clients
+to try the other frontend during asymmetric failures.
 
 As of this decision, Knot Resolver 6.4.1 is the preferred stable upstream
 release. The major-specific package name follows compatible 6.x minor and patch
 updates without silently crossing to a future major version. A move to Knot
 Resolver 7 requires a separate compatibility review.
 
-Use the default 100 MB persistent file-backed cache initially. It is explicitly
-sized for personal and small-office deployments. Start each resolver LXC with a
-1 GB memory limit. Package updates have produced OOM failures in otherwise
-comparable 512 MB guests, so 512 MB does not provide sufficient operational
-headroom for package management alongside Knot Resolver, Vector and
-node_exporter. Do not increase the cache until cgroup memory, cache use and hit
-rate show a reason to do so.
+Start with the 100 MB persistent cache and a 1 GB LXC limit. Comparable 512 MB
+guests OOMed during package updates. Increase cache only from cgroup, cache and
+hit-rate measurements. The addendum records the later increase to 256 MB.
 
-dnsdist remains the client-facing service on port 53 and retains client ACLs,
-name-based internal routing, backend health checks and dnstap logging. Knot
-Resolver receives only external recursive queries from the two dnsdist
-frontends. Internal zones remain routed directly to the pdns secondaries;
-duplicating them as resolver forwarding policy would create two sources of
-routing truth.
+dnsdist remains client-facing and routes internal zones directly to pdns. Knot
+Resolver receives only external recursive queries, avoiding duplicate routing truth.
 
 Create the guests as independent host-bound Terraform stacks:
 `tf/lxc/node2/resolver` for resolver1 and `tf/lxc/node3/resolver` for resolver2.
@@ -125,24 +102,14 @@ output out of the existing stacks that manage dist and authoritative DNS
 guests. Provision each guest with only Knot Resolver plus the standard
 timezone, node_exporter and LXC logging baseline.
 
-Enable Knot Resolver's DNSSEC bogus logging and Prometheus metrics. Knot
-Resolver 6 serves `/metrics/prometheus` from the management HTTP API, which has
-no authentication or authorization of any kind and can reconfigure the resolver
-at runtime; there is no separate metrics listener that could be exposed on its
-own. Keep the management API on its default unix socket in the resolver rundir
-and do not bind it to a LAN address. Bridge the metrics instead: export
-`kresctl metrics` periodically into the node_exporter textfile collector
-directory (`/var/lib/node_exporter/textfile_collector`), using the same atomic
-write-and-rename pattern as the existing rpi_throttled exporter. node_exporter
-then carries the resolver metrics over its own scrape, adding no LAN-reachable
-listener beyond one that is already a standard part of the fleet.
+Enable DNSSEC bogus logging and Prometheus metrics. Because the unauthenticated
+management API can reconfigure the resolver, keep it on its unix socket. Export
+metrics atomically to node_exporter's textfile directory instead of opening a
+LAN listener.
 
-This requires adding resolver1 and resolver2 to the `node_exporter_lxc`
-inventory group and to the external node_exporter scrape targets. Proxmox OTLP
-does not expose in-guest filesystem and memory use, while the resolver's
-persistent mmap-backed cache must be measured against the guest cgroup. Note also that
-`/metrics/prometheus` returns 404 unless the `prometheus-client` Python package
-is installed.
+Add both guests to `node_exporter_lxc` and external scrape targets. Proxmox OTLP
+does not expose the needed guest filesystem/cgroup data. Metrics also require
+the `prometheus-client` package.
 
 ## Product evaluation
 
@@ -153,21 +120,15 @@ is installed.
 | Unbound current stable | Signed upstream source release, but no NLnet Labs Ubuntu package repository for Unbound | Small default caches | Enforcing validation and failure logs, but no native Prometheus | Rejected: a local source-build and upgrade pipeline would be required |
 | Ubuntu Noble Unbound | Ubuntu `main`, maintained 1.19.2 branch | Small default caches | Ubuntu backports CVEs; no native Prometheus | Rejected: not the current upstream-supported release train |
 
-Knot Resolver's lack of a global equivalent to Unbound's
-`val-permissive-mode` is intentional here: permissive validation returns bogus
-data and conflicts with the requirement to enforce DNSSEC from the first
-production query.
+Knot Resolver's lack of global permissive validation matches the requirement to
+reject bogus data from the first production query.
 
-PowerDNS Recursor remains the fallback if Knot Resolver fails its canary. It
-has a suitable upstream package channel and observability, and its cache limits
-can be reduced to fit. Sharing a vendor with dnsdist is useful but not enough
-to outweigh Knot Resolver's naturally bounded cache and persistent-cache
-behaviour at this query volume.
+PowerDNS Recursor remains the canary fallback, but requires more explicit cache
+sizing than Knot Resolver.
 
 ## Update policy
 
-The upstream repository is part of the security design, not just an
-installation convenience.
+The upstream repository is part of the security design.
 
 - Track the latest available `knot-resolver6` version; do not pin a minor or
   patch version indefinitely.
@@ -184,12 +145,8 @@ The CZ.NIC repository is not an Ubuntu `-security` origin, and the deployed
 unattended-upgrades allowlist covers only the `-security` origins, so
 `knot-resolver6` is not updated automatically. Do not imply otherwise.
 
-**Do not add the CZ.NIC repository to the unattended-upgrades allowlist.**
-unattended-upgrades runs on each host independently with no coordination
-between them, so both resolvers could upgrade and restart inside the same
-window — precisely the simultaneous outage that `serial: 1` in
-`ops-package_upgrade.yaml` and the dual-resolver design exist to prevent.
-Detection is automated instead of application:
+**Do not allow unattended CZ.NIC upgrades.** Hosts update independently and
+could restart both resolvers together. Automate detection, then apply serially:
 
 - `ops-version_audit.yaml` reports installed and APT-candidate
   `knot-resolver6` versions on resolver1 and resolver2, so a pending upgrade is a
@@ -201,44 +158,23 @@ Detection is automated instead of application:
   current-upstream-release driver is not actually being met and this decision
   should be revisited rather than quietly relaxed.
 
-The same current-release policy applies in principle to dnsdist in this path:
-the frontend should not sit on a superseded train while the resolver behind it
-is held to a current-upstream requirement. The configured channel is
-`dnsdist_repo_channel: dnsdist-21`
-([`ansible/roles/dnsdist/defaults/main.yaml`](../../ansible/roles/dnsdist/defaults/main.yaml)).
-Whether that train is still current must be checked against PowerDNS'
-repository and EOL pages at rollout time rather than asserted here.
-
-That upgrade is **not** a prerequisite of this ADR. A dnsdist major-version move
-carries its own configuration-syntax risk and its own rollback story, and
-coupling it to the resolver introduction would block one change behind an
-unrelated migration. Track it as a separate decision. The only hard requirement
-here is that dnsdist's configuration is validated and its installed version
-recorded before either host is restarted.
+Apply the same current-train principle to dnsdist, but track major upgrades
+separately because their syntax and rollback risks are unrelated. Validate and
+record the installed dnsdist version before restart.
 
 ## Consequences
 
-- The hand-written `dnsdist_local_reverse_zones` list and its `RCodeAction`
-  become redundant. Knot Resolver's built-in special-use and locally-served
-  zone policy owns RFC 6303 behaviour. **Remove them only after both dnsdist
-  default pools contain only resolver1 and resolver2 and both resolvers have passed
-  health and behaviour tests.** Removing them first, while the default pool
-  still holds the router and the public resolvers, would reopen the RFC1918
-  reverse-lookup path to third parties. On the measurement in Context that path
-  currently carries no traffic, so this is precaution rather than an active
-  leak — but the ordering costs nothing and the measurement only covers one
-  sample window, so keep it.
+- Remove `dnsdist_local_reverse_zones` and `RCodeAction` only after both default
+  pools use tested in-house resolvers; earlier removal could expose RFC1918
+  reverse queries to remaining public backends.
 - `dnsdist_internal_domains` becomes load-bearing. It is the only routing layer
   preventing internal zones from reaching public recursion, so rollout tests
   must cover every configured internal forward and reverse suffix.
 - Remove the dnsdist packet cache from the default pool. Knot Resolver owns the
   recursive cache; retaining both makes TTL and failure behaviour harder to
   reason about.
-- The router at `192.168.10.1` leaves the query path along with the public
-  resolvers, not just Google and Cloudflare. Kea is configured without DDNS, so
-  no LAN hostnames are registered there and none are lost, but any name the
-  router answered from its own configuration stops resolving. Confirm during the
-  canary that nothing depends on it.
+- The router also leaves the query path. Kea has no DDNS, but canary tests must
+  confirm no resolver-specific router names are used.
 - The resolver containers bootstrap through `dns_external`
   (`192.168.10.1`, `8.8.8.8`) from [`tf/common.hcl`](../../tf/common.hcl), not
   through dnsdist, so package installation and service startup do not depend on
@@ -248,13 +184,10 @@ recorded before either host is restarted.
 - The resolver guests need their own Vector configuration containing the Knot
   Resolver and SSH journald units. DNSSEC bogus entries must reach Loki from
   resolver1 and resolver2, not remain only in the local journal.
-- Resolver DNS listens on the guest LAN addresses, so it has a larger network
-  attack surface than a loopback-only co-located process. Fixed-address binds
-  and Knot views restrict service to dist1 and dist2. The management API
-  remains unix-socket-only.
-- dnsdist-to-resolver traffic is unencrypted Do53 on the trusted LAN. A
-  dedicated backend network or DoT would reduce exposure but add interfaces,
-  certificates and lifecycle coupling; neither is required by this decision.
+- Resolver DNS listens on fixed LAN addresses but Knot views allow only dist1
+  and dist2; the management API remains unix-socket-only.
+- dnsdist-to-resolver traffic is unencrypted Do53 on the trusted LAN; a backend
+  network or DoT is deferred.
 - Losing one resolver no longer invokes client timeout failover: both dnsdist
   hosts select the healthy peer. Losing both resolvers still leaves internal
   authoritative routing operational on dnsdist, while external queries are
@@ -265,10 +198,8 @@ recorded before either host is restarted.
 - Two independent caches reduce aggregate hit rate but preserve resolver
   independence. Local-first ordering keeps normal traffic and cache locality
   aligned with the existing node2/node3 frontend placement.
-- resolver1 and resolver2 add two addresses, two Terraform states, inventory
-  entries and a network hop. In return, resolver package trust, filesystem,
-  cgroup memory, cache and lifecycle no longer share a guest with dnsdist
-  credentials and internal routing.
+- Two guests add addresses, Terraform states and a network hop in exchange for
+  isolating resolver trust, state, memory and lifecycle from dnsdist.
 - The monitoring inventory currently calls dist1 and dist2 `dnsRecursors`.
   Once recursion moves behind them, rename that shared client-facing inventory
   to `dnsFrontends`; resolver1 and resolver2 are backend resolvers and should
@@ -285,42 +216,17 @@ recorded before either host is restarted.
   balances rather than treating them as cold standby, so queries would continue
   leaving the LAN and DNSSEC behaviour could diverge by selected backend.
   Availability comes from two in-house resolvers instead.
-- **Co-locate Knot Resolver with dnsdist on dist1 and dist2.** Loopback-only
-  exposure and fewer guests are attractive, but this mixes two application
-  services with different package sources, state and lifecycles. Resolver cache
-  pressure and a CZ.NIC package operation would share the dnsdist cgroup,
-  filesystem and credentials; a resolver fault could also disturb internal-zone
-  routing that does not otherwise depend on recursion. Cross-cutting logging and
-  monitoring agents remain acceptable co-located infrastructure, but the
-  resolver gets its own guest.
-- **Run resolver1 and resolver2 separately but connect them one-to-one.** This
-  provides cgroup and package-trust isolation but does not use the second
-  resolver when a single backend fails; external queries would still wait for
-  client stub failover. Once the resolver must listen on the LAN anyway,
-  allowing both dnsdist addresses and using both healthy backends gives
-  materially better availability for little additional configuration.
-- **Use a dedicated resolver backend VLAN or DoT between dnsdist and Knot
-  Resolver.** Either would reduce trusted-LAN exposure, but a VLAN requires
-  additional interfaces and Proxmox network configuration, while DoT introduces
-  certificate issuance and renewal into the DNS bootstrap path. Fixed-address
-  binds plus a two-address Knot view are sufficient for this trusted homelab
-  segment. Revisit if the LAN trust model changes.
-- **Proxy `/metrics/prometheus` through the central Caddy on caddy1.** Not
-  possible: caddy1 is a separate host and `caddy_upstreams` entries are `IP:port`,
-  so it cannot reach a unix socket on a resolver host. Making it reachable means
-  binding the management API to a LAN address, and Caddy cannot stop the LAN
-  from bypassing it and hitting that unauthenticated API directly. There is no
-  host firewall layer in this repository to close that gap.
-- **Run a local Caddy on each resolver host restricted to `GET
-  /metrics/prometheus`.** This does work — Caddy supports unix-socket upstreams
-  and method/path matchers, so the management API could stay on its socket while
-  only the metrics path is exposed, and it would give scrape-time freshness that
-  the textfile export cannot. Rejected on cost: the caddy role is built for one
-  central instance and its Caddyfile template emits whole-host `reverse_proxy`
-  lines with no matcher or `respond` support, so it would need generalising. The
-  resolver guests need node_exporter for cgroup, cache-filesystem and textfile
-  metrics in any case, while a per-host Caddy would be a generalised role serving
-  exactly one path. Revisit if the timer interval's staleness ever matters.
+- **Co-locate Knot Resolver with dnsdist.** Fewer guests and loopback exposure do
+  not justify sharing package trust, state, memory and failure domains. *Rejected.*
+- **Connect separate resolvers one-to-one.** A backend failure would still wait
+  for client frontend failover instead of using the healthy peer. *Rejected.*
+- **Use a backend VLAN or DoT.** Extra network or certificate lifecycle is not
+  justified for the trusted segment. Revisit if its trust model changes.
+- **Proxy metrics through central Caddy.** It cannot reach remote unix sockets;
+  a LAN bind would expose the unauthenticated management API directly. *Rejected.*
+- **Run local Caddy metrics proxies.** This preserves the unix socket but requires
+  generalizing a central-only role for one path; node_exporter is needed anyway.
+  Revisit if textfile staleness matters.
 - **Build current Unbound locally.** This produces an unpackaged binary whose
   version detection, rebuild trigger, dependency patching and provenance become
   our responsibility.
@@ -388,8 +294,7 @@ items below are verified as of 2026-08-04:
 
 ## Addendum (2026-08-10): cache raised to 256 MB on measurement
 
-The Decision above sized the cache at 100 MB and said not to increase it "until
-cgroup memory, cache use and hit rate show a reason to do so". They now do.
+Measurements now justify increasing the initial 100 MB cache.
 
 Measured over seven days on both resolvers:
 
@@ -399,31 +304,20 @@ Measured over seven days on both resolvers:
 | SERVFAIL share of requests | 0% | 47–50% (peak 70%) |
 | SERVFAIL seen by clients at dnsdist | 0% | 29–39% |
 
-`data.mdb` sits at the configured ceiling on both guests, and
-`kresd[…]: [cache ] […] stash failed, ret = 1` appears in the journal on a
-rising curve — 573, 949, 1015, 4128, 4196 entries per day on resolver1. Once
-the LMDB map is full the cache is dropped and refills from cold, so every
-query is resolved recursively until it warms up. That overloads upstream,
-`dnsdist_downstream_timeouts` peaks near 7/s, and both frontends mark both
-resolvers down. The cycle had repeated more than fifty times in seven days
-without producing an alert.
+Both `data.mdb` files reached the limit. `stash failed` logs rose from hundreds
+to thousands per day; LMDB resets forced cold recursion, downstream timeouts
+peaked near 7/s, and both frontends marked both resolvers down. This repeated
+more than fifty times in seven days without alerting.
 
 Both resolvers degrade together despite running on different hypervisors
 (resolver1 on node2, resolver2 on node3), because dnsdist splits traffic evenly
 and the two caches therefore fill at the same rate.
 
-Ruled out by measurement: DNSSEC validation (`log-bogus` recorded zero bogus
-answers in seven days), guest memory (800 MB of 1 GB still available at the
-worst point), repeated crashes (one counter reset in seven days), the
-authoritative layer (ns2/ns3 never left `dnsdist_server_status=1`), disk space
-(38% used) and a sustained upstream outage (the `dns_external` probe failed
-twice in 672 samples).
+Measurements ruled out DNSSEC, memory pressure, repeated crashes, authoritative
+DNS, disk space and sustained upstream outage.
 
-Raise `knot_resolver_cache_size` to 256 MB. This stays deliberately short of
-the guest's headroom: the mmap'd cache is charged to the LXC memory cgroup, and
-the 1 GB limit exists because package updates have caused OOM failures in
-comparable 512 MB guests. Measure the hit rate and `memory.current` again
-before considering a further increase.
+Raise `knot_resolver_cache_size` to 256 MB. Recheck hit rate and `memory.current`
+before further increases because mmap pages count against the 1 GB cgroup.
 
 Alert on the cache hit rate rather than on SERVFAIL alone. The hit rate falls
 first and separates cleanly — 90–99% against 36–43% — so it is the leading

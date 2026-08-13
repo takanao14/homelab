@@ -13,23 +13,18 @@
 
 ## Context
 
-Two events take the fleet down, and until now neither was orchestrated.
+Two uncoordinated events took the fleet down:
 
-**Rolling reboots.** `ops-package_upgrade.yaml` targeted `all:!proxmox:!dns`
-with no `serial`, so every k0s node in both clusters upgraded and rebooted at
-once. Nothing was cordoned or drained: kubelet and containerd were killed with
-the host, and workloads got no SIGTERM. The two clusters fail differently under
-that. sandbox runs Longhorn with `defaultReplicaCount: 3` across exactly three
-workers, so every volume has a replica on every worker and a simultaneous
-reboot takes all of them down together — past degraded, into faulted, relying
-on auto-salvage to come back. prd runs OpenEBS LocalPV hostpath, where PVs are
-node-local directories with node affinity and there are no replicas at all.
+**Rolling reboots.** `ops-package_upgrade.yaml` rebooted every k0s node at once,
+without cordon or drain. Workloads received no SIGTERM. sandbox's former
+three-replica Longhorn volumes lost all three workers; prd's OpenEBS LocalPV has
+no replicas and is node-affine.
 
 **Planned power outage.** No procedure existed. The dependency order, which
 guests do not restart by themselves, and how workloads come back were all
 undocumented.
 
-Several facts shaped the design and are easy to get wrong later:
+Design constraints:
 
 - Ansible runs from a workstation outside the fleet, so it survives every phase
   including powering off the hypervisors.
@@ -46,9 +41,7 @@ Several facts shaped the design and are easy to get wrong later:
 
 ## Decision
 
-**Treat the two events as different strategies over a shared foundation.**
-Draining and scaling to zero are mutually exclusive, and conflating them is the
-central mistake this ADR exists to prevent:
+**Use separate strategies over a shared foundation:**
 
 |                | Rolling reboot        | Planned shutdown |
 | -------------- | --------------------- | ---------------- |
@@ -57,10 +50,8 @@ central mistake this ADR exists to prevent:
 | Wait condition | node Ready, storage recovered | workloads stopped, volumes detached |
 | Argo CD        | untouched             | application controller scaled to 0 |
 
-Shared below that: node identity, k0s service names, and a storage-readiness
-wait selected by `k8s_storage_providers` — controller readiness for OpenEBS
-and NFS plus an endpoint mount probe for NFS. Adding a cluster adds group_vars,
-not tasks.
+Both share node identity, k0s service names, and provider-specific storage
+readiness. New clusters add group_vars, not tasks.
 
 **Align inventory host names with the k0s node names.** tf is canonical: the
 `for_each` map key is the Proxmox VM name, the cloud-init hostname, and the
@@ -115,17 +106,10 @@ tags (`prd` and `sandbox`) select the corresponding guest-start, readiness and
 workload-restore path. Full recovery then waits for the remaining guests in
 reverse shutdown order before restoring the workloads.
 
-**Scope this to reboots of a *running* cluster.** The one reboot that stays
-outside Ansible is the one `k0s/create_cluster.sh <env> reset` performs after
-`k0sctl reset`, which clears the runtime residue k0sctl leaves behind — Cilium
-interfaces, their nftables rules, stale kubelet bind mounts — so the host is
-clean for the next `bootstrap`. Nothing this ADR provides applies there: the
-cluster is already gone, so there is nothing to cordon, drain, scale down or
-wait for storage on, and the only reusable piece would have been
-`ansible.builtin.reboot` itself. Routing it through Ansible would instead force
-a translation between the IP addresses `k0s/env/<env>.sh` owns and the host
-names the inventory owns, for a step that is part of the k0s lifecycle and
-belongs with it. Every reboot of a cluster that is still serving stays here.
+**Scope this to running clusters.** `k0s/create_cluster.sh <env> reset` still
+reboots after `k0sctl reset` to clear Cilium, nftables and mount residue before
+bootstrap. At that point no cluster remains to drain or restore, so the reboot
+belongs to the k0s lifecycle. Reboots of serving clusters belong in Ansible.
 
 ## Alternatives considered
 
@@ -146,19 +130,10 @@ belongs with it. Every reboot of a cluster that is still serving stays here.
 - **Drive OS upgrades through k0sctl.** *Not applicable.* k0sctl upgrades k0s,
   not the operating system. Its drain options were copied so both paths
   disrupt the cluster identically.
-- **Add `startup { order, up_delay }` to the tf VM/container modules.**
-  *Rejected.* Both `proxmox_virtual_environment_vm` and
-  `proxmox_virtual_environment_container` support the block in the pinned
-  provider, but Proxmox applies startup order **per node**, and these are six
-  independent installations. The dependency that matters spans nodes — DNS
-  lives on node2 and node3 while the k0s nodes live on node1, node4, node5 and
-  pve — so `startup` cannot express it at all. Only `ops-startup.yaml` can, by
-  waiting in dependency order across the fleet. Within a node the ordering buys
-  little, since the services that start early enough to miss a dependency
-  simply retry. node1, node4 and node5 host a single guest each, so the block
-  would be inert there. That leaves one real benefit: `up_delay` staggering the
-  eleven guests node2 starts at once, which is not worth changing both shared
-  modules and node2's stacks for an event that happens a few times a year.
+- **Add Proxmox `startup { order, up_delay }`.** *Rejected.* Ordering is per
+  hypervisor, but DNS and k0s dependencies span six independent hosts. Ansible
+  can wait across the fleet; per-host staggering alone does not justify shared
+  module changes.
 
 ## Consequences
 
@@ -168,13 +143,8 @@ belongs with it. Every reboot of a cluster that is still serving stays here.
 - Every k0s node is drained on every upgrade run, even when no reboot turns out
   to be required — `/var/run/reboot-required` is only known after the upgrade,
   and maintainer scripts restart services regardless.
-- Both playbooks were rehearsed end to end against pve, node1, node4 and node5,
-  taking both clusters down entirely — 28 prd workloads and 16 sandbox ones
-  scaled to zero and restored, Argo CD suspended and brought back first, k0s
-  stopped, all eight nodes powered off, `truenas` stopped over ACPI, four
-  hypervisors powered off and started again, and every workload back with no pod
-  left outside Running. node2, node3, rpi3 and rpi4 stayed up, which kept DNS and
-  therefore the operator's own name resolution alive throughout.
+- End-to-end rehearsal restored 28 prd and 16 sandbox workloads, eight k0s nodes,
+  `truenas`, and four hypervisors. node2, node3 and both RPis stayed up for DNS.
 - What the rehearsal could not cover is the BIOS AC-power-recovery path: a
   graceful `shutdown -h now` leaves the machine in soft-off with mains still
   present, so the firmware setting never fires. Recovery used AMT for node1 and

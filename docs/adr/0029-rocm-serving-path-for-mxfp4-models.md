@@ -8,24 +8,14 @@
 
 ## Context
 
-ADR-0028 chose the Vulkan backend as lemonade's serving path on the RX 9060 XT
-(gfx1200), measuring it ~20% faster single-request and ~47% faster at four
-concurrent requests than the ROCm `system`-backend Deployment. It kept
-`lemonade-server-rocm` alive **only** to re-run that comparison, and recorded the
-re-measurement trigger explicitly: "The decision rests on a measurement, and both
-sides of it move."
+ADR-0028 chose Vulkan after measuring Qwen3-4B ~20% faster for one request and
+~47% faster for four, while retaining the ROCm Deployment for re-measurement.
 
-That trigger fired from a direction the ADR did not anticipate. ADR-0028
-compared the two backends on `Qwen3-4B-GGUF` (`Q4_K_M`); the comparison is both
-**quantization- and concurrency-dependent**. The MXFP4 result does not simply
-reverse the ordering: Vulkan still wins one request, while ROCm wins aggregate
-throughput with four concurrent requests.
+MXFP4 shows that the result depends on quantization and concurrency: Vulkan wins
+one request, while ROCm wins four-request aggregate throughput.
 
-The ADR-0028 model is identified by two independent observations. Its cache was
-populated immediately before the Vulkan-switch commit, while the MXFP4 model was
-downloaded after that commit. A short re-measurement also reproduced ADR-0028:
-Qwen3-4B generated 98.72 tok/s on Vulkan versus 82.08 tok/s on ROCm (20% faster),
-and Vulkan was about 40% faster in the four-request run.
+A short Qwen3-4B re-measurement reproduced ADR-0028: 98.72 tok/s on Vulkan versus
+82.08 on ROCm, with Vulkan about 40% faster at four requests.
 
 ## Measurement
 
@@ -75,14 +65,8 @@ Deployments can disagree about the backend without either corrupting the other.
   Qwen3-4B model it measured and on a single MXFP4 request; it is not faster
   universally. Backend choice depends on model, quantization, and concurrency,
   so neither Deployment can be deleted.
-- **The maintenance cost ADR-0028 refused to pay is now being paid.** The Forgejo
-  image (`takanao/lemonade-docker`, `llamacpp-rocm` `b1302`, bundled ROCm 7
-  userspace) sits on a serving path. Renovate cannot see the LAN registry or the
-  Forgejo repository, so the base tag and `LLAMACPP_ROCM_VERSION` stay on human
-  watch — and now a rotted image degrades serving, not just a benchmark. ADR-0028
-  called this "not acceptable under a serving path"; that judgement is being
-  overridden by the measurement, and the exposure should be stated rather than
-  inherited silently.
+- The Forgejo ROCm image now enters a serving path. Renovate cannot see its base
+  tag or `LLAMACPP_ROCM_VERSION`, so updates require manual monitoring.
 - **The bundled ROCm userspace/KMD pairing matters; the host ROCm userspace
   still does not.** The custom image supplies its own ROCm 7 libraries, so
   lemonade does not load `/opt/rocm` from [`ansible/roles/rocm`](../../ansible/roles/rocm/).

@@ -16,14 +16,10 @@ v10.8.0's built-in `llamacpp:rocm` backend refuses it outright:
 llamacpp   rocm   unsupported   Unsupported GPU: gfx1200
 ```
 
-This is an upstream defect, not a misconfiguration. lemonade detects the card by
-its KFD-derived name (`AMD Radeon Graphics (RADV GFX1200)`), extracts the raw
-token `gfx1200`, and then compares it for **exact equality** against its recipe
-table, which lists RDNA4 only as the wildcard `gfx120X`. Cards detected by
-marketing name normalise to `gfx120X` and pass; cards detected by ISA name never
-can. Switching the ROCm channel between `stable` and `nightly` does not change
-it, and the chart's `LEMONADE_LLAMACPP=rocm` environment variable turned out to
-be a no-op — v10.8.0's source never reads it.
+This is an upstream matching defect. lemonade compares detected `gfx1200`
+exactly against the recipe's `gfx120X` wildcard, so ISA-name detection fails.
+Stable/nightly channels do not change it, and v10.8.0 does not read the chart's
+`LEMONADE_LLAMACPP=rocm` variable.
 
 Two routes get past the gate, and they differ in kind:
 
@@ -76,19 +72,13 @@ Three things decided it:
    ADR-0027 recorded for `comfyui-docker`. Acceptable for an artifact that runs
    only during a benchmark; not acceptable under a serving path.
 
-Note that the image's *placement* was right even though the image lost: a
-769 MB ROCm payload is exactly the "too large for a hosted runner" case ADR-0027
-assigned to Forgejo on the self-hosted runner. The build path is not what is
-being rejected here.
+The 769 MB image still belongs on Forgejo's self-hosted runner under ADR-0027;
+only its use as the primary backend is rejected.
 
 ### Why keep the ROCm Deployment instead of deleting it
 
-The decision rests on a measurement, and both sides of it move: lemonade may fix
-the `gfx1200` detection (restoring the stock `rocm` backend with no custom image
-at all), and ROCm's RDNA4 kernels are actively improving. Re-running the
-comparison after such a change should be a `gpu-switch.sh` invocation, not a
-rediscovery of the `system` backend's undocumented requirements and a fresh
-image build.
+Both inputs may change: lemonade can fix `gfx1200` detection and ROCm kernels
+continue improving. Keep the variant so re-measurement needs only a GPU switch.
 
 The cost of keeping it is one chart template and a Deployment at
 `replicaCount: 0`. It shares the `huggingface`/`llama`/`recipe` PVCs with the
@@ -110,16 +100,10 @@ behind. It is labelled `homelab/gpu-switchable: "true"` and enumerated in the
   because the timeline is unbounded and, more decisively, because a working
   `rocm` backend would still be the slower one today. *Rejected as a plan,
   retained as a trigger to re-measure.*
-- **Patch or fork lemonade** to expand the wildcard — a few lines against a
-  lookup-table bug. Rejected: it trades a disposable benchmark image for a fork
-  that must be rebased on every lemonade release, to reach a backend that loses
-  the benchmark anyway. *Rejected.*
-- **Fetch and unpack `llamacpp-rocm` onto the PVC from an initContainer**,
-  avoiding a new repository and keeping everything inside this repo — genuinely
-  attractive while ROCm looked like the answer, since lemonade already fetches
-  backends at runtime by design. Rejected once Vulkan won; it would also have
-  required expanding the `lemonade-llama` PVC and a 769 MB first-start download.
-  *Rejected, never implemented.*
+- **Patch or fork lemonade.** Maintaining a fork to reach the slower backend is
+  unjustified. *Rejected.*
+- **Fetch ROCm onto the PVC from an initContainer.** Vulkan won, and this adds a
+  769 MB first-start download and larger PVC. *Rejected, never implemented.*
 
 ## Consequences
 

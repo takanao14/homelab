@@ -91,9 +91,6 @@ durability, and acceptance of the TrueNAS/Proxmox failure domain.
 - The startup mount probe runs as a temporary Kubernetes Pod with an inline NFS
   volume. A host-side mount would require interactive sudo immediately after a
   reboot, making unattended recovery depend on a vanished sudo timestamp.
-- The startup mount probe runs as a temporary Kubernetes Pod with an inline NFS
-  volume. A host-side mount would require interactive sudo immediately after a
-  reboot, making unattended recovery depend on a vanished sudo timestamp.
 - Requested PVC capacity is not a per-PVC TrueNAS quota. Dataset capacity,
   snapshots, replication, alerts, and recovery tests are separate TrueNAS
   responsibilities.
