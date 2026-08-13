@@ -2,13 +2,7 @@ reloader:
   reloader:
     watchGlobally: false
     deployment:
-      # Resource reservations. Without requests this runs as BestEffort,
-      # invisible to the scheduler and first to be evicted under node memory
-      # pressure.
-      #
-      # Requests only, no limits — see "Resource Requests" in k8s/README.md.
-      # Sizing basis: 7-day observed usage, mean 51Mi and high-water 55Mi, p95
-      # CPU 0.4m.
+      # Requests only (README): 7-day mean/peak 51/55 Mi, p95 CPU 0.4m.
       resources:
         requests:
           cpu: 10m

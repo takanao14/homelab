@@ -1,6 +1,6 @@
 # reloader
 
-Deploys [Stakater Reloader](https://github.com/stakater/Reloader) to automatically trigger rolling restarts of Deployments when their referenced Secrets or ConfigMaps change. Managed by ArgoCD.
+Deploys Stakater Reloader for annotated Secret/ConfigMap-driven restarts.
 
 ## Directory Structure
 
@@ -19,7 +19,7 @@ annotations:
   reloader.stakater.com/auto: "true"
 ```
 
-or specific secret/configmap annotations. This prevents unintended restarts across all namespaces.
+or resource-specific annotations, preventing cluster-wide unintended restarts.
 
 ## Environments
 
@@ -27,9 +27,7 @@ Deployed to the `prd` and `sandbox` clusters.
 
 ## Usage
 
-The `reloader` Application is rendered by the app-of-apps chart
-(`k8s/argocd/apps`) and enabled per environment in
-`k8s/argocd/<env>/apps-values.yaml`. The generated Application:
+App of Apps enables Reloader per environment and renders:
 
 ```yaml
 source:
