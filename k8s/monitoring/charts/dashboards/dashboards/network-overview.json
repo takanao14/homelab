@@ -33,7 +33,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)",
+          "expr": "count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
           "legendFormat": "{{instance}}"
         }
       ],
@@ -45,7 +45,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
+        "w": 8,
         "x": 0,
         "y": 1
       },
@@ -84,11 +84,12 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} != 1) or count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}) * 0",
+          "expr": "count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} != 1 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)) or count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}) * 0",
           "legendFormat": "{{instance}}"
         }
       ],
       "title": "Interfaces Down",
+      "description": "Ports that are enabled but have no link. Ports shut down on purpose are excluded and counted separately, so anything here is a fault.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -96,8 +97,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 6,
+        "w": 8,
+        "x": 8,
         "y": 1
       },
       "repeatDirection": "h",
@@ -139,11 +140,63 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum by (instance) (rate(ifHCInOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8)",
+          "expr": "count by (instance) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 2) or count by (instance) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}) * 0",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "title": "Interfaces Shutdown",
+      "description": "Ports administratively disabled (ifAdminStatus=down). Not a fault, but these are excluded from Interfaces Up and Down, so the count is here to make the exclusion visible.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum by (instance) (rate(ifHCInOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
           "legendFormat": "{{instance}} In"
         },
         {
-          "expr": "sum by (instance) (rate(ifHCOutOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8)",
+          "expr": "sum by (instance) (rate(ifHCOutOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
           "legendFormat": "{{instance}} Out"
         }
       ],
@@ -155,9 +208,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 12,
-        "x": 12,
-        "y": 1
+        "w": 24,
+        "x": 0,
+        "y": 5
       },
       "repeatDirection": "h",
       "interval": "2m",
@@ -199,7 +252,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 5
+        "y": 9
       },
       "id": 0,
       "panels": []
@@ -208,12 +261,12 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (instance) (rate(ifHCInOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8)",
+          "expr": "sum by (instance) (rate(ifHCInOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
           "legendFormat": "{{instance}} In",
           "refId": "In"
         },
         {
-          "expr": "sum by (instance) (rate(ifHCOutOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8)",
+          "expr": "sum by (instance) (rate(ifHCOutOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
           "legendFormat": "{{instance}} Out",
           "refId": "Out"
         }
@@ -228,7 +281,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 6
+        "y": 10
       },
       "repeatDirection": "h",
       "interval": "2m",
@@ -290,7 +343,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 18
       },
       "id": 0,
       "panels": []
@@ -299,11 +352,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(ifInErrors{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval])",
+          "expr": "rate(ifInErrors{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)",
           "legendFormat": "{{instance}} {{ifDescr}} In"
         },
         {
-          "expr": "rate(ifOutErrors{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval])",
+          "expr": "rate(ifOutErrors{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)",
           "legendFormat": "{{instance}} {{ifDescr}} Out"
         }
       ],
@@ -317,7 +370,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 15
+        "y": 19
       },
       "repeatDirection": "h",
       "interval": "2m",
@@ -346,11 +399,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(ifInDiscards{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval])",
+          "expr": "rate(ifInDiscards{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)",
           "legendFormat": "{{instance}} {{ifDescr}} In"
         },
         {
-          "expr": "rate(ifOutDiscards{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval])",
+          "expr": "rate(ifOutDiscards{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)",
           "legendFormat": "{{instance}} {{ifDescr}} Out"
         }
       ],
@@ -364,7 +417,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 15
+        "y": 19
       },
       "repeatDirection": "h",
       "interval": "2m",

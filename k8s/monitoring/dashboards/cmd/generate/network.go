@@ -20,6 +20,21 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 	// subinterfaces, and vendor-internal interfaces.
 	const ifFilter = `ifDescr=~"GigaEthernet[0-9]+|GigabitEthernet[0-9]+", instance=~"$instance"`
 
+	// adminUp drops ports that are administratively shut down. ifAdminStatus is a
+	// separate series from the counters and from ifOperStatus, so this cannot be a
+	// label selector -- it has to be a set intersection on ifIndex. Appending it
+	// needs no extra parentheses: `and` binds looser than both `*` and the
+	// comparison operators, and it sits inside sum by (instance) because the
+	// aggregation is what drops ifIndex.
+	//
+	// Without it, Interfaces Down counted three ports on c1200 when only one was a
+	// fault: gi6 and gi7 are shut down on purpose, while gi1 (vlan100_nw) is
+	// enabled and simply has no link. Those are different facts and only the last
+	// one is worth reacting to. Interfaces Up does not change value -- a shut port
+	// is never operationally up -- but carries the filter so the pair means the
+	// same thing.
+	const adminUp = ` and on(instance, ifIndex) (ifAdminStatus{` + ifFilter + `} == 1)`
+
 	// Min interval for every rate() panel here. SNMP is probed once a minute
 	// (values/snmp-exporter.yaml, interval: 60s -- measured, count_over_time over
 	// ten minutes returns exactly 10 samples), but the Prometheus datasource has
@@ -82,28 +97,56 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Interfaces Up").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(8).Height(4).
 				Unit("short").
 				Min(0).
 				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count by (instance) (ifOperStatus{` + ifFilter + `} == 1)`).
+					Expr(`count by (instance) (ifOperStatus{` + ifFilter + `} == 1` + adminUp + `)`).
 					LegendFormat("{{instance}}"),
 				),
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Interfaces Down").
+				Description("Ports that are enabled but have no link. Ports shut down on " +
+					"purpose are excluded and counted separately, so anything here is a fault.").
 				Datasource(ds).
-				Span(6).Height(4).
+				Span(8).Height(4).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`count by (instance) (ifOperStatus{` + ifFilter + `} != 1) or count by (instance) (ifOperStatus{` + ifFilter + `}) * 0`).
+					// The zero baseline stays on the unfiltered selector: keyed on the
+					// filtered one it would vanish for a device whose ports are all
+					// healthy, which is exactly when it needs to read 0.
+					Expr(`count by (instance) (ifOperStatus{` + ifFilter + `} != 1` + adminUp + `) or count by (instance) (ifOperStatus{` + ifFilter + `}) * 0`).
+					LegendFormat("{{instance}}"),
+				),
+		).
+		// The counterpart to the adminUp filter, and the reason it is safe to apply.
+		// Filtering shut ports out of Interfaces Down means a port disabled by
+		// mistake would otherwise disappear from the dashboard entirely rather than
+		// showing up as a fault -- turning a problem into nothing at all. This tile
+		// keeps the count visible, so "Down 1" can always be read against how many
+		// ports are intentionally off.
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Interfaces Shutdown").
+				Description("Ports administratively disabled (ifAdminStatus=down). Not a " +
+					"fault, but these are excluded from Interfaces Up and Down, so the count " +
+					"is here to make the exclusion visible.").
+				Datasource(ds).
+				Span(8).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(measurementThresholds()).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`count by (instance) (ifAdminStatus{` + ifFilter + `} == 2) or count by (instance) (ifAdminStatus{` + ifFilter + `}) * 0`).
 					LegendFormat("{{instance}}"),
 				),
 		).
@@ -111,18 +154,18 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Total Traffic").
 				Datasource(ds).
-				Span(12).Height(4).
+				Span(24).Height(4).
 				Unit("bps").
 				Min(0).
 				Interval(snmpMinInterval).
 				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (instance) (rate(ifHCInOctets{` + ifFilter + `}[$__rate_interval]) * 8)`).
+					Expr(`sum by (instance) (rate(ifHCInOctets{` + ifFilter + `}[$__rate_interval]) * 8` + adminUp + `)`).
 					LegendFormat("{{instance}} In"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`sum by (instance) (rate(ifHCOutOctets{` + ifFilter + `}[$__rate_interval]) * 8)`).
+					Expr(`sum by (instance) (rate(ifHCOutOctets{` + ifFilter + `}[$__rate_interval]) * 8` + adminUp + `)`).
 					LegendFormat("{{instance}} Out"),
 				),
 		).
@@ -140,12 +183,12 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("In").
-					Expr(`sum by (instance) (rate(ifHCInOctets{`+ifFilter+`}[$__rate_interval]) * 8)`).
+					Expr(`sum by (instance) (rate(ifHCInOctets{`+ifFilter+`}[$__rate_interval]) * 8`+adminUp+`)`).
 					LegendFormat("{{instance}} In"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Out").
-					Expr(`sum by (instance) (rate(ifHCOutOctets{`+ifFilter+`}[$__rate_interval]) * 8)`).
+					Expr(`sum by (instance) (rate(ifHCOutOctets{`+ifFilter+`}[$__rate_interval]) * 8`+adminUp+`)`).
 					LegendFormat("{{instance}} Out"),
 				).
 				OverrideByQuery("Out", []dashboard.DynamicConfigValue{
@@ -164,11 +207,11 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(ifInErrors{` + ifFilter + `}[$__rate_interval])`).
+					Expr(`rate(ifInErrors{` + ifFilter + `}[$__rate_interval])` + adminUp).
 					LegendFormat("{{instance}} {{ifDescr}} In"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(ifOutErrors{` + ifFilter + `}[$__rate_interval])`).
+					Expr(`rate(ifOutErrors{` + ifFilter + `}[$__rate_interval])` + adminUp).
 					LegendFormat("{{instance}} {{ifDescr}} Out"),
 				),
 		).
@@ -183,11 +226,11 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(ifInDiscards{` + ifFilter + `}[$__rate_interval])`).
+					Expr(`rate(ifInDiscards{` + ifFilter + `}[$__rate_interval])` + adminUp).
 					LegendFormat("{{instance}} {{ifDescr}} In"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(ifOutDiscards{` + ifFilter + `}[$__rate_interval])`).
+					Expr(`rate(ifOutDiscards{` + ifFilter + `}[$__rate_interval])` + adminUp).
 					LegendFormat("{{instance}} {{ifDescr}} Out"),
 				),
 		).
