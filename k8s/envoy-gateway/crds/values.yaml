@@ -1,6 +1,4 @@
-# Sole owner of the Gateway API CRDs cluster-wide (Envoy Gateway 1.8.x bundles
-# Gateway API v1.5.1). Keep crds/Chart.yaml and controller/Chart.yaml on the
-# same gateway-*-helm version so the controller matches the installed CRDs.
+# Sole CRD owner; keep CRD and controller chart versions aligned.
 gateway-crds-helm:
   crds:
     gatewayAPI:
