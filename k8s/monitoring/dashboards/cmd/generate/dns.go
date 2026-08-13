@@ -10,9 +10,8 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
-// buildDnsOverview defines the DNS infrastructure dashboard.
-// The dnsdist/pdns-auth scrape configs relabel instance to the hostname
-// (dist1/dist2, ns1/ns2), so panels use the instance label directly.
+// buildDnsOverview covers DNS infrastructure. Scrape configs relabel
+// dnsdist and pdns-auth instances to hostnames.
 func buildDnsOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 	lokiType := "loki"
@@ -54,9 +53,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 
 	issueThresholds := issueThresholds()
 
-	// Keep the red boundary aligned with resolverAlerts.cacheHitRateMin (0.6)
-	// in charts/node-exporter-external/values.yaml. This panel reports percent,
-	// so the alert ratio becomes 60 here; 90 is the documented healthy floor.
+	// Match resolver alert ratios: healthy >=90%, critical <60%.
 	resolverCacheHitRateThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
@@ -72,8 +69,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 			{Value: new(0.001), Color: "red"},
 		})
 
-	// external-dns syncs every minute; warn once a sync is a few intervals
-	// late, alert red when it has been stuck for 15 minutes.
+	// Warn after several missed one-minute syncs; alert after 15 minutes.
 	syncAgeThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
@@ -86,10 +82,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		Uid("dns-overview").
 		Tags([]string{"dns", "infrastructure"}).
 		Timezone("browser").
-		// 6h to match the traffic dashboards: QPS and latency are the subject
-		// here, and over the previous 30d default the step grew to roughly an
-		// hour, which averaged away the query spikes and latency excursions the
-		// panels exist to show -- while still re-querying every 30s.
+		// Six hours preserves QPS and latency spikes hidden by the old 30-day step.
 		Time("now-6h", "now").
 		Refresh("30s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
@@ -279,13 +272,8 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Unit("percent").
 				Thresholds(resolverCacheHitRateThresholds).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// No clamp_min on the denominator. It was there to avoid a
-					// division by zero, but it turned 0/0 into a hard 0% instead
-					// of a gap -- and 0/0 is exactly what a window with no
-					// counter change produces. With the collector writing every
-					// 15s that window no longer occurs during traffic; if the
-					// resolver really is idle, an undefined hit rate should read
-					// as absent, not as a cache that stopped working.
+					// Preserve a gap for undefined 0/0 cache ratios; clamping would report a
+					// false 0% failure during idle windows.
 					Expr(`100 * sum(rate(resolver_answer_cached_total{` + resolver + `}[$__rate_interval])) / sum(rate(resolver_answer_total{` + resolver + `}[$__rate_interval]))`).
 					Instant().
 					LegendFormat("Hit rate"),
@@ -315,12 +303,8 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Span(6).Height(4).
 				Unit("s").
 				ColorMode(common.BigValueColorModeBackground).
-				// 60s to agree with resolverAlerts.metricsMaxAgeSeconds, so a red
-				// tile and a firing alert always mean the same thing. There is no
-				// amber band: the metric already includes up to one scrape
-				// interval of staleness, so a healthy worst case is 15s of write
-				// interval plus 30s of scrape, and the 14s left below the
-				// threshold is too narrow to divide usefully.
+				// Match resolverAlerts.metricsMaxAgeSeconds. Healthy write and scrape
+				// intervals already consume most of the margin, so omit an amber band.
 				Thresholds(dashboard.NewThresholdsConfigBuilder().
 					Mode(dashboard.ThresholdsModeAbsolute).
 					Steps([]dashboard.Threshold{
@@ -357,8 +341,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// See the summary tile: a gap is the honest rendering of an
-					// undefined ratio, a flat 0% is not.
+					// Preserve gaps for undefined cache ratios.
 					Expr(`100 * sum by (instance) (rate(resolver_answer_cached_total{` + resolver + `}[$__rate_interval])) / sum by (instance) (rate(resolver_answer_total{` + resolver + `}[$__rate_interval]))`).
 					LegendFormat("{{instance}}"),
 				).
@@ -413,9 +396,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{instance}} p99"),
 				),
 		).
-		// Cache occupancy sits beside process memory because both answer "is this
-		// resolver running out of something", and it comes first because it is
-		// the one with a documented failure attached.
+		// Place cache occupancy beside memory because both show resource exhaustion.
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Resolver Cache Usage").
@@ -457,9 +438,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Title("Resolver Metrics Freshness").
 				Description("Per-resolver textfile age, which carries up to one scrape interval on top of the real age: the collector rewrites every 15s, Prometheus scrapes every 30s, and the reading climbs between scrapes. Healthy values sweep roughly 11-45s. Zoomed in the shape is a rising sawtooth; at the default range the step equals the scrape interval and the same signal aliases into a slow drift with occasional jumps. Neither shape is a fault -- only a line that climbs past 60s and keeps going, which means the collector stopped.").
 				Datasource(ds).
-				// Full width, alone on its line: this is collector health rather
-				// than resolver health, and the sawtooth needs the horizontal
-				// room for its shape to be readable at all.
+				// Full width keeps the collector-age sawtooth readable.
 				Span(24).Height(8).
 				Unit("s").
 				Tooltip(tooltipAll).
@@ -494,14 +473,8 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Unit("reqps").
 				Thresholds(measurementThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// Both transports, matching the Query Rate timeseries below,
-					// which always plotted udp and tcp while this tile counted
-					// only udp. TCP is not hypothetical for an authoritative
-					// server: it carries responses over 512 bytes and the zone
-					// transfers between ns1, ns2 and ns3, and logged 25 queries
-					// over 7 days. It is a rounding error against 5.3 udp
-					// queries a second, but a tile titled QPS should not have a
-					// different definition from the graph under it.
+					// Count UDP and TCP consistently with the Query Rate panel; TCP includes
+					// large responses and zone transfers.
 					Expr(`sum(rate(pdns_auth_udp_queries{` + pdns + `}[$__rate_interval]))` +
 						` + sum(rate(pdns_auth_tcp_queries{` + pdns + `}[$__rate_interval]))`).
 					LegendFormat("QPS"),
@@ -785,17 +758,8 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				Unit("s").
 				Tooltip(tooltipAll).
 				Legend(legend).
-				// Aggregated down to the label the legend prints. The raw metric
-				// also carries pod and instance, and both churn: over 30 days
-				// this one deployment produced seven series, including the same
-				// pod name under three different addresses. Each drew as its own
-				// broken line labelled "prd sync", so the panel accumulated
-				// identically-named fragments while the description had claimed
-				// all along that it was grouped by cluster.
-				//
-				// max, because the panel answers "how stale is the staleest
-				// replica"; it matches the Last Sync Age tile, which takes the
-				// max across everything.
+				// Aggregate pod and instance churn to the cluster label shown in the legend.
+				// max reports the stalest replica, matching the summary tile.
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`max by (cluster) (time() - external_dns_controller_last_sync_timestamp_seconds{` + extdns + `})`).
 					LegendFormat("{{cluster}} sync"),
@@ -837,15 +801,8 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{cluster}} source"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// NS and SOA belong to the zone itself, not to anything
-					// external-dns manages, so the registry reports them while no
-					// source ever will. Summing every record_type made the two
-					// lines differ by exactly that count -- prd read 19 against a
-					// source total of 17 -- so the panel permanently displayed
-					// the very gap its description calls a sync failure.
-					// Excluding the apex types is preferred over matching
-					// record_type="a": adding an AAAA or CNAME source later would
-					// silently undercount instead.
+					// Exclude apex NS/SOA records that no external-dns source can produce;
+					// retain all other record types for future sources.
 					Expr(`sum by (cluster) (external_dns_registry_records{` + extdns + `,record_type!~"ns|soa"})`).
 					LegendFormat("{{cluster}} registry"),
 				),

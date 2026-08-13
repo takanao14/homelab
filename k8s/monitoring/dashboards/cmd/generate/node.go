@@ -12,8 +12,7 @@ import (
 func buildNodeOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
-	// The hypervisor list, reused from the same inventory proxmox_logs.go reads.
-	// Only needed by the throttling panel; see the comment there.
+	// Shared Proxmox inventory for the throttling panel.
 	proxmoxHosts, err := loadProxmoxHostRegex()
 	if err != nil {
 		return nil, err
@@ -22,76 +21,31 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Two-stage variable resolution: node_* metrics carry instance (IP:port) but
-	// display names come from node_uname_info which has nodename. We expose $node
-	// (nodename) in the UI and hide $instance (IP:port) resolved from it.
-	// joinNodename copies nodename onto query results so legends show hostnames.
+	// Resolve visible nodenames to hidden scrape instances.
+	// joinNodename adds display names to query results.
 	const (
 		instFilter = `instance=~"$instance"`
-		// max by deduplicates node_uname_info if the same instance is scraped by multiple jobs.
+		// Deduplicate hosts scraped by multiple jobs.
 		joinNodename = `* on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)`
-		// normByCPU divides by the number of logical CPUs so load values are expressed
-		// as a fraction of total capacity (1.0 = fully loaded, >1.0 = overloaded).
+		// Normalize load by logical CPU count; 1.0 means saturated.
 		normByCPU = `/ on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode="idle", ` + instFilter + `})`
-		// fsFilter excludes pseudo/boot filesystems that don't need capacity monitoring.
+		// Exclude pseudo and boot filesystems.
 		fsFilter = `fstype=~"ext[234]|xfs|btrfs|zfs|vfat",mountpoint!~"/var/lib/docker/.*|/boot/efi|/boot/firmware"`
-		// zfsActive keeps only nodes with a pool actually imported.
-		//
-		// The Proxmox hosts all load the ZFS module and only pve has a pool, so
-		// node1-5 publish an ARC holding a few header structs. It does not scale
-		// with the machine -- 2880 bytes on a 31 GiB node, 1440 on a 1 GiB one --
-		// against 6.3 GiB of real ARC on pve. A megabyte sits 350x above the empty
-		// case and six thousand times below a working one, so the boundary is not
-		// close to anything.
-		//
-		// Gating on size alone would not have been enough. arc_c_max and arc_c_min
-		// are GiB-scale even with no pool -- 0.75 to 6.3 GiB, comparable to pve's
-		// actual ARC -- so the limit lines are gated on the same condition rather
-		// than left to be filtered by their own magnitude.
-		//
-		// The collector stays enabled on those hosts deliberately. The readings are
-		// genuinely theirs, unlike the LXC guests where /proc/spl/kstat/zfs is the
-		// hypervisor's and each guest was republishing its host's ARC under its own
-		// name (see group_vars/node_exporter_lxc.yaml, where the collector is now
-		// switched off for exactly that reason). Any of these hosts could gain a
-		// pool, and when one does it crosses this threshold and appears here on its
-		// own -- which is why the filter belongs in the query rather than in a list
-		// of hostnames anywhere.
+		// Show ZFS only for hosts with an imported pool. Gate live size and limits
+		// together because module-only hosts expose a tiny ARC with GiB-scale bounds.
+		// Keeping the collector enabled lets newly imported pools appear automatically.
 		zfsActive = ` and on(instance) (node_zfs_arc_size{` + instFilter + `} > 1024 * 1024)`
 	)
 
-	// ownKernel excludes the LXC guests, for the panels whose metric is read
-	// straight out of /proc and is therefore the host's. See loadLxcGuestRegex:
-	// IO pressure and boot time are the two measured cases, and five guests on
-	// node2 publish node2's values under their own names. CPU and memory PSI are
-	// not affected -- lxcfs virtualises those -- so their panels keep instFilter.
+	// Exclude LXC guests where /proc reports host IO pressure and boot time.
+	// CPU/memory PSI remains container-specific through lxcfs.
 	ownKernel := instFilter + `, instance!~"` + lxcGuests + `"`
 
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
 
-	// denseTooltip is defaultTooltip for the panels that carry more series than a
-	// screen can hold. Disk I/O draws 54 -- 27 devices, read and write -- and
-	// Network I/O draws 66, so the shared multi-series tooltip listed every one of
-	// them and ran off the bottom of the window, which meant the series under the
-	// cursor could be the one you could not see.
-	//
-	// Sorting descending is the part that does the work: with the busiest series
-	// at the top, the rows that fit are the rows worth reading.
-	//
-	// MaxHeight bounds the box at 400px, against a Grafana default of 600. The
-	// remainder is not lost -- hovering and then clicking pins the tooltip in
-	// place, and a pinned tooltip scrolls (confirmed on this Grafana, 13.1.3).
-	// That interaction is worth knowing about, because a capped tooltip otherwise
-	// looks like truncation.
-	//
-	// HideZeros drops devices idle at that instant. It earns less than it sounds:
-	// measured, only 5 of the 54 disk series and 16 of the 66 network ones sit at
-	// exactly zero, because nearly everything here carries some traffic. A row
-	// reading 0 B/s is still never the row being looked for.
-	//
-	// A fresh builder per call: panels must not share one, and the tooltipAll
-	// above is already shared by several.
+	// Dense I/O panels sort tooltips by value and cap their height. Pinned
+	// tooltips remain scrollable; HideZeros removes idle devices.
 	denseTooltip := func() *common.VizTooltipOptionsBuilder {
 		return common.NewVizTooltipOptionsBuilder().
 			Mode(common.TooltipDisplayModeMulti).
@@ -103,10 +57,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 	zeroLineThresholds := zeroLineThresholds()
 	zeroLineStyle := zeroLineStyle()
 
-	// Yellow from one, for the Summary counters that report a condition worth
-	// looking at rather than a fault. Only "Nodes Down" gets red: a node that
-	// stopped answering is broken, whereas a saturated CPU, a full-ish memory or a
-	// reboot are all states this fleet reaches in normal operation.
+	// Summary conditions warn from one; only an unreachable node is critical.
 	noticeThresholds := dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
 		Steps([]dashboard.Threshold{
@@ -124,15 +75,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 		WithVariable(
 			promDatasourceVariable(),
 		).
-		// Bare-metal and LXC/VM guests scraped over the external scrapeConfig job;
-		// the k8s cluster nodes have their own dashboard and their own job.
-		//
-		// A nodename!="gpuvm" term used to hang off each of these, added to hide
-		// stale series from a period when that host was misconfigured. Nothing has
-		// matched it for the whole retention window, and the host is now scraped as
-		// gpuvm1 by the in-cluster job, which this job selector already excludes, so
-		// the term could only ever have hidden something unrelated that happened to
-		// be named gpuvm.
+		// External bare-metal and VM/LXC targets; Kubernetes nodes use another job.
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("node").
 				Label("Node").
@@ -143,8 +86,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Multi(true).
 				IncludeAll(true),
 		).
-		// Hidden variable: resolves $node (nodename) to $instance (IP:port).
-		// With Multi+IncludeAll, multiple selections produce a regex (a|b|c).
+		// Resolve selected nodenames to instances; multi-select produces a regex.
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("instance").
 				Datasource(ds).
@@ -154,34 +96,9 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				IncludeAll(true).
 				Hide(dashboard.VariableHideHideVariable),
 		).
-		// Counts of how many things are in a state worth knowing about, and nothing
-		// else. The row used to be five strips of one value per node -- status,
-		// CPU, memory, load, uptime -- which at nineteen nodes came to 95 tiles and
-		// about 600 pixels, so the answer to "is anything wrong" arrived only after
-		// reading all of them, and the first screen held nothing else.
-		// dashboards/README.md asks whether an operator can identify scope and
-		// health without scrolling, and describes Summary as mixing health,
-		// utilization and issue counts; every other dashboard here counts, and this
-		// one enumerated. The strips are not gone, they are one row down, which is
-		// where you go once a count is not zero.
-		//
-		// Two lines by meaning rather than by insertion order: node lifecycle
-		// first at 12 each, then resource pressure at 8 each.
-		//
-		// Thresholds were checked against 30 days of history so that none of these
-		// is a tile that can only ever read zero: nodes down peaked at 1, load per
-		// CPU above 1.0 at 2, memory above 80% at 1, and reboots within the hour at
-		// 10. Memory above 90% was tried and dropped -- it has not happened once,
-		// and the 80% tile already covers the same resource.
-		//
-		// Filesystems are the exception to that rule and are counted anyway. The
-		// fleet's fullest sits at 49.9% and has never crossed 70%, so by the test
-		// above the tile would have been cut. It is here because the test is the
-		// wrong one for this signal: CPU saturation, memory pressure and reboots
-		// are transients that come back down by themselves, whereas a filesystem
-		// only moves one way, and "has not happened yet" says nothing about whether
-		// it will. A counter that sits at zero for months and then does not is
-		// exactly what a summary counter is for.
+		// Summary counts actionable states instead of enumerating every node.
+		// Lifecycle and pressure form balanced lines. Filesystem usage remains even
+		// with a zero history because persistent growth differs from transient load.
 		WithRow(dashboard.NewRowBuilder("Summary")).
 		WithPanel(
 			stat.NewPanelBuilder().
@@ -274,25 +191,9 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				),
 		).
 
-		// The per-node strips the Summary used to carry. Current values, one tile
-		// or bar per node; the rows below chart the same quantities over time.
-		//
-		// The pairing is the organising rule of this dashboard: a current-value
-		// gauge here, its trend in the row named for the subject. CPU Usage pairs
-		// with CPU Usage (%), Memory Usage with Memory Usage, Load Average per CPU
-		// with Load Average per CPU (1m). Filesystem Usage was the one that did not
-		// follow it -- both halves sat together down in the Disk row -- so the
-		// Summary's "Filesystems Over 85%" count had nowhere to resolve to a name
-		// without scrolling past everything else. Its trend stayed behind.
-		//
-		// All three capacity gauges sort_desc. Nineteen nodes, and twenty-seven
-		// filesystems, do not fit the ten grid rows they are given, so the panel
-		// scrolls and only the first few bars are visible without dragging. Sorted
-		// by value the visible ones are the ones worth seeing; in label order they
-		// were whichever hostnames happened to sort first. The sort wraps the whole
-		// expression rather than an inner part of it: order does survive the
-		// nodename join in practice -- checked against the live series -- but
-		// nothing documents that it must, and there is no reason to depend on it.
+		// Current per-node values pair with trends in later rows. Sort capacity
+		// gauges so visible bars show the most constrained resources.
+		// One day of node_uname_info history preserves names while targets are down.
 		WithRow(dashboard.NewRowBuilder("Current State by Node")).
 		// up{job=...} is always recorded by Prometheus for every configured scrape
 		// target, returning 0 when the target is unreachable. Joining with
@@ -323,9 +224,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					}},
 				}).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// max by dedupes node_uname_info when a kernel upgrade + reboot leaves
-					// two series (differing only in "release") for the same instance
-					// within the last_over_time lookback window.
+					// Deduplicate stale kernel-release series in the lookback.
 					Expr(`up{job="scrapeConfig/monitoring/node-exporter-external", ` + instFilter + `} * on(instance) group_left(nodename) max by (instance, nodename) (last_over_time(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external"}[1d]))`).
 					LegendFormat("{{nodename}}"),
 				),
@@ -334,12 +233,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Uptime").
 				Datasource(ds).
-				// Height 6 rather than the 4 the neighbouring stats use. A stat panel
-				// sizes its text to whatever box it is given, and nineteen values
-				// across a full-width row leave each about 74px wide; at height 4
-				// there was so little left after the node name that the figures came
-				// out barely legible. Node Exporter Status keeps height 4 beside it
-				// because "UP" survives being small in a way "3 week" does not.
+				// Extra height keeps nineteen uptime values legible.
 				Span(24).Height(6).
 				Unit("s").
 				Min(0).
@@ -360,14 +254,8 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{nodename}}"),
 				).Decimals(0),
 		).
-		// A "Filesystem Usage (Current)" bar gauge used to sit here, span 24. It ran
-		// the same query as "Filesystem Usage" in the Disk row -- the only textual
-		// difference was whether the nodename join fell inside or outside
-		// sort_desc(), which does not change the result -- so the same bars were
-		// drawn twice on one dashboard, and a third panel below charts the same
-		// figure over time. The Disk row keeps the pair that answer different
-		// questions, current level and trend; Summary is for reading at a glance
-		// and a full-width duplicate was the largest thing on it.
+		// Keep filesystem level and trend together in the Disk row; avoid a
+		// duplicate full-width Summary gauge.
 		WithPanel(
 			bargauge.NewPanelBuilder().
 				Title("CPU Usage").
@@ -376,12 +264,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Unit("percent").
 				Min(0).
 				Max(100).
-				// Horizontal in Grafana's naming, which draws each bar running left to
-				// right with the node name beside it and stacks them down the panel.
-				// Auto chose the other layout here: at span 8 the panel is wider than
-				// tall, so it stood nineteen bars up side by side and had nowhere to put
-				// the names. Matches Filesystem Usage next to it, so the three capacity
-				// gauges on this line are read the same way.
+				// Horizontal bars preserve labels in narrow panels.
 				Orientation(common.VizOrientationHorizontal).
 				Thresholds(capacityThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -439,12 +322,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Span(24).Height(4).
 				Unit("percentunit").
 				Min(0).
-				// No sparkline, matching Node Exporter Status and Uptime above it.
-				// This row answers "what is each node doing right now"; the trend
-				// belongs to "Load Average per CPU (1m)" in the CPU row, which has a
-				// full panel and a legend for it. Squeezed behind nineteen values in
-				// a strip four grid rows tall, the same curve was decoration over a
-				// number that is the point of the panel.
+				// Show current load only; the CPU row owns the trend.
 				GraphMode(common.BigValueGraphModeNone).
 				Orientation(common.VizOrientationAuto).
 				JustifyMode(common.BigValueJustifyModeCenter).
@@ -524,9 +402,8 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{nodename}}"),
 				),
 		).
-		// PSI: fraction of time at least one task was stalled ("some") or all
-		// tasks were stalled ("full") waiting on the resource. CPU has no "full"
-		// series since the kernel doesn't track fully-stalled CPU time.
+		// PSI `some` is partial stall time; `full` is total stall time.
+		// Linux exposes no CPU `full` series.
 		WithRow(dashboard.NewRowBuilder("Pressure (PSI)")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -622,16 +499,8 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// Restricted to the hypervisors. node_cpu_package_throttles_total
-					// comes from the cpu collector, which cannot be turned off on the
-					// LXC guests without losing their CPU usage as well (see
-					// group_vars/node_exporter_lxc.yaml), so unlike thermal_zone and
-					// hwmon it still leaks the host's reading into each container:
-					// thirteen series were being drawn for five physical CPUs, and
-					// ns1's "throttling" was node2's. The other temperature panels need
-					// no such guard -- their collectors are disabled on the guests, and
-					// the nvme and smartmon figures come from the textfile collector on
-					// the physical host itself.
+					// Restrict package throttles to hypervisors because LXC guests inherit
+					// the host cpu collector series.
 					Expr(`(rate(node_cpu_package_throttles_total{` + instFilter + `, instance=~"` + proxmoxHosts + `"}[$__rate_interval])) ` + joinNodename).
 					LegendFormat("{{nodename}} Throttles"),
 				),
@@ -758,8 +627,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				// Min and Max are the ARC's configured bounds, so they are drawn
-				// dashed against the solid line of the size that moves between them.
+				// Draw configured ARC bounds dashed around the live size.
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("A").
 					Expr(`(node_zfs_arc_size{`+instFilter+`}`+zfsActive+`) `+joinNodename).

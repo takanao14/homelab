@@ -1,24 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Install the toolchain `make dev` needs on Ubuntu 24.04 and Rocky 9/10.
-#
-#   podman          distro package (both ship a release new enough for compose)
-#   podman-compose  the project's recommended pip install, run through pipx.
-#                   Ubuntu 24.04 marks the system Python as externally managed
-#                   (PEP 668), so a bare `pip3 install` is refused; pipx keeps
-#                   both distros on one code path. Rocky carries pipx in EPEL.
-#                   https://github.com/containers/podman-compose#installation
-#   go              the official linux tarball unpacked into /usr/local/go.
-#                   https://go.dev/doc/install
-#
-# Go is not taken from the distro: Ubuntu's golang-go is far older than this
-# module's go directive and its packaging pins GOTOOLCHAIN=local, so it cannot
-# download the toolchain go.mod asks for either. Rocky has no current Go at all
-# in its base repositories.
-#
-# Idempotent: every step is skipped when it is already satisfied.
-#
+# Idempotently install Podman, pipx-managed podman-compose, and official Go on
+# Ubuntu 24.04 or Rocky 9/10. Distro Go versions do not satisfy go.mod.
 # Usage: ./setup-linux.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -43,8 +27,7 @@ die() {
 }
 
 check_host() {
-  # pipx installs into the invoking user's home, so running the whole script
-  # under sudo would put podman-compose in root's home instead.
+  # pipx must target the invoking user's home.
   [[ $EUID -ne 0 ]] || die "run as a regular user; the script calls sudo only where it needs to"
   command -v sudo >/dev/null || die "sudo is required"
 
@@ -56,8 +39,7 @@ check_host() {
   case "$OS_ID" in
     ubuntu | debian)
       PKG_UPDATE=(sudo apt-get update -qq)
-      # `sudo env VAR=val` survives sudo's env reset and does not depend on the
-      # sudoers `setenv` option (a bare `sudo VAR=val` can be rejected).
+      # `sudo env` survives reset without requiring sudoers setenv.
       PKG_INSTALL=(sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y)
       [[ "$OS_ID" != "ubuntu" || "${VERSION_ID:-}" == "24.04" ]] ||
         warn "tested on Ubuntu 24.04, found ${VERSION_ID:-unknown}; continuing"
@@ -73,8 +55,7 @@ check_host() {
 }
 
 # ensure_commands <command>:<package>...
-# Keyed on the command, not the package: Rocky satisfies curl with
-# curl-minimal, and asking dnf for `curl` there raises a package conflict.
+# Check commands because Rocky's curl-minimal conflicts with the curl package.
 ensure_commands() {
   local spec cmd missing=()
   for spec in "$@"; do
@@ -139,8 +120,7 @@ ensure_go() {
     log "Go not found, installing the current release (go.mod needs >= ${required})"
   fi
 
-  # go.dev/VERSION?m=text is the endpoint the Go toolchain itself uses to
-  # resolve "the current stable release".
+  # Use the toolchain's stable-version endpoint.
   latest="$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -n1)"
   [[ "$latest" == go* ]] || die "unexpected reply from go.dev/VERSION: ${latest}"
   version_ge "${latest#go}" "$required" ||
@@ -153,8 +133,7 @@ ensure_go() {
 
   log "Downloading ${tarball}"
   curl -fsSL -o "${WORKDIR}/${tarball}" "https://go.dev/dl/${tarball}"
-  # go.dev/dl/ redirects downloads to dl.google.com, which is also where the
-  # per-file .sha256 sidecars live; go.dev itself serves HTML for that path.
+  # dl.google.com also hosts the per-file checksum sidecar.
   expected="$(curl -fsSL "https://dl.google.com/go/${tarball}.sha256")"
   actual="$(sha256sum "${WORKDIR}/${tarball}" | awk '{print $1}')"
   [[ "$expected" == "$actual" ]] ||
@@ -188,10 +167,7 @@ ensure_podman_compose() {
 check_rootless_prerequisites() {
   local mode
 
-  # The compose file bind-mounts provisioning/ and the generated dashboards.
-  # Grafana runs as UID 472, which rootless podman maps to a subuid that is not
-  # the owner of those files, so an unreadable $HOME yields an empty Grafana
-  # with no error in the logs.
+  # Rootless Grafana UID 472 must traverse the bind-mount parent directories.
   mode="$(stat -c '%A' "$HOME")"
   if [[ "${mode:9:1}" != "x" ]]; then
     warn "${HOME} is ${mode}: rootless podman cannot traverse it as UID 472."
@@ -199,17 +175,13 @@ check_rootless_prerequisites() {
     warn "Fix with 'chmod o+x ${HOME}', or add 'user: \"0\"' to the grafana service."
   fi
 
-  # Rootless podman needs a subuid/subgid range for the invoking user. Cloud
-  # images usually provide one, but accounts created without useradd defaults
-  # (LDAP, some Rocky kickstarts) do not.
+  # Rootless Podman requires subuid/subgid ranges.
   if ! grep -q "^${USER}:" /etc/subuid 2>/dev/null; then
     warn "no /etc/subuid range for ${USER}: rootless podman will refuse to start."
     warn "Fix with: sudo usermod --add-subuids 100000-165535 --add-subgids 100000-165535 ${USER}"
   fi
 
-  # SELinux (enforcing by default on Rocky) blocks a container from reading an
-  # unlabelled bind mount. The compose file carries :z for this; flag it if the
-  # labels were dropped.
+  # Rocky bind mounts require the compose file's SELinux :z label.
   if command -v getenforce >/dev/null 2>&1 && [[ "$(getenforce)" == "Enforcing" ]]; then
     if ! grep -q ':z$' "$COMPOSE_FILE"; then
       warn "SELinux is enforcing but the volumes in docker-compose.yml carry no :z"
@@ -217,9 +189,7 @@ check_rootless_prerequisites() {
     fi
   fi
 
-  # Podman has no implicit default registry, and Ubuntu ships registries.conf
-  # with no unqualified-search-registries, so a short image name simply fails
-  # to resolve. The compose file spells the registry out; flag it if undone.
+  # Podman needs the compose file's registry-qualified image.
   if ! grep -qE '^[[:space:]]*image:[[:space:]]*[^[:space:]/]+\.[^[:space:]/]+/' "$COMPOSE_FILE"; then
     warn "the image in docker-compose.yml is not registry-qualified; podman"
     warn "cannot resolve a short name without unqualified-search-registries."

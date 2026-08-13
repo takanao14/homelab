@@ -8,36 +8,16 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
-// buildOpenbaoOverview defines the OpenBao (external VM, 192.168.40.30) health
-// dashboard: seal/active status, request rate and latency, raft storage
-// performance, and lease/token inventory.
-//
-// OpenBao keeps the vault_* metric prefix for compatibility, and its metrics
-// carry their own cluster label (the raft cluster name, not the Kubernetes
-// environment name), so
-// panels filter on the scrape job only — no $cluster variable here.
-// Latency summaries (vault_core_handle_request, vault_raft_*) are emitted in
-// milliseconds.
+// buildOpenbaoOverview covers external OpenBao health, requests, Raft, leases,
+// and tokens. Vault-compatible metrics retain the vault_* prefix and use their
+// own Raft cluster label, so panels filter only by scrape job. Latency is ms.
 func buildOpenbaoOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
 	const openbao = `job="scrapeConfig/monitoring/openbao"`
 
-	// usageGauge holds a metric from OpenBao's periodic usage-gauge collection.
-	//
-	// vault_token_count and vault_identity_num_entities are not emitted on every
-	// scrape. They come from a background loop that runs every ten minutes, so the
-	// series exists for one scrape and is then absent until the loop runs again:
-	// sampled at one-minute resolution over six hours, vault_token_count was
-	// present for 36 of 360 minutes and vault_identity_num_entities the same. An
-	// instant query only reaches back five minutes, so the stat that reads it went
-	// blank for roughly half of every ten-minute cycle, and the timeseries drew a
-	// point every ten minutes with line segments guessing at the gaps.
-	//
-	// A fifteen-minute window is longer than the ten-minute period by enough to
-	// always contain a sample, without being so long that a genuinely stopped
-	// collector goes unnoticed for an hour. Metrics that are emitted every scrape,
-	// vault_expire_num_leases among them, need none of this and do not get it.
+	// usageGauge carries ten-minute background metrics forward for 15 minutes.
+	// Per-scrape gauges such as lease count do not need this window.
 	usageGauge := func(expr string) string {
 		return `last_over_time(` + expr + `[15m])`
 	}
@@ -45,25 +25,8 @@ func buildOpenbaoOverview() (*dashboard.Dashboard, error) {
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
 
-	// sparseLatency styles the three summary-quantile panels, which are drawn from
-	// go-metrics summaries and are mostly holes.
-	//
-	// The holes are NaN, not missing samples: the series is published on every
-	// scrape and carries NaN for any interval with nothing to measure, so there is
-	// no zero baseline to add -- a latency of 0 ms would be a lie where a gap is
-	// merely unknown. Measured over six hours at 30s resolution, only 86 of 720
-	// samples of vault_core_handle_request p99 were real numbers; the panels were
-	// 88% gap.
-	//
-	// Connecting them is the readable answer, but not unconditionally. Bounding the
-	// span at fifteen minutes keeps normal sparsity joined up while leaving a
-	// genuine quiet spell visible as a break: measured across the last 24 hours,
-	// every 15-minute window contained at least one real sample, for both request
-	// latency and raft commit time, so nothing that happens normally reaches the
-	// bound.
-	//
-	// Points are shown always. A connected line over 12% real data would otherwise
-	// present interpolation as measurement; the markers say where the readings are.
+	// sparseLatency joins NaN gaps under 15 minutes while retaining point markers
+	// for real summary samples. Longer quiet periods remain visible.
 	spanMillis := float64(15 * 60 * 1000)
 
 	// downThresholds colors boolean up/unsealed/active stats: red for 0, green for 1.
@@ -183,32 +146,9 @@ func buildOpenbaoOverview() (*dashboard.Dashboard, error) {
 				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				// Plotted raw, for the same reason as Raft Applies below: these are
-				// go-metrics counters reaching Prometheus through the go-metrics sink,
-				// which publishes the count for the last collection interval and then
-				// starts over. Measured over thirty minutes the request count read
-				// 3,3,6,3,3,3,3,29,3,6,3,3,3 -- it falls as well as rises, so it is a
-				// gauge in everything but name.
-				//
-				// rate() over that reported 0 at almost every step, because every fall
-				// looks like a counter reset: a service handling three requests a minute
-				// was drawn as a flat zero line. That is the panel saying "no traffic"
-				// about a service that is working.
-				// Both series are pinned to zero against up{}, because the sink emits
-				// nothing at all for an interval with no activity rather than emitting a
-				// zero -- the same shape as LogQL's empty windows. Neither counter can
-				// serve as the other's baseline: measured at two-minute resolution the
-				// request count was itself absent for six of eleven steps. up{} is the
-				// only series here that exists on every scrape.
-				//
-				// sum() is what makes the fallback work at all. Without it the two sides
-				// carry different label sets -- the metric keeps __name__, the * 0 term
-				// drops it -- so `or` treats them as unrelated series and the gaps stay
-				// open. There is one OpenBao node, so collapsing labels costs nothing.
-				//
-				// The zeros are real readings, not padding: retention is 60s against a
-				// 30s scrape, so each collection interval is observed about twice and a
-				// quiet minute genuinely reports nothing.
+				// OpenBao's go-metrics sink republishes per-interval request counts rather
+				// than monotonic counters. Plot raw values and use up{} as a zero baseline
+				// when quiet intervals omit the series. sum() aligns label sets.
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`sum(vault_core_handle_request_count{` + openbao + `})` +
 						` or sum(up{` + openbao + `}) * 0`).
@@ -249,20 +189,8 @@ func buildOpenbaoOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// Plotted raw, without rate(). vault_raft_apply is a go-metrics
-					// counter reaching Prometheus through the go-metrics sink, which
-					// publishes the count for the last collection interval and then
-					// starts over -- it is a gauge in everything but name and does not
-					// increase monotonically. Observed over two hours it read
-					// 11,11,11,11,11,27,11,11,11,11,11,27,11. rate() treats each fall
-					// back to 11 as a counter reset and adds the 11 again as fresh
-					// increase, which is how the panel arrived at 0.0588 ops from a
-					// series whose real meaning is "11 applies in that interval".
-					//
-					// Pinned to zero against up{} for the same reason as the request
-					// panel: an interval with no applies publishes no series at all, so
-					// four of ten steps were gaps that read as "no data" rather than as
-					// the "nothing was written" they actually mean.
+					// Raft apply is also a republished interval count, so plot it raw and
+					// baseline omitted quiet intervals against up{}.
 					Expr(`sum(vault_raft_apply{` + openbao + `})` +
 						` or sum(up{` + openbao + `}) * 0`).
 					LegendFormat("applies"),

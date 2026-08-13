@@ -9,30 +9,15 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
-// buildCiliumOverview defines Cilium CNI health: agent/operator status, packet
-// drops, policy verdicts, BPF datapath pressure, endpoint health, and Hubble flows.
-//
-// Two kinds of range window appear below and they are not interchangeable. The
-// rate() trends use $__rate_interval so the window grows with the zoom level:
-// they previously used a fixed [5m], which is fine at the default 6h but breaks
-// once the step exceeds it. At 7d the step is 15m, so Prometheus only ever
-// looked at 5 minutes out of every 15 and the remaining two thirds of the data
-// were never read -- the largest drop spike in a 7-day view read 0.278 with
-// [5m] against 0.606 with a step-sized window, and shorter bursts disappeared
-// outright. The increase() windows in the "(5m)" panels stay fixed on purpose:
-// there the five minutes is the quantity the panel is named for, not a
-// rendering detail.
+// buildCiliumOverview covers Cilium health, drops, policy, BPF maps, endpoints,
+// and Hubble. Trends use $__rate_interval; named five-minute KPIs stay fixed.
 func buildCiliumOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
 	const clusterFilter = `cluster=~"$cluster"`
 
-	// Cilium's drop counters are overwhelmingly one benign reason: over 30 days
-	// prd logged 33,143 "Unsupported L3 protocol" drops (non-IP frames the
-	// datapath does not handle) against 3 "Policy denied". Left on the default
-	// palette the noise takes a colour and the three drops that matter do not,
-	// so the benign series is pinned to grey and policy denials to red. The
-	// panel then reads by colour alone: grey only means nothing happened.
+	// Render dominant benign unsupported-L3 drops grey and policy denials red
+	// so operationally relevant drops stand out.
 	const benignDropColor = "#808080"
 
 	tooltipAll := defaultTooltip()
@@ -231,11 +216,7 @@ func buildCiliumOverview() (*dashboard.Dashboard, error) {
 		WithRow(dashboard.NewRowBuilder("BPF Datapath & Hubble Flows")).
 		WithPanel(
 			bargauge.NewPanelBuilder().
-				// topk is a cardinality guard, not a promise of ten bars: prd
-				// currently exposes seven maps, and enabling features such as
-				// Egress Gateway or L7 policy adds more. Naming a count in the
-				// title would misdescribe every environment but the one that
-				// happens to hit it.
+				// topk bounds future map growth; the title does not promise ten results.
 				Title("BPF Map Pressure").
 				Description("Fill ratio of the busiest eBPF maps. Sustained high pressure (>80%) risks map exhaustion and packet drops.").
 				Datasource(ds).

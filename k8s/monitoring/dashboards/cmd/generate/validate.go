@@ -32,9 +32,7 @@ type thresholdsJSON struct {
 	Steps []json.RawMessage `json:"steps"`
 }
 
-// validateDashboardJSON enforces the generated-dashboard invariant that every
-// coloured panel owns an explicit threshold definition. Grafana otherwise
-// supplies its unrelated green-below-80/red-at-80 default.
+// validateDashboardJSON requires explicit thresholds on coloured panels.
 func validateDashboardJSON(name string, data []byte) error {
 	var document dashboardJSON
 	if err := json.Unmarshal(data, &document); err != nil {

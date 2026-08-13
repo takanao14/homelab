@@ -11,17 +11,8 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
-// buildK8sControlPlaneOverview defines Kubernetes control-plane and DNS health.
-// It complements kubernetes-overview, which focuses on workloads and node resources.
-//
-// Range windows come in two kinds and are not interchangeable. The rate() trends
-// use $__rate_interval so the window follows the zoom: a fixed [5m] is fine at
-// the 6h default, where the step is about 30s, but breaks once the range is wide
-// enough for the step to overtake it -- at 7d the step reaches ~15m, so
-// Prometheus reads 5 minutes out of every 15 and never looks at the rest, which
-// silently drops spikes from a dashboard whose whole purpose is catching them.
-// The increase() windows in the "(5m)" and "(1h)" panels stay fixed on purpose:
-// there the interval is the quantity the panel is named for.
+// buildK8sControlPlaneOverview complements workload views with control-plane
+// and DNS health. Trends use $__rate_interval; named 5m/1h KPIs stay fixed.
 func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
@@ -65,10 +56,7 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 				Multi(true).
 				IncludeAll(true),
 		).
-		// Summary tiles are all "0 = healthy" issue counters, laid out Span(8) so the
-		// nine of them tile evenly as 3 columns x 3 rows. Panel order is the layout:
-		// each row of three is one concern — API serving, scheduling, then node and
-		// storage state. Keep additions in multiples of three, or the grid breaks.
+		// Nine zero-is-healthy counters form three concern-based rows of three.
 		WithRow(dashboard.NewRowBuilder("Summary")).
 		WithPanel(
 			stat.NewPanelBuilder().
@@ -724,10 +712,8 @@ func buildK8sControlPlaneOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{cluster}}"),
 				),
 		).
-		// Radial gauges rather than bar gauges: each of these is a single bounded
-		// 0-100% reading per cluster, which is what a dial is for. A bar gauge
-		// earns its keep when several items are ranked against each other, as in
-		// the Scheduling row.
+		// Use radial gauges for single bounded cluster percentages; bar gauges are
+		// reserved for ranked multi-item panels.
 		WithRow(dashboard.NewRowBuilder("Capacity")).
 		WithPanel(
 			gauge.NewPanelBuilder().

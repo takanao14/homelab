@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
-// buildMonitoringOverview defines the self-monitoring dashboard for Prometheus and Loki.
-// Job variables are discovered from build_info metrics so they adapt to any release name.
+// buildMonitoringOverview covers Prometheus and Loki self-monitoring.
+// Discover jobs from build_info so release names remain flexible.
 func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
@@ -228,13 +228,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// type="float" only. The counter is split by sample type, and the
-					// histogram series is flat at zero because nothing here writes
-					// native histograms. Both rendered under the identical legend
-					// "prd samples/s", so the panel drew two indistinguishable lines,
-					// one of which was always zero. Should native histograms ever be
-					// ingested, this needs a second target rather than a wider matcher,
-					// so the two stay separable in the legend.
+					// Select float samples; native histograms need a separately labelled target.
 					Expr(`rate(prometheus_tsdb_head_samples_appended_total{` + promJob + `, type="float"}[$__rate_interval])`).
 					LegendFormat("{{cluster}} samples/s"),
 				),
@@ -254,14 +248,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{cluster}} Blocks"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// This read prometheus_tsdb_head_chunks * 1024 and was labelled
-					// "Head (est.)". head_chunks is a count of chunks, and 1024 was an
-					// assumed size per chunk: 401378 chunks came out as 411 MB against
-					// the 80.9 MB the head actually occupied, high by a factor of five.
-					// prometheus_tsdb_head_chunks_storage_size_bytes is the measurement
-					// and was available the whole time, so there was never a reason to
-					// estimate. A guess on a bytes axis beside a real 13.4 GB figure
-					// reads as a measurement whatever the legend says.
+					// Use measured head storage bytes, not an assumed size per chunk.
 					Expr(`prometheus_tsdb_head_chunks_storage_size_bytes{` + promJob + `}`).
 					LegendFormat("{{cluster}} Head"),
 				),
@@ -291,13 +278,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// The "and on (slice) ... > 0" guard is the same one the two other
-					// p99 panels on this dashboard already carry, and this was the only
-					// one without it. histogram_quantile returns NaN when every bucket
-					// rate in a window is zero, which for a quiet slice is most of the
-					// time: over seven days at a five-minute step, result_sort was NaN
-					// in 1883 of 2016 samples. The line was absent 93% of the time and
-					// nothing said whether that meant idle or broken.
+					// Guard quiet histogram slices so NaN quantiles do not appear broken.
 					Expr(`histogram_quantile(0.99, sum by (le, slice) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{` + promJob + `}[$__rate_interval])))` +
 						` and on (slice) sum by (slice) (rate(prometheus_engine_query_duration_histogram_seconds_count{` + promJob + `}[$__rate_interval])) > 0`).
 					LegendFormat("{{cluster}} {{slice}}"),

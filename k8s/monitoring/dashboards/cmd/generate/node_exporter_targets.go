@@ -8,31 +8,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// nodeExporterTargetsFile is the non-hypervisor half of the node-exporter
-// inventory, resolved relative to the dashboards/ working directory the Makefile
-// runs from. The hypervisors themselves come from proxmoxNodesFile.
+// nodeExporterTargetsFile contains non-hypervisor node-exporter inventory.
+// Hypervisors come from proxmoxNodesFile.
 const nodeExporterTargetsFile = "../values/node-exporter-external.yaml"
 
-// loadLxcGuestRegex builds a "resolver1|ns1|..." regex of the LXC guests, so
-// panels reading kernel-wide values can exclude them.
-//
-// An LXC guest runs on its host's kernel, so anything node-exporter reads
-// straight out of /proc is the host's number wearing the guest's instance label.
-// lxcfs virtualises much of it -- CPU count, meminfo, loadavg and the CPU and
-// memory PSI files are all genuinely per-container -- but not all of it.
-// Measured across the fleet, node_pressure_io_{waiting,stalled}_seconds_total
-// and node_boot_time_seconds are bit-for-bit the host's: five guests on node2
-// all read its 9221.5s of IO wait and its exact boot timestamp, and three on
-// node3 read node3's.
-//
-// This is the third time the same shape has turned up, after ZFS ARC and CPU
-// package throttles, which is why the answer lives in the inventory now rather
-// than in another hand-written list. VMs and bare metal each run their own
-// kernel and are correct as they stand.
-//
-// The result is meant for `instance!~"..."`. Exclusion rather than inclusion is
-// deliberate: the hypervisors arrive from a different file, and an exclusion
-// list leaves them alone instead of needing both files stitched together.
+// loadLxcGuestRegex identifies LXC guests for kernel-wide metric exclusions.
+// lxcfs virtualizes CPU, memory, load, and related PSI, but IO pressure and
+// boot time still mirror the host. Excluding known guests avoids duplicate
+// host series while leaving VMs and bare metal intact.
 func loadLxcGuestRegex() (string, error) {
 	raw, err := os.ReadFile(nodeExporterTargetsFile)
 	if err != nil {
@@ -52,10 +35,8 @@ func loadLxcGuestRegex() (string, error) {
 	}
 	names := make([]string, 0, len(inventory.Targets))
 	for _, target := range inventory.Targets {
-		// kind is required rather than defaulted. Defaulting either way has a
-		// silent failure: assume "vm" and a new LXC guest quietly republishes its
-		// host's numbers, assume "lxc" and a new VM quietly vanishes from the
-		// panels. Failing generation is the only option that cannot be missed.
+		// Require kind so new VMs remain visible and new LXC guests cannot silently
+		// republish host metrics.
 		switch target.Kind {
 		case "lxc":
 			if target.Name == "" {

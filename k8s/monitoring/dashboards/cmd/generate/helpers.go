@@ -5,13 +5,9 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 )
 
-// This file holds the shared "house style" helpers reused across dashboards.
-// Reuse is kept to two levels (see README "Conventions"): string constants live
-// inline in each builder (L0), and the fragment factories below (L1) return a
-// fresh builder on every call so panels never share mutable state.
+// Shared fragment factories return fresh builders to avoid mutable state aliasing.
 
-// promDatasource returns a datasource ref using "$datasource" as the UID so that
-// all panels switch together when the user changes the datasource dropdown variable.
+// promDatasource binds panels to the selected Prometheus datasource.
 func promDatasource() common.DataSourceRef {
 	dsType := "prometheus"
 	dsUID := "$datasource"
@@ -21,7 +17,7 @@ func promDatasource() common.DataSourceRef {
 	}
 }
 
-// lokiDatasource is the Loki counterpart of promDatasource.
+// lokiDatasource binds panels to the selected Loki datasource.
 func lokiDatasource() common.DataSourceRef {
 	dsType := "loki"
 	dsUID := "$datasource"
@@ -31,21 +27,21 @@ func lokiDatasource() common.DataSourceRef {
 	}
 }
 
-// promDatasourceVariable returns the standard Prometheus datasource dropdown variable.
+// promDatasourceVariable returns the Prometheus datasource selector.
 func promDatasourceVariable() *dashboard.DatasourceVariableBuilder {
 	return dashboard.NewDatasourceVariableBuilder("datasource").
 		Label("Datasource").
 		Type("prometheus")
 }
 
-// lokiDatasourceVariable returns the standard Loki datasource dropdown variable.
+// lokiDatasourceVariable returns the Loki datasource selector.
 func lokiDatasourceVariable() *dashboard.DatasourceVariableBuilder {
 	return dashboard.NewDatasourceVariableBuilder("datasource").
 		Label("Datasource").
 		Type("loki")
 }
 
-// defaultTooltip returns a multi-series tooltip so all series values are visible on hover.
+// defaultTooltip returns the standard multi-series tooltip.
 func defaultTooltip() *common.VizTooltipOptionsBuilder {
 	return common.NewVizTooltipOptionsBuilder().Mode(common.TooltipDisplayModeMulti)
 }
@@ -58,8 +54,7 @@ func defaultLegend() *common.VizLegendOptionsBuilder {
 		Placement(common.LegendPlacementBottom)
 }
 
-// issueThresholds returns green/red thresholds where any value >= 1 is red.
-// Used for panels that count errors, degraded workloads, or other anomalies.
+// issueThresholds marks any nonzero anomaly count red.
 func issueThresholds() *dashboard.ThresholdsConfigBuilder {
 	return dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -69,8 +64,7 @@ func issueThresholds() *dashboard.ThresholdsConfigBuilder {
 		})
 }
 
-// watchdogAwareFiringAlertThresholds keeps the normal Watchdog alert green while
-// still marking any additional firing alert as an issue.
+// watchdogAwareFiringAlertThresholds allows the expected Watchdog alert.
 func watchdogAwareFiringAlertThresholds() *dashboard.ThresholdsConfigBuilder {
 	return dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -80,15 +74,7 @@ func watchdogAwareFiringAlertThresholds() *dashboard.ThresholdsConfigBuilder {
 		})
 }
 
-// measurementThresholds returns a single neutral step, for panels whose number is
-// a measurement rather than a verdict -- power-on hours, bytes written, a count of
-// things that exist.
-//
-// It has to be said explicitly. A stat panel with a colorMode but no thresholds
-// does not render uncoloured: Grafana falls back to its own default of green below
-// 80 and red at or above it, which is a judgement nobody wrote. On a panel reading
-// in thousands of hours or terabytes that means permanently red, and on a panel
-// reading a percentage it means a healthy 95% shown in red.
+// measurementThresholds prevents Grafana's implicit 80% threshold on neutral values.
 func measurementThresholds() *dashboard.ThresholdsConfigBuilder {
 	return dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -97,8 +83,7 @@ func measurementThresholds() *dashboard.ThresholdsConfigBuilder {
 		})
 }
 
-// capacityThresholds returns the standard utilization thresholds for percent-based
-// capacity panels: green below 80, yellow at 80, red at 90.
+// capacityThresholds marks percentage utilization at 80% and 90%.
 func capacityThresholds() *dashboard.ThresholdsConfigBuilder {
 	return dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -109,8 +94,7 @@ func capacityThresholds() *dashboard.ThresholdsConfigBuilder {
 		})
 }
 
-// zeroLineThresholds returns a transparent/white threshold pair used to draw a
-// zero-reference line on bidirectional I/O panels (receive positive, transmit negative-Y).
+// zeroLineThresholds draws zero on bidirectional I/O panels.
 func zeroLineThresholds() *dashboard.ThresholdsConfigBuilder {
 	return dashboard.NewThresholdsConfigBuilder().
 		Mode(dashboard.ThresholdsModeAbsolute).
@@ -120,8 +104,7 @@ func zeroLineThresholds() *dashboard.ThresholdsConfigBuilder {
 		})
 }
 
-// zeroLineStyle returns a threshold style that renders the zero-reference line
-// as a solid line (not a shaded region).
+// zeroLineStyle renders the zero threshold as a line.
 func zeroLineStyle() *common.GraphThresholdsStyleConfigBuilder {
 	return common.NewGraphThresholdsStyleConfigBuilder().
 		Mode(common.GraphThresholdsStyleModeLine)

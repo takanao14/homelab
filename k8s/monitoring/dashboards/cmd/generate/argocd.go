@@ -9,14 +9,8 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
-// buildArgocdOverview defines ArgoCD application health, sync activity, and
-// repo-server performance.
-//
-// Metrics come from the four per-component ServiceMonitors
-// (job="argocd-<component>-metrics", see docs/plans/prometheus-scrape-gaps.md).
-// Each environment renders this against its own Prometheus, so the dashboard
-// only ever shows one cluster -- see "Environments and the cluster variable"
-// in the README.
+// buildArgocdOverview covers application health, sync activity, reconciliation,
+// and repo-server performance from per-component ServiceMonitors.
 func buildArgocdOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
@@ -87,8 +81,7 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("Failures"),
 				),
 		).
-		// Second summary line: reachability of the things ArgoCD depends on,
-		// as opposed to the application state counters above.
+		// Second line covers Argo CD dependency reachability.
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Cluster Connections Down").
@@ -113,9 +106,7 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 				Thresholds(issueThresholds).
 				ColorMode(common.BigValueColorModeBackground).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// Aggregate away repo: on this metric the label holds the
-					// local temp clone path (/tmp/_argocd-repo/<uuid>), not the
-					// remote URL, so it churns on every repo-server restart.
+					// Drop restart-specific local clone paths from the repo label.
 					Expr(`ceil(sum(increase(argocd_git_lsremote_fail_total{` + clusterFilter + `}[1h]))) or vector(0)`).
 					LegendFormat("Failures"),
 				),
@@ -215,27 +206,17 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
-				// Syncs are discrete events, roughly one an hour, so a per-second
-				// rate reads as 0.00175 ops and puts the axis in millionths.
-				// Counting them per bucket instead keeps the axis in whole syncs.
-				// The window matches the step, so buckets do not overlap; round()
-				// clears the fractions increase() extrapolation leaves behind
-				// (1.05 for a single sync), and the 10m floor keeps bars wide
-				// enough to read across the default 24h range.
+				// Count sparse sync events per non-overlapping bucket. Round increase()
+				// extrapolation and floor bars at ten minutes for readability.
 				Interval("10m").
 				DrawStyle(common.GraphDrawStyleBars).
-				// Solid, not the FillOpacity(10) the line panels use: that value
-				// tints the area under a curve, but leaves a bar as an outline.
+				// Fill bars solid rather than applying line-area opacity.
 				FillOpacity(100).
 				GradientMode(common.GraphGradientModeHue).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				// Split by phase into two targets so the stack order is fixed by
-				// query order rather than by however the label values happen to
-				// sort. One target would put Error and Failed underneath
-				// Succeeded alphabetically, burying the failures at the baseline;
-				// failures belong on top where they are the first thing read.
+				// Separate targets fix stack order with failures above successes.
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`round(sum by (cluster) (increase(argocd_app_sync_total{`+clusterFilter+`,dry_run="false",phase="Succeeded"}[$__interval])))`).
 					LegendFormat("{{cluster}} Succeeded"),
@@ -258,10 +239,7 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
-				// Reconciles arrive in bursts roughly every 2 minutes. Without a
-				// floor, $__rate_interval shrinks to ~1m when zoomed in, every
-				// bucket rate becomes 0, and histogram_quantile returns NaN --
-				// which renders as a broken line.
+				// Floor bursty reconcile histograms so quantiles retain enough samples.
 				Interval("5m").
 				Tooltip(tooltipAll).
 				Legend(legend).
@@ -282,11 +260,7 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("short").
-				// Counted per bucket rather than per second, for the same reason
-				// as Sync Activity: ls-remote polls every ~2.4 minutes, which as
-				// a rate is 0.007 and renders as "7 mops". The two request types
-				// differ ~47x in volume (702 vs 15 a day), so whole counts also
-				// keep fetch visible as a segment instead of a rounding error.
+				// Count sparse Git requests per bucket so rare fetches remain visible.
 				Interval("10m").
 				DrawStyle(common.GraphDrawStyleBars).
 				FillOpacity(100).
@@ -294,10 +268,7 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				// One target per request type, so the stack order follows query
-				// order instead of the alphabetical sort of the label values,
-				// which would put the rare fetch bars underneath the tall
-				// ls-remote ones. ArgoCD only ever emits these two types.
+				// Separate request types to keep rare fetch bars above ls-remote.
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`round(sum by (cluster) (increase(argocd_git_request_total{` + clusterFilter + `,request_type="ls-remote"}[$__interval])))`).
 					LegendFormat("{{cluster}} ls-remote"),
@@ -314,11 +285,7 @@ func buildArgocdOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("s").
-				// ls-remote polls every ~3 minutes and fetch only fires on an
-				// actual repo change, so a short window leaves every bucket rate
-				// at 0 and histogram_quantile returns NaN. The floor keeps
-				// ls-remote continuous; fetch stays sparse by nature, hence the
-				// always-visible points.
+				// Floor sparse Git latency windows; show naturally sparse fetches as points.
 				Interval("15m").
 				ShowPoints(common.VisibilityModeAlways).
 				PointSize(6).

@@ -9,22 +9,9 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
-// buildServiceLogs defines a generic journald service log dashboard backed by Loki.
-// Logs are JSON-encoded journald entries shipped via vector with labels: host, unit.
-// PRIORITY follows syslog convention: 0=emerg … 3=err, 4=warning, 5=notice, 6=info, 7=debug.
-//
-// Window and baseline conventions follow dns_logs.go; see the comment at the top
-// of that file. Aggregation windows use $__auto so the window tracks the zoom
-// rather than reading five minutes out of every step at wide ranges,
-// Interval("1m") floors it, and every timeseries pins its series to zero because LogQL emits no
-// sample at all for an empty window. The volume here is low enough that all
-// three matter: across every journald host the estate produces a few dozen lines
-// a day at PRIORITY 0-4, and most units log nothing for hours at a time.
-//
-// The error and warning panels plot count_over_time() as bars, while the volume
-// panels keep rate() in counts per second; see the same split explained in
-// syslog.go. At a few dozen events a day a per-second rate lands in thousandths
-// and moves with the zoom, which is no way to read an error count.
+// buildServiceLogs covers Vector-shipped journald JSON with host/unit labels.
+// Follow dns_logs window and zero-baseline conventions. Use rates for volume
+// and count_over_time bars for sparse errors and warnings.
 func buildServiceLogs() (*dashboard.Dashboard, error) {
 	ds := lokiDatasource()
 	tooltipAll := defaultTooltip()
@@ -58,19 +45,13 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("host").
 				Label("Host").
 				Datasource(ds).
-				// Scoped to the streams that carry a unit label. The host label is
-				// shared with the syslog and DNS query log streams, so the unscoped
-				// label_values(host) offered 21 hosts of which only 11 ship journald:
-				// picking any of the other 10 emptied the whole dashboard.
+				// Scope host options to journald streams carrying unit labels.
 				Query(dashboard.StringOrMap{String: new(`label_values({unit=~".+"}, host)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
 				IncludeAll(true).
-				// All expands to ".+" rather than the values seen in the current
-				// range, so a host that stayed silent through the view is still
-				// covered. Every selector also constrains unit, which is what keeps
-				// the syslog and DNS streams out.
+				// Use .+ for All so silent hosts remain in scope.
 				AllValue(".+"),
 		).
 		WithVariable(
@@ -84,8 +65,6 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 				IncludeAll(true).
 				AllValue(".+"),
 		).
-
-		// Row 1: Summary
 		WithRow(dashboard.NewRowBuilder("Summary")).
 		WithPanel(
 			stat.NewPanelBuilder().
@@ -134,8 +113,6 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 					LegendFormat("warnings"),
 				),
 		).
-
-		// Row 2: Volume Trends
 		WithRow(dashboard.NewRowBuilder("Volume Trends")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -175,8 +152,6 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 					LegendFormat("{{unit}}"),
 				),
 		).
-
-		// Row 3: Errors & Warnings
 		WithRow(dashboard.NewRowBuilder("Errors & Warnings")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
@@ -194,8 +169,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(loki.NewDataqueryBuilder().
-					// The baseline is keyed on $__range rather than the current window,
-					// which is itself empty for a unit that has gone quiet.
+					// Key zero on the full range so quiet units remain visible.
 					Expr(`sum by (unit) (count_over_time(` + baseJSON + ` | PRIORITY =~ "[0-3]" [$__auto]))` +
 						` or sum by (unit) (count_over_time(` + base + `[$__range])) * 0`).
 					LegendFormat("{{unit}}"),
@@ -221,8 +195,6 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 					LegendFormat("{{unit}}"),
 				),
 		).
-
-		// Row 4: Log browser
 		WithRow(dashboard.NewRowBuilder("Logs")).
 		WithPanel(
 			logs.NewPanelBuilder().
@@ -236,14 +208,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 				ShowControls(true).
 				ShowFieldSelector(true).
 				WithTarget(loki.NewDataqueryBuilder().
-					// line_format is what picks the displayed fields: the logs panel
-					// has no displayedFields option in the schema, and
-					// ShowFieldSelector only lets a viewer choose fields for the
-					// session, with nothing persisted back to the dashboard. host and
-					// unit are in front of the message because both variables default
-					// to All, so the bare message left no way to tell which service on
-					// which host produced a line -- and journald units repeat across
-					// hosts, so the unit alone does not identify it either.
+					// line_format persists host, unit, and message for unfiltered log views.
 					Expr(baseJSON + ` | line_format "{{.host}} [{{.unit}}] {{.message}}"`).
 					MaxLines(500),
 				),

@@ -12,9 +12,7 @@ import (
 )
 
 func main() {
-	// Map of dashboard name to builder function.
-	// The name becomes the output filename (e.g. "node-overview" in the output directory).
-	// To add a new dashboard, just add an entry here.
+	// Dashboard names become output filenames.
 	dashboards := map[string]func() (*dashboard.Dashboard, error){
 		"node-overview":          buildNodeOverview,
 		"k8s-node-overview":      buildK8sNodeOverview,

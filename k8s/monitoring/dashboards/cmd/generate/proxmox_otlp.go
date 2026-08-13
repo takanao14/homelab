@@ -8,37 +8,16 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
-// buildProxmoxOtlpOverview defines the Proxmox VE cluster dashboard using native OTLP metrics
-// pushed by PVE 9 via OTLP/HTTP.
-//
-// Label structure (no join expressions required):
-//
-//	proxmox_node_*  : {job="proxmox-ve", node="<hostname>"}
-//	proxmox_vm_*    : {job="proxmox-ve", node="<hostname>", name="<vm>", type="qemu|lxc", vmid="<id>"}
-//	proxmox_storage_*: {job="proxmox-ve", node="<hostname>", storage="<pool>"}
-//
-// Differences from the pve-exporter dashboard (proxmox.go):
-//   - Stopped guest counts are unavailable: OTLP only emits metrics for running guests.
-//     Replaced with Node Network I/O summary stats.
-//   - Temperature join uses target_info{job="proxmox-ve"} + node_uname_info instead of
-//     the pve_node_info instance chain.
-//   - Additional panels: Node Network I/O, Guest Disk I/O, Guest Network I/O.
+// buildProxmoxOtlpOverview covers PVE 9 native OTLP node, guest, and storage
+// metrics. OTLP emits running guests only and already carries usable labels.
 func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
 	const (
 		job        = `job="proxmox-ve"`
 		nodeFilter = `job="proxmox-ve", node=~"$node"`
-		// zfsActive keeps only nodes with a pool actually imported, the same
-		// condition node-overview applies to node_zfs_arc_size and for the same
-		// reason -- this is the same fleet seen through a different exporter, and
-		// the readings agree down to the byte. Every Proxmox host loads the module,
-		// only pve has a pool, and an ARC with nothing in it holds a few header
-		// structs: 2880 bytes on node1 and node5, 1440 on node2 through node4,
-		// against 6.2 GiB on pve. A megabyte is nowhere near either figure.
-		//
-		// Gated on the metric itself rather than on a list of hostnames, so a host
-		// that gains a pool appears here without anyone editing this file.
+		// Show ZFS only for nodes with an imported pool. Module-only hosts expose
+		// tiny empty ARCs; metric-based gating lets new pools appear automatically.
 		zfsActive = ` and (proxmox_node_memory_arcsize_bytes{` + nodeFilter + `} > 1024 * 1024)`
 	)
 
@@ -81,8 +60,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				IncludeAll(true),
 		).
 
-		// Summary: guest counts + node resource snapshot.
-		// Stopped guest counts are not available via OTLP (only running guests emit metrics).
+		// Summary combines running guest counts and node resources.
 		WithRow(dashboard.NewRowBuilder("Summary")).
 		WithPanel(
 			stat.NewPanelBuilder().
@@ -264,22 +242,8 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				ThresholdsStyle(zeroLineStyle).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Rx").
-					// Excludes loopback, the per-guest tap and veth interfaces, the
-					// firewall bridge internals, and nic0. Keeps nic1, the vmbr*
-					// bridges, and the SDN vnets.
-					//
-					// nic0 is named like a physical NIC and is one, but it is not
-					// cabled on any host in this fleet: measured across all six nodes
-					// it moves 0 B/s while nic1 carries everything, so it contributed
-					// six flat lines at zero. An earlier version of this comment said
-					// the filter kept "physical NICs (nic*)", which the pattern beside
-					// it had never done.
-					//
-					// nic1 and vmbr0 report nearly the same rate on each host -- on
-					// node1, 122.7 against 118.3 kB/s -- because the bridge carries
-					// what the NIC under it carries. That is not double counting here:
-					// the panel draws a line per device rather than summing, so the
-					// two are visible as the same traffic seen at two layers.
+					// Exclude loopback, guest, firewall, and unused nic0 devices. Keep nic1,
+					// bridges, and SDN vnets; parallel NIC/bridge lines show traffic layers.
 					Expr(`rate(proxmox_node_network_receive_bytes_total{`+nodeFilter+`, device!~"lo|tap.*|fwbr.*|fwpr.*|fwln.*|veth.*|nic0"}[$__rate_interval])`).
 					LegendFormat("{{node}} {{device}} RX"),
 				).
@@ -301,8 +265,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// Filter node_uname_info to PVE nodes only by joining against target_info{job="proxmox-ve"},
-					// mapping proxmox_node → nodename. Then join temperature metrics on nodename.
+					// Map OTLP node labels to nodenames before joining temperatures.
 					Expr(`node_thermal_zone_temp{type=~"x86_pkg_temp|cpu-thermal"} * on(instance) group_left(nodename)
   (node_uname_info * on(nodename) group_left()
     label_replace(target_info{` + job + `, proxmox_node=~"$node"}, "nodename", "$1", "proxmox_node", "(.*)"))`).
@@ -351,11 +314,7 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				Description("Run-queue length divided by the node's CPU count, so 100% is a saturated node whatever its size. The hosts here run from 6 to 16 CPUs, which is why the raw averages are not comparable between them.").
 				Datasource(ds).
 				Span(24).Height(8).
-				// percentunit, matching the same quantity on node-overview and
-				// k8s-node-overview. All three divide a load average by a CPU count;
-				// this one was the last still printing a bare 0.038 where the others
-				// read 3.8%, which invites three views of one fleet to be compared as
-				// though they measured different things.
+				// Match normalized load percentage across node dashboards.
 				Unit("percentunit").
 				Min(0).
 				Tooltip(tooltipSingle).
@@ -522,13 +481,8 @@ func buildProxmoxOtlpOverview() (*dashboard.Dashboard, error) {
 				// pressurecpusome_percent: % of time at least one task was stalled on CPU.
 				Unit("percent").
 				Min(0).
-				// AxisSoftMax rather than Max, unlike the I/O pressure panel below.
-				// Both are on the same 0-100 scale, but they occupy different parts
-				// of it: over 30 days I/O pressure peaked at 93.2% while CPU pressure
-				// peaked at 1.99%. A hard ceiling of 100 suits the first and erases
-				// the second, so the ceiling here is a soft one -- the normal range
-				// stays legible, and a genuine stall still pushes the axis out to the
-				// full scale rather than running off the top.
+				// CPU pressure is normally low, so use a soft 100% ceiling; I/O pressure
+				// can approach 100% and uses a hard bound.
 				AxisSoftMax(100).
 				Tooltip(tooltipSingle).
 				Legend(legend).

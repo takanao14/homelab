@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
-// buildCertManagerOverview defines cert-manager certificate and issuer health.
-// The timeseries shows the expiry countdown — a jump upward indicates a successful renewal.
+// buildCertManagerOverview covers certificate and issuer health; expiry jumps
+// upward after successful renewal.
 func buildCertManagerOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
@@ -94,10 +94,8 @@ func buildCertManagerOverview() (*dashboard.Dashboard, error) {
 				ColorMode(common.BigValueColorModeBackground).
 				GraphMode(common.BigValueGraphModeNone).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// ArgoCD defines whether this cluster is expected to run cert-manager.
-					// The zero fallback catches a target that disappears from service
-					// discovery without marking clusters that intentionally omit the app
-					// as DOWN.
+					// Use Argo CD presence to distinguish a missing target from a cluster that
+					// intentionally omits cert-manager.
 					Expr(`min by (cluster) (up{job="cert-manager",` + clusterFilter + `}) or (0 * max by (cluster) (argocd_app_info{` + clusterFilter + `,name="cert-manager"}))`).
 					Instant().
 					LegendFormat("Target"),
@@ -159,21 +157,12 @@ func buildCertManagerOverview() (*dashboard.Dashboard, error) {
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// $__range rather than the fixed [1h] its neighbour uses:
-					// a 90-day certificate only talks to ACME every couple of
-					// months, so an hour of history is almost always empty and
-					// says nothing. Following the time picker lets the panel
-					// answer "has ACME rejected us lately" at whatever range the
-					// operator is already looking at.
+					// Follow the selected range because ACME activity is months apart.
 					Expr(`ceil(sum(increase(certmanager_http_acme_client_request_count{` + clusterFilter + `,status=~"4..|5.."}[$__range]))) or vector(0)`).
 					LegendFormat("Errors"),
 				),
 		).
-		// One row for both tables: a certificate is only as healthy as the
-		// issuer that signs it, so they are read together. The 16/8 split
-		// follows their real density -- seven columns against three -- rather
-		// than giving the issuer table a full-width row of its own for what is
-		// a two-line answer.
+		// Keep certificate and issuer tables together; size them by column density.
 		WithRow(dashboard.NewRowBuilder("Certificates & Issuers")).
 		WithPanel(
 			table.NewPanelBuilder().
@@ -305,22 +294,12 @@ func buildCertManagerOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(6).
 				Unit("d").
-				// Soft, not a hard Min(0): zero is the meaningful origin for a
-				// countdown and the axis should stay anchored there rather than
-				// auto-zooming into the top of the range, but an expired
-				// certificate goes negative and a hard floor would push exactly
-				// that case off the bottom of the chart.
+				// Anchor at zero while allowing expired certificates below it.
 				AxisSoftMin(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// Aggregated down to the labels the legend actually prints.
-					// The raw metric also carries pod and instance, so every
-					// cert-manager pod replacement starts a fresh series: one
-					// certificate showed up as four identically-named, broken
-					// line segments across 7 days. max() over the group also
-					// absorbs the moment during a rollout when two pods report
-					// the same certificate at once.
+					// Aggregate pod churn to legend labels; max also deduplicates rollouts.
 					Expr(`(max by (cluster, exported_namespace, name) (certmanager_certificate_expiration_timestamp_seconds{` + clusterFilter + `}) - time()) / 86400`).
 					LegendFormat("{{cluster}} {{exported_namespace}}/{{name}}"),
 				),

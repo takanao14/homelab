@@ -8,34 +8,10 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
-// buildGpuOverview defines the AMD GPU dashboard for the single RX 9060 XT on gpuvm.
-// No variables needed; job label is sufficient to target the single GPU.
-//
-// Every query goes through byGpu, which collapses the labels the exporter varies
-// underneath a metric that is supposed to describe one card. Two of them move:
-//
-// kfd_process_id appears when a compute process is running, and the exporter
-// swaps label sets rather than adding to them -- while a process holds the GPU
-// the aggregate series stops and a per-process one takes over. Measured across
-// the switch on 2026-07-24: the series without kfd_process_id reported through
-// 08:46 and stopped, and one carrying kfd_process_id="11558" started at 08:47,
-// the two never overlapping. Left alone every panel breaks its line the moment
-// the GPU starts working, and since LegendFormat here is a fixed string both
-// halves are labelled identically, so the break reads as missing data rather
-// than as a new series. It also means the value on screen during a workload --
-// the only time this dashboard is worth opening -- describes one process rather
-// than the card.
-//
-// driver_version and vbios_version move on every driver upgrade: four distinct
-// driver_version values in 60 days, two of them the exporter putting a whole
-// uname string where a version belongs ("Linuxversion7.0.0-28-generic(buildd@...").
-// Same consequence, on a slower clock.
-//
-// gpu_id is the one label that identifies the thing being measured, so grouping
-// by it keeps a per-card series if a second card is ever fitted. max is the
-// reduction rather than sum because these are gauges describing one device, not
-// quantities to add up; it also keeps count() and sum() in the health row
-// counting cards instead of however many series the exporter happens to emit.
+// buildGpuOverview covers the single AMD GPU.
+// byGpu groups on stable gpu_id, hiding process and driver label churn that
+// would split one card into discontinuous series. max is correct for gauges
+// and prevents health counts from counting exporter label variants.
 func buildGpuOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
@@ -216,11 +192,7 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("percent").
-				// Pinned to 0-100 like the other bounded percentages in this repo
-				// (node-overview CPU Usage, k8s-node-overview CPU Usage). Without it
-				// an idle GPU, which is the usual state here, autoscales a flat zero
-				// line onto whatever range Grafana invents and the panel reads as
-				// though something were happening.
+				// Pin bounded utilization so idle zero remains meaningful.
 				Min(0).
 				Max(100).
 				Tooltip(tooltipAll).
@@ -305,12 +277,8 @@ func buildGpuOverview() (*dashboard.Dashboard, error) {
 				Unit("watt").
 				Tooltip(tooltipAll).
 				Legend(legend).
-				// A second target read amd_gpu_power_usage and was labelled
-				// "Current". That metric has never been exported: nothing matched it
-				// anywhere in the retention window, so the panel drew one line while
-				// claiming to compare two, and the average was silently read as an
-				// instantaneous value. Only amd_gpu_average_package_power exists,
-				// and the legend now says so.
+				// Only amd_gpu_average_package_power exists; label it as average rather
+				// than implying a missing instantaneous series.
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(byGpu(`amd_gpu_average_package_power{` + gpuFilter + `}`)).
 					LegendFormat("Average package power"),

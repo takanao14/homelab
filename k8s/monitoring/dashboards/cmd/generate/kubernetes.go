@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
-// buildKubernetesOverview defines the Kubernetes cluster overview dashboard.
-// Uses kube-state-metrics (kube_*) and cAdvisor (container_*) from kube-prometheus-stack.
+// buildKubernetesOverview uses kube-state-metrics and cAdvisor for workload
+// and cluster resource health.
 func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
@@ -128,11 +128,8 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// "and ... > 0" drops deployments scaled to zero. Without it a parked
-					// deployment satisfied available == spec as 0 == 0 and was counted as
-					// healthy: 4 of the 35 here are at spec=0, so the tile read 35 healthy
-					// out of 35 while 31 were actually running. Degraded needs no such
-					// guard, since 0 < 0 is false.
+					// Exclude deployments intentionally scaled to zero; 0 available == 0 desired
+					// is not a running healthy deployment.
 					Expr(`count((kube_deployment_status_replicas_available{` + clusterFilter + `,` + nsFilter + `} == kube_deployment_spec_replicas{` + clusterFilter + `,` + nsFilter + `}) and (kube_deployment_spec_replicas{` + clusterFilter + `,` + nsFilter + `} > 0)) or vector(0)`).
 					LegendFormat("Healthy"),
 				),
@@ -379,19 +376,8 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 						{Value: new(float64(50)), Color: "red"},
 					})).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// clamp_min avoids NaN when an idle container has no scheduling periods.
-					//
-					// The window is a literal [5m], not $__rate_interval. Grafana derives
-					// $__rate_interval from the dashboard range even for an instant query,
-					// so the window this panel measured used to change with the zoom while
-					// the title kept promising five minutes. Throttling arrives in bursts,
-					// which makes that difference decisive rather than cosmetic: measured
-					// at one instant on the homepage container, [5m] read 63.6%, [15m]
-					// (a 7d view) read 55.4%, and [2m30s] -- what the 1d default resolved
-					// to -- read 0. The panel reported no throttling at the range it opens
-					// at, while the container was in fact throttled about two thirds of
-					// its scheduling periods. A window a panel is named for has to be
-					// fixed; the same is already true of the two "(1h)" panels beside it.
+					// Avoid NaN for idle containers. Keep the named five-minute window fixed;
+					// $__rate_interval would change this instant KPI with dashboard zoom.
 					Expr(`sort_desc(topk(10, (100 * sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[5m])) / clamp_min(sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{` + clusterFilter + `,` + nsFilter + `,container!="",pod!=""}[5m])), 1e-9)) > 0)) or on() label_replace(vector(0), "cluster", "No throttling", "", "")`).
 					Instant().
 					LegendFormat("{{cluster}} {{namespace}}/{{pod}}/{{container}}"),
@@ -427,13 +413,8 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// sum over the raw gauge rather than count(... == 1). kube-state-metrics
-					// publishes one series per pod per phase, carrying 1 for the phase the
-					// pod is in and 0 for the rest, so summing gives the same counts while
-					// keeping a series for phases nothing is in. Filtering on == 1 dropped
-					// those series entirely: over six hours this panel drew Running alone,
-					// and Pending and Failed were absent rather than zero -- indistinguishable
-					// from the query being broken.
+					// Sum phase gauges so empty phases remain visible at zero. Filtering ==1
+					// removes those series entirely.
 					Expr(`sum by (cluster, phase) (kube_pod_status_phase{` + clusterFilter + `,` + nsFilter + `})`).
 					LegendFormat("{{cluster}} {{phase}}"),
 				),
@@ -447,7 +428,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				Min(0).
 				Orientation(common.VizOrientationHorizontal).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// > 0 excludes containers with no restarts; sort_desc orders by count without topk's per-step instability.
+					// Exclude zero restarts; sort without topk's per-step instability.
 					Expr(`sort_desc(sum by (cluster, namespace, pod, container) (increase(kube_pod_container_status_restarts_total{` + clusterFilter + `,` + nsFilter + `}[1h])) > 0) or on() label_replace(vector(0), "cluster", "No restarts", "", "")`).
 					Instant().
 					LegendFormat("{{cluster}} {{namespace}}/{{pod}}/{{container}}"),

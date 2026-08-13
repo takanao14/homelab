@@ -1,20 +1,8 @@
 CHART_DASHBOARDS_DIR := ../charts/dashboards/dashboards
 
-# Compose implementation for the dev targets. Real Docker wins when present so
-# existing setups are unchanged; Podman hosts fall back to podman-compose.
-#
-# `docker` is not proof of Docker: the podman-docker package installs a shim at
-# /usr/bin/docker that forwards to podman, which in turn delegates compose to
-# whatever external provider it finds -- often the obsolete docker-compose v1,
-# which then fails against a Docker socket that does not exist. `docker compose
-# version` succeeds in that setup, so the shim has to be ruled out by name.
-#
-# `podman compose` is deliberately not probed for the same reason: what it runs
-# depends on which provider happens to be installed. Set COMPOSE explicitly to
-# use it.
-#
-# COMPOSE is recursively expanded, so the probe only runs for dev/dev-stop and
-# never slows down generate/check.
+# Prefer real Docker Compose, then podman-compose. Exclude the podman-docker shim
+# and delegated `podman compose` providers; set COMPOSE to use one explicitly.
+# Recursive expansion limits probing to dev/dev-stop.
 # Override with: make dev COMPOSE=podman-compose
 COMPOSE ?= $(shell \
 	if command -v docker >/dev/null 2>&1 \

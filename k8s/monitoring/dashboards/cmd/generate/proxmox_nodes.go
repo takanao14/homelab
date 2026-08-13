@@ -8,13 +8,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// proxmoxNodesFile is the shared Proxmox hypervisor inventory, resolved
-// relative to the dashboards/ working directory the Makefile runs from.
+// proxmoxNodesFile is the shared inventory relative to this working directory.
 const proxmoxNodesFile = "../values/proxmox-nodes.yaml"
 
-// loadProxmoxHostRegex builds a "pve|node1|..." host regex from the shared
-// inventory so dashboards stay in sync with the scrape and alerting
-// configuration derived from the same file.
+// loadProxmoxHostRegex keeps dashboards aligned with shared scrape inventory.
 func loadProxmoxHostRegex() (string, error) {
 	raw, err := os.ReadFile(proxmoxNodesFile)
 	if err != nil {

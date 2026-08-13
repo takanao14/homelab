@@ -10,35 +10,10 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
-// buildDnsLogs defines the DNS query log dashboard backed by Loki.
-// Logs are JSON from dnscollector/dnsdist; field names use dots which LogQL normalizes to underscores.
-//
-// rate() windows use $__auto, the Loki counterpart of $__rate_interval, so the
-// window tracks the zoom level. A fixed [5m] is fine at the 3h default, where
-// the step is around 15s, but once the range is widened past roughly half a day
-// the step overtakes the window and Loki only ever looks at 5 minutes out of
-// each step -- the data in between is never read, and short spikes vanish.
-// count_over_time in "Top Queried Domains (Last 5m)" keeps its fixed window on
-// purpose: there the five minutes is the quantity the panel is named for.
-//
-// Two things follow from these series being counts of discrete events rather
-// than samples of a counter, and every timeseries below applies both.
-//
-// A LogQL rate() over a window containing no matching line yields no sample at
-// all, where the Prometheus equivalent would still report 0. Zoomed in to a
-// two-second window, NOERROR had a point at all 61 steps while NXDOMAIN had 28:
-// the missing 33 are absences, not zeroes. Grafana then draws the line straight
-// across them and, worse for the stacked panels, stacks series whose timestamps
-// do not line up. Each by-label query therefore adds
-// `or sum by (...) (count_over_time(...[$__range])) * 0`, which enumerates every
-// label value present anywhere in the view and pins it to zero, so a series that
-// falls silent reads as zero instead of vanishing. The same shape was already
-// used for SERVFAIL by host; it is now consistent and keyed on $__range rather
-// than the current window, which is itself empty when a host goes quiet.
-//
-// Interval("1m") floors $__auto. Left alone it follows the zoom down to about a
-// second, where roughly three queries per second quantises the rate into a
-// staircase of 0, 0.5 and 1 that says more about the window than the traffic.
+// buildDnsLogs covers dnscollector/dnsdist JSON logs in Loki.
+// Use $__auto with a one-minute floor for zoom-dependent windows. Add zero
+// baselines from unfiltered selectors because quiet LogQL series disappear.
+// Fixed windows remain only where the panel explicitly reports that period.
 func buildDnsLogs() (*dashboard.Dashboard, error) {
 	ds := lokiDatasource()
 
@@ -48,15 +23,8 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 		responseJSON = `{job="dns", host=~"$host"} | json | __error__="" | dnstap_operation="CLIENT_RESPONSE"`
 		nxdomainJSON = responseJSON + ` | dns_rcode="NXDOMAIN"`
 
-		// Known-benign NXDOMAIN categories (LogQL regexes are fully anchored):
-		// reverse lookups for unregistered PTRs, Windows WPAD probes, unicast
-		// DNS-SD discovery, mDNS .local names leaking to the unicast resolver,
-		// gRPC load-balancer SRV probes, and search-domain suffixing of external
-		// names (k8s ndots:5 pods and DHCP clients appending home.butaco.net).
-		//
-		// mDNS and gRPC were added after they turned out to be the two largest
-		// sources by volume while being in no category at all: over 3h .local
-		// accounted for 2162 lookups and _grpclb._tcp for another 2231.
+		// Categorize common PTR, WPAD, DNS-SD, mDNS, gRPC, and search-suffix
+		// NXDOMAIN noise. LogQL regexes are fully anchored.
 		nxNoiseArpa   = `.+\\.arpa`
 		nxNoiseWpad   = `wpad\\..*`
 		nxNoiseDnssd  = `.*\\._dns-sd\\._udp\\..*`
@@ -64,11 +32,8 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 		nxNoiseGrpclb = `_grpclb\\._tcp\\..*`
 		nxNoiseSuffix = `.+\\..+\\.home\\.butaco\\.net`
 
-		// nxUnexpected is NXDOMAIN with every known-benign category removed;
-		// what remains (typos, stale configs, suspicious lookups) is the signal.
-		// It drives only the category breakdown: the panels that rank names show
-		// everything, because an exclusion list nobody can see is a bad way to
-		// decide what an operator is allowed to notice.
+		// nxUnexpected drives only the visible category breakdown. Ranking panels
+		// remain unfiltered so an incomplete exclusion list cannot hide names.
 		nxUnexpected = nxdomainJSON +
 			` | dns_qname!~"` + nxNoiseArpa + `"` +
 			` | dns_qname!~"` + nxNoiseWpad + `"` +
@@ -115,31 +80,9 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 					LegendFormat("queries/s"),
 				),
 		).
-		// Two tiles that used to sit here are gone, both because they stated a
-		// conclusion the data did not support.
-		//
-		// "Policy Block Rate" filtered on dnstap.policy-action, which looks like
-		// a decision and is not one. dnstap.proto is proto2, where an unset
-		// optional enum reads back as its first declared value, and
-		// Policy.Action declares NXDOMAIN first; dnsdist runs no RPZ so it never
-		// populates the Policy message, and dnscollector reads GetAction()
-		// without checking presence. Every line therefore carries
-		// policy-action="NXDOMAIN", the filter matched 100% of queries, and the
-		// tile reprinted the query rate -- 2.12/s against a query rate of
-		// 2.12/s. The sibling fields prove the mechanism: policy-match, also an
-		// enum, is uniformly "QNAME", its own first value, while the string
-		// fields (policy-type, -rule, -value) are empty. Bring this back only
-		// with a real policy, keyed on policy-rule, which stays empty until a
-		// rule actually matches.
-		//
-		// "Unexpected NXDOMAIN Rate" reduced a judgement to one number, which
-		// needs the exclusion list to be complete -- and it was not: mDNS and
-		// gRPC discovery, the two largest sources by volume, were in no category
-		// at all and were being counted as unexpected. That list is defensible
-		// as a *breakdown*, where a miscategorised name lands in the wrong
-		// colour and stays on screen, but not as a single figure asserting how
-		// much is wrong. NXDOMAIN by Category carries that judgement now, and
-		// Response Code Distribution the total.
+		// Omit Policy Block Rate because proto2 defaults label every query as
+		// NXDOMAIN without an actual policy. Omit a single Unexpected NXDOMAIN
+		// rate because category lists are incomplete; keep the visible breakdown.
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Unique Clients").
@@ -217,13 +160,8 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Legend(legend).
 				FillOpacity(10).
 				Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal)).
-				// The series stack, so the categories have to partition NXDOMAIN
-				// rather than merely describe it. Precedence runs most specific
-				// first, and each target subtracts the categories above it that
-				// it can actually overlap with. Only real overlaps are excluded:
-				// search-domain suffixing is the broad one, and it genuinely
-				// collides with the others -- over 3h, 1558 names matched both
-				// _grpclb._tcp and the suffix pattern.
+				// Stacked categories must partition NXDOMAIN. Apply specific matches first
+				// and subtract only real overlaps from broader suffix patterns.
 				WithTarget(loki.NewDataqueryBuilder().
 					Expr(`sum(rate(`+nxdomainJSON+` | dns_qname=~"`+nxNoiseDnssd+`" [$__auto])) or vector(0)`).
 					LegendFormat("dns-sd discovery"),
@@ -289,21 +227,8 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 					Values(true).
 					Limit(10)).
 				WithTarget(loki.NewDataqueryBuilder().
-					// Unfiltered on purpose. This panel used to subtract the
-					// nxUnexpected noise list, which turned out to be wrong in
-					// both directions: over 3h it still ranked mDNS .local
-					// lookups first and second (1045 and 1043) and ArgoCD's
-					// _grpclb._tcp SRV probes third (673), because the list knows
-					// neither category -- while the suffix pattern hid
-					// openbao.home.butaco.net.home.butaco.net (197), a genuine
-					// double-suffixing misconfiguration, which is exactly what
-					// the panel was supposed to surface. A hardcoded exclusion
-					// list ages against the environment, and being invisible in
-					// the UI, nobody can tell what it swallowed.
-					//
-					// dns_qname != "" stays: it drops records with no name at
-					// all, which would render as an unlabelled bar, and matched
-					// nothing over 3h and 52k lines. It hides no domain.
+					// Keep rankings unfiltered: hardcoded noise lists hid real suffix errors
+					// while missing newer benign categories. Drop only empty qnames.
 					Expr(`sort_desc(topk(10, sum by (dns_qname) (count_over_time(` + nxdomainJSON + ` | dns_qname != "" [$__range]))))`).
 					Instant(true).
 					Range(false).
@@ -370,16 +295,8 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				ShowControls(true).
 				ShowFieldSelector(true).
 				WithTarget(loki.NewDataqueryBuilder().
-					// line_format is what picks the displayed fields: the logs
-					// panel has no displayedFields option in the schema, and
-					// ShowFieldSelector only lets a viewer choose fields for the
-					// session, with nothing persisted back to the dashboard.
-					//
-					// policy={{.dnstap_policy_action}} used to be part of this
-					// line and is gone for the reason given above the Summary
-					// row: the field is a proto2 default, not a decision, so
-					// every line read policy=NXDOMAIN -- including the NOERROR
-					// ones, where it flatly contradicts the rcode beside it.
+					// line_format persists displayed fields. Exclude policy-action because its
+					// proto2 default claims NXDOMAIN even for successful queries.
 					Expr(baseJSON + ` | line_format "{{.host}} {{.dnstap_operation}} {{.network_query_ip}} -> {{.dns_qname}} {{.dns_qtype}} {{.dns_rcode}} latency={{.dnstap_latency_ms}}ms"`).
 					MaxLines(500),
 				),

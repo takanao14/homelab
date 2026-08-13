@@ -8,55 +8,20 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
-// buildNetworkOverview defines the network device dashboard using SNMP MIB-II metrics.
-// The snmp-exporter Probe relabels instance to the device hostname
-// (bgw1 = router, c1200 = switch), so panels use the instance label directly.
-// ifHC* counters are 64-bit, avoiding wrap-around on high-speed interfaces.
+// buildNetworkOverview covers physical SNMP MIB-II interfaces. Probe relabeling
+// supplies hostnames, and 64-bit ifHC counters avoid high-speed wraparound.
 func buildNetworkOverview() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 
-	// Physical ports on the router and switch use GigaEthernetN/GigabitEthernetN.
-	// Match them explicitly to exclude loopbacks, tunnels, VLANs, port channels,
-	// subinterfaces, and vendor-internal interfaces.
+	// Match physical ports and exclude virtual/vendor interfaces.
 	const ifFilter = `ifDescr=~"GigaEthernet[0-9]+|GigabitEthernet[0-9]+", instance=~"$instance"`
 
-	// adminUp drops ports that are administratively shut down. ifAdminStatus is a
-	// separate series from the counters and from ifOperStatus, so this cannot be a
-	// label selector -- it has to be a set intersection on ifIndex. Appending it
-	// needs no extra parentheses: `and` binds looser than both `*` and the
-	// comparison operators, and it sits inside sum by (instance) because the
-	// aggregation is what drops ifIndex.
-	//
-	// Without it, Interfaces Down conflates two different facts: a port nobody has
-	// enabled, and a port that is enabled and has lost its link. Only the second is
-	// worth reacting to. c1200 keeps a couple of ports shut at any given time and
-	// they were being counted as faults; which ports those are changes as the
-	// switch is reconfigured, so no port is named here on purpose.
-	//
-	// Interfaces Up does not change value -- a shut port is never operationally up
-	// -- but carries the filter so the pair means the same thing.
+	// Intersect with administratively enabled ports so Interfaces Down means
+	// lost link, not intentional shutdown. Keep a separate disabled-port count.
 	const adminUp = ` and on(instance, ifIndex) (ifAdminStatus{` + ifFilter + `} == 1)`
 
-	// Min interval for every rate() panel here. SNMP is probed once a minute
-	// (values/snmp-exporter.yaml, interval: 60s -- measured, count_over_time over
-	// ten minutes returns exactly 10 samples), but the Prometheus datasource has
-	// no timeInterval set, so Grafana assumes the 15s default when it builds
-	// $__rate_interval = max($__interval + scrape, 4 x scrape). Whenever
-	// $__interval falls below 45s that collapses to a 60s window, and a 60s window
-	// on a 60s scrape does not reliably contain the two samples rate() needs:
-	// measured over the last 30 minutes, rate(...[60s]) returned no series at
-	// every single step, while [2m] returned all of them.
-	//
-	// The failure therefore depends on panel width and time range together, which
-	// is why it looked arbitrary. $__interval is roughly range / pixel-width, so
-	// the full-width Traffic (bps) panel broke even at the dashboard's default 24h
-	// while the half-width Total Traffic beside it still worked, and Total Traffic
-	// then broke too once the range was pulled in below a day.
-	//
-	// 2m floors $__interval so $__rate_interval lands at 135s, verified to return
-	// every series at every step. A 1m floor would give 75s, which straddles the
-	// two-sample boundary depending on scrape alignment -- not worth the risk to
-	// save a minute of smoothing on a link that is sampled once a minute anyway.
+	// SNMP scrapes every minute; floor rate panels at two minutes so
+	// $__rate_interval reliably contains two samples regardless of panel width.
 	const snmpMinInterval = "2m"
 
 	tooltipAll := defaultTooltip()
@@ -70,18 +35,9 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 		Uid("network-overview").
 		Tags([]string{"network", "infrastructure"}).
 		Timezone("browser").
-		// 24h, not the 30d this used to open at. The rate windows follow the zoom:
-		// at 30d $__rate_interval resolved to roughly 63 minutes, which averages a
-		// link's busiest minute into an hour of quiet either side. bgw1 peaked at
-		// 427 Mbps over the last 30 days measured in 10-minute windows and idles
-		// near 1.8 Mbps, so the panel that exists to show how hard the line is
-		// working was smoothing away the only part worth seeing. At 24h the window
-		// is about 4 minutes -- $__interval of 2 minutes against a 60s scrape, so
-		// the 4 x scrape floor decides it -- and bursts survive. The 30-day view is
-		// still one zoom away when the question is a monthly trend.
+		// A 24-hour default preserves bursts that 30-day rate windows smooth away.
 		Time("now-24h", "now").
-		// Matches the 60s SNMP scrape interval: refreshing faster would redraw the
-		// same points, and slower would leave the newest scrape off the screen.
+		// Refresh at the 60-second SNMP scrape interval.
 		Refresh("60s").
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
@@ -122,19 +78,13 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				ColorMode(common.BigValueColorModeBackground).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// The zero baseline stays on the unfiltered selector: keyed on the
-					// filtered one it would vanish for a device whose ports are all
-					// healthy, which is exactly when it needs to read 0.
+					// Key zero on the unfiltered selector so all-healthy devices remain visible.
 					Expr(`count by (instance) (ifOperStatus{` + ifFilter + `} != 1` + adminUp + `) or count by (instance) (ifOperStatus{` + ifFilter + `}) * 0`).
 					LegendFormat("{{instance}}"),
 				),
 		).
-		// The counterpart to the adminUp filter, and the reason it is safe to apply.
-		// Filtering shut ports out of Interfaces Down means a port disabled by
-		// mistake would otherwise disappear from the dashboard entirely rather than
-		// showing up as a fault -- turning a problem into nothing at all. This tile
-		// keeps the count visible, so "Down 1" can always be read against how many
-		// ports are intentionally off.
+		// Show administratively disabled ports separately so mistaken shutdowns
+		// cannot disappear behind the operational-status filter.
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Interfaces Shutdown").

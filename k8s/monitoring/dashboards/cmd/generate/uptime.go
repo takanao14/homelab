@@ -10,9 +10,8 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
-// buildUptime defines the availability monitoring dashboard.
-// blackbox-exporter probes return probe_success (1=up, 0=down).
-// ScrapeConfig job label format: scrapeConfig/<namespace>/<name>.
+// buildUptime covers blackbox ICMP and DNS probe success.
+// ScrapeConfig jobs use scrapeConfig/<namespace>/<name>.
 func buildUptime() (*dashboard.Dashboard, error) {
 	ds := promDatasource()
 	tooltipAll := defaultTooltip()
@@ -109,11 +108,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 					LegendFormat("availability"),
 				),
 		).
-		// The Summary row was three tiles of span 8, with a headline availability
-		// figure for ICMP and none for DNS -- the two "Devices Down" tiles beside it
-		// treat the probe families as equals, so answering "how has DNS been?"
-		// meant scrolling to the per-device bar gauge further down. Four tiles of
-		// span 6 make the row symmetric and still total 24.
+		// Give ICMP and DNS symmetric range availability and current-down tiles.
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("DNS Availability (range)").
@@ -240,12 +235,7 @@ func buildUptime() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					// phase="rtt", not probe_duration_seconds. The latter is the sum of
-					// every phase, and the other two are not network latency: averaged
-					// across the fifteen targets, probe_duration read 2.53 ms against an
-					// actual rtt of 1.10 ms, with 0.58 ms of setup and 0.07 ms of
-					// resolve making up the difference. A panel named for response time
-					// was reporting 2.3x the round trip.
+					// Use the ICMP rtt phase; total probe duration also includes setup and DNS.
 					Expr(`probe_icmp_duration_seconds{` + icmpJob + `, phase="rtt"}`).
 					LegendFormat("{{instance}}"),
 				),
@@ -280,15 +270,8 @@ func buildUptime() (*dashboard.Dashboard, error) {
 				Min(0).
 				Tooltip(tooltipAll).
 				Legend(legend).
-				// probe_duration_seconds, not probe_dns_lookup_time_seconds. The
-				// lookup_time metric is emitted by every blackbox prober and times the
-				// resolution of the target's own hostname; for the dns prober that is
-				// a step before the query under test, not the query. Measured together
-				// it was 36 to 249 times smaller: dist2's external probe answered in
-				// 16.0 ms while lookup_time reported 0.064 ms. That gap matters here,
-				// because 16 ms against roughly 3 ms everywhere else is the one real
-				// difference between these four probes, and the old metric flattened
-				// it out of sight.
+				// Use total DNS probe duration; lookup_time measures resolution of the
+				// probe target itself, not the test query.
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`probe_duration_seconds{` + dnsExtJob + `}`).
 					LegendFormat("{{instance}} External"),
