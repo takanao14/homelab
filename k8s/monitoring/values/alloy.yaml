@@ -36,7 +36,7 @@ alloy:
     type: ClusterIP
 
 otlp:
-  # Referenced as alloy_otlp_server in ansible group_vars/all.yaml — keep in sync.
+  # Keep synchronized with Ansible alloy_otlp_server.
   loadBalancerIP: 192.168.30.251  # Set to an available Cilium IPAM IP (e.g. 192.168.30.251)
   hostname: alloy-otlp.prd.butaco.net
 
@@ -46,8 +46,7 @@ gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
   sectionName: https
-  # The graph endpoint streams live pipeline updates indefinitely. Disable
-  # Envoy Gateway's default request timeout for this route only.
+  # The live graph stream requires no request timeout.
   graphTimeouts:
     request: 0s
     backendRequest: 0s

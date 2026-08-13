@@ -74,15 +74,8 @@ kube-prometheus-stack:
       enableRemoteWriteReceiver: true
       externalLabels:
         cluster: prd
-      # Default scrape class stamps cluster=prd on every scraped target so
-      # individual ServiceMonitors/PodMonitors don't need their own relabeling.
-      # Uses target relabelings (not metricRelabelings) so synthetic series
-      # such as up and scrape_* get the label too — KubeletDown and other
-      # up-join rules depend on it. External LAN targets opt out with
-      # scrapeClass: external because they are not prd-cluster workloads and
-      # must not appear in cluster=~"$cluster" dashboard queries (and
-      # control-plane-node-exporter sets its own per-target cluster labels
-      # that the default class would overwrite).
+      # Target relabeling stamps synthetic series too; external/per-cluster
+      # targets opt out to avoid incorrect dashboard and alert joins.
       scrapeClasses:
         - name: cluster-prd
           default: true
@@ -111,12 +104,7 @@ kube-prometheus-stack:
 
   kubelet:
     serviceMonitor:
-      # NOTE: these keys override the chart defaults, so the default
-      # __metrics_path__ -> metrics_path relabeling must be repeated here for
-      # all three kubelet scrape endpoints (/metrics, /metrics/cadvisor,
-      # /metrics/probes); the KubeletDown rule selects
-      # up{...,metrics_path="/metrics"}. The cluster label itself comes from
-      # the default cluster-prd scrape class (values/prometheus.yaml).
+      # Overrides must repeat metrics_path relabeling for all kubelet endpoints.
       relabelings:
         - action: replace
           sourceLabels: [__metrics_path__]
@@ -130,21 +118,14 @@ kube-prometheus-stack:
           sourceLabels: [__metrics_path__]
           targetLabel: metrics_path
 
-  # Resource reservations for the stack's own components. Without requests these
-  # run as BestEffort and are evicted first under node memory pressure. Requests
-  # only, no limits — see "Resource Requests" in k8s/README.md. Sizing basis:
-  # 7-day observed usage, requests ~= mean x 1.2. Prometheus and Alertmanager
-  # themselves already carry requests above.
-  #
-  # Observed: mean 48Mi, peak 85Mi, p95 CPU 2.6m.
+  # Requests only (README). Operator: 48/85 Mi, p95 CPU 2.6m.
   prometheusOperator:
     resources:
       requests:
         cpu: 25m
         memory: 64Mi
 
-  # Observed: mean 55Mi, peak 77Mi, p95 CPU 1.8m. Memory scales with the number
-  # of objects in the cluster.
+  # kube-state-metrics: 55/77 Mi, p95 CPU 1.8m.
   kube-state-metrics:
     resources:
       requests:
@@ -154,11 +135,9 @@ kube-prometheus-stack:
   nodeExporter:
     enabled: true
 
-  # The node-exporter ServiceMonitor is managed by the prometheus-node-exporter subchart.
-  # nodeExporter.serviceMonitor is ignored by kube-prometheus-stack v84+; use the subchart path instead.
+  # v84+ configures the ServiceMonitor through the node-exporter subchart.
   prometheus-node-exporter:
-    # DaemonSet: these requests are reserved on every node. Observed: mean 19Mi,
-    # peak 32Mi, p95 CPU 1.5m.
+    # Per-node DaemonSet: 19/32 Mi, p95 CPU 1.5m.
     resources:
       requests:
         cpu: 10m
@@ -170,12 +149,7 @@ kube-prometheus-stack:
             sourceLabels: [__meta_kubernetes_pod_node_name]
             targetLabel: node
 
-  # The k0s controller (192.168.60.11) is a dedicated control-plane node with no
-  # kubelet, so it is not discoverable as a Kubernetes Endpoint. Point the chart
-  # at the node IP directly; it renders a headless Service + manual Endpoints and
-  # a ServiceMonitor that scrapes the component's secure metrics port over HTTPS
-  # using the Prometheus ServiceAccount token. Requires the component to listen on
-  # a routable address (bind-address != 127.0.0.1); see k0s/template_lib.sh.
+  # The kubelet-less k0s controller needs direct secure endpoint scraping.
   kubeControllerManager:
     enabled: true
     endpoints:
@@ -198,7 +172,7 @@ kube-prometheus-stack:
     serviceMonitor:
       https: true
       insecureSkipVerify: true
-  # kube-proxy is disabled cluster-wide (Cilium kube-proxy replacement).
+  # Cilium replaces kube-proxy cluster-wide.
   kubeProxy:
     enabled: false
 

@@ -1,8 +1,7 @@
 port: 8081
 metricsPath: /metrics
 
-# name becomes the instance label (relabeled from __tmp_name); scraping still
-# connects by IP so DNS monitoring does not depend on DNS itself.
+# Names label IP-based scrapes without a DNS dependency.
 targets:
   - ip: "192.168.10.233"
     name: "ns1"

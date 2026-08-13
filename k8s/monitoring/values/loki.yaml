@@ -37,7 +37,7 @@ loki:
     namespaced: true
 
   sidecar:
-    # Rules sidecar. Observed: mean 82Mi, peak 89Mi, p95 CPU 0.3m.
+    # Rules sidecar: 82/89 Mi, p95 CPU 0.3m.
     resources:
       requests:
         cpu: 10m
@@ -49,13 +49,7 @@ loki:
 
   singleBinary:
     replicas: 1
-    # Resource reservations. Without requests Loki runs as BestEffort and is
-    # evicted first under node memory pressure, taking log search down at the
-    # point it is most useful. Requests only, no limits — see "Resource
-    # Requests" in k8s/README.md. Sizing basis: 7-day observed usage,
-    # requests ~= mean x 1.2.
-    #
-    # Observed: mean 210Mi, peak 403Mi, p95 CPU 7.9m. Peak tracks query load.
+    # Requests only (README): 210/403 Mi, p95 CPU 7.9m.
     resources:
       requests:
         cpu: 50m
@@ -66,7 +60,7 @@ loki:
     service:
       type: LoadBalancer
       annotations:
-        # Referenced as loki_endpoint in ansible group_vars/all.yaml — keep in sync.
+        # Keep synchronized with Ansible loki_endpoint.
         io.cilium/lb-ipam-ips: 192.168.30.250
         external-dns.alpha.kubernetes.io/hostname: loki.prd.butaco.net
 

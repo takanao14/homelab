@@ -1,7 +1,6 @@
 # Monitoring Stack
 
-Monitoring stack for the prd cluster. Managed by ArgoCD; secrets are injected by
-External Secrets Operator from OpenBao (see [ADR-0012](../../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md)).
+Argo CD-managed monitoring for prd, with a sandbox subset and OpenBao secrets.
 
 ## Components
 
@@ -67,96 +66,36 @@ monitoring/
 
 ## Ownership Policy
 
-`k8s/monitoring` is the observability control-plane definition, not just the
-Prometheus chart. Its default values describe the prd full stack, and the
-`apps/` chart intentionally supports environment overlays that render only a
-safe subset for staging-style clusters such as sandbox. Keep monitoring-owned
-resources here when their primary purpose is to collect, store, query, alert on,
-or expose telemetry.
-
-It is acceptable for this directory to be large: observability is naturally
-cross-cutting, and keeping the scrape contracts, dashboards, alerting, and
-telemetry backends together makes operations easier to review. The constraint
-is that the directory must grow as small, responsibility-focused charts and
-values files, not as an unbounded `charts/prometheus` dumping ground.
+This directory owns resources whose primary purpose is collecting, storing,
+querying, alerting on, or exposing telemetry. Add responsibility-focused charts
+instead of growing `charts/prometheus` indiscriminately.
 
 Use these boundaries:
 
-- The `apps/` chart owns ArgoCD Application generation. Add new monitoring
-  components there with an `enabled` flag so prd can run the full set while
-  sandbox can opt into a subset without forking Application manifests.
-- Telemetry backends and frontends belong here: Prometheus, Alertmanager,
-  Grafana, Loki, Alloy, their Secrets, HTTPRoutes, LoadBalancers, dashboards,
-  and alert routing.
-- Exporter workloads belong here only when the exporter exists solely as
-  monitoring infrastructure and is not part of a product workload. Examples:
-  `snmp-exporter` and in-cluster collectors/receivers such as Alloy.
-- External exporter targets stay here as small local charts when Kubernetes
-  only owns the scrape contract (`ScrapeConfig`, `Probe`, `ServiceMonitor`, or
-  related ESO Secret), while the exporter process runs outside the cluster.
-  Examples: `node-exporter-external`, `amd-gpu-external`, `dnsdist`,
-  `pdns-auth`, `openbao`, and blackbox probes through the rpi4 exporter.
-- Application-owned metrics endpoints should stay with the owning application
-  when that application is deployed by ArgoCD after the monitoring CRDs exist.
-  The application chart may create its own metrics Service, ServiceMonitor,
-  PodMonitor, or PrometheusRule if doing so does not break bootstrap ordering.
-- Bootstrap or cross-cutting scrape resources may stay in
-  `charts/prometheus/templates/` when the monitored component is installed
-  before Prometheus Operator CRDs exist, or when the same scrape policy must be
-  centralized across clusters. Current examples are Cilium, Envoy Gateway,
-  ArgoCD, and external-dns (kube-controller-manager/kube-scheduler scraping
-  also stays in the wrapper, via the upstream chart's `endpoints` values — see
-  the kube-prometheus-stack boundary below).
-- Dashboards and alert rules belong with the telemetry backend that loads or
-  evaluates them unless a rule is tightly coupled to a workload chart. Grafana
-  dashboards are delivered by the dedicated `charts/dashboards` chart; the
-  Grafana sidecar discovers labeled ConfigMaps across namespaces, so delivery
-  is decoupled from both the Prometheus wrapper and the Grafana chart.
+- `apps/` generates Applications with environment-specific enablement.
+- Backends, frontends, alert routing, and monitoring-only exporters belong here.
+- External processes get small scrape-contract charts with targets in `values/`.
+- Application metrics stay with the application when CRD ordering permits.
+- Bootstrap/cross-cluster scrapes may remain in the Prometheus wrapper when the
+  ordering or shared-policy reason is documented.
+- Generated dashboards ship through the dedicated ConfigMap-only chart.
 
-kube-prometheus-stack boundary: the upstream chart owns in-cluster Kubernetes
-telemetry and its bundled rule library — kubelet, apiserver, and CoreDNS
-discovery, the node-exporter DaemonSet, kube-state-metrics, and
-`defaultRules`. Its `kubeControllerManager` / `kubeScheduler` endpoints
-mechanism is the supported way to scrape the external k0s controllers and
-stays in use until the re-evaluation triggers in
-`docs/plans/control-plane-metrics-chart.md` fire; the bundled alert rules are
-coupled to the job names upstream renders, so replacing that wiring would
-carry a standing compatibility obligation across chart version bumps. Local
-charts own what the cluster cannot natively discover: fixed-IP hosts and
-external services. Do not pull upstream-managed scrape targets into local
-charts for ownership-style reasons alone.
-
-The main tradeoff is intentional centralization versus ownership clarity. This
-directory centralizes monitoring-specific resources so bootstrap ordering,
-Prometheus Operator selectors, common labels, and dashboards remain coherent.
-To preserve ownership clarity, do not move application runtime configuration or
-product deployments here just because they expose metrics. When a monitored app
-can safely own its own metrics objects, keep those objects with the app.
+The upstream kube-prometheus-stack retains Kubernetes discovery, node-exporter,
+kube-state-metrics, default rules, and controller/scheduler endpoint wiring.
+Local charts cover fixed-IP hosts and external services. Do not move product
+runtime configuration here merely because it exposes metrics.
 
 Adding a new monitoring item:
 
-1. If it deploys a reusable exporter process, prefer an upstream chart wrapper
-   or a dedicated local chart under `charts/<name>/`.
-2. If it only describes external scrape targets, create a small local chart
-   that renders only the monitoring CRDs and keep target IPs in
-   `values/<name>.yaml`.
-3. If it monitors an app that can own its own metrics objects safely, put the
-   monitoring objects in that app's chart instead of growing
-   `charts/prometheus`.
-4. If it must stay centralized because of CRD ordering or cross-cluster
-   semantics, document that reason in the template comment.
-
-Avoid putting application deployments, product-specific runtime configuration,
-or non-telemetry infrastructure here merely because they expose metrics. Also
-avoid adding unrelated scrape resources directly to `charts/prometheus`; prefer
-a dedicated small chart unless the resource genuinely belongs to the Prometheus
-control plane or must be centralized for bootstrap/cross-cluster reasons.
+1. Use an upstream wrapper or dedicated chart for reusable exporters.
+2. Use a small CRD-only chart plus values for external targets.
+3. Keep safely deployable application metrics with their application.
+4. Document why centralized resources require bootstrap or cross-cluster scope.
 
 ## Environment Subsets
 
-The default `apps/values.yaml` renders the prd full stack. Sandbox consumes the
-same `apps/` chart with `values/apps-sandbox.yaml`, currently enabling only
-Prometheus, Grafana, and dashboards:
+prd enables the full stack. `values/apps-sandbox.yaml` enables only Prometheus,
+Grafana, and dashboards:
 
 - Prometheus runs locally with `cluster=sandbox`, short retention, no
   Alertmanager deployment, and no external alert delivery.
@@ -168,42 +107,9 @@ Prometheus, Grafana, and dashboards:
   control-plane host scrape contracts are disabled until they have
   sandbox-safe values.
 
-When adding a monitoring component, keep the prd default enabled in
-`apps/values.yaml` only if it belongs to the full stack, then explicitly decide
-whether `values/apps-sandbox.yaml` should opt in or out.
-
-## Current Inventory
-
-This inventory records why each current component lives here and whether it is
-a good fit for the ownership policy above.
-
-| Area | Location | Main resources | Classification | Assessment |
-|------|----------|----------------|----------------|------------|
-| Prometheus and Alertmanager | `charts/prometheus` | `kube-prometheus-stack`, Prometheus, Alertmanager, default selectors, Prometheus HTTPRoute | Telemetry backend and control plane | Correct here. Keep Prometheus runtime and Alertmanager routing centralized. |
-| Grafana | `charts/grafana` | Grafana deployment, admin `ExternalSecret`, HTTPRoute, datasource and dashboard sidecar values | Telemetry frontend | Correct here. Grafana is shared observability UI, not app-owned. |
-| Loki | `charts/loki` | Loki SingleBinary, LoadBalancer ingestion, Proxmox LogQL ruler ConfigMap | Telemetry backend and log alerting | Correct here. Log ingestion and alert evaluation are observability control-plane concerns. |
-| Alloy | `charts/alloy` | Alloy deployment, OTLP LoadBalancer Service, HTTPRoute | Telemetry receiver/collector | Correct here. It exists to receive Proxmox OTLP metrics and remote_write them into Prometheus. |
-| SNMP exporter | `charts/snmp-exporter` | `prometheus-snmp-exporter`, SNMP auth `ExternalSecret`, network-device `Probe` via chart values | Monitoring-only exporter workload | Correct here. The exporter exists solely as monitoring infrastructure. |
-| External node exporter targets | `charts/node-exporter-external` | `ScrapeConfig` for Proxmox nodes, Raspberry Pis, and stateful service guests; resolver-specific target-loss and textfile-freshness rules | External scrape contract | Correct here. Kubernetes owns the scrape contract and resolver monitoring policy; exporters run outside the cluster. |
-| AMD GPU exporter target | `charts/amd-gpu-external` | `ScrapeConfig` for the GPU VM exporter | External scrape contract | Correct here. The GPU exporter runs outside this cluster and is consumed centrally. |
-| Blackbox probes | `charts/blackbox-exporter-external` | ICMP and DNS `ScrapeConfig` resources through the rpi4 blackbox_exporter | External probe contract | Correct here. The probing endpoint is external; monitoring owns probe definitions and target labels. |
-| dnsdist metrics | `charts/dnsdist` | `ScrapeConfig` for external dnsdist instances | External scrape contract | Correct here. DNS service runtime stays outside this chart; monitoring owns scrape configuration. |
-| PowerDNS Authoritative metrics | `charts/pdns-auth` | `ScrapeConfig` for external authoritative DNS instances | External scrape contract | Correct here. DNS service runtime stays outside this chart; monitoring owns scrape configuration. |
-| OpenBao metrics | `charts/openbao` | `ScrapeConfig` for the external OpenBao VM | External scrape contract | Correct here. OpenBao is not deployed here; only its scrape contract is. |
-| Dashboards | `charts/dashboards`, generated by `dashboards/` | Grafana dashboard ConfigMaps labeled for the sidecar; JSON written directly into the chart by `make generate` | Dashboard delivery | Correct here. Dedicated ConfigMap-only chart (enabled in prd **and** sandbox) keeps dashboard iteration from resyncing the kube-prometheus-stack Application. |
-| Shared platform ServiceMonitors | `charts/prometheus/templates/{argocd,cilium-servicemonitors,envoy-gateway,external-dns}.yaml` | `ServiceMonitor` and `PodMonitor` resources for bootstrap/platform apps | Bootstrap/cross-cutting scrape resources | Acceptable centralization. These have CRD ordering or cross-cutting consistency reasons. |
-| Control-plane host metrics | `charts/control-plane-metrics` | `ScrapeConfig` for k0s controller host node-exporter targets (per-target `cluster` labels) | Control-plane host scrape contract | Correct here. Dedicated chart because controller hosts are not discoverable as Kubernetes nodes; also the future home for kube-controller-manager/kube-scheduler scraping if the deferred plan (`docs/plans/control-plane-metrics-chart.md`) is executed. |
-| Metric alert rules | `charts/prometheus/templates/{cert-manager-rules,hardware-rules}.yaml` | `PrometheusRule` resources | Central alert evaluation | Acceptable. Rules evaluate in the central prd Prometheus. App-specific rules can move to app charts once ownership and CRD ordering are safe. |
-| Loki self-scrape | `charts/loki/templates/servicemonitor.yaml` | `ServiceMonitor` for Loki | Backend self-monitoring | Correct here. Lifecycle follows the Loki Application, so environments without Loki (sandbox) need no toggle. |
-
-Near-term cleanup candidates:
-
-1. Keep `charts/prometheus` from growing further by default. New external
-   targets should get their own small chart unless they are part of Prometheus
-   control-plane behavior.
-2. Keep shared platform scrape templates small; when changing ArgoCD, Cilium,
-   Envoy Gateway, or external-dns scraping, verify both prd and sandbox
-   rendered Applications still select the intended monitoring subset.
+New components must explicitly choose prd and sandbox enablement. Keep shared
+platform scrape templates small and verify both rendered subsets when changing
+Argo CD, Cilium, Envoy Gateway, or external-dns scraping.
 
 ## Access
 
@@ -215,11 +121,11 @@ Near-term cleanup candidates:
 
 > `butaco.net` is a personal domain. Replace it in `values/prometheus.yaml` and `values/loki.yaml`.
 
-Loki uses LoadBalancer intentionally to receive logs from nodes outside the cluster (e.g., Proxmox hosts, VMs).
+Loki uses a LoadBalancer for logs from external hosts and VMs.
 
 ## Secrets
 
-All secrets are fetched from OpenBao via ESO. They are not stored in this repository.
+ESO fetches all secrets from OpenBao; plaintext is never committed.
 
 | OpenBao path | Property | Used by | Description |
 |-------------|----------|---------|-------------|
@@ -229,45 +135,32 @@ All secrets are fetched from OpenBao via ESO. They are not stored in this reposi
 
 ## Notes
 
-- `serviceMonitorSelectorNilUsesHelmValues: false` — Prometheus discovers all ServiceMonitors cluster-wide
-- Cluster labels (ADR-0016): prd and sandbox stamp `cluster` via a default
-  scrapeClass (`cluster-prd` / `cluster-sandbox` in `values/prometheus*.yaml`).
-  Every external LAN scrape resource (ScrapeConfig or Probe) must set
-  `scrapeClass: external` to opt out, or LAN hosts leak into
-  `cluster=~"$cluster"` dashboard queries.
-- Target IPs for external exporters (blackbox, node-exporter, etc.) are hardcoded in `values/` files
+- Prometheus discovers ServiceMonitors cluster-wide.
+- Default scrapeClasses stamp cluster labels (ADR-0016). External LAN resources
+  must use `scrapeClass: external` to stay out of cluster dashboard queries.
+- External exporter IPs live in `values/`.
 - Proxmox hypervisors are listed once in `values/proxmox-nodes.yaml`
   (ADR-0024). node-exporter targets, ICMP/AMT probes, the Loki alert host
-  regex, and the proxmox-logs dashboard all derive from it — add a node
-  there, then run `make generate` in `dashboards/`
+  regex, and dashboard derive from it; regenerate dashboards after changes.
 - DNS frontends are listed once in `values/dns-frontends.yaml`
-  (ADR-0024 addendum). dnsdist metrics targets and both blackbox DNS
-  resolution probes derive from it
+  (ADR-0024 addendum); dnsdist and blackbox DNS probes derive from it.
 - Future plan: move k0s controller-manager/scheduler scraping into an explicit local chart (`docs/plans/control-plane-metrics-chart.md`)
 
 ## Alerting
 
-Alertmanager is the shared notification hub:
+Alertmanager routes metric and Loki alerts:
 
-- Prometheus evaluates metric alerts from `PrometheusRule` resources.
-- The Loki SingleBinary ruler evaluates Proxmox LogQL alerts.
-- All seven Proxmox LogQL rules are enabled through `values/loki.yaml`
-  (`ProxmoxAppArmorDenied`, `ProxmoxOOMDetected`, `ProxmoxStorageError`,
-  `ProxmoxBackupFailed`, `ProxmoxServiceErrors`, `ProxmoxQuorumError`,
-  `ProxmoxHAError`).
+- Prometheus evaluates `PrometheusRule`; Loki evaluates Proxmox LogQL rules.
+- `values/loki.yaml` enables all seven Proxmox rules.
 - Only `warning` and `critical` alerts are routed to Discord.
 - `Watchdog`, `InfoInhibitor`, informational alerts, and alerts without a
   supported severity remain on the null receiver.
-- Proxmox log alerts are grouped by `alertname` and `host`.
-- Resolved notifications are enabled.
+- Proxmox alerts group by alert name and host; resolved notifications are sent.
 
-The Discord webhook is never stored in Git. ESO reads it from OpenBao into the
-`alertmanager-discord` Secret. An `AlertmanagerConfig` references its
-`discord-webhook-url` key through a `SecretKeySelector`, and the Prometheus
-Operator generates the runtime Alertmanager configuration.
+ESO projects the OpenBao webhook into `alertmanager-discord`; AlertmanagerConfig
+references it without storing the URL in Git.
 
-Before enabling the receiver in a live cluster, create the Discord webhook and
-add it to the encrypted Ansible `openbao_secrets` list:
+Add the webhook to encrypted Ansible `openbao_secrets` before enabling delivery:
 
 ```yaml
 - path: secret/k8s/monitoring/alertmanager
@@ -275,7 +168,7 @@ add it to the encrypted Ansible `openbao_secrets` list:
     discord-webhook-url: "<Discord webhook URL>"
 ```
 
-Edit the file through SOPS and seed OpenBao with Ansible:
+Edit with SOPS and seed through Ansible:
 
 ```bash
 sops ansible/inventories/homelab/group_vars/openbao.sops.yaml
@@ -283,5 +176,4 @@ cd ansible
 ansible-playbook playbooks/ops-openbao_seed_secrets.yaml
 ```
 
-Do not run `bao kv put` manually; Ansible is the source of truth for seeded
-OpenBao values.
+Do not use manual `bao kv put`; Ansible is the source of truth.

@@ -1,8 +1,7 @@
 port: 8083
 metricsPath: /metrics
 
-# Scrape targets come from the shared recursor inventory
-# (values/dns-frontends.yaml via apps/values.yaml valueFiles).
+# Targets come from the shared DNS frontend inventory.
 
 alerts:
   enabled: true

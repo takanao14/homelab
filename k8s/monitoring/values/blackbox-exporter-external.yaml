@@ -1,11 +1,8 @@
-# External blackbox_exporter endpoint running on rpi4
+# External blackbox_exporter on rpi4.
 blackboxExporterURL: "192.168.10.241:9115"
 scrapeInterval: 60s
 
-# ICMP probe targets (network devices + hosts).
-# Proxmox hypervisors (and their AMT interfaces) are injected from the shared
-# inventory (values/proxmox-nodes.yaml via apps/values.yaml valueFiles); list
-# only non-hypervisor targets here.
+# Non-hypervisor ICMP targets; shared inventory injects Proxmox/AMT targets.
 icmp:
   targets:
     - ip: "192.168.10.1"
@@ -19,9 +16,7 @@ icmp:
     - ip: "192.168.10.254"
       name: "wifi-ap1"
 
-# DNS resolution probes (dns_external: google.com / dns_internal:
-# ns1.home.butaco.net) target the shared recursor inventory
-# (values/dns-frontends.yaml via apps/values.yaml valueFiles).
+# DNS modules probe the shared frontend inventory.
 
 dnsProbeAlerts:
   enabled: true

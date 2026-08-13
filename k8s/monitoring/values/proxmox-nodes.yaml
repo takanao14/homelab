@@ -1,15 +1,5 @@
-# Shared Proxmox VE hypervisor inventory (single source of truth).
-#
-# Consumers (wired via valueFiles in apps/values.yaml):
-#   - node-exporter-external: node-exporter scrape targets (ip:port)
-#   - blackbox-exporter-external: ICMP probes for ip and, when set, amtIp
-#   - loki: host regex for the Proxmox LogQL alerting rules
-# The dashboard generator (dashboards/cmd/generate) also reads this file to
-# build the host regex of the proxmox-logs dashboard; run `make generate`
-# in dashboards/ after changing the node list.
-#
-# name becomes the instance/host label; scraping connects by IP so
-# monitoring does not depend on DNS resolution.
+# Shared node-exporter, blackbox, Loki-rule, and dashboard inventory (ADR-0024).
+# Regenerate dashboards after changes; names label IP-based scrapes.
 proxmoxNodes:
   - name: "pve"
     ip: "192.168.10.10"

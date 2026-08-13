@@ -2,8 +2,7 @@ port: 8200
 metricsPath: /v1/sys/metrics
 scheme: http
 
-# name becomes the instance label (relabeled from __tmp_name); scraping still
-# connects by IP so monitoring does not depend on DNS resolution.
+# Names label IP-based scrapes without a DNS dependency.
 targets:
   - ip: "192.168.40.30"
     name: "openbao1"

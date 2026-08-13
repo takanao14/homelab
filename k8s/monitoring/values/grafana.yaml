@@ -8,19 +8,13 @@ grafana:
     existingSecret: grafana-admin
     userKey: admin-user
     passwordKey: admin-password
-  # Resource reservations. Without requests Grafana runs as BestEffort and is
-  # evicted first under node memory pressure, which is exactly when the
-  # dashboards are needed. Requests only, no limits — see "Resource Requests"
-  # in k8s/README.md. Sizing basis: 7-day observed usage, requests ~= mean x 1.2.
-  #
-  # Observed: mean 385Mi, peak 774Mi, p95 CPU 8.3m. The wide mean-to-peak gap is
-  # query and render load.
+  # Requests only (README): 7-day mean/peak 385/774 Mi, p95 CPU 8.3m.
   resources:
     requests:
       cpu: 50m
       memory: 448Mi
   sidecar:
-    # Dashboard sidecar. Observed: mean 103Mi, peak 104Mi, p95 CPU 1.3m.
+    # Dashboard sidecar: 103/104 Mi, p95 CPU 1.3m.
     resources:
       requests:
         cpu: 10m

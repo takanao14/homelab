@@ -5,12 +5,7 @@ prometheus-snmp-exporter:
   podAnnotations:
     reloader.stakater.com/auto: "true"
 
-  # Resource reservations. Without requests this runs as BestEffort and is
-  # evicted first under node memory pressure. Requests only, no limits — see
-  # "Resource Requests" in k8s/README.md. Sizing basis: 7-day observed usage,
-  # requests ~= mean x 1.2.
-  #
-  # Observed: mean 35Mi, peak 50Mi, p95 CPU 0.6m.
+  # Requests only (README): 35/50 Mi, p95 CPU 0.6m.
   resources:
     requests:
       cpu: 10m
@@ -35,7 +30,7 @@ prometheus-snmp-exporter:
         labels:
           release: prometheus
       spec:
-        # External LAN devices: opt out of the default cluster-prd scrape class.
+        # Keep external LAN devices outside the prd cluster label.
         scrapeClass: external
         interval: 60s
         module: if_mib
@@ -48,12 +43,7 @@ prometheus-snmp-exporter:
               - action: replace
                 targetLabel: __param_auth
                 replacement: homelab_v2
-              # Probe staticConfig has no per-target labels, so map each probed
-              # IP (__param_target) to its hostname as the instance label.
-              # Probing still connects by IP: no DNS dependency.
-              # action is explicit: the CRD defaults it to replace, and with
-              # ServerSideApply the ArgoCD diff cannot absorb server-side
-              # defaults, leaving the app permanently OutOfSync if omitted.
+              # Map IPs to names; explicit action prevents SSA default drift.
               - action: replace
                 sourceLabels: [__param_target]
                 regex: "192.168.10.1"

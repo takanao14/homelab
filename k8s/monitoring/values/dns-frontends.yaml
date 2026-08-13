@@ -1,13 +1,5 @@
-# Shared DNS frontend (dnsdist) inventory (single source of truth,
-# ADR-0024 addendum).
-#
-# Consumers (wired via valueFiles in apps/values.yaml):
-#   - dnsdist: dnsdist metrics scrape targets (ip:port)
-#   - blackbox-exporter-external: dns_external and dns_internal resolution
-#     probes (both probe the same frontend set; only the module differs)
-#
-# name becomes the instance label; scraping/probing connects by IP so DNS
-# monitoring does not depend on DNS itself.
+# Shared dnsdist scrape and blackbox DNS probe inventory (ADR-0024).
+# Names label IP-based probes without a DNS dependency.
 dnsFrontends:
   - ip: "192.168.10.231"
     name: "dist1"
