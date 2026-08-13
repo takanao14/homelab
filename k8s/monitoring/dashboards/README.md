@@ -33,6 +33,8 @@ generated as JSON.
 
 - `cmd/generate/main.go`: dashboard registry and JSON output
 - `cmd/generate/helpers.go`: shared visual conventions
+- `cmd/generate/proxmox_nodes.go`: shared Proxmox inventory loader
+- `cmd/generate/node_exporter_targets.go`: node-exporter target classification
 - `cmd/generate/validate*.go`: generated-dashboard invariants
 - `cmd/generate/*.go`: dashboard definitions
 - `provisioning/`: local Grafana datasources and file provider
