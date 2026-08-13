@@ -1,37 +1,24 @@
 ---
-# Cluster guests placed on this hypervisor. ops-startup.yaml explicitly ensures
-# they are running during full-fleet and environment-only recovery. This is
-# independent of tf's on_boot setting: on_boot fires only when the hypervisor
-# boots, not when a cluster alone was powered off.
+# Cluster guests started during recovery; tf on_boot only covers host boot.
 startup_prd_guests: []
 startup_sandbox_guests: []
 
-# Guests running on this hypervisor that Ansible does not manage and that are
-# therefore absent from guest_shutdown_order. ops-shutdown.yaml stops them over
-# ACPI with `qm shutdown` in the hypervisor phase — after every managed guest is
-# already down, which is the safe point for anything that might be serving
-# storage to them. Without this they survive every earlier phase and trip the
-# "guests are still running" assert.
+# Unmanaged guests stopped via ACPI after managed guests.
 shutdown_unmanaged_guests: []
 
-# How long `qm shutdown` waits for an unmanaged guest to stop on its own.
+# Unmanaged guest ACPI shutdown timeout.
 shutdown_unmanaged_timeout: 300
 
-# Kernel tuning for Proxmox hosts (consumed by the `sysctl` role).
+# Proxmox kernel tuning (`sysctl` role).
 sysctl_settings:
-  # Default 60 swaps out live VM pages too eagerly on a hypervisor; 10 only
-  # swaps under genuine memory pressure. See roles/sysctl/README.md.
+  # Avoid swapping VM pages before genuine memory pressure.
   vm.swappiness: 10
 
-# Proxmox ships chrony by default, so manage its NTP sources and service without
-# reinstalling the package or changing the systemd-timesyncd service state.
+# Use bundled chrony without altering systemd-timesyncd.
 chrony_install: false
 chrony_manage_timesyncd: false
 
-# Static route source of truth for per-node Proxmox SDN SimpleZone segments.
-# Each Proxmox host owns one routed SimpleZone behind its management-LAN address.
-# The proxmox_simplezone_routes role installs routes to every *other* segment on
-# each node, avoiding router hairpinning for SimpleZone-to-SimpleZone traffic.
+# Per-node SimpleZone routes; direct inter-zone traffic avoids router hairpinning.
 proxmox_simplezone_routes_interface: vmbr0
 proxmox_simplezone_routes_file: /etc/network/interfaces.d/ansible-simplezone-routes
 proxmox_simplezone_routes_map:
@@ -54,8 +41,7 @@ proxmox_simplezone_routes_map:
     segment: 192.168.70.0/24
     via: "{{ hostvars['node5']['ansible_host'] }}"
 
-# Forward Proxmox host logs to the central Vector log collector
-# (rsyslog_forward_host comes from group_vars/all.yaml).
+# Forward host logs to Vector; destination is defined in all.yaml.
 rsyslog_forward_port: 514
 rsyslog_forward_protocol: tcp
 rsyslog_journal_input: true
@@ -65,11 +51,7 @@ rsyslog_queue_high_watermark: 9000
 rsyslog_queue_low_watermark: 7000
 rsyslog_queue_max_disk_space: "256m"
 
-# Proxmox file logs the journal does not cover. Exact paths only; rotated files
-# (.1, .gz, index.1, pveam.log.0) are intentionally not matched. tasks/active and
-# the per-task tasks/[0-F]/* output files are excluded (rewritten state / hundreds
-# of low-value UPID files). Sensitive fields in access.log (source IPs, users,
-# URLs, VMIDs, UPIDs) stay in the message body and must never become Loki labels.
+# Non-journal logs; exact paths exclude rotated/state files. Keep sensitive fields out of labels.
 rsyslog_file_inputs:
   - path: /var/log/pve/tasks/index
     tag: pve-task
@@ -80,8 +62,7 @@ rsyslog_file_inputs:
   - path: /var/log/pveam.log
     tag: pveam
 
-# Proxmox external metric server definitions are cluster-scoped. These hosts are
-# independent Proxmox installations, so each one manages its own definition.
+# Each independent Proxmox host manages its cluster-scoped metric definition.
 proxmox_metric_server_manage_hosts:
   - pve
   - node1

@@ -1,6 +1,5 @@
 ---
-# One worker per core, following the LXC allocation going to cores = 2
-# (tf/lxc/node2/resolver, tf/lxc/node3/resolver).
+# One worker per allocated LXC core (tf/lxc/node{2,3}/resolver).
 knot_resolver_workers: 2
 
 knot_resolver_server_addr: "{{ ansible_host }}"

@@ -1,4 +1,4 @@
 ---
-# Vector reads logs directly from journald on these LXC guests.
+# Vector reads LXC journals directly.
 journald_forward_to_syslog: false
 journald_disable_rsyslog: true

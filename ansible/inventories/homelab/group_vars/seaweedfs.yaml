@@ -1,24 +1,16 @@
 ---
-# Non-secret SeaweedFS configuration.
-#
-# The role also creates public buckets and manages the admin UI and R2 backup
-# timer. The versioned backup destination bucket remains a one-time post-install
-# step (see roles/seaweedfs/README.md).
+# Non-secret settings. The versioned backup bucket remains a post-install step
+# (roles/seaweedfs/README.md).
 
-# Public-download buckets. Anonymous clients get Read-only
-# (no List) on these; served over HTTPS via the central Caddy at
-# https://s3.home.butaco.net/<bucket>/<file>. The seaweedfs role creates these
-# buckets with the Admin identity.
+# Public-download buckets: anonymous Read without List, served through Caddy.
 #   firmware     - router / PC firmware images
 #   cloud-images - custom image distribution
 seaweedfs_public_buckets:
   - firmware
   - cloud-images
 
-# Upload identity for packer/push.sh. SeaweedFS 4.37 rejects PutObject when these
-# actions are bucket-scoped, so they currently apply to every bucket. This is
-# broader than the intended cloud-images scope, but excludes Admin/IAM actions.
-# The script disables S3 multipart upload to keep the required actions minimal.
+# packer/push.sh identity. SeaweedFS 4.37 requires bucket-global actions;
+# multipart upload stays disabled to minimize permissions.
 seaweedfs_s3_extra_identities:
   - name: imagebuilder
     access_key: "{{ seaweedfs_imagebuilder_access_key }}"

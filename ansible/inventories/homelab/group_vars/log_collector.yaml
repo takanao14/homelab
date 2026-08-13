@@ -1,5 +1,5 @@
 ---
-# loki_endpoint comes from group_vars/all.yaml (fixed IP, no DNS dependency).
+# loki_endpoint is defined in all.yaml without DNS dependency.
 
 vector_config:
   sources:
@@ -19,9 +19,7 @@ vector_config:
       decoding:
         codec: bytes
 
-    # log1 is itself a Vector host, so it collects its own journal directly
-    # instead of relying on journald-to-rsyslog forwarding (which the LXC
-    # AppArmor profile denies and which would not reach Loki anyway).
+    # Collect log1 locally; LXC AppArmor blocks journald-to-rsyslog forwarding.
     journald:
       type: journald
       include_units:
@@ -69,8 +67,7 @@ vector_config:
           }
         }
 
-        # Ensure default values for required label fields
-        # parse_syslog() returns .hostname for RFC 5424; socket source pre-fills .host with source IP
+        # Normalize required labels; prefer RFC 5424 hostname over source IP.
         if exists(.hostname) && !is_null(.hostname) {
           .host = .hostname
         } else if !exists(.host) || is_null(.host) {

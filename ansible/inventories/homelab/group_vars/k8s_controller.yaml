@@ -1,10 +1,8 @@
 ---
 k0s_service: k0scontroller
 
-# Flag to force k8s to shut down.
+# Require all namespaces to be classified before shutdown.
 k8s_shutdown_allow_unclassified: false
 
-# Where ops-shutdown.yaml records the replica counts it scales to zero, so
-# ops-startup.yaml can put them back. Kept outside the repo: it is runtime
-# state, and it must survive the fleet being powered off.
+# Persist pre-shutdown replicas outside the repo for startup restoration.
 k8s_shutdown_state_dir: "~/.local/state/homelab/shutdown"

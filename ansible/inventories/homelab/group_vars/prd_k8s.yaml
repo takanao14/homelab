@@ -1,23 +1,12 @@
 ---
-# kubectl for this cluster runs on the Ansible control node: the inventory has
-# no API endpoint host, and cordon/drain must keep working while the node being
-# operated on is down.
+# Control-node kubeconfig keeps cordon/drain independent of target nodes.
 k8s_kubeconfig: "~/.kube/prd.yaml"
 
-# prd uses OpenEBS LocalPV hostpath
-# (k0s/env/prd.sh, k0s/values/openebs.yaml.gotmpl).
-# PVs are node-local directories with node affinity, so a drained pod cannot be
-# rescheduled elsewhere — draining buys a graceful SIGTERM, not availability.
-# There are no replicas to rebuild, so no post-reboot storage recovery wait.
+# OpenEBS LocalPV is node-local; drain provides graceful stop, not rescheduling.
 k8s_storage_providers:
   - openebs
 
-# Scaled to zero by ops-shutdown.yaml, in this order. Application workloads
-# only: kube-system, openebs, cert-manager, external-secrets and
-# envoy-gateway-system are cluster infrastructure and are left to stop with the
-# node. monitoring is late so the shutdown of everything above it is still
-# observed, and argocd is last because scaling it early would leave nothing able
-# to reconcile the cluster back.
+# Ordered application shutdown; monitoring observes it and Argo CD stops last.
 k8s_shutdown_namespaces:
   - comfyui
   - ollama
@@ -33,11 +22,7 @@ k8s_shutdown_namespaces:
   - monitoring
   - argocd
 
-# Cluster infrastructure, deliberately left to stop with the node. Declared
-# rather than merely described so ops-shutdown.yaml can verify the split: a
-# namespace that carries workloads and appears in neither list stops the run,
-# turning a forgotten addition into a visible failure instead of a workload
-# that quietly never gets a graceful shutdown.
+# Infrastructure stops with the node; explicit classification guards omissions.
 k8s_infrastructure_namespaces:
   - kube-system
   - openebs
@@ -45,8 +30,6 @@ k8s_infrastructure_namespaces:
   - external-secrets
   - envoy-gateway-system
 
-# Stopped before anything else is scaled: with the application controller down,
-# Argo CD cannot revert the scale-to-zero while the shutdown is in progress.
-# Cheaper and far less stateful than suspending every Application's syncPolicy.
+# Stop the controller first so GitOps cannot revert scale-to-zero.
 k8s_gitops_controller_namespace: argocd
 k8s_gitops_controller_resource: statefulset/argocd-application-controller

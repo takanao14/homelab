@@ -1,6 +1,5 @@
 ---
 k0s_service: k0sworker
 
-# OpenEBS LocalPV basePath on k0s worker. The SSD mount is
-# created by k0s/hook/ssdsetup.sh in both environments.
+# OpenEBS LocalPV path; mounted by k0s/hook/ssdsetup.sh.
 k8s_storage_mountpoint: /srv/storage/volume

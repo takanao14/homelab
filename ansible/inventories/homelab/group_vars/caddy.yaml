@@ -14,11 +14,10 @@ caddy_upstreams:
   - hostname: forgejo.home.butaco.net
     backend: "{{ hostvars['forgejo1']['ansible_host'] }}:3000"
   - hostname: truenas-ui.home.butaco.net
-    # TrueNAS is not an Ansible-managed host, so no inventory entry to derive
-    # this from; it stays a literal.
+    # TrueNAS is outside the Ansible inventory.
     backend: 192.168.20.10:443
     scheme: https
-    tls_insecure: true   # TrueNAS uses a local (self-signed) cert; verify only the internal Caddy->TrueNAS leg is skipped
+    tls_insecure: true   # Self-signed cert on the internal Caddy-to-TrueNAS leg.
   - hostname: netbox-ui.home.butaco.net
     backend: "{{ hostvars['netbox1']['ansible_host'] }}:80"
   - hostname: openbao.home.butaco.net

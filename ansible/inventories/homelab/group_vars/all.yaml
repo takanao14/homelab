@@ -1,25 +1,18 @@
 ---
 ansible_python_interpreter: /usr/bin/python3
 
-# Telemetry ingestion endpoints. The IPs are Cilium LB-IPAM addresses
-# pinned in k8s/monitoring/values (loki.yaml / alloy.yaml) — keep in sync.
-# Fixed IPs on purpose: log/metric shipping must not depend on DNS.
+# Cilium LB-IPAM addresses; keep aligned with k8s/monitoring/values. Avoid DNS dependency.
 loki_endpoint: "http://192.168.30.250:3100"
 alloy_otlp_server: "192.168.30.251"
 
-# Vector syslog relay; rsyslog hosts forward here.
+# Vector syslog relay.
 rsyslog_forward_host: "{{ hostvars['log1']['ansible_host'] }}"
 
-# How long the package upgrade reboot waits for a host to come back. Suits VMs
-# and LXC guests; slow physical hosts raise it in host_vars.
+# Reboot wait; override for slower physical hosts.
 package_upgrade_reboot_timeout: 300
 
-# How long ops-shutdown.yaml waits for a host to stop answering on SSH after it
-# was told to power off. Exceeding it stops the run rather than powering off the
-# tier below a host that is still up.
+# SSH-down timeout; expiry aborts shutdown before the next tier.
 host_poweroff_timeout: 300
 
-# How long ops-startup.yaml waits for a host to answer on SSH after power is
-# restored. Generous on purpose: hypervisors run firmware checks before they
-# boot, and guests only start once their node is up.
+# SSH-up timeout, including hypervisor firmware checks and guest startup.
 host_startup_timeout: 900
