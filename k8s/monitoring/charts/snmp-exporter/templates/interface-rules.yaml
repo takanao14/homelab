@@ -27,4 +27,44 @@ spec:
               {{ "{{ $labels.instance }}" }} is administratively enabled but has no
               link. A port shut down on purpose does not reach this alert, so this
               is either a cable, the far end, or the port itself.
+
+        # Physical-layer faults: CRC, framing, duplex mismatch. Separate from
+        # discards because the response differs -- this one is the cable.
+        - alert: NetworkInterfaceErrors
+          expr: >-
+            increase(ifInErrors{ifDescr=~"{{ .Values.interfaceAlerts.ifDescr }}"}[1h])
+            + increase(ifOutErrors{ifDescr=~"{{ .Values.interfaceAlerts.ifDescr }}"}[1h])
+            > {{ .Values.interfaceAlerts.errorsPerHour }}
+          for: {{ .Values.interfaceAlerts.errorsFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Interface errors on {{ "{{ $labels.instance }}" }}'
+            description: >-
+              {{ "{{ $labels.ifDescr }}" }}
+              {{ "{{ if $labels.ifAlias }}({{ $labels.ifAlias }}) {{ end }}" }}on
+              {{ "{{ $labels.instance }}" }} logged
+              {{ "{{ printf \"%.0f\" $value }}" }} errors in the last hour against
+              a seven-day baseline of zero. Suspect the cable, the transceiver, or
+              a duplex mismatch.
+
+        # Queue drops rather than corruption: congestion, or a policy dropping
+        # traffic on purpose. Same threshold, different thing to go and look at.
+        - alert: NetworkInterfaceDiscards
+          expr: >-
+            increase(ifInDiscards{ifDescr=~"{{ .Values.interfaceAlerts.ifDescr }}"}[1h])
+            + increase(ifOutDiscards{ifDescr=~"{{ .Values.interfaceAlerts.ifDescr }}"}[1h])
+            > {{ .Values.interfaceAlerts.errorsPerHour }}
+          for: {{ .Values.interfaceAlerts.errorsFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Interface discards on {{ "{{ $labels.instance }}" }}'
+            description: >-
+              {{ "{{ $labels.ifDescr }}" }}
+              {{ "{{ if $labels.ifAlias }}({{ $labels.ifAlias }}) {{ end }}" }}on
+              {{ "{{ $labels.instance }}" }} dropped
+              {{ "{{ printf \"%.0f\" $value }}" }} packets in the last hour against
+              a seven-day baseline of zero. The frames arrived intact; the port
+              had nowhere to put them.
 {{- end }}
