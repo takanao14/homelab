@@ -160,6 +160,7 @@
         "y": 1
       },
       "repeatDirection": "h",
+      "interval": "2m",
       "options": {
         "graphMode": "area",
         "colorMode": "value",
@@ -230,6 +231,7 @@
         "y": 6
       },
       "repeatDirection": "h",
+      "interval": "2m",
       "options": {
         "legend": {
           "displayMode": "list",
@@ -318,6 +320,7 @@
         "y": 15
       },
       "repeatDirection": "h",
+      "interval": "2m",
       "options": {
         "legend": {
           "displayMode": "list",
@@ -364,6 +367,7 @@
         "y": 15
       },
       "repeatDirection": "h",
+      "interval": "2m",
       "options": {
         "legend": {
           "displayMode": "list",

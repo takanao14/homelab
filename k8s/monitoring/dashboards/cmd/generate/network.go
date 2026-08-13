@@ -20,6 +20,28 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 	// subinterfaces, and vendor-internal interfaces.
 	const ifFilter = `ifDescr=~"GigaEthernet[0-9]+|GigabitEthernet[0-9]+", instance=~"$instance"`
 
+	// Min interval for every rate() panel here. SNMP is probed once a minute
+	// (values/snmp-exporter.yaml, interval: 60s -- measured, count_over_time over
+	// ten minutes returns exactly 10 samples), but the Prometheus datasource has
+	// no timeInterval set, so Grafana assumes the 15s default when it builds
+	// $__rate_interval = max($__interval + scrape, 4 x scrape). Whenever
+	// $__interval falls below 45s that collapses to a 60s window, and a 60s window
+	// on a 60s scrape does not reliably contain the two samples rate() needs:
+	// measured over the last 30 minutes, rate(...[60s]) returned no series at
+	// every single step, while [2m] returned all of them.
+	//
+	// The failure therefore depends on panel width and time range together, which
+	// is why it looked arbitrary. $__interval is roughly range / pixel-width, so
+	// the full-width Traffic (bps) panel broke even at the dashboard's default 24h
+	// while the half-width Total Traffic beside it still worked, and Total Traffic
+	// then broke too once the range was pulled in below a day.
+	//
+	// 2m floors $__interval so $__rate_interval lands at 135s, verified to return
+	// every series at every step. A 1m floor would give 75s, which straddles the
+	// two-sample boundary depending on scrape alignment -- not worth the risk to
+	// save a minute of smoothing on a link that is sampled once a minute anyway.
+	const snmpMinInterval = "2m"
+
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
 
@@ -92,6 +114,7 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(4).
 				Unit("bps").
 				Min(0).
+				Interval(snmpMinInterval).
 				Thresholds(measurementThresholds()).
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -110,6 +133,7 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Datasource(ds).
 				Span(24).Height(8).
 				Unit("bps").
+				Interval(snmpMinInterval).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				Thresholds(zeroLineThresholds).
@@ -136,6 +160,7 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("pps").
 				Min(0).
+				Interval(snmpMinInterval).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
@@ -154,6 +179,7 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				Span(12).Height(8).
 				Unit("pps").
 				Min(0).
+				Interval(snmpMinInterval).
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
