@@ -3,7 +3,7 @@ set -euo pipefail
 
 # template_lib.sh — Common logic for k0s cluster management
 
-# Prevent double-sourcing
+# Prevent double sourcing.
 if [[ "${TEMPLATE_LIB_LOADED:-0}" -eq 1 ]]; then
     return 0
 fi
@@ -14,15 +14,12 @@ export GREEN='\033[0;32m'
 export YELLOW='\033[1;33m'
 export NC='\033[0m'
 
-# SSH identity for the cluster nodes. Used both for the k0sctl host entries and
-# for the direct SSH calls this library makes on its own (node reboots), so the
-# two can never drift apart. Overridable by the caller, like K0S_SSH_USER.
+# Shared SSH identity for k0sctl and direct reboot calls; caller-overridable.
 export K0S_SSH_KEY_PATH="${K0S_SSH_KEY_PATH:-$HOME/.ssh/id_ed25519}"
 
 # ── logging ───────────────────────────────────────────────────────────────────
 
-# All logs go to stderr so stdout stays clean for machine-readable output
-# (e.g. `create_cluster.sh <env> config > k0sctl.yaml`).
+# Keep stdout machine-readable by logging to stderr.
 log_error()   { echo -e "${RED}✗${NC} Error: $*" >&2; }
 log_info()    { echo -e "${YELLOW}→${NC} $*" >&2; }
 log_success() { echo -e "${GREEN}✓${NC} $*" >&2; }
@@ -53,7 +50,7 @@ usage() {
     local script_name env_dir available_envs env_hint
     script_name=$(basename "$0")
 
-    # Discover available environments dynamically from env/*.sh
+    # Discover environments from env/*.sh.
     env_dir="${SCRIPT_DIR:-$(cd "$(dirname "$0")" && pwd)}/env"
     local available_envs="" f
     for f in "$env_dir"/*.sh; do
@@ -148,9 +145,7 @@ validate_storage_config() {
 
 # ── node addresses ────────────────────────────────────────────────────────────
 
-# Every worker address: the standard workers plus the optional GPU workers.
-# Printed comma-separated so callers can keep using the `IFS=',' read -ra` idiom
-# the environment files themselves are written in.
+# Print standard and optional GPU workers as a comma-separated list.
 _worker_addresses() {
     validate_vars K0S_WORKER_ADDRESSES
 
@@ -161,9 +156,7 @@ _worker_addresses() {
     printf '%s' "$addresses"
 }
 
-# Every node address, workers first and controllers last — the same ordering
-# ADR-0032 encodes in the Ansible inventory, for the same reason: a worker
-# operation may still need the API server its controller provides.
+# Print workers before controllers to preserve API access (ADR-0032).
 _all_node_addresses() {
     validate_vars K0S_CONTROLLER_ADDRESSES
 
@@ -185,7 +178,7 @@ _l2_segment_from_ip() {
     printf '%s-%s-%s' "$octet1" "$octet2" "$octet3"
 }
 
-# Generates a worker host entry (standard or GPU).
+# Render a standard or GPU worker host.
 # Usage: _render_worker_host <address> [gpu]
 _render_worker_host() {
     local addr="$1"
@@ -232,9 +225,7 @@ EOF
 EOF
 }
 
-# Adds the GPU worker taint toleration only to CoreDNS. k0s calculates the
-# CoreDNS replica count from the number of Linux nodes, so a small cluster with
-# a tainted GPU worker needs one replica to stay schedulable.
+# Add a CoreDNS-only GPU taint toleration so calculated replicas remain schedulable.
 _render_coredns_config() {
     if [[ -z "${K0S_GPU_WORKER_ADDRESSES:-}" ]]; then
         return
@@ -282,16 +273,15 @@ sync_worker_l2_labels() {
     done
 }
 
-# Builds the full k0sctl config from environment variables.
-# Supports multiple controllers and workers via comma-separated address lists.
+# Build k0sctl config from comma-separated environment topology.
 #   K0S_CONTROLLER_ADDRESSES — required, comma-separated controller IPs
 #   K0S_WORKER_ADDRESSES     — required, comma-separated worker IPs
 #   K0S_GPU_WORKER_ADDRESSES — optional, comma-separated GPU worker IPs
 #
-# Storage backend is selected automatically:
+# Datastore selection:
 #   1 controller  → kine  (embedded SQLite, suitable for homelab single-node control plane)
 #   2+ controllers → etcd (required for HA; controllers must be an odd number for quorum)
-# Operation mode controls disruptive-operation safety:
+# Operation safety:
 #   bootstrap → do not wait for Ready because the custom CNI is not installed yet
 #   upgrade   → wait for each worker and allow storage recovery during drain
 generate_k0sctl_config() {
@@ -310,14 +300,14 @@ generate_k0sctl_config() {
 
     log_info "Generating k0sctl configuration for ${operation_mode}..."
 
-    # Split address lists (trim spaces around commas)
+    # Split address lists and trim surrounding spaces.
     IFS=',' read -ra ctrl_list   <<< "${K0S_CONTROLLER_ADDRESSES// /}"
     IFS=',' read -ra worker_list <<< "${K0S_WORKER_ADDRESSES// /}"
 
     local ctrl_count="${#ctrl_list[@]}"
     local worker_count="${#worker_list[@]}"
 
-    # Determine storage backend
+    # Select datastore.
     local storage_type storage_comment
     if [[ "$ctrl_count" -gt 1 ]]; then
         storage_type="etcd"
@@ -430,7 +420,7 @@ generate_kubeconfig() {
     local k0sctl_file="$1"
     local kubeconfig_out="$2"
 
-    # k0sctl_file is populated by generate_k0sctl_config; skip if already done (e.g. via apply)
+    # Reuse config generated earlier in this run.
     if [[ ! -s "$k0sctl_file" ]]; then
         generate_k0sctl_config "$k0sctl_file"
     fi
@@ -555,9 +545,7 @@ _ssh_node() {
     local addr="$1"
     shift
 
-    # accept-new keeps the call non-interactive under BatchMode without blindly
-    # accepting a *changed* key; a recreated VM still has to go through
-    # remove-known-hosts.sh.
+    # Accept new keys non-interactively, but reject changed keys from recreated VMs.
     ssh -o BatchMode=yes \
         -o StrictHostKeyChecking=accept-new \
         -o ConnectTimeout=10 \
@@ -569,10 +557,7 @@ _node_boot_id() {
     _ssh_node "$1" cat /proc/sys/kernel/random/boot_id
 }
 
-# Blocks until the node reports a boot id different from the one it had before
-# the reboot was triggered. Probing SSH alone cannot distinguish "already back"
-# from "has not gone down yet", because the pre-reboot sshd keeps answering
-# until the shutdown actually starts.
+# Wait for a changed boot ID; SSH alone can still reach the pre-reboot daemon.
 wait_for_reboot() {
     local addr="$1"
     local previous_boot_id="$2"
@@ -597,18 +582,8 @@ wait_for_reboot() {
     done
 }
 
-# Reboots every node of the environment and waits for all of them to return.
-#
-# `k0sctl reset` stops k0s and deletes its files, but the runtime residue
-# outlives it: the Cilium interfaces (cilium_host / cilium_net / cilium_vxlan),
-# the nftables rules they installed, and leftover kubelet bind mounts under
-# /var/lib/k0s/kubelet. A reboot is the only reliable way to clear all of that
-# before the host is bootstrapped again.
-#
-# Reboots are triggered on every node first and waited on afterwards, so the
-# nodes come back in parallel rather than one full boot at a time. There is no
-# cluster left to protect at this point, which is what makes that safe here and
-# not during the rolling reboots ADR-0032 covers.
+# Reboot all nodes after reset to clear Cilium, nftables and kubelet residue.
+# Trigger all first for parallel boot; the cluster no longer exists (ADR-0032).
 reboot_nodes() {
     local timeout="${1:-600}"
     local addr boot_id i failed=""
@@ -616,9 +591,7 @@ reboot_nodes() {
 
     IFS=',' read -ra addr_list <<< "$(_all_node_addresses)"
 
-    # Read every boot id before touching anything. A node unreachable at this
-    # point cannot have its reboot verified at all, and nothing has been
-    # disturbed yet, so this is the one phase that aborts rather than collects.
+    # Abort before changes if any initial boot ID cannot be read.
     for i in "${!addr_list[@]}"; do
         addr="${addr_list[i]}"
         if ! boot_id="$(_node_boot_id "$addr")"; then
@@ -631,21 +604,17 @@ reboot_nodes() {
     for i in "${!addr_list[@]}"; do
         addr="${addr_list[i]}"
         log_info "Triggering reboot on $addr"
-        # systemd-run detaches the reboot from this SSH session, so the command
-        # returns cleanly instead of the connection being torn down under it and
-        # reported as a failure.
+        # Detach reboot so SSH closure is not reported as failure.
         if ! _ssh_node "$addr" \
             "sudo systemd-run --on-active=3 --timer-property=AccuracySec=100ms systemctl reboot"; then
             log_error "Failed to trigger a reboot on $addr"
             failed+="${failed:+ }$addr"
-            # An empty boot id marks the node as nothing to wait for, so a host
-            # that never started rebooting does not burn the whole timeout.
+            # Skip wait when reboot dispatch failed and cleared the boot ID.
             boot_ids[i]=""
         fi
     done
 
-    # Every reachable node is waited on even after one fails, so a single run
-    # reports every node still down rather than only the first.
+    # Collect all wait failures instead of stopping at the first.
     for i in "${!addr_list[@]}"; do
         [[ -n "${boot_ids[i]}" ]] || continue
         addr="${addr_list[i]}"
@@ -670,26 +639,19 @@ helmfile_apply() {
     base_dir="$(dirname "$helmfile_file")"
     log_info "Using KUBECONFIG: ${KUBECONFIG:-unknown}"
 
-    # Refuse to compound an already-invalid cluster state. A deliberate
-    # default-class switch first removes the old default annotation, then runs
-    # this workflow with zero current defaults.
+    # Reject multiple defaults; deliberate switches may begin with zero.
     check_default_storage_classes
 
     sync_worker_l2_labels
 
-    # Phase 1: install Cilium first so its CRDs exist before other releases are diffed.
-    # helm-diff validates manifests against the live API, so CRD-dependent resources
-    # (CiliumL2AnnouncementPolicy, CiliumLoadBalancerIPPool) would fail if cilium hasn't
-    # been installed yet.
+    # Phase 1: install Cilium before live validation of CRD-dependent releases.
     log_info "Running: helmfile apply (phase 1: cilium)"
     helmfile -f "$helmfile_file" -l name=cilium apply
 
-    # Wait for Cilium CRDs to be fully established before running the diff for
-    # CRD-dependent releases in phase 2 — helm-diff queries the live API and will
-    # fail if the CRDs aren't registered yet even when the helm release is installed.
+    # Wait until Cilium CRDs are established for helm-diff.
     "$base_dir/scripts/wait-cilium-crds.sh"
 
-    # Phase 2: apply everything; CRDs are guaranteed to exist at this point.
+    # Phase 2: apply all releases after CRD readiness.
     log_info "Running: helmfile apply (phase 2: all releases)"
     helmfile -f "$helmfile_file" apply
     check_default_storage_classes "$K0S_DEFAULT_STORAGE_CLASS"
