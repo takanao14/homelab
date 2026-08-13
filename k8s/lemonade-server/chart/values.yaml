@@ -1,9 +1,6 @@
 replicaCount: 0
 
-# Upstream image. lemonade's built-in "rocm" backend mis-detects gfx1200 (RX
-# 9060 XT) as unsupported, but the "vulkan" backend has no such GPU-family
-# gate and works out of the box on this GPU via the RADV Mesa driver already
-# on the host — see README.md. Set by the set-llamacpp-backend initContainer.
+# Vulkan bypasses lemonade's gfx1200 ROCm detection bug (README).
 image:
   repository: ghcr.io/lemonade-sdk/lemonade-server
   tag: v10.8.0
@@ -42,11 +39,7 @@ gateway:
     request: null
     backendRequest: null
 
-# Second, ROCm-backend Deployment used for MXFP4 serving and benchmarking
-# against the vulkan backend above. Scaled to 0 by default; gpu-switch.sh
-# discovers it via homelab/gpu-switchable like any other GPU workload. Shares
-# the huggingface/llama/recipe PVCs with the vulkan Deployment — safe because
-# gpu-switch guarantees only one of the two ever runs at a time.
+# ROCm serving/benchmark variant; safe shared PVCs rely on GPU-switch exclusion.
 rocm:
   replicaCount: 0
   hostname: lemonade-rocm.prd.butaco.net

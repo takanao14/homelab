@@ -3,14 +3,11 @@ gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
   sectionName: https
-  # Envoy Gateway defaults HTTPRoute requests to 15s. Local agent responses
-  # can exceed that even while the backend is healthy and generating tokens.
+  # Override Envoy's 15s default for long agent responses.
   timeouts:
     request: 10m
     backendRequest: 10m
-# Agent / tool-calling context. 32768 fits alongside a ~8-13 GB model on the
-# 16 GB RX 9060 XT when the KV cache is quantized (q8_0) with flash attention.
-# Raise toward 65536 only for <=14B models after checking VRAM headroom.
+# 32768 fits an 8–13 GB model with q8_0 cache; verify VRAM before increasing.
 numCtx: 32768
 flashAttention: true
 kvCacheType: q8_0

@@ -1,5 +1,4 @@
-# Common values for the upstream open-webui chart
-# (https://helm.openwebui.com/). Per-env overrides live in <env>/values.yaml.
+# Shared upstream chart values; environment files set hostnames.
 ollama:
   enabled: false
 ollamaUrls:
@@ -16,10 +15,7 @@ openaiApiKeys:
   - "dummy"
   - "dummy"
 
-# Connections are GitOps-managed. Disable database-backed ConfigVar overrides
-# so Admin UI changes cannot silently take precedence over these values after
-# a restart. Only one GPU backend is active at a time, so keep model discovery
-# responsive while the other endpoints are intentionally scaled to zero.
+# Keep Git values authoritative and tolerate intentionally stopped GPU backends.
 extraEnvVars:
   - name: ENABLE_PERSISTENT_CONFIG
     value: "false"
@@ -30,13 +26,7 @@ persistence:
   enabled: true
   size: 2Gi
 
-# Resource reservations. Without requests this runs as BestEffort, invisible to
-# the scheduler and first to be evicted under node memory pressure. At roughly
-# 1.6Gi resident this is the largest workload in the cluster, so leaving it
-# unaccounted for skewed scheduling the most.
-#
-# Requests only, no limits — see "Resource Requests" in k8s/README.md. Sizing
-# basis: 7-day observed usage, mean 1644Mi and high-water 1937Mi, p95 CPU 1.0m.
+# Requests only (README): 7-day mean/peak 1644/1937 Mi, p95 CPU 1m.
 resources:
   requests:
     cpu: 25m
@@ -44,7 +34,7 @@ resources:
 
 websocket:
   redis:
-    # Observed: mean 28Mi, high-water 31Mi, p95 CPU 2.6m.
+    # 28/31 Mi, p95 CPU 2.6m.
     resources:
       requests:
         cpu: 10m

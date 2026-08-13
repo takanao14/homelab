@@ -3,8 +3,7 @@ gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
   sectionName: https
-  # Envoy Gateway defaults HTTPRoute requests to 15s. LLM responses can
-  # exceed that even while the backend is healthy and streaming tokens.
+  # Override Envoy's 15s default for long streaming responses.
   timeouts:
     request: 10m
     backendRequest: 10m

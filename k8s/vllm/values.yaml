@@ -4,13 +4,12 @@ gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
   sectionName: https
-  # Model loading and long generations can exceed Envoy Gateway's default.
+  # Allow model loading and long generations past Envoy's default.
   timeouts:
     request: 10m
     backendRequest: 10m
 
 toolCalling:
   enabled: true
-  # Qwen's official vLLM deployment guide specifies the Hermes parser for
-  # standard Qwen3 models. Qwen3-Coder uses a different parser.
+  # Standard Qwen3 uses Hermes; revisit for other model families.
   parser: hermes

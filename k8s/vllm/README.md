@@ -1,7 +1,6 @@
 # vLLM
 
-[vLLM](https://docs.vllm.ai/) OpenAI-compatible inference server deployed on
-the prd cluster with AMD GPU (ROCm) support. Managed by Argo CD.
+[vLLM](https://docs.vllm.ai/) OpenAI-compatible ROCm inference on prd.
 
 ## Access
 
@@ -12,28 +11,20 @@ the prd cluster with AMD GPU (ROCm) support. Managed by Argo CD.
 
 ## GPU / ROCm
 
-The workload requests one `amd.com/gpu` resource and is pinned to the
-`gpu=amd` node. The node must also carry the `gpu=amd:NoSchedule` taint.
+Requests one `amd.com/gpu` on the labelled and tainted GPU node.
 
-The image is AMD's Radeon/Navi vLLM build. The `_navi_` image variant is
-required for the RX 9060 XT (`gfx1200`); the CDNA variant targets AMD Instinct
-GPUs. Do not set `HSA_OVERRIDE_GFX_VERSION` because the GPU target is supported
-natively.
+Use AMD's Radeon/Navi gfx1200 image, not the Instinct/CDNA variant. Do not set
+`HSA_OVERRIDE_GFX_VERSION`.
 
-The pod disables Kubernetes Service Links. Without
-`enableServiceLinks: false`, the `vllm` Service injects a
-`VLLM_PORT=tcp://<service-ip>:8000` environment variable. vLLM reserves that
-name for a numeric internal port and exits when Kubernetes supplies the URI.
+Service Links stay disabled because Kubernetes otherwise injects a URI into
+vLLM's numeric `VLLM_PORT`.
 
-Automatic tool choice is enabled with the `hermes` parser for the standard
-Qwen3 model. This is required when Open WebUI sends `tool_choice: auto`.
-Revisit the parser when changing model families; Qwen3-Coder, for example,
-uses a different parser.
+Standard Qwen3 uses the Hermes parser for `tool_choice: auto`; revisit it when
+changing model families.
 
 ## Validation
 
-The deployment defaults to zero replicas so Argo CD can create the namespace,
-route, service, and model-cache PVC without consuming the single GPU.
+Zero replicas lets Argo CD create resources without consuming the GPU.
 
 Start it through the exclusive GPU workload switch:
 
@@ -52,9 +43,8 @@ kubectl -n vllm get pod -o wide
 kubectl -n vllm describe pod -l app=vllm
 ```
 
-The initial model is `Qwen/Qwen3-4B`. This deliberately avoids quantization
-while validating the ROCm, PyTorch, and vLLM stack within the GPU's 16 GiB
-VRAM. Test larger or quantized models only after this baseline succeeds.
+The unquantized `Qwen/Qwen3-4B` baseline validates the stack within 16 GiB VRAM;
+test larger models only after it succeeds.
 
 ## Key values
 

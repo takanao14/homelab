@@ -11,8 +11,7 @@ gateway:
     backendRequest: ""
 
 image:
-  # Radeon/Navi build with gfx1200 support. Do not replace this with the CDNA
-  # image intended for AMD Instinct GPUs.
+  # Radeon/Navi gfx1200 build, not the Instinct/CDNA image.
   repository: rocm/vllm-dev
   tag: rocm7.2.1_navi_ubuntu24.04_py3.12_pytorch_2.9_vllm_0.16.0
 

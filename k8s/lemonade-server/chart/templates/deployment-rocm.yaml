@@ -21,12 +21,7 @@ spec:
       nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
       tolerations: {{ toYaml .Values.tolerations | nindent 8 }}
       initContainers:
-        # Pin the llamacpp backend to "system" so lemonade uses the
-        # ROCm-enabled llama-server baked into the rocm image, bypassing the
-        # built-in "rocm" backend's gfx1200 detection bug (see README.md).
-        # Shares the recipe PVC with the vulkan Deployment; safe because only
-        # one of the two Deployments is ever scaled up at a time, and this
-        # initContainer re-pins the backend on every start.
+        # Pin the baked ROCm system backend; GPU-switch makes the shared PVC safe.
         - name: set-llamacpp-backend
           image: {{ .Values.rocm.image.repository }}:{{ .Values.rocm.image.tag }}
           command:
@@ -55,8 +50,7 @@ spec:
               mountPath: /opt/lemonade/llama
             - name: recipe
               mountPath: /root/.cache/lemonade
-          # See chart/templates/deployment.yaml for why /dev/kfd and
-          # /dev/dri are not hostPath-mounted here.
+          # The device plugin injects permitted nodes; do not use hostPath.
           securityContext:
             seccompProfile:
               type: Unconfined

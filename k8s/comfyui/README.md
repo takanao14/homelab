@@ -1,6 +1,6 @@
 # comfyui
 
-[ComfyUI](https://github.com/comfyanonymous/ComfyUI) AI image generation deployed on the prd cluster with AMD GPU support. Managed by ArgoCD.
+[ComfyUI](https://github.com/comfyanonymous/ComfyUI) image generation on prd's AMD GPU.
 
 ## Directory Structure
 
@@ -25,15 +25,18 @@ Exposed via Gateway API HTTPRoute at `comfyui.prd.butaco.net`.
 
 ## GPU
 
-Requires one AMD GPU (`amd.com/gpu: "1"`), allocated by the ROCm k8s-device-plugin deployed from `k0s/helmfile.yaml.gotmpl`. The node must be labeled `gpu: amd` and tainted `gpu=amd:NoSchedule` (applied automatically by the k0s cluster setup for GPU workers).
+Requests one `amd.com/gpu` on a `gpu=amd` labelled and tainted node.
 
-The container uses an unconfined seccomp profile. It does **not** hostPath-mount `/dev/kfd` or `/dev/dri`: the device plugin injects `/dev/kfd` plus the allocated `/dev/dri/card<N>` and `/dev/dri/renderD<N>` in response to the `amd.com/gpu` request, and adds the matching device-cgroup rules. Bind-mounting the whole host `/dev/dri` on top would expose every card on the host while the cgroup still permits only the allocated one.
+The container uses unconfined seccomp. The device plugin injects permitted
+`/dev/kfd` and `/dev/dri` nodes; never shadow them with hostPath mounts.
 
 ### ROCm
 
-Unlike ollama (which bundles its own ROCm userspace) or lemonade-server (which runs on Vulkan, not ROCm, on this GPU — see `k8s/lemonade-server/README.md`), ComfyUI runs on **PyTorch ROCm wheels baked into the custom image** at build time. The [`comfyui-docker` Dockerfile](https://forgejo.home.butaco.net/takanao/comfyui-docker) installs PyTorch from the `rocm7.2` wheel index (`--index-url https://download.pytorch.org/whl/rocm7.2`); those wheels bundle their own ROCm runtime, so the container is **independent of the host ROCm version** (`ansible/roles/rocm`, currently ROCm 7.14). Only the host amdgpu kernel driver has to stay within AMD's [KMD/UMD skew window](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/user-kernel-space-compat-matrix.html) (one year since ROCm 6.4), which ROCm 7.2 wheels satisfy against the 7.14 host driver.
+The custom image bakes PyTorch `rocm7.2` wheels and their userspace, independent
+of host ROCm 7.14 except for AMD's supported driver/userspace skew window.
 
-PyTorch's `rocm7.2` wheels officially support `gfx1200`/`gfx1201` (RDNA4), so no `HSA_OVERRIDE_GFX_VERSION` is needed for the RX 9060 XT. The image was last built against `rocm7.2`; `rocm7.3`+ wheel indexes are not published yet, so this is the newest available and no bump is due for the ROCm 7.14 host upgrade. Rebuild the image only to move the PyTorch/ROCm wheel line — edit the `--index-url` in the Dockerfile, and the Forgejo Actions workflow rebuilds and pushes `:latest`.
+`rocm7.2` supports gfx1200 natively; do not set `HSA_OVERRIDE_GFX_VERSION`.
+Rebuild only when changing the PyTorch/ROCm wheel line.
 
 ## Storage
 
@@ -53,5 +56,5 @@ PyTorch's `rocm7.2` wheels officially support `gfx1200`/`gfx1201` (RDNA4), so no
 
 ## Notes
 
-- `replicaCount` defaults to `0` (scaled down when not in use). ArgoCD ignores replica drift via `ignoreDifferences`.
-- Uses a custom Docker image (`comfyui-docker`) built with ROCm support, hosted on the self-hosted Forgejo instance.
+- `replicaCount: 0` leaves GPU activation to gpu-switch; Argo CD ignores drift.
+- Forgejo hosts the custom ROCm image.

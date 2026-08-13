@@ -1,6 +1,6 @@
 # ollama
 
-[Ollama](https://ollama.com/) LLM inference server deployed on the prd cluster with AMD GPU (ROCm) support. Managed by ArgoCD. Open-WebUI is deployed as a companion application and connects to this service.
+[Ollama](https://ollama.com/) ROCm inference on prd, consumed by Open WebUI.
 
 ## Directory Structure
 
@@ -28,9 +28,10 @@ ollama/
 
 ## GPU / ROCm
 
-Requires one AMD GPU (`amd.com/gpu: "1"`), allocated by the ROCm k8s-device-plugin deployed from `k0s/helmfile.yaml.gotmpl`. The node must be labeled `gpu: amd` and tainted `gpu=amd:NoSchedule`.
+Requests one `amd.com/gpu` on a `gpu=amd` labelled and tainted node.
 
-Uses the official `ollama/ollama:<version>-rocm` image. That image ships a **self-contained ROCm userspace** under `/usr/lib/ollama/rocm`; it never loads the host's `/opt/rocm`, so the container ROCm version and the host ROCm version are independent and only have to stay compatible:
+The official `-rocm` image bundles userspace under `/usr/lib/ollama/rocm`; it
+does not load host `/opt/rocm`:
 
 | Layer | Managed in | Current |
 |-------|-----------|---------|
@@ -38,20 +39,23 @@ Uses the official `ollama/ollama:<version>-rocm` image. That image ships a **sel
 | Container userspace (UMD) | `chart/values.yaml` (`image.tag`) | ROCm 7.2.1, bundled in ollama 0.32.x |
 | GPU target | host GPU / image build | `gfx1200` (RX 9060 XT) |
 
-Since ROCm 6.4 AMD guarantees forward and backward compatibility between the amdgpu driver and ROCm userspace [up to a year apart](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/user-kernel-space-compat-matrix.html), so the bundled 7.2.1 userspace is a supported pairing with the ROCm 7.14 host driver. Upstream ollama has no ROCm 7.14 build; `rocm_v7_2` is the newest ROCm backend it ships.
+AMD's supported skew window covers bundled ROCm 7.2.1 with the 7.14 host
+driver; Ollama currently ships no newer backend.
 
-`gfx1200` is included in the image's `AMDGPU_TARGETS`, so **no `HSA_OVERRIDE_GFX_VERSION` is needed** — setting it would break the natively supported target. Earlier gfx120x container bugs (missing `TensileLibrary_lazy_gfx120x.dat`, ollama [#12908](https://github.com/ollama/ollama/issues/12908) / [#12734](https://github.com/ollama/ollama/issues/12734)) were fixed upstream well before the pinned version.
+gfx1200 is native; do not set `HSA_OVERRIDE_GFX_VERSION`.
 
 ### When the host ROCm version changes
 
-`ansible/roles/rocm` moves independently of this chart. After a host ROCm/driver upgrade, only re-check the pairing — no chart change is normally required:
+After host driver upgrades, verify the pairing without automatically changing
+the chart:
 
 ```bash
 kubectl -n ollama scale deploy/ollama --replicas=1
 kubectl -n ollama logs deploy/ollama | grep -i "rocm\|gfx\|amdgpu"
 ```
 
-The log line should report the `gfx1200` device and the ROCm library path; a fallback to CPU means the driver/userspace pairing broke. When bumping `image.tag`, the bundled ROCm version is the `ROCMVERSION` arg in ollama's [Dockerfile](https://github.com/ollama/ollama/blob/main/Dockerfile) and the compiled targets are `AMDGPU_TARGETS` in [`llama/server/CMakePresets.json`](https://github.com/ollama/ollama/blob/main/llama/server/CMakePresets.json).
+Logs must show gfx1200 and the ROCm library path; CPU fallback indicates an
+incompatible pairing. Check upstream `ROCMVERSION` and `AMDGPU_TARGETS` on bumps.
 
 ## Storage
 
@@ -75,6 +79,6 @@ The log line should report the `gfx1200` device and the ROCm library path; a fal
 
 ## Notes
 
-- `replicaCount` defaults to `0` (scaled down when not in use). ArgoCD ignores replica drift via `ignoreDifferences`.
-- The external HTTPRoute uses a 10-minute request timeout because agent/tool-calling responses can exceed Envoy Gateway's 15-second default. In-cluster clients bypass the gateway.
-- Open-WebUI is deployed as a separate ArgoCD Application (rendered by the app-of-apps chart, enabled in `k8s/argocd/prd/apps-values.yaml`) using the upstream `open-webui` Helm chart with values from `k8s/open-webui/`.
+- `replicaCount: 0` leaves activation to gpu-switch; Argo CD ignores drift.
+- The external route allows 10 minutes; in-cluster clients bypass Envoy.
+- Open WebUI is a separate upstream-chart Application.
