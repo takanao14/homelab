@@ -1,6 +1,6 @@
 # Homepage
 
-[Homepage](https://gethomepage.dev/) dashboard deployed on the prd and sandbox clusters. Managed by ArgoCD.
+[Homepage](https://gethomepage.dev/) dashboard for prd and sandbox, managed by Argo CD.
 
 ## Directory Structure
 
@@ -29,28 +29,23 @@ homepage/
 
 ## Access
 
-Exposed via Gateway API HTTPRoute. Hostname is set in `chart/values.yaml` and
-overridden per environment in `{env}/values.yaml`. Sandbox uses HTTP via the
-`http` Gateway listener at `http://homepage.sandbox.butaco.net`.
+An HTTPRoute uses the environment hostname and listener; sandbox is HTTP-only.
 
 > `butaco.net` is a personal domain. Replace it in `chart/values.yaml`.
 
 ## Configuration
 
-Homepage configs (`services.yaml`, `widgets.yaml`, etc.) are in `chart/config/`.
-They are mounted as-is and should stay close to Homepage's native YAML format.
-Do not use Helm templating in these files; keep deployment differences in
-`chart/values.yaml` or in the per-environment `{env}/values.yaml`.
+`chart/config/` is mounted as native Homepage YAML. Keep Helm and environment
+differences in values files, not these configs.
 
-`secret-config.yaml` reads all `*.yaml` files in `chart/config/` and creates a Kubernetes Secret named `homepage-config`.
+`secret-config.yaml` packages the config files as `homepage-config`.
 
 ## Secrets
 
-All secrets are fetched from OpenBao via ESO. They are injected as environment variables (`HOMEPAGE_VAR_*`) that Homepage substitutes in its config files.
+ESO injects OpenBao values as `HOMEPAGE_VAR_*` variables used by Homepage.
 
-Sandbox is used for staging validation and intentionally reuses the same
-dashboard Secret paths as prd. The `kubernetes-sandbox` OpenBao auth role must
-include the `k8s-homepage` policy so ESO can read `k8s/homepage/*`.
+Sandbox intentionally reuses prd dashboard paths; its OpenBao role therefore
+requires the `k8s-homepage` policy.
 
 OpenBao KV paths:
 

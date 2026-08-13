@@ -1,10 +1,6 @@
 ---
 # https://gethomepage.dev/latest/configs/bookmarks/
-# NOTE: Bookmark group names must NOT collide with service group names in
-# services.yaml, otherwise Homepage hides the bookmark group. To keep them
-# consistent with the service groups while avoiding the collision, each group
-# mirrors its service-group name with a " Docs" suffix. These groups are not
-# listed in settings.yaml `layout`, so they render at the bottom of the page.
+# Bookmark groups need unique names; " Docs" mirrors services without collisions.
 
 - Hypervisor Docs:
   - Proxmox VE:

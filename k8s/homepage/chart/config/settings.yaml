@@ -6,8 +6,7 @@ logpath: stdout
 disableCollapse: true
 useEqualHeights: true
 
-# Group display order and rendering style.
-# Keys must match the group names in services.yaml exactly.
+# Display order; keys must exactly match service groups.
 layout:
   Hypervisor:
     style: row
