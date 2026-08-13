@@ -441,6 +441,53 @@
         },
         "overrides": []
       }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "increase(ifInErrors{ifDescr=~\".+\\\\.[0-9]+\", ifDescr!~\"Loopback.*|Null.*\", instance=~\"$instance\"}[1h])",
+          "legendFormat": "{{instance}} {{ifDescr}} {{ifAlias}} In"
+        },
+        {
+          "expr": "increase(ifOutErrors{ifDescr=~\".+\\\\.[0-9]+\", ifDescr!~\"Loopback.*|Null.*\", instance=~\"$instance\"}[1h])",
+          "legendFormat": "{{instance}} {{ifDescr}} {{ifAlias}} Out"
+        }
+      ],
+      "title": "Sub-interface Errors (per hour)",
+      "description": "Errors on logical L3 sub-interfaces, which every other panel on this dashboard excludes. Physical ports have held at zero for seven days; these have not. Not alerted -- transmit errors here may be routine for the device, so the count is presented for judgement rather than paging.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": []
+      }
     }
   ],
   "templating": {

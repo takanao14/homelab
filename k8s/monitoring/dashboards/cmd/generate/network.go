@@ -24,6 +24,9 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 	// $__rate_interval reliably contains two samples regardless of panel width.
 	const snmpMinInterval = "2m"
 
+	// Match logical L3 sub-interfaces; exclude non-forwarding Loopback and Null.
+	const subIfFilter = `ifDescr=~".+\\.[0-9]+", ifDescr!~"Loopback.*|Null.*", instance=~"$instance"`
+
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
 
@@ -184,6 +187,31 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`rate(ifOutDiscards{` + ifFilter + `}[$__rate_interval])` + adminUp).
 					LegendFormat("{{instance}} {{ifDescr}} Out"),
+				),
+		).
+		// Physical-port filters exclude these active logical-interface counters.
+		// Display without alerting because device semantics determine whether
+		// transmit errors are routine. A fixed hour keeps counts comparable.
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Sub-interface Errors (per hour)").
+				Description("Errors on logical L3 sub-interfaces, which every other panel on " +
+					"this dashboard excludes. Physical ports have held at zero for seven days; " +
+					"these have not. Not alerted -- transmit errors here may be routine for the " +
+					"device, so the count is presented for judgement rather than paging.").
+				Datasource(ds).
+				Span(24).Height(8).
+				Unit("short").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`increase(ifInErrors{` + subIfFilter + `}[1h])`).
+					LegendFormat("{{instance}} {{ifDescr}} {{ifAlias}} In"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`increase(ifOutErrors{` + subIfFilter + `}[1h])`).
+					LegendFormat("{{instance}} {{ifDescr}} {{ifAlias}} Out"),
 				),
 		).
 		Build()
