@@ -8,12 +8,10 @@ metadata:
     release: prometheus
 spec:
   groups:
-    # cert-manager metrics from prd land here; rules keep the cluster label in
-    # annotations so dashboards and alerts remain consistent with sandbox views.
+    # Preserve cluster labels for cross-environment views.
     - name: cert-manager.rules
       rules:
-        # ACME certs are 90-day and renew at 30 days remaining; under 21 days left
-        # means renewal has been failing for ~9+ days and needs attention.
+        # ACME renewal starts at 30d; 21d implies about nine days of failure.
         - alert: CertManagerCertExpiringSoon
           expr: |
             certmanager_certificate_expiration_timestamp_seconds - time() < 86400 * 21
@@ -44,15 +42,7 @@ spec:
             summary: 'Certificate {{ "{{" }} $labels.name {{ "}}" }} not Ready ({{ "{{" }} $labels.cluster {{ "}}" }})'
             description: '{{ "{{" }} $labels.namespace {{ "}}" }}/{{ "{{" }} $labels.name {{ "}}" }} is not in the Ready state.'
 
-        # The expiry alerts above only speak up once renewal has already been
-        # failing for more than a week: a 90-day ACME cert starts renewing at 30
-        # days left, and CertManagerCertExpiringSoon waits until 21. A non-2xx
-        # from the ACME endpoint marks the first failed attempt instead, which
-        # includes the 429 rate limits Let's Encrypt applies per account and per
-        # domain. prd has returned nothing but 200 in 30 days, so there is no
-        # noise floor to tune around and any failure is worth reporting; the 1h
-        # window is wide enough to still catch retries that cert-manager has
-        # backed off.
+        # Detect first ACME failure before expiry alerts; 30-day baseline is all 2xx.
         - alert: CertManagerACMERequestFailing
           expr: |
             sum by (cluster, host, status) (
@@ -65,11 +55,7 @@ spec:
             summary: 'ACME requests to {{ "{{" }} $labels.host {{ "}}" }} failing with HTTP {{ "{{" }} $labels.status {{ "}}" }} ({{ "{{" }} $labels.cluster {{ "}}" }})'
             description: 'cert-manager is being rejected by the ACME endpoint, so certificate issuance and renewal cannot complete. Check for a Let''s Encrypt rate limit or an account problem before the expiry alerts start firing.'
 
-        # kube-prometheus-stack's TargetDown already covers a discovered target
-        # that returns up=0. This rule covers the complementary failure mode: the
-        # cert-manager Application exists, but its target has disappeared from
-        # service discovery entirely, so no up series remains for TargetDown to
-        # evaluate. Sandbox omits the Application and therefore stays silent.
+        # Cover disappearance from discovery, where TargetDown has no series.
         - alert: CertManagerMetricsTargetMissing
           expr: |
             group by (cluster) (

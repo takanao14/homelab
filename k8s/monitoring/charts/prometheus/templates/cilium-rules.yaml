@@ -8,26 +8,10 @@ metadata:
     release: prometheus
 spec:
   groups:
-    # Metrics come from the Cilium agent and Hubble ServiceMonitors defined in
-    # cilium-servicemonitors.yaml; the cluster label is injected by the scrape
-    # class.
+    # ServiceMonitors supply metrics; scrapeClass supplies the cluster label.
     - name: cilium.rules
       rules:
-        # Hubble drops flow records when a consumer cannot keep up. That costs
-        # observability, not connectivity, so the question is not whether events
-        # are lost but whether the proportion has changed.
-        #
-        # Raw counts are the wrong threshold here: prd loses events in short
-        # bursts roughly twice a day, so "> 0" would page constantly while
-        # describing a healthy system. Against volume it is 18,282 lost out of
-        # 273,897,852 flows over 30 days -- 0.0067%, about one in 15,000 -- and
-        # the worst 15-minute window in a week reached 0.049%. One percent
-        # sustained is therefore some twenty times worse than anything observed
-        # and means a consumer has genuinely fallen behind.
-        #
-        # Lost events carry a source label the denominator does not, so the
-        # ratio is computed on the total; the "Hubble Lost Events by Node /
-        # Source" panel breaks down which stage is losing them.
+        # Use total loss ratio, not noisy raw counts; 1% is >20x the observed peak.
         - alert: HubbleLosingEvents
           expr: |
             sum by (cluster) (rate(hubble_lost_events_total[15m]))

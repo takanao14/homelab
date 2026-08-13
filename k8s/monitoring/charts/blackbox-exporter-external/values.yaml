@@ -1,13 +1,10 @@
 blackboxExporterURL: ""
 scrapeInterval: 30s
 
-# Proxmox hypervisor inventory; populated by the shared
-# values/proxmox-nodes.yaml through apps/values.yaml valueFiles.
+# Shared Proxmox inventory.
 proxmoxNodes: []
 
-# DNS frontend inventory; populated by the shared
-# values/dns-frontends.yaml through apps/values.yaml valueFiles.
-# Both DNS resolution probes (dns_external / dns_internal) derive from it.
+# Shared frontend inventory for both DNS probe modules.
 dnsFrontends: []
 
 icmp:
@@ -15,8 +12,7 @@ icmp:
 
 dnsProbeAlerts:
   enabled: false
-  # Short: this is the client-visible symptom, and the probe runs every
-  # scrapeInterval against two independent frontends.
+  # Client-visible failure across two independently probed frontends.
   failedFor: 2m
 
 icmpProbeAlerts:

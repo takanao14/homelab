@@ -3,18 +3,14 @@ metricsPath: /metrics
 
 targets: []
 
-# The authoritative servers answered zero SERVFAIL and zero corrupt packets
-# across seven days, so anything sustained is worth waking up for. The rate
-# threshold sits just above a single stray packet decaying out of the window,
-# which keeps a one-off from holding the alert for its full duration.
+# Seven-day baseline is zero; thresholds ignore one decaying stray packet.
 alerts:
   enabled: false
   servfailRate: 0.05
   servfailFor: 10m
   corruptRate: 0.05
   corruptFor: 10m
-  # A transfer that is genuinely running clears the queue quickly, so a queue
-  # still occupied after fifteen minutes is stuck rather than busy.
+  # A queue persisting 15m is stuck, not busy.
   xfrQueueFor: 15m
-  # Not urgent, but it should not be possible to miss it either.
+  # Security status is actionable but not urgent.
   securityStatusFor: 1h

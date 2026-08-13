@@ -8,19 +8,10 @@ metadata:
     release: prometheus
 spec:
   groups:
-    # Metrics come from the four per-component ServiceMonitors defined in
-    # argocd.yaml; the cluster label is injected by the scrape class. Thresholds
-    # below were calibrated against 7 days of prd history so that routine GitOps
-    # churn (rollouts, transient GitHub blips) stays silent.
+    # Seven-day thresholds exclude routine rollout and Git transient noise.
     - name: argocd.rules
       rules:
-        # ls-remote runs every ~3 minutes per repo, so isolated failures are
-        # common: prd saw ~26 non-zero 30m windows in 7 days, almost all of them
-        # one or two failures. A raw count therefore alerts several times a day
-        # for nothing. The failure *ratio* separates a blip from an outage --
-        # over the same 7 days it stayed under 0.2 except for three short
-        # episodes, peaking at 0.9. Above half the attempts failing for a full
-        # 15 minutes, ArgoCD has effectively stopped seeing new commits.
+        # Ratio filters common isolated ls-remote failures; >50% means Git is unusable.
         - alert: ArgoCDGitLsRemoteFailing
           expr: |
             sum by (cluster) (rate(argocd_git_lsremote_fail_total[15m]))
@@ -34,9 +25,7 @@ spec:
             summary: 'ArgoCD cannot reach the Git remote ({{ "{{" }} $labels.cluster {{ "}}" }})'
             description: '{{ "{{" }} $value | humanizePercentage {{ "}}" }} of git ls-remote calls are failing; applications will stop picking up new commits until this recovers.'
 
-        # Apps dip into Degraded or Progressing during ordinary rollouts, so this
-        # needs a long hold to be actionable. Over 7 days of prd history no app
-        # was Degraded at two consecutive hourly samples.
+        # Hold past transient rollout degradation.
         - alert: ArgoCDAppNotHealthy
           expr: |
             argocd_app_info{health_status=~"Degraded|Missing|Unknown"} == 1
@@ -47,10 +36,7 @@ spec:
             summary: 'Application {{ "{{" }} $labels.name {{ "}}" }} is {{ "{{" }} $labels.health_status {{ "}}" }} ({{ "{{" }} $labels.cluster {{ "}}" }})'
             description: 'Application {{ "{{" }} $labels.name {{ "}}" }} (project {{ "{{" }} $labels.project {{ "}}" }}, namespace {{ "{{" }} $labels.dest_namespace {{ "}}" }}) has been {{ "{{" }} $labels.health_status {{ "}}" }} for over 30 minutes.'
 
-        # Restricted to autosync apps on purpose: an app synced manually is
-        # expected to sit OutOfSync until someone acts on it, so alerting on it
-        # would be noise. With autosync on, a prolonged OutOfSync means the sync
-        # itself is failing or is blocked by a sync window or hook.
+        # Manual apps may remain OutOfSync; only autosync indicates a fault.
         - alert: ArgoCDAppOutOfSync
           expr: |
             argocd_app_info{sync_status="OutOfSync",autosync_enabled="true"} == 1
@@ -74,8 +60,7 @@ spec:
             summary: 'Sync failing for application {{ "{{" }} $labels.name {{ "}}" }} ({{ "{{" }} $labels.cluster {{ "}}" }})'
             description: '{{ "{{" }} $value | printf "%.0f" {{ "}}" }} sync operations for {{ "{{" }} $labels.name {{ "}}" }} (project {{ "{{" }} $labels.project {{ "}}" }}) ended in Error or Failed in the last 15 minutes.'
 
-        # A destination cluster the application-controller cannot reach means
-        # every application targeting it is frozen, hence critical.
+        # An unreachable destination freezes all of its applications.
         - alert: ArgoCDClusterConnectionDown
           expr: |
             argocd_cluster_connection_status == 0
@@ -86,8 +71,7 @@ spec:
             summary: 'ArgoCD cannot reach destination cluster {{ "{{" }} $labels.server {{ "}}" }} ({{ "{{" }} $labels.cluster {{ "}}" }})'
             description: 'The application-controller has been unable to connect to {{ "{{" }} $labels.server {{ "}}" }} for over 10 minutes; applications targeting it cannot sync.'
 
-        # Mirrors CertManagerDown: without scraping, none of the rules above can
-        # fire, so the blind spot itself has to be alertable.
+        # Alert on the monitoring blind spot itself.
         - alert: ArgoCDComponentDown
           expr: |
             up{job=~"argocd-.*-metrics"} == 0

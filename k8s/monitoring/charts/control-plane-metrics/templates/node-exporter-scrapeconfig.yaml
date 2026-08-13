@@ -6,16 +6,11 @@ metadata:
   labels:
     release: prometheus
 spec:
-  # Opt out of the default in-cluster scrape class: the per-target cluster
-  # labels below would otherwise be overwritten.
+  # Preserve per-target cluster labels.
   scrapeClass: {{ .Values.nodeExporter.scrapeClass }}
   metricsPath: {{ .Values.nodeExporter.metricsPath }}
   scrapeInterval: {{ .Values.nodeExporter.scrapeInterval }}
-  # k0s controllers run kine (embedded SQLite) and have no kubelet, so they are
-  # not covered by the in-cluster node-exporter DaemonSet. Scrape them host-level
-  # with an explicit cluster label (per target) so they appear in the
-  # k8s-node-overview dashboard alongside the other cluster nodes. node-exporter
-  # is installed on these hosts via the ansible node_exporter role.
+  # Kubelet-less k0s controllers require host-level node-exporter scrapes.
   staticConfigs:
     {{- range .Values.controllers }}
     - targets: ["{{ .ip }}:{{ $.Values.nodeExporter.port }}"]
@@ -24,10 +19,7 @@ spec:
         __tmp_name: {{ .name }}
     {{- end }}
   relabelings:
-    # Scrape by IP (no DNS dependency) but expose the hostname as instance.
-    # action is explicit: the CRD defaults it to replace, and with
-    # ServerSideApply the ArgoCD diff cannot absorb server-side defaults,
-    # leaving the app permanently OutOfSync if omitted.
+    # Name IP-based scrapes; explicit action avoids SSA default drift.
     - action: replace
       sourceLabels: [__tmp_name]
       targetLabel: instance

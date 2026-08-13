@@ -8,14 +8,9 @@ resolverAlerts:
   enabled: false
   targetDownFor: 5m
   metricsStaleFor: 5m
-  # 4x the 15s collector interval (knot_resolver_metrics_interval). A healthy
-  # file is never older than one interval plus the timer's 1s jitter, so this
-  # clears normal variation while still catching a dead collector inside a
-  # minute. It was 180 against the former 1min interval; leaving it there would
-  # have made it 12x and correspondingly slow to notice.
+  # Four 15s collector intervals, allowing jitter while detecting failure quickly.
   metricsMaxAgeSeconds: 60
-  # Healthy is 90-99%. 60% is comfortably below normal variation and well above
-  # the 36-43% seen while the cache was being dropped and refilled.
+  # Healthy 90–99%; fault measured 36–43%.
   cacheHitRateMin: 0.6
   cacheHitRateFor: 15m
   servfailRatioMax: 0.3
@@ -23,47 +18,34 @@ resolverAlerts:
 
 zoneSerialAlerts:
   enabled: false
-  # Long enough that a transfer in flight is not mistaken for a stuck one.
+  # Allow in-flight transfers.
   divergedFor: 30m
   missingFor: 30m
-  # A NOTIFY goes out within seconds of a change, so anything still behind
-  # after this is not in flight.
+  # NOTIFY should propagate well within this window.
   notifyBehindFor: 15m
 
 filesystemAlerts:
   enabled: false
   job: scrapeConfig/monitoring/node-exporter-external
-  # Kept identical to fsFilter in dashboards/cmd/generate/node.go, so the set
-  # that alerts is the set the dashboard draws. /boot/efi and /boot/firmware are
-  # excluded because they are near-static and sized for exactly what they hold;
-  # /boot itself is not, since a failed kernel upgrade fills it.
+  # Match the dashboard filter; exclude fixed-size EFI/firmware mounts.
   fstypes: ext[234]|xfs|btrfs|zfs|vfat
   excludeMountpoints: /var/lib/docker/.*|/boot/efi|/boot/firmware
-  # Upstream kube-prometheus-stack numbers, unchanged. The fleet's tightest
-  # filesystem sits at 50% free and none has been above 50% used in 30 days, so
-  # there is nothing here to tune against; picking different numbers would only
-  # make these disagree with the identical rules that cover the in-cluster nodes.
-  #
-  # The pairing is deliberate: the trend rule is meant to fire, the level rule is
-  # the backstop. predict_linear over a 6h window ignores a single large write
-  # and needs a sustained slope, and the free-space floor stops it firing while
-  # there is still plenty of room.
+  # Match upstream rules: sustained trend first, low-space level as backstop.
   fillingUpFreePercent: 15
   fillingUpHorizonHours: 24
   fillingUpFor: 1h
   almostOutFreePercent: 5
   almostOutFor: 30m
-  # Inodes: worst on this fleet is netbox1 at 26% used, so 20% free is far off.
+  # Fleet worst is 26% inode use.
   inodesFreePercent: 20
   inodesFor: 1h
 
 textfileAlerts:
   enabled: false
-  # apt / nvme / smartmon are written by systemd timers every 15 minutes, so an
-  # hour is four missed runs and leaves room for a reboot.
+  # One hour permits four missed 15m timer runs and a reboot.
   staleFor: 15m
   maxAgeSeconds: 3600
-  # rpi_throttled is written by a cron job every minute.
+  # rpi_throttled updates every minute.
   rpi:
     staleFor: 5m
     maxAgeSeconds: 180

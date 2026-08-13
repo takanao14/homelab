@@ -10,7 +10,7 @@ spec:
   groups:
     - name: hardware-temp.rules
       rules:
-        # CPU temperature critical
+        # Critical CPU temperature.
         - alert: NodeCPUTempCrit
           expr: |
             ((node_thermal_zone_temp{type=~"x86_pkg_temp|cpu-thermal"}) or (node_hwmon_temp_celsius{chip=~".*18_3", sensor="temp3"})) > 85
@@ -21,9 +21,7 @@ spec:
             summary: 'Critical CPU temperature on {{ "{{" }} $labels.instance {{ "}}" }}'
             description: 'CPU temperature is above 85°C (current value: {{ "{{" }} $value {{ "}}" }}°C)'
 
-        # Disk temperature high (Warning)
-        # smartctl_device_temperature covers TrueNAS disks behind the
-        # passed-through SATA controller (smartctl_exporter in the guest).
+        # Union host, NVMe, and TrueNAS disk temperatures.
         - alert: NodeDiskTempHigh
           expr: |
             (nvme_temperature_celsius or smartmon_temperature_celsius_raw_value or smartctl_device_temperature{temperature_type="current"}) > 60
@@ -34,7 +32,7 @@ spec:
             summary: 'High disk temperature on {{ "{{" }} $labels.instance {{ "}}" }}'
             description: 'Disk {{ "{{" }} $labels.device {{ "}}" }} temperature is above 60°C (current value: {{ "{{" }} $value {{ "}}" }}°C)'
 
-        # RPi under voltage (Critical)
+        # Raspberry Pi undervoltage.
         - alert: RPiUnderVoltage
           expr: rpi_throttled_under_voltage == 1
           for: 1m
@@ -44,7 +42,7 @@ spec:
             summary: 'Raspberry Pi Under Voltage on {{ "{{" }} $labels.instance {{ "}}" }}'
             description: "Voltage dropped below 4.63V. Power supply or cable may be insufficient."
 
-        # RPi thermal throttling (Warning)
+        # Raspberry Pi thermal throttling.
         - alert: RPiThermalThrottling
           expr: rpi_throttled_thermal_throttling == 1
           for: 5m
@@ -54,7 +52,7 @@ spec:
             summary: 'Raspberry Pi Thermal Throttling on {{ "{{" }} $labels.instance {{ "}}" }}'
             description: "CPU is throttling due to high temperature."
 
-        # x86 CPU throttling active (Warning)
+        # x86 CPU throttling.
         - alert: NodeCPUThrottlingActive
           expr: rate(node_cpu_package_throttles_total[5m]) > 0
           for: 5m
@@ -64,33 +62,11 @@ spec:
             summary: 'CPU Throttling active on {{ "{{" }} $labels.instance {{ "}}" }}'
             description: "CPU package is throttling due to thermal or power limits."
 
-    # Physical disk health. Three exporters cover the fleet's fifteen disks and
-    # none of them speaks for the others, so every rule here unions all three:
-    #
-    #   smartmon_*   node-exporter textfile collector   7 SATA disks
-    #   nvme_*       nvme-cli exporter                  6 NVMe disks
-    #   smartctl_*   smartctl_exporter inside TrueNAS   2 SATA disks
-    #
-    # This group used to be one rule, SmartctlDiskUnhealthy, matching only
-    # smartctl_device_smart_status -- that is TrueNAS alone, so thirteen of the
-    # fifteen disks had no health alert at all. The disk-health dashboard's
-    # "Unhealthy Disks" tile has always summed all three; only the alerting was
-    # narrow. NodeDiskTempHigh above already had the union right, and is the
-    # model these follow.
-    #
-    # Label names differ by exporter: smartmon carries `disk` (/dev/sda), the
-    # other two carry `device` (nvme0n1, sdb). Descriptions print both and let
-    # the empty one collapse.
-    #
-    # The nonzero-at-write-time values below were measured on 2026-08-12; each
-    # threshold was checked to fire on none of them, so none of these arrives
-    # already firing.
+    # Union smartmon SATA, nvme-cli, and TrueNAS smartctl metrics. Exporters use
+    # different disk/device labels, so descriptions intentionally print both.
     - name: hardware-disk.rules
       rules:
-        # type="sat" is not optional. The four type="scsi" series are VM virtual
-        # disks, where SMART is not really available and the collector reports
-        # smart_healthy=0 for all of them; without the filter this alert would
-        # fire permanently on four disks it cannot actually evaluate.
+        # Exclude virtual SCSI disks that falsely report unhealthy SMART.
         - alert: DiskSmartUnhealthy
           expr: >-
             smartmon_device_smart_healthy{type="sat"} == 0
@@ -106,17 +82,7 @@ spec:
               reports SMART overall-health FAILED (NVMe: a critical warning bit
               is set) and may be close to dying.
 
-        # Growth, not level. Both pve disks are Seagate ST2000DM001s that already
-        # carry historical damage -- /dev/sdc 24 reallocated sectors and 1
-        # reported-uncorrectable, /dev/sdd 5 reported-uncorrectable -- and all of
-        # it has been flat for the whole retention window. A "> 0" rule on these
-        # two attributes would have arrived permanently firing on two disks,
-        # which is the fastest way to teach everyone to ignore it. An old scar is
-        # not news; the count moving is.
-        #
-        # delta() rather than increase(): these are gauges holding a raw SMART
-        # value, not counters. Over a 24h window a flat series gives exactly 0,
-        # so this stays quiet until a sector is actually added.
+        # Alert on growth, not historical damage; raw SMART values are gauges.
         - alert: DiskFailurePrecursorGrowing
           expr: >-
             delta(smartmon_reallocated_sector_ct_raw_value[24h]) > 0
@@ -138,10 +104,7 @@ spec:
               sectors in the last 24 hours. A disk that is remapping is a disk to
               plan a replacement for; SMART overall-health will still say PASSED.
 
-        # Level, because unlike the two above these are unstable by nature: a
-        # pending sector is one the drive could not read and has not yet remapped,
-        # so any nonzero value is current damage rather than an old scar. Measured
-        # across all ten reporting disks, every one is at 0.
+        # Any pending/unreadable sector is current damage; baseline is zero.
         - alert: DiskPendingSectors
           expr: >-
             smartmon_current_pending_sector_raw_value > 0
@@ -160,10 +123,7 @@ spec:
               has {{ "{{" }} $value {{ "}}" }} sectors it could not read and has
               not remapped. Data in them is already at risk.
 
-        # SATA wear is vendor-specific, and the four attributes are normalized the
-        # same way: 100 = new, counting down. Only three disks publish any of them
-        # (100, 95 and 94), so this has a long way to fall before it fires. HDDs
-        # publish none and simply never match.
+        # Vendor SATA wear attributes normalize to 100=new and count down.
         - alert: DiskWearHigh
           expr: >-
             (
@@ -182,15 +142,7 @@ spec:
               {{ "{{" }} $value {{ "}}" }}% of its rated write endurance
               remaining.
 
-        # The NVMe counterpart, on the drive's own estimate. Inverted scale: this
-        # one counts up. The fleet reads 0, 0, 1, 2, 5 and 45 percent used -- node4
-        # nvme1n1 (SK hynix BC501) arrived at 45 and has not moved since, so it is
-        # a used drive rather than one wearing out here.
-        #
-        # There is deliberately no separate rule on nvme_available_spare_ratio.
-        # Spare falling below the drive's threshold is what sets bit 0 of
-        # nvme_critical_warning, so DiskSmartUnhealthy already fires on it, and a
-        # second rule would only page twice for one event.
+        # NVMe wear counts up; critical_warning already covers low spare.
         - alert: NvmeEnduranceHigh
           expr: nvme_percentage_used_ratio * 100 > 90
           for: 1h

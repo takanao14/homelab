@@ -47,22 +47,8 @@ spec:
               The Knot Resolver textfile collector has not produced fresh
               metrics within the configured age threshold.
 
-        # Leading indicator. When the LMDB cache fills, every stash fails and
-        # the cache is dropped, so the hit rate collapses well before clients
-        # notice. It separates cleanly: 90-99% healthy against 36-43% during
-        # the fault measured in the 2026-08-10 addendum to ADR-0030.
-        #
-        # The rate window has to stay well above the textfile write interval, or
-        # consecutive scrapes read the same counter and the ratio alternates
-        # with zero. 10m holds with room to spare now that the collector writes
-        # every 15s rather than every minute.
-        #
-        # Summed by instance because kresd exports every resolver_* metric per
-        # worker (instance_id="kresd:kresd0", "kresd:kresd1", ...) and publishes
-        # no pre-aggregated series. Unaggregated this fires once per worker with
-        # an identical per-host summary, and judges each worker's share of the
-        # traffic rather than the host's answer rate, which is what the
-        # threshold below was calibrated against.
+        # Cache-drop leading indicator: healthy 90–99%, fault 36–43%. Aggregate
+        # workers per host and keep the rate window above the 15s write interval.
         - alert: KnotResolverCacheHitRateLow
           expr: >-
             sum by (instance) (rate(resolver_answer_cached_total[10m]))
@@ -80,8 +66,7 @@ spec:
               SERVFAIL. Check for "stash failed" in the knot-resolver journal:
               a full cache is the known cause.
 
-        # Outcome indicator: this share of requests is what clients get back.
-        # Summed by instance for the same reason as the hit rate above.
+        # Client-visible outcome, aggregated across workers per host.
         - alert: KnotResolverServfailHigh
           expr: >-
             sum by (instance) (rate(resolver_answer_rcode_servfail_total[10m]))

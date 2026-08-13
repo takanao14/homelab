@@ -6,14 +6,13 @@ metadata:
   labels:
     release: prometheus
 spec:
-  # External probe targets: opt out of the default cluster-prd scrape class.
+  # Keep external probes outside the prd cluster label.
   scrapeClass: external
   metricsPath: /probe
   params:
     module: [icmp]
   staticConfigs:
-    # Proxmox hypervisors come from the shared inventory (values/proxmox-nodes.yaml):
-    # one ICMP probe per node IP, plus one per AMT IP when amtIp is set.
+    # Probe shared node and optional AMT addresses.
     {{- range .Values.proxmoxNodes }}
     - targets: [{{ .ip | quote }}]
       labels:
@@ -32,15 +31,15 @@ spec:
         __tmp_name: {{ .name | quote }}
     {{- end }}
   relabelings:
-    # Set target IP as __param_target
+    # Forward the target IP to blackbox_exporter.
     - action: replace
       sourceLabels: [__address__]
       targetLabel: __param_target
-    # Set instance label to hostname
+    # Use inventory names as instances.
     - action: replace
       sourceLabels: [__tmp_name]
       targetLabel: instance
-    # Point scrape target to blackbox_exporter on rpi4
+    # Scrape the external blackbox_exporter.
     - action: replace
       targetLabel: __address__
       replacement: {{ .Values.blackboxExporterURL | quote }}

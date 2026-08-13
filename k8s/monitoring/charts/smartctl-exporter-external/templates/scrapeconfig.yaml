@@ -6,7 +6,7 @@ metadata:
   labels:
     release: prometheus
 spec:
-  # External LAN host: opt out of the default cluster-prd scrape class.
+  # Keep the external host outside the prd cluster label.
   scrapeClass: external
   staticConfigs:
     {{- range .Values.targets }}
@@ -15,7 +15,7 @@ spec:
         __tmp_name: {{ .name | quote }}
     {{- end }}
   relabelings:
-    # Scrape by IP (no DNS dependency) but expose the hostname as instance.
+    # Name IP-based scrapes.
     - action: replace
       sourceLabels: [__tmp_name]
       targetLabel: instance

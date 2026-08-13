@@ -10,17 +10,7 @@ spec:
   groups:
     - name: node-textfile-external
       rules:
-        # A .prom file whose writer has stopped keeps being served with its last
-        # contents, so a dead collector looks like live data. node1 served a
-        # 131-day-old smartmon.prom this way, and NodeDiskTempHigh was reading
-        # it as a current temperature.
-        #
-        # Staleness only: a missing file produces no series at all, which is the
-        # correct state on hosts that legitimately have nothing to report —
-        # smartmon.prom never appears on an NVMe-only host, because the timer
-        # that writes it is conditioned on /dev/sd* existing. The files that
-        # must always be present carry their own rules below and in
-        # resolver-rules.yaml, and are excluded here to avoid double alerting.
+        # Detect stale optional files; required files have dedicated missing rules.
         - alert: NodeTextfileMetricsStale
           expr: >-
             time() - node_textfile_mtime_seconds{
@@ -37,10 +27,7 @@ spec:
               stopped, but node_exporter keeps exporting the last values it
               wrote.
 
-        # rpi_throttled.prom feeds RPiUnderVoltage, which is a critical alert.
-        # Its cron runs every minute and the file must exist on every Raspberry
-        # Pi, so both halves are checked: too old, or gone while the host is
-        # still being scraped.
+        # Required 1m RPi metrics: alert when stale or missing on a reachable host.
         - alert: RPiThrottledMetricsStale
           expr: >-
             (
@@ -68,9 +55,7 @@ spec:
               rpi_throttled.prom is missing or no longer being rewritten, so
               RPiUnderVoltage and RPiThermalThrottling have nothing to evaluate.
 
-        # Set when node_exporter cannot parse a .prom file. The writers rename
-        # into place so a half-written file is never read, but a malformed line
-        # from a collector script would surface here.
+        # Catch malformed collector output; writers already rename atomically.
         - alert: NodeTextfileScrapeError
           expr: node_textfile_scrape_error != 0
           for: {{ .Values.textfileAlerts.scrapeErrorFor }}

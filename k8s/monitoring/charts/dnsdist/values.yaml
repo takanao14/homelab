@@ -1,14 +1,12 @@
 port: 8083
 metricsPath: /metrics
 
-# DNS frontend inventory; populated by the shared values/dns-frontends.yaml
-# through apps/values.yaml valueFiles.
+# Shared DNS frontend inventory.
 dnsFrontends: []
 
 alerts:
   enabled: false
-  # One backend of a redundant pair: the other absorbs it, so this is a warning
-  # and can wait for a couple of health-check rounds.
+  # Redundancy permits two health-check rounds.
   backendDownFor: 2m
-  # No recursive backend left at all. Nothing absorbs this.
+  # No resolver remains to absorb failure.
   noResolverFor: 1m

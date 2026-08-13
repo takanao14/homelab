@@ -1,13 +1,6 @@
 interfaceAlerts:
   enabled: false
-  # Kept identical to ifFilter in dashboards/cmd/generate/network.go, so the set
-  # that alerts is the set the dashboard draws. Physical ports only: sub-interfaces
-  # (GigaEthernet0.0), Port-Channels, Loopback and Null are deliberately outside it.
-  # That exclusion is load-bearing for the error counters -- bgw1's GigaEthernet0.0
-  # and GigaEthernet1.0 carry 37k and 41k errors over seven days while every
-  # physical port sits at zero.
+  # Match dashboard physical ports; excluded subinterfaces have noisy counters.
   ifDescr: GigaEthernet[0-9]+|GigabitEthernet[0-9]+
-  # SNMP is probed once a minute, so this is ten consecutive misses. Long enough
-  # that a link renegotiating or a switch reboot does not page, short enough that
-  # a cable actually falling out is noticed while someone is still nearby.
+  # Ten 1m misses tolerate renegotiation/reboot while catching real link loss.
   downFor: 10m

@@ -10,24 +10,7 @@ spec:
   groups:
     - name: node-filesystem-external
       rules:
-        # kube-prometheus-stack already ships NodeFilesystemSpaceFillingUp and
-        # NodeFilesystemAlmostOutOfSpace, and they are running — but every one of
-        # them is pinned to job="node-exporter", the in-cluster DaemonSet. The
-        # nineteen hosts scraped through job="scrapeConfig/monitoring/
-        # node-exporter-external" match none of them, which left the Proxmox
-        # hypervisors, the Raspberry Pis, the LXC guests and the standalone VMs
-        # with no disk-fill alerting at all. These rules are the upstream ones
-        # re-scoped; the thresholds are deliberately unchanged, because there is
-        # no measurement here that would justify a different number and inventing
-        # one would only make the two sets disagree.
-        #
-        # The selector matches the fsFilter in dashboards/cmd/generate/node.go so
-        # that what alerts and what the dashboard draws are the same set. /boot is
-        # included on purpose: it is small and a failed kernel upgrade fills it.
-        #
-        # On pve several ZFS datasets share one pool, so a full rpool fires this
-        # once per dataset rather than once. That is noisy but not wrong, and
-        # suppressing it would mean guessing which dataset is the interesting one.
+        # Upstream-equivalent rules re-scoped to external hosts and dashboard filters.
         - alert: NodeFilesystemSpaceFillingUp
           expr: >-
             (
@@ -72,8 +55,7 @@ spec:
               the leading indicator; act on it rather than waiting for
               NodeFilesystemAlmostOutOfSpace.
 
-        # The backstop, on level alone. Reached only if the trend alert above was
-        # missed or the fill was too abrupt to predict.
+        # Level backstop for abrupt or missed fill trends.
         - alert: NodeFilesystemAlmostOutOfSpace
           expr: >-
             node_filesystem_avail_bytes{
@@ -98,10 +80,7 @@ spec:
               {{ "{{ $labels.instance }}" }} has only
               {{ "{{ printf \"%.1f\" $value }}" }}% free.
 
-        # Inodes run out independently of bytes: many small files fill the table
-        # while df still reports space. Measured on this fleet the worst is
-        # netbox1 at 26% of its inodes used, so this has room, but it is the
-        # failure mode that looks like a full disk while the disk is half empty.
+        # Inodes can exhaust independently of free bytes; fleet worst is 26% used.
         - alert: NodeFilesystemFilesFillingUp
           expr: >-
             (

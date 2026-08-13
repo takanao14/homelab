@@ -10,9 +10,7 @@ spec:
   groups:
     - name: pdns-auth-external
       rules:
-        # An authoritative server answers from its own zones, so SERVFAIL means
-        # the backend or the signing path is broken rather than anything
-        # upstream. The measured baseline is zero.
+        # Authoritative SERVFAIL indicates backend/signing failure; baseline is zero.
         - alert: PdnsAuthServfail
           expr: rate(pdns_auth_servfail_packets[10m]) > {{ .Values.alerts.servfailRate }}
           for: {{ .Values.alerts.servfailFor }}
@@ -37,13 +35,7 @@ spec:
               baseline of zero. Expect a broken client or something mangling
               DNS on the path.
 
-        # Zones waiting to be transferred. Measured at zero for seven days, so
-        # anything that persists means transfers are not draining.
-        #
-        # This does not cover the opposite failure: a transfer that never
-        # starts leaves the queue empty while the secondaries keep serving a
-        # stale zone. Catching that needs the SOA serial compared across ns1,
-        # ns2 and ns3, and no exported metric carries the serial.
+        # Persistent queue means transfers are stuck; serial rules cover missing starts.
         - alert: PdnsAuthXfrQueueStuck
           expr: pdns_auth_xfr_queue > 0
           for: {{ .Values.alerts.xfrQueueFor }}
@@ -56,8 +48,7 @@ spec:
               longer than expected. The secondaries may be serving stale zone
               data.
 
-        # PowerDNS checks its own version against the vendor's security status
-        # feed: 1 is OK, 2 recommends an upgrade, 3 means a known vulnerability.
+        # Vendor status: 1 OK, 2 upgrade recommended, 3 vulnerable.
         - alert: PdnsAuthSecurityStatusBad
           expr: pdns_auth_security_status > 1
           for: {{ .Values.alerts.securityStatusFor }}
