@@ -1,6 +1,4 @@
-# Shared template for the basic (headless server) images. Per-distro inputs
-# live in vars/<target>.pkrvars.hcl; build.sh selects the var file and injects
-# the output variables. The XRDP desktop variant is xrdp.pkr.hcl.
+# Shared headless template; build.sh combines target vars and output settings.
 packer {
   required_plugins {
     qemu = {
@@ -34,9 +32,7 @@ variable "user_password" {
   description = "Password for the default user account (used in Cloud-Init)"
 }
 
-# SSH public key injected into cloud-init user-data for the default user.
-# Empty (default) means "read the builder's ~/.ssh/id_ed25519.pub"; CI passes
-# a stub value so validate needs no key file on the runner.
+# Cloud-init SSH key; empty reads the builder key, while CI passes a validation stub.
 variable "ssh_pubkey" {
   type        = string
   default     = ""

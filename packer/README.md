@@ -1,7 +1,6 @@
 # Packer — Custom Cloud Images for Proxmox VE
 
-Packer templates that build cloud-init enabled custom VM images for the Proxmox
-VE homelab.
+Build cloud-init-enabled VM images for Proxmox VE.
 
 The build and the Proxmox registration are **decoupled** through S3 (SeaweedFS):
 
@@ -14,16 +13,8 @@ The build and the Proxmox registration are **decoupled** through S3 (SeaweedFS):
    Proxmox node **download** the image from that URL (`proxmox_download_file`),
    pinned by the published sha256.
 
-This means the host running `terragrunt apply` no longer needs the image files
-locally — only network access to the bucket. Packer (which needs KVM/libguestfs)
-can run on a dedicated builder, separate from where images are registered.
-
-## Project Overview
-
-- **Purpose**: Automated creation of cloud-init enabled golden images
-- **Target Platform**: Proxmox VE
-- **Supported OS**: Ubuntu 24.04, Rocky Linux 9/10, Debian 13, FreeBSD 15.1
-- **Image Variants**: Base (minimal) and XRDP (desktop environment with remote access)
+The apply host needs bucket access, not local images. Packer can run separately
+on a KVM/libguestfs builder.
 
 ## Requirements
 
@@ -43,10 +34,8 @@ can run on a dedicated builder, separate from where images are registered.
 
 ### Deployment
 
-Proxmox download of the pushed images is handled by the Terragrunt stack in
-[`../tf/customimage`](../tf/customimage) (module `tf/modules/proxmox-cloudimage`,
-shared with the stock-image stack `tf/cloudimage`). See that directory for the
-per-environment (`dev`/`prd`/`node2`/`node3`/`node4`) configs.
+[`../tf/customimage`](../tf/customimage) downloads pushed images through the
+shared `tf/modules/proxmox-cloudimage` module.
 
 ## Directory Structure
 
@@ -140,12 +129,9 @@ terragrunt apply
 
 ## Available Build Targets
 
-Two shared templates cover all targets: [basic.pkr.hcl](basic.pkr.hcl)
-(headless server) and [xrdp.pkr.hcl](xrdp.pkr.hcl) (XRDP + XFCE desktop with
-the baked-in CLI toolchain). Per-target differences — upstream image URL and
-checksum, default user, cloud-init directory, provisioner script list — live in
-`vars/<target>.pkrvars.hcl`; `build.sh` pairs each target with its template and
-var file (`*-xrdp` targets use `xrdp.pkr.hcl`, the rest `basic.pkr.hcl`).
+Targets use [basic.pkr.hcl](basic.pkr.hcl) or
+[xrdp.pkr.hcl](xrdp.pkr.hcl). URLs, checksums, users, cloud-init paths and
+provisioners live in `vars/<target>.pkrvars.hcl`.
 
 | Target | Template | Var file | Output |
 |--------|----------|----------|--------|
@@ -162,14 +148,10 @@ To add a target, create a `vars/<target>.pkrvars.hcl` and register the target in
 
 ## Upstream Image Imports
 
-Some upstream cloud images do not need a full Packer build, but still need to be
-normalized before they can be consumed by `tf/customimage`.
+Some upstream images require normalization but no Packer build.
 
-FreeBSD official VM images are published as `.qcow2.xz` archives. Proxmox should
-not download those archives directly as VM disk images, and the bpg/proxmox
-`proxmox_download_file` decompression option does not support `xz`. Instead,
-import the upstream archive into the same artifact contract used by Packer-built
-images:
+FreeBSD publishes `.qcow2.xz`, which `proxmox_download_file` cannot decompress.
+Import it into the standard image/checksum contract:
 
 ```bash
 ./import-upstream.sh freebsd151
@@ -189,9 +171,7 @@ Then publish it like any other custom image:
 ./push.sh freebsd151
 ```
 
-## Build Script Options
-
-The `build.sh` script simplifies the build process:
+## Build Script
 
 ```bash
 ./build.sh [OPTIONS] <IMAGE_TYPE>
@@ -200,86 +180,26 @@ The `build.sh` script simplifies the build process:
 **Options:**
 - `-y` - Force overwrite existing images without prompting
 
-**Available IMAGE_TYPE values:**
-- `ubuntu24` - Ubuntu 24.04 base image
-- `ubuntu24-xrdp` - Ubuntu 24.04 with XRDP
-- `rocky10` - Rocky Linux 10 base image
-- `rocky9` - Rocky Linux 9 base image
-- `rocky9-xrdp` - Rocky Linux 9 with XRDP
-- `debian13` - Debian 13 base image
-- `all` - Build every image above, in order (pair with `-y` for unattended runs)
+`IMAGE_TYPE` is any target in the table above or `all`. Pair `all` with `-y`
+for unattended builds.
 
 Upstream imports are handled separately by `import-upstream.sh`; they are not
 included in `build.sh all`.
 
-### Build Process
-
-1. Checks if the output image already exists and prompts for confirmation
-2. Removes the corresponding `output-*` directory if it exists
-3. Runs Packer build with appropriate variables
-4. Converts the output to compressed qcow2 format in the `images/` directory
-
-### Build Output
-
-**Intermediate files (temporary):**
-- `output-ubuntu24-custom/`
-- `output-ubuntu24-xrdp/`
-- `output-rocky-10-custom/`
-- `output-rocky-9-xrdp/`
-- `output-debian-13-custom/`
-
-**Final images (each with a `.sha256` sidecar):**
-- `images/ubuntu-24.04-custom.img`
-- `images/ubuntu-24.04-xrdp.img`
-- `images/rocky-10-custom.img`
-- `images/rocky-9-custom.img`
-- `images/rocky-9-xrdp.img`
-- `images/debian-13-custom.img`
-- `images/freebsd-15.1-cloudinit-ufs.img` (from `import-upstream.sh`)
-
-## Image Distribution with S3 + Terragrunt
-
-After building, push images to the SeaweedFS `cloud-images` bucket and then make
-Proxmox download them via the Terragrunt stack in
-[`../tf/customimage`](../tf/customimage):
-
-```bash
-# 1. Push built images + checksums to S3
-./push.sh all
-
-# 2. Deploy to production
-cd ../tf/customimage/prd
-terragrunt apply
-
-# 3. Deploy to development
-cd ../tf/customimage/dev
-terragrunt apply
-```
-
-Each environment directory (`dev`/`prd`/`node2`/`node3`) holds a
-`terragrunt.hcl` selecting which images to deploy and the target Proxmox node.
-The shared module `tf/modules/proxmox-cloudimage` issues the download
-(`proxmox_download_file`) from `https://s3.home.butaco.net/cloud-images/<file>`,
-pinned to the sha256 published next to each object so rebuilt images are
-re-downloaded. Image definitions (and the bucket base URL) are centralized in
-`tf/customimage/images.hcl`.
+The script confirms overwrite, clears the target's temporary output, runs
+Packer, converts to compressed qcow2, and writes the image plus `.sha256` under
+`images/`. Distribution and deployment are covered by Quick Start steps 3–4.
 
 ## Dependency Management
 
-This repository uses [Renovate](https://docs.renovatebot.com/) to automatically
-track and update dependency versions, configured in the root `renovate.json`.
+Root `renovate.json` manages tracked dependency versions.
 
-The XRDP images first install system-package prerequisites via
-`../scripts/install/packages.sh global`, then bake the CLI toolchain (kubectl,
-helm, terragrunt, opentofu, k9s, …) system-wide via
-`../scripts/install/tools.sh global`. These wrappers are the single source of
-truth shared with `scripts/provision.sh`; pinned tool versions are
-Renovate-managed in the `takanao14/dotfiles` installers, not here.
+XRDP images install prerequisites and the CLI toolchain through the same
+`scripts/install` wrappers as `scripts/provision.sh`. Tool pins are maintained
+in `takanao14/dotfiles`.
 
-The wrappers run the **vendored** installer copies in
-`../scripts/install/vendor/` (uploaded to the guest by a `file` provisioner and
-selected via `VENDOR_DIR`), so the build does not fetch them from GitHub at
-runtime. Refresh those copies with `../scripts/install/vendor/sync.sh`.
+Builds use vendored installers from `../scripts/install/vendor/`; refresh them
+with `../scripts/install/vendor/sync.sh`.
 
 **Not tracked (always installed as latest):**
 - Unpinned APT/DNF packages installed by the shared package installer or Packer
@@ -318,21 +238,6 @@ Modify templates in `cinit/` directory to customize:
 - Package installation
 - User creation
 
-## Features
-
-### Base Images
-- ✅ Cloud-init enabled
-- ✅ QEMU Guest Agent installed
-- ✅ Minimal package set
-- ✅ SSH key authentication only (password auth disabled)
-- ✅ Optimized for cloning
-
-### XRDP Images
-All base features plus:
-- ✅ XFCE4 desktop environment
-- ✅ XRDP remote desktop server
-- ✅ Pre-configured for remote access
-
 ## Security Considerations
 
 - **SSH Authentication**: Password authentication is disabled; SSH key-only access
@@ -347,7 +252,7 @@ All base features plus:
 Ensure the Packer user has sudo access in the base cloud image.
 
 ### Image Already Exists
-The build script will prompt you to confirm overwriting. Answer 'y' to proceed, or use `-y` flag to skip the prompt.
+Confirm overwrite or pass `-y`.
 
 ### Packer Cannot Connect to VM
 Check that:
@@ -362,19 +267,13 @@ Verify:
 - Target node and datastore exist
 
 ### Download Fails to Resolve `s3.home.butaco.net`
-The image download runs **on the Proxmox node**, not on the host running
-`terragrunt apply`. If a node cannot resolve the internal S3 hostname, add a
-per-node `/etc/hosts` entry pointing at the Caddy that fronts SeaweedFS
-(`192.168.10.244  s3.home.butaco.net`). Every node that downloads needs it
-(dev pve, prd node1/node2/node3). This keeps TLS and avoids resolver changes.
+Downloads run on each Proxmox node, not the apply host. If internal DNS fails,
+map `s3.home.butaco.net` to Caddy (`192.168.10.244`) in that node's `/etc/hosts`.
 
 ### Download Stalls or the Image Server Restarts Mid-Transfer
-Serving multi-GB images is memory-heavy on the SeaweedFS host. In an LXC the page
-cache counts against the memory cgroup, so the node can OOM-kill `weed` while
-serving even though it has plenty of disk (symptom: `volume server has been
-killed` in `journalctl -u seaweedfs`). Give the SeaweedFS LXC enough RAM + swap
-(currently 8GB + 4GB; see `tf/lxc/node3/seaweedfs` and the seaweedfs role README),
-and keep `tf/customimage` at `-parallelism=1` so downloads run serially.
+Multi-GB transfers charge page cache to the SeaweedFS LXC cgroup and can OOM
+`weed`. Keep sufficient RAM/swap (currently 8 GB + 4 GB) and run
+`tf/customimage` with `-parallelism=1`.
 
 ## License
 

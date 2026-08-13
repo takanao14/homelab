@@ -1,13 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-# Import upstream cloud images that do not need a full Packer build, but still
-# need normalization before publishing to the SeaweedFS cloud-images bucket.
-#
-# The generated output follows the same contract as build.sh:
+# Normalize upstream images into the build.sh artifact contract:
 #   images/<name>.img
 #   images/<name>.img.sha256
-#
 # Requires: curl, xz, sha256sum.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

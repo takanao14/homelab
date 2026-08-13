@@ -90,17 +90,12 @@ build_image() {
         exit 1
     fi
 
-    # Record the sha256 digest (64 hex chars only) next to the image. push.sh
-    # uploads it alongside the image so Terraform can pin the checksum and
-    # detect rebuilds (see tf/customimage). Recompute on every build.
+    # Recompute the sidecar digest so Terraform detects rebuilt images.
     echo "Writing checksum for ${image_file}..."
     sha256sum "${image_file}" | cut -d' ' -f1 > "${image_file}.sha256"
 }
 
-# Build a single target by name. Maps CLI targets to their Packer templates and
-# outputs. Keep the target list in sync with ALL_TARGETS, push.sh and
-# tf/customimage/images.hcl; CI verifies the image filenames via
-# scripts/check-image-refs.sh.
+# Map a target to template/output; CI checks parity with push.sh and tf/customimage.
 build_target() {
     case "$1" in
         ubuntu24)

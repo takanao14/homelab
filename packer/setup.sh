@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# One-time setup for a Packer build host (Ubuntu/Debian): installs the
-# QEMU/KVM stack and libguestfs (virt-sparsify used by the post-processor).
+# Install QEMU/KVM and libguestfs once on an Ubuntu/Debian builder.
 
 # Resolve the target user (the invoking user when run via sudo).
 TARGET_USER="${SUDO_USER:-${USER}}"

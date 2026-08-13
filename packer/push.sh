@@ -1,25 +1,18 @@
 #!/bin/bash
 set -euo pipefail
 
-# Upload Packer-built images (and their .sha256 digests) to the SeaweedFS
-# `cloud-images` bucket. Proxmox pulls them from there via tf/customimage
-# (proxmox_download_file), decoupling the build host from the deploy host.
-#
-# Auth is taken from the environment (inject via .envrc / sops, never hardcode):
+# Upload images and digests to SeaweedFS for tf/customimage downloads.
+# Inject authentication through .envrc/SOPS:
 #   SEAWEEDFS_S3_ENDPOINT     e.g. https://s3.home.butaco.net
 #   SEAWEEDFS_S3_ACCESS_KEY   identity with non-Admin Read/Write/List actions
 #   SEAWEEDFS_S3_SECRET_KEY
-#
 # Requires: rclone.
 
 BUCKET="${SEAWEEDFS_CLOUD_IMAGES_BUCKET:-cloud-images}"
 IMAGES_DIR="$(cd "$(dirname "$0")" && pwd)/images"
 
-# Map CLI targets to image basenames produced by build.sh or import-upstream.sh.
-# Keep this in sync with those scripts and tf/customimage/images.hcl; CI
-# verifies the mapping via scripts/check-image-refs.sh. Use a case statement
-# instead of an associative array so the script works with macOS' older
-# /bin/bash.
+# Map targets to image basenames; CI checks parity with producers and tf/customimage.
+# A case statement supports macOS' older Bash.
 target_image() {
     case "$1" in
         ubuntu24) echo "ubuntu-24.04-custom.img" ;;
@@ -83,8 +76,7 @@ require_env() {
     fi
 }
 
-# Configure an on-the-fly rclone remote via env vars so secrets never appear in
-# the process arguments.
+# Configure rclone through environment variables to hide secrets from arguments.
 setup_rclone() {
     export RCLONE_CONFIG_SEAWEEDFS_TYPE=s3
     export RCLONE_CONFIG_SEAWEEDFS_PROVIDER=Other
@@ -92,13 +84,9 @@ setup_rclone() {
     export RCLONE_CONFIG_SEAWEEDFS_SECRET_ACCESS_KEY="$SEAWEEDFS_S3_SECRET_KEY"
     export RCLONE_CONFIG_SEAWEEDFS_ENDPOINT="$SEAWEEDFS_S3_ENDPOINT"
     export RCLONE_CONFIG_SEAWEEDFS_REGION=us-east-1
-    # The imagebuilder identity is scoped to cloud-images and cannot create
-    # buckets. Without this, rclone attempts CreateBucket before upload and
-    # fails with 403. The bucket must already exist (admin-created).
+    # The scoped identity cannot create buckets; require the admin-created bucket.
     export RCLONE_CONFIG_SEAWEEDFS_NO_CHECK_BUCKET=true
-    # Keep uploads on plain PutObject. rclone's default S3 behavior switches
-    # large files to multipart upload, but SeaweedFS rejects CreateMultipartUpload
-    # for the scoped imagebuilder identity with AccessDenied.
+    # Force PutObject; the scoped identity cannot start multipart uploads.
     export RCLONE_CONFIG_SEAWEEDFS_USE_MULTIPART_UPLOADS=false
 }
 

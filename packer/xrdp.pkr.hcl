@@ -1,6 +1,4 @@
-# Shared template for the XRDP desktop images. Per-distro inputs live in
-# vars/<target>-xrdp.pkrvars.hcl; build.sh selects the var file and injects the
-# output variables. The headless server variant is basic.pkr.hcl.
+# Shared XRDP template; build.sh combines target vars and output settings.
 packer {
   required_plugins {
     qemu = {
@@ -34,9 +32,7 @@ variable "user_password" {
   description = "Password for the default user account (used in Cloud-Init)"
 }
 
-# SSH public key injected into cloud-init user-data for the default user.
-# Empty (default) means "read the builder's ~/.ssh/id_ed25519.pub"; CI passes
-# a stub value so validate needs no key file on the runner.
+# Cloud-init SSH key; empty reads the builder key, while CI passes a validation stub.
 variable "ssh_pubkey" {
   type        = string
   default     = ""
@@ -123,41 +119,31 @@ source "qemu" "xrdp" {
 build {
   sources = ["source.qemu.xrdp"]
 
-  # Install base packages: guest agent / timezone, desktop/XRDP, container
-  # runtime, virtualization and GUI tools (Firefox, VS Code, Wireshark,
-  # HashiCorp).
+  # Install guest, desktop, container, virtualization and GUI packages.
   provisioner "shell" {
     scripts         = var.provision_scripts
     execute_command = "chmod +x {{ .Path }}; sudo -S bash -c '{{ .Vars }} {{ .Path }}'"
   }
 
-  # Upload the vendored dotfiles installers next to where the wrappers run, so
-  # install-*.sh use local copies instead of fetching them from GitHub during
-  # the build. VENDOR_DIR points each wrapper at this directory.
+  # Upload vendored installers; VENDOR_DIR prevents runtime GitHub fetches.
   provisioner "file" {
     source      = "../scripts/install/vendor"
     destination = "/tmp"
   }
 
-  # Install the system-package prerequisites before the unprivileged tool and
-  # font installers consume them.
+  # Install package prerequisites before tool/font wrappers.
   provisioner "shell" {
     script          = "../scripts/install/packages.sh"
     execute_command = "VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
   }
 
-  # Bake the CLI toolchain (kubectl, helm, terragrunt, opentofu, k9s, …)
-  # system-wide via the shared homelab wrapper -- the single source of truth
-  # also used by scripts/provision.sh. Global mode self-elevates with sudo and
-  # installs into /usr/local/bin.
+  # Install the shared CLI toolchain globally into /usr/local/bin.
   provisioner "shell" {
     script          = "../scripts/install/tools.sh"
     execute_command = "VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
   }
 
-  # Bake the UDEV Gothic NF font system-wide via the shared homelab wrapper.
-  # TOOL_FORCE_GUI_INSTALL=1 skips the live-GUI check (xrdp is not running yet
-  # during the build).
+  # Install the GUI font before XRDP exists, bypassing the live-GUI check.
   provisioner "shell" {
     script          = "../scripts/install/fonts.sh"
     execute_command = "TOOL_FORCE_GUI_INSTALL=1 VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
@@ -169,8 +155,7 @@ build {
     execute_command = "TOOL_FORCE_GUI_INSTALL=1 VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
   }
 
-  # Default kitty config for all users (UDEV Gothic font); kitty reads
-  # /etc/xdg/kitty/kitty.conf via XDG_CONFIG_DIRS.
+  # System-wide kitty defaults via XDG_CONFIG_DIRS.
   provisioner "file" {
     source      = "files/kitty.conf"
     destination = "/tmp/kitty.conf"

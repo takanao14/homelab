@@ -1,5 +1,4 @@
-# Rocky GenericCloud images ship qemu-guest-agent preinstalled, so timezone.sh
-# replaces ubuntu's qemu-ga.sh as the base-setup step.
+# GenericCloud includes qemu-guest-agent; timezone.sh replaces qemu-ga.sh.
 iso_url      = "https://download.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud-Base.latest.x86_64.qcow2"
 iso_checksum = "file:https://download.rockylinux.org/pub/rocky/9/images/x86_64/CHECKSUM"
 ssh_username = "rocky"
