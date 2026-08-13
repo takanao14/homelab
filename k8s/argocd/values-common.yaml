@@ -1,19 +1,14 @@
-# Resource reservations. Requests only, no limits — see "Resource Requests" in
-# k8s/README.md for why. Sizing basis: 7-day observed usage from Prometheus,
-# requests ~= mean x 1.2. Figures below are mean / high-water memory and p95
-# CPU.
+# Requests only (README), about 1.2x 7-day mean; figures are mean/peak Mi and p95 CPU.
 
 server:
   extraArgs:
     - --insecure
   ingress:
     enabled: false
-  # Only the metrics Service is enabled here; the ServiceMonitor lives in the
-  # prometheus chart (monitoring app syncs after argocd, so a ServiceMonitor
-  # bundled here would fail its CRD lookup on a fresh cluster).
+  # Monitoring owns the ServiceMonitor because its CRD is unavailable at bootstrap.
   metrics:
     enabled: true
-  # Observed: mean 43Mi, peak 69Mi, p95 CPU 1.2m.
+  # 43/69 Mi, p95 1.2m.
   resources:
     requests:
       cpu: 25m
@@ -22,14 +17,8 @@ server:
 controller:
   metrics:
     enabled: true
-  # Observed: mean 494Mi, high-water 733Mi over 3.5 months and 607Mi within
-  # minutes of a cold start, p95 CPU 44m. By far the heaviest component, and
-  # the only one where the CPU request is meaningful.
-  #
-  # This is the container that proved memory limits unsafe to derive here: a
-  # 1Gi cap sized from its observed peak put it into an OOMKill crash loop, and
-  # because it reconciles everything else including its own values, the loop
-  # left Argo CD unable to sync its own fix. See k8s/README.md.
+  # 494/733 Mi, cold-start 607 Mi, p95 44m. A prior 1 Gi limit caused a
+  # self-reconciliation OOM loop; keep requests only (README).
   resources:
     requests:
       cpu: 100m
@@ -38,8 +27,7 @@ controller:
 repoServer:
   metrics:
     enabled: true
-  # Observed: mean 127Mi, peak 368Mi, p95 CPU 4m. The widest mean-to-peak gap
-  # of any component, because manifest rendering is bursty.
+  # 127/368 Mi, p95 4m; rendering is bursty.
   resources:
     requests:
       cpu: 50m
@@ -48,41 +36,35 @@ repoServer:
 applicationSet:
   metrics:
     enabled: true
-  # Observed: mean 33Mi, peak 49Mi, p95 CPU 1.0m.
+  # 33/49 Mi, p95 1m.
   resources:
     requests:
       cpu: 10m
       memory: 64Mi
 
-# Observed: mean 78Mi, peak 115Mi, p95 CPU 0.2m.
+# 78/115 Mi, p95 0.2m.
 dex:
   resources:
     requests:
       cpu: 10m
       memory: 96Mi
 
-# Observed: mean 57Mi, peak 120Mi, p95 CPU 0.6m.
+# 57/120 Mi, p95 0.6m.
 notifications:
   resources:
     requests:
       cpu: 10m
       memory: 96Mi
 
-# Observed: mean 28Mi, peak 44Mi, p95 CPU 3.8m.
+# 28/44 Mi, p95 3.8m.
 redis:
   resources:
     requests:
       cpu: 25m
       memory: 64Mi
 
-# Consumed by k8s/argocd/chart, not by the upstream argo-cd chart (which
-# ignores unknown keys — it ships no values.schema.json).
-#
-# The admin password is injected into argocd-secret by ESO rather than set
-# through configs.secret.argocdServerAdminPassword, so no bcrypt hash lands in
-# git (ADR-0026). `key` is deliberately absent here: each environment sets its
-# own OpenBao path in <env>/values.yaml so prd and sandbox have independent
-# passwords.
+# Local chart values. ESO injects the admin hash; each environment selects its
+# own OpenBao key (ADR-0026).
 openbao:
   secretStore:
     name: openbao
@@ -94,10 +76,7 @@ openbao:
 
 configs:
   cm:
-    # Argo CD >=1.8 ships no built-in health check for the Application CRD,
-    # so app-of-apps sync waves do not gate on child app health without this.
-    # Required so envoy-gateway-crds (wave -2) is Healthy before the
-    # envoy-gateway controller (-1) and gateway (0) apps sync on a fresh cluster.
+    # Gate app-of-apps waves on child health, including Gateway CRD ordering.
     resource.customizations.health.argoproj.io_Application: |
       hs = {}
       hs.status = "Progressing"

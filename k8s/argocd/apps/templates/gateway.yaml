@@ -15,8 +15,7 @@ spec:
     path: k8s/gateway
     helm:
       releaseName: gateway
-      # Shared definitions live in k8s/gateway/values.yaml; per-env
-      # differences live in k8s/gateway/<env>/values.yaml.
+      # Layer shared and environment-specific Gateway values.
       valueFiles:
         - {{ include "argocd-apps.env" . }}/values.yaml
   destination:
@@ -29,9 +28,7 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-    # On a fresh cluster the first automated sync can race the envoy-gateway-crds
-    # app (EnvoyProxy kind not yet registered); a failed automated sync is never
-    # re-attempted for the same revision unless a retry policy is set.
+    # Retry bootstrap races with EnvoyProxy CRD registration.
     retry:
       limit: 5
       backoff:

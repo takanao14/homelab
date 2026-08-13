@@ -19,8 +19,7 @@ apps:
     enabled: true
   monitoring:
     enabled: true
-    # Staging-style subset of the shared monitoring stack. External alert
-    # delivery and external target scrapes stay disabled in the overlay.
+    # Shared monitoring subset without external alerts or scrapes.
     path: k8s/monitoring/apps
     namespace: argocd
     helm:

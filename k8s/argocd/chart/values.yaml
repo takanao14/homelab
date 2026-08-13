@@ -1,6 +1,4 @@
-# Real values come from ../values-common.yaml and ../<env>/values.yaml, which
-# Argo CD passes to this chart as well. Defaults here only keep a bare
-# `helm template k8s/argocd/chart` renderable.
+# Minimal defaults; Argo CD also passes shared and environment values.
 openbao:
   secretStore:
     name: openbao

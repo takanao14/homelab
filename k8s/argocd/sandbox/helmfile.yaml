@@ -8,9 +8,7 @@ releases:
     createNamespace: true
     chart: argo/argo-cd
     version: 10.3.2
-    # On a fresh cluster the redis-secret-init pre-install hook pulls the
-    # ~200MB argocd image on an empty node cache, which alone can exceed
-    # helm's default 5m timeout.
+    # Allow the uncached ~200 MB bootstrap image pull.
     timeout: 600
     values:
       - ../values-common.yaml
@@ -27,13 +25,7 @@ releases:
               exit 1
             fi
 
-            # This helmfile is for initial bootstrap only. Once root-apps is
-            # applied, Argo CD self-manages this release (see apps/templates/
-            # argocd.yaml) and applies with ServerSideApply, so every resource
-            # a later chart version adds is created without Helm ownership
-            # annotations. Re-running helm here then aborts on the first such
-            # resource: "invalid ownership metadata; missing key
-            # meta.helm.sh/release-name".
+            # Bootstrap only; after root-apps, SSA owns resources without Helm metadata.
             if [[ "${ARGOCD_BOOTSTRAP_FORCE:-}" != "1" ]] \
               && kubectl -n argocd get application argocd >/dev/null 2>&1; then
               echo "ERROR: Argo CD already self-manages this release (Application/argocd exists)." >&2

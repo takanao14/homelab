@@ -1,16 +1,12 @@
-# Environment name (prd / sandbox). Required — selects the
-# k8s/<app>/<env>/values.yaml files referenced by the generated Applications.
+# Required environment selecting each app's values file.
 env: ""
 
-# This repository, as seen by the in-cluster ArgoCD.
+# Repository coordinates visible to in-cluster Argo CD.
 repo:
   url: https://github.com/takanao14/homelab.git
   targetRevision: HEAD
 
-# One entry per app template. `enabled` gates rendering; `wave` sets the
-# ArgoCD sync-wave annotation. Upstream chart coordinates are kept here (not
-# in templates/) because Renovate ignores **/templates/** and its regex
-# manager tracks the repoURL/chart/targetRevision triple in k8s/**/*.yaml.
+# App enablement, sync waves, and Renovate-visible upstream chart coordinates.
 apps:
   argocd:
     enabled: false
@@ -59,9 +55,7 @@ apps:
   lemonade-server:
     enabled: false
     wave: "1"
-  # monitoring differs structurally per environment (prd: central full stack,
-  # sandbox: subset overlay), so its source path / namespace / helm settings
-  # come from apps-values.yaml.
+  # Environment files define monitoring's structurally different sources.
   monitoring:
     enabled: false
     wave: "1"

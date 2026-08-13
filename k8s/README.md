@@ -22,10 +22,8 @@ Kubernetes manifests and Helm charts for homelab clusters managed via ArgoCD Git
   for prd; sandbox intentionally uses HTTP without cert-manager
 - **DNS**: external-dns with PowerDNS provider (`gateway-httproute` source)
 
-All HTTP services are exposed via HTTPRoute referencing the shared Envoy Gateway
-(`shared-gateway-envoy` in the `gateway-system` namespace). TLS is terminated at
-the Gateway using a wildcard certificate in prd; sandbox uses HTTP-only
-routes. See
+HTTPRoutes use `gateway-system/shared-gateway-envoy`. The Gateway terminates prd
+TLS with a wildcard certificate; sandbox remains HTTP-only. See
 [`ADR-0011`](../docs/adr/0011-cilium-gateway-to-envoy-gateway-migration.md) for
 the Cilium Gateway to Envoy Gateway migration decision.
 
@@ -135,12 +133,10 @@ k8s/
 
 ## Resource Requests
 
-Workloads set **memory and CPU requests, and no memory limits**. Per-chart
-values carry the observed figures behind each number; this section is the
-rationale they refer to.
+Workloads set **CPU/memory requests without memory limits**. Chart values record
+the observations behind each request.
 
-Requests are what matter. Both defences against a container overrunning its
-memory key off the request, not the limit:
+Requests drive both memory-pressure defenses:
 
 - kubelet ranks pods for eviction by how far usage exceeds the request, so the
   container that actually overran is evicted first.
@@ -149,14 +145,10 @@ memory key off the request, not the limit:
   accurate request is protected and one that grew far past its request is the
   first victim.
 
-A limit takes no part in either ordering — it only caps. Setting requests is
-therefore what moves a pod out of `BestEffort`, makes it visible to the
-scheduler, and directs memory pressure at the right container.
+Limits only cap usage; requests make scheduling and pressure handling accurate.
 
-Memory limits are deliberately omitted because they cannot be sized safely from
-the metrics available here. A 1Gi limit on the Argo CD application controller,
-derived from its observed peak, put it into an OOMKill crash loop and had to be
-removed:
+Observed metrics cannot safely size memory limits. A derived 1 Gi Argo CD
+controller limit caused an OOMKill loop because:
 
 - `container_memory_working_set_bytes` is sampled every 30s and misses spikes
   between scrapes. The container that died under the cap recorded a high-water
@@ -166,25 +158,21 @@ removed:
 - A container that has run uninterrupted for months has never been observed
   through a cold start, so its "peak" describes warm operation only.
 
-Nodes have roughly 28-32Gi allocatable against about 15% actual use, so an
-uncapped container is the cheaper risk. Add a memory limit only for a workload
-with a *measured* leak, and size it from that measurement.
+Nodes have 28–32 GiB allocatable at about 15% use. Add limits only for measured
+leaks and size them from direct evidence.
 
-CPU limits are omitted as well: the CFS quota throttles a container even when
-the node is idle.
+CPU limits are also omitted because CFS throttles even on idle nodes.
 
 Two exceptions:
 
 - **GPU workloads** (`ollama`, `comfyui`, `lemonade-server`, `vllm`) set
-  `limits: amd.com/gpu`. Extended resources must be declared as limits —
-  removing them breaks GPU allocation. This is unrelated to memory limits.
+  `limits: amd.com/gpu`, as required for extended-resource allocation.
 - **`homepage`, `pdns-ui`, `external-dns`** carry pre-existing CPU and memory
-  limits. They have run without an OOMKill, so those values are validated by
-  production in a way freshly derived ones are not, and are left alone.
+  limits retained from stable production operation.
 
 ## Initial Cluster Bootstrap
 
-ArgoCD is deployed first via helmfile, then manages everything else via the App of Apps pattern.
+Bootstrap Argo CD with helmfile, then hand control to App of Apps.
 
 ```bash
 # Deploy ArgoCD (prd)
@@ -195,4 +183,4 @@ helmfile apply
 kubectl apply -f k8s/argocd/prd/root-apps.yaml
 ```
 
-After `root-apps.yaml` is applied, ArgoCD syncs all applications automatically.
+After applying `root-apps.yaml`, use GitOps for subsequent changes.
