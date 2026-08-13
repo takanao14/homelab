@@ -4,11 +4,7 @@ metadata:
   labels:
     blueprints.goauthentik.io/instantiate: "true"
 entries:
-  # Disposable user for stage 6 of docs/plans/identity-authentication-
-  # architecture.md (SSSD/LDAP validation on sssdtest1). Not a real lab
-  # member; delete this blueprint once the PoC is done.
-  # (content-bump: force re-apply after the task-ordering fix so the
-  # password is set from the correct env value)
+  # Disposable SSSD/LDAP PoC user; remove after validation. Content bump reapplies env password.
   - model: authentik_core.user
     identifiers:
       username: sssdtest
@@ -21,7 +17,5 @@ entries:
         - !Find [authentik_core.group, [name, lab-linux-users]]
       attributes:
         sshPublicKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ0tkBI+/IMh3FxcPiKisnn4s2eNujC0AB9kobFQW0Rd sssdtest@home.butaco.net"
-      # Plaintext here is hashed by Authentik on save; the value itself
-      # comes from the container environment (see authentik.env.j2), not
-      # this file, so it never sits in the 0644 blueprints directory.
+      # Authentik hashes the environment-sourced value; plaintext is not stored here.
       password: !Env TEST_USER_PASSWORD

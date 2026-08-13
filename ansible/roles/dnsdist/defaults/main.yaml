@@ -1,41 +1,23 @@
 ---
-# Fallback address for dnsdist frontend bind/web UI.
-# By default use the primary IPv4 fact; override per-host if needed.
+# Frontend/web bind address; override per host if needed.
 dnsdist_server_addr: "{{ ansible_facts['default_ipv4'].address | default(ansible_host) }}"
 
 dnsdist_repo_base_url: "http://repo.powerdns.com/ubuntu"
 dnsdist_repo_release: "{{ ansible_facts['distribution_release'] | default('noble') }}"
-# Release train, not a version pin. PowerDNS supports a train for one year after
-# the next major release, so this has to be moved deliberately: dnsdist-20 went
-# critical-fixes-only when 2.1.0 shipped (2026-07-02).
+# Release train; advance deliberately when support status changes.
 dnsdist_repo_channel: "dnsdist-21"
 dnsdist_repo_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc"
-# Checksum of the key file, verified 2026-07-31. This is the trust anchor for the
-# whole APT repository, so pinning it means the bytes are checked rather than
-# only the TLS connection to the host serving them.
-#
-# It also stops get_url touching the network on every run. Contrary to the module
-# documentation, `force: false` alone does not skip a re-fetch: the early exit is
-# gated on a checksum being set, so without one it always issues a conditional
-# GET and the role depends on external DNS and HTTPS every time it runs.
-#
-# If PowerDNS re-armours the file this fails loudly and the value needs updating.
-# A key rotation changes the URL instead (FD380FBB is the key ID).
+# APT trust-anchor checksum, verified 2026-07-31; also avoids repeat downloads.
+# Re-armouring requires a checksum update; key rotation changes the URL.
 dnsdist_repo_key_sha256: "efeb5b1451c76de1dac8eefaddba5af5549e8fd93484728744ea7b4923decae8"
-# Deliberately free of the channel name. The signing key is the same for every
-# PowerDNS train and the pin matches on origin, not suite, so neither file has
-# any reason to be renamed when the train moves.
+# Shared across release trains; the pin matches origin, not suite.
 dnsdist_repo_key_path: "/etc/apt/keyrings/powerdns-pub.asc"
 dnsdist_repo_pin_path: "/etc/apt/preferences.d/powerdns"
 
-# The service account the dnsdist package creates. dnsdist reads its config as
-# this user rather than as root, which is why the config cannot simply be
-# root-only. Its primary group is resolved at run time, not hard-coded.
+# Package account used to read config; resolve its primary group at runtime.
 dnsdist_service_user: "_dnsdist"
 
-# Lists, not comma-separated strings: the YAML config takes `acl` as a sequence.
-# webserver.acl defaults to 127.0.0.1/::1 upstream, so dropping it would break the
-# Prometheus scrape rather than open the webserver up — but it must still be set.
+# YAML ACL sequences; web ACL must include the Prometheus source.
 dnsdist_mgmt_acl:
   - "127.0.0.1/32"
   - "192.168.0.0/16"
@@ -47,17 +29,7 @@ dnsdist_internal_domains:
   - "home.butaco.net."
   - "prd.butaco.net."
   - "sandbox.butaco.net."
-  # LAN reverse space, served by pdns auth; PTR records managed via dnscontrol.
-  # One suffix covers every 192.168.x.0/24 segment — the management LAN plus the
-  # per-node SimpleZones in proxmox_simplezone_routes_map — matching the scope
-  # already used by dnsdist_mgmt_acl. SuffixMatchNode matches on label suffix,
-  # so listing each /24 separately would be redundant.
-  #
-  # pdns holds the same /16 as one aggregated zone, so an address that is not
-  # declared in dnscontrol still gets an authoritative NXDOMAIN rather than
-  # REFUSED. Keeping this suffix and pdns' authority identical in scope is what
-  # guarantees that: any narrower zone set in pdns would make the addresses
-  # outside it answer REFUSED instead.
+  # Aggregated LAN reverse zone; keep scope aligned with pdns authority.
   - "168.192.in-addr.arpa."
 dnsdist_internal_check_name: "ns1.home.butaco.net."
 
@@ -66,11 +38,7 @@ dnsdist_web_password: "{{ DNSDIST_WEB_PASSWORD }}"
 dnsdist_web_api_key: "{{ DNSDIST_WEB_API_KEY }}"
 dnsdist_console_key: "{{ DNSDIST_CONSOLE_KEY }}"
 
-# Backend Servers Configuration
-# Builds one backend entry per element in secondary_auth_servers.
-# Adding or removing a secondary only requires updating that list.
-# The YAML config takes `pools` as a sequence and folds the Lua checkName /
-# checkType pair into a nested `health_checks` mapping.
+# Internal backends derived from secondary_auth_servers.
 dnsdist_internal_backends: >-
   {{ secondary_auth_servers
      | map('combine', {
@@ -80,9 +48,7 @@ dnsdist_internal_backends: >-
        })
      | list }}
 
-# Build the default pool from the canonical resolver inventory. Each frontend
-# prefers its node-local resolver (order 1) and uses the peer resolver as a
-# standby (order 2). firstAvailable selects the lowest-order healthy server.
+# Prefer the node-local resolver; use peers as firstAvailable standbys.
 dnsdist_default_health_checks:
   qname: "{{ dnsdist_default_check_name }}"
   qtype: "{{ dnsdist_default_check_type }}"
@@ -111,35 +77,10 @@ dnsdist_standby_backends: >-
 
 dnsdist_default_backends: "{{ [dnsdist_preferred_backend] + dnsdist_standby_backends }}"
 
-# The whole dnsdist configuration as data. templates/dnsdist.yml.j2 does nothing
-# but render this through to_nice_yaml, so there is no hand-written YAML to get
-# the indentation wrong in, and the rules below are reviewable as a list.
-#
-# Selector and action `type` values are PascalCase enum variants with the
-# Selector/Action suffix dropped (QNameSuffixSelector -> QNameSuffix,
-# DnstapLogAction -> DnstapLog). The YAML reference shows some of them
-# hyphen-lowercased; that is wrong, and dnsdist rejects them. Query rules,
-# response rules and selectors are three separate enums, so a name is only valid
-# in its own section and needs no suffix to disambiguate. When a type name is
-# wrong the parse error lists every valid variant, which is the reliable source.
-#
-# Rule order is load-bearing:
-#   1. dnstap on every query   (DnstapLog has no stop_processing field and
-#      always falls through, so it must come first to see the query exactly
-#      as the client sent it, before rule 2 rewrites the RD bit)
-#   2. internal SetNoRecurse   (non-terminal, falls through to 3)
-#   3. internal Pool           (stop_processing: true, routing decision is final)
-#
-# response_rules (below) is a separate chain that dnsdist evaluates on every
-# response regardless of stop_processing in query_rules, so its own dnstap
-# rule already saw internal-zone responses, real client address included,
-# even before rule 1 above existed. Verified against production Loki data
-# (2026-08-05): internal-zone qnames appeared only as CLIENT_RESPONSE
-# operations, never CLIENT_QUERY, until this reorder.
+# Data rendered directly by dnsdist.yml.j2. Enum types use PascalCase without suffixes.
+# Query rule order is required: DnstapLog, SetNoRecurse, then terminal Pool.
 dnsdist_config:
-  # No top-level `acl`: the Lua config never set one either, so the upstream
-  # default (RFC1918 + loopback + link-local + ULA) applies. Spelling it out here
-  # would freeze a copy that silently drifts from upstream on the next release.
+  # Omit top-level ACL to retain upstream private-network defaults.
   binds:
     - listen_address: "{{ dnsdist_server_addr }}:53"
       protocol: Do53
@@ -158,17 +99,13 @@ dnsdist_config:
     acl: "{{ dnsdist_console_acl }}"
 
   webserver:
-    # Plural, and a sequence: the webserver takes listen_addresses, unlike the
-    # console section above which takes a single listen_address.
+    # Webserver uses plural listen_addresses, unlike console.
     listen_addresses:
       - "{{ dnsdist_server_addr }}:8083"
     password: "{{ dnsdist_web_password }}"
     api_key: "{{ dnsdist_web_api_key }}"
     acl: "{{ dnsdist_mgmt_acl }}"
-    # Both false on purpose. The ScrapeConfig in k8s/monitoring/charts/dnsdist
-    # scrapes /metrics with no authorization stanza, so requiring auth blanks the
-    # dashboards; the HTML dashboard is kept browsable on the LAN. Reach is
-    # bounded by acl above, and password/api_key still guard /api.
+    # LAN ACL protects unauthenticated metrics/dashboard; API remains credentialed.
     stats_require_authentication: false
     dashboard_requires_authentication: false
 
@@ -201,9 +138,7 @@ dnsdist_config:
         pool_name: internal
         stop_processing: true
 
-  # response_rules has its own action enum, so the dnstap variant is plain
-  # DnstapLog here too — there is no DnstapLogResponse. The Lua names
-  # (DnstapLogAction / DnstapLogResponseAction) do not carry over.
+  # Response action enum is DnstapLog, not the Lua DnstapLogResponseAction.
   response_rules:
     - name: dnstap-responses
       selector:

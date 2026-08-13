@@ -5,10 +5,7 @@ caddy_env_file: /etc/caddy/caddy.env
 caddy_user: caddy
 caddy_group: caddy
 
-# Manage TLS certificates through ACME (Let's Encrypt + Cloudflare DNS-01).
-# Set to false for an HTTP-only host: sites are then served as
-# `http://<hostname>` on port 80, Caddy's automatic HTTPS never triggers, and
-# the Cloudflare API token is not required.
+# Enable ACME DNS-01; false serves HTTP only and needs no Cloudflare token.
 caddy_acme_enabled: true
 
 # ACME account email (used for Let's Encrypt expiry notifications)
@@ -19,10 +16,8 @@ caddy_acme_email: ""
 # Let's Encrypt production: https://acme-v02.api.letsencrypt.org/directory
 caddy_acme_ca: "https://acme-v02.api.letsencrypt.org/directory"
 
-# List of reverse proxy upstreams
-# Override in group_vars/caddy.yaml
+# Reverse-proxy upstreams; override in group_vars/caddy.yaml.
 caddy_upstreams: []
 
-# List of redirect-only sites (no backend, Caddy answers with a 3xx itself)
-# Override in group_vars/caddy.yaml
+# Redirect-only sites; override in group_vars/caddy.yaml.
 caddy_redirects: []

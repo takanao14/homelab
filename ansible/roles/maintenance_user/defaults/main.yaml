@@ -9,8 +9,7 @@ maintenance_ssh_key_path: >- # noqa var-naming[no-role-prefix]
   {{ lookup('env', 'SSH_KEY_PATH')
      | default(lookup('vars', 'SSH_KEY_PATH', default=''), true) }}
 maintenance_ssh_key: "" # noqa var-naming[no-role-prefix]
-# If maintenance_ssh_key is not provided, it will look up maintenance_ssh_key_path
-# with expanduser filter.
+# Fall back to expanded maintenance_ssh_key_path when no key is provided.
 
-# Whether to force user creation even if not an LXC container
+# Allow creation outside LXC.
 maintenance_user_force: false

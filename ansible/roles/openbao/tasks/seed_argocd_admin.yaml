@@ -1,11 +1,5 @@
 ---
-# The ArgoCD admin password is seeded here rather than through openbao_secrets
-# because admin.passwordMtime must move only when the hash actually changes.
-# ArgoCD rejects every session token issued before that timestamp, so stamping
-# it on every run would log all admins out whenever an unrelated secret is
-# re-seeded — and the generic seed loop rewrites its whole list unconditionally.
-# Skipping the write when nothing changed also keeps the KV version history
-# meaningful: a new version means the password really was rotated.
+# Write Argo CD hash/mtime only on rotation to preserve sessions and KV history.
 
 - name: Log in as the Ansible admin user
   ansible.builtin.include_tasks: login_admin.yaml
@@ -22,9 +16,7 @@
   loop_control:
     label: "{{ item.env }}"
   register: openbao_argocd_admin_current
-  # An absent path is the expected first-run state, not an error. A genuine
-  # failure (OpenBao unreachable, permission denied) also lands here with empty
-  # stdout, which makes the write below run and fail loudly with the real cause.
+  # Missing path triggers first write; other failures surface during that write.
   failed_when: false
   changed_when: false
   no_log: true
@@ -47,8 +39,7 @@
   register: openbao_argocd_admin_results
   ignore_errors: true
 
-# The write task is no_log, so failures are censored. Re-report only the
-# environment name and the bao CLI stderr, which never contain secret values.
+# Re-report only non-secret environment and stderr after censored write failures.
 - name: Report ArgoCD admin seed failures without exposing secret values
   ansible.builtin.fail:
     msg: |

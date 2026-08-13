@@ -27,10 +27,7 @@ netbox_mcp_group: mcp-readers
 netbox_mcp_group_description: "Read-only API access for MCP service accounts"
 netbox_mcp_permission_name: mcp-readers-view
 netbox_mcp_permission_description: "View-only access to infrastructure objects"
-# Every model in these apps is granted `view`. Apps holding credentials or
-# accounts (users, core, extras) are deliberately left out. Note that NetBox's
-# built-in DEFAULT_PERMISSIONS still lets any account see its own token row;
-# `write_enabled = False` on the token is what keeps it read-only. See README.
+# Grant model view by app; omit credential/account apps. Token write_enabled enforces read-only.
 netbox_mcp_permission_app_labels:
   - circuits
   - dcim

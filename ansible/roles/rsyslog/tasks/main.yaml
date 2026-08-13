@@ -6,11 +6,7 @@
     state: present
     update_cache: true
 
-# The imjournal input() object requires rsyslog >= 8.2312.0 (Proxmox VE 9 /
-# Debian 13). Older rsyslog (Proxmox VE 8 / Debian 12 ships 8.2302) rejects it
-# in `rsyslogd -N1`, so detect the version and let the template fall back to the
-# legacy $RuleSet binding. Revision/epoch suffixes (e.g. "-1+deb12u1") are
-# stripped before the comparison.
+# Use input() on rsyslog >=8.2312; older versions fall back to legacy $RuleSet.
 - name: Gather rsyslog package version
   become: true
   ansible.builtin.package_facts:

@@ -81,9 +81,7 @@
   changed_when: true
   when: rocm_gpg_key_download.changed or not rocm_gpg_keyring.stat.exists
 
-# ROCm 7.14 moved its apt repo to repo.amd.com under a separate signing key
-# from the repo.radeon.com key above, which still signs the amdgpu and
-# device-metrics-exporter repos.
+# ROCm 7.14+ repo uses a separate key from amdgpu/device-metrics.
 - name: Download ROCm 7.14+ apt repository GPG key
   become: true
   ansible.builtin.get_url:
@@ -119,19 +117,8 @@
     owner: root
     group: root
 
-# Legacy "rocm"/"rocm-core" packages (ROCm <= 7.2.4, from the old
-# repo.radeon.com/rocm/apt/<version> repo) are not upgraded in place by the
-# new gfx-specific amdrocm<series>-<target> packages; AMD's install docs
-# require removing them before installing the new package set.
-#
-# Do NOT set autoremove here: rocm is a metapackage whose dev components pull
-# in general build tooling (cmake, python3-dev, opencv, gstreamer, ...), and
-# autoremove would drag all of that out in one huge dpkg transaction. On a
-# host whose amdgpu-dkms cannot build against the running kernel, that large
-# transaction also trips a kernel-header reconfigure and leaves dpkg broken.
-# Remove only the ROCm meta-packages; orphaned old ROCm libs live under the
-# flat /opt/rocm and do not collide with the versioned /opt/rocm/*/ layout of
-# 7.14.
+# Remove legacy ROCm metapackages before gfx-specific packages; never autoremove
+# their shared build dependencies. Old flat /opt/rocm does not conflict.
 - name: Purge legacy ROCm packages predating the repo.amd.com apt repo
   become: true
   ansible.builtin.apt:
@@ -206,11 +193,7 @@
       (rocm_apt_repository.changed | default(false))
       or (rocm_deb822_repositories.changed | default(false))
 
-# Install the specific AMD-supported HWE kernel and its headers/modules
-# before building amdgpu-dkms. dkms builds the module for every installed
-# kernel that has headers, so an unsupported kernel left installed (e.g. a
-# 7.0 pulled in by the rolling HWE meta) would make the amdgpu build fail and
-# break dpkg. Pin one supported kernel via rocm_hwe_kernel.
+# Install only the pinned AMD-supported kernel/headers before DKMS builds.
 - name: Install the ROCm-supported pinned HWE kernel
   become: true
   ansible.builtin.apt:
@@ -221,9 +204,7 @@
     state: present
     update_cache: true
 
-# Hold the rolling HWE metapackages so future apt upgrades don't reintroduce
-# an unsupported kernel. Removal of an already-installed unsupported kernel is
-# a one-time manual step: it can't be removed while it is the running kernel.
+# Hold rolling HWE; remove an already-running unsupported kernel manually after reboot.
 - name: Hold rolling HWE metapackages at their current version
   become: true
   ansible.builtin.dpkg_selections:
@@ -291,11 +272,7 @@
   async: 3600
   poll: 30
 
-# ROCm 7.14 installs each component into its own versioned subdirectory
-# under /opt/rocm (e.g. /opt/rocm/core-7.14/lib) instead of a flat
-# /opt/rocm/{lib,lib64}, and the exact set of subdirectories depends on
-# which component/gfx packages are installed. Discover them rather than
-# hardcoding names ldconfig itself cannot glob-expand.
+# Discover ROCm 7.14 component library directories instead of hardcoding them.
 - name: Discover ROCm component library directories
   ansible.builtin.command:
     cmd: find /opt/rocm -mindepth 2 -maxdepth 2 -type d -name lib
@@ -370,8 +347,7 @@
 - name: Verify installed ROCm package version
   ansible.builtin.assert:
     that:
-      # Debian package version carries a "-<revision>" suffix (e.g. 7.14.0-3)
-      # not present in rocm_version, so match on the upstream version prefix.
+      # Match upstream prefix because Debian adds a revision suffix.
       - rocm_installed_version.stdout.startswith(rocm_version)
     fail_msg: "Installed ROCm {{ rocm_installed_version.stdout }} does not match requested {{ rocm_version }}."
     success_msg: "ROCm {{ rocm_installed_version.stdout }} is installed."

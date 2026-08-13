@@ -1,6 +1,5 @@
 ---
-# Authenticate once per play and retain the short-lived token only as an
-# in-memory fact. Subsequent includes reuse the fact through the block guard.
+# Authenticate once and retain the short-lived token only in memory.
 
 - name: Log in to OpenBao as the Ansible admin user
   when: openbao_admin_token is not defined

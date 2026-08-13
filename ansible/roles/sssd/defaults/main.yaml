@@ -9,65 +9,37 @@ sssd_packages:
 
 sssd_domain: home.butaco.net
 
-# Authentik LDAP Outpost (see roles/authentik). LDAPS only — plaintext 389 is
-# not published by that role (決定事項: LDAPSのみ). Dialled by the LDAP
-# service name rather than the host name so the outpost can move hosts with
-# only a DNS change; it is also the CN/SAN of the certificate below, which
-# `ldap_tls_reqcert = demand` verifies against.
+# Authentik LDAPS service name; also the verified certificate CN/SAN.
 sssd_ldap_uri: ldaps://ldap.home.butaco.net:636
 sssd_ldap_search_base: dc=ldap,dc=home,dc=butaco,dc=net
 
-# The `homelab-ldap` certificate the authentik role generates for the LDAP
-# provider (CN/SAN = ldap.home.butaco.net). Self-signed, so SSSD trusts this
-# exact certificate rather than a CA chain. Public data — safe in git.
-# It expires (authentik_ldap_cert_validity_days, default 1 year): monitor
-# the LDAPS endpoint's expiry rather than relying on remembering to rotate
-# (see the plan's 可用性と復旧 section, "TLS証明書期限の監視").
+# Public self-signed LDAPS certificate; monitor expiry and trust it directly.
 sssd_ldap_ca_cert_src: authentik-ldap-ca.pem
 sssd_ldap_ca_cert_path: /etc/ssl/certs/authentik-ldap-ca.pem
 
-# Shared bind account for directory lookups (getent/id for arbitrary users),
-# separate from each user's own auth bind. Created by the authentik role's
-# ldap.yaml blueprint; the password comes from the same SOPS group_vars.
+# Shared lookup bind account from ldap.yaml; password comes from SOPS.
 sssd_ldap_bind_dn: cn=ldapbind,ou=users,dc=ldap,dc=home,dc=butaco,dc=net
 
-# Authentik exposes the login name as `cn`; `uid` holds an opaque hash, so it
-# must NOT be used as the username attribute. Group membership is on the user
-# entry (memberOf), and real (non-virtual) groups live under ou=groups.
+# Use cn for login; uid is opaque. Membership uses memberOf and real groups.
 sssd_ldap_user_name_attr: cn
 sssd_ldap_group_name_attr: cn
 sssd_ldap_user_object_class: user
 sssd_ldap_group_object_class: group
 
-# Restricts login to this Authentik group — the PoC pass criterion
-# "linux-users以外のLDAP userはLinuxへログインできない".
+# Restrict Linux login to this Authentik group.
 sssd_allowed_login_group: lab-linux-users
 
-# Authentik's LDAP provider serves users and groups but NOT central sudo
-# rules (see the plan's 「Authentik単体で提供しない機能」), so sudo stays in
-# Ansible-managed sudoers keyed off the Authentik group name.
-# Password-required (not NOPASSWD): these are LDAP identities whose password
-# lives in Authentik, so `sudo` re-verifies the operator through it.
+# Manage sudo locally by Authentik group; require the LDAP password.
 sssd_sudo_group: lab-linux-admins
 sssd_sudoers_file: /etc/sudoers.d/60-lab-linux-admins
 
-# 決定事項16: user無効化後の最大残存を許容範囲に収める。break-glassの
-# 代替としては扱わない。
+# Limit disabled-user cache lifetime; not a break-glass mechanism.
 sssd_offline_credentials_expiration: 2
 sssd_home_dir_template: /home/%u
 sssd_default_shell: /bin/bash
 
-# Break-glass: a purely local account that keeps working when Authentik or
-# the LDAP outpost is down (the plan's 可用性と復旧 lists
-# 「ローカルbreak-glassアカウント」as a prerequisite). Deliberately managed
-# here rather than left to the cloud-init account the VM was built with, so
-# its key can be rotated and its presence re-asserted on every run instead of
-# depending on a value only set at VM creation time.
-# NOPASSWD, because in a real outage the operator may not have a working
-# password path — the SSH key is the control.
+# Local NOPASSWD recovery account, managed continuously for key rotation.
 sssd_breakglass_user: breakglass
 sssd_breakglass_sudoers_file: /etc/sudoers.d/10-breakglass
-# Public keys authorised for the break-glass account. Public data, so it
-# lives in plain group_vars rather than SOPS. Setting this to an empty list
-# leaves any existing keys untouched rather than locking the account out.
+# Public recovery keys; an empty list preserves existing keys.
 sssd_breakglass_authorized_keys: []

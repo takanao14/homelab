@@ -1,13 +1,5 @@
 ---
-# The dns group (dns_auth, dns_resolver, dnsdist) is a redundant pool that
-# collectively provides name resolution, so hosts are upgraded/rebooted one
-# at a time to keep resolution available throughout.
-#
-# Phases are tagged so a run that stopped partway can be resumed at the phase
-# that failed. Unlike ops-shutdown.yaml the phases are independent — no phase
-# depends on an earlier one having run — so they are safe to invoke in any
-# order or on their own:
-#
+# Upgrade redundant DNS hosts one at a time. Tagged phases are independent:
 #   --tags dns     the redundant DNS pool, one host at a time
 #   --tags k8s     k0s workers (drained) then controllers
 #   --tags others  everything else, in parallel
@@ -20,13 +12,7 @@
     - name: Run package upgrade tasks
       ansible.builtin.import_tasks: tasks/package_upgrade.yaml
 
-# k0s workers carry the cluster's workloads and storage, so they are drained
-# before the reboot and restored afterwards. serial: 1 keeps the blast radius to
-# one node: prd has only two general workers, while LocalPV workloads in both
-# environments must recover on the worker that owns their volume.
-#
-# tasks/k8s_node_restore.yaml blocks until the node is back and its storage has
-# recovered, which is what makes serial: 1 safe rather than merely sequential.
+# Drain and restore k0s workers serially, including node-local storage readiness.
 - name: Upgrade OS packages on k0s workers one at a time
   hosts: prd_k8s_worker:sandbox_k8s_worker
   serial: 1
@@ -42,10 +28,7 @@
     - name: Restore the node to service
       ansible.builtin.import_tasks: tasks/k8s_node_restore.yaml
 
-# Controllers run kine (embedded SQLite) and host no workloads, so there is
-# nothing to drain. They come after every worker on purpose: cordon/drain of the
-# workers talks to the API server these hosts provide, and rebooting a
-# single-controller cluster mid-run would strand the remaining nodes.
+# Reboot workload-free controllers after workers to preserve the drain API.
 - name: Upgrade OS packages on k0s controllers
   hosts: prd_k8s_controller:sandbox_k8s_controller
   serial: 1
@@ -55,8 +38,7 @@
     - name: Run package upgrade tasks
       ansible.builtin.import_tasks: tasks/package_upgrade.yaml
 
-# All other hosts run a single independent service each, so a simultaneous
-# reboot only takes down that one service either way — no need to serialize.
+# Upgrade independent single-service hosts in parallel.
 - name: Upgrade OS packages on remaining hosts
   hosts: all:!proxmox:!dns:!power_only:!prd_k8s:!sandbox_k8s
   any_errors_fatal: false

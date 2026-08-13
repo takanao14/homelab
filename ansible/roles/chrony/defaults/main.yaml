@@ -1,29 +1,16 @@
 ---
-# Whether this role installs the chrony package. Set to false for hosts that
-# already ship chrony and where installing must be avoided (e.g. Proxmox
-# hypervisors, configured via group_vars/proxmox.yaml). Configuration is still
-# applied regardless of this flag.
+# Install chrony; disable for preinstalled hosts such as Proxmox. Config still applies.
 chrony_install: true
 
-# Whether to stop/disable systemd-timesyncd. Only relevant on Debian/Ubuntu.
-# Set false for hosts that already run chrony (timesyncd already yielded), so we
-# don't perform needless systemd state changes on them (e.g. Proxmox).
+# Disable timesyncd on Debian/Ubuntu; skip when chrony already owns time sync.
 chrony_manage_timesyncd: true
 
-# NTP source(s) for clients. The on-prem router is the single internal NTP
-# server: clients point only at it (reachable from every internal segment), and
-# external-source redundancy is handled on the router itself (multiple upstreams
-# configured on the IX router), not per-client. This avoids every host egressing
-# to the internet and keeps a single, central time authority.
+# Internal router is the client authority; it owns upstream redundancy.
 chrony_servers:
   - 192.168.10.1
 
-# Optional extra source(s) appended after chrony_servers. Empty by default;
-# redundancy lives on the router, so clients normally need no external fallback.
+# Optional client sources; normally empty because the router owns redundancy.
 chrony_fallback_servers: []
 
-# Chrony can import extra NTP sources through source directories. Keep dynamic
-# sources enabled by default; DHCP-provided NTP servers are legitimate site
-# policy when the DHCP service is controlled. Add paths here only for hosts
-# where a dynamic source directory is known to be untrusted or noisy.
+# Exclude only untrusted/noisy dynamic source directories.
 chrony_disabled_source_dirs: []

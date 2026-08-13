@@ -1,3 +1,2 @@
 ---
-# Intentionally empty: this role only aggregates `vector` + `journald` via
-# meta/main.yaml dependencies. See README.md.
+# Empty aggregator; dependencies are in meta/main.yaml.

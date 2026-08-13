@@ -9,8 +9,7 @@ meshcentral_container_port: 443
 meshcentral_memory_limit: 1g
 meshcentral_systemd_memory_max: 1G
 meshcentral_cpu_limit: "1.0"
-# Ubuntu's generated containers-default profile denies crun the TERM/KILL
-# signals required to stop this container. Scope the workaround to MeshCentral.
+# Scope Ubuntu crun TERM/KILL AppArmor workaround to MeshCentral.
 meshcentral_apparmor_profile: unconfined
 
 meshcentral_data_root: /opt/meshcentral

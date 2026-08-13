@@ -1,7 +1,5 @@
 ---
-# Cross-cutting entry point for the system timezone. Service playbooks still
-# embed `- role: timezone` for self-contained provisioning; this playbook is the
-# bulk entry for applying/changing the timezone across all managed hosts at once.
+# Fleet timezone entry point; service playbooks embed the role for self-containment.
 - name: Set system timezone on all timezone-managed hosts
   hosts: timezone
   roles:

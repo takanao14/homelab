@@ -18,8 +18,7 @@
     mode: '0644'
   notify: Restart blackbox_exporter
 
-# CAP_NET_RAW is required for ICMP.
-# setcap is used instead of AmbientCapabilities as it works more reliably.
+# Grant CAP_NET_RAW directly for reliable ICMP probes.
 - name: Grant CAP_NET_RAW to blackbox_exporter binary (for ICMP)
   become: true
   community.general.capabilities:

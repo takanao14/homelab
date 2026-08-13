@@ -19,68 +19,58 @@ openbao_tls_disable: true
 openbao_tls_cert_file: "{{ openbao_config_dir }}/tls/cert.pem"
 openbao_tls_key_file: "{{ openbao_config_dir }}/tls/key.pem"
 
-# How long Prometheus-format metrics stay in memory before eviction.
+# Prometheus metric retention.
 openbao_prometheus_retention_time: "60s"
 
-# List of other cluster node API addresses for Raft auto-join
+# Peer API addresses for Raft auto-join.
 # e.g. ["https://192.168.10.1:8200", "https://192.168.10.2:8200"]
 openbao_raft_retry_join: []
 
-# Static seal key ID (permanent identifier, update when rotating key)
+# Permanent seal key ID; update on rotation.
 openbao_seal_key_id: "key-1"
 
-# Static seal key: 32 raw bytes, base64-encoded (set via group_vars with SOPS encryption)
+# Base64-encoded 32-byte seal key from SOPS group_vars.
 # Generate with: openssl rand -base64 32
 openbao_seal_key: ""
 
-# Local API address used by bao CLI tasks running on the openbao host itself.
-# TLS is terminated by Caddy upstream, so the listener is plain HTTP.
+# Local CLI endpoint; Caddy terminates external TLS.
 openbao_local_addr: "http://127.0.0.1:{{ openbao_api_port }}"
 
-# Root token (set via group_vars with SOPS encryption; bootstrap/recovery only)
+# SOPS root token for bootstrap/recovery only.
 openbao_root_token: ""
 
-# Ansible userpass credentials. Override the password via SOPS-encrypted group_vars.
+# Ansible userpass credentials; password comes from SOPS.
 openbao_ansible_user: ansible-admin
 openbao_ansible_password: ""
 
-# Kubernetes auth configuration
-# prd cluster (mount path: kubernetes)
+# prd Kubernetes auth.
 openbao_k8s_host: ""
 
-# sandbox cluster (mount path: kubernetes-sandbox)
+# sandbox Kubernetes auth.
 openbao_k8s_sandbox_host: ""
 
-# All clusters to configure. Cluster CA certificates are harvested at runtime by
-# ops-openbao_register_cluster.yaml and injected into openbao_k8s_target_clusters.
+# Cluster CAs are harvested by ops-openbao_register_cluster.yaml.
 openbao_k8s_clusters:
   - name: prd
     mount_path: kubernetes
     host: "{{ openbao_k8s_host }}"
     ca_cert_file: "{{ openbao_config_dir }}/k8s-prd-ca.pem"
     role: k8s-eso
-    # k8s-argocd-prd is environment-scoped on purpose: it grants read on
-    # secret/k8s/argocd/prd/* only, so this cluster cannot read the sandbox
-    # ArgoCD admin password.
+    # Argo CD policy is restricted to the prd secret path.
     policies: "k8s-cert-manager,k8s-external-dns,k8s-homepage,k8s-monitoring,k8s-headlamp,k8s-gpu-switch,k8s-argocd-prd"
   - name: sandbox
     mount_path: kubernetes-sandbox
     host: "{{ openbao_k8s_sandbox_host }}"
     ca_cert_file: "{{ openbao_config_dir }}/k8s-sandbox-ca.pem"
     role: k8s-eso
-    # k8s-monitoring covers the Grafana admin secret read by the sandbox
-    # monitoring subset (secret/k8s/monitoring/grafana). k8s-argocd-sandbox is
-    # environment-scoped: read on secret/k8s/argocd/sandbox/* only.
+    # Argo CD policy is restricted to sandbox; monitoring includes Grafana.
     policies: "k8s-external-dns,k8s-homepage,k8s-monitoring,k8s-argocd-sandbox"
 
-# Policies retired from the repository. Keeping the deny-list declarative makes
-# configure idempotently remove server-side policy objects that are no longer
-# written or attached to any role.
+# Retired policies removed idempotently from the server.
 openbao_absent_policies:
   - k8s-longhorn-ui
 
-# Secrets to write into OpenBao KV (set via group_vars with SOPS encryption)
-# Each entry requires: path (KV path) and data (key/value pairs)
+# SOPS-backed KV entries: path and data.
 # Example:
 #   openbao_secrets:
 #     - path: secret/k8s/cert-manager/cloudflare
@@ -88,22 +78,15 @@ openbao_absent_policies:
 #         api-token: "xxxx"
 openbao_secrets: []
 
-# ArgoCD admin password, one entry per environment. Deliberately kept out of
-# openbao_secrets: seed_argocd_admin.yaml writes an entry only when the hash
-# changed and stamps mtime at that moment, whereas the generic loop above
-# rewrites its whole list on every run. Each entry requires: env (must match an
-# openbao_k8s_clusters[].name, so the generated k8s-argocd-<env> policy grants
-# read on it) and password (bcrypt hash — never the plaintext).
-# Written to secret/k8s/argocd/<env>/admin. Set via SOPS-encrypted group_vars.
+# Per-environment Argo CD bcrypt hashes; write only on change to preserve mtime.
+# env must match a configured cluster; stored under secret/k8s/argocd/<env>/admin.
 # Example:
 #   openbao_argocd_admin:
 #     - env: prd
 #       password: "$2a$10$..."
 openbao_argocd_admin: []
 
-# Userpass auth users (set via group_vars with SOPS encryption)
-# Each entry requires: username, password, policies (comma-separated)
-# Available policies: kv-admin (full CRUD on secret/), kv-read (read-only on secret/)
+# SOPS userpass entries: username, password, comma-separated policies.
 # Example:
 #   openbao_userpass_users:
 #     - username: alice

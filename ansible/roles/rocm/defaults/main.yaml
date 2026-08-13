@@ -1,24 +1,14 @@
 ---
-# ROCm moved off repo.radeon.com/rocm/apt/<version> to a single rolling
-# repo.amd.com/rocm/packages-multi-arch/<distro> "stable" apt repo starting
-# with 7.14. There is no version-numbered index left to scrape, so this is
-# updated manually until renovate.json's custom.rocm datasource is reworked.
+# ROCm 7.14+ uses a rolling stable repo; update manually until Renovate supports it.
 rocm_version: "7.14.0"
 rocm_package_state: latest
-# Device-specific ROCm package suffix for this host's GPU, e.g. gfx1200 for
-# RX 9060 XT. See https://rocm.docs.amd.com/en/latest/install/rocm.html for
-# the mapping from marketing name to gfx target.
+# GPU package suffix (for example gfx1200); see ROCm install docs.
 rocm_gpu_target: gfx1200
 # ROCm apt package name for this host, e.g. amdrocm7.14-gfx1200.
 rocm_package_name: "amdrocm{{ rocm_version.split('.')[:2] | join('.') }}-{{ rocm_gpu_target }}"
 rocm_ubuntu_codename: noble
-# ROCm/amdgpu only support specific kernels per release; for 24.04.4 that is
-# 6.8 (GA) or 6.17 (HWE). The rolling linux-generic-hwe-24.04 metapackage
-# tracks newer kernels (e.g. 7.0) that AMD does not support and on which
-# amdgpu-dkms fails to build, so pin a specific supported kernel here instead
-# of following the rolling meta. Update deliberately when AMD's support
-# matrix moves. The role asserts this is the running kernel before building
-# the driver.
+# Pin an AMD-supported kernel; rolling HWE can outrun DKMS support.
+# Update with AMD's matrix; the role asserts the running kernel.
 rocm_hwe_kernel: 6.17.0-35-generic
 # renovate: datasource=custom.amdgpu depName=amdgpu
 rocm_amdgpu_version: "31.40"

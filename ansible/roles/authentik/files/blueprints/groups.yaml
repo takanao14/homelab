@@ -4,9 +4,7 @@ metadata:
   labels:
     blueprints.goauthentik.io/instantiate: "true"
 entries:
-  # See docs/plans/identity-authentication-architecture.md, "グループと権限".
-  # None of these are Authentik superusers (that flag controls access to
-  # Authentik's own admin interface, not Linux/Kubernetes privilege).
+  # Lab privilege groups, not Authentik UI superusers; see the identity plan.
   - model: authentik_core.group
     identifiers:
       name: lab-platform-admins

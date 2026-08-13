@@ -5,6 +5,5 @@ podman_packages:
   - slirp4netns
   - fuse-overlayfs
 
-# Root system Quadlet unit directory (systemd auto-generates *.service units
-# from *.container/*.pod/*.volume files here on `systemctl daemon-reload`).
+# Root Quadlet directory; daemon-reload generates systemd services.
 podman_quadlet_dir: /etc/containers/systemd

@@ -1,6 +1,5 @@
 ---
-# Time synchronization for physical hosts and VMs. LXC containers are excluded
-# (they inherit the host clock and cannot set time themselves).
+# Time sync for physical hosts and VMs; LXC inherits the host clock.
 - name: Configure chrony time synchronization
   hosts: all:!lxc:!power_only
   any_errors_fatal: false

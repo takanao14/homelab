@@ -100,13 +100,7 @@
     name: dnsdist
     state: present
 
-# The config carries the console key and the webserver password, so it is not
-# world readable. dnsdist reads it as its own service account rather than as
-# root, so it has to stay readable by that account's primary group.
-#
-# Both lookups are read-only and resolve the group by GID instead of assuming a
-# name. If the package ever renames or drops the account, these fail here —
-# before the config is rewritten — leaving the running service untouched.
+# Resolve the service group before writing its credential-bearing 0640 config.
 - name: Resolve the dnsdist service account
   ansible.builtin.getent:
     database: passwd
@@ -125,20 +119,13 @@
     owner: root
     group: "{{ ansible_facts.getent_group | list | first }}"
     mode: "0640"
-    # dnsdist picks the config format from the file extension, and Ansible hands
-    # validate an extension-less temp file — which would be parsed as Lua and
-    # fail. Copy to a .yml name first. mktemp rather than a fixed path so this
-    # cannot be pre-created by another local user.
+    # Validate through a secure .yml temp path so dnsdist selects YAML format.
     validate: >-
       /bin/sh -c 'f=$(mktemp /tmp/dnsdist-validate.XXXXXX.yml) || exit 1;
       cp %s "$f"; /usr/bin/dnsdist --check-config -C "$f"; rc=$?; rm -f "$f"; exit $rc'
   notify: Restart dnsdist
 
-# dnsdist 2.1 prefers dnsdist.yml but still loads a same-named .lua alongside it,
-# and falls back to dnsdist.conf only when no YAML exists. Leaving the old Lua
-# file behind would therefore not change what runs, but it would leave a
-# plausible-looking config on disk that is no longer the running one. Remove it
-# after the YAML is in place, never before.
+# Remove legacy Lua only after YAML is installed to avoid ambiguous live config.
 - name: Remove the superseded Lua configuration
   become: true
   ansible.builtin.file:

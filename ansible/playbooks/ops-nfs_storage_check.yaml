@@ -1,6 +1,5 @@
 ---
-# Pre-deployment validation for an NFS export. This creates a uniquely named
-# probe file per node, verifies it reached stable storage, and removes it.
+# Validate NFS with a per-node probe file, then remove it.
 - name: Validate the NFS export from every enabled cluster node
   hosts: prd_k8s:sandbox_k8s
   any_errors_fatal: true

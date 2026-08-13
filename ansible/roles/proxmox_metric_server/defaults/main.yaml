@@ -1,10 +1,8 @@
 ---
-# Metric server definitions are cluster-scoped in Proxmox VE
-# (/etc/pve/status.cfg), so only the representative hosts should manage them.
+# Cluster-scoped metric definitions; only representative hosts manage them.
 proxmox_metric_server_manage_hosts: []
 
-# Desired external metric servers. Each item uses Proxmox API option names
-# directly, for example:
+# External metric servers using Proxmox API option names:
 # - id: alloy-otlp
 #   type: opentelemetry
 #   server: alloy-otlp.prd.butaco.net

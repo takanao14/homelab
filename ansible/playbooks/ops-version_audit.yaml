@@ -1,8 +1,5 @@
 ---
-# Read-only audit for version-managed Ansible components.
-# This playbook compares desired or repository candidate versions with the
-# versions currently installed on hosts. It does not call service roles or
-# change state.
+# Read-only comparison of desired/candidate and installed component versions.
 
 - name: Audit Forgejo version
   hosts: forgejo

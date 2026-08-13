@@ -1,8 +1,5 @@
 ---
-# Read-only NetBox identity for the MCP server (scripts/netbox-mcp.sh).
-#
-# Both scripts run through `manage.py shell` on stdin: NetBox has no Ansible
-# module, and stdin keeps the token plaintext out of the process arguments.
+# Read-only MCP identity; manage.py stdin keeps the token out of process arguments.
 - name: Provision the NetBox MCP group, permission, and user
   become: true
   ansible.builtin.command:

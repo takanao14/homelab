@@ -142,10 +142,7 @@
           }}
       changed_when: false
 
-    # Store-level validation: ESO performs an OpenBao login when validating the
-    # store, so a Ready ClusterSecretStore proves the re-registered auth works
-    # even when no ExternalSecret exists yet (fresh bootstrap runs this playbook
-    # before the ArgoCD apps that create them).
+    # A Ready store proves ESO login works before ExternalSecrets exist.
     - name: Wait for ClusterSecretStore to become Ready
       ansible.builtin.command:
         argv: >-

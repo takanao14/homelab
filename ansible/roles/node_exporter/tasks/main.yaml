@@ -27,14 +27,8 @@
     - ansible_check_mode
     - node_exporter_installed.rc != 0
 
-# Masking rather than removing the package: prometheus-node-exporter-collectors
-# produces the apt / nvme / smartmon textfile metrics that are actually scraped,
-# and its Recommends would drag ipmitool and openipmi back in on the next
-# dist-upgrade. A mask survives that, a removal does not.
-# LoadState rather than list-unit-files: openipmi ships an LSB init script that
-# systemd-sysv-generator turns into a unit, so there is no unit file to list,
-# and list-unit-files exits 0 even when nothing matches. systemctl show always
-# exits 0 and reports not-found / loaded / masked unambiguously.
+# Mask instead of remove: package recommendations would reinstall openipmi.
+# Use LoadState because the generated LSB unit has no unit file to list.
 - name: Check the state of openipmi.service
   become: true
   ansible.builtin.command:
@@ -58,9 +52,7 @@
     - node_exporter_mask_openipmi
     - "'LoadState=not-found' not in node_exporter_openipmi.stdout_lines"
 
-# Masking does not clear a failure that systemd has already recorded: the unit
-# stays in ActiveState=failed and keeps showing up in `systemctl list-units
-# --state=failed`, which is exactly the noise the mask is meant to remove.
+# Clear recorded failure after masking.
 - name: Clear the recorded openipmi.service failure
   become: true
   ansible.builtin.command:
@@ -82,10 +74,7 @@
     - ansible_facts['architecture'] == "x86_64"
     - node_exporter_install_lm_sensors | bool
 
-# Removal has to be explicit so hosts that were provisioned before the flag
-# existed converge too. The autoremove in playbooks/tasks/package_upgrade.yaml
-# never reclaims lm-sensors: the task above installs it by name, which marks it
-# manual, and autoremove only collects auto-marked packages.
+# Explicitly remove manually-marked lm-sensors when disabled.
 - name: Remove lm-sensors where hardware sensors are unavailable
   become: true
   ansible.builtin.apt:
@@ -113,10 +102,7 @@
     group: root
     mode: '0755'
 
-# Migration: the role used to write .prom files to a directory of its own while
-# the exporter kept reading the package default, so anything written here was
-# never scraped. Nothing else owns this path — it only ever held .prom files
-# that are regenerated on the next timer or cron tick.
+# Remove obsolete unscripted textfile path from the previous role layout.
 - name: Remove the superseded textfile collector directory
   become: true
   ansible.builtin.file:
@@ -133,8 +119,7 @@
     mode: '0755'
   when: ansible_facts['architecture'] in ["aarch64", "armv7l"]
 
-# Write to a temp file and rename so node_exporter never scrapes a
-# partially written .prom file (rename is atomic on the same filesystem).
+# Atomic rename prevents partial .prom scrapes.
 - name: Add cron job for Raspberry Pi monitoring script
   become: true
   ansible.builtin.cron:

@@ -1,6 +1,5 @@
 ---
-# Host packages required by enabled Kubernetes storage providers. Keep this
-# separate from cluster bootstrap: k0sctl owns k0s, while Ansible owns the OS.
+# OS packages for enabled storage providers; k0sctl still owns k0s.
 - name: Install Kubernetes storage client packages
   hosts: prd_k8s:sandbox_k8s
   any_errors_fatal: true

@@ -10,8 +10,7 @@
   ansible.builtin.systemd:
     daemon_reload: true
 
-# Only meaningful once the unit exists. On a first run the enable task starts
-# it instead, and in check mode the unit was never written at all.
+# Restart only existing units; first-run enable handles startup.
 - name: Restart pdns zone serial timer
   become: true
   ansible.builtin.systemd:

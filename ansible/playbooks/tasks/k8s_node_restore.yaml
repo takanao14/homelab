@@ -1,8 +1,5 @@
 ---
-# Bring a drained k0s worker back into service after a disruptive operation, and
-# block until its LocalPV mount and NFS client path are verified. With serial: 1
-# this prevents the next worker from being disrupted before the current worker
-# can safely accept its node-affine and shared-storage workloads again.
+# Restore a drained worker and verify storage before serial maintenance continues.
 
 - name: Wait for node to report Ready
   ansible.builtin.command:
@@ -21,9 +18,7 @@
   become: false
   changed_when: false
 
-# OpenEBS LocalPV serves PVs out of a separate mount. Confirm it is back before
-# the node accepts pods, so a workload cannot bind an empty directory on the
-# root filesystem and start with no data.
+# Verify LocalPV before uncordon to avoid binding an empty rootfs directory.
 - name: Verify the LocalPV data mount is present
   ansible.builtin.command:
     argv:

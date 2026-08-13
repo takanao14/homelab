@@ -25,25 +25,18 @@
   ansible.builtin.user:
     name: "{{ item.name }}"
     password: "{{ item.password | password_hash(users_password_scheme) }}"
-    # Only set the password when the account is created; existing users keep theirs.
+    # Set password only at creation.
     update_password: on_create
-    # Disabled accounts: lock the password so it cannot be used to authenticate.
-    # Re-enabling (state back to enabled) unlocks it, so this is reversible.
+    # Lock disabled accounts; re-enabling unlocks them.
     password_lock: "{{ _user_disabled }}"
-    # Expire the account (epoch day 1) when disabled. Account expiration is enforced
-    # at the PAM account stage, so it blocks ALL logins -- including SSH public-key
-    # auth, SFTP, and tunneling -- not just password. Enabled accounts are set to -1
-    # (no expiration) to explicitly clear any prior expiry, keeping this reversible.
+    # Expiry blocks all login methods; -1 reversibly clears it when enabled.
     expires: "{{ 1 if _user_disabled else -1 }}"
-    # Disabled accounts get a nologin shell; enabled accounts use their own/default.
+    # Disabled accounts use nologin.
     shell: >-
       {{ (('/usr/sbin/nologin' if ansible_facts['os_family'] == 'Debian'
            else '/sbin/nologin') if _user_disabled
           else (item.shell | default(users_default_shell))) }}
-    # Grant the admin group (sudo on Debian/Ubuntu, wheel on RHEL-family) only to
-    # enabled accounts that opt in with `sudo: true`. Enabled accounts append
-    # (preserving other supplementary groups); disabled accounts replace with an
-    # empty set, which strips sudo/wheel and revokes elevated access.
+    # Grant admin group only to enabled opt-in users; disabling revokes all groups.
     groups: >-
       {{ ([] if _user_disabled
           else ((['sudo'] if ansible_facts['os_family'] == 'Debian' else ['wheel'])

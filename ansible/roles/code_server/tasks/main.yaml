@@ -13,8 +13,7 @@
     database: passwd
     key: "{{ code_server_user }}"
 
-# Staged even under --check: the install task below needs the file to exist to
-# report anything useful, and a download into /tmp changes no managed state.
+# Stage in /tmp during check mode so install can report accurately.
 - name: Download code-server package
   become: true
   ansible.builtin.get_url:
@@ -68,8 +67,7 @@
     group: "{{ code_server_group }}"
     mode: '0700'
 
-# no_log keeps the argon2 hash out of --diff output, terminal scrollback and
-# CI logs; it is the password verifier and is kept SOPS-encrypted at rest.
+# Keep the SOPS-backed Argon2 verifier out of logs and diffs.
 - name: Deploy code-server configuration
   become: true
   no_log: true
@@ -90,8 +88,7 @@
     group: "{{ code_server_group }}"
     mode: '0755'
 
-# Seeded once and then left alone: editor preferences belong to the person
-# using the editor, so Ansible must not keep reverting their changes.
+# Seed preferences once; preserve user edits.
 - name: Seed code-server user settings
   become: true
   ansible.builtin.copy:
@@ -111,9 +108,7 @@
     group: root
     mode: '0755'
 
-# The packaged unit starts code-server with no argument, which reopens whatever
-# folder was last open. Pin the workspace so a fresh session lands in the repo
-# tree the coding agents work in.
+# Pin the initial workspace instead of reopening the last folder.
 - name: Deploy systemd override for the workspace folder
   become: true
   ansible.builtin.template:

@@ -63,8 +63,7 @@
   when: caddy_acme_enabled | bool
   notify: Restart caddy
 
-# Without ACME the Cloudflare token is not needed; drop any copy left behind by
-# a previous run so the credential does not linger on an HTTP-only host.
+# Remove stale Cloudflare credentials from HTTP-only hosts.
 - name: Remove caddy environment file when ACME is disabled
   become: true
   ansible.builtin.file:

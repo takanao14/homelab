@@ -1,27 +1,14 @@
 ---
-# Bring the homelab back after a planned outage — the counterpart to
-# ops-shutdown.yaml, but not its mirror image. Most of the fleet restarts on its
-# own: every guest in tf/ except the sandbox cluster has on_boot = true, so once
-# a hypervisor powers on its guests follow. What this playbook does is ensure
-# every cluster guest is running, wait in dependency order, and put the
-# Kubernetes workloads back. Explicit guest starts also support recovery after
-# stopping one cluster without rebooting its hypervisors.
-#
+# Planned-outage recovery: ensure cluster guests, wait by dependency, restore workloads.
 #   --tags hypervisors  wait for the Proxmox nodes to answer
 #   --tags guests       ensure cluster guests run, wait in dependency order
 #   --tags k8s          wait for the clusters to report every node Ready
 #   --tags workloads    scale workloads back to their recorded replica counts
 #   --tags prd          restore only the prd cluster and its guests
 #   --tags sandbox      restore only the sandbox cluster and its guests
-#
-# Powering the hypervisors on is out of scope, and does not need to be handled
-# here: every node has its BIOS AC-power-recovery set to power on, so mains
-# returning starts the fleet. That is the only remote path for pve and node5,
-# which have no AMT; node1-node4 can also be woken over AMT (192.168.110.x, see
-# k8s/monitoring/values/proxmox-nodes.yaml) if a node stays down.
-# rpi3/rpi4 restart with mains power.
+# Hypervisor power-on is external: BIOS AC recovery, or AMT for node1-node4.
 
-# Phase 1 — hypervisors. Nothing else can be reached until these answer.
+# Phase 1 — wait for hypervisors.
 - name: Wait for the Proxmox nodes to come back
   hosts: proxmox
   gather_facts: false
@@ -36,9 +23,7 @@
       delegate_to: localhost
       become: false
 
-# Phase 2a — explicitly ensure every cluster guest is running. This is
-# idempotent after a full outage (most prd VMs already returned through
-# on_boot), and is what makes recovery after an environment-only stop work.
+# Phase 2a — idempotently start cluster guests, including environment-only recovery.
 - name: Start prd cluster guests
   hosts: prd_k8s_hypervisor
   gather_facts: false
@@ -63,8 +48,7 @@
       vars:
         startup_guests: "{{ startup_sandbox_guests }}"
 
-# Phase 2b — guests, in the reverse of the shutdown order: DNS first, because
-# everything started after it expects name resolution to work.
+# Phase 2b — wait for guests in reverse shutdown order, DNS first.
 - name: Wait for guests in dependency order
   hosts: guest_shutdown_order
   serial: 1
@@ -81,13 +65,7 @@
       delegate_to: localhost
       become: false
 
-# Phase 3 — prd, brought all the way back before sandbox is touched. The
-# clusters are split into separate plays for the same reason ops-shutdown.yaml
-# splits them: a single play over both runs them in parallel, which makes the
-# order depend on an operator passing the right --limit. The order is reversed
-# here on purpose — the shutdown leads with sandbox so a failure lands on the
-# disposable cluster first, while recovery leads with prd because that is the
-# one whose downtime costs something.
+# Phase 3 — restore prd fully before sandbox.
 - name: Wait for the prd cluster to be ready
   hosts: prd_k8s_controller
   gather_facts: false

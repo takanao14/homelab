@@ -9,13 +9,7 @@
     state: present
   when: chrony_install | default(true)
 
-# On Debian/Ubuntu the default time sync is systemd-timesyncd. When we newly
-# install chrony, stop/disable timesyncd so the two NTP clients don't compete.
-# We deliberately do NOT mask it: installing chrony already deactivates timesyncd
-# naturally, so masking is needless aggressive systemd surgery. Hosts that
-# already run chrony (e.g. Proxmox) set chrony_manage_timesyncd=false.
-# Minimal images may not ship the unit at all, so tolerate a "not found" result
-# rather than relying on service_facts (which can misreport the unit's presence).
+# Stop timesyncd when installing chrony; do not mask it. Tolerate absent units.
 - name: Stop and disable systemd-timesyncd (replaced by chrony)
   become: true
   ansible.builtin.systemd:
@@ -70,8 +64,7 @@
       {% endfor %}
   notify: Restart chrony
 
-# Comment out active NTP sources in the main config so the configured homelab
-# source file remains the only static source definition.
+# Disable main-config sources so the managed file is authoritative.
 - name: Disable unmanaged NTP sources in main config
   become: true
   ansible.builtin.replace:

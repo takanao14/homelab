@@ -1,7 +1,5 @@
 ---
-# Declared as a dependency so it runs before this role's own tasks (which add
-# forgejo_runner_user to the docker group and expect docker to already be
-# installed and running).
+# Ensure Docker runs before adding the runner user to its group.
 dependencies:
   - role: docker
     vars:

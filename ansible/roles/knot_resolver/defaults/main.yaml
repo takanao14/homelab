@@ -17,34 +17,15 @@ knot_resolver_server_addr: "{{ ansible_host }}"
 knot_resolver_allowed_clients: []
 knot_resolver_workers: 1
 knot_resolver_cache_storage: "/var/cache/knot-resolver"
-# Raised from the 100M default after it was measured filling up: once the LMDB
-# map is full every stash fails, the cache is dropped, and the hit rate falls
-# from ~90% to ~40% until it refills. Meanwhile every query is resolved
-# recursively, which overloads upstream and answers up to half of all requests
-# with SERVFAIL. See the 2026-08-10 addendum to ADR-0030.
+# 100M exhausted LMDB and caused SERVFAIL/cache collapse; see ADR-0030 addendum.
 knot_resolver_cache_size: "256M"
 
-# Must land in the directory node_exporter actually reads. Falls back to the
-# same literal the node_exporter role defaults to, so this role stays usable in
-# a play that does not include it.
+# Write into node_exporter's textfile directory, with its package default fallback.
 knot_resolver_metrics_path: "{{ node_exporter_textfile_dir | default('/var/lib/prometheus/node-exporter') }}/knot_resolver.prom"
 knot_resolver_metrics_script_path: "/usr/local/sbin/knot-resolver-metrics"
-# The manager's control socket, which serves /metrics/prometheus. This is the
-# same endpoint kresctl talks to; the collector reads it directly to avoid
-# paying kresctl's startup cost on every run.
+# Read /metrics/prometheus directly from the manager socket.
 knot_resolver_metrics_socket_path: "/run/knot-resolver/kres-api.sock"
-# Half the 30s Prometheus scrape interval, deliberately. The information
-# ceiling is the scrape, so writing slower than it throws resolution away: at
-# the previous 1min every other scrape re-read an unchanged counter, making the
-# effective sample period 60s while every other target in the homelab ran at
-# 30s. Grafana derives $__rate_interval from the scrape interval and floors it
-# at 4x30s=120s, which is only 2x a 60s write period -- the bare Nyquist limit,
-# with no margin -- so short-window rates aliased: measured over 7 days,
-# resolver2 produced a zero rate in 18% of 2-minute windows while it was
-# demonstrably still answering queries. Writing at 15s guarantees every scrape
-# reads a value that is both fresh and different from the last, which pins the
-# effective sample period to the 30s scrape and makes Grafana's 4x floor correct
-# by construction. Going below 15s buys nothing Prometheus can observe.
+# Half the 30s scrape interval prevents unchanged samples and short-window aliasing.
 knot_resolver_metrics_interval: "15s"
 
 knot_resolver_config:

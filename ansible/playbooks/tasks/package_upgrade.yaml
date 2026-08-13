@@ -1,9 +1,5 @@
 ---
-# --- Baseline ---
-# Units that are already failed before anything is touched. Some hosts carry
-# permanently failed units that the upgrade neither caused nor can fix. Only a
-# service that was healthy before and is failed afterwards indicates the upgrade
-# broke something.
+# Baseline pre-existing failed units so only upgrade regressions fail.
 - name: Record systemd services already failed before the upgrade
   become: true
   ansible.builtin.command:
@@ -17,7 +13,7 @@
   register: package_upgrade_failed_services_before
   changed_when: false
 
-# --- Debian / Ubuntu (apt) ---
+# Debian / Ubuntu.
 - name: Update apt cache and upgrade packages
   ansible.builtin.apt:
     update_cache: true
@@ -33,9 +29,7 @@
   become: true
   when: ansible_facts['os_family'] == "Debian"
 
-# --- Rocky / RHEL (dnf) ---
-# dnf rejects autoremove together with state=latest, so upgrade and
-# autoremove are run as separate tasks.
+# Rocky / RHEL; dnf requires separate upgrade and autoremove tasks.
 - name: Upgrade all packages  # noqa package-latest
   ansible.builtin.dnf:
     name: "*"
@@ -50,7 +44,7 @@
   become: true
   when: ansible_facts['os_family'] == "RedHat"
 
-# needs-restarting ships with dnf-utils; required for the reboot check below.
+# dnf-utils provides needs-restarting.
 - name: Ensure dnf-utils is present
   ansible.builtin.dnf:
     name: dnf-utils
@@ -58,8 +52,7 @@
   become: true
   when: ansible_facts['os_family'] == "RedHat"
 
-# Exit code 1 means a reboot is required, 0 means not. failed_when disabled
-# so the non-zero code is treated as data rather than a task failure.
+# needs-restarting rc=1 means reboot required; treat it as data.
 - name: Check if reboot is required (RedHat)
   ansible.builtin.command: needs-restarting -r
   register: rhel_reboot_required
@@ -68,7 +61,7 @@
   become: true
   when: ansible_facts['os_family'] == "RedHat"
 
-# --- Common reboot ---
+# Common reboot.
 - name: Reboot if required
   ansible.builtin.reboot:
     reboot_timeout: "{{ package_upgrade_reboot_timeout }}"
@@ -77,9 +70,7 @@
     (ansible_facts['os_family'] == "Debian" and deb_reboot_required.stat.exists)
     or (ansible_facts['os_family'] == "RedHat" and rhel_reboot_required.rc == 1)
 
-# Package maintainer scripts may restart services even when no reboot is
-# required. Fail before the next serial host is upgraded if an updated service
-# did not come back cleanly.
+# Catch services broken by maintainer-script restarts before the next serial host.
 - name: Check for failed systemd services after package upgrades
   become: true
   ansible.builtin.command:
@@ -93,9 +84,7 @@
   register: package_upgrade_failed_services
   changed_when: false
 
-# list-units prints "<unit> <load> <active> <sub> <description>", so the unit
-# name is the first field; comparing names rather than whole lines keeps the
-# diff stable when a description changes.
+# Compare unit names, not descriptions from list-units.
 - name: Determine which services newly failed during the upgrade
   ansible.builtin.set_fact:
     package_upgrade_new_failures: >-

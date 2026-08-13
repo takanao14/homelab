@@ -113,10 +113,7 @@
     BAO_TOKEN: "{{ openbao_admin_token }}"
   changed_when: true
 
-# Scoped per environment, unlike the per-app policies above. Each cluster has
-# its own Argo CD admin password, so neither cluster's ESO should be able to
-# read the other's hash. Looping over openbao_k8s_clusters covers any
-# environment added there without a matching edit here.
+# Generate environment-scoped Argo CD policies from the cluster list.
 - name: Write per-environment policies for the ArgoCD admin password
   ansible.builtin.command:
     cmd: "{{ openbao_binary }} policy write k8s-argocd-{{ item.name }} -"

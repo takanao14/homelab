@@ -1,3 +1,2 @@
 ---
-# Intentionally empty. Used by operational playbooks that need this role's
-# defaults without running service configuration tasks.
+# Empty entry point for loading defaults without configuring the service.

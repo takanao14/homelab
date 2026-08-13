@@ -1,9 +1,5 @@
 ---
-# Prove that kubelet can mount the configured export before application
-# workloads are restored. Running the probe as a temporary Pod avoids relying
-# on an SSH sudo timestamp after every node has just rebooted. Rolling node
-# maintenance sets k8s_nfs_probe_node so the Pod binds directly to the restored,
-# still-cordoned worker; full-cluster startup may schedule it on any worker.
+# Probe NFS from a Pod before workloads; optionally pin it to the restored worker.
 
 - name: Probe the NFS export through kubelet
   block:

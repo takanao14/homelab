@@ -1,19 +1,9 @@
 ---
-# Host bring-up baseline: the fleet-uniform host hygiene that every managed host
-# should receive before any service is deployed on it. Run once per new host:
-#
+# Baseline a new host before deploying its service:
 #   ansible-playbook playbooks/bootstrap.yaml --limit <newhost>
-#
-# Each imported playbook keeps its own host pattern (all / all:!lxc / a group),
-# so combined with --limit only the plays that apply to the host actually run;
-# the rest are skipped automatically.
-#
-# Scope: only host-uniform baseline roles. Service-coupled concerns (the service
-# role and its vector/journald log shipping) stay in the per-service playbooks.
-# Narrow roles applied to a handful of hosts (rsyslog, maintenance_user) are run
-# via their own common-*.yaml and are intentionally not bundled here.
-#
-# apt_mirror runs first so the package installs in the later roles resolve.
+# Imports retain host patterns; --limit skips irrelevant plays.
+# Service-specific and narrow-scope roles stay in their own playbooks.
+# apt_mirror runs first for subsequent package installs.
 - name: Baseline - apt mirror
   import_playbook: common-apt_mirror.yaml
 - name: Baseline - timezone

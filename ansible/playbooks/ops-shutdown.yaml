@@ -1,33 +1,15 @@
 ---
-# Planned full shutdown of the homelab, for a scheduled power outage.
-#
-# Run from the control node (a workstation outside the fleet) — every phase
-# below removes something this playbook depends on, ending with the hypervisors
-# themselves. Phases are tagged so they can be run and reviewed one at a time:
-#
+# Planned outage shutdown, run from the external control node.
 #   --tags workloads    scale Kubernetes applications to zero
 #   --tags k8s          stop k0s on workers, then controllers
 #   --tags guests       power off VMs and LXC guests in dependency order
 #   --tags hypervisors  power off the Proxmox nodes
 #   --tags prd          stop only the prd cluster
 #   --tags sandbox      stop only the sandbox cluster
-#
-# Not covered, on purpose: rpi3 and rpi4 stay up to the very end so DHCP and the
-# blackbox probes outlive the fleet, and are powered off by hand afterwards.
-#
-# Coming back is not the reverse of this file — see ops-startup.yaml. Guests
-# other than the sandbox cluster have on_boot set in tf/, so most of the fleet
-# starts by itself once the hypervisors power on.
-#
-# The clusters are taken down one at a time, sandbox before prd, and each is
-# carried all the way to powered-off before the next is touched. Splitting them
-# into separate plays is what makes that structural: a single play over both
-# clusters runs them in parallel, so any_errors_fatal would abort only after prd
-# had already been changed, and the ordering would depend on an operator
-# remembering to pass the right --limit twice.
+# rpi3/rpi4 stay up for DHCP/probes and are powered off manually.
+# Startup differs; see ops-startup.yaml. Clusters stop serially: sandbox, then prd.
 
-# Phase 1 — sandbox. Scaling to zero rather than draining: with the whole fleet
-# going down there is nowhere to evict to. See tasks/k8s_workload_stop.yaml.
+# Phase 1 — sandbox. Scale to zero because no eviction target remains.
 - name: Stop application workloads on sandbox
   hosts: sandbox_k8s_controller
   gather_facts: false
@@ -51,12 +33,7 @@
       ansible.builtin.import_tasks: tasks/k8s_nfs_mounts_released.yaml
       when: "'nfs' in k8s_storage_providers"
 
-# Workers before the controller: stopping the controller first would strand the
-# remaining nodes without an API server. Each node is stopped cleanly and then
-# powered off — these are guests like any other, and leaving the VMs up would
-# only hand them to the hypervisor's own shutdown timeout in phase 4. serial is
-# deliberately not set within a cluster, since nothing there needs to stay
-# available once its workloads are down.
+# Stop workers before the API controller; nodes within each role stop in parallel.
 - name: Stop and power off sandbox k0s workers
   hosts: sandbox_k8s_worker
   any_errors_fatal: true
@@ -80,8 +57,7 @@
     - k8s
     - sandbox
   tasks:
-    # kine keeps its state in an embedded SQLite database. Stop the service and
-    # let it close the database before the host loses power.
+    # Stop kine cleanly before power loss closes its SQLite database.
     - name: Stop the k0s controller service
       become: true
       ansible.builtin.systemd_service:
@@ -91,8 +67,7 @@
     - name: Power off the controller
       ansible.builtin.import_tasks: tasks/host_poweroff.yaml
 
-# Phase 2 — prd, reached only once sandbox is fully down. Identical steps; the
-# differences between the clusters live in their group_vars.
+# Phase 2 — prd, after sandbox; differences live in group_vars.
 - name: Stop application workloads on prd
   hosts: prd_k8s_controller
   gather_facts: false
@@ -148,10 +123,7 @@
     - name: Power off the controller
       ansible.builtin.import_tasks: tasks/host_poweroff.yaml
 
-# Phase 3 — guests, in the order declared by guest_shutdown_order. serial: 1 so
-# each host is confirmed down before the one it depends on is stopped. Not split
-# per cluster: the k0s node VMs are already off by now, and what remains is
-# shared infrastructure that belongs to neither.
+# Phase 3 — shared guests in dependency order, confirmed down one at a time.
 - name: Power off VMs and LXC guests
   hosts: guest_shutdown_order
   serial: 1
@@ -161,18 +133,14 @@
     - name: Power off the guest
       ansible.builtin.import_tasks: tasks/host_poweroff.yaml
 
-# Phase 4 — hypervisors, in the order declared by proxmox_shutdown_order.
+# Phase 4 — hypervisors in declared shutdown order.
 - name: Power off the Proxmox nodes
   hosts: proxmox_shutdown_order
   serial: 1
   any_errors_fatal: true
   tags: hypervisors
   tasks:
-    # These are independent Proxmox installations, not a cluster (see
-    # group_vars/proxmox.yaml), so there is no quorum to lose and HA is not
-    # expected to be configured at all. Checked anyway because it is nearly
-    # free: were a cluster ever formed, powering nodes off with HA active would
-    # invite watchdog fencing and reboot the node instead of leaving it down.
+    # Guard against accidental HA, which could trigger watchdog fencing.
     - name: Check whether HA resources are configured
       become: true
       ansible.builtin.command:
@@ -192,10 +160,7 @@
           instead of leaving it down. Disable HA for these resources first.
         success_msg: No HA resources configured
 
-    # Guests Ansible does not manage are absent from guest_shutdown_order, so no
-    # earlier phase touched them. Stopped over ACPI here, at the point where
-    # every managed guest is already down — the safe moment for anything that
-    # might have been serving storage to them. See group_vars/proxmox.yaml.
+    # Stop unmanaged guests via ACPI after all managed guests.
     - name: Shut down guests that Ansible does not manage
       become: true
       ansible.builtin.shell:
@@ -215,8 +180,7 @@
       register: shutdown_unmanaged
       changed_when: shutdown_unmanaged.stdout == "stopped"
 
-    # Proxmox stops running guests itself on shutdown, but on its own timeout
-    # and in its own order. Anything still running here escaped phase 2 or 3.
+    # Reject guests missed by earlier phases before Proxmox chooses its own order.
     - name: Check for running guests
       become: true
       ansible.builtin.shell:

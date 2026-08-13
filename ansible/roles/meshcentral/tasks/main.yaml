@@ -78,10 +78,7 @@
     path: "{{ meshcentral_config_file }}"
   register: meshcentral_config
 
-# DYNAMIC_CONFIG generates config.json only on first start; later hostname
-# changes do not rewrite the persisted settings.cert value. Keep it aligned
-# with the canonical URL because MeshCentral rejects mismatched WebSocket
-# origins after login.
+# Keep persisted settings.cert aligned; DYNAMIC_CONFIG only initializes it once.
 - name: Align the MeshCentral certificate hostname
   become: true
   ansible.builtin.replace:

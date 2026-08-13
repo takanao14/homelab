@@ -1,6 +1,5 @@
 ---
-# Ensure a reviewed set of guests is running on one Proxmox host. Resolving the
-# VMID from the inventory-owned name keeps numeric Proxmox IDs out of Ansible.
+# Start reviewed guests by inventory name, resolving VMIDs dynamically.
 
 - name: Start the guest if it is not already running
   become: true

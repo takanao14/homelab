@@ -2,10 +2,7 @@
 # renovate: datasource=github-releases depName=coder/code-server
 code_server_version: "4.132.0"
 
-# Account that owns the editor session. code-server runs as this user so the
-# integrated terminal inherits the same ~/.claude, ~/.codex, SSH keys, git
-# config and SOPS AGE key the coding agents on this host already use. The
-# account is expected to exist; this role never creates it.
+# Existing editor account; inherits agent config, keys, git, and SOPS state.
 code_server_user: ""
 code_server_group: "{{ code_server_user }}"
 code_server_home: "/home/{{ code_server_user }}"
@@ -18,16 +15,11 @@ code_server_config_dir: "{{ code_server_home }}/.config/code-server"
 code_server_config: "{{ code_server_config_dir }}/config.yaml"
 code_server_settings_dir: "{{ code_server_home }}/.local/share/code-server/User"
 
-# Caddy terminates TLS on caddy1, which sits on a different subnet, so bind to
-# all interfaces rather than loopback. The service is never published to the
-# internet: it is reachable from the LAN and, remotely, only through vpngw.
+# Bind for cross-subnet Caddy; exposure remains LAN/VPN only.
 code_server_bind_addr: "0.0.0.0:8080"
 code_server_hostname: vscode.home.butaco.net
 
-# argon2 hash of the login password, not the password itself. See the role
-# README for how to generate it; the argon2 CLI hashes stdin verbatim, so a
-# stray trailing newline silently produces a hash nothing can log in with.
-# Store the result in group_vars/code_server.sops.yaml.
+# SOPS Argon2 password hash; avoid a trailing newline when generating it.
 code_server_hashed_password: ""
 
 code_server_deb_url: >-

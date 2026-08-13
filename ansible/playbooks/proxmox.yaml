@@ -23,7 +23,7 @@
       tags: proxmox_metric_server
 
   tasks:
-    # Set access permissions for Proxmox GUI (Web UI)
+    # Proxmox web UI access.
     - name: Get Proxmox users
       become: true
       ansible.builtin.command:

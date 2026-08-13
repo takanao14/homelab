@@ -1,17 +1,13 @@
 ---
-# Controlled DNS failure-mode tests for ADR-0030.
-#
-# Test one scenario:
+# Controlled DNS failover tests (ADR-0030). One scenario:
 #   ansible-playbook playbooks/ops-dns_failover_test.yaml \
 #     -e dns_failover_scenario=resolver1 \
 #     -e confirm_dns_disruption=true
-#
-# Test every scenario sequentially, restoring services after each one:
+# All scenarios, restoring after each:
 #   ansible-playbook playbooks/ops-dns_failover_test.yaml \
 #     -e dns_failover_scenario=all \
 #     -e confirm_dns_disruption=true
-#
-# Emergency recovery after controller interruption:
+# Emergency restore after interruption:
 #   ansible-playbook playbooks/ops-dns_failover_test.yaml \
 #     -e dns_failover_action=restore
 

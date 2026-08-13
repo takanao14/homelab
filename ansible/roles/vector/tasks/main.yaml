@@ -6,9 +6,7 @@
     state: present
     update_cache: true
 
-# In check mode the apt task above reports the pending package installation but
-# does not make it available to the next module in the same run. Probe the
-# library without changing the host so the dry-run can continue safely.
+# Probe apt library so check mode can continue before a reported install.
 - name: Check whether the python-debian library is available
   ansible.builtin.command:
     argv:
@@ -20,9 +18,7 @@
   failed_when: false
   check_mode: false
 
-# Declarative replacement for the setup.vector.dev installer script, which
-# piped an unpinned remote script into bash. Same repository and signing key:
-# the key URL always points at Datadog's currently active apt signing key.
+# Declarative replacement for the unpinned installer script, using its repository/key.
 - name: Add Vector apt repository
   become: true
   ansible.builtin.deb822_repository:
@@ -92,11 +88,7 @@
   notify: Restart vector
   when: not ansible_check_mode or vector_installed.rc == 0
 
-# The template module only runs its validator when the rendered file changes.
-# Validate the installed configuration on every normal run as well, so package
-# upgrades cannot leave an unchanged configuration incompatible with the new
-# Vector binary. The command module skips this task in check mode, where the
-# template task validates the candidate configuration when it changes.
+# Validate unchanged config after binary upgrades; template validation covers check mode.
 - name: Validate installed Vector configuration
   become: true
   ansible.builtin.command:

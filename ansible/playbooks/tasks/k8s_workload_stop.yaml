@@ -1,20 +1,8 @@
 ---
-# Bring a cluster's application workloads down cleanly ahead of a planned
-# outage. Scaling to zero, not draining: with every node about to be powered
-# off there is nowhere to evict to, so a drain would only produce Pending pods
-# and burn the eviction timeout. Scaling gives each pod its normal SIGTERM and
-# stops the controllers from recreating it.
-#
-# Every task delegates to the control node — this play's hosts stand in for
-# their cluster and are never connected to.
+# Scale applications to zero for graceful shutdown; no eviction target remains.
+# Tasks run on the control node; play hosts only identify clusters.
 
-# Checked before anything is touched. Namespaces are classified statically, not
-# discovered: scaling down whatever happens to be running would let a forgotten
-# infrastructure namespace be taken out mid-shutdown, and leave the cluster
-# depending on the restore to come back whole. Detection is dynamic so drift is
-# caught; the action stays static so it can only ever touch what was reviewed.
-# Namespaces without a Deployment or StatefulSet need no classification, which
-# keeps the lists to what actually gets scaled.
+# Detect drift dynamically but scale only reviewed namespace classifications.
 - name: List namespaces that carry scalable workloads
   ansible.builtin.command:
     argv:
@@ -73,10 +61,7 @@
       {{ k8s_shutdown_snapshot.results | map(attribute='stdout_lines')
          | flatten | reject('equalto', '') | list }}
 
-# Written before anything is scaled, and kept outside the repo so it survives
-# the fleet being off. ops-startup.yaml reads it to restore the counts: relying
-# on Argo CD alone would silently leave a workload at zero whenever its chart
-# does not set replicas explicitly.
+# Persist replicas before scaling; Argo CD cannot restore omitted counts.
 - name: Ensure the shutdown state directory exists
   ansible.builtin.file:
     path: "{{ k8s_shutdown_state_dir | expanduser }}"
@@ -93,9 +78,7 @@
   delegate_to: localhost
   become: false
 
-# Stopped only after the snapshot is on disk: scaling it first would record the
-# controller's own replica count as 0 and leave ops-startup.yaml with nothing
-# able to reconcile the cluster back.
+# Stop GitOps only after snapshotting its nonzero replica count.
 - name: Stop the GitOps controller so it cannot revert the scale-down
   ansible.builtin.command:
     argv:
@@ -124,9 +107,7 @@
   become: false
   changed_when: true
 
-# Waiting on "no pods in the namespace" would never finish: DaemonSet pods such
-# as node-exporter stay until the node itself stops. Watch each scaled workload
-# instead — .status.replicas disappears or reaches 0 once its pods are gone.
+# Wait on scaled workloads, not namespaces that retain DaemonSet pods.
 - name: Wait for scaled workloads to report no running replicas
   ansible.builtin.command:
     argv:

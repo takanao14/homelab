@@ -134,10 +134,7 @@
     group: pdns
     recurse: true
 
-# This file carries the API key, and pdns reads it as the pdns user, so group
-# read is all it needs. The role used to write it 0644 root:root, which would
-# have handed the key to every account on the guest; the hosts were already
-# 0640 root:pdns, so the role was the thing out of step.
+# API-key config is 0640 root:pdns for service access only.
 - name: Deploy pdns configuration
   become: true
   ansible.builtin.template:
@@ -159,10 +156,7 @@
 - name: Flush handlers to ensure pdns is restarted before API calls
   ansible.builtin.meta: flush_handlers
 
-# APT creates no unit here — these files are the unit — so on a first run there
-# is nothing for the handler or the enable task to act on until they have been
-# written for real. Read the state up front and gate on it, the same way the
-# node_exporter role defers its service checks.
+# Gate service actions until first-run unit files exist.
 - name: Check whether the zone serial timer is already installed
   become: true
   ansible.builtin.command:
@@ -241,12 +235,7 @@
   register: pdns_auth_autoprimaries
   changed_when: false
   when: pdns_role == 'secondary'
-  # The uri module does not declare check-mode support, so in check mode Ansible
-  # skips it and registers a result with no `json` key — which the next task's
-  # condition then dereferences and fails on. This is a read-only GET with
-  # changed_when: false, so running it for real in check mode is both safe and
-  # what makes the dry-run reflect reality. The POST below is deliberately left
-  # alone: it must stay skipped in check mode.
+  # Run the read-only GET in check mode so later conditions receive JSON; POST stays skipped.
   check_mode: false
 
 - name: Register autoprimary on secondary

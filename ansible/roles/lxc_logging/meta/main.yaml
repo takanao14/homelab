@@ -1,11 +1,6 @@
 ---
-# Aggregates the standard log-shipping stack for Vector-enabled LXC guests so
-# service playbooks declare it once instead of repeating `vector` + `journald`.
-#
-# Declared AFTER the service role in a play; role dependencies run immediately
-# before the declaring role, preserving the required `service -> vector ->
-# journald` order. Per-dependency tags keep `--tags vector` / `--tags journald`
-# working alongside the bundle tag `logging`.
+# Bundle Vector and journald for LXC. Declare after the service role to preserve
+# service -> vector -> journald ordering; dependency tags remain usable.
 dependencies:
   - role: vector
     tags: [logging, vector]

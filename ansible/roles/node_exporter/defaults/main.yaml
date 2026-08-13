@@ -3,7 +3,7 @@ node_exporter_package: prometheus-node-exporter
 node_exporter_service: prometheus-node-exporter
 node_exporter_binary_path: /usr/bin/prometheus-node-exporter
 
-# Arguments for prometheus-node-exporter, combined from three layers:
+# Exporter arguments, combined by scope:
 #   node_exporter_base_args  - common args for all hosts (group_vars/node_exporter)
 #   node_exporter_rpi_args   - RPi-specific args (group_vars/node_exporter_rpi)
 #   node_exporter_lxc_args   - LXC-specific args (group_vars/node_exporter_lxc)
@@ -13,20 +13,11 @@ node_exporter_rpi_args: []
 node_exporter_lxc_args: []
 node_exporter_extra_args: []
 
-# Where .prom files are written and where the exporter reads them. Both sides
-# must agree, so the template passes this same value as
-# --collector.textfile.directory. This is the Debian/Ubuntu package default,
-# which prometheus-node-exporter-collectors already writes into: pointing the
-# exporter anywhere else silently drops its apt / nvme / smartmon metrics.
+# Shared textfile path for exporter and package collectors.
 node_exporter_textfile_dir: /var/lib/prometheus/node-exporter
 
-# Install lm-sensors on x86_64 hosts so the hwmon collector can read hardware
-# temperatures. Set to false where that collector is disabled anyway, so the
-# package has no consumer (see group_vars/node_exporter_lxc.yaml).
+# Install lm-sensors for hwmon; disable when that collector is off.
 node_exporter_install_lm_sensors: true
 
-# prometheus-node-exporter recommends prometheus-node-exporter-collectors,
-# which recommends ipmitool, which pulls in openipmi. No host in this fleet has
-# a BMC, so openipmi's init script fails to load the IPMI drivers and the unit
-# sits permanently failed. Set to false on a host that does have a BMC.
+# Mask openipmi on hosts without a BMC; its recommended package leaves a failed unit.
 node_exporter_mask_openipmi: true

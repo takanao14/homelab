@@ -1,7 +1,5 @@
 ---
-# Break-glass first: everything after this point makes the host depend on
-# Authentik being reachable, so the local escape hatch is established (and
-# re-asserted on every run) before that dependency is introduced.
+# Establish local recovery before introducing the Authentik dependency.
 - name: Create the break-glass local account
   become: true
   ansible.builtin.user:
@@ -15,9 +13,7 @@
   ansible.builtin.copy:
     content: |
       # Managed by Ansible (sssd role). Do not edit manually.
-      # Local escape hatch for when Authentik/LDAP is unavailable. NOPASSWD
-      # because a working password path cannot be assumed during an outage;
-      # access is controlled by the SSH key alone.
+      # SSH-key recovery when Authentik/LDAP and password paths are unavailable.
       {{ sssd_breakglass_user }} ALL=(ALL) NOPASSWD: ALL
     dest: "{{ sssd_breakglass_sudoers_file }}"
     owner: root
@@ -30,9 +26,7 @@
   ansible.posix.authorized_key:
     user: "{{ sssd_breakglass_user }}"
     key: "{{ sssd_breakglass_authorized_keys | join('\n') }}"
-    # Prunes keys no longer listed, so revoking one is a config change —
-    # skipped entirely when the list is empty so an unset variable can never
-    # wipe the account's access.
+    # Prune revoked keys, but skip empty input to prevent lockout.
     exclusive: true
     state: present
   when: sssd_breakglass_authorized_keys | length > 0
@@ -62,16 +56,11 @@
     dest: /etc/sssd/sssd.conf
     owner: root
     group: root
-    # sssd refuses to start if this is group/world readable — it holds the
-    # LDAP bind password.
+    # Contains LDAP bind password; SSSD requires private permissions.
     mode: '0600'
   notify: Restart sssd
 
-# pam_mkhomedir creates the home directory on first login. Ubuntu ships this
-# as a pam-auth-update profile, so enabling it there keeps it consistent with
-# the distro's PAM stack management instead of hand-editing common-session.
-# pam-auth-update is itself idempotent; grep the resulting PAM stack for the
-# module to report changed only when it actually gets added.
+# Enable pam_mkhomedir through Ubuntu's PAM manager; report only real changes.
 - name: Check whether pam_mkhomedir is already enabled
   ansible.builtin.command:
     cmd: grep -q pam_mkhomedir /etc/pam.d/common-session
@@ -86,10 +75,7 @@
   when: sssd_mkhomedir_check.rc != 0
   changed_when: true
 
-# Authentik's LDAP provider cannot serve sudo rules, so sudo lives here and
-# is keyed off the Authentik group name (resolved through SSSD/NSS, hence
-# the %group syntax). visudo validation means a broken template fails the
-# play rather than locking sudo out on the host.
+# Manage sudo by SSSD group locally; validate with visudo before install.
 - name: Grant sudo to the Authentik admin group
   become: true
   ansible.builtin.template:
@@ -110,10 +96,7 @@
     mode: '0644'
   notify: Restart sshd
 
-# Validates the whole assembled config (the drop-in above is only meaningful
-# in the context of the main sshd_config that Includes it). Runs before the
-# handler restarts sshd, so a bad drop-in fails the play instead of taking
-# SSH down on the host.
+# Validate assembled sshd config before restart.
 - name: Verify the assembled sshd configuration is valid
   become: true
   ansible.builtin.command:
