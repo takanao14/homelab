@@ -1,18 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Install the UDEV Gothic NF font by fetching the dotfiles installer and
-# running it. The install mode selects where the font lands:
+# Install UDEV Gothic NF in the selected scope:
 #
 #   local  (default)  per-user    -> $HOME/.local/share/fonts   (no sudo)
 #   global            system-wide -> /usr/local/share/fonts      (via sudo)
 #
-# Use global for shared / golden-image VMs where every user needs the font;
-# use local when provisioning a personal VM for a single user.
-#
-# Set TOOL_FORCE_GUI_INSTALL=1 to bypass the dotfiles installer's live-GUI
-# check (needed when baking into a golden image where xrdp is not yet running,
-# e.g. during a Packer build).
+# TOOL_FORCE_GUI_INSTALL=1 bypasses the live-GUI check during image builds.
 #
 # Usage: fonts.sh [local|global]
 
@@ -25,8 +19,7 @@ case "$MODE" in
     PRIV=(env)
     ;;
   global)
-    # `sudo env VAR=val` survives sudo's env reset and does not depend on the
-    # sudoers `setenv` option (a bare `sudo VAR=val` can be rejected).
+    # Preserve assignments through sudo without requiring sudoers setenv.
     FONT_DIR="/usr/local/share/fonts"
     CACHE_DIR="/usr/local/share/tool-versions"
     PRIV=(sudo env)
@@ -41,17 +34,14 @@ ENVS=(
   "TOOL_FONT_DIR=${FONT_DIR}"
   "TOOL_VERSION_CACHE_DIR=${CACHE_DIR}"
 )
-# Forward the GUI-check bypass when the caller requested it.
+# Forward the optional GUI-check bypass.
 [[ "${TOOL_FORCE_GUI_INSTALL:-}" == "1" ]] && ENVS+=("TOOL_FORCE_GUI_INSTALL=1")
 
 RUNNER=("${PRIV[@]}" "${ENVS[@]}" bash)
 
-# Run the vendored copy of the dotfiles installer (see vendor/), not a fresh
-# download from GitHub, so provisioning does not depend on the GitHub API rate
-# limit or raw.githubusercontent.com being reachable. Refresh it with vendor/sync.sh.
+# Use the vendored installer; refresh it with vendor/sync.sh.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# VENDOR_DIR lets callers that upload the wrapper and the vendored files to
-# separate locations (e.g. the Packer shell provisioner) point at the copies.
+# Packer can override the separately staged vendor directory.
 VENDOR_DIR="${VENDOR_DIR:-${SCRIPT_DIR}/vendor}"
 INSTALLER="${VENDOR_DIR}/run_onchange_linux3_fonts.sh"
 if [[ ! -f "$INSTALLER" ]]; then

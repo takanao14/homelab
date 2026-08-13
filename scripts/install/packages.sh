@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Install the system packages required by the homelab CLI toolchain. The install
-# mode selects where version-cache markers land:
+# Install CLI prerequisites and select the version-cache scope:
 #
 #   local  (default)  per-user    -> $HOME/.local/share/tool-versions
 #   global            system-wide -> /usr/local/share/tool-versions (via sudo)
 #
-# Set TOOL_SKIP_SYSTEM_PACKAGES=1 for a no-sudo preflight that verifies the
-# packages were already provided, for example by a golden-image build.
+# TOOL_SKIP_SYSTEM_PACKAGES=1 performs a no-sudo prerequisite check.
 #
 # Usage: packages.sh [local|global]
 
@@ -22,8 +20,7 @@ case "$MODE" in
     PRIV=(env)
     ;;
   global)
-    # `sudo env VAR=val` survives sudo's env reset and does not depend on the
-    # sudoers `setenv` option (a bare `sudo VAR=val` can be rejected).
+    # Preserve assignments through sudo without requiring sudoers setenv.
     ENVS=(
       "TOOL_VERSION_CACHE_DIR=/usr/local/share/tool-versions"
     )
@@ -41,12 +38,9 @@ done
 
 RUNNER=("${PRIV[@]}" "${ENVS[@]}" bash)
 
-# Run the vendored copy of the dotfiles installer (see vendor/), not a fresh
-# download from GitHub, so provisioning does not depend on the GitHub API rate
-# limit or raw.githubusercontent.com being reachable. Refresh it with vendor/sync.sh.
+# Use the vendored installer; refresh it with vendor/sync.sh.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# VENDOR_DIR lets callers that upload the wrapper and the vendored files to
-# separate locations (e.g. the Packer shell provisioner) point at the copies.
+# Packer can override the separately staged vendor directory.
 VENDOR_DIR="${VENDOR_DIR:-${SCRIPT_DIR}/vendor}"
 INSTALLER="${VENDOR_DIR}/run_onchange_linux0_package.sh"
 if [[ ! -f "$INSTALLER" ]]; then

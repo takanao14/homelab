@@ -1,14 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Provision a VM: verify/install system packages, install the CLI toolchain,
-# terminal and fonts, wire up the shell init files, then fetch secrets (env and
-# kubeconfig) from OpenBao.
-#
-# Two modes:
-#   remote (default)  provision the VM at <ip> over SSH (push from this host)
-#   --local           provision THIS machine directly, no SSH. Run it on the
-#                     target Linux box as the user being provisioned.
+# Provision a VM locally or over SSH, then fetch its OpenBao secrets.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -89,10 +82,9 @@ if $LOCAL_MODE; then
 
   validate_local_target
 
-  # No SSH target in local mode; provisioning happens in place.
   IP="localhost"
   USERNAME="${1:-$USER}"
-  # We never `su` to another user, so the requested user must be the caller.
+  # Local mode never changes users.
   if [[ "$USERNAME" != "$USER" ]]; then
     echo "Error: --local provisions the current user only (got '${USERNAME}', running as '${USER}')." >&2
     echo "Re-run as that user, or omit the username." >&2
@@ -109,24 +101,16 @@ else
 fi
 
 SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 -o BatchMode=yes)
-# All provisioning scripts are staged under this single directory so they can be
-# removed in one shot when provisioning finishes (remote mode only).
+# Remote scripts share one disposable staging directory.
 REMOTE_ROOT="/tmp/homelab-provision"
 CLOUD_INIT_WAIT_TIMEOUT="${CLOUD_INIT_WAIT_TIMEOUT:-600}"
 
-# Stage every script a remote step needs under REMOTE_ROOT in a single
-# round-trip, preserving each script's path relative to SCRIPT_DIR so it resolves
-# its siblings the same way it does locally (install/* finds install/vendor,
-# secrets/* finds ../lib). This phase handles no credentials. secrets/ ships only
-# the get-* readers; the privileged admin/set-* scripts are never copied to a
-# provisioned VM. Not used in --local mode: the scripts already live in SCRIPT_DIR.
+# Stage required scripts once, preserving relative paths; exclude admin writers.
 stage_scripts() {
   echo "Staging provisioning scripts on ${IP}..."
   # shellcheck disable=SC2029  # REMOTE_ROOT is a client-side constant, expanded here by design
   ssh "${SSH_OPTS[@]}" -n "${USERNAME}@${IP}" "rm -rf ${REMOTE_ROOT} && mkdir -p ${REMOTE_ROOT}"
-  # --no-xattrs keeps macOS bsdtar from embedding extended attributes (e.g.
-  # com.apple.provenance), which GNU tar on the Linux VM would warn about on
-  # extract. Both bsdtar and GNU tar accept the flag.
+  # Avoid macOS extended attributes in the Linux archive.
   # shellcheck disable=SC2029
   tar --no-xattrs -C "$SCRIPT_DIR" -cf - \
         install lib \
@@ -134,11 +118,7 @@ stage_scripts() {
     | ssh "${SSH_OPTS[@]}" "${USERNAME}@${IP}" "tar -C ${REMOTE_ROOT} -xf -"
 }
 
-# Execute a staged script. `rel` is its path relative to SCRIPT_DIR. Extra args
-# are forwarded as `KEY=VALUE` env assignments. In remote mode this is a single
-# ssh, so any piped stdin (e.g. a credential) reaches the script intact -- there
-# is no sibling ssh to consume it first. In local mode the real script under
-# SCRIPT_DIR is run directly, resolving its siblings the same way.
+# Run a relative script with environment assignments, preserving piped stdin.
 run_remote() {
   local rel="$1"; shift
   if $LOCAL_MODE; then
@@ -149,9 +129,7 @@ run_remote() {
   fi
 }
 
-# Run an arbitrary shell command on the target. The command string is evaluated
-# by bash either locally or on the remote host, so `~`/`$HOME`/`$USER` expand for
-# the target user in both modes.
+# Run a command with target-side shell expansion.
 run_shell() {
   if $LOCAL_MODE; then
     bash -c "$1"
@@ -161,8 +139,7 @@ run_shell() {
   fi
 }
 
-# Run a shell script supplied on stdin on the target (used for the kitty config
-# heredoc, whose body must not be expanded by the client shell).
+# Run a stdin script without client-side expansion.
 run_shell_stdin() {
   if $LOCAL_MODE; then
     env "$@" bash -s
@@ -266,7 +243,7 @@ run_openbao_target() {
 if $LOCAL_MODE; then
   echo "Provisioning this machine locally as ${USERNAME}..."
 else
-  # Wait for SSH to become available (max 5 min)
+  # Wait up to five minutes for SSH.
   echo "Waiting for SSH on ${IP}..."
   max_attempts=60
   attempts=0
@@ -283,17 +260,14 @@ else
   echo ""
   echo "SSH is ready."
 
-  # Remove the staged scripts from the VM when provisioning finishes (including
-  # on error), so no auth helper or script copies linger under /tmp.
+  # Remove staged scripts on success or failure.
   trap 'ssh "${SSH_OPTS[@]}" -n "${USERNAME}@${IP}" "rm -rf ${REMOTE_ROOT}" 2>/dev/null || true' EXIT
 
-  # Stage all scripts in one round-trip. The install/*.sh wrappers run the
-  # bundled install/vendor/run_onchange_*.sh instead of fetching from GitHub, so
-  # the VM never depends on the GitHub API rate limit at this point.
+  # Stage once; installers use bundled vendor scripts.
   stage_scripts
 fi
 
-# Wait for cloud-init to finish (no-op where cloud-init is not installed).
+# Wait for cloud-init when present.
 wait_cloud_init
 
 if $LOCAL_MODE; then
@@ -373,11 +347,11 @@ if [[ -z "${BAO_TOKEN:-}" ]]; then
   read -rsp "OpenBao password for ${BAO_USERNAME}: " OPENBAO_PASSWORD; echo
 fi
 
-# Run get-env.sh to populate ~/.env from OpenBao secrets
+# Populate ~/.env from OpenBao.
 echo "Fetching env secrets from OpenBao..."
 run_openbao_target "secrets/get-env.sh"
 
-# Run get-kubeconfig.sh to populate ~/.kube from OpenBao secrets
+# Populate ~/.kube from OpenBao.
 echo "Retrieving kubeconfig from OpenBao..."
 run_openbao_target "secrets/get-kubeconfig.sh"
 

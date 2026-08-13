@@ -1,18 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Switch which single GPU workload runs on the prd-homelab cluster by scaling
-# deployments. Only runs against the prd-homelab kube context.
-#
-# The switchable workloads are discovered from the cluster by the
-# homelab/gpu-switchable label, not listed here. That label is already on every
-# GPU workload's Deployment and is load-bearing for the Argo CD health checks in
-# k8s/argocd/values-common.yaml, so a list in this script would be a second
-# place to update whenever a GPU workload is added or removed. Adding one is
-# now just adding the label. See ADR-0027.
-#
-# Avoids bash-4-only features (mapfile, associative arrays) so it also runs on
-# macOS' stock /bin/bash.
+# Switch the single active prd GPU workload discovered by label (ADR-0027).
+# Compatible with macOS' Bash 3.
 
 LABEL_SELECTOR="homelab/gpu-switchable=true"
 EXPECTED_CONTEXT="prd-homelab"
@@ -33,11 +23,7 @@ if [[ "$current_context" != "$EXPECTED_CONTEXT" ]]; then
   exit 1
 fi
 
-# One tab-separated "namespace/name  desired  ready" record per line. The
-# replica counts are only read by status, but come from the same query so the
-# script never shows a state from a different moment than the one it acts on.
-# readyReplicas is absent rather than 0 on a scaled-down Deployment, so that
-# field arrives empty.
+# Snapshot tab-separated namespace/name, desired, and ready replica counts.
 gpu_workloads=$(kubectl get deployment -A -l "$LABEL_SELECTOR" \
   -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}{"\t"}{.spec.replicas}{"\t"}{.status.readyReplicas}{"\n"}{end}')
 
@@ -65,8 +51,7 @@ show_status() {
   while IFS=$'\t' read -r workload desired ready; do
     if [[ "${desired:-0}" -gt 0 ]]; then
       active="yes"
-      # Scaling up is not the same as holding the GPU: the pod stays Pending
-      # until the device is free, so report readiness rather than intent.
+      # Report readiness because scaled-up pods may still be Pending.
       if [[ "${ready:-0}" -gt 0 ]]; then
         marker="*"
         state="running (${ready}/${desired})"
@@ -98,8 +83,7 @@ if [[ "$target" == "off" ]]; then
   exit 0
 fi
 
-# Workloads are addressed by deployment name alone, so resolve it to exactly one
-# namespace. Names are unique today; refuse rather than guess if that changes.
+# Require deployment names to resolve to one namespace.
 match=""
 while IFS=$'\t' read -r workload _ _; do
   if [[ "${workload##*/}" == "$target" ]]; then
@@ -117,8 +101,7 @@ if [[ -z "$match" ]]; then
   exit 1
 fi
 
-# Scale everything down first, including the target: the single GPU must be
-# released before the incoming pod can claim it.
+# Release the GPU before scaling up the target.
 scale_all_down
 kubectl scale deployment "${match##*/}" -n "${match%%/*}" --replicas=1
 echo "$target started, others stopped."

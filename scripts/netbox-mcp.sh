@@ -1,23 +1,13 @@
 #!/usr/bin/env bash
 #
-# Launcher for the official NetBox Labs MCP server over stdio.
-#
-# Runtime selection and credential resolution are shared with grafana-mcp.sh
-# through lib/mcp-launcher.sh.
+# NetBox MCP stdio launcher. Shared setup lives in lib/mcp-launcher.sh.
 #
 # Credentials (NETBOX_URL, NETBOX_TOKEN):
-#   - Used directly when already exported (for example by direnv).
-#   - Otherwise resolved from the SOPS-encrypted .env/secrets.sops.env so MCP
-#     clients never need to store the token in their own configuration.
+#   - Use exported values, otherwise load the SOPS-encrypted environment.
 #
 # Image reference:
-#   - Pinned to a release tag for reproducibility, bumped in place by Renovate.
-#     The published image carries the upstream uv.lock, so transitive
-#     dependencies are fixed too — a `uvx --from git+...@tag` install pins only
-#     the tag and re-resolves everything below it.
-#   - Fully qualified on purpose. Docker resolves a bare name to Docker Hub, but
-#     Podman enforces short-name resolution and defines no unqualified-search
-#     registries, so the bare name fails on Linux.
+#   - Pinned with upstream uv.lock and tracked by Renovate.
+#   - Fully qualified for Podman short-name compatibility.
 #
 set -euo pipefail
 
@@ -44,9 +34,7 @@ export NETBOX_URL NETBOX_TOKEN VERIFY_SSL ENABLE_PLUGIN_DISCOVERY
 # renovate: datasource=docker depName=netboxlabs/netbox-mcp-server
 netbox_mcp_version="${NETBOX_MCP_VERSION:-1.2.1}"
 
-# stdio transport: keep stdin open (-i), never allocate a TTY (-t breaks framing).
-# Only env var names are passed (-e NAME), so values are forwarded from the host
-# without ever appearing on the command line.
+# Keep stdin open without a TTY; pass only environment variable names.
 exec "${runtime}" run -i --rm \
   -e NETBOX_URL \
   -e NETBOX_TOKEN \

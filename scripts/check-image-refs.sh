@@ -1,14 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Cross-check the hardcoded image-filename maps against the image definitions
-# in tf/customimage/images.hcl (and tf/cloudimage/images.hcl).
-#
-# The target -> image-file mapping is duplicated across build.sh, push.sh and
-# create-vm.sh, and a typo there only surfaces at VM-create time as a Proxmox
-# "file not found" (this actually happened: create-vm.sh once pointed at
-# debian13-custom.img while the real file is debian-13-custom.img). This script
-# fails fast in CI instead (.github/workflows/image-refs.yaml).
+# Validate image filename maps against the Terraform image definitions.
 #
 # Checks:
 #   1. create-vm.sh FILE_IDs        exist in customimage or cloudimage images.hcl
@@ -17,8 +10,7 @@ set -euo pipefail
 #      (both directions: every pushable image is defined, every defined image
 #      is pushable)
 #
-# Avoids bash-4-only features (mapfile, associative arrays) so it also runs
-# on macOS' stock /bin/bash.
+# Compatible with macOS' Bash 3.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -38,8 +30,7 @@ defined_all="$(printf '%s\n%s\n' "$defined_custom" "$(hcl_file_names "$CLOUDIMAG
 
 status=0
 
-# check_subset <label> <defined-set> <items> <message>: every item must be in
-# the set; <message> describes what a missing item means.
+# Verify every item exists in the defined set.
 check_subset() {
     local label="$1" defined="$2" items="$3" message="$4" item
     while IFS= read -r item; do

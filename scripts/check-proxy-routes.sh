@@ -1,14 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Cross-check the Caddy reverse-proxy sites against the Homepage dashboard.
-#
-# Caddy publishes every *.home.butaco.net service, but nothing links the two
-# sides: a site added to caddy_upstreams stays invisible on the portal until
-# someone remembers to add it to services.yaml (this happened with code-server
-# / vscode.home.butaco.net), and a dashboard tile can outlive the Caddy site it
-# points at, leaving a dead link. This script fails fast in CI instead
-# (.github/workflows/proxy-routes.yaml).
+# Cross-check Caddy sites and Homepage links.
 #
 # Checks, in both directions:
 #   1. every caddy_upstreams / caddy_redirects hostname has a Homepage entry,
@@ -16,29 +9,21 @@ set -euo pipefail
 #   2. every Homepage `https://<host>.home.butaco.net` link (no port, no plain
 #      http) is a Caddy site
 #
-# Direction 2 keys on the URL shape rather than an exclusion list: an explicit
-# port (Proxmox at :8006) or plain http (the network appliances) means the
-# entry is reached directly and never traverses Caddy.
-#
-# Avoids bash-4-only features (mapfile, associative arrays) so it also runs
-# on macOS' stock /bin/bash.
+# Explicit ports and plain HTTP links bypass Caddy and are excluded by URL shape.
+# Compatible with macOS' Bash 3.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 CADDY_VARS="${REPO_ROOT}/ansible/inventories/homelab/group_vars/caddy.yaml"
 SERVICES="${REPO_ROOT}/k8s/homepage/chart/config/services.yaml"
 
-# Only this zone is served by Caddy. *.prd / *.sandbox go through the
-# in-cluster Gateway and are out of scope here.
+# Other zones use the in-cluster Gateway.
 ZONE="home.butaco.net"
 
-# Caddy sites that intentionally have no dashboard tile: API endpoints with no
-# UI to link to. The UI that fronts them is listed separately (SeaweedFS' own
-# console is seaweedfs-ui). One hostname per line.
+# Machine-facing Caddy sites without dashboard tiles, one per line.
 NO_UI_HOSTS="s3.${ZONE}"
 
-# Hostnames published by Caddy (caddy_upstreams and caddy_redirects both key
-# the site on `hostname`).
+# Hostnames published by Caddy upstreams and redirects.
 caddy_hosts="$(
     sed -n 's/^[[:space:]]*-\{0,1\}[[:space:]]*hostname:[[:space:]]*\([^[:space:]#]*\).*/\1/p' "$CADDY_VARS" |
         grep -F ".${ZONE}" | sort -u
@@ -58,8 +43,7 @@ homepage_proxied="$(
 
 status=0
 
-# check_subset <label> <defined-set> <items> <message>: every item must be in
-# the set; <message> describes what a missing item means.
+# Verify every item exists in the defined set.
 check_subset() {
     local label="$1" defined="$2" items="$3" message="$4" item
     while IFS= read -r item; do

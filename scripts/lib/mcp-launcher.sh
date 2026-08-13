@@ -1,14 +1,8 @@
 #!/usr/bin/env bash
 
-# Shared plumbing for the MCP server launchers (grafana-mcp.sh, netbox-mcp.sh).
-#
-# MCP clients (Claude Code, Codex, Cursor, …) start these launchers with an
-# arbitrary cwd and without the user's interactive shell environment, so each
-# launcher resolves its own credentials and container runtime instead of relying
-# on direnv or a warm shell.
+# Shared credential and runtime setup for MCP launchers started without a shell.
 
-# Diagnostic prefix, taken from the sourcing launcher's filename (netbox-mcp.sh
-# -> "netbox-mcp"). Callers may set MCP_LOG_PREFIX beforehand to override it.
+# Default diagnostics to the sourcing launcher's filename.
 : "${MCP_LOG_PREFIX:=$(basename "${0}" .sh)}"
 
 _mcp_lib_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,8 +13,7 @@ mcp_warn() {
 
 # mcp_load_sops_env <guard_var_name>
 #
-# Decrypts .env/secrets.sops.env into the environment, unless <guard_var_name>
-# is already set — an environment supplied by direnv always wins.
+# Load the SOPS environment unless the guard variable is already set.
 mcp_load_sops_env() {
   local guard_var="$1"
 
@@ -30,10 +23,7 @@ mcp_load_sops_env() {
 
   local secret_file="${_mcp_lib_dir}/../../.env/secrets.sops.env"
 
-  # Point sops at the age key explicitly. On macOS sops otherwise defaults to
-  # ~/Library/Application Support/sops/age/keys.txt (Go's os.UserConfigDir), so
-  # clients that do not inherit SOPS_AGE_KEY_FILE from the shell profile would
-  # fail to decrypt and the server would start with an empty credential.
+  # Keep the age key path consistent for clients without the shell profile.
   : "${SOPS_AGE_KEY_FILE:=${XDG_CONFIG_HOME:-${HOME}/.config}/sops/age/keys.txt}"
   export SOPS_AGE_KEY_FILE
 
@@ -44,11 +34,7 @@ mcp_load_sops_env() {
 
 # mcp_resolve_container_runtime [override]
 #
-# Echoes the container runtime to use:
-#   macOS -> OrbStack's drop-in docker CLI when installed, otherwise Podman
-#   Linux -> Podman
-# Returns non-zero with actionable diagnostics when the runtime is missing or
-# its macOS virtual machine is not ready.
+# Select OrbStack/Docker or Podman and verify availability.
 mcp_resolve_container_runtime() {
   local runtime="${1:-}"
 

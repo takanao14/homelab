@@ -1,7 +1,6 @@
 # scripts
 
-Helper scripts for managing the homelab: VM lifecycle, provisioning, secret
-sync, and GPU workload switching.
+Homelab VM lifecycle, provisioning, secret sync, checks, and integrations.
 
 ## Layout
 
@@ -53,16 +52,11 @@ operation can be inspected and resumed directly with Terragrunt.
 
 The XRDP images are available only on `pve`.
 
-The script uses `TF_VM_USERNAME`, `TF_VM_PASSWORD`, and
-`TF_VM_SSH_PUBLIC_KEY` for the VM credentials. When they are unset, the
-username defaults to the current user, the password is read from an
-interactive hidden prompt, and the public key defaults to
-`~/.ssh/id_ed25519.pub`. The public-key file must exist. For non-interactive
-use, set `TF_VM_PASSWORD` explicitly. The resolved values are written to a
-local `.envrc` in the generated VM directory and reused on subsequent runs.
-The file is created with mode `600` and excluded by a colocated `.gitignore`;
-it contains the VM password in plaintext and must remain local. Run
-`direnv allow` once after generation.
+VM credentials use `TF_VM_USERNAME`, `TF_VM_PASSWORD`, and
+`TF_VM_SSH_PUBLIC_KEY`. Defaults are the current user, a hidden password prompt,
+and `~/.ssh/id_ed25519.pub`; non-interactive runs must set the password. Resolved
+values are reused from a mode-600, gitignored `.envrc` containing plaintext
+credentials. Keep it local and run `direnv allow` once.
 
 Re-running the command with the same arguments succeeds without changing the
 file. If the existing file differs, the script prints a diff and leaves it
@@ -79,9 +73,7 @@ direnv exec . terragrunt apply
 ./provision.sh 192.168.20.50
 ```
 
-Terragrunt obtains `TF_VM_USERNAME`, `TF_VM_PASSWORD`, and
-`TF_VM_SSH_PUBLIC_KEY` from the generated VM directory's `.envrc`. It calls
-`source_up` first so the node and shared Terraform environment is preserved.
+The generated `.envrc` calls `source_up` to retain node/shared Terraform settings.
 
 ### `remove-vm.sh`
 
@@ -109,22 +101,13 @@ Provisions a VM in order (over SSH by default, or in place with `--local`):
 7. Fetches env secrets from OpenBao into `~/.env` (`secrets/get-env.sh`)
 8. Retrieves kubeconfigs from OpenBao into `~/.kube/` (`secrets/get-kubeconfig.sh`)
 
-All scripts are staged once under `/tmp/homelab-provision/` in a single
-`tar`-over-`ssh` step (`stage_scripts`), preserving each script's path relative
-to `scripts/` so it resolves its siblings the same way as locally (e.g.
-`install/tools.sh` finds `install/vendor/`). Because the vendored installers ride
-along, the `install/*.sh` wrappers run those local copies instead of downloading
-from GitHub. Only the `secrets/get-*` readers are staged; the privileged
-`admin/set-*` scripts are never copied to the VM. The staged directory is removed
-on exit (success or failure) via a `trap`.
+Remote mode stages scripts once under `/tmp/homelab-provision/`, preserving
+relative paths and vendored installers. It copies only `secrets/get-*`, never
+privileged `admin/set-*`, and removes the staging directory on exit.
 
-Each step then runs through the `run_remote` helper, which is a single `ssh`
-invocation, so a piped credential reaches the script intact. The OpenBao
-credential is reused across steps: when `BAO_TOKEN` is set it is forwarded to the
-remote scripts over stdin; otherwise the password is entered once and reused.
-The cloud-init wait checks the standard `/var/lib/cloud/instance/boot-finished`
-marker and `cloud-init status` before provisioning continues. The default wait
-timeout is 600 seconds and can be overridden with `CLOUD_INIT_WAIT_TIMEOUT`.
+Each step uses one SSH invocation so piped OpenBao credentials remain intact.
+Tokens are forwarded; otherwise one prompted password is reused. Provisioning
+waits up to 600 seconds for cloud-init; override with `CLOUD_INIT_WAIT_TIMEOUT`.
 
 ```bash
 ./provision.sh <ip> [username]      # remote: push to the VM at <ip> over SSH
@@ -135,24 +118,14 @@ CLOUD_INIT_WAIT_TIMEOUT=900 ./provision.sh 192.168.20.50 myuser
 ./provision.sh --local               # run on the target Linux box as that user
 ```
 
-In `--local` mode there is no SSH hop: the SSH-wait, the `tar`-over-`ssh`
-staging, and the `/tmp` cleanup `trap` are skipped, and each step runs the real
-script under `scripts/` (resolving its siblings the same way) or executes the
-shell snippet directly. It must run **on the target Linux box** as the user being
-provisioned (no `su`), so `[username]` is optional and, if given, must match
-`$USER`. Supported distributions are Ubuntu, Debian, and Rocky Linux. The
-system-package step runs with `TOOL_SKIP_SYSTEM_PACKAGES=1`, so it never invokes
-sudo and fails fast when the required packages were not baked into the image.
-The remaining install steps stay in per-user (`local`) mode, landing tools under
-`$HOME/.local`.
+`--local` runs directly on the target Ubuntu, Debian, or Rocky host as `$USER`.
+It skips SSH/staging, performs a no-sudo package preflight, and installs remaining
+tools per-user under `$HOME/.local`.
 
 ### `check-image-refs.sh`
 
-Cross-checks the image-filename maps duplicated across `create-vm.sh`,
-`packer/build.sh` and `packer/push.sh` against the definitions in
-`tf/customimage/images.hcl` (and `tf/cloudimage/images.hcl`). Run by CI on
-changes to any of those files (`.github/workflows/image-refs.yaml`); run it
-manually after adding or renaming an image target.
+Checks image filename maps in VM/Packer scripts against Terraform definitions.
+CI runs it on relevant changes; run it after adding or renaming a target.
 
 ```bash
 ./check-image-refs.sh
@@ -160,21 +133,16 @@ manually after adding or renaming an image target.
 
 ### `check-proxy-routes.sh`
 
-Cross-checks the Caddy sites in
-`ansible/inventories/homelab/group_vars/caddy.yaml` against the Homepage tiles
-in `k8s/homepage/chart/config/services.yaml`, in both directions:
+Checks Caddy sites against Homepage tiles in both directions:
 
 - a `caddy_upstreams` / `caddy_redirects` hostname with no dashboard entry —
   the service is published but invisible on the portal
 - a dashboard `https://<host>.home.butaco.net` link (no port, plain `https`)
   that Caddy does not serve — a dead tile
 
-Entries reached without Caddy are recognised by their URL shape and skipped:
-an explicit port (Proxmox at `:8006`) or plain `http` (the network
-appliances). Machine-facing Caddy sites with no UI to link to are listed in the
-script's `NO_UI_HOSTS`. Only `home.butaco.net` is in scope; `*.prd` and
-`*.sandbox` go through the in-cluster Gateway. Run by CI on changes to either
-file (`.github/workflows/proxy-routes.yaml`).
+Explicit-port and plain-HTTP links bypass Caddy and are skipped. `NO_UI_HOSTS`
+lists machine-only routes. Only `home.butaco.net` is in scope; cluster domains
+use the Gateway. CI runs the check on either source file changing.
 
 ```bash
 ./check-proxy-routes.sh
@@ -182,22 +150,17 @@ file (`.github/workflows/proxy-routes.yaml`).
 
 ## Secrets / environment
 
-These OpenBao scripts share the same auth pattern and can run **locally or
-remotely** (over ssh). Authentication is resolved in order: `BAO_TOKEN` env var
-→ `BAO_PASSWORD` env var → interactive prompt (TTY) → stdin (non-interactive).
-When `BAO_TOKEN` is set, userpass login is skipped and the token is used as-is.
-An invalid or insufficient token fails the requested operation; unset
-`BAO_TOKEN` to use password authentication instead.
+OpenBao scripts run locally or over SSH. Authentication order is `BAO_TOKEN`,
+`BAO_PASSWORD`, TTY prompt, then non-interactive stdin. A token bypasses userpass;
+unset it to retry with password authentication.
 
 Common env vars: `OPENBAO_ADDR` (default `https://openbao.home.butaco.net`),
 `BAO_USERNAME`, `BAO_TOKEN`, `BAO_PASSWORD`.
 
 ### `get-env.sh`
 
-Fetches `secret/provision/env` from OpenBao and writes it to `~/.env`.
-Updates are written via a temporary file and moved into place only after a
-successful fetch. Values are double-quoted so `$VAR` and `${VAR}` references
-expand when sourced by Bash. Command substitutions are rejected.
+Fetches `secret/provision/env` atomically into `~/.env`. Variable references
+expand when sourced; command substitutions are rejected.
 
 ```bash
 ./secrets/get-env.sh
@@ -206,9 +169,8 @@ BAO_TOKEN=xxx ./secrets/get-env.sh
 
 ### `set-env.sh`
 
-Pushes the contents of `~/.env` back into `secret/provision/env`. Defaults to the
-`admin` OpenBao user. Values are parsed without sourcing the file, so shell
-variables such as `$HOME` remain literal and command substitutions are not run.
+Stores `~/.env` in `secret/provision/env` as admin. Parsing does not source or
+execute the file, so variables remain literal.
 
 ```bash
 ./secrets/admin/set-env.sh
@@ -240,13 +202,9 @@ BAO_PASSWORD=xxx ./secrets/admin/set-kubeconfig.sh
 
 ### `get-sops-key.sh`
 
-Retrieves the SOPS age private key from OpenBao (`secret/sops/age`) into
-`~/.config/sops/age/keys.txt` (override with `SOPS_AGE_KEY_FILE`). The file is
-written via a temporary file and moved into place only after the value is
-fetched and validated as an age private key. This is the bootstrap key used to
-decrypt the repo's `*.sops.yaml` and `*.sops.env` files; it is intentionally
-**not** part of the default `provision.sh` flow, so run it explicitly only where
-SOPS decryption is needed.
+Fetches and validates `secret/sops/age` atomically into `SOPS_AGE_KEY_FILE` or
+the default age key path. It is intentionally excluded from normal provisioning;
+run it only on hosts that need repository decryption.
 
 ```bash
 ./secrets/get-sops-key.sh                       # local, interactive
@@ -287,16 +245,11 @@ $ ./gpu-switch.sh status
   vllm               stopped
 ```
 
-`starting (0/1)` means the deployment is scaled up but its pod is not ready yet
-— on a single GPU that also covers a pod stuck `Pending` because the device is
-still held. Replica count is runtime state and is deliberately not tracked in
-Git (the Argo CD `Application`s ignore `/spec/replicas`), so the cluster is the
-only place to ask.
+`starting (0/1)` means desired but not ready, including GPU contention. Replica
+count is runtime state outside Git, so status comes from the cluster.
 
-Targets are **discovered from the cluster** by the `homelab/gpu-switchable`
-label, not hardcoded in the script, so a GPU workload becomes switchable by
-carrying that label on its `Deployment` — which it already needs for the Argo CD
-health checks (ADR-0027). Run with an unknown name to list what is available.
+Targets come from the `homelab/gpu-switchable` Deployment label shared with Argo
+CD health (ADR-0027). An unknown name lists available targets.
 
 ## Grafana MCP
 
@@ -311,25 +264,14 @@ per OS — `docker` on macOS when OrbStack is installed, `podman` otherwise — 
 runs the `grafana/mcp-grafana` image with `-i` (no TTY). You normally don't run
 this by hand; the client starts it.
 
-The image is the vendor's own, pinned to a release tag. Docker's curated
-`mcp/grafana` mirror publishes only a `latest` tag, so it could be neither
-pinned nor tracked by Renovate. Note that the binary reports its version as
-`(devel)` regardless — upstream does not inject version info into the Docker
-build, so the image tag is the only reliable indicator of what is running.
+The vendor image is release-pinned and Renovate-managed; Docker's curated mirror
+offers only `latest`. The binary reports `(devel)`, so trust the image tag.
 
-The launcher exposes only `search`, `datasource`, `prometheus`, `loki`,
-`dashboard`, and `navigation` tools by default. Alert-management tools are
-excluded from the default allowlist. It also passes
-`--disable-write` and limits Loki results to 20 lines. This keeps the tool
-schema and responses small enough for local models while enforcing read-only
-operation independently of Grafana permissions.
+Default tools cover read-only search, data sources, Prometheus, Loki, dashboards
+and navigation. Writes are disabled and Loki responses capped at 20 lines.
 
-Credentials are **self-resolving**: if `GRAFANA_SERVICE_ACCOUNT_TOKEN` is already
-exported (e.g. Claude Code launched under direnv) it is used as-is; otherwise the
-script decrypts `.env/secrets.sops.env` via `sops` itself, deriving the repo root
-from its own path. This means the same launcher works from any client regardless
-of cwd or whether direnv has loaded — clients only need to point at this script,
-never embed the token. `GRAFANA_URL` defaults to the prd Grafana.
+The launcher uses exported credentials or decrypts `.env/secrets.sops.env`
+relative to itself. It works from any cwd without embedding tokens in clients.
 
 Other clients just reference the absolute path, e.g. Codex (`~/.codex/config.toml`):
 
@@ -341,10 +283,8 @@ startup_timeout_ms = 60000   # first run pulls the grafana/mcp-grafana image
 
 ### Goose workstation setup
 
-Goose is the default local-LLM agent for this repository. Run the agent on the
-workstation and keep only Ollama in the cluster. This gives the agent direct
-access to the checked-out repository and preserves interactive approval while
-avoiding another long-running in-cluster agent runtime.
+Run Goose on the workstation and keep Ollama in-cluster for repository access
+and interactive approval without another in-cluster agent.
 
 The validated baseline is:
 
@@ -367,18 +307,14 @@ brew install block-goose-cli
 goose configure
 ```
 
-Select the Ollama provider and set the endpoint/model above. Add a
-**Command-line Extension** named `grafana` with:
+Select the Ollama settings above and add a `grafana` command-line extension:
 
 ```text
 /absolute/path/to/homelab/scripts/grafana-mcp.sh
 ```
 
-Use a 300-second extension timeout and do not add token environment variables
-to the Goose configuration. The launcher resolves the encrypted token itself.
-Keep `GOOSE_MODE=approve` for interactive use. A one-shot `GOOSE_MODE=auto`
-override is appropriate only for a narrowly scoped task whose enabled MCP
-servers are read-only.
+Use a 300-second extension timeout without token variables. Keep
+`GOOSE_MODE=approve`; use one-shot `auto` only for narrow, read-only tasks.
 
 Smoke-test the complete tool loop from Goose:
 
@@ -387,10 +323,8 @@ Use only the Grafana MCP. List each Grafana data source name and type.
 Do not modify Grafana or any files.
 ```
 
-The Grafana extension is healthy when Goose selects `list_datasources` and
-returns the Prometheus and Loki data sources. A broader read-only check can
-search for a dashboard, call `get_dashboard_summary`, and then call
-`get_dashboard_panel_queries` using the returned UID.
+Success means `list_datasources` returns Prometheus and Loki. Broader checks may
+search a dashboard and inspect its summary and queries.
 
 If the MCP server does not start, run `bash -n scripts/grafana-mcp.sh`, confirm
 that Docker or Podman is running, and check that `sops` can access the AGE key.
@@ -413,13 +347,8 @@ such as `krunkit`. After installing Podman, initialize the machine with
 
 ### `grafana-mcp-token.sh`
 
-Idempotently creates the `mcp-grafana` service account (Viewer role) and issues
-a token, printing it to stdout as a `GRAFANA_SERVICE_ACCOUNT_TOKEN="..."`
-line (logs go to stderr). Admin auth is taken from `GRAFANA_ADMIN_USER` /
-`GRAFANA_ADMIN_PASSWORD`, or read from the in-cluster `grafana-admin` secret via
-`kubectl --context "${GRAFANA_KUBE_CONTEXT:-prd-homelab}"` so it never depends on
-the currently selected context. Requires `curl` and `jq` (and `kubectl` for the
-secret path).
+Creates/reuses the Viewer service account and prints a new dotenv token line.
+Admin auth comes from environment or the explicitly selected cluster secret.
 
 ```bash
 # Print the token line
@@ -430,10 +359,8 @@ sops edit ../.env/secrets.sops.env
 direnv allow
 ```
 
-`../.env/secrets.sops.env` is already encrypted, so the append-then-encrypt
-shortcut (`>> file` followed by `sops --encrypt --in-place file`) does **not**
-work — SOPS refuses with exit 203 because the file already carries its `sops_*`
-metadata. `sops edit` is the only flow that survives a rotation.
+The file is already encrypted; append-then-encrypt fails on existing SOPS
+metadata. Rotate through `sops edit`.
 
 | Env var | Default | Notes |
 |---------|---------|-------|
@@ -453,26 +380,16 @@ revoke unused tokens in the Grafana UI or via the API.
 container over stdio. The image is pinned to `1.2.1`, and the server exposes
 read-only NetBox query tools.
 
-The image carries the upstream `uv.lock`, so transitive dependencies are pinned
-alongside the release tag. (A `uvx --from git+…@tag` install pins only the tag
-and re-resolves everything below it — the two paths resolved different FastMCP
-versions in practice.) Upstream publishes multi-arch images signed with cosign.
+The image includes upstream `uv.lock`, pinning transitive dependencies; a tagged
+`uvx` install would re-resolve them. Upstream signs its multi-arch images.
 
-Runtime selection and SOPS credential resolution are shared with
-`grafana-mcp.sh` through `lib/mcp-launcher.sh`, so both launchers behave
-identically: `NETBOX_URL` and `NETBOX_TOKEN` are taken from the environment when
-present, otherwise decrypted from `.env/secrets.sops.env`. MCP client
-configuration therefore contains no API token, and only variable *names* are
-passed to the container (`-e NAME`), keeping values off the command line.
+Shared launcher logic uses exported NetBox credentials or SOPS and passes only
+environment variable names to the container, keeping values off command lines.
 
-Upstream's README states that containers require `TRANSPORT=http` because stdio
-"doesn't work" there. That applies to detached containers; `docker run -i`
-without a TTY keeps stdio framing intact, which is what this launcher uses and
-what the Grafana launcher has always done.
+Despite upstream's detached-container warning, `docker run -i` without a TTY
+preserves stdio framing.
 
-A container runtime must be running — on macOS this is OrbStack (or Podman).
-This is the one operational cost of the container over `uvx`: if the runtime is
-cold, the server fails to start until it is up.
+A container runtime must already be running; a cold runtime prevents startup.
 
 Generate the desired v2 token, then store it by editing the existing encrypted
 environment file:
@@ -489,11 +406,8 @@ Add this assignment inside the decrypted editor buffer:
 NETBOX_TOKEN="<read-only-api-token>"
 ```
 
-The `netbox` Ansible role reads this environment variable, creates the
-`mcp-netbox` user and `mcp-readers` group, assigns infrastructure-only `view`
-permissions, and creates the matching token with API writes disabled. NetBox
-keeps only an HMAC of a v2 token, which is why the value is generated here
-rather than read back from the API. Preview and apply it with:
+The NetBox role creates the read-only identity and matching v2 token. NetBox
+stores only an HMAC, so generate the plaintext locally, then preview and apply:
 
 ```bash
 cd ansible
@@ -503,12 +417,8 @@ ansible-playbook playbooks/netbox.yaml --check --diff --tags netbox
 ansible-playbook playbooks/netbox.yaml --tags netbox
 ```
 
-The identity steps run through `manage.py` and are therefore skipped under
-`--check`, like the other `manage.py` tasks in the role; the check run confirms
-the rest of the play. Rotating the token is the same three commands as first
-setup — generate, `sops edit`, re-run the play — and the role replaces the old
-token row. See [`ansible/roles/netbox/README.md`](../ansible/roles/netbox/README.md)
-for the permission scope and the variables that adjust it.
+Identity steps use `manage.py` and are skipped in check mode. Rotate by
+regenerating, editing SOPS, and rerunning the play. See the role README for scope.
 
 Do not commit a plaintext token or pass it in `.codex/config.toml` or
 `.mcp.json`. Start a new client session after changing MCP configuration. The
@@ -525,20 +435,14 @@ the local image.
 | `NETBOX_MCP_IMAGE` | `docker.io/netboxlabs/netbox-mcp-server:$NETBOX_MCP_VERSION` | Full reference override for testing |
 | `NETBOX_MCP_RUNTIME` | auto (OrbStack `docker`, else `podman`) | Force a container runtime |
 
-Renovate tracks the Docker Hub tag through the `# renovate:` comment above
-`netbox_mcp_version`, matched by the `scripts/*.sh` custom manager in
-[`renovate.json`](../renovate.json). Updates land as a regular PR; they are not
-automerged, since the automerge rule covers only `k8s/`, `ansible/`, and `tf/`.
-The Grafana launcher is tracked the same way, against `grafana/mcp-grafana`.
+Renovate tracks both launcher tags through script comments. Updates create
+manual-review PRs because scripts are outside the automerge paths.
 
 ## `install/`
 
 ### `packages.sh`
 
-Thin wrapper that runs the **vendored** dotfiles system-package installer
-(`vendor/run_onchange_linux0_package.sh`, see [`vendor/`](#vendor)). It owns the
-privileged package-manager operations and must run before `tools.sh` and
-`fonts.sh`.
+Runs the vendored privileged package installer before tools and fonts.
 
 Set `TOOL_SKIP_SYSTEM_PACKAGES=1` to perform a no-sudo preflight instead of
 installing packages. This is used by `provision.sh --local`, where a golden image
@@ -552,11 +456,8 @@ TOOL_SKIP_SYSTEM_PACKAGES=1 ./install/packages.sh  # no-sudo preflight
 
 ### `tools.sh`
 
-Thin wrapper that runs the **vendored** dotfiles CLI-toolchain installer
-(`vendor/run_onchange_linux1_tool.sh`, see [`vendor/`](#vendor)). It installs the
-homelab CLI toolchain (kubectl, helm, terragrunt, opentofu, openbao, sops, age,
-k9s, kubie, helmfile, cilium, HashiCorp tools …) on Ubuntu or Rocky; tool
-versions are pinned and managed by Renovate in dotfiles.
+Runs the vendored Ubuntu/Rocky CLI installer. Versions are pinned and
+Renovate-managed in dotfiles.
 
 The install mode selects where the tools land:
 
@@ -602,11 +503,8 @@ selects where the font lands:
 
 ### `vendor/`
 
-Local copies of the dotfiles installer scripts that `packages.sh`, `tools.sh`,
-`terminal.sh`, and `fonts.sh` run. Vendoring them means
-provisioning no longer fetches them from GitHub at runtime, so it does not depend
-on the GitHub API rate limit or `raw.githubusercontent.com` being reachable. The
-pinned source commit is recorded in `vendor/REVISION`.
+Vendored dotfiles installers remove runtime GitHub dependencies. Their source
+commit is recorded in `vendor/REVISION`.
 
 Do not edit the `run_onchange_*.sh` files by hand — they are kept in sync with
 `takanao14/dotfiles` by `vendor/sync.sh`:
