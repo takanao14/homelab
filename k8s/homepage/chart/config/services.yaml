@@ -244,6 +244,11 @@
         href: https://lemonade.prd.butaco.net
         description: Local LLM Inference Server
 
+    - Lemonade Server(ROCm):
+        icon: sh-lemonade-ai
+        href: https://lemonade-rocm.prd.butaco.net
+        description: Local LLM Inference Server (ROCm)
+
     - ComfyUI:
         icon: comfyui.png
         href: https://comfyui.prd.butaco.net
