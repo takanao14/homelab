@@ -29,7 +29,6 @@ spec:
             cpu: 100m
             memory: 256Mi
           limits:
-            cpu: 200m
             memory: 384Mi
         env:
         - name: HOMEPAGE_ALLOWED_HOSTS
