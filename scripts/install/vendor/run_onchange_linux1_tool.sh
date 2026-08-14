@@ -26,7 +26,7 @@ readonly OPENTOFU_VERSION="${OPENTOFU_VERSION:-1.12.5}"
 # renovate: datasource=github-releases depName=helm/helm
 readonly HELM_VERSION="${HELM_VERSION:-4.2.3}"
 # renovate: datasource=github-releases depName=argoproj/argo-cd
-readonly ARGOCD_VERSION="${ARGOCD_VERSION:-3.5.0}"
+readonly ARGOCD_VERSION="${ARGOCD_VERSION:-3.5.1}"
 # renovate: datasource=github-releases depName=FiloSottile/age
 readonly AGE_VERSION="${AGE_VERSION:-1.3.1}"
 # renovate: datasource=github-releases depName=cilium/cilium-cli
@@ -48,9 +48,9 @@ readonly PROMETHEUS_VERSION="${PROMETHEUS_VERSION:-3.13.2}"
 # renovate: datasource=pypi depName=ansible-core
 readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.21.3}"
 # renovate: datasource=pypi depName=ansible-lint
-readonly ANSIBLE_LINT_VERSION="${ANSIBLE_LINT_VERSION:-26.6.0}"
+readonly ANSIBLE_LINT_VERSION="${ANSIBLE_LINT_VERSION:-26.8.0}"
 # renovate: datasource=github-tags depName=aws/aws-cli
-readonly AWS_CLI_VERSION="${AWS_CLI_VERSION:-2.36.20}"
+readonly AWS_CLI_VERSION="${AWS_CLI_VERSION:-2.36.22}"
 # renovate: datasource=github-releases depName=rclone/rclone
 readonly RCLONE_VERSION="${RCLONE_VERSION:-1.75.0}"
 # renovate: datasource=github-releases depName=rhysd/actionlint
@@ -66,26 +66,15 @@ readonly PROCS_VERSION="${PROCS_VERSION:-0.14.12}"
 # renovate: datasource=github-releases depName=mikefarah/yq
 readonly YQ_VERSION="${YQ_VERSION:-4.53.3}"
 
-# Install location. Defaults to a per-user prefix. Set TOOL_BIN_DIR (and
-# TOOL_VERSION_CACHE_DIR) to a system-wide path such as /usr/local/bin to make
-# the tools available to every user (e.g. for a shared / golden-image VM). A
-# system-wide target requires running this script as root.
+# Defaults to per-user paths; system-wide TOOL_* paths require root.
 readonly BIN_DIR="${TOOL_BIN_DIR:-$HOME/.local/bin}"
 readonly VERSION_CACHE_DIR="${TOOL_VERSION_CACHE_DIR:-$HOME/.local/share/tool-versions}"
-# A system-wide baseline (golden-image VM) records installed versions here. A
-# per-user install defers to it when it already provides the desired version, so
-# running this via chezmoi / provision.sh on a baked image does not shadow a
-# current baseline with a duplicate in $HOME/.local.
+# Per-user installs defer to matching versions in this system baseline.
 readonly SYSTEM_CACHE_DIR="/usr/local/share/tool-versions"
-# pipx-managed Python tools (ansible, ansible-lint). Venvs live next to the
-# version cache (per-user $HOME/.local/share, or /usr/local/share when this runs
-# as a system-wide baseline); app symlinks go into BIN_DIR like every other tool.
+# Keep pipx venvs beside the version cache and app links in BIN_DIR.
 PIPX_HOME_DIR="$(dirname "$VERSION_CACHE_DIR")/pipx"
 readonly PIPX_HOME_DIR
-# AWS CLI v2 installs its own self-contained tree here and symlinks `aws` into
-# BIN_DIR. Deriving from BIN_DIR's parent matches AWS's own default of
-# /usr/local/aws-cli for a system-wide (BIN_DIR=/usr/local/bin) install, and
-# mirrors it under $HOME (~/.local/aws-cli) for a per-user install.
+# Mirror AWS CLI's self-contained tree beside BIN_DIR's parent.
 AWS_CLI_INSTALL_DIR="$(dirname "$BIN_DIR")/aws-cli"
 readonly AWS_CLI_INSTALL_DIR
 ARCH="$(uname -m)"
@@ -96,9 +85,7 @@ readonly BIN_ARCH
 mkdir -p "$BIN_DIR" "$VERSION_CACHE_DIR"
 export PATH="${BIN_DIR}:${PATH}"
 
-# ============================================================================
 # Logging
-# ============================================================================
 
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
@@ -120,14 +107,9 @@ cleanup_tmp_paths() {
 
 trap cleanup_tmp_paths EXIT
 
-# ============================================================================
 # Helpers
-# ============================================================================
 
-# This script is unprivileged by design: it never calls sudo. The OS packages it
-# depends on (curl, unzip, gnupg, pipx, a >=3.12 python, ...) are provided by
-# run_onchange_linux0_package.sh, which chezmoi runs first. Verify they exist and
-# fail fast with a clear pointer rather than failing deep inside an install.
+# This script never calls sudo; linux0 must provide its OS-level dependencies.
 local_preflight() {
     local missing=() cmd
     for cmd in curl tar gzip unzip gpg git find sha256sum awk install mktemp pipx; do
@@ -225,8 +207,7 @@ install_binary() {
     fi
 }
 
-# True when a system-wide baseline already provides KEY at VERSION. Only
-# meaningful for a per-user install (our cache dir is not the system one).
+# True when a per-user install can defer to the system baseline.
 baseline_satisfies() {
     local key="$1" version="$2"
     [[ "$VERSION_CACHE_DIR" != "$SYSTEM_CACHE_DIR" ]] || return 1
@@ -252,9 +233,7 @@ install_if_needed() {
     fi
 }
 
-# ============================================================================
 # Shell Enhancement Tools
-# ============================================================================
 
 install_gh() {
     local archive_name="gh_${GH_VERSION}_linux_${BIN_ARCH}.tar.gz"
@@ -286,11 +265,8 @@ install_procs() {
         "$BIN_DIR/procs"
 }
 
-# Install the raw binary asset rather than the tarball: the tarball names the
-# binary yq_linux_<arch>, which install_binary's find-by-name cannot locate. yq's
-# `checksums` file is a custom filename-first table with one column per hash
-# algorithm (the sha256 column is identified by a separate checksums_hashes_order
-# file), so verify_sha256 cannot parse it and no checksum is passed.
+# Use the raw asset: the archive renames yq, and its custom checksum table is
+# incompatible with verify_sha256.
 install_yq() {
     install_binary "yq" \
         "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_${BIN_ARCH}" \
@@ -330,9 +306,7 @@ install_fzf() {
 
 install_zellij() {
     log_info "Installing zellij ${ZELLIJ_VERSION}..."
-    # zellij publishes the checksum of the *extracted* binary, not the tarball,
-    # so the generic install_binary (which verifies the archive) can't be used.
-    # Extract first, then verify the binary against the .sha256sum.
+    # Zellij checksums the extracted binary, so verify it after extraction.
     local tmp_dir base url
     make_tmp_dir tmp_dir
     base="zellij-${ARCH}-unknown-linux-musl"
@@ -343,9 +317,7 @@ install_zellij() {
     install -m 0755 "${tmp_dir}/zellij" "$BIN_DIR/zellij"
 }
 
-# ============================================================================
 # HashiCorp Tools
-# ============================================================================
 
 install_terragrunt() {
     local archive_name="terragrunt_linux_${BIN_ARCH}"
@@ -369,9 +341,7 @@ install_opentofu() {
     install -m 0755 "${tmp_dir}/tofu" "$BIN_DIR/tofu"
 }
 
-# ============================================================================
 # Kubernetes Tools
-# ============================================================================
 
 install_helm() {
     log_info "Installing helm ${HELM_VERSION}..."
@@ -483,10 +453,7 @@ install_cilium() {
 
 install_sops() {
     log_info "Installing sops..."
-    # sops only publishes checksums for the raw binaries (the .deb/.rpm packages
-    # are absent from checksums.txt), so install the verified linux binary into
-    # BIN_DIR on every distro. The age dependency is installed as a no-sudo
-    # binary on every distro too (no apt path), keeping this script sudo-free.
+    # Only raw sops binaries have checksums; install sops and age without sudo.
     install_if_needed "age" "$AGE_VERSION" install_age
     install_binary "sops" \
         "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.${BIN_ARCH}" \
@@ -494,9 +461,7 @@ install_sops() {
         "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.checksums.txt"
 }
 
-# ============================================================================
 # DNS Tools
-# ============================================================================
 
 install_dnscontrol() {
     local archive_name="dnscontrol_${DNSCONTROL_VERSION}_linux_${BIN_ARCH}.tar.gz"
@@ -507,9 +472,7 @@ install_dnscontrol() {
 }
 
 install_helm_diff_plugin() {
-    # helm plugins live under HELM_DATA_HOME (per-user by default). For a
-    # shared install, set TOOL_HELM_DATA_HOME to a system-wide path; users must
-    # then export HELM_DATA_HOME to the same path (e.g. via /etc/profile.d).
+    # Shared installs must expose TOOL_HELM_DATA_HOME as HELM_DATA_HOME to users.
     if [[ -n "${TOOL_HELM_DATA_HOME:-}" ]]; then
         export HELM_DATA_HOME="$TOOL_HELM_DATA_HOME"
         mkdir -p "$HELM_DATA_HOME"
@@ -519,19 +482,13 @@ install_helm_diff_plugin() {
         return
     fi
     log_info "Installing helm-diff plugin..."
-    # helm v4 verifies plugin provenance by default; the git source does not
-    # support verification, so verification must be skipped explicitly.
+    # The git source does not support Helm 4 provenance verification.
     helm plugin install --verify=false https://github.com/databus23/helm-diff
 }
 
-# ============================================================================
 # Monitoring Tools
-# ============================================================================
 
-# promtool validates prometheus.yml and alerting/recording rules, and runs rule
-# unit tests. Prometheus publishes no standalone promtool asset, so the full
-# server tarball (~100MB) is downloaded and install_binary extracts only promtool
-# -- the prometheus server binary is discarded with the temp dir.
+# Prometheus has no standalone promtool asset; extract it from the server archive.
 install_promtool() {
     local archive_name="prometheus-${PROMETHEUS_VERSION}.linux-${BIN_ARCH}.tar.gz"
     install_binary "promtool" \
@@ -540,16 +497,10 @@ install_promtool() {
         "https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/sha256sums.txt"
 }
 
-# ============================================================================
 # AWS Tools
-# ============================================================================
 
-# AWS CLI v2 installer zips are signed only with the AWS CLI Team PGP key (AWS
-# publishes no sha256 file), so verify the .sig against this embedded key. The
-# key is imported into a throwaway keyring holding only it, so a good signature
-# already proves the zip came from AWS. The key currently expires 2027-07-01 --
-# if verification later fails with an expired-key error, refresh the block from
-# https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+# AWS publishes signatures but no checksums; verify with an isolated keyring.
+# The embedded key expires 2027-07-01; refresh it from the AWS install docs.
 install_aws_cli() {
     log_info "Installing aws-cli ${AWS_CLI_VERSION}..."
     local tmp_dir gnupg_home url zip
@@ -600,15 +551,10 @@ AWS_CLI_PGP_KEY
     "${tmp_dir}/aws/install" --bin-dir "$BIN_DIR" --install-dir "$AWS_CLI_INSTALL_DIR" --update
 }
 
-# ============================================================================
 # Cloud Storage Tools
-# ============================================================================
 
-# rclone ships as a zip with the binary nested in a versioned subdirectory, and
-# its SHA256SUMS lists the zip by name -- so it can't use the generic
-# install_binary (tar.gz/raw only). Verify the zip, then extract just the binary.
-# Used by homelab's packer/push.sh to upload custom images to the SeaweedFS S3
-# bucket.
+# rclone's nested zip is unsupported by install_binary; verify and extract it.
+# homelab uses it to upload images to SeaweedFS S3.
 install_rclone() {
     log_info "Installing rclone ${RCLONE_VERSION}..."
     local tmp_dir zip_name
@@ -623,9 +569,7 @@ install_rclone() {
     install -m 0755 "${tmp_dir}/rclone" "$BIN_DIR/rclone"
 }
 
-# ============================================================================
 # GitHub Actions Tools
-# ============================================================================
 
 install_actionlint() {
     local archive_name="actionlint_${ACTIONLINT_VERSION}_linux_${BIN_ARCH}.tar.gz"
@@ -635,23 +579,16 @@ install_actionlint() {
         "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_checksums.txt"
 }
 
-# ============================================================================
 # Python Tools (pipx)
-# ============================================================================
 
-# ansible / ansible-lint install into isolated pipx venvs (upstream Ansible
-# recommends pip/pipx, and ansible-lint is not reliably packaged by the distros).
-# pipx itself is bootstrapped by run_onchange_linux0_package.sh; here we only
-# verify it is present (local_preflight already guards this) and never apt/dnf.
+# linux0 provides pipx; use isolated venvs because distro packages are unreliable.
 ensure_pipx() {
     command -v pipx &>/dev/null && return
     log_error "pipx not found. Run run_onchange_linux0_package.sh first."
     exit 1
 }
 
-# ansible-core needs a controller Python >= 3.12 (Rocky 9 ships 3.9; linux0
-# installs python3.12 there). Pick a >=3.12 interpreter to hand pipx via
-# --python; do not install one here (that is linux0's job).
+# Select the Python >=3.12 controller provided by linux0.
 PIPX_PYTHON=""
 resolve_pipx_python() {
     [[ -n "$PIPX_PYTHON" ]] && return
@@ -666,9 +603,7 @@ resolve_pipx_python() {
     fi
 }
 
-# Route pipx so app symlinks land in BIN_DIR (already on PATH) and venvs live in
-# PIPX_HOME_DIR. --force makes the install idempotent and lets a version bump
-# reinstall over an existing venv; --python pins the venv to a 3.12 interpreter.
+# Route pipx links and venvs to the managed paths; --force applies upgrades.
 pipx_install() {
     ensure_pipx
     resolve_pipx_python
@@ -686,9 +621,7 @@ install_ansible_lint() {
     pipx_install "ansible-lint==${ANSIBLE_LINT_VERSION}"
 }
 
-# argcomplete is an ansible-core dependency, but pipx does not expose dependency
-# entrypoints by default. Publish only its completion generator so the post-apply
-# completion script can generate native zsh definitions for Ansible commands.
+# Expose argcomplete's generator, which pipx does not link for dependencies.
 ensure_argcomplete_generator() {
     command -v register-python-argcomplete &>/dev/null && return
 
@@ -701,9 +634,7 @@ ensure_argcomplete_generator() {
     ln -sf "$generator" "$BIN_DIR/register-python-argcomplete"
 }
 
-# ============================================================================
 # Main
-# ============================================================================
 
 main() {
     log_info "=== Linux Development Tools Installation ==="

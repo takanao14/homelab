@@ -5,13 +5,8 @@ set -euo pipefail
 
 # renovate: datasource=github-releases depName=yuru7/udev-gothic
 readonly UDEV_GOTHIC_VERSION="${UDEV_GOTHIC_VERSION:-2.2.0}"
-# Install location. Defaults to a per-user prefix. Set TOOL_FONT_DIR to a
-# system-wide path such as /usr/local/share/fonts to make the font available to
-# every user (e.g. for a shared / golden-image VM); that requires running as
-# root. fontconfig scans /usr/local/share/fonts by default. Also set
-# TOOL_VERSION_CACHE_DIR=/usr/local/share/tool-versions so the baseline marker is
-# recorded where per-user installs look for it; otherwise the deferral below
-# silently no-ops (the marker lands in $HOME instead of SYSTEM_CACHE_DIR).
+# Defaults to per-user paths; a system-wide TOOL_FONT_DIR requires root.
+# Use /usr/local/share/tool-versions so per-user installs see the baseline.
 readonly VERSION_CACHE_DIR="${TOOL_VERSION_CACHE_DIR:-$HOME/.local/share/tool-versions}"
 # A per-user install defers to a current system-wide baseline (golden image),
 # so it does not shadow it with a duplicate in $HOME/.local.
@@ -19,9 +14,7 @@ readonly SYSTEM_CACHE_DIR="/usr/local/share/tool-versions"
 readonly FONTS_DIR="${TOOL_FONT_DIR:-$HOME/.local/share/fonts}/udev-gothic"
 readonly DOWNLOAD_URL="https://github.com/yuru7/udev-gothic/releases/download/v${UDEV_GOTHIC_VERSION}/UDEVGothic_NF_v${UDEV_GOTHIC_VERSION}.zip"
 
-# ============================================================================
 # Logging
-# ============================================================================
 
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
@@ -43,9 +36,7 @@ cleanup_tmp_paths() {
 
 trap cleanup_tmp_paths EXIT
 
-# ============================================================================
 # Helpers
-# ============================================================================
 
 make_tmp_dir() {
     local __var_name="$1" path
@@ -79,10 +70,7 @@ check_gui() {
     fi
 }
 
-# This script installs the font into a per-user (or TOOL_FONT_DIR) directory and
-# never calls sudo. The OS packages it needs (curl, unzip, fontconfig providing
-# fc-cache/fc-list) are installed by run_onchange_linux0_package.sh. Verify they
-# exist and fail fast with a clear pointer rather than calling apt/dnf here.
+# This script never calls sudo; linux0 must provide its OS-level dependencies.
 check_dependencies() {
     local missing_deps=()
     for cmd in curl unzip fc-cache fc-list; do

@@ -6,12 +6,8 @@ set -euo pipefail
 # renovate: datasource=github-releases depName=kovidgoyal/kitty
 readonly KITTY_VERSION="${KITTY_VERSION:-0.48.2}"
 
-# Install location. Defaults to a per-user prefix. Override TOOL_BIN_DIR /
-# TOOL_KITTY_PREFIX / TOOL_APPS_DIR / TOOL_VERSION_CACHE_DIR with system-wide
-# paths (e.g. /usr/local) to make kitty available to every user (golden-image
-# VM); requires running as root. Point TOOL_VERSION_CACHE_DIR at
-# /usr/local/share/tool-versions so the baseline marker is recorded where
-# per-user installs look for it; otherwise the deferral below silently no-ops.
+# Defaults to per-user paths; system-wide TOOL_* paths require root.
+# Use /usr/local/share/tool-versions so per-user installs see the baseline.
 readonly BIN_DIR="${TOOL_BIN_DIR:-$HOME/.local/bin}"
 readonly VERSION_CACHE_DIR="${TOOL_VERSION_CACHE_DIR:-$HOME/.local/share/tool-versions}"
 # A per-user install defers to a current system-wide baseline (golden image),
@@ -21,9 +17,7 @@ readonly KITTY_PREFIX="${TOOL_KITTY_PREFIX:-$HOME/.local}"
 readonly APPS_DIR="${TOOL_APPS_DIR:-$HOME/.local/share/applications}"
 readonly KITTY_APP="${KITTY_PREFIX}/kitty.app"
 
-# ============================================================================
 # Logging
-# ============================================================================
 
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
@@ -45,9 +39,7 @@ cleanup_tmp_paths() {
 
 trap cleanup_tmp_paths EXIT
 
-# ============================================================================
 # Helpers
-# ============================================================================
 
 make_tmp_dir() {
     local __var_name="$1" path
@@ -81,9 +73,7 @@ check_gui() {
     fi
 }
 
-# ============================================================================
 # Kitty
-# ============================================================================
 
 install_kitty() {
     log_info "Installing kitty ${KITTY_VERSION}..."

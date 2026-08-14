@@ -7,8 +7,7 @@ set -euo pipefail
 . /etc/os-release
 readonly OS_ID="${ID}"
 
-# Version pins for the package-manager-managed tools that need them. kubectl uses
-# a minor (the apt/dnf repo path is per-minor); openbao pins the .deb/.rpm asset.
+# kubectl pins a repository minor; openbao pins its package asset.
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 readonly KUBECTL_VERSION="${KUBECTL_VERSION:-1.36}"
 # renovate: datasource=github-releases depName=openbao/openbao
@@ -17,24 +16,15 @@ readonly OPENBAO_VERSION="${OPENBAO_VERSION:-2.6.1}"
 BIN_ARCH="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
 readonly BIN_ARCH
 
-# This script owns every privileged (sudo) operation; the unprivileged tool and
-# font scripts (run_onchange_linux1_tool.sh / run_onchange_linux3_fonts.sh) only
-# consume what this provides. Two modes:
-#   - default (env unset): install OS packages with sudo. This is what a normal
-#     `chezmoi apply` on a workstation does, so behaviour is unchanged there.
-#   - TOOL_SKIP_SYSTEM_PACKAGES=1: a no-sudo run (e.g. homelab provision --local
-#     where packages were baked into the image). Instead of installing, verify
-#     the prerequisites exist and fail fast, never invoking sudo.
+# This script owns all privileged operations. By default it installs packages;
+# TOOL_SKIP_SYSTEM_PACKAGES=1 only verifies preinstalled dependencies.
 readonly SKIP_PACKAGES="${TOOL_SKIP_SYSTEM_PACKAGES:-0}"
 
-# Version-cache markers, kept consistent with run_onchange_linux1_tool.sh so
-# install_if_needed/baseline deferral behaves identically for the package tools.
+# Share linux1's cache layout for consistent baseline deferral.
 readonly VERSION_CACHE_DIR="${TOOL_VERSION_CACHE_DIR:-$HOME/.local/share/tool-versions}"
 readonly SYSTEM_CACHE_DIR="/usr/local/share/tool-versions"
 
-# ============================================================================
 # Logging
-# ============================================================================
 
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
@@ -63,9 +53,7 @@ make_tmp_dir() {
     printf -v "$__var_name" '%s' "$path"
 }
 
-# ============================================================================
 # Package-manager helpers (privileged)
-# ============================================================================
 
 update_package_cache() {
     case "$OS_ID" in
@@ -85,8 +73,7 @@ install_packages() {
 
 add_apt_repository() {
     local repo_name="$1" gpg_url="$2" repo_line="$3"
-    # Optional 4th arg overrides the keyring path so we can match the upstream
-    # project's official name (keep it in sync with the signed-by= in repo_line).
+    # Keep an overridden keyring path in sync with repo_line's signed-by value.
     local keyring_path="${4:-/usr/share/keyrings/${repo_name}-keyring.gpg}"
     log_info "Adding ${repo_name} repository..."
     curl -fsSL "$gpg_url" | gpg --dearmor | sudo tee "$keyring_path" > /dev/null
@@ -108,12 +95,9 @@ gpgkey=${gpgkey_url}
 EOF
 }
 
-# ============================================================================
 # Idempotency helpers (mirrors run_onchange_linux1_tool.sh)
-# ============================================================================
 
-# True when a system-wide baseline already provides KEY at VERSION. Only
-# meaningful for a per-user install (our cache dir is not the system one).
+# True when a per-user install can defer to the system baseline.
 baseline_satisfies() {
     local key="$1" version="$2"
     [[ "$VERSION_CACHE_DIR" != "$SYSTEM_CACHE_DIR" ]] || return 1
@@ -136,9 +120,7 @@ install_if_needed() {
     fi
 }
 
-# ============================================================================
 # Baseline OS dependencies
-# ============================================================================
 
 install_base_dependencies() {
     log_info "Installing baseline dependencies..."
@@ -158,9 +140,7 @@ install_base_dependencies() {
     esac
 }
 
-# ============================================================================
 # HashiCorp tools (terraform / packer / vault) via official repository
-# ============================================================================
 
 install_hashicorp_tools() {
     log_info "Installing HashiCorp tools (Terraform, Packer, Vault)..."
@@ -183,9 +163,7 @@ install_hashicorp_tools() {
     install_packages terraform packer vault
 }
 
-# ============================================================================
 # kubectl via official Kubernetes repository
-# ============================================================================
 
 install_kubectl() {
     log_info "Installing kubectl..."
@@ -210,9 +188,7 @@ install_kubectl() {
     install_packages kubectl
 }
 
-# ============================================================================
 # openbao via release .deb / .rpm
-# ============================================================================
 
 install_openbao() {
     log_info "Installing openbao..."
@@ -234,13 +210,9 @@ install_openbao() {
     esac
 }
 
-# ============================================================================
 # pipx toolchain bootstrap (consumed by the ansible installs in linux1)
-# ============================================================================
 
-# ansible-core needs a controller Python >= 3.12. Install an explicit 3.12
-# package when the distro default is older; fail here with a clear error when
-# the configured repositories do not provide one.
+# Install Python 3.12 when the distro default cannot run ansible-core.
 have_python312() {
     command -v python3.12 &>/dev/null && return 0
     command -v python3 &>/dev/null && \
@@ -281,9 +253,7 @@ ensure_pipx_toolchain() {
     fi
 }
 
-# ============================================================================
 # Preflight (no-sudo mode): verify prerequisites instead of installing
-# ============================================================================
 
 print_install_hint() {
     log_error "  Run this script once without TOOL_SKIP_SYSTEM_PACKAGES as a user with sudo access."
@@ -293,7 +263,7 @@ print_install_hint() {
 preflight_packages() {
     log_info "TOOL_SKIP_SYSTEM_PACKAGES set: verifying pre-provided packages (no sudo)..."
     local missing=() cmd
-    # base deps (as commands) + font deps + the package-managed tools.
+    # Check base, font, and package-managed tool dependencies.
     for cmd in curl tar gzip unzip xz gpg git file find make sha256sum install \
                fc-cache fc-list terraform packer vault kubectl bao pipx mosh tmux podman; do
         command -v "$cmd" &>/dev/null || missing+=("$cmd")
@@ -308,9 +278,7 @@ preflight_packages() {
     log_info "All required system packages are present."
 }
 
-# ============================================================================
 # Main
-# ============================================================================
 
 main() {
     log_info "=== Linux System Package Installation ==="
