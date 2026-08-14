@@ -31,7 +31,7 @@ layout:
     columns: 4
   AI:
     style: row
-    columns: 6
+    columns: 7
   Remote Management:
     style: row
     columns: 4

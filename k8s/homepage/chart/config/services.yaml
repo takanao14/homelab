@@ -234,6 +234,11 @@
         description: Continuous Delivery (sandbox)
 
 - AI:
+    - GPU Switch:
+        icon: mdi-expansion-card-variant
+        href: https://gpu-switch.prd.butaco.net
+        description: AMD GPU Workload Switcher
+
     - Open WebUI:
         icon: open-webui.png
         href: https://open-webui.prd.butaco.net
@@ -263,11 +268,6 @@
         icon: vllm.png
         href: https://vllm.prd.butaco.net
         description: OpenAI-compatible Inference Server
-
-    - GPU Switch:
-        icon: mdi-expansion-card-variant
-        href: https://gpu-switch.prd.butaco.net
-        description: AMD GPU Workload Switcher
 
 - Remote Management:
     - MeshCentral:
