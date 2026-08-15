@@ -76,3 +76,4 @@ deleting it:
 | [0031](0031-browser-editor-on-relocated-toolbox-vm.md) | Run a browser editor on toolbox1, relocated to pve | Proposed |
 | [0032](0032-reboot-and-planned-shutdown-orchestration.md) | Orchestrate reboots and planned shutdowns from Ansible | Accepted |
 | [0033](0033-sandbox-storage-openebs-localpv-and-truenas-nfs.md) | Use OpenEBS LocalPV and TrueNAS NFS for sandbox storage | Accepted |
+| [0034](0034-hubble-ui-for-service-traffic-visibility.md) | Visualize service-to-service traffic with Hubble UI | Proposed |
