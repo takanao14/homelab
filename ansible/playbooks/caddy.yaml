@@ -31,6 +31,20 @@
         msg: "homelab-private not found at {{ homelab_private_path }}, skipping DNS sync"
       when: not homelab_private_stat.stat.exists
 
+    - name: Assert the generated records point at the caddy host
+      ansible.builtin.assert:
+        that:
+          - caddy_dns_target is defined
+          - caddy_dns_target | string is match('^\d{1,3}(\.\d{1,3}){3}$')
+          - caddy_dns_target | string is not match('^127\.')
+        fail_msg: >-
+          caddy_dns_target is "{{ caddy_dns_target | default('undefined') }}",
+          not the caddy host address. Every A record in the generated block would
+          be rewritten to it, and pushing home-zone.js applies dnscontrol to
+          PowerDNS with no approval step.
+        quiet: true
+      when: homelab_private_stat.stat.exists
+
     - name: Update caddy section in dnsconfig.js
       ansible.builtin.blockinfile:
         path: "{{ dnsconfig_path }}"
