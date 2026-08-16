@@ -4,6 +4,13 @@ alloy:
     replicas: 1
 
   alloy:
+    # Requests only: 30-day p95/max 8.3/9.9m CPU and 329/330Mi memory
+    # for the main Alloy container (2026-08-16).
+    resources:
+      requests:
+        cpu: 15m
+        memory: 448Mi
+
     configMap:
       content: |-
         otelcol.receiver.otlp "pve" {
