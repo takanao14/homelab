@@ -60,9 +60,7 @@
     mode: '0600'
   notify:
     - Restart sssd
-    # Only this task invalidates: the config carries entry_cache_timeout, and a
-    # changed ceiling has to reach entries already cached. The certificate task
-    # above restarts without discarding the cache.
+    # Apply a changed cache timeout to existing entries.
     - Invalidate the sssd cache
 
 # Enable pam_mkhomedir through Ubuntu's PAM manager; report only real changes.

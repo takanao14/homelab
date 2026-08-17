@@ -5,13 +5,7 @@
     name: sssd
     state: restarted
 
-# Only notified by the sssd.conf task, and deliberately ordered after the
-# restart above (handlers run in definition order). SSSD stamps an expiration
-# onto every cache entry using the timeout in effect when it writes the entry,
-# and the cache lives on disk, so lowering entry_cache_timeout leaves existing
-# entries on the old, longer ceiling — measured at 78 extra minutes of a
-# already-revoked group. Invalidating once on config change makes the new value
-# apply to what is already cached. See README.
+# Existing entries retain their original TTL, so clear them after config changes.
 - name: Invalidate the sssd cache
   become: true
   ansible.builtin.command:
