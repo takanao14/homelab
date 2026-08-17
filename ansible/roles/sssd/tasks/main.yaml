@@ -58,7 +58,12 @@
     group: root
     # Contains LDAP bind password; SSSD requires private permissions.
     mode: '0600'
-  notify: Restart sssd
+  notify:
+    - Restart sssd
+    # Only this task invalidates: the config carries entry_cache_timeout, and a
+    # changed ceiling has to reach entries already cached. The certificate task
+    # above restarts without discarding the cache.
+    - Invalidate the sssd cache
 
 # Enable pam_mkhomedir through Ubuntu's PAM manager; report only real changes.
 - name: Check whether pam_mkhomedir is already enabled

@@ -57,3 +57,10 @@ fallback_homedir = {{ sssd_home_dir_template }}
 default_shell = {{ sssd_default_shell }}
 cache_credentials = true
 enumerate = false
+
+# Explicit rather than SSSD's 5400s default. A group membership added or removed
+# in Authentik reaches LDAP within ~2.5 min (measured), but `id`/initgroups —
+# which is what sudo consults — is served from this cache until it expires.
+# `getent group` refreshes independently, so the group can list a member while
+# that member still lacks the privileges, or still holds them after removal.
+entry_cache_timeout = {{ sssd_entry_cache_timeout }}

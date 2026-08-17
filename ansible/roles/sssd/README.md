@@ -84,6 +84,7 @@ entirely, so an unset variable can never lock the account out.
 | `sssd_sudo_group` | `lab-linux-admins` | Authentik group granted sudo |
 | `sssd_sudoers_file` | `/etc/sudoers.d/60-lab-linux-admins` | Ansible-managed sudoers drop-in |
 | `sssd_offline_credentials_expiration` | `2` | Days of offline login (決定事項16) |
+| `sssd_entry_cache_timeout` | `600` | Seconds before a cached entry expires; caps how long a revoked group survives in `id`/initgroups, and therefore in sudo. SSSD's own default is `5400` |
 | `sssd_ldap_ca_cert_path` | `/etc/ssl/certs/authentik-ldap-ca.pem` | Trusted LDAPS certificate |
 
 ## Notes
@@ -97,19 +98,51 @@ entirely, so an unset variable can never lock the account out.
   `sssdtest1`: disabling then re-enabling flips `pam_acct_mgmt` between
   `Permission denied` and `Success`.
 - **Revocation is not instant, and there are two caches in the path.**
-  1. SSSD's own cache on this host (`sss_cache -E`, or an `sssd` restart).
-  2. The Authentik LDAP Outpost's cache — the provider ships with
-     `search_mode: cached`, so *group membership changes* made in Authentik
-     are not even visible over LDAP until the outpost refreshes. Observed on
-     `sssdtest1`: adding a user to `lab-linux-admins` stayed invisible to
-     `ldapsearch` until `authentik-ldap` was restarted, while a
-     user *disable* propagated with only the SSSD cache cleared.
+  Both expire on their own; neither needs a restart. Measured on `sssdtest1`
+  (2026-08-17, `search_mode: cached`):
+  1. The Authentik LDAP Outpost's cache — a group membership added in
+     Authentik became visible to `ldapsearch` after ~1 min 15 s, and a removal
+     after ~2 min 22 s.
+  2. SSSD's cache on this host — bounded by `entry_cache_timeout`
+     (`sssd_entry_cache_timeout`, set to 600s here; SSSD defaults to 5400s).
 
+  So the ceiling on privilege revocation is roughly cache (1) + cache (2).
   Both are separate from `offline_credentials_expiration`, which governs
-  offline login. Off-boarding / privilege-revocation runbooks must account
-  for both, or explicitly invalidate them. Setting the provider's
-  `search_mode` to `direct` trades outpost caching for a live query per
-  lookup and removes cache (2).
+  offline login.
+
+  **`getent group` and `id` do not agree during that window.** They are served
+  from different caches: `getent group lab-linux-admins` listed `sssdtest` as a
+  member while `id sssdtest` still omitted the group. **sudo follows `id`**
+  (initgroups), so a member shown by `getent group` may not actually hold sudo
+  yet — and, in the other direction, may still hold it after removal.
+  For immediate revocation, invalidate the user's entry on the host:
+  `sudo sss_cache -u <user>` (narrower than `-E`, and observed to take effect
+  at once).
+
+  **Lowering `entry_cache_timeout` does not shorten entries already cached.**
+  SSSD stamps an expiration onto each entry when it writes it, using whatever
+  timeout was in effect then, and the cache lives on disk
+  (`/var/lib/sss/db/*.ldb`) so a restart does not clear it. Observed here: an
+  entry refreshed at 17:02 carried the old 5400s stamp (expiring 18:32), and
+  survived the 17:14 config change and service restart unchanged — a revoked
+  group therefore stayed effective for another 78 minutes. After one
+  `sss_cache -u sssdtest`, the replacement entry expired in 600s as configured,
+  and `sssctl user-show` reported the same value for both the cache entry and
+  initgroups (so `entry_cache_user_timeout` does not need to be set separately).
+  **After changing this value, invalidate once** (`sss_cache -E`, or per user)
+  or the new ceiling does not apply to existing entries. The role does this for
+  you: the `sssd.conf` task notifies `Invalidate the sssd cache` alongside
+  `Restart sssd`, so a config change discards the stale stamps. The certificate
+  task only restarts — it has no reason to drop the cache.
+
+  Use `sssctl user-show <user>` to read the actual expiration timestamps rather
+  than inferring them.
+
+  An earlier note here claimed group changes stayed invisible over LDAP until
+  `authentik-ldap` was restarted. Re-measurement disproved that: the outpost
+  cache expires on its own within a couple of minutes. Setting the provider's
+  `search_mode` to `direct` would remove cache (1) entirely, but it makes every
+  lookup a live query, so it was **not** adopted.
 - `sssd_sudo_group` membership is independent of
   `sssd_allowed_login_group`: an admin needs to be in *both* to log in and
   then escalate, since the login filter only admits `lab-linux-users`.

@@ -35,6 +35,16 @@ sssd_sudoers_file: /etc/sudoers.d/60-lab-linux-admins
 
 # Limit disabled-user cache lifetime; not a break-glass mechanism.
 sssd_offline_credentials_expiration: 2
+
+# Bound how long a revoked group membership survives locally. SSSD's default is
+# 5400s (90 min), which sets the ceiling on privilege revocation: sudo resolves
+# the user's groups through initgroups, and that lookup is served from this
+# cache. Measured LDAP-side propagation is up to ~2.5 min, so a shorter value
+# here does not shrink the total much — 600s keeps both legs the same order of
+# magnitude. Immediate revocation is `sss_cache -u <user>` on the host.
+# Changing this does not re-stamp entries already in the on-disk cache; run
+# `sss_cache -E` once after lowering it. See README.
+sssd_entry_cache_timeout: 600
 sssd_home_dir_template: /home/%u
 sssd_default_shell: /bin/bash
 
