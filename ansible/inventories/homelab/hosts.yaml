@@ -65,7 +65,7 @@ all:
     authentik1:
       ansible_host: 192.168.10.248
     sssdtest1:
-      ansible_host: 192.168.10.249
+      ansible_host: 192.168.10.176
     vpngw:
       ansible_host: 192.168.10.3
   children:
