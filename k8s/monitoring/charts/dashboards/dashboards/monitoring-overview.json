@@ -969,6 +969,49 @@
       "type": "timeseries",
       "targets": [
         {
+          "expr": "sum(rate(loki_ingester_chunk_stored_bytes_total{job=\"$loki_job\"}[$__rate_interval]))",
+          "legendFormat": "bytes/s"
+        }
+      ],
+      "title": "Chunk Stored Rate (compressed)",
+      "description": "Bytes written to storage after compression -- this, not the ingestion rate above, drives disk growth. Bursty over short intervals as chunks flush.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 67
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
           "expr": "sum(rate(loki_distributor_lines_received_total{job=\"$loki_job\"}[$__rate_interval]))",
           "legendFormat": "lines/s"
         }
@@ -982,8 +1025,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 67
+        "x": 0,
+        "y": 75
       },
       "repeatDirection": "h",
       "options": {
@@ -1024,7 +1067,7 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
+        "x": 12,
         "y": 75
       },
       "repeatDirection": "h",
@@ -1066,8 +1109,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 75
+        "x": 0,
+        "y": 83
       },
       "repeatDirection": "h",
       "options": {

@@ -94,6 +94,18 @@ func capacityThresholds() *dashboard.ThresholdsConfigBuilder {
 		})
 }
 
+// timeToFullThresholds colors a "days until full" projection, where a lower
+// value is worse: red below 30 days, yellow below 90, green above.
+func timeToFullThresholds() *dashboard.ThresholdsConfigBuilder {
+	return dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "red"},
+			{Value: new(float64(30)), Color: "yellow"},
+			{Value: new(float64(90)), Color: "green"},
+		})
+}
+
 // zeroLineThresholds draws zero on bidirectional I/O panels.
 func zeroLineThresholds() *dashboard.ThresholdsConfigBuilder {
 	return dashboard.NewThresholdsConfigBuilder().

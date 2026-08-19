@@ -906,6 +906,76 @@
       }
     },
     {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sort(clamp_max((node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / deriv(node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}[7d]) / -86400) \u003e 0, 3650) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+          "instant": true,
+          "legendFormat": "{{nodename}} {{mountpoint}}",
+          "range": false
+        }
+      ],
+      "title": "Time Until Filesystem Full",
+      "description": "Days until free space reaches zero, projected from the last 7 days. Capped at 3650 d; filesystems that are not filling are omitted.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 67
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "d",
+          "decimals": 0,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 30,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
       "type": "timeseries",
       "targets": [
         {
@@ -929,7 +999,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 67
+        "y": 75
       },
       "repeatDirection": "h",
       "options": {
@@ -990,7 +1060,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 75
+        "y": 83
       },
       "id": 0,
       "panels": []
@@ -1020,7 +1090,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 76
+        "y": 84
       },
       "repeatDirection": "h",
       "options": {

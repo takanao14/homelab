@@ -356,6 +356,25 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				}),
 		).
 		WithPanel(
+			bargauge.NewPanelBuilder().
+				Title("Time Until Filesystem Full").
+				// deriv is negative while filling, so /-86400 gives positive days;
+				// the clamp stops idle filesystems flattening the bar scale.
+				Description("Days until free space reaches zero, projected from the last 7 days. Capped at 3650 d; filesystems that are not filling are omitted.").
+				Datasource(ds).
+				Span(24).Height(8).
+				Unit("d").
+				Min(0).
+				Decimals(0).
+				Thresholds(timeToFullThresholds()).
+				Orientation(common.VizOrientationHorizontal).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sort(clamp_max((node_filesystem_avail_bytes{` + clusterFilter + `, ` + fsFilter + `} / deriv(node_filesystem_avail_bytes{` + clusterFilter + `, ` + fsFilter + `}[7d]) / -86400) > 0, 3650) ` + joinNode + `)`).
+					Instant().
+					LegendFormat("{{nodename}} {{mountpoint}}"),
+				),
+		).
+		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Disk I/O").
 				Datasource(ds).

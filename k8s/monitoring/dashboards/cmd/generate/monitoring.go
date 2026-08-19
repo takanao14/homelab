@@ -342,6 +342,22 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().
+				Title("Chunk Stored Rate (compressed)").
+				// Ingestion rate above is what Loki receives; this is what reaches disk.
+				Description("Bytes written to storage after compression -- this, not the ingestion rate above, drives disk growth. Bursty over short intervals as chunks flush.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("Bps").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(rate(loki_ingester_chunk_stored_bytes_total{` + lokiJob + `}[$__rate_interval]))`).
+					LegendFormat("bytes/s"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
 				Title("Log Lines Ingested Rate").
 				Datasource(ds).
 				Span(12).Height(8).
