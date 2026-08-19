@@ -52,7 +52,7 @@ targets:
     name: "ns3"
     service: "pdns-auth"
     kind: "lxc"
-  # Dedicated recursive DNS backends (ADR-0030).
+  # Recursive DNS backends.
   - ip: "192.168.10.236"
     name: "resolver1"
     service: "knot-resolver"
@@ -60,6 +60,30 @@ targets:
   - ip: "192.168.10.237"
     name: "resolver2"
     service: "knot-resolver"
+    kind: "lxc"
+  # Forgejo CI runner, include container images.
+  - ip: "192.168.10.246"
+    name: "runner1"
+    service: "forgejo-runner"
+    kind: "vm"
+  # Vector log colletor.
+  - ip: "192.168.10.243"
+    name: "log1"
+    service: "log-collector"
+    kind: "lxc"
+  # Reverse Proxy.
+  - ip: "192.168.10.244"
+    name: "caddy1"
+    service: "caddy"
+    kind: "lxc"
+  # DNS routers.
+  - ip: "192.168.10.231"
+    name: "dist1"
+    service: "dnsdist"
+    kind: "lxc"
+  - ip: "192.168.10.232"
+    name: "dist2"
+    service: "dnsdist"
     kind: "lxc"
 
 resolverAlerts:
