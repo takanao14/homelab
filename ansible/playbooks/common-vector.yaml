@@ -1,6 +1,4 @@
 ---
-# Fleet-wide Vector entry point; config remains host-specific.
-# Journald policy is managed by common-journald.yaml / lxc_logging.
 - name: Apply Vector agent to all Vector hosts
   hosts: vector
   roles:

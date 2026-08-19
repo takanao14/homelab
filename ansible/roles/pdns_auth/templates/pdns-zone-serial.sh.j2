@@ -1,20 +1,12 @@
 #!/bin/sh
 # Ansible managed
-#
-# Export the SOA serial of every zone this server holds, so Prometheus can
-# compare the primary against the secondaries and catch a zone transfer that
-# silently never happened. pdns_auth_xfr_queue only reports transfers that are
-# queued and not draining; a transfer that never starts leaves the queue empty
-# while the secondaries keep serving stale data.
-#
-# The API key is read from pdns.conf at runtime rather than templated in here,
-# so this script does not become a second place the secret lives.
+# Export SOA serials so Prometheus detects stalled zone transfers.
+# Unlike pdns_auth_xfr_queue, this also detects transfers that never start.
+# Read the API key at runtime to avoid templating the secret.
 set -eu
 
 metrics_output="{{ pdns_zone_serial_metrics_path }}"
-# The webserver binds the guest's own service address, not loopback, and
-# webserver-allow-from lists the LAN ranges rather than 127.0.0.1 — so this has
-# to use the same address pdns.conf does.
+# The API listens on the configured service address, not loopback.
 {% if pdns_role == 'primary' %}
 api_url="http://{{ pdns_primary_addr }}:{{ pdns_webserver_port }}/api/v1/servers/localhost/zones"
 {% else %}
@@ -40,8 +32,7 @@ trap cleanup EXIT HUP INT TERM
   echo '# TYPE pdns_zone_serial gauge'
   echo '# HELP pdns_zone_notified_serial Highest serial this server has notified secondaries of.'
   echo '# TYPE pdns_zone_notified_serial gauge'
-{# The Python below is emitted verbatim: its f-strings use {{ }} for literal
-   braces, which Jinja would otherwise read as an expression. #}
+{# Preserve Python f-string braces. #}
 {% raw %}
   API_KEY="${api_key}" API_URL="${api_url}" python3 - <<'PY'
 import json
@@ -62,8 +53,7 @@ for zone in zones:
     serial = zone.get("serial")
     if serial is not None:
         print(f'pdns_zone_serial{{zone="{label}"}} {serial}')
-    # Only a primary notifies, so this stays absent on the secondaries rather
-    # than being reported as zero.
+    # Omit notified_serial on secondaries instead of reporting zero.
     notified = zone.get("notified_serial")
     if notified:
         print(f'pdns_zone_notified_serial{{zone="{label}"}} {notified}')

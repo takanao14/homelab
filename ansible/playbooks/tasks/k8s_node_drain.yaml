@@ -1,6 +1,5 @@
 ---
-# Drain before disruption for graceful pod termination. kubectl runs on the control node.
-# Inventory names match Kubernetes node names.
+# Drain before disruption for graceful pod termination.
 
 - name: Check current cordon state
   ansible.builtin.command:
@@ -28,7 +27,6 @@
   become: false
   changed_when: k8s_node_cordon_state.stdout != 'true'
 
-# Match k0sctl drain policy; force handles LocalPV pods and timeout covers PDBs.
 - name: Drain node
   ansible.builtin.command:
     argv:

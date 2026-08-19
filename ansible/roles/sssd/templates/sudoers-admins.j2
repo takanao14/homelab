@@ -1,14 +1,3 @@
 # Managed by Ansible (sssd role). Do not edit manually.
 #
-# Authentik's LDAP provider serves users/groups but not central sudo rules
-# (see docs/plans/identity-authentication-architecture.md,
-# 「Authentik単体で提供しない機能」), so sudo is granted here instead.
-#
-# The group is resolved through SSSD/NSS, so membership follows Authentik:
-# adding someone to {{ sssd_sudo_group }} in Authentik grants sudo on every
-# host running this role, and removing them revokes it (subject to the SSSD
-# cache — see the role README).
-#
-# Password is required (not NOPASSWD): the password is the Authentik one, so
-# sudo re-verifies the operator against the identity provider.
 %{{ sssd_sudo_group }} ALL=(ALL) ALL

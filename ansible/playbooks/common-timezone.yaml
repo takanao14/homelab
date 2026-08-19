@@ -1,5 +1,4 @@
 ---
-# Fleet timezone entry point; service playbooks embed the role for self-containment.
 - name: Set system timezone on all timezone-managed hosts
   hosts: timezone
   roles:

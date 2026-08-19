@@ -1,5 +1,4 @@
 ---
-# Break-glass public keys (roles/sssd); unencrypted to keep recovery independent of SOPS.
-# Mirrors TF_VM_SSH_PUBLIC_KEY but rotates independently.
+# Break-glass public keys (roles/sssd)
 sssd_breakglass_authorized_keys:
   - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAC3V/tQIKA+06f/+2wMHWEhJMeciTFlvqcb9MwTLy9Y takanao@toolbox1"

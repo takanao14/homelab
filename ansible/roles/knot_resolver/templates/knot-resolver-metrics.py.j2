@@ -1,16 +1,7 @@
 #!/usr/bin/env python3
-"""Write Knot Resolver metrics for the node_exporter textfile collector.
+"""Write Knot Resolver metrics to node_exporter's textfile collector.
 
-Reads the manager's Prometheus endpoint straight off its unix control socket
-rather than shelling out to kresctl. kresctl loads its whole CLI framework on
-every invocation, measured on resolver1 at 0.19s and 99% CPU against 0.02s for
-the direct request. On a container this small that 190ms is a spike contending
-with query processing, and it lands four times a minute at the 15s collection
-interval.
-
-Any failure exits non-zero and leaves the previous file untouched, so its mtime
-goes stale and KnotResolverMetricsStale reports the collector rather than the
-dashboard quietly flatlining on a truncated write.
+Read the manager socket directly and preserve the last good file on failure.
 """
 
 import os
@@ -23,12 +14,11 @@ SOCKET_PATH = "{{ knot_resolver_metrics_socket_path }}"
 OUTPUT_PATH = "{{ knot_resolver_metrics_path }}"
 CACHE_PATH = "{{ knot_resolver_cache_storage }}/data.mdb"
 
-# LMDB meta page constants, used to validate before trusting any offset.
+# Validate LMDB metadata before reading offsets.
 LMDB_MAGIC = 0xBEEFC0DE
 LMDB_VERSION = 1
 LMDB_META_PAGES = (0, 4096)
-# Plain /metrics answers 301 to /metrics/json; the Prometheus rendering is only
-# served from this path.
+# The Prometheus rendering is available only at this path.
 REQUEST = b"GET /metrics/prometheus HTTP/1.0\r\nHost: localhost\r\n\r\n"
 TIMEOUT_SECONDS = 10.0
 
@@ -58,25 +48,7 @@ def fetch():
 
 
 def deduplicate_declarations(body):
-    """Drop repeated HELP/TYPE lines for a metric name.
-
-    The manager renders one complete block per worker, so with more than one
-    worker every metric name is declared several times:
-
-        # HELP resolver_answer_total ...
-        # TYPE resolver_answer_total counter
-        resolver_answer_total{instance_id="kresd:kresd0"} 544.0
-        # HELP resolver_answer_total ...
-        # TYPE resolver_answer_total counter
-        resolver_answer_total{instance_id="kresd:kresd1"} 256.0
-
-    Repeating a declaration is invalid in the Prometheus text format, and
-    node_exporter's textfile collector rejects the entire file rather than the
-    offending line -- every metric from this host then disappears while
-    node_textfile_scrape_error goes to 1. The samples themselves are fine, since
-    the instance_id label keeps the series distinct, so only the duplicate
-    declarations are removed.
-    """
+    """Remove duplicate HELP/TYPE declarations emitted per worker."""
     seen = set()
     kept = []
     for line in body.split(b"\n"):
@@ -92,25 +64,10 @@ def deduplicate_declarations(body):
 
 
 def cache_metrics():
-    """Report LMDB cache occupancy, which the resolver does not export.
+    """Report LMDB occupancy from validated metadata; see ADR-0030.
 
-    ADR-0030 records the failure this exists to predict: once the map fills,
-    every stash fails, the cache is dropped, and the hit rate falls from ~90% to
-    ~40% while the recursion that follows answers up to half of all queries with
-    SERVFAIL. Nothing in resolver_* sees it coming -- kresd publishes only query
-    counters, /metrics/json carries the same set, and kresctl has no cache
-    subcommand -- so the only reading available is the database itself.
-
-    The file size is not it: kresd preallocates the whole map, so data.mdb sits
-    at exactly mm_mapsize from the start and would report 100% forever. The real
-    figure is mm_last_pg, the high-water mark of allocated pages, which on this
-    deployment reads 3.9% against a file that looks completely full.
-
-    Parsing an on-disk layout by offset is the trade being made here, so it is
-    guarded: the magic and version are checked, both meta pages are read and the
-    newer transaction wins, and the page arithmetic has to agree with the map
-    size. Anything unexpected returns nothing and leaves the resolver's own
-    metrics untouched, because a missing panel beats a broken collector.
+    Use mm_last_pg because LMDB preallocates data.mdb to mm_mapsize. Invalid
+    metadata omits only the cache metrics.
     """
     try:
         with open(CACHE_PATH, "rb") as handle:
@@ -126,8 +83,7 @@ def cache_metrics():
         magic, version = struct.unpack_from("<II", raw, base)
         if magic != LMDB_MAGIC or version != LMDB_VERSION:
             continue
-        # mm_mapsize at +16, then two MDB_db of 48 bytes, then mm_last_pg and
-        # mm_txnid.
+        # mm_mapsize precedes two 48-byte MDB_db records, mm_last_pg, and mm_txnid.
         mapsize, last_page, txnid = (
             struct.unpack_from("<Q", raw, base + 16)[0],
             struct.unpack_from("<Q", raw, base + 120)[0],

@@ -1,18 +1,7 @@
 # Managed by Ansible (netbox role) -- do not run by hand.
-#
-# Creates or rotates the v2 API token used by the NetBox MCP server.
-#
-# NetBox stores only an HMAC of a v2 token's secret half, so the value cannot be
-# read back once created. The desired token is therefore generated outside
-# NetBox (scripts/netbox-mcp-token.sh), kept in .env/secrets.sops.env, and
-# supplied here through NETBOX_TOKEN -- the same value the MCP launcher uses.
-#
-# A v2 token is `nbt_<key>.<secret>`: `key` identifies the row and `secret` is
-# hashed with the newest API_TOKEN_PEPPERS entry and never stored.
-#
-# Executed by `manage.py shell` reading this script on stdin, so the plaintext
-# never touches the filesystem or the process arguments. The trailing
-# NETBOX_MCP_CHANGED / NETBOX_MCP_UNCHANGED line drives Ansible's changed state.
+# Reconcile the MCP read-only v2 token supplied through NETBOX_TOKEN.
+# Run through `manage.py shell` to keep plaintext out of files and arguments;
+# the final marker drives Ansible's changed state.
 import sys
 
 from django.db import transaction
@@ -55,8 +44,7 @@ changes = []
 with transaction.atomic():
     existing = Token.objects.filter(key=key).first()
 
-    # `validate()` re-derives the HMAC, so a rotated pepper or a changed secret
-    # both surface as a mismatch here.
+    # Detect secret or pepper rotation through HMAC validation.
     up_to_date = (
         existing is not None
         and existing.user_id == user.pk
@@ -67,8 +55,7 @@ with transaction.atomic():
     )
 
     if existing is not None and not up_to_date:
-        # NetBox refuses to reassign the plaintext of a saved token, so the row
-        # has to be replaced rather than updated.
+        # Saved token secrets are immutable; replace the row.
         existing.delete()
         existing = None
         changes.append('removed the stale token holding key {}'.format(key))
@@ -81,13 +68,12 @@ with transaction.atomic():
             write_enabled=False,
             description=DESCRIPTION,
         )
-        # Surfaces a missing API_TOKEN_PEPPERS as a readable error instead of a
-        # database constraint violation.
+        # Validate API_TOKEN_PEPPERS before saving.
         token.clean()
         token.save()
         changes.append('created a read-only token for {}'.format(USERNAME))
 
-    # Any other token on this account is a superseded MCP credential.
+    # Remove superseded MCP credentials.
     superseded = Token.objects.filter(user=user).exclude(key=key)
     superseded_count = superseded.count()
     if superseded_count:

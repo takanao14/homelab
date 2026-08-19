@@ -1,6 +1,5 @@
 ---
-# Restore snapshotted replicas; Argo CD cannot infer omitted replica counts.
-# Tasks run on the control node; play hosts only identify clusters.
+# Restore snapshotted replicas
 
 - name: Locate the replica snapshot
   ansible.builtin.stat:
@@ -26,14 +25,14 @@
   delegate_to: localhost
   become: false
 
-# Reverse order starts GitOps first. splitlines() handles folded-scalar newlines.
+# Reverse order starts GitOps first.
 - name: Build the restore list
   ansible.builtin.set_fact:
     k8s_startup_targets: >-
       {{ (k8s_startup_snapshot.content | b64decode).splitlines()
          | reject('equalto', '') | list | reverse | list }}
 
-# Skip resources whose snapshot omitted replicas; do not invent state.
+# Skip resources whose snapshot omitted replicas.
 - name: Scale workloads back to their recorded replica counts
   ansible.builtin.command:
     argv:

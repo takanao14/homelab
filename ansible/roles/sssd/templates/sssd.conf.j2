@@ -7,8 +7,7 @@ services = nss, pam, ssh
 homedir_substring = /home
 
 [pam]
-# 決定事項16: offline login is a convenience for short outages only, never a
-# break-glass substitute (local accounts + SSH keys cover that).
+# offline login is a convenience for short outages only
 offline_credentials_expiration = {{ sssd_offline_credentials_expiration }}
 
 [domain/{{ sssd_domain }}]
@@ -47,9 +46,7 @@ ldap_group_name = {{ sssd_ldap_group_name_attr }}
 ldap_group_gid_number = gidNumber
 ldap_group_member = member
 
-# Only members of this Authentik group who are still enabled may log in
-# (PoC pass criteria: 「linux-users以外のLDAP userはLinuxへログインできない」
-# and 「Authentik user無効化後のOIDC/LDAP/session/cacheの挙動」).
+# Only members of this Authentik group who are also active.
 ldap_access_order = filter
 ldap_access_filter = (&(memberOf=cn={{ sssd_allowed_login_group }},ou=groups,{{ sssd_ldap_search_base }})(ak-active=TRUE))
 

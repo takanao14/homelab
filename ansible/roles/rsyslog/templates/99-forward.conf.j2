@@ -3,9 +3,8 @@
 template(name="ForwardRFC5424UTC" type="string"
   string="<%PRI%>1 %TIMESTAMP:::date-rfc3339% %HOSTNAME% %APP-NAME% %PROCID% %MSGID% %STRUCTURED-DATA% %MSG%\n")
 
-{#- Shared omfwd forwarding action (DRY). Each caller passes a distinct queue
-    filename so journal and file paths never collide on disk. timeoutEnqueue="0"
-    drops new entries instead of blocking the producer when the queue is full. -#}
+{#- Shared non-blocking action; distinct queue names prevent collisions.
+    timeoutEnqueue="0" drops new entries when full. -#}
 {% macro omfwd_loki(queue_filename, q_size, q_high, q_low, q_disk) -%}
 action(
   type="omfwd"
@@ -26,22 +25,10 @@ action(
 {%- endmacro %}
 
 {% if rsyslog_journal_input %}
-# Read journald directly and forward through a dedicated ruleset, so journal
-# entries bypass the default local-file rules (imuxsock keeps writing local
-# files): no duplicate processing, and remote-forwarding failures stay
-# isolated from Proxmox services. Disk-assisted memory queue (LinkedList) keeps
-# steady-state I/O off the hypervisor disk and only spills to disk when backed
-# up; timeoutEnqueue="0" drops instead of blocking the producer when the queue
-# is full.
-#
-# NOTE: ruleset binding for imjournal is set on the input() object, NOT on the
-# module() statement (module-level `ruleset` is unsupported for imjournal). The
-# input() form requires rsyslog >= 8.2312.0, which Proxmox VE 9 ships. The
-# ruleset must be defined before the input() references it.
-#
-# Proxmox VE 8 / Debian 12 ships rsyslog 8.2302, which rejects the input() form
-# in `rsyslogd -N1`. rsyslog_imjournal_input_supported (set from package facts in
-# tasks/main.yaml) selects the legacy $RuleSet binding on those hosts.
+# Isolate journald forwarding from local files and use a disk-assisted queue.
+# Bind rulesets on input() for rsyslog >= 8.2312 (Proxmox VE 9); module-level
+# binding is unsupported, and the ruleset must be defined first.
+# Package facts select the legacy branch for rsyslog 8.2302 (Proxmox VE 8).
 {% if rsyslog_imjournal_input_supported | default(true) %}
 module(
   load="imjournal"
@@ -58,11 +45,8 @@ input(
   ruleset="ForwardJournalToLoki"
 )
 {% else %}
-# Legacy binding for rsyslog < 8.2312.0 (Proxmox VE 8 / Debian 12): imjournal has
-# no input() object and no module-level `ruleset`, so bind via the legacy $RuleSet
-# directive — imjournal attaches to the ruleset active when the module is loaded.
-# The ruleset must exist first; reset to the default ruleset afterwards so no
-# later input inherits it.
+# rsyslog < 8.2312 binds imjournal to the active legacy $RuleSet.
+# Define it first, then restore the default for later inputs.
 ruleset(name="ForwardJournalToLoki") {
 {{ omfwd_loki("loki_forward", rsyslog_queue_size, rsyslog_queue_high_watermark, rsyslog_queue_low_watermark, rsyslog_queue_max_disk_space) | indent(2, true) }}
 }
@@ -98,19 +82,10 @@ $RuleSet RSYSLOG_DefaultRuleset
 {% endif %}
 
 {% if rsyslog_file_inputs %}
-# File log collection via imfile (e.g. Proxmox /var/log files the journal does
-# not cover). Inputs are bound to their own ForwardFilesToLoki ruleset with a
-# separate disk-assisted, non-blocking queue (distinct filename), so a
-# high-volume file burst cannot starve the journal forwarding queue. inotify
-# mode (default) follows rename-based rotation; state is persisted so only the
-# current file is replayed once on first deployment. NOTE: per-line size is
-# bounded by rsyslog's global maxMessageSize default (imfile has no per-input
-# line-size cap); a global override is intentionally not set here to avoid
-# touching the hypervisor's shared rsyslog limits.
-#
-# workDirectory is required so imfile persists read-position state files in a
-# stable location (and so isolated `rsyslogd -N1` validation passes); it is set
-# to the path the main rsyslog.conf already uses, so this is idempotent.
+# Give imfile its own disk-assisted queue so bursts cannot starve journald.
+# Persisted state follows rename-based rotation without replaying old files.
+# Keep the global maxMessageSize unchanged; imfile has no per-input limit.
+# Reuse the main workDirectory for state and isolated validation.
 global(workDirectory="{{ rsyslog_work_directory }}")
 module(load="imfile")
 

@@ -2,7 +2,7 @@
 knot_resolver_repository_url: "https://pkg.labs.nic.cz/knot-resolver"
 knot_resolver_repository_suite: "{{ ansible_facts['distribution_release'] }}"
 knot_resolver_repository_key_url: "https://pkg.labs.nic.cz/gpg"
-# Verified against the official CZ.NIC Labs documentation on 2026-07-31.
+# Verified with official CZ.NIC Labs documentation on 2026-07-31.
 knot_resolver_repository_key_checksum: "sha256:e82408f6c31b994e896f9c4244fa73bf92a10435289cab1f5ef5b619adae6482"
 knot_resolver_repository_key_fingerprint: "9C71D59CD4CE8BD2966A7A3EAB6A303124019B64"
 knot_resolver_repository_key_path: "/etc/apt/keyrings/cznic-labs-pkg.gpg"
@@ -17,15 +17,15 @@ knot_resolver_server_addr: "{{ ansible_host }}"
 knot_resolver_allowed_clients: []
 knot_resolver_workers: 1
 knot_resolver_cache_storage: "/var/cache/knot-resolver"
-# 100M exhausted LMDB and caused SERVFAIL/cache collapse; see ADR-0030 addendum.
+# 100M exhausted LMDB; see the ADR-0030 addendum.
 knot_resolver_cache_size: "256M"
 
-# Write into node_exporter's textfile directory, with its package default fallback.
+# Use node_exporter's textfile directory.
 knot_resolver_metrics_path: "{{ node_exporter_textfile_dir | default('/var/lib/prometheus/node-exporter') }}/knot_resolver.prom"
 knot_resolver_metrics_script_path: "/usr/local/sbin/knot-resolver-metrics"
-# Read /metrics/prometheus directly from the manager socket.
+# Read metrics directly from the manager socket.
 knot_resolver_metrics_socket_path: "/run/knot-resolver/kres-api.sock"
-# Half the 30s scrape interval prevents unchanged samples and short-window aliasing.
+# Half the 30s scrape interval avoids sample aliasing.
 knot_resolver_metrics_interval: "15s"
 
 knot_resolver_config:

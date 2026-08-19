@@ -14,7 +14,6 @@
   until:
     - startup_node_ready.stdout_lines | length > 0
     - startup_node_ready.stdout_lines | reject('equalto', 'True') | list | length == 0
-  # Four-hypervisor rehearsal needed 39 attempts; allow margin for all six.
   retries: 90
   delay: 10
   delegate_to: localhost

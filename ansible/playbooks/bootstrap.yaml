@@ -1,9 +1,6 @@
 ---
 # Baseline a new host before deploying its service:
 #   ansible-playbook playbooks/bootstrap.yaml --limit <newhost>
-# Imports retain host patterns; --limit skips irrelevant plays.
-# Service-specific and narrow-scope roles stay in their own playbooks.
-# apt_mirror runs first for subsequent package installs.
 - name: Baseline - apt mirror
   import_playbook: common-apt_mirror.yaml
 - name: Baseline - timezone

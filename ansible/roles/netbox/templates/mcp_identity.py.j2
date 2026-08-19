@@ -1,12 +1,6 @@
 # Managed by Ansible (netbox role) -- do not run by hand.
-#
-# Ensures the read-only identity used by the NetBox MCP server exists:
-#   * a group that carries the single view-only ObjectPermission
-#   * that ObjectPermission, covering the configured infrastructure app labels
-#   * a service user with no usable password, holding only that group
-#
-# Executed by `manage.py shell` reading this script on stdin. The trailing
-# NETBOX_MCP_CHANGED / NETBOX_MCP_UNCHANGED line drives Ansible's changed state.
+# Reconcile the MCP read-only group, permission, and token-only user.
+# Run through `manage.py shell`; the final marker drives Ansible's changed state.
 import sys
 
 from django.contrib.contenttypes.models import ContentType
@@ -23,9 +17,7 @@ EXTRA_OBJECT_TYPES = {{ netbox_mcp_permission_object_types | to_json }}
 
 changes = []
 
-# Resolve the object types the permission covers. A label that matches nothing
-# is a configuration error rather than an intentionally empty grant, so fail
-# instead of silently narrowing read access.
+# Reject unresolved object types instead of silently narrowing access.
 content_types = []
 unresolved = []
 
@@ -76,8 +68,7 @@ elif (
     or not permission.enabled
     or permission.constraints is not None
 ):
-    # Anything beyond `view` was added outside this role; the MCP server is
-    # read-only by contract, so put the permission back.
+    # Enforce the MCP server's read-only contract.
     permission.actions = ['view']
     permission.enabled = True
     permission.constraints = None
@@ -101,8 +92,7 @@ user, created = User.objects.get_or_create(
     defaults={'is_active': True, 'is_superuser': False},
 )
 if created:
-    # The account authenticates by API token only. A freshly created User has
-    # an empty password, which Django still treats as usable.
+    # Django treats a new user's empty password as usable.
     user.set_unusable_password()
     user.save()
     changes.append('created user {}'.format(USERNAME))
@@ -117,8 +107,7 @@ if not user.groups.filter(pk=group.pk).exists():
     user.groups.add(group)
     changes.append('added {} to {}'.format(USERNAME, GROUP_NAME))
 
-# Per-user grants would move read access out of the group, which is meant to be
-# the only place it is defined.
+# Keep access exclusively group-managed.
 if user.object_permissions.exists():
     user.object_permissions.clear()
     changes.append('removed direct object permissions from {}'.format(USERNAME))

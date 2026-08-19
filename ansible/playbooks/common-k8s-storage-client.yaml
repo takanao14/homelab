@@ -1,5 +1,5 @@
 ---
-# OS packages for enabled storage providers; k0sctl still owns k0s.
+# OS packages for enabled storage providers.
 - name: Install Kubernetes storage client packages
   hosts: prd_k8s:sandbox_k8s
   any_errors_fatal: true

@@ -1,10 +1,3 @@
 # Managed by Ansible (roles/dnsdist) - do not edit on the host.
-# Rendered from the dnsdist_config structure in defaults/main.yaml; there is no
-# hand-written YAML here on purpose, so indentation cannot drift.
-#
-# The to_json|from_json round-trip is not redundant. map('combine') merges the
-# same literal dict object into every backend, so PyYAML sees repeated object
-# identity and emits anchors and aliases (&id001 / *id001). Valid YAML, but it
-# leans on the parser resolving aliases and it makes the on-host file hard to
-# read. The round-trip rebuilds fresh objects, so the output is plain.
+# The JSON round-trip prevents PyYAML anchors caused by shared combine objects.
 {{ dnsdist_config | to_json | from_json | to_nice_yaml(indent=2, width=120) }}
