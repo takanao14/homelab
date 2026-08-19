@@ -4,6 +4,15 @@ node_exporter_lxc_args:
     - --no-collector.thermal_zone
     - --no-collector.hwmon
     - --no-collector.zfs
+    # These read /sys or /proc paths lxcfs does not virtualize, so a guest
+    # re-reports its Proxmox host under its own instance name: diskstats returns
+    # the host's full block device list, cpufreq the host's physical core count,
+    # powersupplyclass the host's supplies. nvme is quiet only because every LXC
+    # currently sits on node2 or node3, neither of which has an NVMe device.
+    - --no-collector.diskstats
+    - --no-collector.cpufreq
+    - --no-collector.powersupplyclass
+    - --no-collector.nvme
 
 # lm-sensors is unused when hwmon is disabled.
 node_exporter_install_lm_sensors: false

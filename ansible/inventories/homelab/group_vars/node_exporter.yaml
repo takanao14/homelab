@@ -1,4 +1,5 @@
 ---
+# Cardinality trimming: metrics no dashboard or alert reads.
 node_exporter_base_args:
     - --no-collector.schedstat
     - --no-collector.netstat
@@ -6,3 +7,13 @@ node_exporter_base_args:
     - --no-collector.softnet
     - --no-collector.udp_queues
     - --no-collector.systemd
+    # Hardware absent fleet-wide, plus rapl, which the kernel keeps root-only.
+    # These fail every scrape rather than returning empty, so they also cost a
+    # log line each time. Collectors that merely have nothing to report yet
+    # (nfs, nfsd, mdadm, btrfs, xfs, bonding, conntrack, ipvs, edac) stay
+    # enabled: they succeed quietly today and start reporting on their own once
+    # the corresponding mount, array, or module appears.
+    - --no-collector.fibrechannel
+    - --no-collector.infiniband
+    - --no-collector.tapestats
+    - --no-collector.rapl

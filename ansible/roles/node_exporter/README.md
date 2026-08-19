@@ -18,21 +18,48 @@ Installs and configures `prometheus-node-exporter` on Debian-based systems.
 
 ## Variables
 
-Command-line arguments are combined from four layers (all default to `[]`):
+Command-line arguments are combined from five layers (all default to `[]`):
 
 | Variable | Scope | Defined in |
 |----------|-------|------------|
 | `node_exporter_base_args` | All hosts | `group_vars/node_exporter.yaml` |
 | `node_exporter_rpi_args` | Raspberry Pi hosts | `group_vars/node_exporter_rpi.yaml` |
 | `node_exporter_lxc_args` | LXC guests | `group_vars/node_exporter_lxc.yaml` |
+| `node_exporter_vm_args` | VM guests | `group_vars/node_exporter_vm.yaml` |
 | `node_exporter_extra_args` | Service-specific hosts | Service group variables |
 
-The LXC layer disables hardware collectors (`thermal_zone`, `hwmon`):
-LXC guests share the host kernel and would otherwise re-report the host's
-sensors under their own instance name, duplicating temperature panels and
-hardware alerts. Beware: an unknown `--no-collector.*` name makes
-node_exporter exit at startup, so only use names from
-`prometheus-node-exporter --help`.
+Beware: an unknown `--no-collector.*` name makes node_exporter exit at startup,
+so only use names from `prometheus-node-exporter --help-long` **on a target
+host**. The Debian package trails the k0s node-exporter DaemonSet — `bcachefs`
+exists in the latter and not in the former.
+
+### What earns a `--no-collector.*`
+
+Only two things. A collector that merely has nothing to report *yet* stays
+enabled, because it starts reporting on its own once the corresponding mount,
+array, or module appears; silencing it would hide the very change worth seeing.
+`nfs` is the case in point: it is empty until a host mounts an NFS share, and
+`k8s_storage_providers` already carries `nfs` in sandbox.
+
+**Hardware that will never exist on this fleet**, in `node_exporter_base_args`:
+`fibrechannel`, `infiniband`, `tapestats`. These fail every scrape rather than
+returning empty, so each one also costs a log line per scrape. `rapl` belongs
+here for a different reason — it fails on exactly the bare-metal hosts where it
+could produce data, because the kernel restricts `energy_uj` to root.
+
+**Host metrics duplicated into a guest.** LXC guests share the host kernel, and
+collectors reading paths lxcfs does not virtualize re-report the hypervisor
+under the guest's own instance name: `thermal_zone` and `hwmon` (sensors),
+`diskstats` (the host's whole block device list), `cpufreq` (the host's physical
+core count), `powersupplyclass`, `nvme`, and `zfs`. Collectors that *are*
+namespaced — `netdev`, `netclass`, `filesystem`, `pressure`, `cpu` — must stay
+enabled. `node_exporter_vm_args` disables `zfs` alone: VMs get virtio hardware,
+so the sensor collectors return empty rather than wrong, but the zpools live on
+the hypervisor.
+
+Verify with data before adding a flag: `node_scrape_collector_success == 0`
+identifies the failing ones, and comparing a guest's series against its Proxmox
+host proves duplication.
 
 ### Package installation
 
