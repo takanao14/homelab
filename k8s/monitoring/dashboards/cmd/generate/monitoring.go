@@ -229,7 +229,9 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// Select float samples; native histograms need a separately labelled target.
-					Expr(`rate(prometheus_tsdb_head_samples_appended_total{` + promJob + `, type="float"}[$__rate_interval])`).
+					// Aggregate away instance: the pod IP changes on every reschedule, so a
+					// long range would otherwise draw one broken series per past address.
+					Expr(`sum by (cluster) (rate(prometheus_tsdb_head_samples_appended_total{` + promJob + `, type="float"}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} samples/s"),
 				),
 		).
@@ -244,12 +246,14 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`prometheus_tsdb_storage_blocks_bytes{` + promJob + `}`).
+					// max, not sum: a single replica per cluster, so this only drops the
+					// churning instance label without doubling the value during a handover.
+					Expr(`max by (cluster) (prometheus_tsdb_storage_blocks_bytes{` + promJob + `})`).
 					LegendFormat("{{cluster}} Blocks"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// Use measured head storage bytes, not an assumed size per chunk.
-					Expr(`prometheus_tsdb_head_chunks_storage_size_bytes{` + promJob + `}`).
+					Expr(`max by (cluster) (prometheus_tsdb_head_chunks_storage_size_bytes{` + promJob + `})`).
 					LegendFormat("{{cluster}} Head"),
 				),
 		).
@@ -263,7 +267,7 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`prometheus_tsdb_head_series{` + promJob + `}`).
+					Expr(`max by (cluster) (prometheus_tsdb_head_series{` + promJob + `})`).
 					LegendFormat("{{cluster}}"),
 				),
 		).
@@ -279,8 +283,9 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// Guard quiet histogram slices so NaN quantiles do not appear broken.
-					Expr(`histogram_quantile(0.99, sum by (le, slice) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{` + promJob + `}[$__rate_interval])))` +
-						` and on (slice) sum by (slice) (rate(prometheus_engine_query_duration_histogram_seconds_count{` + promJob + `}[$__rate_interval])) > 0`).
+					// Keep cluster in the grouping so the legend prefix resolves.
+					Expr(`histogram_quantile(0.99, sum by (le, slice, cluster) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{` + promJob + `}[$__rate_interval])))` +
+						` and on (slice, cluster) sum by (slice, cluster) (rate(prometheus_engine_query_duration_histogram_seconds_count{` + promJob + `}[$__rate_interval])) > 0`).
 					LegendFormat("{{cluster}} {{slice}}"),
 				),
 		).
@@ -309,19 +314,19 @@ func buildMonitoringOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(prometheus_target_scrapes_exceeded_sample_limit_total{` + promJob + `}[$__rate_interval])`).
+					Expr(`sum by (cluster) (rate(prometheus_target_scrapes_exceeded_sample_limit_total{` + promJob + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} sample limit exceeded"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(prometheus_target_scrapes_sample_duplicate_timestamp_total{` + promJob + `}[$__rate_interval])`).
+					Expr(`sum by (cluster) (rate(prometheus_target_scrapes_sample_duplicate_timestamp_total{` + promJob + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} duplicate timestamp"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(prometheus_target_scrapes_sample_out_of_order_total{` + promJob + `}[$__rate_interval])`).
+					Expr(`sum by (cluster) (rate(prometheus_target_scrapes_sample_out_of_order_total{` + promJob + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} out of order"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(prometheus_target_scrapes_sample_out_of_bounds_total{` + promJob + `}[$__rate_interval])`).
+					Expr(`sum by (cluster) (rate(prometheus_target_scrapes_sample_out_of_bounds_total{` + promJob + `}[$__rate_interval]))`).
 					LegendFormat("{{cluster}} out of bounds"),
 				),
 		).

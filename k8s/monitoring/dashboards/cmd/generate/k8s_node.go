@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/grafana/grafana-foundation-sdk/go/bargauge"
 	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
@@ -31,6 +33,12 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 	// means saturation.
 	perCore := func(expr string) string {
 		return expr + ` / on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode="idle", ` + clusterFilter + `})`
+	}
+
+	// Drop the exporter's own identity.
+	byNode := func(expr string, extraKeys ...string) string {
+		keys := strings.Join(append([]string{"nodename"}, extraKeys...), ", ")
+		return `max by (` + keys + `) (` + expr + `)`
 	}
 
 	tooltipAll := defaultTooltip()
@@ -105,7 +113,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Orientation(common.VizOrientationAuto).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					// MemAvailable includes reclaimable cache, giving a more realistic usage figure than MemFree.
-					Expr(`(1 - node_memory_MemAvailable_bytes{` + clusterFilter + `} / node_memory_MemTotal_bytes{` + clusterFilter + `}) ` + joinNode + ` * 100`).
+					Expr(byNode(`(1 - node_memory_MemAvailable_bytes{` + clusterFilter + `} / node_memory_MemTotal_bytes{` + clusterFilter + `}) ` + joinNode + ` * 100`)).
 					LegendFormat("{{nodename}}"),
 				).Decimals(1),
 		).
@@ -154,7 +162,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Orientation(common.VizOrientationAuto).
 				JustifyMode(common.BigValueJustifyModeCenter).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`node_memory_MemTotal_bytes{` + clusterFilter + `} ` + joinNode).
+					Expr(byNode(`node_memory_MemTotal_bytes{` + clusterFilter + `} ` + joinNode)).
 					LegendFormat("{{nodename}}"),
 				),
 		).
@@ -178,7 +186,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 					}),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(time() - node_boot_time_seconds{` + clusterFilter + `}) ` + joinNode).
+					Expr(byNode(`(time() - node_boot_time_seconds{` + clusterFilter + `}) ` + joinNode)).
 					LegendFormat("{{nodename}}"),
 				),
 		).
@@ -213,15 +221,15 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				ThresholdsStyle(common.NewGraphThresholdsStyleConfigBuilder().
 					Mode(common.GraphThresholdsStyleModeLine)).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(perCore(`node_load1{`+clusterFilter+`}`)+` `+joinNode).
+					Expr(byNode(perCore(`node_load1{`+clusterFilter+`}`)+` `+joinNode)).
 					LegendFormat("{{nodename}} 1m"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(perCore(`node_load5{`+clusterFilter+`}`)+` `+joinNode).
+					Expr(byNode(perCore(`node_load5{`+clusterFilter+`}`)+` `+joinNode)).
 					LegendFormat("{{nodename}} 5m"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(perCore(`node_load15{`+clusterFilter+`}`)+` `+joinNode).
+					Expr(byNode(perCore(`node_load15{`+clusterFilter+`}`)+` `+joinNode)).
 					LegendFormat("{{nodename}} 15m"),
 				).
 				// 5m/15m as dashed to distinguish from 1m (solid) without adding noise.
@@ -243,11 +251,11 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(node_memory_MemTotal_bytes{`+clusterFilter+`} - node_memory_MemAvailable_bytes{`+clusterFilter+`}) `+joinNode).
+					Expr(byNode(`(node_memory_MemTotal_bytes{`+clusterFilter+`} - node_memory_MemAvailable_bytes{`+clusterFilter+`}) `+joinNode)).
 					LegendFormat("{{nodename}} Used"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`node_memory_MemAvailable_bytes{`+clusterFilter+`} `+joinNode).
+					Expr(byNode(`node_memory_MemAvailable_bytes{`+clusterFilter+`} `+joinNode)).
 					LegendFormat("{{nodename}} Available"),
 				).
 				// Draw available memory dotted against solid used memory.
@@ -268,7 +276,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`rate(node_pressure_cpu_waiting_seconds_total{` + clusterFilter + `}[$__rate_interval]) * 100 ` + joinNode).
+					Expr(byNode(`rate(node_pressure_cpu_waiting_seconds_total{` + clusterFilter + `}[$__rate_interval]) * 100 ` + joinNode)).
 					LegendFormat("{{nodename}}"),
 				),
 		).
@@ -283,12 +291,12 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Some").
-					Expr(`rate(node_pressure_memory_waiting_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode).
+					Expr(byNode(`rate(node_pressure_memory_waiting_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
 					LegendFormat("{{nodename}} some"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Full").
-					Expr(`rate(node_pressure_memory_stalled_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode).
+					Expr(byNode(`rate(node_pressure_memory_stalled_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
 					LegendFormat("{{nodename}} full"),
 				).
 				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* full$"}, []dashboard.DynamicConfigValue{
@@ -306,12 +314,12 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Some").
-					Expr(`rate(node_pressure_io_waiting_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode).
+					Expr(byNode(`rate(node_pressure_io_waiting_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
 					LegendFormat("{{nodename}} some"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Full").
-					Expr(`rate(node_pressure_io_stalled_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode).
+					Expr(byNode(`rate(node_pressure_io_stalled_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
 					LegendFormat("{{nodename}} full"),
 				).
 				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* full$"}, []dashboard.DynamicConfigValue{
@@ -344,11 +352,11 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`(node_filesystem_size_bytes{`+clusterFilter+`, `+fsFilter+`} - node_filesystem_avail_bytes{`+clusterFilter+`, `+fsFilter+`}) `+joinNode).
+					Expr(byNode(`(node_filesystem_size_bytes{`+clusterFilter+`, `+fsFilter+`} - node_filesystem_avail_bytes{`+clusterFilter+`, `+fsFilter+`}) `+joinNode, "mountpoint")).
 					LegendFormat("{{nodename}} {{mountpoint}} Used"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`node_filesystem_size_bytes{`+clusterFilter+`, `+fsFilter+`} `+joinNode).
+					Expr(byNode(`node_filesystem_size_bytes{`+clusterFilter+`, `+fsFilter+`} `+joinNode, "mountpoint")).
 					LegendFormat("{{nodename}} {{mountpoint}} Total"),
 				).
 				WithOverride(dashboard.MatcherConfig{Id: "byRegexp", Options: ".* Total$"}, []dashboard.DynamicConfigValue{
@@ -387,12 +395,12 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Read").
 					// Exclude dm-*, loop*, and sr* to avoid double-counting or noise from virtual/optical devices.
-					Expr(`rate(node_disk_read_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[$__rate_interval]) `+joinNode).
+					Expr(byNode(`rate(node_disk_read_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[$__rate_interval]) `+joinNode, "device")).
 					LegendFormat("{{nodename}} {{device}} Read"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					RefId("Write").
-					Expr(`rate(node_disk_written_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[$__rate_interval]) `+joinNode).
+					Expr(byNode(`rate(node_disk_written_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[$__rate_interval]) `+joinNode, "device")).
 					LegendFormat("{{nodename}} {{device}} Write"),
 				).
 				OverrideByQuery("Write", []dashboard.DynamicConfigValue{
