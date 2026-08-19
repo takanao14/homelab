@@ -112,7 +112,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Pods Running").
-				Description("Worker nodes only. k0s controllers do not run a kubelet unless started with --enable-worker, so a control-plane node is absent here rather than reading zero: the metric this counts does not exist on it.").
+				Description("Worker nodes only -- k0s controllers run no kubelet unless started with --enable-worker, so a control-plane node is absent here, not zero.").
 				Datasource(ds).
 				Span(12).Height(4).
 				Unit("short").
@@ -201,7 +201,7 @@ func buildK8sNodeOverview() (*dashboard.Dashboard, error) {
 		WithPanel(
 			timeseries.NewPanelBuilder().
 				Title("Load Average per CPU").
-				Description("Run-queue length divided by the node's CPU count, so 100% is a saturated node whatever its size and the red line marks it. Raw load averages are not comparable across this cluster: k0s-cp1 has 2 CPUs against 10 on the workers, so the same load1 of 0.08 is 13.5% per CPU on cp1 and 0.9% on worker1. Read a value here as the fraction of the node's CPUs that had work waiting.").
+				Description("Run-queue length divided by the node's CPU count -- the fraction of CPUs with work waiting, so 100% is saturated regardless of node size (red line). Raw load averages are not comparable across this cluster: k0s-cp1 has 2 CPUs against 10 on the workers, so the same load1 of 0.08 is 13.5%/CPU on cp1 vs 0.9% on worker1.").
 				Datasource(ds).
 				Span(24).Height(8).
 				// Match node-overview's normalized percentage display.
