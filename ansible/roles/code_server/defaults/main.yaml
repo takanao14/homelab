@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=coder/code-server
-code_server_version: "4.132.0"
+code_server_version: "4.133.0"
 
 # Existing editor account; inherits agent config, keys, git, and SOPS state.
 code_server_user: ""
