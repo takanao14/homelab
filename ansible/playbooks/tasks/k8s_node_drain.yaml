@@ -2,6 +2,21 @@
 # Drain before disruption for graceful pod termination. kubectl runs on the control node.
 # Inventory names match Kubernetes node names.
 
+- name: Check current cordon state
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - get
+      - node
+      - "{{ inventory_hostname }}"
+      - -o
+      - jsonpath={.spec.unschedulable}
+  register: k8s_node_cordon_state
+  delegate_to: localhost
+  become: false
+  changed_when: false
+
 - name: Cordon node
   ansible.builtin.command:
     argv:
@@ -11,7 +26,7 @@
       - "{{ inventory_hostname }}"
   delegate_to: localhost
   become: false
-  changed_when: true
+  changed_when: k8s_node_cordon_state.stdout != 'true'
 
 # Match k0sctl drain policy; force handles LocalPV pods and timeout covers PDBs.
 - name: Drain node

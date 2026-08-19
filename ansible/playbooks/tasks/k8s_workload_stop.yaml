@@ -79,6 +79,22 @@
   become: false
 
 # Stop GitOps only after snapshotting its nonzero replica count.
+- name: Get current GitOps controller replica count
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - "--namespace={{ k8s_gitops_controller_namespace }}"
+      - get
+      - "{{ k8s_gitops_controller_resource }}"
+      - -o
+      - jsonpath={.spec.replicas}
+  register: k8s_gitops_controller_current
+  delegate_to: localhost
+  become: false
+  changed_when: false
+  when: k8s_gitops_controller_resource is defined
+
 - name: Stop the GitOps controller so it cannot revert the scale-down
   ansible.builtin.command:
     argv:
@@ -90,7 +106,7 @@
       - --replicas=0
   delegate_to: localhost
   become: false
-  changed_when: true
+  changed_when: k8s_gitops_controller_current.stdout | default('0', true) != '0'
   when: k8s_gitops_controller_resource is defined
 
 - name: Scale workloads to zero
@@ -105,7 +121,7 @@
   loop: "{{ k8s_shutdown_targets }}"
   delegate_to: localhost
   become: false
-  changed_when: true
+  changed_when: item.split()[3] | default('0', true) != '0'
 
 # Wait on scaled workloads, not namespaces that retain DaemonSet pods.
 - name: Wait for scaled workloads to report no running replicas
