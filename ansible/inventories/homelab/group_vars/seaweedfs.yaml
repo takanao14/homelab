@@ -1,6 +1,5 @@
 ---
-# Non-secret settings. The versioned backup bucket remains a post-install step
-# (roles/seaweedfs/README.md).
+# Non-secret settings. The versioned backup bucket remains a post-install step.
 
 # Public-download buckets: anonymous Read without List, served through Caddy.
 #   firmware     - router / PC firmware images
