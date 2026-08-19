@@ -36,7 +36,7 @@ jobs:
       - name: Install Helmfile
         env:
           # renovate: datasource=github-releases depName=helmfile/helmfile
-          HELMFILE_VERSION: "1.7.3"
+          HELMFILE_VERSION: "1.7.4"
         run: |
           set -euo pipefail
           archive="helmfile_${HELMFILE_VERSION}_linux_amd64.tar.gz"
