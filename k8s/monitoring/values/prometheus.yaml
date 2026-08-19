@@ -85,6 +85,7 @@ kube-prometheus-stack:
               replacement: prd
         - name: external
       retention: 30d
+      retentionSize: 40GB
       # Requests only: 30-day mean/p95/max 994/1108/1143 Mi;
       # CPU mean/p95/max 75/79/107m (2026-08-15).
       resources:
