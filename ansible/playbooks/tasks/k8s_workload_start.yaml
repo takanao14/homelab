@@ -47,4 +47,4 @@
   when: item.split() | length == 4
   delegate_to: localhost
   become: false
-  changed_when: true
+  changed_when: item.split()[3] != '0'
