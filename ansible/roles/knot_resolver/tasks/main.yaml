@@ -39,6 +39,8 @@
     owner: root
     group: root
     mode: "0644"
+  retries: 3
+  delay: 5
 
 - name: Check whether GnuPG is already installed
   ansible.builtin.command:

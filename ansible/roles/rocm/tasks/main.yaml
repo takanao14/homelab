@@ -36,6 +36,9 @@
     url: "https://repo.radeon.com/amdgpu/{{ rocm_amdgpu_version }}/ubuntu/pool/main/a/amdgpu-insecure-instinct-udev-rules/{{ rocm_udev_rules }}"
     dest: "/tmp/{{ rocm_udev_rules }}"
     mode: '0644'
+    timeout: 60
+  retries: 3
+  delay: 5
 
 - name: Grant GPU access to all users on the system
   become: true
@@ -62,6 +65,8 @@
     dest: /tmp/rocm.gpg.key
     mode: '0644'
   register: rocm_gpg_key_download
+  retries: 3
+  delay: 5
 
 - name: Check ROCm apt keyring
   ansible.builtin.stat:
@@ -89,6 +94,8 @@
     dest: /tmp/amdrocm.gpg.key
     mode: '0644'
   register: rocm_amd_gpg_key_download
+  retries: 3
+  delay: 5
 
 - name: Check ROCm multi-arch apt keyring
   ansible.builtin.stat:

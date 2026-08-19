@@ -98,6 +98,9 @@
     url: "https://github.com/netbox-community/netbox/archive/refs/tags/v{{ netbox_version }}.tar.gz"
     dest: "/tmp/netbox-{{ netbox_version }}.tar.gz"
     mode: '0644'
+    timeout: 60
+  retries: 3
+  delay: 5
 
 - name: Extract NetBox
   become: true

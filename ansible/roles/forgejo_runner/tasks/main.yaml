@@ -50,6 +50,9 @@
     owner: root
     group: root
     mode: '0755'
+    timeout: 60
+  retries: 3
+  delay: 5
   notify: Restart forgejo-runner
 
 - name: Ensure homelab version marker directory exists

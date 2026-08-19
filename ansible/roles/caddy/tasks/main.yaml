@@ -32,6 +32,9 @@
     owner: root
     group: root
     mode: "0755"
+    timeout: 120
+  retries: 3
+  delay: 5
   notify: Restart caddy
 
 - name: Set CAP_NET_BIND_SERVICE on Caddy binary

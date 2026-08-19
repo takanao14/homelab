@@ -22,7 +22,10 @@
     owner: root
     group: root
     mode: '0644'
+    timeout: 60
   check_mode: false
+  retries: 3
+  delay: 5
 
 - name: Install code-server
   become: true
