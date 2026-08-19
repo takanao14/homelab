@@ -313,6 +313,11 @@ all:
             ns1: null
             ns2: null
             ns3: null
+            # Vector spools syslog here before shipping to Loki.
+            log1: null
+            caddy1: null
+            dist1: null
+            dist2: null
         # Guests with virtio hardware only; ZFS lives on the hypervisor.
         node_exporter_vm:
           hosts:
@@ -322,6 +327,9 @@ all:
             authentik1: null
             # Track toolbox1 capacity for editor and coding agents (ADR-0031).
             toolbox1: null
+            # Proxmox reports disk 0 for QEMU guests, so CI cache growth is
+            # invisible without an in-guest exporter.
+            runner1: null
       # Hypervisors; the only hosts with real sensors, NVMe and zpools.
       hosts:
         pve: null
