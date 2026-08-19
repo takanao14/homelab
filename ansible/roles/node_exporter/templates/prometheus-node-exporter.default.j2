@@ -1,2 +1,2 @@
 # Ansible managed
-ARGS="--collector.textfile.directory={{ node_exporter_textfile_dir }} {{ (node_exporter_base_args + node_exporter_rpi_args + node_exporter_lxc_args + node_exporter_extra_args) | join(' ') }}"
+ARGS="--collector.textfile.directory={{ node_exporter_textfile_dir }} {{ (node_exporter_base_args + node_exporter_rpi_args + node_exporter_lxc_args + node_exporter_vm_args + node_exporter_extra_args) | join(' ') }}"

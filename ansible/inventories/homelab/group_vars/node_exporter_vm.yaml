@@ -1,0 +1,6 @@
+---
+# ZFS lives on the hypervisors, not in the guests. The collector succeeds on
+# pve and node1-5 (zpool state, ARC size) but fails every scrape inside a VM,
+# where /proc/spl/kstat/zfs does not exist.
+node_exporter_vm_args:
+    - --no-collector.zfs

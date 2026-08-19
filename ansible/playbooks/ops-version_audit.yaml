@@ -393,6 +393,47 @@
              | union(['unknown'])
              | first }}
 
+- name: Audit PowerDNS authoritative package version
+  hosts: dns_auth
+  gather_facts: false
+  tasks:
+    - name: Read pdns-server package policy
+      ansible.builtin.command:
+        argv:
+          - apt-cache
+          - policy
+          - pdns-server
+      register: pdns_auth_audit_policy
+      changed_when: false
+      failed_when: false
+
+    - name: Report pdns-server package version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s candidate=%-24s installed=%-24s %s' | format(
+            'pdns-server',
+            inventory_hostname,
+            pdns_auth_audit_candidate,
+            pdns_auth_audit_installed,
+            'OK' if (
+              pdns_auth_audit_installed != 'unknown'
+              and pdns_auth_audit_installed == pdns_auth_audit_candidate
+            ) else 'DIFF'
+          ) }}
+      vars:
+        pdns_auth_audit_installed: >-
+          {{ pdns_auth_audit_policy.stdout
+             | regex_findall('Installed: ([!-~]+)')
+             | default([], true)
+             | union(['unknown'])
+             | first }}
+        pdns_auth_audit_candidate: >-
+          {{ pdns_auth_audit_policy.stdout
+             | regex_findall('Candidate: ([!-~]+)')
+             | default([], true)
+             | union(['unknown'])
+             | first }}
+
 - name: Audit code-server version
   hosts: code_server
   gather_facts: false

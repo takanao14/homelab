@@ -634,7 +634,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(prometheus_tsdb_head_samples_appended_total{job=\"$prometheus_job\", type=\"float\"}[$__rate_interval])",
+          "expr": "sum by (cluster) (rate(prometheus_tsdb_head_samples_appended_total{job=\"$prometheus_job\", type=\"float\"}[$__rate_interval]))",
           "legendFormat": "{{cluster}} samples/s"
         }
       ],
@@ -676,11 +676,11 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "prometheus_tsdb_storage_blocks_bytes{job=\"$prometheus_job\"}",
+          "expr": "max by (cluster) (prometheus_tsdb_storage_blocks_bytes{job=\"$prometheus_job\"})",
           "legendFormat": "{{cluster}} Blocks"
         },
         {
-          "expr": "prometheus_tsdb_head_chunks_storage_size_bytes{job=\"$prometheus_job\"}",
+          "expr": "max by (cluster) (prometheus_tsdb_head_chunks_storage_size_bytes{job=\"$prometheus_job\"})",
           "legendFormat": "{{cluster}} Head"
         }
       ],
@@ -723,7 +723,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "prometheus_tsdb_head_series{job=\"$prometheus_job\"}",
+          "expr": "max by (cluster) (prometheus_tsdb_head_series{job=\"$prometheus_job\"})",
           "legendFormat": "{{cluster}}"
         }
       ],
@@ -765,7 +765,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "histogram_quantile(0.99, sum by (le, slice) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{job=\"$prometheus_job\"}[$__rate_interval]))) and on (slice) sum by (slice) (rate(prometheus_engine_query_duration_histogram_seconds_count{job=\"$prometheus_job\"}[$__rate_interval])) \u003e 0",
+          "expr": "histogram_quantile(0.99, sum by (le, slice, cluster) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{job=\"$prometheus_job\"}[$__rate_interval]))) and on (slice, cluster) sum by (slice, cluster) (rate(prometheus_engine_query_duration_histogram_seconds_count{job=\"$prometheus_job\"}[$__rate_interval])) \u003e 0",
           "legendFormat": "{{cluster}} {{slice}}"
         }
       ],
@@ -860,19 +860,19 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(prometheus_target_scrapes_exceeded_sample_limit_total{job=\"$prometheus_job\"}[$__rate_interval])",
+          "expr": "sum by (cluster) (rate(prometheus_target_scrapes_exceeded_sample_limit_total{job=\"$prometheus_job\"}[$__rate_interval]))",
           "legendFormat": "{{cluster}} sample limit exceeded"
         },
         {
-          "expr": "rate(prometheus_target_scrapes_sample_duplicate_timestamp_total{job=\"$prometheus_job\"}[$__rate_interval])",
+          "expr": "sum by (cluster) (rate(prometheus_target_scrapes_sample_duplicate_timestamp_total{job=\"$prometheus_job\"}[$__rate_interval]))",
           "legendFormat": "{{cluster}} duplicate timestamp"
         },
         {
-          "expr": "rate(prometheus_target_scrapes_sample_out_of_order_total{job=\"$prometheus_job\"}[$__rate_interval])",
+          "expr": "sum by (cluster) (rate(prometheus_target_scrapes_sample_out_of_order_total{job=\"$prometheus_job\"}[$__rate_interval]))",
           "legendFormat": "{{cluster}} out of order"
         },
         {
-          "expr": "rate(prometheus_target_scrapes_sample_out_of_bounds_total{job=\"$prometheus_job\"}[$__rate_interval])",
+          "expr": "sum by (cluster) (rate(prometheus_target_scrapes_sample_out_of_bounds_total{job=\"$prometheus_job\"}[$__rate_interval]))",
           "legendFormat": "{{cluster}} out of bounds"
         }
       ],

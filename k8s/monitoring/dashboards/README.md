@@ -97,6 +97,29 @@ Do not describe missing data from the other environment as a dashboard gap.
   const snmpMinInterval = "2m"
   ```
 
+- Aggregate the exporter's own identity away, and keep only the labels the
+  legend reads. `instance` is a pod IP and `pod` a generated name, so both
+  change whenever the pod is rescheduled: a 7- or 30-day range then draws one
+  truncated series per past pod, all sharing the same legend name. The label
+  survives joins too -- `node_memory_MemTotal_bytes * on(instance)
+  group_left(nodename) node_uname_info` carries the DaemonSet's `pod` onto a
+  per-node result.
+
+  ```go
+  Expr(`max by (cluster) (prometheus_tsdb_head_series{` + promJob + `})`)
+  Expr(byNode(`node_memory_MemTotal_bytes{`+clusterFilter+`} `+joinNode))
+  ```
+
+  Use `sum by` for rates and counters, `max by` for a gauge from a
+  single-replica workload, where `sum` would double the value while an old and
+  a new pod overlap inside the lookback window. Targets scraped by address
+  (`scrapeConfig/*-external`, SNMP, blackbox) keep a stable `instance` and
+  need no aggregation.
+
+- Every label a `LegendFormat` interpolates must survive the query's `by`
+  clause. A `{{cluster}}` prefix on top of `sum by (le, route)` renders as a
+  leading space.
+
 ### Dashboard flow and layout
 
 Order dashboards from detection to diagnosis:
@@ -132,6 +155,9 @@ Keep these choices inline because density is panel-specific.
 - Do zoom-dependent log queries use `$__auto`?
 - Are sparse events counts rather than rates?
 - Do slow-scrape rate panels set a Min interval?
+- Do pod-hosted metrics aggregate `instance` and `pod` away so a long range
+  stays one series per legend entry?
+- Does every legend label survive its query's `by` clause?
 - Are dense panels ordered by value?
 - Does every coloured panel define thresholds?
 - Are descriptions environment-neutral?
