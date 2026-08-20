@@ -24,8 +24,42 @@ gpuWorkloads:
     name: vllm
 
 securityPolicy:
+  # Preserve the name to avoid two policies targeting one route during sync.
   name: gpu-switch-basic-auth
   secretName: gpu-switch-basic-auth
+
+# Shared Authentik forward auth; disable to restore OpenBao basicAuth (stage 14a).
+forwardAuth:
+  enabled: true
+  # Upstream HTTPRoute targeted by SecurityPolicy; the outpost route is excluded.
+  targetRouteName: gpu-switch
+  outpost:
+    # Keep aligned with authentik_proxy_http_port on authentik1.
+    address: 192.168.10.248
+    port: 9001
+  # Hardcoded in authentik for Envoy support; not configurable upstream.
+  authPath: /outpost.goauthentik.io/auth/envoy
+  # Login/callback route excluded from SecurityPolicy to avoid redirect loops.
+  callbackPathPrefix: /outpost.goauthentik.io
+  headersToExtAuth:
+    - cookie
+    - accept
+    - authorization
+    - proxy-authorization
+    - x-forwarded-for
+    - x-forwarded-proto
+    - x-real-ip
+  # The app ignores these; forwarded so a future access log can name the user.
+  headersToBackend:
+    - x-authentik-username
+    - x-authentik-groups
+    - x-authentik-email
+
+# Prevent direct Service access from bypassing SecurityPolicy (ADR-0027).
+networkPolicy:
+  enabled: true
+  # Envoy proxy-pod namespace, not the Gateway resource namespace.
+  gatewayNamespace: envoy-gateway-system
 
 openbao:
   secretStore:

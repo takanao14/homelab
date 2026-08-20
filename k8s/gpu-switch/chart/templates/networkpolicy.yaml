@@ -1,20 +1,18 @@
 {{- if .Values.networkPolicy.enabled }}
 {{- $np := .Values.networkPolicy }}
-{{- $ns := .Values.headlamp.namespaceOverride | default .Release.Namespace }}
-{{- $parent := first (required "headlamp.httpRoute.parentRefs is required when networkPolicy is enabled" .Values.headlamp.httpRoute.parentRefs) }}
-# Prevent direct access from bypassing ext_authz; allow only Gateway proxy pods.
+# Prevent direct access from bypassing SecurityPolicy; allow only Gateway pods.
 # Cilium exempts kubelet probes while host firewall is disabled.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ $np.name | default "headlamp" }}
-  namespace: {{ $ns }}
+  name: gpu-switch
+  namespace: {{ .Release.Namespace }}
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: headlamp
+      app.kubernetes.io/name: gpu-switch
       app.kubernetes.io/instance: {{ .Release.Name }}
-  # Ingress only: Headlamp still needs egress to the API server and DNS.
+  # Ingress only: the app still needs egress to the API server and DNS.
   policyTypes:
     - Ingress
   ingress:
@@ -26,8 +24,8 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: envoy
-              gateway.envoyproxy.io/owning-gateway-name: {{ $parent.name }}
-              gateway.envoyproxy.io/owning-gateway-namespace: {{ $parent.namespace }}
+              gateway.envoyproxy.io/owning-gateway-name: {{ .Values.gateway.name }}
+              gateway.envoyproxy.io/owning-gateway-namespace: {{ .Values.gateway.namespace }}
       ports:
         # Named port follows upstream changes.
         - protocol: TCP

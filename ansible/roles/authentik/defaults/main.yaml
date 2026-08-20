@@ -36,14 +36,12 @@ authentik_ldap_outpost_name: homelab-ldap-outpost
 authentik_ldap_env_file: /etc/authentik/authentik-ldap.env
 authentik_ldaps_port: 636
 
-# Standalone Proxy Outpost for Headlamp forward auth (stage 8b-1). One external
-# deployment serves both clusters; its token is fetched like the LDAP outpost's.
+# Shared external Proxy Outpost for Headlamp forward auth (stage 8b-1).
 authentik_proxy_image: "ghcr.io/goauthentik/proxy"
 authentik_proxy_container: authentik-proxy
 authentik_proxy_outpost_name: homelab-proxy-outpost
 authentik_proxy_env_file: /etc/authentik/authentik-proxy.env
-# LAN port used by Envoy Gateway. Keep aligned with forwardAuth.outpost.port;
-# 9100 is reserved for node_exporter.
+# Keep aligned with forwardAuth.outpost.port; 9100 belongs to node_exporter.
 authentik_proxy_http_port: 9001
 # Browser-facing Caddy URL; must match `authentik_host` in proxy.yaml.
 authentik_external_url: "https://auth.home.butaco.net"

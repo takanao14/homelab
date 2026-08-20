@@ -1,14 +1,12 @@
 # In-cluster defaults; environment files set hostnames.
 
-# Headlamp forward auth (stage 8b-1); Envoy delegates authorization to the
-# external Authentik outpost without proxying application traffic through it.
+# Headlamp forward auth via an external Authentik outpost (stage 8b-1).
 forwardAuth:
   enabled: true
   # Upstream HTTPRoute targeted by SecurityPolicy; the outpost route is excluded.
   targetRouteName: headlamp
   outpost:
-    # External Backend on authentik1; keep the port aligned with
-    # authentik_proxy_http_port. Port 9100 is reserved for node_exporter.
+    # Keep aligned with authentik_proxy_http_port on authentik1.
     address: 192.168.10.248
     port: 9001
   # Hardcoded in authentik for Envoy support; not configurable upstream.
@@ -23,20 +21,16 @@ forwardAuth:
     - x-forwarded-for
     - x-forwarded-proto
     - x-real-ip
-  # Envoy overwrites client-supplied identity headers with trusted outpost values.
-  # Do not remove them via RequestHeaderModifier; it runs after ext_authz.
+  # Overwrite client identity; RequestHeaderModifier would remove trusted values.
   headersToBackend:
     - x-authentik-username
     - x-authentik-groups
     - x-authentik-email
 
-# Closes the path around forward auth. Required rather than optional once
-# unsafeUseServiceAccountToken is on: without it any pod that can reach the
-# Headlamp Service gets a cluster-admin session with no authentication.
+# Restrict direct Service access when using the cluster-admin token.
 networkPolicy:
   enabled: true
-  # Where Envoy Gateway runs its proxy pods, which is its own install namespace
-  # rather than the Gateway's namespace.
+  # Envoy proxy-pod namespace, not the Gateway resource namespace.
   gatewayNamespace: envoy-gateway-system
 
 headlamp:
@@ -47,17 +41,9 @@ headlamp:
       cpu: 10m
       memory: 72Mi
   config:
-    # What actually removes the token prompt: Headlamp talks to the API server
-    # with its own ServiceAccount for everyone. Upstream calls it unsafe because
-    # on its own it hands cluster-admin to anyone who can reach the Service —
-    # it is only acceptable behind the forward auth above, which is why the two
-    # must be enabled and disabled together. Admission is therefore
-    # all-or-nothing and the audit log sees one identity (decision 20).
+    # Requires forward auth and NetworkPolicy; all users share cluster-admin.
     unsafeUseServiceAccountToken: true
-    # -proxy-auth does NOT bypass the login screen; in v0.44.0 it only feeds
-    # /clusters/{name}/me so the top bar shows who Authentik authenticated, and
-    # gates -proxy-auth-token-header (unused here — forwarding a token to the
-    # API server needs the OIDC work deferred by decision 19).
+    # Shows Authentik identity in /me; API token forwarding awaits OIDC.
     extraArgs:
       - -proxy-auth=true
       - -proxy-auth-username-header=X-authentik-username

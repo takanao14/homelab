@@ -8,8 +8,28 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       name: gpu-switch
+{{- if .Values.forwardAuth.enabled }}
+  # Switches atomically with the fallback basicAuth below.
+  extAuth:
+    # Fail closed: no auth service means no GPU switching, not open access.
+    failOpen: false
+    headersToExtAuth:
+      {{- toYaml .Values.forwardAuth.headersToExtAuth | nindent 6 }}
+    http:
+      backendRefs:
+        - group: gateway.envoyproxy.io
+          kind: Backend
+          name: authentik-outpost
+          port: {{ .Values.forwardAuth.outpost.port }}
+          # Explicit API default prevents Argo CD drift.
+          weight: 1
+      path: {{ .Values.forwardAuth.authPath }}
+      headersToBackend:
+        {{- toYaml .Values.forwardAuth.headersToBackend | nindent 8 }}
+{{- else }}
   basicAuth:
     users:
       group: ""
       kind: Secret
       name: {{ .Values.securityPolicy.secretName }}
+{{- end }}

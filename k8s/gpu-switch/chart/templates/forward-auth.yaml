@@ -1,0 +1,42 @@
+{{- if .Values.forwardAuth.enabled }}
+{{- $fa := .Values.forwardAuth }}
+# Shared external Authentik outpost; this app uses its own provider.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: authentik-outpost
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpoints:
+    - ip:
+        address: {{ $fa.outpost.address | quote }}
+        port: {{ $fa.outpost.port }}
+---
+# Same-origin login/callback route excluded from ext_authz to avoid loops.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: gpu-switch-outpost
+  namespace: {{ .Release.Namespace }}
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ .Values.gateway.name }}
+      namespace: {{ .Values.gateway.namespace }}
+      sectionName: {{ .Values.gateway.sectionName }}
+  hostnames:
+    - {{ .Values.hostname | quote }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: {{ $fa.callbackPathPrefix }}
+      backendRefs:
+        - group: gateway.envoyproxy.io
+          kind: Backend
+          name: authentik-outpost
+          port: {{ $fa.outpost.port }}
+          # Explicit API default prevents Argo CD drift.
+          weight: 1
+{{- end }}

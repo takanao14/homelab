@@ -50,7 +50,23 @@ The current write targets are:
 
 ## Authentication
 
-Envoy Gateway applies Basic Auth to the HTTPRoute. ESO reads htpasswd from:
+Envoy Gateway gates the HTTPRoute with a `SecurityPolicy`. Since stage 14a of
+the identity plan that policy runs `extAuth` against the shared Authentik proxy
+outpost on `authentik1`, so entry needs an Authentik login rather than a shared
+password. Admission is granted to `lab-platform-admins` and `lab-gpu-users`;
+the bindings live in
+`ansible/roles/authentik/files/blueprints/proxy.yaml`.
+
+The app itself reads no identity — the Gateway is the only gate — so the
+identity headers are forwarded purely so a future access log can name the user.
+A NetworkPolicy limits ingress to the Gateway's proxy pods, since reaching the
+Service directly would skip the policy entirely.
+
+A `SecurityPolicy` accepts either `basicAuth` or `extAuth`, never both, so the
+switch is all-or-nothing. `forwardAuth.enabled: false` in `chart/values.yaml`
+reverts to the previous Basic Auth in one sync, which is why the ExternalSecret
+below is still deployed. Remove it, and the OpenBao entry, once forward auth has
+proven itself.
 
 ```text
 secret/k8s/gpu-switch/basic-auth

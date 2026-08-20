@@ -64,7 +64,6 @@
     - authentik-server.service
     - authentik-worker.service
 
-# Apply the final container env before the watcher sees new blueprints.
 - name: Ensure Authentik containers are running the latest config before blueprints are deployed
   ansible.builtin.meta: flush_handlers
 
@@ -77,8 +76,7 @@
   retries: 30
   delay: 5
 
-# Mint before ldap.yaml references it; the API ignores name filters, so filter
-# client-side to avoid reminting.
+# The API ignores name filters; filter client-side to avoid reminting.
 - name: Check whether the LDAPS certificate already exists
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/crypto/certificatekeypairs/"
@@ -107,7 +105,6 @@
     | list | length == 0
   no_log: true
 
-# Rename to the stable name the blueprint looks up.
 - name: Give the generated certificate the name the blueprint looks up
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/crypto/certificatekeypairs/{{ authentik_ldap_cert_generated.json.pk }}/"
@@ -130,8 +127,7 @@
     group: root
     mode: '0644'
 
-# Templated rather than copied: usernames, group membership and initial
-# passwords come from the SOPS-encrypted authentik_users list.
+# Render users from the SOPS-encrypted authentik_users list.
 - name: Deploy the Authentik users blueprint
   become: true
   ansible.builtin.template:
@@ -141,12 +137,7 @@
     group: root
     mode: '0644'
 
-# Authentik's own discovery only reapplies a blueprint when the file hash
-# changes, so deleting an account and rerunning the playbook would be a no-op —
-# the account would stay gone. Applying explicitly makes account state a
-# function of authentik_users rather than of whether the file happened to
-# change. page_size is required: the default 20 paginates this instance out of
-# the first page and the lookup silently finds nothing.
+# Explicit apply restores deleted users; page_size keeps the instance discoverable.
 - name: Look up the users blueprint instance
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/managed/blueprints/?page_size=200"
@@ -161,8 +152,7 @@
   delay: 5
   no_log: true
 
-# Convergent, so not reported as a change; the check at the end of this role is
-# the signal that matters.
+# Convergent; the final user check reports failures.
 - name: Apply the users blueprint
   ansible.builtin.uri:
     url: >-
@@ -176,7 +166,6 @@
   changed_when: false
   no_log: true
 
-# Blueprint objects are created asynchronously; retry the lookups below.
 - name: Wait for the blueprint-created objects to appear
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ authentik_http_port }}/-/health/ready/"
@@ -198,8 +187,7 @@
   delay: 5
   no_log: true
 
-# Object permissions have no blueprint model, so assign via the API; role-name
-# filters are silently ignored, so filter client-side.
+# Blueprints cannot assign object permissions; filter unsupported role names locally.
 - name: Look up the LDAP search Role created by the ldap.yaml blueprint
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/rbac/roles/"
@@ -323,11 +311,7 @@
     enabled: true
     daemon_reload: true
 
-# The users blueprint sets passwords with `state: created`, so a bad first apply
-# is permanent and silent: !Env yields None for a variable the worker cannot see,
-# which stores an unusable password, and every later run skips the entry. Catch
-# it here rather than at someone's first login. Blueprints apply asynchronously,
-# hence the retries.
+# Detect unusable create-only passwords after asynchronous blueprint application.
 - name: Check that every managed user has a usable password
   become: true
   ansible.builtin.command:
@@ -356,9 +340,7 @@
 - name: Fail when a managed user is missing or has no usable password
   ansible.builtin.assert:
     that: authentik_user_check.stdout is search('USERCHECK_OK')
-    # Ansible finalizes fail_msg whether or not the assertion holds, so this has
-    # to stay safe when the regex finds nothing: regex_search returns None on a
-    # passing run, and `first` would raise on it.
+    # fail_msg is always evaluated, so handle a missing failure regex safely.
     fail_msg: >-
       Missing, or created without a usable password:
       {{ authentik_user_check.stdout | regex_search('USERCHECK_FAIL:(\S*)', '\1') | default(['unknown'], true) | join(',') }}.

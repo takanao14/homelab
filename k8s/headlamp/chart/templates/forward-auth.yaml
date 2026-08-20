@@ -37,8 +37,7 @@ spec:
           kind: Backend
           name: authentik-outpost
           port: {{ $fa.outpost.port }}
-          # Defaulted by the API server; declared here so Argo CD does not read
-          # it back as drift, matching the upstream route in values.yaml.
+          # Explicit API default prevents Argo CD drift.
           weight: 1
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
