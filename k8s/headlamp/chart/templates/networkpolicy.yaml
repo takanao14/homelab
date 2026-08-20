@@ -1,0 +1,42 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- $np := .Values.networkPolicy }}
+{{- $ns := .Values.headlamp.namespaceOverride | default .Release.Namespace }}
+{{- $parent := first (required "headlamp.httpRoute.parentRefs is required when networkPolicy is enabled" .Values.headlamp.httpRoute.parentRefs) }}
+# Reaching the Headlamp Service directly skips ext_authz, and
+# unsafeUseServiceAccountToken turns that into a cluster-admin session for any
+# pod in the cluster. Narrow ingress to the proxy pods of the Gateway that the
+# HTTPRoute already names, so the authenticated path is the only one left.
+#
+# kubelet probes are unaffected: Cilium exempts host-to-pod traffic while the
+# host firewall is disabled, which is the default here.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $np.name | default "headlamp" }}
+  namespace: {{ $ns }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: headlamp
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  # Ingress only: Headlamp still needs egress to the API server and DNS.
+  policyTypes:
+    - Ingress
+  ingress:
+    # namespaceSelector and podSelector in one item are ANDed, so this is
+    # "envoy pods for this Gateway, in the Envoy Gateway namespace".
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $np.gatewayNamespace }}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: envoy
+              gateway.envoyproxy.io/owning-gateway-name: {{ $parent.name }}
+              gateway.envoyproxy.io/owning-gateway-namespace: {{ $parent.namespace }}
+      ports:
+        # Named container port, so this follows the upstream chart if it moves
+        # off 4466.
+        - protocol: TCP
+          port: http
+{{- end }}
