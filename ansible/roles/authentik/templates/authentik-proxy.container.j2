@@ -1,0 +1,26 @@
+[Unit]
+Description=Authentik Proxy Outpost
+After=network-online.target authentik-server.service
+Wants=network-online.target
+Requires=authentik-server.service
+
+[Container]
+ContainerName={{ authentik_proxy_container }}
+Image={{ authentik_proxy_image }}:{{ authentik_version }}
+Network={{ authentik_network }}.network
+EnvironmentFile={{ authentik_proxy_env_file }}
+Environment=AUTHENTIK_HOST=http://authentik-server:9000
+Environment=AUTHENTIK_INSECURE=false
+# Use the public URL for browser-facing OIDC endpoints while token and JWKS
+# calls stay on the internal AUTHENTIK_HOST backchannel.
+Environment=AUTHENTIK_HOST_BROWSER={{ authentik_external_url }}
+# Envoy Gateway reaches this HTTP port directly for ext_authz and callbacks;
+# it is not published through Caddy. The container's 9443 remains unused.
+PublishPort={{ authentik_proxy_http_port }}:9000
+
+[Service]
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,5 +1,5 @@
 ---
-- name: Create Authentik directories
+- name: Create Ansible-owned Authentik directories
   become: true
   ansible.builtin.file:
     path: "{{ item }}"
@@ -8,12 +8,21 @@
     group: root
     mode: '0755'
   loop:
-    - "{{ authentik_data_dir }}"
     - "{{ authentik_templates_dir }}"
-    - "{{ authentik_certs_dir }}"
-    - "{{ authentik_pg_data_dir }}"
     - "{{ authentik_blueprints_dir }}"
     - "{{ authentik_env_file | dirname }}"
+
+# Container entrypoints own these paths (authentik 1000; PostgreSQL 70/0700).
+# Managing owner or mode would break PostgreSQL on subsequent runs.
+- name: Ensure container-owned Authentik directories exist
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ authentik_data_dir }}"
+    - "{{ authentik_certs_dir }}"
+    - "{{ authentik_pg_data_dir }}"
 
 - name: Deploy Authentik secrets env file
   become: true
@@ -55,7 +64,7 @@
     - authentik-server.service
     - authentik-worker.service
 
-# Apply final container environment before the watcher sees new blueprints.
+# Apply the final container env before the watcher sees new blueprints.
 - name: Ensure Authentik containers are running the latest config before blueprints are deployed
   ansible.builtin.meta: flush_handlers
 
@@ -68,8 +77,8 @@
   retries: 30
   delay: 5
 
-# Create the certificate before ldap.yaml references it; check first to avoid reminting.
-    # The API silently ignores unsupported name filters; filter client-side.
+# Mint before ldap.yaml references it; the API ignores name filters, so filter
+# client-side to avoid reminting.
 - name: Check whether the LDAPS certificate already exists
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/crypto/certificatekeypairs/"
@@ -98,7 +107,7 @@
     | list | length == 0
   no_log: true
 
-# Rename generated cert to the stable blueprint lookup name.
+# Rename to the stable name the blueprint looks up.
 - name: Give the generated certificate the name the blueprint looks up
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/crypto/certificatekeypairs/{{ authentik_ldap_cert_generated.json.pk }}/"
@@ -121,7 +130,7 @@
     group: root
     mode: '0644'
 
-# Fetch the blueprint-generated Outpost token live; retry asynchronous creation.
+# Blueprint objects are created asynchronously; retry the lookups below.
 - name: Wait for the blueprint-created objects to appear
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ authentik_http_port }}/-/health/ready/"
@@ -143,8 +152,8 @@
   delay: 5
   no_log: true
 
-# Object permissions lack a blueprint model, so assign them through the API.
-    # Role-name filters are unsupported and silently ignored; filter client-side.
+# Object permissions have no blueprint model, so assign via the API; role-name
+# filters are silently ignored, so filter client-side.
 - name: Look up the LDAP search Role created by the ldap.yaml blueprint
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/rbac/roles/"
@@ -212,6 +221,58 @@
   become: true
   ansible.builtin.systemd:
     name: authentik-ldap.service
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Look up the proxy outpost created by the proxy.yaml blueprint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/outposts/instances/?name__iexact={{ authentik_proxy_outpost_name }}"
+    headers:
+      Authorization: "Bearer {{ authentik_bootstrap_token }}"
+    status_code: 200
+  register: authentik_proxy_outpost
+  until: authentik_proxy_outpost.json.results | length > 0
+  retries: 12
+  delay: 5
+  no_log: true
+
+- name: Reveal the proxy outpost token
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/core/tokens/{{ (authentik_proxy_outpost.json.results | first).token_identifier }}/view_key/"
+    headers:
+      Authorization: "Bearer {{ authentik_bootstrap_token }}"
+    status_code: 200
+  register: authentik_proxy_outpost_token
+  no_log: true
+
+- name: Deploy Authentik proxy outpost env file
+  become: true
+  no_log: true
+  ansible.builtin.template:
+    src: authentik-proxy.env.j2
+    dest: "{{ authentik_proxy_env_file }}"
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Restart authentik proxy outpost
+
+- name: Deploy Authentik proxy outpost Quadlet unit
+  become: true
+  ansible.builtin.template:
+    src: authentik-proxy.container.j2
+    dest: "{{ podman_quadlet_dir }}/authentik-proxy.container"
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart authentik proxy outpost
+
+- name: Ensure Authentik proxy outpost service is enabled and started
+  become: true
+  ansible.builtin.systemd:
+    name: authentik-proxy.service
     state: started
     enabled: true
     daemon_reload: true

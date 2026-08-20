@@ -1,4 +1,35 @@
 # In-cluster defaults; environment files set hostnames.
+
+# Headlamp forward auth (stage 8b-1); Envoy delegates authorization to the
+# external Authentik outpost without proxying application traffic through it.
+forwardAuth:
+  enabled: true
+  # Upstream HTTPRoute targeted by SecurityPolicy; the outpost route is excluded.
+  targetRouteName: headlamp
+  outpost:
+    # External Backend on authentik1; keep the port aligned with
+    # authentik_proxy_http_port. Port 9100 is reserved for node_exporter.
+    address: 192.168.10.248
+    port: 9001
+  # Hardcoded in authentik for Envoy support; not configurable upstream.
+  authPath: /outpost.goauthentik.io/auth/envoy
+  # Login/callback route excluded from SecurityPolicy to avoid redirect loops.
+  callbackPathPrefix: /outpost.goauthentik.io
+  headersToExtAuth:
+    - cookie
+    - accept
+    - authorization
+    - proxy-authorization
+    - x-forwarded-for
+    - x-forwarded-proto
+    - x-real-ip
+  # Envoy overwrites client-supplied identity headers with trusted outpost values.
+  # Do not remove them via RequestHeaderModifier; it runs after ext_authz.
+  headersToBackend:
+    - x-authentik-username
+    - x-authentik-groups
+    - x-authentik-email
+
 headlamp:
   namespaceOverride: headlamp
   # Requests only (README): 7-day mean/peak 57/111 Mi, p95 CPU 0.3m.
@@ -6,6 +37,14 @@ headlamp:
     requests:
       cpu: 10m
       memory: 72Mi
+  config:
+    # Trust Authentik headers; Headlamp still uses its cluster-admin
+    # ServiceAccount, so admission remains all-or-nothing (decision 20).
+    extraArgs:
+      - -proxy-auth=true
+      - -proxy-auth-username-header=X-authentik-username
+      - -proxy-auth-group-header=X-authentik-groups
+      - -proxy-auth-email-header=X-authentik-email
   httpRoute:
     enabled: true
     parentRefs:

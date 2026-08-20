@@ -3,4 +3,8 @@ gateway-helm:
     gatewayAPI:
       safeUpgradePolicy:
         enabled: false
-
+  config:
+    envoyGateway:
+      # Enables Headlamp to reference the external Authentik outpost as a Backend.
+      extensionApis:
+        enableBackend: true

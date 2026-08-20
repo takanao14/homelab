@@ -1,0 +1,109 @@
+version: 1
+metadata:
+  name: homelab proxy provider
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+entries:
+  # Per-application forward auth lets Envoy retain proxying while Authentik
+  # enforces each application's group bindings (decision 20).
+  - model: authentik_providers_proxy.proxyprovider
+    id: headlamp-prd-provider
+    identifiers:
+      name: headlamp-prd
+    attrs:
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      mode: forward_single
+      # Browser entry point and post-login return URL; must match the HTTPRoute.
+      external_host: https://headlamp.prd.butaco.net
+      basic_auth_enabled: false
+      access_token_validity: hours=8
+
+  # Sandbox remains HTTP-only; its session cookie lacks Secure (ADR-0010).
+  - model: authentik_providers_proxy.proxyprovider
+    id: headlamp-sandbox-provider
+    identifiers:
+      name: headlamp-sandbox
+    attrs:
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      mode: forward_single
+      external_host: http://headlamp.sandbox.butaco.net
+      basic_auth_enabled: false
+      access_token_validity: hours=8
+
+  - model: authentik_core.application
+    id: headlamp-prd-application
+    identifiers:
+      slug: headlamp-prd
+    attrs:
+      name: Headlamp (prd)
+      provider: !KeyOf headlamp-prd-provider
+      # Admit on any matching binding; the group bindings below are the gate.
+      policy_engine_mode: any
+      meta_description: prd Kubernetes dashboard. Everyone admitted here shares
+        the same cluster-admin ServiceAccount inside Headlamp.
+
+  - model: authentik_core.application
+    id: headlamp-sandbox-application
+    identifiers:
+      slug: headlamp-sandbox
+    attrs:
+      name: Headlamp (sandbox)
+      provider: !KeyOf headlamp-sandbox-provider
+      policy_engine_mode: any
+      meta_description: sandbox Kubernetes dashboard. Everyone admitted here
+        shares the same cluster-admin ServiceAccount inside Headlamp.
+
+  # Headlamp uses cluster-admin, so admit only groups trusted at that level.
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf headlamp-prd-application
+      group: !Find [authentik_core.group, [name, lab-platform-admins]]
+      order: 0
+    attrs:
+      enabled: true
+
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf headlamp-prd-application
+      group: !Find [authentik_core.group, [name, lab-k8s-prd-admins]]
+      order: 1
+    attrs:
+      enabled: true
+
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf headlamp-sandbox-application
+      group: !Find [authentik_core.group, [name, lab-platform-admins]]
+      order: 0
+    attrs:
+      enabled: true
+
+  # Deliberately elevates sandbox users because the cluster is rebuildable;
+  # narrow this when OIDC restores per-user RBAC (decision 22).
+  - model: authentik_policies.policybinding
+    identifiers:
+      target: !KeyOf headlamp-sandbox-application
+      group: !Find [authentik_core.group, [name, lab-k8s-sandbox-users]]
+      order: 1
+    attrs:
+      enabled: true
+
+  - model: authentik_outposts.outpost
+    id: proxy-outpost
+    identifiers:
+      name: homelab-proxy-outpost
+    attrs:
+      type: proxy
+      # One external outpost serves both environments.
+      providers:
+        - !KeyOf headlamp-prd-provider
+        - !KeyOf headlamp-sandbox-provider
+      # Standalone outpost with an explicit token (decision 18). A non-empty
+      # config is required because the proxy outpost expects authentik_host.
+      config:
+        # Browser-facing URL; backchannel calls use the container environment.
+        authentik_host: https://auth.home.butaco.net
+        authentik_host_insecure: false
+        log_level: info

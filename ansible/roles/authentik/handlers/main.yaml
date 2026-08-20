@@ -14,3 +14,9 @@
   ansible.builtin.systemd:
     name: authentik-ldap.service
     state: restarted
+
+- name: Restart authentik proxy outpost
+  become: true
+  ansible.builtin.systemd:
+    name: authentik-proxy.service
+    state: restarted

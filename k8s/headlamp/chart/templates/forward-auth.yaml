@@ -1,0 +1,65 @@
+{{- if .Values.forwardAuth.enabled }}
+{{- $fa := .Values.forwardAuth }}
+{{- $route := .Values.headlamp.httpRoute }}
+{{- $ns := .Values.headlamp.namespaceOverride | default .Release.Namespace }}
+{{- $parentRefs := required "headlamp.httpRoute.parentRefs is required when forwardAuth is enabled" $route.parentRefs }}
+{{- $hostnames := required "headlamp.httpRoute.hostnames is required when forwardAuth is enabled" $route.hostnames }}
+# External Authentik outpost exposed through Envoy Gateway's Backend API.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: authentik-outpost
+  namespace: {{ $ns }}
+spec:
+  endpoints:
+    - ip:
+        address: {{ $fa.outpost.address | quote }}
+        port: {{ $fa.outpost.port }}
+---
+# Same-origin login/callback route, excluded from SecurityPolicy to avoid loops.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $fa.targetRouteName }}-outpost
+  namespace: {{ $ns }}
+spec:
+  parentRefs:
+    {{- toYaml $parentRefs | nindent 4 }}
+  hostnames:
+    {{- toYaml $hostnames | nindent 4 }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: {{ $fa.callbackPathPrefix }}
+      backendRefs:
+        - group: gateway.envoyproxy.io
+          kind: Backend
+          name: authentik-outpost
+          port: {{ $fa.outpost.port }}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: {{ $fa.targetRouteName }}-forward-auth
+  namespace: {{ $ns }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $fa.targetRouteName }}
+  extAuth:
+    # Fail closed because Headlamp uses cluster-admin; X.509 remains break-glass.
+    failOpen: false
+    headersToExtAuth:
+      {{- toYaml $fa.headersToExtAuth | nindent 6 }}
+    http:
+      backendRefs:
+        - group: gateway.envoyproxy.io
+          kind: Backend
+          name: authentik-outpost
+          port: {{ $fa.outpost.port }}
+      path: {{ $fa.authPath }}
+      headersToBackend:
+        {{- toYaml $fa.headersToBackend | nindent 8 }}
+{{- end }}

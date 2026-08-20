@@ -10,13 +10,21 @@ adapted for Podman instead of Docker.
 - Depends on the `podman` role (Docker CE is not used — see
   `docs/plans/identity-authentication-architecture.md` decision 18).
 - Creates data/template/certs/PostgreSQL directories under `/opt/authentik`
-  and `/var/lib/authentik-postgresql`.
+  and `/var/lib/authentik-postgresql`. **Only the template, blueprint, and
+  `/etc/authentik` directories have their ownership managed** (root:root 0755).
+  `data`, `certs`, and the PostgreSQL data directory are created but their
+  owner and mode are left alone, because the containers take them over on first
+  use — the authentik image ends up owning them as uid 1000, and PostgreSQL as
+  uid 70 with mode 0700. Asserting root:root 0755 on every run would revert
+  that, and PostgreSQL refuses to start unless its data directory is 0700 or
+  0750, so managing them would take the stack down on the second apply.
 - Deploys a dedicated Podman network (`authentik.network`) so the
   postgresql/server/worker containers resolve each other by container name.
 - Deploys Quadlet `.container` units to `/etc/containers/systemd/`:
-  `authentik-postgresql`, `authentik-server`, `authentik-worker`, and
+  `authentik-postgresql`, `authentik-server`, `authentik-worker`,
   `authentik-ldap` (the standalone LDAP Outpost, LDAPS-only on
-  `authentik_ldaps_port`).
+  `authentik_ldaps_port`), and `authentik-proxy` (the standalone Proxy
+  Outpost on `authentik_proxy_http_port`).
 - Deploys `/etc/authentik/authentik.env` (mode 0600) with the secrets shared
   across the three containers, mirroring upstream's `env_file: .env`
   pattern (each container reads only the variable names it recognizes).
@@ -71,6 +79,9 @@ adapted for Podman instead of Docker.
 | `authentik_ldap_image` | `ghcr.io/goauthentik/ldap` | LDAP Outpost image |
 | `authentik_ldap_outpost_name` | `homelab-ldap-outpost` | Must match the Outpost name in `files/blueprints/ldap.yaml` |
 | `authentik_ldaps_port` | `636` | Host port published for LDAPS; plaintext 389 is not exposed |
+| `authentik_proxy_image` | `ghcr.io/goauthentik/proxy` | Proxy Outpost image |
+| `authentik_proxy_outpost_name` | `homelab-proxy-outpost` | Must match the Outpost name in `files/blueprints/proxy.yaml` |
+| `authentik_proxy_http_port` | `9001` | Host port published for the Proxy Outpost; mirrored by `forwardAuth.outpost.port` in `k8s/headlamp/chart/values.yaml`. Not 9100 — that is node_exporter, which scrapes this host |
 
 ## Dependencies
 
@@ -119,4 +130,13 @@ adapted for Podman instead of Docker.
   regenerates it. This mirrors Authentik's own documented standalone-outpost
   workflow (copy the outpost's token into your deployment); it does not
   script around anything Authentik doesn't already support, unlike the
-  akadmin email/password case above.
+  akadmin email/password case above. `authentik-proxy` uses the same
+  mechanism for its own token.
+- `files/blueprints/proxy.yaml` covers the Proxy Outpost used for Headlamp
+  forward auth (stage 8b-1). Both providers use `mode: forward_single`, so
+  the outpost only answers authorization checks — it is **not** a reverse
+  proxy in the request path, and therefore is not published through Caddy.
+  Each cluster's Envoy Gateway calls `authentik_proxy_http_port` directly
+  over the LAN via a `SecurityPolicy` (`k8s/headlamp/chart/templates/`).
+  A single outpost serves prd and sandbox so a sandbox rebuild never
+  touches it.
