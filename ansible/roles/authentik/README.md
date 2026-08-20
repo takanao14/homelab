@@ -63,6 +63,7 @@ adapted for Podman instead of Docker.
 | `authentik_bootstrap_email` | Initial `akadmin` email (`AUTHENTIK_BOOTSTRAP_EMAIL`) — treated as sensitive in this repo and kept in SOPS rather than `defaults/main.yaml` |
 | `authentik_bootstrap_password` | Initial `akadmin` password (`AUTHENTIK_BOOTSTRAP_PASSWORD`) |
 | `authentik_bootstrap_token` | Initial `akadmin` API token (`AUTHENTIK_BOOTSTRAP_TOKEN`) — usable for further API-driven configuration (OIDC providers, groups, applications) once the containers are up |
+| `authentik_users` | List of accounts rendered into the `users.yaml` blueprint — see below |
 
 ### Non-secret variables (in `defaults/main.yaml`)
 
@@ -123,6 +124,42 @@ adapted for Podman instead of Docker.
   password is set via the blueprint `password` attr (plaintext, hashed by
   Authentik on save) sourced with `!Env TEST_USER_PASSWORD` from
   `authentik.env` rather than embedded in the 0644 blueprints directory.
+- Real accounts are the one blueprint this role renders itself:
+  `templates/blueprints/users.yaml.j2` is templated from the SOPS-encrypted
+  `authentik_users` list, because usernames and group membership are data,
+  not a fixed file. Each list item accepts:
+
+  | Key | Required | Description |
+  |-----|----------|-------------|
+  | `username` | yes | Login name. Authentik LDAP returns `cn`, so this is also the UNIX login name on SSSD hosts |
+  | `password` | yes | **Initial** password to hand to the person (see below) |
+  | `groups` | no | Group names, matched with `!Find`. Authoritative — dropping one revokes it on the next apply |
+  | `name` | no | Display name, defaults to `username` |
+  | `email` | no | Defaults to `<username>@home.butaco.net` |
+  | `is_active` | no | Defaults to `true`; set `false` to offboard without deleting |
+  | `ssh_public_key` | no | Published as `sshPublicKey` for `sss_ssh_authorizedkeys` |
+
+  Each user renders two blueprint entries. The first uses `state: created`
+  and carries only the password, which authentik skips once the account
+  exists ("Instance exists, skipping") — so the value really is an *initial*
+  password and a reapply never resets one the person has changed. The second
+  entry omits `password` and reconciles profile, groups and `is_active` on
+  every apply. Passwords reach the blueprint through `!Env` from
+  `authentik.env` (0600) rather than being rendered into the blueprints
+  directory (0644).
+
+  Rotating a password in `authentik_users` therefore does **not** change an
+  existing account. Reset it in the Authentik UI, or delete the user and
+  reapply to re-run the creation path.
+
+  The role applies this blueprint explicitly through
+  `POST /api/v3/managed/blueprints/{pk}/apply/` instead of relying on
+  Authentik's file-hash discovery, which only reapplies when the rendered
+  content changes — without it, deleting an account and rerunning would leave
+  the account gone. A final task then asserts that every listed user exists
+  with a usable password, because `!Env` returns `None` for a variable the
+  worker cannot see and would otherwise store an unusable password silently
+  and permanently.
 - The `authentik-ldap` outpost's `AUTHENTIK_TOKEN` is the one case where
   this role *does* read from the API (`GET .../view_key/` on the token the
   Outpost object owns) rather than only deploying blueprints — fetched live

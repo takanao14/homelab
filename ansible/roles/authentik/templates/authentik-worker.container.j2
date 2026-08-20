@@ -5,7 +5,7 @@ Wants=network-online.target
 Requires=authentik-postgresql.service
 
 [Container]
-ContainerName=authentik-worker
+ContainerName={{ authentik_worker_container }}
 Image={{ authentik_image }}:{{ authentik_version }}
 Exec=worker
 Network={{ authentik_network }}.network

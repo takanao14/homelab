@@ -130,6 +130,52 @@
     group: root
     mode: '0644'
 
+# Templated rather than copied: usernames, group membership and initial
+# passwords come from the SOPS-encrypted authentik_users list.
+- name: Deploy the Authentik users blueprint
+  become: true
+  ansible.builtin.template:
+    src: blueprints/users.yaml.j2
+    dest: "{{ authentik_blueprints_dir }}/users.yaml"
+    owner: root
+    group: root
+    mode: '0644'
+
+# Authentik's own discovery only reapplies a blueprint when the file hash
+# changes, so deleting an account and rerunning the playbook would be a no-op —
+# the account would stay gone. Applying explicitly makes account state a
+# function of authentik_users rather than of whether the file happened to
+# change. page_size is required: the default 20 paginates this instance out of
+# the first page and the lookup silently finds nothing.
+- name: Look up the users blueprint instance
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/managed/blueprints/?page_size=200"
+    headers:
+      Authorization: "Bearer {{ authentik_bootstrap_token }}"
+    status_code: 200
+  register: authentik_users_blueprint
+  until: >-
+    authentik_users_blueprint.json.results
+    | selectattr('path', 'equalto', 'local/users.yaml') | list | length > 0
+  retries: 12
+  delay: 5
+  no_log: true
+
+# Convergent, so not reported as a change; the check at the end of this role is
+# the signal that matters.
+- name: Apply the users blueprint
+  ansible.builtin.uri:
+    url: >-
+      http://127.0.0.1:{{ authentik_http_port }}/api/v3/managed/blueprints/{{
+      (authentik_users_blueprint.json.results
+      | selectattr('path', 'equalto', 'local/users.yaml') | first).pk }}/apply/
+    method: POST
+    headers:
+      Authorization: "Bearer {{ authentik_bootstrap_token }}"
+    status_code: 200
+  changed_when: false
+  no_log: true
+
 # Blueprint objects are created asynchronously; retry the lookups below.
 - name: Wait for the blueprint-created objects to appear
   ansible.builtin.uri:
@@ -276,3 +322,48 @@
     state: started
     enabled: true
     daemon_reload: true
+
+# The users blueprint sets passwords with `state: created`, so a bad first apply
+# is permanent and silent: !Env yields None for a variable the worker cannot see,
+# which stores an unusable password, and every later run skips the entry. Catch
+# it here rather than at someone's first login. Blueprints apply asynchronously,
+# hence the retries.
+- name: Check that every managed user has a usable password
+  become: true
+  ansible.builtin.command:
+    argv:
+      - podman
+      - exec
+      - "{{ authentik_worker_container }}"
+      - ak
+      - shell
+      - -c
+      - |
+        from authentik.core.models import User
+        broken = []
+        for name in {{ authentik_users | map(attribute='username') | list | to_json }}:
+            user = User.objects.filter(username=name).first()
+            if user is None or not user.has_usable_password():
+                broken.append(name)
+        print("USERCHECK_FAIL:" + ",".join(broken) if broken else "USERCHECK_OK")
+  register: authentik_user_check
+  changed_when: false
+  failed_when: false
+  until: authentik_user_check.stdout is search('USERCHECK_(OK|FAIL)')
+  retries: 12
+  delay: 5
+
+- name: Fail when a managed user is missing or has no usable password
+  ansible.builtin.assert:
+    that: authentik_user_check.stdout is search('USERCHECK_OK')
+    # Ansible finalizes fail_msg whether or not the assertion holds, so this has
+    # to stay safe when the regex finds nothing: regex_search returns None on a
+    # passing run, and `first` would raise on it.
+    fail_msg: >-
+      Missing, or created without a usable password:
+      {{ authentik_user_check.stdout | regex_search('USERCHECK_FAIL:(\S*)', '\1') | default(['unknown'], true) | join(',') }}.
+      The blueprint sets passwords with `state: created`, which skips accounts
+      that already exist, so rerunning does not repair one that was created
+      wrong. Delete each listed account in Authentik and run this playbook
+      again — the explicit blueprint apply above then re-runs the creation path.
+    success_msg: All accounts in authentik_users have a usable password.

@@ -1,0 +1,57 @@
+{#
+  Rendered from the SOPS-encrypted `authentik_users` list, so this blueprint is
+  templated instead of living in files/blueprints/ with the static ones.
+
+  Each user produces two entries on purpose:
+
+  - `state: created` carries only the password. authentik's importer skips a
+    `created` entry whose object already exists ("Instance exists, skipping"),
+    so the password is an *initial* password: hand it to the person, and once
+    they change it a later reapply never resets it.
+  - the default `present` entry carries everything that should keep
+    reconciling — profile, group membership, is_active. It deliberately omits
+    `password` so it cannot clobber a changed one.
+
+  Passwords are referenced with !Env rather than rendered here, because this
+  file lands in a 0644 directory while authentik.env is 0600.
+#}
+version: 1
+metadata:
+  name: homelab users
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+entries:
+{% for user in authentik_users %}
+{#- Must match the variable name emitted by authentik.env.j2. #}
+{% set password_var = 'AUTHENTIK_USER_PASSWORD_' ~ (user.username | upper | regex_replace('[^A-Z0-9]', '_')) %}
+  # {{ user.username }}: created once with the handed-out initial password.
+  # `name` is only here because the serializer requires it to create the user;
+  # the entry below is what keeps it reconciled.
+  - model: authentik_core.user
+    state: created
+    identifiers:
+      username: {{ user.username }}
+    attrs:
+      name: {{ user.name | default(user.username) }}
+      password: !Env {{ password_var }}
+
+  # {{ user.username }}: reconciled on every apply. `groups` is authoritative,
+  # so dropping a group here revokes it; set is_active false to offboard.
+  - model: authentik_core.user
+    identifiers:
+      username: {{ user.username }}
+    attrs:
+      name: {{ user.name | default(user.username) }}
+      email: {{ user.email | default(user.username ~ '@home.butaco.net') }}
+      is_active: {{ user.is_active | default(true) | bool | lower }}
+      path: {{ user.path | default('users') }}
+      groups:
+{% for group in user.groups | default([]) %}
+        - !Find [authentik_core.group, [name, {{ group }}]]
+{% endfor %}
+{% if user.ssh_public_key is defined %}
+      attributes:
+        sshPublicKey: "{{ user.ssh_public_key }}"
+{% endif %}
+
+{% endfor %}
