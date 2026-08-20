@@ -1,15 +1,8 @@
 {{- /*
-ServiceMonitors for Cilium metrics. Defined here (not in the Cilium chart)
-because Cilium is installed via helmfile at cluster bootstrap, before the
-kube-prometheus-stack ServiceMonitor CRD exists. Cilium only exposes the metrics
-Services (prometheus.metricsService / hubble.metrics.enabled); scraping is wired
-up here. The cluster label is injected by the environment's default scrape class
-(see prometheusSpec.scrapeClasses in values/prometheus*.yaml).
-
-Sandbox renders this same template through values/prometheus-sandbox.yaml and
-has no separate copy. Selectors, ports, paths, and non-cluster relabelings
-should stay in sync across prd and sandbox; cluster labels are injected by each
-environment's scrape class.
+Cilium is bootstrapped before the ServiceMonitor CRD exists, so its metrics
+Services are scraped here. The default scrape class adds the cluster label.
+This template is shared by prd and sandbox; keep all other scrape settings
+identical across environments.
 */ -}}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor

@@ -1,17 +1,8 @@
 {{- /*
-external-dns metrics. Defined here (not in k8s/externalDNS/) for consistency
-with the other cross-cutting ServiceMonitors in this chart (cilium, envoy
-gateway, argocd) — see cilium-servicemonitors.yaml for the CRD-race rationale,
-though external-dns itself has no such ordering constraint since it isn't
-part of cluster bootstrap.
-
-The cluster label is injected by the environment's default scrape class (see
-prometheusSpec.scrapeClasses in values/prometheus*.yaml).
-
-Sandbox renders this same template through values/prometheus-sandbox.yaml and
-has no separate copy. Selectors, ports, paths, and non-cluster relabelings
-should stay in sync across prd and sandbox; cluster labels are injected by each
-environment's scrape class.
+This monitor lives here with the other cross-cutting monitors for consistency;
+external-dns itself has no CRD ordering constraint. The default scrape class
+adds the cluster label. This template is shared by prd and sandbox; keep all
+other scrape settings identical across environments.
 */ -}}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor

@@ -19,11 +19,11 @@ func TestValidateDashboardJSON(t *testing.T) {
 			data: `{"panels":[{"title":"Healthy","options":{"colorMode":"background"},"fieldConfig":{"defaults":{"thresholds":{"steps":[{"color":"blue"}]}}}}]}`,
 		},
 		{
-			name: "colour disabled",
+			name: "color disabled",
 			data: `{"panels":[{"title":"Plain","options":{"colorMode":"none"},"fieldConfig":{"defaults":{}}}]}`,
 		},
 		{
-			name: "colour mode absent",
+			name: "color mode absent",
 			data: `{"panels":[{"title":"Graph","options":{},"fieldConfig":{"defaults":{}}}]}`,
 		},
 		{

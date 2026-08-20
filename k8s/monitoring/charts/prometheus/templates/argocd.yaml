@@ -1,27 +1,12 @@
 {{- /*
-ArgoCD metrics. Defined here (not in k8s/argocd/) because argocd is
-bootstrapped via helmfile before any ArgoCD Application exists, and would fail
-on a fresh cluster if it referenced the ServiceMonitor CRD before it exists —
-same reasoning as cilium-servicemonitors.yaml and envoy-gateway.yaml. The
-metrics Services themselves are enabled via controller/server/repoServer/
-applicationSet.metrics.enabled in k8s/argocd/values-common.yaml.
+Argo CD is bootstrapped before the ServiceMonitor CRD, so its monitors live in
+this wrapper. Metrics Services are enabled in k8s/argocd/values-common.yaml.
 
-The metrics Services' own app.kubernetes.io/name label is not simply
-"argocd-<component>" (that value is the *pod* selector, not the Service's own
-label): application-controller and applicationset-controller both share the
-generic "argocd-metrics" name and are distinguished only by
-app.kubernetes.io/component, while repo-server and server each get their own
-distinct "argocd-<component>-metrics" name. Confirmed via `kubectl get svc -o
-yaml` on prd (2026-07-04) after the first version of this file (matching on
-"argocd-<component>") produced zero scraped targets.
+Both controller Services use the argocd-metrics name and differ by component;
+repo-server and server have distinct names.
 
-The cluster label is injected by the environment's default scrape class (see
-prometheusSpec.scrapeClasses in values/prometheus*.yaml).
-
-Sandbox renders this same template through values/prometheus-sandbox.yaml and
-has no separate copy. Selectors, ports, paths, and non-cluster relabelings
-should stay in sync across prd and sandbox; cluster labels are injected by each
-environment's scrape class.
+This template is shared by prd and sandbox. Each environment's scrape class
+injects its cluster label.
 */ -}}
 {{- $components := dict
   "application-controller" "argocd-metrics"
