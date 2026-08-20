@@ -145,6 +145,16 @@ baseline, not the service playbook.
 Every cross-cutting role additionally owns a `common-<role>.yaml` playbook so it
 can be rolled out fleet-wide in one run.
 
+### Downloading release artifacts
+
+`get_url` defaults to a 10s socket timeout, which aborts mid-transfer on the
+multi-MB release archives once egress leaves a SimpleZone. Every `get_url` task
+therefore carries `retries: 3` / `delay: 5`, and artifact downloads (archives,
+binaries, `.deb`) also raise `timeout` to 60s — 120s for the Caddy download API,
+which builds the binary per request. Repository signing keys are a few KB and
+keep the default timeout. `until` is omitted on purpose: with `retries` set and
+no `until`, Ansible retries until the task stops failing.
+
 ### Provisioning a new host
 
 Host hygiene is applied at host bring-up, before services, via `bootstrap.yaml`
