@@ -38,12 +38,32 @@ browser -> Envoy Gateway -> /outpost.goauthentik.io/*  -> authentik1:9100 (login
                                 302                 -> auth.home.butaco.net
 ```
 
-Headlamp runs with `-proxy-auth=true` and reads authentik's own header names, so
-the token prompt is gone. Client-supplied identity headers cannot be trusted on
-their own: the defence is that `headersToBackend` overwrites coexisting headers,
-so a forged `X-authentik-username` is replaced by the outpost's value. Do not add
-an HTTPRoute `RequestHeaderModifier` to remove those headers — route-level header
+Two separate settings are involved, and it is easy to assume the first does the
+second's job:
+
+- `-unsafe-use-service-account-token` is what removes the token prompt. Headlamp
+  reaches the API server as its own ServiceAccount for every visitor. Upstream
+  calls it unsafe because by itself it gives cluster-admin to anyone who can
+  reach the Service, so it is only sound behind the forward auth above — enable
+  and disable the two together.
+- `-proxy-auth=true` with authentik's header names does **not** bypass the login
+  screen. In v0.44.0 it only feeds `/clusters/{name}/me`, so the top bar shows
+  who Authentik authenticated, and it gates `-proxy-auth-token-header`, which is
+  unused here because forwarding a token to the API server needs the OIDC work
+  deferred by decision 19.
+
+Client-supplied identity headers cannot be trusted on their own: the defence is
+that `headersToBackend` overwrites coexisting headers, so a forged
+`X-authentik-username` is replaced by the outpost's value. Do not add an
+HTTPRoute `RequestHeaderModifier` to remove those headers — route-level header
 mutation runs after ext_authz and would strip the injected values too.
+
+A NetworkPolicy closes the path around all of this. ext_authz only guards
+traffic arriving through the Gateway, so any pod that could reach the Headlamp
+Service directly would get a cluster-admin session without authenticating.
+Ingress is therefore limited to the proxy pods of the Gateway named in the
+HTTPRoute. kubelet probes still work: Cilium exempts host-to-pod traffic while
+the host firewall is off, which is the default here.
 
 Requirements and limits:
 
@@ -61,39 +81,26 @@ Requirements and limits:
 
 See `docs/plans/identity-authentication-architecture.md` decision 20.
 
-## Login Token (per cluster)
+## Login Token (removed)
 
-**Obsolete once forward auth is verified, and worth deleting.** With
-`-proxy-auth=true` the login screen is skipped, so nothing consumes this Secret.
-It remains a long-lived `cluster-admin` credential that works directly against
-the API server, which forward auth does not protect — the gate is in front of
-Headlamp, not in front of kube-apiserver. Deleting it is the part of the
-ADR-0015 cleanup that does not have to wait for OIDC (stage 13).
+There is no login token any more. The `headlamp-token` Secret — a long-lived
+`kubernetes.io/service-account-token` for the `cluster-admin` `headlamp`
+ServiceAccount — was deleted from prd on 2026-08-20; sandbox had already lost it
+in a rebuild and ran without it. **Do not recreate it.**
 
-The chart binds `headlamp` to `cluster-admin`. After sync, create its login token:
+Forward auth does not protect that Secret: the gate sits in front of Headlamp,
+not in front of kube-apiserver, so anyone holding the token could have used it
+against the API directly. Removing it is the part of the ADR-0015 cleanup that
+did not have to wait for OIDC (stage 13 of the identity plan).
 
-```bash
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Secret
-metadata:
-  name: headlamp-token
-  namespace: headlamp
-  annotations:
-    kubernetes.io/service-account.name: headlamp
-type: kubernetes.io/service-account-token
-EOF
+Nothing consumes it: Headlamp reaches the API server with the projected,
+pod-bound token of its own ServiceAccount, which is short-lived and rotated by
+the kubelet. Access is granted by Authentik group membership instead — see
+`ansible/roles/authentik/files/blueprints/proxy.yaml`.
 
-# Retrieve the token
-kubectl get secret headlamp-token -n headlamp \
-  -o jsonpath='{.data.token}' | base64 -d
-```
-
-To revoke access, delete and recreate the Secret:
-
-```bash
-kubectl delete secret headlamp-token -n headlamp
-```
+The `headlamp` ServiceAccount is still bound to `cluster-admin` by the chart,
+which is why the forward auth and NetworkPolicy above are load-bearing. Splitting
+that binding into per-user roles needs OIDC (decision 19).
 
 ## Design Note
 
