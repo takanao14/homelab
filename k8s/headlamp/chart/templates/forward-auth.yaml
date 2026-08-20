@@ -37,6 +37,9 @@ spec:
           kind: Backend
           name: authentik-outpost
           port: {{ $fa.outpost.port }}
+          # Defaulted by the API server; declared here so Argo CD does not read
+          # it back as drift, matching the upstream route in values.yaml.
+          weight: 1
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: SecurityPolicy
@@ -59,6 +62,7 @@ spec:
           kind: Backend
           name: authentik-outpost
           port: {{ $fa.outpost.port }}
+          weight: 1
       path: {{ $fa.authPath }}
       headersToBackend:
         {{- toYaml $fa.headersToBackend | nindent 8 }}
