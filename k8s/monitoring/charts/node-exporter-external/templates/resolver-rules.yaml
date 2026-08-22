@@ -63,8 +63,13 @@ spec:
               Hit rate is {{ "{{ $value | humanizePercentage }}" }}. Queries
               that would have been served from cache are being resolved
               recursively instead, which overloads upstream and ends in
-              SERVFAIL. Check for "stash failed" in the knot-resolver journal:
-              a full cache is the known cause.
+              SERVFAIL. First check cache usage
+              (knot_resolver_cache_used_bytes / cache_size_bytes) for "stash
+              failed" in the knot-resolver journal. If the cache is not near
+              full, this is more likely a short burst of uncached queries at
+              this resolver's low baseline QPS depressing the 10m-windowed
+              ratio; it should self-resolve within ~10m as the burst rolls
+              out of the window.
 
         # Client-visible outcome, aggregated across workers per host.
         - alert: KnotResolverServfailHigh

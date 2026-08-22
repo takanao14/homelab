@@ -93,6 +93,14 @@ resolverAlerts:
   metricsMaxAgeSeconds: 180
   # Match the 5m SERVFAIL alert; a measured 15m window lagged it by ~13m.
   cacheHitRateFor: 5m
+  # At this resolver's baseline of ~2-3 qps, a routine ~2min burst of
+  # uncached queries pins the 10m-windowed hit rate near 0.52-0.55 for
+  # ~9min (the burst outlives the 10m rate window), tripping the 0.6
+  # default several times a week with no actual resolver degradation.
+  # 0.45 stays below that observed noise floor while still catching the
+  # documented real-incident range (fault measured 36-43%, see the rule's
+  # top-of-file comment) with margin.
+  cacheHitRateMin: 0.45
 
 filesystemAlerts:
   enabled: true
