@@ -14,7 +14,7 @@
 
 # Container entrypoints own these paths (authentik 1000; PostgreSQL 70/0700).
 # Managing owner or mode would break PostgreSQL on subsequent runs.
-- name: Ensure container-owned Authentik directories exist
+- name: Ensure container-owned Authentik directories exist  # noqa: risky-file-permissions
   become: true
   ansible.builtin.file:
     path: "{{ item }}"
