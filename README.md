@@ -100,3 +100,21 @@ Make sure your AGE key is listed in `.sops.yaml` before editing.
 | `k0sctl`                   | k0s cluster lifecycle                    |
 | `helmfile` / `helm`        | Kubernetes workload deployments          |
 | `kubectl`                  | Kubernetes cluster interaction           |
+
+## AI Coding Agent (OpenCode)
+
+[OpenCode](https://opencode.ai/) is an optional terminal AI coding agent.
+`opencode.json` at the repository root points it at the in-cluster Ollama
+deployment (`k8s/ollama/`) instead of a hosted provider — see
+[ADR-0035](docs/adr/0035-opencode-connects-to-ollama.md).
+
+```bash
+curl -fsSL https://opencode.ai/install | bash
+# or: npm install -g opencode-ai
+
+opencode --version
+```
+
+Before running it, the GPU must be switched to `ollama` and the expected model
+pulled — see [`k8s/ollama/README.md`](k8s/ollama/README.md#notes) for the
+exact commands.

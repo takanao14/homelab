@@ -1,6 +1,8 @@
 # ollama
 
-[Ollama](https://ollama.com/) ROCm inference on prd, consumed by Open WebUI.
+[Ollama](https://ollama.com/) ROCm inference on prd, consumed by Open WebUI and by
+OpenCode ([ADR-0035](../../docs/adr/0035-opencode-connects-to-ollama.md);
+`opencode.json` at the repo root).
 
 ## Directory Structure
 
@@ -71,7 +73,7 @@ incompatible pairing. Check upstream `ROCMVERSION` and `AMDGPU_TARGETS` on bumps
 | `replicaCount` | `0` | Set to `1` to start (default off to save GPU) |
 | `image.repository` | `ollama/ollama` | Ollama image |
 | `image.tag` | `0.32.3-rocm` | ROCm-enabled image tag (bundles ROCm 7.2.1 userspace) |
-| `numCtx` | `4096` (chart) / `32768` (`values.yaml`) | Context window size (tokens) |
+| `numCtx` | `4096` (chart) / `65536` (`values.yaml`) | Context window size (tokens) |
 | `gateway.timeouts.request` | unset (chart) / `10m` (`values.yaml`) | End-to-end HTTPRoute timeout for long LLM responses |
 | `gateway.timeouts.backendRequest` | unset (chart) / `10m` (`values.yaml`) | Gateway-to-Ollama request timeout |
 | `storage.size` | `100Gi` | PVC size for model storage |
@@ -82,3 +84,7 @@ incompatible pairing. Check upstream `ROCMVERSION` and `AMDGPU_TARGETS` on bumps
 - `replicaCount: 0` leaves activation to gpu-switch; Argo CD ignores drift.
 - The external route allows 10 minutes; in-cluster clients bypass Envoy.
 - Open WebUI is a separate upstream-chart Application.
+- `numCtx: 32768` / `kvCacheType: q8_0` (`values.yaml`) sizes the context window
+  and KV cache for agent workloads (OpenCode), not just chat. Before running
+  OpenCode, switch the GPU to this Deployment (`scripts/gpu-switch.sh ollama`)
+  and pull the model it expects: `ollama pull gemma4:12b`.

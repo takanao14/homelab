@@ -7,7 +7,9 @@ gateway:
   timeouts:
     request: 10m
     backendRequest: 10m
-# 32768 fits an 8–13 GB model with q8_0 cache; verify VRAM before increasing.
-numCtx: 32768
+# Measured with gemma4:12b (~6.7 GB weights) + q8_0 cache: 8646/16304 MiB VRAM
+# at 32768 (2026-08-23, amd_gpu_used_vram via Grafana). 65536 projects to
+# ~10.5 GB (65%); re-verify amd_gpu_used_vram after the next model load.
+numCtx: 65536
 flashAttention: true
 kvCacheType: q8_0

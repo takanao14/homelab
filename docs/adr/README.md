@@ -77,3 +77,4 @@ deleting it:
 | [0032](0032-reboot-and-planned-shutdown-orchestration.md) | Orchestrate reboots and planned shutdowns from Ansible | Accepted |
 | [0033](0033-sandbox-storage-openebs-localpv-and-truenas-nfs.md) | Use OpenEBS LocalPV and TrueNAS NFS for sandbox storage | Accepted |
 | [0034](0034-hubble-ui-for-service-traffic-visibility.md) | Visualize service-to-service traffic with Hubble UI | Proposed |
+| [0035](0035-opencode-connects-to-ollama.md) | OpenCode connects to Ollama instead of Lemonade Server | Accepted |
