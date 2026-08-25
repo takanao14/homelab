@@ -32,13 +32,11 @@ resources:
     cpu: 25m
     memory: 1792Mi
 
+# A single replica can use the in-memory websocket manager; see ADR-0036.
 websocket:
+  manager: ""
   redis:
-    # 28/31 Mi, p95 CPU 2.6m.
-    resources:
-      requests:
-        cpu: 10m
-        memory: 40Mi
+    enabled: false
 
 ingress:
   enabled: false
