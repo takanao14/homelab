@@ -7,11 +7,12 @@ gateway:
   timeouts:
     request: 10m
     backendRequest: 10m
-# Measured with gemma4:12b (~6.7 GB weights) + q8_0 cache: 8646/16304 MiB VRAM
-# at 32768 (2026-08-23, amd_gpu_used_vram via Grafana). 100000 projects to
-# ~12.5 GB (77%); no VRAM limit enforced at the k8s level, so a bad value
-# OOMs the ollama process and CrashLoopBackOffs (see ADR-0035) — re-verify
-# amd_gpu_used_vram after the next model load before pushing higher.
-numCtx: 100000
+# Measured with gemma4:12b (~6.7 GB weights) + q8_0 cache: 9349/16304 MiB VRAM
+# at 100000 (2026-08-25, amd_gpu_used_vram via Grafana, real request). 131072
+# is gemma4:12b's native max context and projects to ~10.2 GB (63%); no VRAM
+# limit enforced at the k8s level, so a bad value OOMs the ollama process and
+# CrashLoopBackOffs (see ADR-0035) — re-verify amd_gpu_used_vram after the
+# next model load.
+numCtx: 131072
 flashAttention: true
 kvCacheType: q8_0
