@@ -73,7 +73,7 @@ incompatible pairing. Check upstream `ROCMVERSION` and `AMDGPU_TARGETS` on bumps
 | `replicaCount` | `0` | Set to `1` to start (default off to save GPU) |
 | `image.repository` | `ollama/ollama` | Ollama image |
 | `image.tag` | `0.32.3-rocm` | ROCm-enabled image tag (bundles ROCm 7.2.1 userspace) |
-| `numCtx` | `4096` (chart) / `65536` (`values.yaml`) | Context window size (tokens) |
+| `numCtx` | `4096` (chart) / `100000` (`values.yaml`) | Context window size (tokens) |
 | `gateway.timeouts.request` | unset (chart) / `10m` (`values.yaml`) | End-to-end HTTPRoute timeout for long LLM responses |
 | `gateway.timeouts.backendRequest` | unset (chart) / `10m` (`values.yaml`) | Gateway-to-Ollama request timeout |
 | `storage.size` | `100Gi` | PVC size for model storage |

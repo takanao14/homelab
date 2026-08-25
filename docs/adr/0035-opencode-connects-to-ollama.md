@@ -89,3 +89,11 @@ interactive OpenCode session points at changes.
   current client therefore chooses concurrent aggregate throughput" describes
   a configuration that has since changed — recorded here rather than edited
   into ADR-0029, per this directory's append-only convention.
+- `numCtx` in `k8s/ollama/values.yaml` is tuned empirically against
+  `amd_gpu_used_vram` (Grafana/Prometheus), not by formula: at 32768 with
+  `gemma4:12b` and `kvCacheType: q8_0`, measured usage was 8646/16304 MiB
+  (2026-08-23). No VRAM limit is enforced at the k8s level (the device plugin
+  only counts GPUs, not memory), so an oversized `numCtx` fails inside
+  ROCm/HIP allocation at model load, crash-loops the single-replica `ollama`
+  Deployment, and takes OpenCode down until `numCtx` is reverted and Argo CD
+  resyncs — recoverable, but not self-healing on its own.
