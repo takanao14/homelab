@@ -4,5 +4,10 @@ k0s_service: k0scontroller
 # Require all namespaces to be classified before shutdown.
 k8s_shutdown_allow_unclassified: false
 
-# Persist pre-shutdown replicas outside the repo for startup restoration.
-k8s_shutdown_state_dir: "~/.local/state/homelab/shutdown"
+# Argo CD must bootstrap these components before it can self-heal the cluster.
+k8s_gitops_controller_namespace: argocd
+k8s_gitops_controller_resource: statefulset/argocd-application-controller
+k8s_gitops_bootstrap_resources:
+  - deployment/argocd-redis
+  - deployment/argocd-repo-server
+  - "{{ k8s_gitops_controller_resource }}"

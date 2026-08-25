@@ -3,7 +3,7 @@
 #   --tags hypervisors  wait for the Proxmox nodes to answer
 #   --tags guests       ensure cluster guests run, wait in dependency order
 #   --tags k8s          wait for the clusters to report every node Ready
-#   --tags workloads    scale workloads back to their recorded replica counts
+#   --tags workloads    resume GitOps and wait for it to self-heal replicas
 #   --tags prd          restore only the prd cluster and its guests
 #   --tags sandbox      restore only the sandbox cluster and its guests
 # Hypervisor power-on is external: BIOS AC recovery, or AMT for node1-node4.
@@ -87,7 +87,7 @@
       ansible.builtin.import_tasks: tasks/k8s_nfs_ready.yaml
       when: "'nfs' in k8s_storage_providers"
 
-    - name: Scale workloads back up
+    - name: Resume GitOps and wait for it to self-heal
       ansible.builtin.import_tasks: tasks/k8s_workload_start.yaml
 
 # Phase 4 — sandbox.
@@ -112,5 +112,5 @@
       ansible.builtin.import_tasks: tasks/k8s_nfs_ready.yaml
       when: "'nfs' in k8s_storage_providers"
 
-    - name: Scale workloads back up
+    - name: Resume GitOps and wait for it to self-heal
       ansible.builtin.import_tasks: tasks/k8s_workload_start.yaml

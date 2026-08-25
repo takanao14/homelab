@@ -1,49 +1,89 @@
 ---
-# Restore snapshotted replicas
+# Bootstrap Argo CD, then let self-heal restore Git-declared replicas (ADR-0036).
 
-- name: Locate the replica snapshot
-  ansible.builtin.stat:
-    path: "{{ k8s_shutdown_state_dir | expanduser }}/replicas-{{ inventory_hostname }}.txt"
-  register: k8s_startup_snapshot_file
-  delegate_to: localhost
-  become: false
-
-- name: Fail if the snapshot is missing
-  ansible.builtin.assert:
-    that: k8s_startup_snapshot_file.stat.exists
-    fail_msg: >-
-      No replica snapshot at {{ k8s_startup_snapshot_file.stat.path }}. It is
-      written by ops-startup.yaml's counterpart, ops-shutdown.yaml --tags
-      workloads. Without it the original replica counts are unknown, so scale
-      the workloads back by hand rather than guessing.
-    success_msg: Replica snapshot found
-
-- name: Read the replica snapshot
-  ansible.builtin.slurp:
-    src: "{{ k8s_startup_snapshot_file.stat.path }}"
-  register: k8s_startup_snapshot
-  delegate_to: localhost
-  become: false
-
-# Reverse order starts GitOps first.
-- name: Build the restore list
-  ansible.builtin.set_fact:
-    k8s_startup_targets: >-
-      {{ (k8s_startup_snapshot.content | b64decode).splitlines()
-         | reject('equalto', '') | list | reverse | list }}
-
-# Skip resources whose snapshot omitted replicas.
-- name: Scale workloads back to their recorded replica counts
+- name: Resume the Argo CD bootstrap components
   ansible.builtin.command:
     argv:
       - kubectl
       - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
-      - "--namespace={{ item.split()[1] }}"
+      - "--namespace={{ k8s_gitops_controller_namespace }}"
       - scale
-      - "{{ item.split()[0] | lower }}/{{ item.split()[2] }}"
-      - "--replicas={{ item.split()[3] }}"
-  loop: "{{ k8s_startup_targets }}"
-  when: item.split() | length == 4
+      - "{{ item }}"
+      - --replicas=1
+  loop: "{{ k8s_gitops_bootstrap_resources }}"
   delegate_to: localhost
   become: false
-  changed_when: item.split()[3] != '0'
+  changed_when: true
+  when: k8s_gitops_bootstrap_resources is defined
+
+- name: Wait for the Argo CD bootstrap components to be ready
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - "--namespace={{ k8s_gitops_controller_namespace }}"
+      - rollout
+      - status
+      - "{{ item }}"
+      - --timeout=300s
+  loop: "{{ k8s_gitops_bootstrap_resources }}"
+  delegate_to: localhost
+  become: false
+  changed_when: false
+  when: k8s_gitops_bootstrap_resources is defined
+
+- name: Request a hard refresh of every Argo CD Application
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - "--namespace={{ k8s_gitops_controller_namespace }}"
+      - annotate
+      - applications.argoproj.io
+      - --all
+      - argocd.argoproj.io/refresh=hard
+      - --overwrite
+  delegate_to: localhost
+  become: false
+  changed_when: true
+  when: k8s_gitops_bootstrap_resources is defined
+
+- name: Wait for Argo CD to process every refresh request
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - "--namespace={{ k8s_gitops_controller_namespace }}"
+      - get
+      - applications.argoproj.io
+      - -o
+      - 'jsonpath={range .items[*]}{.metadata.annotations.argocd\.argoproj\.io/refresh}{end}'
+  register: k8s_startup_refreshes
+  until: k8s_startup_refreshes.stdout == ''
+  retries: 60
+  delay: 10
+  delegate_to: localhost
+  become: false
+  changed_when: false
+  when: k8s_gitops_bootstrap_resources is defined
+
+- name: Wait for every Argo CD Application to be Synced and Healthy
+  ansible.builtin.command:
+    argv:
+      - kubectl
+      - "--kubeconfig={{ k8s_kubeconfig | expanduser }}"
+      - "--namespace={{ k8s_gitops_controller_namespace }}"
+      - get
+      - applications.argoproj.io
+      - -o
+      - jsonpath={range .items[*]}{.status.sync.status}{" "}{.status.health.status}{"\n"}{end}
+  register: k8s_startup_apps
+  until:
+    - k8s_startup_apps.stdout_lines | length > 0
+    - k8s_startup_apps.stdout_lines | reject('equalto', 'Synced Healthy') | list | length == 0
+  retries: 60
+  delay: 10
+  delegate_to: localhost
+  become: false
+  changed_when: false
+  when: k8s_gitops_bootstrap_resources is defined

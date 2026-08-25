@@ -78,3 +78,4 @@ deleting it:
 | [0033](0033-sandbox-storage-openebs-localpv-and-truenas-nfs.md) | Use OpenEBS LocalPV and TrueNAS NFS for sandbox storage | Accepted |
 | [0034](0034-hubble-ui-for-service-traffic-visibility.md) | Visualize service-to-service traffic with Hubble UI | Proposed |
 | [0035](0035-opencode-connects-to-ollama.md) | OpenCode connects to Ollama instead of Lemonade Server | Accepted |
+| [0036](0036-planned-shutdown-restores-via-argocd-selfheal.md) | Planned-shutdown restore relies on Argo CD self-heal, not a replica snapshot | Accepted |

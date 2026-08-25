@@ -25,7 +25,3 @@ k8s_infrastructure_namespaces:
   - openebs
   - external-secrets
   - envoy-gateway-system
-
-# Stop the controller first so GitOps cannot revert scale-to-zero.
-k8s_gitops_controller_namespace: argocd
-k8s_gitops_controller_resource: statefulset/argocd-application-controller

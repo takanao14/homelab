@@ -36,7 +36,7 @@
     success_msg: Every namespace carrying workloads is classified
   when: not (k8s_shutdown_allow_unclassified | bool)
 
-- name: Record current replica counts
+- name: List workloads to scale down
   ansible.builtin.command:
     argv:
       - kubectl
@@ -45,37 +45,21 @@
       - get
       - deployment,statefulset
       - -o
-      - jsonpath={range .items[*]}{.kind}{" "}{.metadata.namespace}{" "}{.metadata.name}{" "}{.spec.replicas}{"\n"}{end}
+      - jsonpath={range .items[*]}{.kind}{" "}{.metadata.namespace}{" "}{.metadata.name}{"\n"}{end}
   loop: "{{ k8s_shutdown_namespaces }}"
   register: k8s_shutdown_snapshot
   delegate_to: localhost
   become: false
   changed_when: false
 
-- name: Flatten the snapshot into one workload per line
+- name: Flatten the list into one workload per line
   ansible.builtin.set_fact:
     k8s_shutdown_targets: >-
       {{ k8s_shutdown_snapshot.results | map(attribute='stdout_lines')
          | flatten | reject('equalto', '') | list }}
 
-# Persist replicas before scaling.
-- name: Ensure the shutdown state directory exists
-  ansible.builtin.file:
-    path: "{{ k8s_shutdown_state_dir | expanduser }}"
-    state: directory
-    mode: "0700"
-  delegate_to: localhost
-  become: false
-
-- name: Save the replica snapshot for ops-startup.yaml
-  ansible.builtin.copy:
-    content: "{{ k8s_shutdown_targets | join('\n') }}\n"
-    dest: "{{ k8s_shutdown_state_dir | expanduser }}/replicas-{{ inventory_hostname }}.txt"
-    mode: "0600"
-  delegate_to: localhost
-  become: false
-
-# Stop GitOps only after snapshotting its nonzero replica count.
+# Restore relies on Argo CD self-heal (ADR-0036), not a recorded replica
+# count, so stopping GitOps needs no snapshot step first.
 - name: Get current GitOps controller replica count
   ansible.builtin.command:
     argv:
@@ -118,7 +102,7 @@
   loop: "{{ k8s_shutdown_targets }}"
   delegate_to: localhost
   become: false
-  changed_when: item.split()[3] | default('0', true) != '0'
+  changed_when: true
 
 # Wait on scaled workloads, not namespaces that retain DaemonSet pods.
 - name: Wait for scaled workloads to report no running replicas
