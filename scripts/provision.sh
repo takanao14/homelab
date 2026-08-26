@@ -24,7 +24,7 @@ Usage: $(basename "$0") <ip> [username]
 Options:
   --profile desktop|server|auto
              machine profile override (default: auto; read from
-             /etc/homelab/machine-profile, otherwise server)
+             /etc/provisioning/machine-profile.local, otherwise server)
 
 Modes:
   remote (default)  provision the VM at <ip> over SSH
@@ -247,7 +247,7 @@ resolve_machine_profile() {
   MACHINE_PROFILE="$(run_shell_stdin <<'REMOTE'
 set -euo pipefail
 
-profile_file="/etc/homelab/machine-profile"
+profile_file="/etc/provisioning/machine-profile.local"
 if [[ -r "$profile_file" ]]; then
   cat "$profile_file"
   exit 0

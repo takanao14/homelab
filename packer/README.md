@@ -198,8 +198,8 @@ XRDP images install prerequisites and the CLI toolchain through the same
 `scripts/install` wrappers as `scripts/provision.sh`. Tool pins are maintained
 in `takanao14/dotfiles`.
 
-Packer writes the image role to `/etc/homelab/machine-profile`: XRDP images are
-`desktop` and basic cloud images are `server`. The same
+Packer writes the image role to `/etc/provisioning/machine-profile.local`: XRDP
+images are `desktop` and basic cloud images are `server`. The same
 `TOOL_MACHINE_PROFILE=desktop|server` contract is passed to shared installers
 and later consumed by `scripts/provision.sh`.
 

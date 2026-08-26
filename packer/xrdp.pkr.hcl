@@ -129,9 +129,9 @@ build {
   # Persist the image role for provision.sh and standalone installers.
   provisioner "shell" {
     inline = [
-      "sudo install -d -m 0755 /etc/homelab",
-      "printf '%s\\n' '${local.machine_profile}' | sudo tee /etc/homelab/machine-profile >/dev/null",
-      "sudo chmod 0644 /etc/homelab/machine-profile",
+      "sudo install -d -m 0755 /etc/provisioning",
+      "printf '%s\\n' '${local.machine_profile}' | sudo tee /etc/provisioning/machine-profile.local >/dev/null",
+      "sudo chmod 0644 /etc/provisioning/machine-profile.local",
     ]
   }
 
