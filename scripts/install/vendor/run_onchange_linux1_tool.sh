@@ -4,9 +4,9 @@ set -euo pipefail
 [[ "$(uname)" == "Linux" ]] || exit 0
 
 # renovate: datasource=github-releases depName=junegunn/fzf
-readonly FZF_VERSION="${FZF_VERSION:-0.74.2}"
+readonly FZF_VERSION="${FZF_VERSION:-0.74.3}"
 # renovate: datasource=github-releases depName=zellij-org/zellij
-readonly ZELLIJ_VERSION="${ZELLIJ_VERSION:-0.44.3}"
+readonly ZELLIJ_VERSION="${ZELLIJ_VERSION:-0.45.0}"
 # renovate: datasource=github-releases depName=sbstp/kubie
 readonly KUBIE_VERSION="${KUBIE_VERSION:-0.28.0}"
 # renovate: datasource=github-releases depName=derailed/k9s
@@ -14,17 +14,17 @@ readonly K9S_VERSION="${K9S_VERSION:-0.51.0}"
 # renovate: datasource=github-releases depName=kdash-rs/kdash
 readonly KDASH_VERSION="${KDASH_VERSION:-2.1.1}"
 # renovate: datasource=github-releases depName=helmfile/helmfile
-readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.7.3}"
+readonly HELMFILE_VERSION="${HELMFILE_VERSION:-1.7.4}"
 # renovate: datasource=github-releases depName=k0sproject/k0sctl
 readonly K0SCTL_VERSION="${K0SCTL_VERSION:-0.32.2}"
 # renovate: datasource=github-releases depName=getsops/sops
 readonly SOPS_VERSION="${SOPS_VERSION:-3.13.3}"
 # renovate: datasource=github-releases depName=gruntwork-io/terragrunt
-readonly TERRAGRUNT_VERSION="${TERRAGRUNT_VERSION:-1.1.2}"
+readonly TERRAGRUNT_VERSION="${TERRAGRUNT_VERSION:-1.1.3}"
 # renovate: datasource=github-releases depName=opentofu/opentofu
-readonly OPENTOFU_VERSION="${OPENTOFU_VERSION:-1.12.5}"
+readonly OPENTOFU_VERSION="${OPENTOFU_VERSION:-1.12.6}"
 # renovate: datasource=github-releases depName=helm/helm
-readonly HELM_VERSION="${HELM_VERSION:-4.2.3}"
+readonly HELM_VERSION="${HELM_VERSION:-4.2.4}"
 # renovate: datasource=github-releases depName=argoproj/argo-cd
 readonly ARGOCD_VERSION="${ARGOCD_VERSION:-3.5.1}"
 # renovate: datasource=github-releases depName=FiloSottile/age
@@ -44,19 +44,23 @@ readonly KREW_VERSION="${KREW_VERSION:-0.5.0}"
 # renovate: datasource=github-releases depName=DNSControl/dnscontrol
 readonly DNSCONTROL_VERSION="${DNSCONTROL_VERSION:-4.46.0}"
 # renovate: datasource=github-releases depName=prometheus/prometheus
-readonly PROMETHEUS_VERSION="${PROMETHEUS_VERSION:-3.13.2}"
+readonly PROMETHEUS_VERSION="${PROMETHEUS_VERSION:-3.14.0}"
 # renovate: datasource=pypi depName=ansible-core
 readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.21.3}"
 # renovate: datasource=pypi depName=ansible-lint
 readonly ANSIBLE_LINT_VERSION="${ANSIBLE_LINT_VERSION:-26.8.0}"
 # renovate: datasource=github-tags depName=aws/aws-cli
-readonly AWS_CLI_VERSION="${AWS_CLI_VERSION:-2.36.22}"
+readonly AWS_CLI_VERSION="${AWS_CLI_VERSION:-2.36.30}"
 # renovate: datasource=github-releases depName=rclone/rclone
 readonly RCLONE_VERSION="${RCLONE_VERSION:-1.75.0}"
 # renovate: datasource=github-releases depName=rhysd/actionlint
 readonly ACTIONLINT_VERSION="${ACTIONLINT_VERSION:-1.7.12}"
 # renovate: datasource=github-releases depName=cli/cli
-readonly GH_VERSION="${GH_VERSION:-2.97.0}"
+readonly GH_VERSION="${GH_VERSION:-2.98.0}"
+# renovate: datasource=github-releases depName=jesseduffield/lazygit
+readonly LAZYGIT_VERSION="${LAZYGIT_VERSION:-0.64.1}"
+# renovate: datasource=github-releases depName=gitui-org/gitui
+readonly GITUI_VERSION="${GITUI_VERSION:-0.28.1}"
 # renovate: datasource=github-releases depName=sharkdp/bat
 readonly BAT_VERSION="${BAT_VERSION:-0.26.1}"
 # renovate: datasource=github-releases depName=BurntSushi/ripgrep
@@ -64,7 +68,7 @@ readonly RIPGREP_VERSION="${RIPGREP_VERSION:-15.2.0}"
 # renovate: datasource=github-releases depName=dalance/procs
 readonly PROCS_VERSION="${PROCS_VERSION:-0.14.12}"
 # renovate: datasource=github-releases depName=mikefarah/yq
-readonly YQ_VERSION="${YQ_VERSION:-4.53.3}"
+readonly YQ_VERSION="${YQ_VERSION:-4.53.6}"
 
 # Defaults to per-user paths; system-wide TOOL_* paths require root.
 readonly BIN_DIR="${TOOL_BIN_DIR:-$HOME/.local/bin}"
@@ -241,6 +245,38 @@ install_gh() {
         "https://github.com/cli/cli/releases/download/v${GH_VERSION}/${archive_name}" \
         "$BIN_DIR/gh" \
         "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_checksums.txt"
+}
+
+install_lazygit() {
+    local asset_arch archive_name
+    case "$ARCH" in
+        x86_64) asset_arch="x86_64" ;;
+        aarch64) asset_arch="arm64" ;;
+        *)
+            log_error "Unsupported architecture for lazygit: ${ARCH}"
+            exit 1
+            ;;
+    esac
+    archive_name="lazygit_${LAZYGIT_VERSION}_linux_${asset_arch}.tar.gz"
+    install_binary "lazygit" \
+        "https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/${archive_name}" \
+        "$BIN_DIR/lazygit" \
+        "https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/checksums.txt"
+}
+
+install_gitui() {
+    local archive_name
+    case "$ARCH" in
+        x86_64|aarch64) archive_name="gitui-linux-${ARCH}.tar.gz" ;;
+        *)
+            log_error "Unsupported architecture for gitui: ${ARCH}"
+            exit 1
+            ;;
+    esac
+    # Upstream does not publish a checksum file for release archives.
+    install_binary "gitui" \
+        "https://github.com/gitui-org/gitui/releases/download/v${GITUI_VERSION}/${archive_name}" \
+        "$BIN_DIR/gitui"
 }
 
 install_bat() {
@@ -646,6 +682,8 @@ main() {
     install_if_needed "direnv"   "$DIRENV_VERSION"   install_direnv
     install_if_needed "eza"      "$EZA_VERSION"      install_eza
     install_if_needed "gh"       "$GH_VERSION"       install_gh
+    install_if_needed "lazygit"  "$LAZYGIT_VERSION"  install_lazygit
+    install_if_needed "gitui"    "$GITUI_VERSION"    install_gitui
     install_if_needed "bat"      "$BAT_VERSION"      install_bat
     install_if_needed "rg"       "$RIPGREP_VERSION"  install_ripgrep
     install_if_needed "procs"    "$PROCS_VERSION"    install_procs

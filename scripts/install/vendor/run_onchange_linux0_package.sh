@@ -11,7 +11,9 @@ readonly OS_ID="${ID}"
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 readonly KUBECTL_VERSION="${KUBECTL_VERSION:-1.36}"
 # renovate: datasource=github-releases depName=openbao/openbao
-readonly OPENBAO_VERSION="${OPENBAO_VERSION:-2.6.1}"
+readonly OPENBAO_VERSION="${OPENBAO_VERSION:-2.6.2}"
+# renovate: datasource=github-releases depName=freelensapp/freelens
+readonly FREELENS_VERSION="${FREELENS_VERSION:-1.10.3}"
 
 BIN_ARCH="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
 readonly BIN_ARCH
@@ -34,6 +36,63 @@ readonly NC='\033[0m'
 log_info()  { echo -e "${GREEN}[INFO]${NC} $*"; }
 log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+
+is_desktop_machine() {
+    local profile="${TOOL_MACHINE_PROFILE:-auto}"
+
+    case "$profile" in
+        desktop)
+            log_info "Desktop machine profile selected"
+            return 0
+            ;;
+        server)
+            log_info "Server machine profile selected"
+            return 1
+            ;;
+        auto) ;;
+        *)
+            log_error "TOOL_MACHINE_PROFILE must be desktop, server, auto, or unset (got: ${profile})"
+            exit 1
+            ;;
+    esac
+
+    # Backward-compatible image-build override. New callers should pass the
+    # explicit desktop profile instead.
+    if [[ "${TOOL_FORCE_GUI_INSTALL:-}" == "1" ]]; then
+        log_warn "TOOL_FORCE_GUI_INSTALL is deprecated; use TOOL_MACHINE_PROFILE=desktop"
+        return 0
+    fi
+
+    local profile_file="/etc/homelab/machine-profile"
+    if [[ -r "$profile_file" ]]; then
+        profile="$(<"$profile_file")"
+        case "$profile" in
+            desktop)
+                log_info "Desktop machine profile read from ${profile_file}"
+                return 0
+                ;;
+            server)
+                log_info "Server machine profile read from ${profile_file}"
+                return 1
+                ;;
+            *)
+                log_error "Invalid machine profile in ${profile_file}: ${profile}"
+                exit 1
+                ;;
+        esac
+    fi
+
+    log_warn "No explicit machine profile or image marker; defaulting to server"
+    return 1
+}
+
+glibc_supports_freelens() {
+    local version major minor
+    version="$(getconf GNU_LIBC_VERSION 2>/dev/null | awk '{print $2}')"
+    IFS=. read -r major minor _ <<<"$version"
+    [[ "$major" =~ ^[0-9]+$ && "$minor" =~ ^[0-9]+$ ]] || return 1
+    (( major > 2 || (major == 2 && minor >= 34) ))
+}
 
 TMP_PATHS=()
 
@@ -125,19 +184,22 @@ install_if_needed() {
 install_base_dependencies() {
     log_info "Installing baseline dependencies..."
     update_package_cache
+    local packages=()
     case "$OS_ID" in
         ubuntu|debian)
-            # fontconfig provides fc-cache/fc-list consumed by the font script.
-            install_packages ca-certificates curl coreutils file findutils git gnupg gzip make tar unzip xz-utils fontconfig mosh tmux podman
+            packages=(ca-certificates curl coreutils file findutils git gnupg gzip make tar unzip xz-utils mosh tmux podman)
             ;;
         rocky)
-            install_packages ca-certificates curl coreutils file findutils git gnupg2 gzip make tar unzip xz fontconfig mosh tmux podman
+            packages=(ca-certificates curl coreutils file findutils git gnupg2 gzip make tar unzip xz mosh tmux podman)
             ;;
         *)
             log_error "Unsupported OS: ${OS_ID}"
             exit 1
             ;;
     esac
+    # fontconfig provides fc-cache/fc-list consumed by the desktop font script.
+    is_desktop_machine && packages+=(fontconfig)
+    install_packages "${packages[@]}"
 }
 
 # HashiCorp tools (terraform / packer / vault) via official repository
@@ -210,6 +272,59 @@ install_openbao() {
     esac
 }
 
+# Freelens desktop application via signed release checksums and native packages
+
+freelens_installed_version() {
+    case "$OS_ID" in
+        ubuntu|debian)
+            dpkg-query -W -f='${Version}' freelens 2>/dev/null || true
+            ;;
+        rocky)
+            rpm -q --qf '%{VERSION}' freelens 2>/dev/null || true
+            ;;
+    esac
+}
+
+install_freelens() {
+    local current_version
+    current_version="$(freelens_installed_version)"
+    if [[ "$current_version" == "$FREELENS_VERSION" ]]; then
+        log_info "Freelens ${FREELENS_VERSION} is already up to date, skipping"
+        return
+    fi
+    if ! glibc_supports_freelens; then
+        log_error "Freelens ${FREELENS_VERSION} requires glibc 2.34 or later."
+        exit 1
+    fi
+
+    log_info "Installing Freelens ${FREELENS_VERSION}..."
+    local extension package_name tmp_dir checksum_file expected actual
+    case "$OS_ID" in
+        ubuntu|debian) extension="deb" ;;
+        rocky)         extension="rpm" ;;
+    esac
+    package_name="Freelens-${FREELENS_VERSION}-linux-${BIN_ARCH}.${extension}"
+    make_tmp_dir tmp_dir
+    curl -fsSL \
+        "https://github.com/freelensapp/freelens/releases/download/v${FREELENS_VERSION}/${package_name}" \
+        -o "${tmp_dir}/${package_name}"
+    checksum_file="${tmp_dir}/${package_name}.sha256"
+    curl -fsSL \
+        "https://github.com/freelensapp/freelens/releases/download/v${FREELENS_VERSION}/${package_name}.sha256" \
+        -o "$checksum_file"
+    expected="$(awk 'NF > 0 {print $1; exit}' "$checksum_file")"
+    actual="$(sha256sum "${tmp_dir}/${package_name}" | awk '{print $1}')"
+    if [[ ! "$expected" =~ ^[0-9a-fA-F]{64}$ || "$expected" != "$actual" ]]; then
+        log_error "Checksum mismatch for ${package_name}"
+        exit 1
+    fi
+
+    case "$OS_ID" in
+        ubuntu|debian) sudo apt-get install -y "${tmp_dir}/${package_name}" ;;
+        rocky)         sudo dnf install -y "${tmp_dir}/${package_name}" ;;
+    esac
+}
+
 # pipx toolchain bootstrap (consumed by the ansible installs in linux1)
 
 # Install Python 3.12 when the distro default cannot run ansible-core.
@@ -263,11 +378,19 @@ print_install_hint() {
 preflight_packages() {
     log_info "TOOL_SKIP_SYSTEM_PACKAGES set: verifying pre-provided packages (no sudo)..."
     local missing=() cmd
-    # Check base, font, and package-managed tool dependencies.
+    # Check base and package-managed tool dependencies.
     for cmd in curl tar gzip unzip xz gpg git file find make sha256sum install \
-               fc-cache fc-list terraform packer vault kubectl bao pipx mosh tmux podman; do
+               terraform packer vault kubectl bao pipx mosh tmux podman; do
         command -v "$cmd" &>/dev/null || missing+=("$cmd")
     done
+    if is_desktop_machine; then
+        for cmd in fc-cache fc-list; do
+            command -v "$cmd" &>/dev/null || missing+=("$cmd")
+        done
+        [[ "$(freelens_installed_version)" == "$FREELENS_VERSION" ]] || \
+            missing+=("freelens=${FREELENS_VERSION}")
+        glibc_supports_freelens || missing+=("glibc>=2.34")
+    fi
     have_python312 || missing+=("python>=3.12")
     if [[ ${#missing[@]} -gt 0 ]]; then
         log_error "Missing pre-provided prerequisites: ${missing[*]}"
@@ -301,6 +424,12 @@ main() {
 
     install_if_needed "kubectl" "$KUBECTL_VERSION" install_kubectl
     install_if_needed "bao"     "$OPENBAO_VERSION" install_openbao
+
+    if is_desktop_machine; then
+        install_freelens
+    else
+        log_info "Skipping Freelens installation on server profile"
+    fi
 
     ensure_pipx_toolchain
 

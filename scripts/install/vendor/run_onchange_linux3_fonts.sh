@@ -45,29 +45,57 @@ make_tmp_dir() {
     printf -v "$__var_name" '%s' "$path"
 }
 
-check_gui() {
+is_desktop_machine() {
     local skip_msg="${1:-}"
-    log_info "Checking system requirements..."
-    # Golden-image builds (e.g. Packer) install the font before the xrdp
-    # service runs; TOOL_FORCE_GUI_INSTALL=1 bypasses the live-GUI check.
+    local profile="${TOOL_MACHINE_PROFILE:-auto}"
+
+    case "$profile" in
+        desktop)
+            log_info "Desktop machine profile selected"
+            return 0
+            ;;
+        server)
+            log_info "Server machine profile selected"
+            [[ -n "$skip_msg" ]] && log_info "$skip_msg"
+            return 1
+            ;;
+        auto) ;;
+        *)
+            log_error "TOOL_MACHINE_PROFILE must be desktop, server, auto, or unset (got: ${profile})"
+            exit 1
+            ;;
+    esac
+
+    # Backward-compatible image-build override. New callers should pass the
+    # explicit desktop profile instead.
     if [[ "${TOOL_FORCE_GUI_INSTALL:-}" == "1" ]]; then
-        log_info "TOOL_FORCE_GUI_INSTALL=1; installing regardless of GUI session"
+        log_warn "TOOL_FORCE_GUI_INSTALL is deprecated; use TOOL_MACHINE_PROFILE=desktop"
         return 0
     fi
-    local has_gui=false
-    if systemctl is-active --quiet xrdp 2>/dev/null; then
-        log_info "xrdp service detected"
-        has_gui=true
+
+    local profile_file="/etc/homelab/machine-profile"
+    if [[ -r "$profile_file" ]]; then
+        profile="$(<"$profile_file")"
+        case "$profile" in
+            desktop)
+                log_info "Desktop machine profile read from ${profile_file}"
+                return 0
+                ;;
+            server)
+                log_info "Server machine profile read from ${profile_file}"
+                [[ -n "$skip_msg" ]] && log_info "$skip_msg"
+                return 1
+                ;;
+            *)
+                log_error "Invalid machine profile in ${profile_file}: ${profile}"
+                exit 1
+                ;;
+        esac
     fi
-    if pgrep -E "^(weston|sway|wayfire|labwc|river|hyprland)$" >/dev/null 2>&1; then
-        log_info "Wayland compositor detected"
-        has_gui=true
-    fi
-    if [[ "$has_gui" == "false" ]]; then
-        log_warn "No GUI session detected (xrdp or Wayland required)"
-        [[ -n "$skip_msg" ]] && log_warn "$skip_msg"
-        exit 0
-    fi
+
+    log_warn "No explicit machine profile or image marker; defaulting to server"
+    [[ -n "$skip_msg" ]] && log_warn "$skip_msg"
+    return 1
 }
 
 # This script never calls sudo; linux0 must provide its OS-level dependencies.
@@ -143,7 +171,7 @@ install_udev_gothic() {
 
 main() {
     log_info "=== Font Installation Script ==="
-    check_gui "Skipping font installation"
+    is_desktop_machine "Skipping font installation" || return 0
     install_udev_gothic
     log_info "=== Font installation completed ==="
 }
