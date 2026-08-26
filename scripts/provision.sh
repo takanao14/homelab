@@ -358,47 +358,6 @@ run_remote "install/terminal.sh" "TOOL_MACHINE_PROFILE=${MACHINE_PROFILE}"
 echo "Running font installation..."
 run_remote "install/fonts.sh" "TOOL_MACHINE_PROFILE=${MACHINE_PROFILE}"
 
-if [[ "$MACHINE_PROFILE" == "desktop" ]]; then
-  echo "Configuring kitty font..."
-  run_shell_stdin <<'REMOTE'
-set -euo pipefail
-
-conf="${HOME}/.config/kitty/kitty.conf"
-tmp="$(mktemp)"
-cleanup() {
-  rm -f "$tmp"
-}
-trap cleanup EXIT
-
-mkdir -p "$(dirname "$conf")"
-if [[ -f "$conf" ]]; then
-  awk '
-    $0 == "# BEGIN homelab font" { skip = 1; next }
-    $0 == "# END homelab font" { skip = 0; next }
-    !skip { print }
-  ' "$conf" > "$tmp"
-else
-  : > "$tmp"
-fi
-
-cat >> "$tmp" <<'EOF'
-
-# BEGIN homelab font
-font_family      UDEV Gothic NFLG
-bold_font        UDEV Gothic NFLG Bold
-italic_font      UDEV Gothic NFLG Italic
-bold_italic_font UDEV Gothic NFLG Bold Italic
-font_size 12.0
-# END homelab font
-EOF
-
-mv "$tmp" "$conf"
-trap - EXIT
-REMOTE
-else
-  echo "Skipping kitty font configuration on server profile."
-fi
-
 OPENBAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
 BAO_USERNAME="${BAO_USERNAME:-homelab}"
 

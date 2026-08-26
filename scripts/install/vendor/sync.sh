@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Sync dotfiles installers used by the offline-friendly install wrappers.
+# Sync dotfiles installers and the kitty defaults used by Packer.
 #
 # Usage:
 #   sync.sh            Fetch the latest main and overwrite the vendored copies.
@@ -18,9 +18,11 @@ declare -A FILES=(
   ["run_onchange_linux2_terminal.sh"]=".chezmoiscripts/run_onchange_linux2_terminal.sh"
   ["run_onchange_linux3_fonts.sh"]=".chezmoiscripts/run_onchange_linux3_fonts.sh"
 )
+KITTY_CONFIG_SOURCE="dot_config/kitty/kitty.conf"
 
 VENDOR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REVISION_FILE="${VENDOR_DIR}/REVISION"
+KITTY_CONFIG_DEST="${VENDOR_DIR}/../../../packer/files/kitty.conf"
 
 CHECK=0
 [[ "${1:-}" == "--check" ]] && CHECK=1
@@ -41,6 +43,8 @@ for name in "${!FILES[@]}"; do
   curl -fsSL "https://raw.githubusercontent.com/${REPO}/${SHA}/${FILES[$name]}" \
     -o "${tmp_dir}/${name}"
 done
+curl -fsSL "https://raw.githubusercontent.com/${REPO}/${SHA}/${KITTY_CONFIG_SOURCE}" \
+  -o "${tmp_dir}/kitty.conf"
 
 if [[ "$CHECK" -eq 1 ]]; then
   drift=0
@@ -50,6 +54,10 @@ if [[ "$CHECK" -eq 1 ]]; then
       drift=1
     fi
   done
+  if ! diff -q "$KITTY_CONFIG_DEST" "${tmp_dir}/kitty.conf" >/dev/null 2>&1; then
+    echo "DRIFT: packer/files/kitty.conf differs from ${REPO}@${SHA}" >&2
+    drift=1
+  fi
   if [[ "$drift" -eq 1 ]]; then
     echo "Vendored installers are out of date. Run vendor/sync.sh to update." >&2
     exit 1
@@ -61,10 +69,11 @@ fi
 for name in "${!FILES[@]}"; do
   install -m 0755 "${tmp_dir}/${name}" "${VENDOR_DIR}/${name}"
 done
+install -m 0644 "${tmp_dir}/kitty.conf" "$KITTY_CONFIG_DEST"
 
 cat > "$REVISION_FILE" <<EOF
 # Vendored from ${REPO}, synced by sync.sh. Do not edit the run_onchange_*.sh
-# files by hand; re-run sync.sh to update them.
+# files or packer/files/kitty.conf by hand; re-run sync.sh to update them.
 repo: ${REPO}
 ref:  ${REF}
 sha:  ${SHA}

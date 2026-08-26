@@ -97,9 +97,8 @@ Provisions a VM in order (over SSH by default, or in place with `--local`):
 3. Installs the CLI toolchain (`install/tools.sh`)
 4. Adds `~/.local/bin` to `PATH` and arranges for `~/.env` to be sourced in `~/.bashrc`
 5. Installs terminal and fonts (`install/terminal.sh`, `install/fonts.sh`)
-6. Configures kitty font
-7. Fetches env secrets from OpenBao into `~/.env` (`secrets/get-env.sh`)
-8. Retrieves kubeconfigs from OpenBao into `~/.kube/` (`secrets/get-kubeconfig.sh`)
+6. Fetches env secrets from OpenBao into `~/.env` (`secrets/get-env.sh`)
+7. Retrieves kubeconfigs from OpenBao into `~/.kube/` (`secrets/get-kubeconfig.sh`)
 
 Remote mode stages scripts once under `/tmp/homelab-provision/`, preserving
 relative paths and vendored installers. It copies only `secrets/get-*`, never
@@ -129,6 +128,9 @@ otherwise uses the safe `server` default. `--profile desktop|server` or the
 `TOOL_MACHINE_PROFILE` environment variable overrides auto mode. Kitty, UDEV
 Gothic and Freelens are desktop-only components. Older desktop images without
 the marker must be provisioned with `--profile desktop`.
+
+Per-user kitty preferences are managed by the dotfiles repository. This script
+installs kitty and its font but does not edit `~/.config/kitty/kitty.conf`.
 
 ### `check-image-refs.sh`
 

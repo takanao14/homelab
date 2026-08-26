@@ -162,7 +162,8 @@ build {
     destination = "/tmp"
   }
 
-  # System-wide kitty defaults, installed by toolchain.sh on desktop images.
+  # Stage the shared kitty defaults. toolchain.sh installs them under /etc/xdg
+  # only when the desktop profile also installs kitty.
   provisioner "file" {
     source      = "files/kitty.conf"
     destination = "/tmp/kitty.conf"

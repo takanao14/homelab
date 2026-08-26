@@ -36,7 +36,11 @@ bash "${INSTALL_DIR}/tools.sh" global
 bash "${INSTALL_DIR}/terminal.sh" global
 bash "${INSTALL_DIR}/fonts.sh" global
 
-if [[ "$TOOL_MACHINE_PROFILE" == "desktop" && -f "$KITTY_CONF" ]]; then
+if [[ "$TOOL_MACHINE_PROFILE" == "desktop" ]]; then
+  if [[ ! -f "$KITTY_CONF" ]]; then
+    echo "Error: kitty defaults not staged: ${KITTY_CONF}" >&2
+    exit 1
+  fi
   echo "Installing system-wide kitty defaults..."
   sudo install -D -m 0644 "$KITTY_CONF" /etc/xdg/kitty/kitty.conf
 fi

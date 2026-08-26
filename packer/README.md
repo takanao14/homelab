@@ -157,7 +157,9 @@ two image roles:
   sops, …), installed system-wide into `/usr/local/bin`.
 - **desktop** — the same toolchain plus the GUI components: Freelens, kitty and
   the UDEV Gothic NF font. `terminal.sh` and `fonts.sh` no-op on `server`, so no
-  extra gating is needed.
+  extra gating is needed. Packer also installs the shared kitty defaults under
+  `/etc/xdg/kitty/kitty.conf` only for this profile; per-user preferences remain
+  owned by the dotfiles repository.
 
 GUI applications that are not part of the shared toolchain (Firefox, VS Code,
 Wireshark, virt-manager) come from the distro provisioner lists
