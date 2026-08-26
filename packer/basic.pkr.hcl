@@ -73,7 +73,8 @@ variable "disk_size" {
 }
 
 locals {
-  ssh_pubkey = var.ssh_pubkey != "" ? var.ssh_pubkey : file("~/.ssh/id_ed25519.pub")
+  ssh_pubkey      = var.ssh_pubkey != "" ? var.ssh_pubkey : file("~/.ssh/id_ed25519.pub")
+  machine_profile = "server"
 }
 
 source "qemu" "custom" {
@@ -113,6 +114,15 @@ source "qemu" "custom" {
 
 build {
   sources = ["source.qemu.custom"]
+
+  # Persist the image role before cleanup removes the temporary build user.
+  provisioner "shell" {
+    inline = [
+      "sudo install -d -m 0755 /etc/homelab",
+      "printf '%s\\n' '${local.machine_profile}' | sudo tee /etc/homelab/machine-profile >/dev/null",
+      "sudo chmod 0644 /etc/homelab/machine-profile",
+    ]
+  }
 
   # Install packages and clean up
   provisioner "shell" {

@@ -32,7 +32,8 @@ case "$MODE" in
     ;;
 esac
 
-for name in TOOL_SKIP_SYSTEM_PACKAGES KUBECTL_VERSION OPENBAO_VERSION; do
+for name in TOOL_SKIP_SYSTEM_PACKAGES TOOL_MACHINE_PROFILE TOOL_FORCE_GUI_INSTALL \
+            KUBECTL_VERSION OPENBAO_VERSION FREELENS_VERSION; do
   [[ -v "$name" ]] && ENVS+=("${name}=${!name}")
 done
 

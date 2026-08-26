@@ -21,6 +21,11 @@ Usage: $(basename "$0") <ip> [username]
   ip        IPv4 address of the VM (remote mode)
   username  target username (default: \$USER)
 
+Options:
+  --profile desktop|server|auto
+             machine profile override (default: auto; read from
+             /etc/homelab/machine-profile, otherwise server)
+
 Modes:
   remote (default)  provision the VM at <ip> over SSH
   --local           provision this machine directly (no SSH); must be run on
@@ -35,10 +40,19 @@ EOF
 
 # --- Argument parsing -------------------------------------------------------
 LOCAL_MODE=false
+REQUESTED_MACHINE_PROFILE="${TOOL_MACHINE_PROFILE:-auto}"
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --local) LOCAL_MODE=true; shift ;;
+    --profile)
+      if (( $# < 2 )); then
+        echo "Error: --profile requires desktop, server, or auto." >&2
+        usage
+      fi
+      REQUESTED_MACHINE_PROFILE="$2"
+      shift 2
+      ;;
     -h|--help) usage ;;
     --) shift; POSITIONAL+=("$@"); break ;;
     -*) echo "Unknown option: $1" >&2; usage ;;
@@ -46,6 +60,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 set -- "${POSITIONAL[@]}"
+
+case "$REQUESTED_MACHINE_PROFILE" in
+  desktop|server|auto) ;;
+  *)
+    echo "Error: --profile must be desktop, server, or auto (got: ${REQUESTED_MACHINE_PROFILE})." >&2
+    exit 1
+    ;;
+esac
 
 validate_local_target() {
   if [[ "$(uname -s)" != "Linux" ]]; then
@@ -216,6 +238,34 @@ shell_quote() {
   printf "%q" "$1"
 }
 
+resolve_machine_profile() {
+  if [[ "$REQUESTED_MACHINE_PROFILE" != "auto" ]]; then
+    MACHINE_PROFILE="$REQUESTED_MACHINE_PROFILE"
+    return
+  fi
+
+  MACHINE_PROFILE="$(run_shell_stdin <<'REMOTE'
+set -euo pipefail
+
+profile_file="/etc/homelab/machine-profile"
+if [[ -r "$profile_file" ]]; then
+  cat "$profile_file"
+  exit 0
+fi
+
+echo server
+REMOTE
+)"
+
+  case "$MACHINE_PROFILE" in
+    desktop|server) ;;
+    *)
+      echo "Error: invalid machine profile from target: ${MACHINE_PROFILE}" >&2
+      exit 1
+      ;;
+  esac
+}
+
 run_openbao_target() {
   local rel="$1"
   local openbao_addr_arg="$OPENBAO_ADDR"
@@ -270,12 +320,17 @@ fi
 # Wait for cloud-init when present.
 wait_cloud_init
 
+resolve_machine_profile
+echo "Machine profile: ${MACHINE_PROFILE}"
+
 if $LOCAL_MODE; then
   echo "Verifying system package prerequisites (no sudo)..."
-  run_remote "install/packages.sh" "TOOL_SKIP_SYSTEM_PACKAGES=1"
+  run_remote "install/packages.sh" \
+    "TOOL_SKIP_SYSTEM_PACKAGES=1" \
+    "TOOL_MACHINE_PROFILE=${MACHINE_PROFILE}"
 else
   echo "Running system package installation..."
-  run_remote "install/packages.sh"
+  run_remote "install/packages.sh" "TOOL_MACHINE_PROFILE=${MACHINE_PROFILE}"
 fi
 
 echo "Running tool installation..."
@@ -298,13 +353,14 @@ run_shell \
   "grep -qF '.bashrc' ~/.bash_profile 2>/dev/null || echo '[[ -f \"\$HOME/.bashrc\" ]] && source \"\$HOME/.bashrc\"' >> ~/.bash_profile"
 
 echo "Running terminal installation..."
-run_remote "install/terminal.sh"
+run_remote "install/terminal.sh" "TOOL_MACHINE_PROFILE=${MACHINE_PROFILE}"
 
 echo "Running font installation..."
-run_remote "install/fonts.sh"
+run_remote "install/fonts.sh" "TOOL_MACHINE_PROFILE=${MACHINE_PROFILE}"
 
-echo "Configuring kitty font..."
-run_shell_stdin <<'REMOTE'
+if [[ "$MACHINE_PROFILE" == "desktop" ]]; then
+  echo "Configuring kitty font..."
+  run_shell_stdin <<'REMOTE'
 set -euo pipefail
 
 conf="${HOME}/.config/kitty/kitty.conf"
@@ -339,6 +395,9 @@ EOF
 mv "$tmp" "$conf"
 trap - EXIT
 REMOTE
+else
+  echo "Skipping kitty font configuration on server profile."
+fi
 
 OPENBAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
 BAO_USERNAME="${BAO_USERNAME:-homelab}"

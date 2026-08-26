@@ -78,7 +78,8 @@ variable "disk_size" {
 }
 
 locals {
-  ssh_pubkey = var.ssh_pubkey != "" ? var.ssh_pubkey : file("~/.ssh/id_ed25519.pub")
+  ssh_pubkey      = var.ssh_pubkey != "" ? var.ssh_pubkey : file("~/.ssh/id_ed25519.pub")
+  machine_profile = "desktop"
 }
 
 source "qemu" "xrdp" {
@@ -125,6 +126,15 @@ build {
     execute_command = "chmod +x {{ .Path }}; sudo -S bash -c '{{ .Vars }} {{ .Path }}'"
   }
 
+  # Persist the image role for provision.sh and standalone installers.
+  provisioner "shell" {
+    inline = [
+      "sudo install -d -m 0755 /etc/homelab",
+      "printf '%s\\n' '${local.machine_profile}' | sudo tee /etc/homelab/machine-profile >/dev/null",
+      "sudo chmod 0644 /etc/homelab/machine-profile",
+    ]
+  }
+
   # Upload vendored installers; VENDOR_DIR prevents runtime GitHub fetches.
   provisioner "file" {
     source      = "../scripts/install/vendor"
@@ -134,7 +144,7 @@ build {
   # Install package prerequisites before tool/font wrappers.
   provisioner "shell" {
     script          = "../scripts/install/packages.sh"
-    execute_command = "VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
+    execute_command = "TOOL_MACHINE_PROFILE=${local.machine_profile} VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
   }
 
   # Install the shared CLI toolchain globally into /usr/local/bin.
@@ -143,16 +153,16 @@ build {
     execute_command = "VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
   }
 
-  # Install the GUI font before XRDP exists, bypassing the live-GUI check.
+  # Install the GUI font for the desktop image profile.
   provisioner "shell" {
     script          = "../scripts/install/fonts.sh"
-    execute_command = "TOOL_FORCE_GUI_INSTALL=1 VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
+    execute_command = "TOOL_MACHINE_PROFILE=${local.machine_profile} VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
   }
 
   # Install the kitty terminal system-wide (into /usr/local/kitty.app).
   provisioner "shell" {
     script          = "../scripts/install/terminal.sh"
-    execute_command = "TOOL_FORCE_GUI_INSTALL=1 VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
+    execute_command = "TOOL_MACHINE_PROFILE=${local.machine_profile} VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
   }
 
   # System-wide kitty defaults via XDG_CONFIG_DIRS.

@@ -112,6 +112,7 @@ waits up to 600 seconds for cloud-init; override with `CLOUD_INIT_WAIT_TIMEOUT`.
 ```bash
 ./provision.sh <ip> [username]      # remote: push to the VM at <ip> over SSH
 ./provision.sh --local [username]    # local: provision this machine directly
+./provision.sh --profile desktop <ip> [username]
 
 ./provision.sh 192.168.20.50 myuser
 CLOUD_INIT_WAIT_TIMEOUT=900 ./provision.sh 192.168.20.50 myuser
@@ -121,6 +122,13 @@ CLOUD_INIT_WAIT_TIMEOUT=900 ./provision.sh 192.168.20.50 myuser
 `--local` runs directly on the target Ubuntu, Debian, or Rocky host as `$USER`.
 It skips SSH/staging, performs a no-sudo package preflight, and installs remaining
 tools per-user under `$HOME/.local`.
+
+The machine profile defaults to `auto`: `provision.sh` first reads the
+root-owned `/etc/homelab/machine-profile` marker baked by Packer and otherwise
+uses the safe `server` default. `--profile desktop|server` or the
+`TOOL_MACHINE_PROFILE` environment variable overrides auto mode. Kitty, UDEV
+Gothic and Freelens are desktop-only components. Older desktop images without
+the marker must be provisioned with `--profile desktop`.
 
 ### `check-image-refs.sh`
 
@@ -448,6 +456,9 @@ Set `TOOL_SKIP_SYSTEM_PACKAGES=1` to perform a no-sudo preflight instead of
 installing packages. This is used by `provision.sh --local`, where a golden image
 is expected to provide the prerequisites already.
 
+`TOOL_MACHINE_PROFILE=desktop|server` controls desktop-only system packages,
+including Freelens and the fontconfig dependency used by `fonts.sh`.
+
 ```bash
 ./install/packages.sh                              # install packages via sudo
 TOOL_SKIP_SYSTEM_PACKAGES=1 ./install/packages.sh  # no-sudo preflight
@@ -476,6 +487,9 @@ The install mode selects where the tools land:
 Installs the kitty terminal emulator. Like `tools.sh`, the install mode
 selects where kitty lands:
 
+The installer runs only for `TOOL_MACHINE_PROFILE=desktop`; `server` exits
+successfully without installing anything.
+
 | Mode | Target | Sudo |
 |------|--------|------|
 | `local` (default) | `$HOME/.local/kitty.app` (per-user) | no |
@@ -490,6 +504,9 @@ selects where kitty lands:
 
 Installs the UDEV Gothic NF font. Like `tools.sh`, the install mode
 selects where the font lands:
+
+The installer runs only for `TOOL_MACHINE_PROFILE=desktop`; `server` exits
+successfully without installing anything.
 
 | Mode | Target | Sudo |
 |------|--------|------|

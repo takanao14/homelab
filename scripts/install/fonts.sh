@@ -6,7 +6,8 @@ set -euo pipefail
 #   local  (default)  per-user    -> $HOME/.local/share/fonts   (no sudo)
 #   global            system-wide -> /usr/local/share/fonts      (via sudo)
 #
-# TOOL_FORCE_GUI_INSTALL=1 bypasses the live-GUI check during image builds.
+# TOOL_MACHINE_PROFILE=desktop|server selects desktop components explicitly.
+# TOOL_FORCE_GUI_INSTALL=1 remains as a deprecated compatibility override.
 #
 # Usage: fonts.sh [local|global]
 
@@ -34,7 +35,8 @@ ENVS=(
   "TOOL_FONT_DIR=${FONT_DIR}"
   "TOOL_VERSION_CACHE_DIR=${CACHE_DIR}"
 )
-# Forward the optional GUI-check bypass.
+# Forward the machine profile and legacy GUI-check bypass.
+[[ -v TOOL_MACHINE_PROFILE ]] && ENVS+=("TOOL_MACHINE_PROFILE=${TOOL_MACHINE_PROFILE}")
 [[ "${TOOL_FORCE_GUI_INSTALL:-}" == "1" ]] && ENVS+=("TOOL_FORCE_GUI_INSTALL=1")
 
 RUNNER=("${PRIV[@]}" "${ENVS[@]}" bash)
