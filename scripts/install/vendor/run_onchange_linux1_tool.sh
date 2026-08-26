@@ -67,6 +67,10 @@ readonly BAT_VERSION="${BAT_VERSION:-0.26.1}"
 readonly RIPGREP_VERSION="${RIPGREP_VERSION:-15.2.0}"
 # renovate: datasource=github-releases depName=dalance/procs
 readonly PROCS_VERSION="${PROCS_VERSION:-0.14.12}"
+# renovate: datasource=github-releases depName=bootandy/dust
+readonly DUST_VERSION="${DUST_VERSION:-1.2.4}"
+# renovate: datasource=github-releases depName=Byron/dua-cli
+readonly DUA_VERSION="${DUA_VERSION:-2.40.0}"
 # renovate: datasource=github-releases depName=mikefarah/yq
 readonly YQ_VERSION="${YQ_VERSION:-4.53.6}"
 
@@ -299,6 +303,18 @@ install_procs() {
     install_binary "procs" \
         "https://github.com/dalance/procs/releases/download/v${PROCS_VERSION}/procs-v${PROCS_VERSION}-${ARCH}-linux.zip" \
         "$BIN_DIR/procs"
+}
+
+install_dust() {
+    install_binary "dust" \
+        "https://github.com/bootandy/dust/releases/download/v${DUST_VERSION}/dust-v${DUST_VERSION}-${ARCH}-unknown-linux-musl.tar.gz" \
+        "$BIN_DIR/dust"
+}
+
+install_dua() {
+    install_binary "dua" \
+        "https://github.com/Byron/dua-cli/releases/download/v${DUA_VERSION}/dua-v${DUA_VERSION}-${ARCH}-unknown-linux-musl.tar.gz" \
+        "$BIN_DIR/dua"
 }
 
 # Use the raw asset: the archive renames yq, and its custom checksum table is
@@ -686,6 +702,8 @@ main() {
     install_if_needed "bat"      "$BAT_VERSION"      install_bat
     install_if_needed "rg"       "$RIPGREP_VERSION"  install_ripgrep
     install_if_needed "procs"    "$PROCS_VERSION"    install_procs
+    install_if_needed "dust"     "$DUST_VERSION"     install_dust
+    install_if_needed "dua"      "$DUA_VERSION"      install_dua
     install_if_needed "yq"       "$YQ_VERSION"       install_yq
 
     install_if_needed "fzf"    "$FZF_VERSION"    install_fzf
