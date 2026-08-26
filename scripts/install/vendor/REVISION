@@ -1,6 +1,6 @@
 # Vendored from takanao14/dotfiles, synced by sync.sh. Do not edit the run_onchange_*.sh
-# files by hand; re-run sync.sh to update them.
+# files or packer/files/kitty.conf by hand; re-run sync.sh to update them.
 repo: takanao14/dotfiles
 ref:  main
-sha:  437efdaf49a23fbfbfe42ca7154c62d38e68a9c3
-date: 2026-08-26T03:27:08Z
+sha:  ebcbd42df17d9359d9b55c34966e064948f0c39f
+date: 2026-08-26T07:57:06Z

@@ -66,14 +66,7 @@ is_desktop_machine() {
             ;;
     esac
 
-    # Backward-compatible image-build override. New callers should pass the
-    # explicit desktop profile instead.
-    if [[ "${TOOL_FORCE_GUI_INSTALL:-}" == "1" ]]; then
-        log_warn "TOOL_FORCE_GUI_INSTALL is deprecated; use TOOL_MACHINE_PROFILE=desktop"
-        return 0
-    fi
-
-    local profile_file="/etc/homelab/machine-profile"
+    local profile_file="/etc/provisioning/machine-profile.local"
     if [[ -r "$profile_file" ]]; then
         profile="$(<"$profile_file")"
         case "$profile" in
@@ -91,6 +84,13 @@ is_desktop_machine() {
                 exit 1
                 ;;
         esac
+    fi
+
+    # Backward-compatible image-build override. New callers should pass the
+    # explicit desktop profile instead.
+    if [[ "${TOOL_FORCE_GUI_INSTALL:-}" == "1" ]]; then
+        log_warn "TOOL_FORCE_GUI_INSTALL is deprecated; use TOOL_MACHINE_PROFILE=desktop"
+        return 0
     fi
 
     log_warn "No explicit machine profile or image marker; defaulting to server"

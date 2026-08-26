@@ -590,7 +590,6 @@ AWS_CLI_PGP_KEY
 # Cloud Storage Tools
 
 # rclone's nested zip is unsupported by install_binary; verify and extract it.
-# homelab uses it to upload images to SeaweedFS S3.
 install_rclone() {
     log_info "Installing rclone ${RCLONE_VERSION}..."
     local tmp_dir zip_name
