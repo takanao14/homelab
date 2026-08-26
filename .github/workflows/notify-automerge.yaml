@@ -1,8 +1,6 @@
 name: Notify auto-merge
 
-# Posts to Discord when Renovate auto-merges a PR (merged by the bot itself),
-# so deploys that land without human action are still surfaced. Manual merges
-# (merged by a person) are intentionally skipped.
+# Notify Discord only when Renovate itself merges a PR; skip manual merges.
 
 on:
   pull_request:

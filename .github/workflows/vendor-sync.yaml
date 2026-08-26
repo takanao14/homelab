@@ -1,12 +1,8 @@
 name: Vendor Sync Check
 
-# Vendored third-party files must match their upstreams:
-#   - scripts/install/vendor/       tracks takanao14/dotfiles @ main
-#   - k8s/pdns-ui/chart/web/        tracks james-stevens/powerdns-webui @ a tag
-# Drift usually appears when the upstream changes, not this repo, so a weekly
-# schedule is the primary trigger; the PR path filters guard edits to the
-# vendored copies themselves. For the tag-pinned copy the PR path also catches
-# a Renovate ref bump that has not been followed by a re-sync.
+# Check vendored dotfiles (main) and powerdns-webui (tag) against upstream.
+# The weekly run detects upstream drift; PR filters cover local edits and
+# Renovate tag bumps.
 on:
   pull_request:
     paths:

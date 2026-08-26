@@ -79,15 +79,8 @@ jobs:
           chmod +x "${RUNNER_TEMP}/yq"
           echo "${RUNNER_TEMP}" >> "${GITHUB_PATH}"
 
-      # ArgoCD Applications that reference a remote chart (repoURL+chart, as
-      # opposed to a path into this repo) have no local Chart.yaml, so the
-      # lint loop above never touches them. The Application manifests are
-      # themselves templates of the shared app-of-apps chart, so render that
-      # chart with each environment's values first, then validate every
-      # enabled remote source against its pinned targetRevision to catch
-      # incompatible chart/values bumps. Apps disabled in every environment
-      # are not rendered and therefore not validated, mirroring what ArgoCD
-      # would actually deploy.
+      # Render each app-of-apps environment and validate enabled remote charts at
+      # their pinned versions; local Chart.yaml charts are covered above.
       - name: Validate ArgoCD remote Helm sources
         run: |
           set -euo pipefail
@@ -106,7 +99,7 @@ jobs:
               args=()
               while IFS= read -r vf; do
                 [ -z "$vf" ] && continue
-                # "$values" is the ref source pointing at this repo's root
+                # "$values" points to this repository's root.
                 path="${vf#\$values/}"
                 if [ -f "$path" ]; then
                   args+=(-f "$path")

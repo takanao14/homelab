@@ -15,8 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Gate at warning severity: style/info findings (e.g. SC1091 for files
-      # not passed as input) stay visible locally but do not fail CI.
+      # Fail on warnings or worse; keep style and info findings local.
       - name: Run shellcheck
         run: |
           set -euo pipefail

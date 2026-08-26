@@ -1,8 +1,6 @@
 name: Notify workflow failure
 
-# Post to Discord when CI workflows fail. This intentionally uses a separate
-# webhook from Renovate auto-merge notifications because failures usually need
-# attention, while auto-merge notices are informational.
+# Use a dedicated Discord webhook for actionable CI failures.
 on:
   workflow_run:
     workflows:

@@ -1,9 +1,6 @@
 name: Proxy Route Check
 
-# The Caddy sites in the Ansible group_vars and the Homepage dashboard tiles
-# are maintained by hand in two places. This job fails when they drift: a
-# published site with no dashboard entry, or a dashboard link to a host Caddy
-# does not serve.
+# Keep manually maintained Caddy sites and Homepage links in sync.
 on:
   pull_request:
     paths:

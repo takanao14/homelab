@@ -1,8 +1,7 @@
 name: Image Reference Check
 
-# The target -> image-filename mapping is duplicated across packer/build.sh,
-# packer/push.sh and scripts/create-vm.sh, with tf/customimage/images.hcl as
-# the source of truth. This job fails when any of them drift.
+# Keep image filename mappings aligned with tf/customimage/images.hcl, their
+# source of truth.
 on:
   pull_request:
     paths:
