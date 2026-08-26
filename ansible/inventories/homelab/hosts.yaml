@@ -1,31 +1,17 @@
+# Inventory ordering rules — keep them when adding a host or a group.
+#   all.hosts  grouped by role under a heading comment, IP ascending inside each
+#              block (k0s blocks run controller first to mirror prd_k8s /
+#              sandbox_k8s). The third octet is the Proxmox SDN vnet: 10 = LAN,
+#              20 = pve, 30 = node1, 40 = node2, 50 = node3, 60 = node4,
+#              70 = node5 (tf/common.hcl).
+#   children   split into sections: service groups, platform, cross-cutting
+#              agents, operational sequencing, placeholders. Member lists are
+#              alphabetical unless a play walks them serially.
+#   Do not reorder anything under "Operational sequencing", the dns children,
+#   or the k8s worker groups — those lists are execution order.
 all:
   hosts:
-    caddy1:
-      ansible_host: 192.168.10.244
-    ns1:
-      ansible_host: 192.168.10.233
-    ns2:
-      ansible_host: 192.168.10.234
-    ns3:
-      ansible_host: 192.168.10.235
-    dist1:
-      ansible_host: 192.168.10.231
-    dist2:
-      ansible_host: 192.168.10.232
-    resolver1:
-      ansible_host: 192.168.10.236
-    resolver2:
-      ansible_host: 192.168.10.237
-    log1:
-      ansible_host: 192.168.10.243
-    forgejo1:
-      ansible_host: 192.168.10.245
-    runner1:
-      ansible_host: 192.168.10.246
-    netbox1:
-      ansible_host: 192.168.10.247
-    gpuvm1:
-      ansible_host: 192.168.20.22
+    # Hypervisors.
     pve:
       ansible_host: 192.168.10.10
     node1:
@@ -38,10 +24,64 @@ all:
       ansible_host: 192.168.10.14
     node5:
       ansible_host: 192.168.10.15
+
+    # Raspberry Pi; DHCP, MeshCentral and blackbox probes.
     rpi3:
       ansible_host: 192.168.10.240
     rpi4:
       ansible_host: 192.168.10.241
+
+    # DNS; dnsdist front end, authoritative servers, recursive resolvers.
+    dist1:
+      ansible_host: 192.168.10.231
+    dist2:
+      ansible_host: 192.168.10.232
+    ns1:
+      ansible_host: 192.168.10.233
+    ns2:
+      ansible_host: 192.168.10.234
+    ns3:
+      ansible_host: 192.168.10.235
+    resolver1:
+      ansible_host: 192.168.10.236
+    resolver2:
+      ansible_host: 192.168.10.237
+
+    # Platform services; openbao1 and seaweedfs1 sit on their own SDN vnets.
+    log1:
+      ansible_host: 192.168.10.243
+    caddy1:
+      ansible_host: 192.168.10.244
+    forgejo1:
+      ansible_host: 192.168.10.245
+    runner1:
+      ansible_host: 192.168.10.246
+    netbox1:
+      ansible_host: 192.168.10.247
+    authentik1:
+      ansible_host: 192.168.10.248
+    openbao1:
+      ansible_host: 192.168.40.30
+    seaweedfs1:
+      ansible_host: 192.168.50.31
+
+    # Toolbox and PoC guests.
+    sssdtest1:
+      ansible_host: 192.168.10.176
+    toolbox1:
+      ansible_host: 192.168.20.21
+
+    # k0s prd; one node per SDN vnet, gpuvm1 is the GPU worker (ADR-0019).
+    k0s-cp1:
+      ansible_host: 192.168.60.11
+    k0s-worker1:
+      ansible_host: 192.168.30.12
+    k0s-worker2:
+      ansible_host: 192.168.70.13
+    gpuvm1:
+      ansible_host: 192.168.20.22
+
+    # k0s sandbox; all nodes share the pve vnet.
     sandbox-k0s-cp1:
       ansible_host: 192.168.20.31
     sandbox-k0s-worker1:
@@ -50,30 +90,33 @@ all:
       ansible_host: 192.168.20.33
     sandbox-k0s-worker3:
       ansible_host: 192.168.20.34
-    k0s-cp1:
-      ansible_host: 192.168.60.11
-    k0s-worker1:
-      ansible_host: 192.168.30.12
-    k0s-worker2:
-      ansible_host: 192.168.70.13
-    openbao1:
-      ansible_host: 192.168.40.30
-    seaweedfs1:
-      ansible_host: 192.168.50.31
-    toolbox1:
-      ansible_host: 192.168.20.21
-    authentik1:
-      ansible_host: 192.168.10.248
-    sssdtest1:
-      ansible_host: 192.168.10.176
+
+    # Managed outside this repo; power sequencing only.
     vpngw:
       ansible_host: 192.168.10.3
-  children:
-    # Power sequencing only; configuration is managed outside this repo.
-    power_only:
-      hosts:
-        vpngw: null
 
+  children:
+    # =================================================================
+    # Service groups — one per managed service.
+    # =================================================================
+    authentik:
+      hosts:
+        authentik1: null
+
+    caddy:
+      hosts:
+        caddy1: null
+
+    # Browser editor for toolbox1 (ADR-0031).
+    code_server:
+      hosts:
+        toolbox1: null
+
+    dhcp:
+      hosts:
+        rpi4: null
+
+    # Child order is the serial upgrade order in ops-package_upgrade.yaml.
     dns:
       children:
         dns_auth:
@@ -94,28 +137,6 @@ all:
             resolver1: null
             resolver2: null
 
-    openbao:
-      hosts:
-        openbao1: null
-
-    authentik:
-      hosts:
-        authentik1: null
-
-    # Disposable SSSD/LDAP PoC VM; excluded from monitoring.
-    sssd:
-      hosts:
-        sssdtest1: null
-
-    # Object storage for Terraform state backups and Packer images.
-    seaweedfs:
-      hosts:
-        seaweedfs1: null
-
-    log_collector:
-      hosts:
-        log1: null
-
     forgejo:
       hosts:
         forgejo1: null
@@ -124,30 +145,62 @@ all:
       hosts:
         runner1: null
 
-    netbox:
-      hosts:
-        netbox1: null
-
     gpuvm:
       hosts:
         gpuvm1: null
 
-    caddy:
+    log_collector:
       hosts:
-        caddy1: null
-
-    # Browser editor for toolbox1 (ADR-0031).
-    code_server:
-      hosts:
-        toolbox1: null
-
-    dhcp:
-      hosts:
-        rpi4: null
+        log1: null
 
     meshcentral:
       hosts:
         rpi4: null
+
+    netbox:
+      hosts:
+        netbox1: null
+
+    openbao:
+      hosts:
+        openbao1: null
+
+    # Object storage for Terraform state backups and Packer images.
+    seaweedfs:
+      hosts:
+        seaweedfs1: null
+
+    # Disposable SSSD/LDAP PoC VM; excluded from monitoring.
+    sssd:
+      hosts:
+        sssdtest1: null
+
+    # =================================================================
+    # Platform — hypervisors, containers, Kubernetes clusters.
+    # =================================================================
+    proxmox:
+      hosts:
+        pve: null
+        node1: null
+        node2: null
+        node3: null
+        node4: null
+        node5: null
+
+    lxc:
+      hosts:
+        caddy1: null
+        dist1: null
+        dist2: null
+        forgejo1: null
+        log1: null
+        netbox1: null
+        ns1: null
+        ns2: null
+        ns3: null
+        resolver1: null
+        resolver2: null
+        seaweedfs1: null
 
     # Split k0s by role so workers drain before controllers; names match Kubernetes nodes.
     prd_k8s:
@@ -182,32 +235,74 @@ all:
         prd_k8s_worker: {}
         sandbox_k8s_worker: {}
 
-    lxc:
+    # Cluster hypervisors used for environment-only startup recovery.
+    prd_k8s_hypervisor:
       hosts:
-        caddy1: null
-        log1: null
-        forgejo1: null
-        netbox1: null
-        ns1: null
-        ns2: null
-        ns3: null
-        dist1: null
-        dist2: null
-        resolver1: null
-        resolver2: null
-        seaweedfs1: null
+        pve: null
+        node1: null
+        node4: null
+        node5: null
+    sandbox_k8s_hypervisor:
+      hosts:
+        pve: null
+
+    # =================================================================
+    # Cross-cutting agents and baseline configuration.
+    # =================================================================
+    node_exporter:
+      children:
+        node_exporter_rpi:
+          hosts:
+            rpi3: null
+            rpi4: null
+        # Stateful LXC metrics unavailable through Proxmox OTLP; omit duplicate host sensors.
+        node_exporter_lxc:
+          hosts:
+            caddy1: null
+            dist1: null
+            dist2: null
+            forgejo1: null
+            log1: null
+            netbox1: null
+            ns1: null
+            ns2: null
+            ns3: null
+            resolver1: null
+            resolver2: null
+            seaweedfs1: null
+        # Guests with virtio hardware only; ZFS lives on the hypervisor.
+        node_exporter_vm:
+          hosts:
+            authentik1: null
+            # No kubelet on k0s controllers; scrape the host and kine DB disk directly.
+            k0s-cp1: null
+            openbao1: null
+            runner1: null
+            toolbox1: null
+      # Hypervisors; the only hosts with real sensors, NVMe and zpools.
+      hosts:
+        pve: null
+        node1: null
+        node2: null
+        node3: null
+        node4: null
+        node5: null
+
+    blackbox_exporter:
+      hosts:
+        rpi4: null
 
     # LXC guests read directly by Vector from journald.
     vector_lxc:
       children:
         caddy: {}
         dns_auth: {}
-        dnsdist: {}
         dns_resolver: {}
+        dnsdist: {}
         forgejo: {}
+        log_collector: {}
         netbox: {}
         seaweedfs: {}
-        log_collector: {}
 
     # All Vector agents; targeted by common-vector.yaml.
     vector:
@@ -215,32 +310,40 @@ all:
         vector_lxc: {}
         dhcp: {}
 
-    # Timezone-managed hosts; explicit scope avoids k0s nodes and toolboxes.
-    timezone:
-      children:
-        caddy: {}
-        dnsdist: {}
-        dns_resolver: {}
-        dns_auth: {}
-        dhcp: {}
-        forgejo: {}
-        forgejo_runner: {}
-        netbox: {}
-        seaweedfs: {}
-        openbao: {}
-        authentik: {}
-        sssd: {}
-        gpuvm: {}
-        log_collector: {}
-      hosts:
-        rpi3: null
-
     # Rsyslog forwarders targeted by common-rsyslog.yaml.
     rsyslog:
       children:
         proxmox: {}
       hosts:
         rpi3: null
+
+    # Timezone-managed hosts; explicit scope avoids k0s nodes and toolboxes.
+    timezone:
+      children:
+        authentik: {}
+        caddy: {}
+        dhcp: {}
+        dns_auth: {}
+        dns_resolver: {}
+        dnsdist: {}
+        forgejo: {}
+        forgejo_runner: {}
+        gpuvm: {}
+        log_collector: {}
+        netbox: {}
+        openbao: {}
+        seaweedfs: {}
+        sssd: {}
+      hosts:
+        rpi3: null
+
+    # =================================================================
+    # Operational sequencing — host order is execution order. Do not sort.
+    # =================================================================
+    # Power sequencing only; configuration is managed outside this repo.
+    power_only:
+      hosts:
+        vpngw: null
 
     # Planned shutdown order: least-dependent first, logging and DNS last.
     # k0s nodes stop earlier in their own play.
@@ -275,69 +378,9 @@ all:
         pve: null
         node2: null
 
-    proxmox:
-      hosts:
-        pve: null
-        node1: null
-        node2: null
-        node3: null
-        node4: null
-        node5: null
-
-    # Cluster hypervisors used for environment-only startup recovery.
-    prd_k8s_hypervisor:
-      hosts:
-        node1: null
-        node4: null
-        node5: null
-        pve: null
-    sandbox_k8s_hypervisor:
-      hosts:
-        pve: null
-
-    node_exporter:
-      children:
-        node_exporter_rpi:
-          hosts:
-            rpi3: null
-            rpi4: null
-        # Stateful LXC metrics unavailable through Proxmox OTLP; omit duplicate host sensors.
-        node_exporter_lxc:
-          hosts:
-            seaweedfs1: null
-            forgejo1: null
-            netbox1: null
-            resolver1: null
-            resolver2: null
-            ns1: null
-            ns2: null
-            ns3: null
-            dist1: null
-            dist2: null
-            log1: null
-            caddy1: null
-        # Guests with virtio hardware only; ZFS lives on the hypervisor.
-        node_exporter_vm:
-          hosts:
-            openbao1: null
-            authentik1: null
-            runner1: null
-            toolbox1: null
-            # No kubelet on k0s controllers; scrape the host and kine DB disk directly.
-            k0s-cp1: null
-      # Hypervisors; the only hosts with real sensors, NVMe and zpools.
-      hosts:
-        pve: null
-        node1: null
-        node2: null
-        node3: null
-        node4: null
-        node5: null
-
-    blackbox_exporter:
-      hosts:
-        rpi4: null
-
+    # =================================================================
+    # Placeholders.
+    # =================================================================
     # VMs receiving bulk users; hosts must also exist under all.hosts.
     shared_vms:
       hosts: {}
