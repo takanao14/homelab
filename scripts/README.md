@@ -124,8 +124,8 @@ It skips SSH/staging, performs a no-sudo package preflight, and installs remaini
 tools per-user under `$HOME/.local`.
 
 The machine profile defaults to `auto`: `provision.sh` first reads the
-root-owned `/etc/homelab/machine-profile` marker baked by Packer and otherwise
-uses the safe `server` default. `--profile desktop|server` or the
+root-owned `/etc/provisioning/machine-profile.local` marker baked by Packer and
+otherwise uses the safe `server` default. `--profile desktop|server` or the
 `TOOL_MACHINE_PROFILE` environment variable overrides auto mode. Kitty, UDEV
 Gothic and Freelens are desktop-only components. Older desktop images without
 the marker must be provisioned with `--profile desktop`.
