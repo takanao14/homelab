@@ -80,3 +80,4 @@ deleting it:
 | [0035](0035-observe-ix2106-dhcp-leases-from-rpi4.md) | Observe IX2106 DHCP leases from rpi4 | Proposed |
 | [0035](0035-opencode-connects-to-ollama.md) | OpenCode connects to Ollama instead of Lemonade Server | Accepted |
 | [0036](0036-planned-shutdown-restores-via-argocd-selfheal.md) | Planned-shutdown restore relies on Argo CD self-heal, not a replica snapshot | Accepted |
+| [0037](0037-bake-shared-toolchain-into-server-images.md) | Bake the shared CLI toolchain into the server images from one Packer template | Accepted |

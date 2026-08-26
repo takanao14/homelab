@@ -1,4 +1,7 @@
-# Shared XRDP template; build.sh combines target vars and output settings.
+# Shared image template; build.sh combines target vars and output settings.
+# var.machine_profile selects the server (headless) or desktop (XRDP) role and
+# is the only switch the shared toolchain needs: the install wrappers skip the
+# desktop-only components on the server profile.
 packer {
   required_plugins {
     qemu = {
@@ -39,7 +42,7 @@ variable "ssh_pubkey" {
   description = "SSH public key for the default user (empty = read ~/.ssh/id_ed25519.pub)"
 }
 
-# --- Distro configuration (vars/<target>-xrdp.pkrvars.hcl) ---
+# --- Distro configuration (vars/<target>.pkrvars.hcl) ---
 
 variable "iso_url" {
   type        = string
@@ -63,7 +66,7 @@ variable "distro" {
 
 variable "provision_scripts" {
   type        = list(string)
-  description = "Shell provisioner scripts for base setup, desktop/XRDP and tooling"
+  description = "Distro-specific provisioners, run in order (cleanup excluded)"
 }
 
 variable "cleanup_script" {
@@ -71,18 +74,34 @@ variable "cleanup_script" {
   description = "Cleanup script run last (purges caches, cloud-init data, build user)"
 }
 
+variable "machine_profile" {
+  type        = string
+  default     = "server"
+  description = "Image role: server (headless) or desktop (adds GUI components)"
+
+  validation {
+    condition     = contains(["server", "desktop"], var.machine_profile)
+    error_message = "The machine_profile variable must be server or desktop."
+  }
+}
+
+variable "install_toolchain" {
+  type        = bool
+  default     = true
+  description = "Install the shared CLI toolchain (false for unsupported distros)"
+}
+
 variable "disk_size" {
   type        = string
-  default     = "20G"
+  default     = "10G"
   description = "Disk size of the built image"
 }
 
 locals {
-  ssh_pubkey      = var.ssh_pubkey != "" ? var.ssh_pubkey : file("~/.ssh/id_ed25519.pub")
-  machine_profile = "desktop"
+  ssh_pubkey = var.ssh_pubkey != "" ? var.ssh_pubkey : file("~/.ssh/id_ed25519.pub")
 }
 
-source "qemu" "xrdp" {
+source "qemu" "custom" {
   iso_url      = var.iso_url
   iso_checksum = var.iso_checksum
   disk_image   = true
@@ -118,63 +137,42 @@ source "qemu" "xrdp" {
 }
 
 build {
-  sources = ["source.qemu.xrdp"]
+  sources = ["source.qemu.custom"]
 
-  # Install guest, desktop, container, virtualization and GUI packages.
+  # Persist the image role first: the installers below and provision.sh on the
+  # running VM both read it, and cleanup later removes the build user.
+  provisioner "shell" {
+    inline = [
+      "sudo install -d -m 0755 /etc/provisioning",
+      "printf '%s\\n' '${var.machine_profile}' | sudo tee /etc/provisioning/machine-profile.local >/dev/null",
+      "sudo chmod 0644 /etc/provisioning/machine-profile.local",
+    ]
+  }
+
+  # Distro-specific setup: guest agent, timezone, EPEL, desktop/XRDP, GUI apps.
   provisioner "shell" {
     scripts         = var.provision_scripts
     execute_command = "chmod +x {{ .Path }}; sudo -S bash -c '{{ .Vars }} {{ .Path }}'"
   }
 
-  # Persist the image role for provision.sh and standalone installers.
-  provisioner "shell" {
-    inline = [
-      "sudo install -d -m 0755 /etc/provisioning",
-      "printf '%s\\n' '${local.machine_profile}' | sudo tee /etc/provisioning/machine-profile.local >/dev/null",
-      "sudo chmod 0644 /etc/provisioning/machine-profile.local",
-    ]
-  }
-
-  # Upload vendored installers; VENDOR_DIR prevents runtime GitHub fetches.
+  # Upload the install wrappers with their vendored installers; the staged
+  # VENDOR_DIR prevents runtime GitHub fetches.
   provisioner "file" {
-    source      = "../scripts/install/vendor"
+    source      = "../scripts/install"
     destination = "/tmp"
   }
 
-  # Install package prerequisites before tool/font wrappers.
-  provisioner "shell" {
-    script          = "../scripts/install/packages.sh"
-    execute_command = "TOOL_MACHINE_PROFILE=${local.machine_profile} VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
-  }
-
-  # Install the shared CLI toolchain globally into /usr/local/bin.
-  provisioner "shell" {
-    script          = "../scripts/install/tools.sh"
-    execute_command = "VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
-  }
-
-  # Install the GUI font for the desktop image profile.
-  provisioner "shell" {
-    script          = "../scripts/install/fonts.sh"
-    execute_command = "TOOL_MACHINE_PROFILE=${local.machine_profile} VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
-  }
-
-  # Install the kitty terminal system-wide (into /usr/local/kitty.app).
-  provisioner "shell" {
-    script          = "../scripts/install/terminal.sh"
-    execute_command = "TOOL_MACHINE_PROFILE=${local.machine_profile} VENDOR_DIR=/tmp/vendor bash '{{ .Path }}' global"
-  }
-
-  # System-wide kitty defaults via XDG_CONFIG_DIRS.
+  # System-wide kitty defaults, installed by toolchain.sh on desktop images.
   provisioner "file" {
     source      = "files/kitty.conf"
     destination = "/tmp/kitty.conf"
   }
+
+  # Install the shared toolchain into /usr/local so it survives the build user's
+  # removal; the profile decides whether the desktop extras are included.
   provisioner "shell" {
-    inline = [
-      "sudo install -D -m 0644 /tmp/kitty.conf /etc/xdg/kitty/kitty.conf",
-      "rm -f /tmp/kitty.conf",
-    ]
+    script          = "scripts/common/toolchain.sh"
+    execute_command = "TOOL_MACHINE_PROFILE=${var.machine_profile} INSTALL_TOOLCHAIN=${var.install_toolchain} bash '{{ .Path }}'"
   }
 
   # Clean up last: purges caches, cloud-init data and the build user.

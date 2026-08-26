@@ -45,13 +45,13 @@ shared `tf/modules/proxmox-cloudimage` module.
 ├── images/             # Generated image output directory (*.img files)
 ├── output-*/           # Packer build artifacts (temporary, gitignored)
 ├── scripts/
+│   ├── common/         # Distro-agnostic provisioners (shared toolchain)
 │   ├── ubuntu/         # Shell provisioners for Ubuntu
 │   ├── rocky/          # Shell provisioners for Rocky Linux
 │   └── debian/         # Shell provisioners for Debian
-├── vars/               # Per-target inputs (URL, checksum, user, script list)
-├── basic.pkr.hcl       # Shared template: headless server images
-├── xrdp.pkr.hcl        # Shared template: XRDP desktop images
-├── build.sh            # Main build script (selects template + var file)
+├── vars/               # Per-target inputs (URL, checksum, user, profile, scripts)
+├── image.pkr.hcl       # Shared template for every target
+├── build.sh            # Main build script (selects the target's var file)
 ├── import-upstream.sh  # Download/verify/normalize upstream compressed images
 ├── push.sh             # Upload built images + checksums to SeaweedFS S3
 └── setup.sh            # One-time build-host setup (QEMU/KVM + libguestfs)
@@ -129,22 +129,47 @@ terragrunt apply
 
 ## Available Build Targets
 
-Targets use [basic.pkr.hcl](basic.pkr.hcl) or
-[xrdp.pkr.hcl](xrdp.pkr.hcl). URLs, checksums, users, cloud-init paths and
-provisioners live in `vars/<target>.pkrvars.hcl`.
+Every target is built from [image.pkr.hcl](image.pkr.hcl). URLs, checksums,
+users, cloud-init paths, the machine profile and the provisioner list live in
+`vars/<target>.pkrvars.hcl`.
 
-| Target | Template | Var file | Output |
-|--------|----------|----------|--------|
-| `ubuntu24` | basic | [vars/ubuntu24.pkrvars.hcl](vars/ubuntu24.pkrvars.hcl) | `images/ubuntu-24.04-custom.img` |
-| `ubuntu24-xrdp` | xrdp | [vars/ubuntu24-xrdp.pkrvars.hcl](vars/ubuntu24-xrdp.pkrvars.hcl) | `images/ubuntu-24.04-xrdp.img` |
-| `rocky10` | basic | [vars/rocky10.pkrvars.hcl](vars/rocky10.pkrvars.hcl) | `images/rocky-10-custom.img` |
-| `rocky9` | basic | [vars/rocky9.pkrvars.hcl](vars/rocky9.pkrvars.hcl) | `images/rocky-9-custom.img` |
-| `rocky9-xrdp` | xrdp | [vars/rocky9-xrdp.pkrvars.hcl](vars/rocky9-xrdp.pkrvars.hcl) | `images/rocky-9-xrdp.img` |
-| `debian13` | basic | [vars/debian13.pkrvars.hcl](vars/debian13.pkrvars.hcl) | `images/debian-13-custom.img` |
+| Target | Profile | Var file | Output |
+|--------|---------|----------|--------|
+| `ubuntu24` | server | [vars/ubuntu24.pkrvars.hcl](vars/ubuntu24.pkrvars.hcl) | `images/ubuntu-24.04-custom.img` |
+| `ubuntu24-xrdp` | desktop | [vars/ubuntu24-xrdp.pkrvars.hcl](vars/ubuntu24-xrdp.pkrvars.hcl) | `images/ubuntu-24.04-xrdp.img` |
+| `rocky10` | server | [vars/rocky10.pkrvars.hcl](vars/rocky10.pkrvars.hcl) | `images/rocky-10-custom.img` |
+| `rocky9` | server | [vars/rocky9.pkrvars.hcl](vars/rocky9.pkrvars.hcl) | `images/rocky-9-custom.img` |
+| `rocky9-xrdp` | desktop | [vars/rocky9-xrdp.pkrvars.hcl](vars/rocky9-xrdp.pkrvars.hcl) | `images/rocky-9-xrdp.img` |
+| `debian13` | server | [vars/debian13.pkrvars.hcl](vars/debian13.pkrvars.hcl) | `images/debian-13-custom.img` |
 
 To add a target, create a `vars/<target>.pkrvars.hcl` and register the target in
 `build.sh`, `push.sh` and `tf/customimage/images.hcl`
 (`scripts/check-image-refs.sh` verifies the filename mapping in CI).
+
+## Machine Profiles
+
+`machine_profile` (`server` by default, `desktop` for the XRDP targets) is
+written to `/etc/provisioning/machine-profile.local` and passed to the shared
+installers as `TOOL_MACHINE_PROFILE`. It is the only switch that separates the
+two image roles:
+
+- **server** — the CLI toolchain only (Terraform, kubectl, helm, k9s, ansible,
+  sops, …), installed system-wide into `/usr/local/bin`.
+- **desktop** — the same toolchain plus the GUI components: Freelens, kitty and
+  the UDEV Gothic NF font. `terminal.sh` and `fonts.sh` no-op on `server`, so no
+  extra gating is needed.
+
+GUI applications that are not part of the shared toolchain (Firefox, VS Code,
+Wireshark, virt-manager) come from the distro provisioner lists
+(`scripts/<distro>/tools.sh`, `vm.sh`), which only the XRDP targets include.
+
+`install_toolchain = false` skips the shared toolchain entirely. `debian13` sets
+it because the toolchain's HashiCorp step resolves an apt suite from
+`VERSION_CODENAME` and `releases.hashicorp.com` publishes no `trixie` suite.
+
+Because the toolchain is installed system-wide, the version cache under
+`/usr/local/share/tool-versions` lets a later `scripts/provision.sh` run skip
+everything the image already provides.
 
 ## Upstream Image Imports
 
@@ -194,9 +219,11 @@ Packer, converts to compressed qcow2, and writes the image plus `.sha256` under
 
 Root `renovate.json` manages tracked dependency versions.
 
-XRDP images install prerequisites and the CLI toolchain through the same
-`scripts/install` wrappers as `scripts/provision.sh`. Tool pins are maintained
-in `takanao14/dotfiles`.
+Images install prerequisites and the CLI toolchain through the same
+`scripts/install` wrappers as `scripts/provision.sh`, driven by
+[scripts/common/toolchain.sh](scripts/common/toolchain.sh). Tool pins are
+maintained in `takanao14/dotfiles`; refresh the vendored copies with
+`../scripts/install/vendor/sync.sh`.
 
 Packer writes the image role to `/etc/provisioning/machine-profile.local`: XRDP
 images are `desktop` and basic cloud images are `server`. The same

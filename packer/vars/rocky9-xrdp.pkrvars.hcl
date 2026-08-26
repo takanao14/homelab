@@ -5,9 +5,12 @@ ssh_username = "rocky"
 distro       = "rocky"
 provision_scripts = [
   "scripts/rocky/timezone.sh",
+  "scripts/rocky/epel.sh",
   "scripts/rocky/xrdp.sh",
   "scripts/rocky/container.sh",
   "scripts/rocky/vm.sh",
   "scripts/rocky/tools.sh",
 ]
-cleanup_script = "scripts/rocky/cleanup.sh"
+cleanup_script  = "scripts/rocky/cleanup.sh"
+machine_profile = "desktop"
+disk_size       = "20G"

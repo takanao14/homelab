@@ -9,4 +9,6 @@ provision_scripts = [
   "scripts/ubuntu/vm.sh",
   "scripts/ubuntu/tools.sh",
 ]
-cleanup_script = "scripts/ubuntu/cleanup.sh"
+cleanup_script  = "scripts/ubuntu/cleanup.sh"
+machine_profile = "desktop"
+disk_size       = "20G"

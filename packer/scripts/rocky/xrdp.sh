@@ -5,11 +5,8 @@ echo "Installing XRDP desktop environment with XFCE and Japanese support..."
 
 LOCALE="${LOCALE:-ja_JP.UTF-8}"
 
-dnf install -y epel-release
-# Enable CRB to satisfy XRDP/Xfce dependencies on Rocky
-dnf install -y dnf-plugins-core
-dnf config-manager --set-enabled crb
-
+# EPEL and CRB (needed by XRDP/Xfce) are enabled by scripts/rocky/epel.sh,
+# which runs ahead of this script.
 dnf clean all
 dnf update -y
 dnf upgrade -y
