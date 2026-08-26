@@ -65,11 +65,25 @@ all:
     seaweedfs1:
       ansible_host: 192.168.50.31
 
-    # Toolbox and PoC guests.
-    sssdtest1:
-      ansible_host: 192.168.10.176
+    # Toolbox
     toolbox1:
       ansible_host: 192.168.20.21
+
+    # PoC guests.
+    sssdtest1:
+      ansible_host: 192.168.10.176
+    ubuntu-server:
+      ansible_host: 192.168.10.177
+    ubuntu-desktop:
+      ansible_host: 192.168.10.178
+    rocky-server:
+      ansible_host: 192.168.10.179
+    rocky-desktop:
+      ansible_host: 192.168.10.180
+    rocky10:
+      ansible_host: 192.168.10.181
+    debian13:
+      ansible_host: 192.168.10.182
 
     # k0s prd; one node per SDN vnet, gpuvm1 is the GPU worker (ADR-0019).
     k0s-cp1:
