@@ -104,6 +104,12 @@ build_image() {
         exit 1
     fi
 
+    # The sparsified image is the only artifact worth keeping. Drop the raw
+    # qcow2 now rather than at the next build, so `all` does not carry every
+    # intermediate to the end of the run.
+    echo "Removing intermediate build output '${packer_output_dir}'..."
+    rm -rf "${packer_output_dir}"
+
     # Recompute the sidecar digest so Terraform detects rebuilt images.
     echo "Writing checksum for ${image_file}..."
     sha256sum "${image_file}" | cut -d' ' -f1 > "${image_file}.sha256"

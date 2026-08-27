@@ -269,7 +269,10 @@ included in `build.sh all`.
 
 The script confirms overwrite, clears the target's temporary output, runs
 Packer, converts to compressed qcow2, and writes the image plus `.sha256` under
-`images/`. Distribution and deployment are covered by Quick Start steps 3–4.
+`images/`. The `output-*/` directory holding the raw qcow2 is removed as soon as
+the sparsified image is in place, so `all` keeps only one build's intermediate
+on disk at a time. Distribution and deployment are covered by Quick Start
+steps 3–4.
 
 ## Dependency Management
 
