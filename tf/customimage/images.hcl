@@ -2,29 +2,44 @@ locals {
   # Packer images in SeaweedFS; sidecar checksums detect same-URL rebuilds.
   base_url = "https://s3.home.butaco.net/cloud-images"
 
+  # The role suffix says how much is baked in, and each role contains the one
+  # before it: base (agent + timezone) < tool (+ shared CLI toolchain) <
+  # desktop (+ XFCE/XRDP and the GUI applications). See packer/README.md.
   image_definitions = {
-    "ubuntu-24.04-custom" = {
-      file_name    = "ubuntu-24.04-custom.img"
+    "ubuntu-24.04-base" = {
+      file_name    = "ubuntu-24.04-base.img"
       content_type = "iso"
     }
-    "ubuntu-24.04-xrdp" = {
-      file_name    = "ubuntu-24.04-xrdp.img"
+    "ubuntu-24.04-tool" = {
+      file_name    = "ubuntu-24.04-tool.img"
       content_type = "iso"
     }
-    "rocky-9-xrdp" = {
-      file_name    = "rocky-9-xrdp.img"
+    "ubuntu-24.04-desktop" = {
+      file_name    = "ubuntu-24.04-desktop.img"
       content_type = "iso"
     }
-    "rocky-10-custom" = {
-      file_name    = "rocky-10-custom.img"
+    "rocky-9-base" = {
+      file_name    = "rocky-9-base.img"
       content_type = "iso"
     }
-    "rocky-9-custom" = {
-      file_name    = "rocky-9-custom.img"
+    "rocky-9-tool" = {
+      file_name    = "rocky-9-tool.img"
       content_type = "iso"
     }
-    "debian-13-custom" = {
-      file_name    = "debian-13-custom.img"
+    "rocky-9-desktop" = {
+      file_name    = "rocky-9-desktop.img"
+      content_type = "iso"
+    }
+    "rocky-10-base" = {
+      file_name    = "rocky-10-base.img"
+      content_type = "iso"
+    }
+    "rocky-10-tool" = {
+      file_name    = "rocky-10-tool.img"
+      content_type = "iso"
+    }
+    "debian-13-base" = {
+      file_name    = "debian-13-base.img"
       content_type = "iso"
     }
     "freebsd-151-cloudinit" = {

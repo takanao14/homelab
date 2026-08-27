@@ -17,7 +17,10 @@ Usage: $(basename "$0") <name> <ip> [node] [cores] [memory_mb] [disk_gb] [image]
   cores     vCPUs                      (default: 4)
   memory    Memory in MB               (default: 8192)
   disk      Disk size in GB            (default: 80)
-  image     OS image: ubuntu24 | ubuntu24-xrdp | rocky10 | rocky9 | rocky9-xrdp | debian13  (default: ubuntu24)
+  image     OS image: ubuntu24-base | ubuntu24-tool | ubuntu24-desktop | rocky10-base |
+            rocky9-base | rocky9-desktop | debian13-base  (default: ubuntu24-base)
+            The role suffix says how much is baked in: base (agent + timezone)
+            < tool (+ shared CLI toolchain) < desktop (+ XFCE/XRDP and GUI apps)
 
 Environment:
   TF_VM_USERNAME        VM username     (default: current username)
@@ -45,7 +48,7 @@ NODE="${3:-pve}"
 CORES="${4:-4}"
 MEMORY="${5:-8192}"
 DISK="${6:-80}"
-IMAGE="${7:-ubuntu24}"
+IMAGE="${7:-ubuntu24-base}"
 
 case "$NODE" in
   pve|node2|node3|node4) ;;
@@ -75,17 +78,19 @@ done
 
 # CI verifies these filenames against the Terraform image definitions.
 case "$IMAGE" in
-  ubuntu24) FILE_ID="local:iso/ubuntu-24.04-custom.img" ;;
-  ubuntu24-xrdp) FILE_ID="local:iso/ubuntu-24.04-xrdp.img" ;;
-  rocky10)  FILE_ID="local:iso/rocky-10-custom.img" ;;
-  rocky9-xrdp)  FILE_ID="local:iso/rocky-9-xrdp.img" ;;
-  rocky9)  FILE_ID="local:iso/rocky-9-custom.img" ;;
-  debian13)  FILE_ID="local:iso/debian-13-custom.img" ;;
-  *) echo "Error: image must be one of: ubuntu24, ubuntu24-xrdp, rocky10, rocky9, rocky9-xrdp, debian13" >&2; exit 1 ;;
+  ubuntu24-base) FILE_ID="local:iso/ubuntu-24.04-base.img" ;;
+  ubuntu24-tool) FILE_ID="local:iso/ubuntu-24.04-tool.img" ;;
+  ubuntu24-desktop) FILE_ID="local:iso/ubuntu-24.04-desktop.img" ;;
+  rocky10-base)  FILE_ID="local:iso/rocky-10-base.img" ;;
+  rocky9-base)  FILE_ID="local:iso/rocky-9-base.img" ;;
+  rocky9-desktop)  FILE_ID="local:iso/rocky-9-desktop.img" ;;
+  debian13-base)  FILE_ID="local:iso/debian-13-base.img" ;;
+  *) echo "Error: image must be one of: ubuntu24-base, ubuntu24-tool, ubuntu24-desktop, rocky10-base, rocky9-base, rocky9-desktop, debian13-base" >&2; exit 1 ;;
 esac
 
+# Only pve downloads the tool and desktop images; see tf/customimage/*/node.hcl.
 case "$IMAGE" in
-  ubuntu24-xrdp|rocky9-xrdp)
+  ubuntu24-tool|ubuntu24-desktop|rocky9-desktop)
     if [[ "$NODE" != "pve" ]]; then
       echo "Error: image '${IMAGE}' is only available on node 'pve'" >&2
       exit 1

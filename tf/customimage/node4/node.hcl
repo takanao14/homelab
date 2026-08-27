@@ -1,9 +1,9 @@
 locals {
   node_name = "node4"
   image_keys = [
-    "ubuntu-24.04-custom",
-    "rocky-9-custom",
-    "rocky-10-custom",
-    "debian-13-custom",
+    "ubuntu-24.04-base",
+    "rocky-9-base",
+    "rocky-10-base",
+    "debian-13-base",
   ]
 }

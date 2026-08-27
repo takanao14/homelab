@@ -9,20 +9,35 @@ Usage: $0 [OPTION]
 
 Build VM images using Packer
 
+Every target is named <distro><version>-<role>. The role suffix says how much
+is baked into the image, and each role contains the one before it:
+
+    base     QEMU Guest Agent and the timezone (JST) only
+    tool     base plus the shared CLI toolchain in /usr/local
+    desktop  tool plus XFCE, XRDP, the Japanese IME and the GUI applications
+
 OPTIONS:
-    -y             Force overwrite existing images without prompting
-    ubuntu24       Build a basic Ubuntu 24.04 image with the QEMU Guest Agent and the timezone set to JST
-    ubuntu24-xrdp  Build Ubuntu 24.04 image with XRDP service
-    rocky10        Build a basic Rocky 10 Linux image with the timezone set to JST
-    rocky9         Build a basic Rocky 9 Linux image with the timezone set to JST
-    rocky9-xrdp    Build Rocky 9 Linux image with XRDP service
-    debian13       Build a basic Debian 13 image
-    all            Build every image listed above, in order
-    help           Display this help message
+    -y                Force overwrite existing images without prompting
+
+TARGETS:
+    ubuntu24-base     Ubuntu 24.04, agent and timezone only
+    ubuntu24-tool     Ubuntu 24.04 with the shared CLI toolchain
+    ubuntu24-desktop  Ubuntu 24.04 with XFCE/XRDP on top of the toolchain
+    rocky10-base      Rocky 10, agent and timezone only
+    rocky10-tool      Rocky 10 with the shared CLI toolchain
+    rocky9-base       Rocky 9, agent and timezone only
+    rocky9-tool       Rocky 9 with the shared CLI toolchain
+    rocky9-desktop    Rocky 9 with XFCE/XRDP on top of the toolchain
+    debian13-base     Debian 13, agent and timezone only
+    all               Build every target listed above, in order
+    help              Display this help message
+
+Debian has no tool target: the toolchain's HashiCorp step resolves an apt suite
+from VERSION_CODENAME and releases.hashicorp.com publishes no trixie suite.
 
 EXAMPLES:
-    $0 ubuntu24
-    $0 ubuntu24-xrdp
+    $0 ubuntu24-base
+    $0 ubuntu24-desktop
     $0 -y all
 
 EOF
@@ -101,41 +116,59 @@ readonly PACKER_TEMPLATE="image.pkr.hcl"
 # Map a target to var file/output; CI checks parity with push.sh and tf/customimage.
 build_target() {
     case "$1" in
-        ubuntu24)
+        ubuntu24-base)
             build_image \
-                "vars/ubuntu24.pkrvars.hcl" \
-                "output-ubuntu24-custom/ubuntu-24.04-custom.qcow2" \
-                "images/ubuntu-24.04-custom.img"
+                "vars/ubuntu24-base.pkrvars.hcl" \
+                "output-ubuntu-24.04-base/ubuntu-24.04-base.qcow2" \
+                "images/ubuntu-24.04-base.img"
             ;;
-        ubuntu24-xrdp)
+        ubuntu24-tool)
             build_image \
-                "vars/ubuntu24-xrdp.pkrvars.hcl" \
-                "output-ubuntu24-xrdp/ubuntu-24.04-xrdp.qcow2" \
-                "images/ubuntu-24.04-xrdp.img"
+                "vars/ubuntu24-tool.pkrvars.hcl" \
+                "output-ubuntu-24.04-tool/ubuntu-24.04-tool.qcow2" \
+                "images/ubuntu-24.04-tool.img"
             ;;
-        rocky10)
+        ubuntu24-desktop)
             build_image \
-                "vars/rocky10.pkrvars.hcl" \
-                "output-rocky-10-custom/rocky-10-custom.qcow2" \
-                "images/rocky-10-custom.img"
+                "vars/ubuntu24-desktop.pkrvars.hcl" \
+                "output-ubuntu-24.04-desktop/ubuntu-24.04-desktop.qcow2" \
+                "images/ubuntu-24.04-desktop.img"
             ;;
-        rocky9)
+        rocky10-base)
             build_image \
-                "vars/rocky9.pkrvars.hcl" \
-                "output-rocky-9-custom/rocky-9-custom.qcow2" \
-                "images/rocky-9-custom.img"
+                "vars/rocky10-base.pkrvars.hcl" \
+                "output-rocky-10-base/rocky-10-base.qcow2" \
+                "images/rocky-10-base.img"
             ;;
-        rocky9-xrdp)
+        rocky10-tool)
             build_image \
-                "vars/rocky9-xrdp.pkrvars.hcl" \
-                "output-rocky-9-xrdp/rocky-9-xrdp.qcow2" \
-                "images/rocky-9-xrdp.img"
+                "vars/rocky10-tool.pkrvars.hcl" \
+                "output-rocky-10-tool/rocky-10-tool.qcow2" \
+                "images/rocky-10-tool.img"
             ;;
-        debian13)
+        rocky9-base)
             build_image \
-                "vars/debian13.pkrvars.hcl" \
-                "output-debian-13-custom/debian-13-custom.qcow2" \
-                "images/debian-13-custom.img"
+                "vars/rocky9-base.pkrvars.hcl" \
+                "output-rocky-9-base/rocky-9-base.qcow2" \
+                "images/rocky-9-base.img"
+            ;;
+        rocky9-tool)
+            build_image \
+                "vars/rocky9-tool.pkrvars.hcl" \
+                "output-rocky-9-tool/rocky-9-tool.qcow2" \
+                "images/rocky-9-tool.img"
+            ;;
+        rocky9-desktop)
+            build_image \
+                "vars/rocky9-desktop.pkrvars.hcl" \
+                "output-rocky-9-desktop/rocky-9-desktop.qcow2" \
+                "images/rocky-9-desktop.img"
+            ;;
+        debian13-base)
+            build_image \
+                "vars/debian13-base.pkrvars.hcl" \
+                "output-debian-13-base/debian-13-base.qcow2" \
+                "images/debian-13-base.img"
             ;;
         *)
             echo "Error: Unknown build target '$1'"
@@ -144,8 +177,13 @@ build_target() {
     esac
 }
 
-# All targets, in build order. `all` iterates this list.
-ALL_TARGETS=(ubuntu24 ubuntu24-xrdp rocky10 rocky9 rocky9-xrdp debian13)
+# All targets, in build order: the cheap base images first, so an interrupted
+# `all` still leaves the quickest-to-rebuild targets done.
+ALL_TARGETS=(
+    ubuntu24-base rocky10-base rocky9-base debian13-base
+    ubuntu24-tool rocky10-tool rocky9-tool
+    ubuntu24-desktop rocky9-desktop
+)
 
 FORCE_OVERWRITE=false
 while [[ $# -gt 0 ]]; do

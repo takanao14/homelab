@@ -4,8 +4,12 @@ ssh_username = "ubuntu"
 distro       = "ubuntu"
 provision_scripts = [
   "scripts/ubuntu/qemu-ga.sh",
+  "scripts/common/timezone.sh",
+  "scripts/ubuntu/xrdp.sh",
+  "scripts/ubuntu/container.sh",
+  "scripts/ubuntu/vm.sh",
+  "scripts/ubuntu/tools.sh",
 ]
-cleanup_script = "scripts/ubuntu/cleanup.sh"
-# 16G is the ceiling: tf/vm/node2/openbao and tf/vm/pve/sssdtest declare 16G
-# disks, and Proxmox cannot import an image larger than the target disk.
-disk_size = "16G"
+cleanup_script  = "scripts/ubuntu/cleanup.sh"
+machine_profile = "desktop"
+disk_size       = "20G"

@@ -84,20 +84,23 @@ export PROXMOX_VE_SSH_AGENT=true
 ### 2. Build Images
 
 ```bash
-# Build base Ubuntu 24.04 image with QEMU Guest Agent
-./build.sh ubuntu24
+# Build Ubuntu 24.04 with the QEMU Guest Agent and the timezone only
+./build.sh ubuntu24-base
+
+# Build Ubuntu 24.04 with the shared CLI toolchain
+./build.sh ubuntu24-tool
 
 # Build Ubuntu 24.04 with XRDP and XFCE desktop
-./build.sh ubuntu24-xrdp
+./build.sh ubuntu24-desktop
 
-# Build base Rocky Linux 10 image
-./build.sh rocky10
+# Build Rocky Linux 10 with the QEMU Guest Agent and the timezone only
+./build.sh rocky10-base
 
 # Build Rocky Linux 9 with XRDP and XFCE desktop
-./build.sh rocky9-xrdp
+./build.sh rocky9-desktop
 
-# Build base Debian 13 image
-./build.sh debian13
+# Build Debian 13 with the QEMU Guest Agent and the timezone only
+./build.sh debian13-base
 
 # Import FreeBSD 15.1 upstream cloud-init image
 ./import-upstream.sh freebsd151
@@ -107,7 +110,7 @@ export PROXMOX_VE_SSH_AGENT=true
 
 ```bash
 # Upload one target (image + .sha256) to the cloud-images bucket
-./push.sh ubuntu24
+./push.sh ubuntu24-base
 
 # Upload imported FreeBSD 15.1 image
 ./push.sh freebsd151
@@ -127,6 +130,27 @@ cd ../tf/customimage/prd
 terragrunt apply
 ```
 
+## Image Roles
+
+Every target is named `<distro><version>-<role>`. The role suffix says how much
+is baked into the image, and each role contains the one before it:
+
+| Role | Contents | `machine_profile` | `install_toolchain` | Disk |
+|------|----------|-------------------|---------------------|------|
+| `base` | QEMU Guest Agent and the timezone (JST) only | `server` | `false` | 10G |
+| `tool` | `base` plus the shared CLI toolchain in `/usr/local` | `server` | `true` | 16G |
+| `desktop` | `tool` plus XFCE, XRDP, the Japanese IME and the GUI applications | `desktop` | `true` | 20G |
+
+`desktop` is reachable over RDP only — XRDP is the single GUI access path in
+this homelab. The suffix names the role rather than the protocol so the image
+name survives a change of access method.
+
+`base` is not a third machine profile. It writes `server` to
+`/etc/provisioning/machine-profile.local` like any other server image, because
+the shared installers accept `desktop`, `server` or `auto` and nothing else. A
+later `scripts/provision.sh` run therefore installs the server toolchain on a
+host built from a `base` image.
+
 ## Available Build Targets
 
 Every target is built from [image.pkr.hcl](image.pkr.hcl). URLs, checksums,
@@ -135,12 +159,40 @@ users, cloud-init paths, the machine profile and the provisioner list live in
 
 | Target | Profile | Var file | Output |
 |--------|---------|----------|--------|
-| `ubuntu24` | server | [vars/ubuntu24.pkrvars.hcl](vars/ubuntu24.pkrvars.hcl) | `images/ubuntu-24.04-custom.img` |
-| `ubuntu24-xrdp` | desktop | [vars/ubuntu24-xrdp.pkrvars.hcl](vars/ubuntu24-xrdp.pkrvars.hcl) | `images/ubuntu-24.04-xrdp.img` |
-| `rocky10` | server | [vars/rocky10.pkrvars.hcl](vars/rocky10.pkrvars.hcl) | `images/rocky-10-custom.img` |
-| `rocky9` | server | [vars/rocky9.pkrvars.hcl](vars/rocky9.pkrvars.hcl) | `images/rocky-9-custom.img` |
-| `rocky9-xrdp` | desktop | [vars/rocky9-xrdp.pkrvars.hcl](vars/rocky9-xrdp.pkrvars.hcl) | `images/rocky-9-xrdp.img` |
-| `debian13` | server | [vars/debian13.pkrvars.hcl](vars/debian13.pkrvars.hcl) | `images/debian-13-custom.img` |
+| `ubuntu24-base` | server | [vars/ubuntu24-base.pkrvars.hcl](vars/ubuntu24-base.pkrvars.hcl) | `images/ubuntu-24.04-base.img` |
+| `ubuntu24-tool` | server | [vars/ubuntu24-tool.pkrvars.hcl](vars/ubuntu24-tool.pkrvars.hcl) | `images/ubuntu-24.04-tool.img` |
+| `ubuntu24-desktop` | desktop | [vars/ubuntu24-desktop.pkrvars.hcl](vars/ubuntu24-desktop.pkrvars.hcl) | `images/ubuntu-24.04-desktop.img` |
+| `rocky10-base` | server | [vars/rocky10-base.pkrvars.hcl](vars/rocky10-base.pkrvars.hcl) | `images/rocky-10-base.img` |
+| `rocky10-tool` | server | [vars/rocky10-tool.pkrvars.hcl](vars/rocky10-tool.pkrvars.hcl) | `images/rocky-10-tool.img` |
+| `rocky9-base` | server | [vars/rocky9-base.pkrvars.hcl](vars/rocky9-base.pkrvars.hcl) | `images/rocky-9-base.img` |
+| `rocky9-tool` | server | [vars/rocky9-tool.pkrvars.hcl](vars/rocky9-tool.pkrvars.hcl) | `images/rocky-9-tool.img` |
+| `rocky9-desktop` | desktop | [vars/rocky9-desktop.pkrvars.hcl](vars/rocky9-desktop.pkrvars.hcl) | `images/rocky-9-desktop.img` |
+| `debian13-base` | server | [vars/debian13-base.pkrvars.hcl](vars/debian13-base.pkrvars.hcl) | `images/debian-13-base.img` |
+
+Debian has no `tool` target: the toolchain's HashiCorp step resolves an apt
+suite from `VERSION_CODENAME` and `releases.hashicorp.com` publishes no `trixie`
+suite. Rocky 10 has no `desktop` target because nothing consumes one.
+
+### Rocky base images need CRB before provisioning
+
+`base` means the guest agent and the timezone, with no repository setup, so the
+Rocky `base` targets do not run `scripts/rocky/epel.sh`. EPEL and CRB stay a
+`tool`/`desktop` concern.
+
+The consequence is that `scripts/provision.sh` cannot install the toolchain on a
+Rocky `base` host as-is. The vendored installer runs `dnf install epel-release`
+but never enables CRB, and EPEL packages — `mosh` among the toolchain baseline —
+resolve their dependencies out of CRB. Enable it on the host first:
+
+```bash
+# Rocky 10 ships dnf5, whose config-manager syntax differs from dnf4
+sudo dnf install -y epel-release
+sudo dnf install -y dnf5-plugins && sudo dnf config-manager setopt crb.enabled=1
+# Rocky 9:
+# sudo dnf install -y dnf-plugins-core && sudo dnf config-manager --set-enabled crb
+```
+
+Ubuntu and Debian `base` images need no equivalent step.
 
 To add a target, create a `vars/<target>.pkrvars.hcl` and register the target in
 `build.sh`, `push.sh` and `tf/customimage/images.hcl`
@@ -148,10 +200,10 @@ To add a target, create a `vars/<target>.pkrvars.hcl` and register the target in
 
 ## Machine Profiles
 
-`machine_profile` (`server` by default, `desktop` for the XRDP targets) is
+`machine_profile` (`server` by default, `desktop` for the `-desktop` targets) is
 written to `/etc/provisioning/machine-profile.local` and passed to the shared
-installers as `TOOL_MACHINE_PROFILE`. It is the only switch that separates the
-two image roles:
+installers as `TOOL_MACHINE_PROFILE`. Together with `install_toolchain` it is
+what separates the three image roles:
 
 - **server** — the CLI toolchain only (Terraform, kubectl, helm, k9s, ansible,
   sops, …), installed system-wide into `/usr/local/bin`.
@@ -163,11 +215,13 @@ two image roles:
 
 GUI applications that are not part of the shared toolchain (Firefox, VS Code,
 Wireshark, virt-manager) come from the distro provisioner lists
-(`scripts/<distro>/tools.sh`, `vm.sh`), which only the XRDP targets include.
+(`scripts/<distro>/tools.sh`, `vm.sh`), which only the `-desktop` targets
+include.
 
-`install_toolchain = false` skips the shared toolchain entirely. `debian13` sets
-it because the toolchain's HashiCorp step resolves an apt suite from
-`VERSION_CODENAME` and `releases.hashicorp.com` publishes no `trixie` suite.
+`install_toolchain = false` skips the shared toolchain entirely. It is what
+makes a target a `base` image, and `debian13-base` additionally has no choice:
+the toolchain's HashiCorp step resolves an apt suite from `VERSION_CODENAME` and
+`releases.hashicorp.com` publishes no `trixie` suite.
 
 Because the toolchain is installed system-wide, the version cache under
 `/usr/local/share/tool-versions` lets a later `scripts/provision.sh` run skip
@@ -247,18 +301,25 @@ Run Packer directly for custom configurations:
 
 ```bash
 packer build \
-  -var "output_directory=custom-output" \
-  -var "vm_name=custom.qcow2" \
-  -var "image_name=image/custom.img" \
-  ubuntu-24.04-custom.pkr.hcl
+  -var-file "vars/ubuntu24-base.pkrvars.hcl" \
+  -var "output_directory=scratch-output" \
+  -var "vm_name=scratch.qcow2" \
+  -var "image_name=images/scratch.img" \
+  image.pkr.hcl
 ```
 
 ### Modifying Provisioning Scripts
 
 Edit scripts in the `scripts/` directory:
+- `scripts/common/` - distro-agnostic provisioners (`timezone.sh`) and the
+  shared toolchain step the template runs on its own (`toolchain.sh`)
 - `scripts/ubuntu/` - Ubuntu-specific provisioners
 - `scripts/rocky/` - Rocky Linux-specific provisioners
 - `scripts/debian/` - Debian-specific provisioners
+
+`qemu-ga.sh` installs the guest agent and nothing else; the timezone is a
+separate `scripts/common/timezone.sh` step listed by every target. The Rocky
+targets omit `qemu-ga.sh` because GenericCloud already ships the agent.
 
 All scripts should be:
 - Idempotent

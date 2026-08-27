@@ -48,9 +48,14 @@ operation can be inspected and resumed directly with Terragrunt.
 | cores  | `4`          | vCPUs                                                      |
 | memory | `8192`       | MB                                                         |
 | disk   | `80`         | GB                                                         |
-| image  | `ubuntu24`   | `ubuntu24[-xrdp]`, `rocky10`, `rocky9[-xrdp]`, `debian13` |
+| image  | `ubuntu24-base` | `ubuntu24-{base,tool,desktop}`, `rocky10-base`, `rocky9-{base,desktop}`, `debian13-base` |
 
-The XRDP images are available only on `pve`.
+The role suffix says how much is baked in: `base` (guest agent + timezone) <
+`tool` (+ shared CLI toolchain) < `desktop` (+ XFCE/XRDP and the GUI
+applications). See [packer/README.md](../packer/README.md).
+
+The `tool` and `desktop` images are downloaded only on `pve`, so VMs using them
+must be created there.
 
 VM credentials use `TF_VM_USERNAME`, `TF_VM_PASSWORD`, and
 `TF_VM_SSH_PUBLIC_KEY`. Defaults are the current user, a hidden password prompt,

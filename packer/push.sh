@@ -15,12 +15,15 @@ IMAGES_DIR="$(cd "$(dirname "$0")" && pwd)/images"
 # A case statement supports macOS' older Bash.
 target_image() {
     case "$1" in
-        ubuntu24) echo "ubuntu-24.04-custom.img" ;;
-        ubuntu24-xrdp) echo "ubuntu-24.04-xrdp.img" ;;
-        rocky10) echo "rocky-10-custom.img" ;;
-        rocky9) echo "rocky-9-custom.img" ;;
-        rocky9-xrdp) echo "rocky-9-xrdp.img" ;;
-        debian13) echo "debian-13-custom.img" ;;
+        ubuntu24-base) echo "ubuntu-24.04-base.img" ;;
+        ubuntu24-tool) echo "ubuntu-24.04-tool.img" ;;
+        ubuntu24-desktop) echo "ubuntu-24.04-desktop.img" ;;
+        rocky10-base) echo "rocky-10-base.img" ;;
+        rocky10-tool) echo "rocky-10-tool.img" ;;
+        rocky9-base) echo "rocky-9-base.img" ;;
+        rocky9-tool) echo "rocky-9-tool.img" ;;
+        rocky9-desktop) echo "rocky-9-desktop.img" ;;
+        debian13-base) echo "debian-13-base.img" ;;
         freebsd151) echo "freebsd-15.1-cloudinit-ufs.img" ;;
         *) return 1 ;;
     esac
@@ -28,13 +31,16 @@ target_image() {
 
 list_targets() {
     cat << EOF
-    debian13       debian-13-custom.img
-    freebsd151     freebsd-15.1-cloudinit-ufs.img
-    rocky10        rocky-10-custom.img
-    rocky9         rocky-9-custom.img
-    rocky9-xrdp    rocky-9-xrdp.img
-    ubuntu24       ubuntu-24.04-custom.img
-    ubuntu24-xrdp  ubuntu-24.04-xrdp.img
+    debian13-base     debian-13-base.img
+    freebsd151        freebsd-15.1-cloudinit-ufs.img
+    rocky10-base      rocky-10-base.img
+    rocky10-tool      rocky-10-tool.img
+    rocky9-base       rocky-9-base.img
+    rocky9-desktop    rocky-9-desktop.img
+    rocky9-tool       rocky-9-tool.img
+    ubuntu24-base     ubuntu-24.04-base.img
+    ubuntu24-desktop  ubuntu-24.04-desktop.img
+    ubuntu24-tool     ubuntu-24.04-tool.img
 EOF
 }
 
@@ -53,7 +59,7 @@ ENVIRONMENT:
     SEAWEEDFS_S3_ENDPOINT, SEAWEEDFS_S3_ACCESS_KEY, SEAWEEDFS_S3_SECRET_KEY
 
 EXAMPLES:
-    $0 ubuntu24
+    $0 ubuntu24-base
     $0 all
 EOF
     exit "$exit_status"

@@ -4,8 +4,7 @@ ssh_username = "debian"
 distro       = "debian"
 provision_scripts = [
   "scripts/debian/qemu-ga.sh",
+  "scripts/common/timezone.sh",
 ]
-cleanup_script = "scripts/debian/cleanup.sh"
-# The shared toolchain is Ubuntu/Rocky only: its HashiCorp step resolves an apt
-# suite from VERSION_CODENAME, and releases.hashicorp.com has no trixie suite.
+cleanup_script    = "scripts/debian/cleanup.sh"
 install_toolchain = false
