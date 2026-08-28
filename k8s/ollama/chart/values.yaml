@@ -13,7 +13,7 @@ gateway:
 image:
   # Self-contained ROCm 7.2.1 userspace with gfx1200; see README before bumps.
   repository: ollama/ollama
-  tag: 0.32.15-rocm
+  tag: 0.33.1-rocm
 
 resources:
   limits:
