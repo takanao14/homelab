@@ -19,10 +19,10 @@
     "**/__fixtures__/**",
     "**/templates/**"
   ],
-  "labels": ["dependencies", "renovate"],
+  "labels": ["dependencies", "renovate", "manual-review"],
   "osvVulnerabilityAlerts": true,
   "vulnerabilityAlerts": {
-    "labels": ["security"],
+    "labels": ["dependencies", "renovate", "manual-review", "security"],
     "assignees": ["takanao14"],
     "minimumReleaseAge": null
   },
@@ -39,20 +39,21 @@
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": true,
       "automergeType": "pr",
-      "platformAutomerge": false
+      "platformAutomerge": false,
+      "labels": ["dependencies", "renovate", "auto-merge-candidate"]
     },
     {
       "description": "Terraform provider updates must refresh committed .terraform.lock.hcl files across all Terragrunt stacks.",
       "matchManagers": ["terraform"],
       "automerge": false,
-      "addLabels": ["manual-review"]
+      "labels": ["dependencies", "renovate", "manual-review"]
     },
     {
       "description": "Cluster-foundation & stateful components on ArgoCD-synced paths: always review minor/major manually (merge = immediate deploy). openbao/seaweedfs are excluded because they live in ansible/ (manual apply, not deploy-on-merge).",
       "matchPackageNames": [
         "/cilium/",
         "k0sproject/k0s",
-        "openebs/openebs",
+        "openebs",
         "cert-manager",
         "argo-cd",
         "kube-prometheus-stack",
@@ -61,26 +62,26 @@
       ],
       "matchUpdateTypes": ["patch", "minor", "major"],
       "automerge": false,
-      "addLabels": ["infra-core", "manual-review"]
+      "labels": ["dependencies", "renovate", "manual-review", "infra-core"]
     },
     {
       "description": "GPU userspace driver (ROCm): review manually, tied to amdgpu-dkms.",
       "matchDatasources": ["custom.rocm"],
       "automerge": false,
-      "addLabels": ["manual-review"]
+      "labels": ["dependencies", "renovate", "manual-review"]
     },
     {
       "description": "These tools pin the CI lint/plan gates other automerges depend on; review manually so a breaking bump can't silently disable a gate.",
       "matchPackageNames": ["gruntwork-io/terragrunt", "ansible-lint", "hashicorp/packer"],
       "matchUpdateTypes": ["patch", "minor", "major"],
       "automerge": false,
-      "addLabels": ["infra-core", "manual-review"]
+      "labels": ["dependencies", "renovate", "manual-review", "infra-core"]
     },
     {
       "description": "powerdns-webui is vendored into the pdns-ui chart. Renovate only bumps the ref in REVISION; the vendored bytes must be refreshed by sync.sh, and vendor-sync CI fails until they are.",
       "matchPackageNames": ["james-stevens/powerdns-webui"],
       "automerge": false,
-      "addLabels": ["manual-review"],
+      "labels": ["dependencies", "renovate", "manual-review"],
       "prBodyNotes": [
         "Run `k8s/pdns-ui/chart/web/sync.sh` to refresh the vendored `index.html`, then re-verify the read-only behaviour documented in `k8s/pdns-ui/README.md`."
       ]
@@ -89,7 +90,7 @@
       "description": "Never auto-merge major updates.",
       "matchUpdateTypes": ["major"],
       "automerge": false,
-      "addLabels": ["major-update"]
+      "labels": ["dependencies", "renovate", "manual-review", "major-update"]
     },
     {
       "description": "Internal Forgejo registry is LAN-only and unreachable from Mend cloud; do not track its images (e.g. comfyui-docker:latest).",
@@ -115,6 +116,7 @@
       "extractVersion": "^(?<version>\\d+\\.\\d+(?:\\.\\d+)?)/$",
       "versioning": "semver-coerced",
       "automerge": false,
+      "labels": ["dependencies", "renovate", "manual-review"],
       "prBodyNotes": [
         "Update `rocm_udev_rules` to the matching package filename before merging.",
         "Validate the ROCm userspace update before explicitly upgrading `amdgpu-dkms`."
