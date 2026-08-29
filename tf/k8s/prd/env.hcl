@@ -14,5 +14,5 @@ locals {
     ssd          = true
     discard      = "on"
   }
-  os_image = "local:iso/ubuntu-24.04-custom.img"
+  os_image = "local:iso/ubuntu-24.04-base.img"
 }

@@ -28,7 +28,7 @@ inputs = {
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 40
-          file_id = "local:iso/rocky-9-xrdp.img"
+          file_id = "local:iso/rocky-9-desktop.img"
         })
       }
     })
