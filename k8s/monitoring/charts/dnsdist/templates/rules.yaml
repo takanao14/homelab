@@ -36,4 +36,29 @@ spec:
               {{ "{{ $labels.instance }}" }}. Recursive resolution through this
               frontend has stopped; internal zones still resolve through the
               pdns secondaries.
+
+        # Backend alerts can be absorbed by retrying another resolver. Escalate
+        # only when clients receive a sustained, material SERVFAIL response rate.
+        - alert: DnsdistClientServfailHigh
+          expr: >-
+            (
+              sum(rate(dnsdist_frontend_servfail{job={{ .Values.alerts.job | quote }}}[5m]))
+              /
+              clamp_min(sum(rate(dnsdist_responses{job={{ .Values.alerts.job | quote }}}[5m])), 0.001)
+              > {{ .Values.alerts.clientServfailRatioMax }}
+            )
+            and
+            sum(rate(dnsdist_frontend_servfail{job={{ .Values.alerts.job | quote }}}[5m]))
+            > {{ .Values.alerts.clientServfailRateMin }}
+          for: {{ .Values.alerts.clientServfailFor }}
+          labels:
+            severity: critical
+          annotations:
+            summary: "dnsdist is returning SERVFAIL to clients"
+            description: >-
+              {{ "{{ $value | humanizePercentage }}" }} of client responses are
+              SERVFAIL across the DNS frontends, with more than
+              {{ .Values.alerts.clientServfailRateMin }} failures per second.
+              Client resolution is materially degraded; inspect both resolver
+              backends and the DNS query logs.
 {{- end }}

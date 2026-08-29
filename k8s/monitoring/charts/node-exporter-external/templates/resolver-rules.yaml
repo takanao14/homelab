@@ -47,31 +47,26 @@ spec:
               The Knot Resolver textfile collector has not produced fresh
               metrics within the configured age threshold.
 
-        # Cache-drop leading indicator: healthy 90–99%, fault 36–43%. Aggregate
-        # workers per host and keep the rate window above the 15s write interval.
-        - alert: KnotResolverCacheHitRateLow
+        # Alert on the failure precursor directly. Cache hit rate is workload
+        # dependent and becomes noisy at the resolvers' low baseline QPS.
+        - alert: KnotResolverCacheNearlyFull
           expr: >-
-            sum by (instance) (rate(resolver_answer_cached_total[10m]))
-            / clamp_min(sum by (instance) (rate(resolver_answer_total[10m])), 0.001)
-            < {{ .Values.resolverAlerts.cacheHitRateMin }}
-          for: {{ .Values.resolverAlerts.cacheHitRateFor }}
+            100 * knot_resolver_cache_used_bytes
+            / knot_resolver_cache_size_bytes
+            > {{ .Values.resolverAlerts.cacheUsagePercentMax }}
+          for: {{ .Values.resolverAlerts.cacheUsageFor }}
           labels:
             severity: warning
           annotations:
-            summary: "Knot Resolver cache hit rate is low on {{ "{{ $labels.instance }}" }}"
+            summary: "Knot Resolver cache is nearly full on {{ "{{ $labels.instance }}" }}"
             description: >-
-              Hit rate is {{ "{{ $value | humanizePercentage }}" }}. Queries
-              that would have been served from cache are being resolved
-              recursively instead, which overloads upstream and ends in
-              SERVFAIL. First check cache usage
-              (knot_resolver_cache_used_bytes / cache_size_bytes) for "stash
-              failed" in the knot-resolver journal. If the cache is not near
-              full, this is more likely a short burst of uncached queries at
-              this resolver's low baseline QPS depressing the 10m-windowed
-              ratio; it should self-resolve within ~10m as the burst rolls
-              out of the window.
+              The LMDB cache on {{ "{{ $labels.instance }}" }} is
+              {{ "{{ $value | printf \"%.1f\" }}" }}% full. Increase the map
+              size or investigate cache growth before stash failures force
+              cold recursion and increase upstream load.
 
-        # Client-visible outcome, aggregated across workers per host.
+        # Backend-local outcome, aggregated across workers per host. dnsdist
+        # may retry another resolver before a client sees the failure.
         - alert: KnotResolverServfailHigh
           expr: >-
             sum by (instance) (rate(resolver_answer_rcode_servfail_total[10m]))
@@ -79,11 +74,12 @@ spec:
             > {{ .Values.resolverAlerts.servfailRatioMax }}
           for: {{ .Values.resolverAlerts.servfailRatioFor }}
           labels:
-            severity: critical
+            severity: warning
           annotations:
-            summary: "Knot Resolver is answering SERVFAIL on {{ "{{ $labels.instance }}" }}"
+            summary: "Knot Resolver backend is answering SERVFAIL on {{ "{{ $labels.instance }}" }}"
             description: >-
               {{ "{{ $value | humanizePercentage }}" }} of requests are
-              answered SERVFAIL. Resolution is failing for clients, not just
-              degraded.
+              answered SERVFAIL by this resolver. dnsdist may still absorb the
+              failure by retrying another backend; check the client-impact
+              alert before treating this as an outage.
 {{- end }}

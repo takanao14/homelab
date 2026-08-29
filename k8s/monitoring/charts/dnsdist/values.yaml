@@ -6,7 +6,12 @@ dnsFrontends: []
 
 alerts:
   enabled: false
+  job: scrapeConfig/monitoring/dnsdist-external
   # Redundancy permits two health-check rounds.
   backendDownFor: 2m
   # No resolver remains to absorb failure.
   noResolverFor: 1m
+  # Client-impact alert: exceed both the fleet-wide ratio and absolute rate.
+  clientServfailRatioMax: 0.2
+  clientServfailRateMin: 0.5
+  clientServfailFor: 5m

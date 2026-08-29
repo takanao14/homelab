@@ -10,9 +10,9 @@ resolverAlerts:
   metricsStaleFor: 5m
   # Four 15s collector intervals, allowing jitter while detecting failure quickly.
   metricsMaxAgeSeconds: 60
-  # Healthy 90–99%; fault measured 36–43%.
-  cacheHitRateMin: 0.6
-  cacheHitRateFor: 15m
+  # Alert before the LMDB map fills and cache stashes start failing.
+  cacheUsagePercentMax: 85
+  cacheUsageFor: 15m
   servfailRatioMax: 0.3
   servfailRatioFor: 5m
 
