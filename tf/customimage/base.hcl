@@ -23,8 +23,8 @@ inputs = {
       url          = "${local.base_url}/${local.images_common.locals.image_definitions[name].file_name}"
       file_name    = local.images_common.locals.image_definitions[name].file_name
       content_type = local.images_common.locals.image_definitions[name].content_type
-      # Detect same-URL rebuilds; pipefail prevents curl errors becoming empty checksums.
-      checksum            = run_cmd("--terragrunt-quiet", "sh", "-c", "set -o pipefail; curl -fsS '${local.base_url}/${local.images_common.locals.image_definitions[name].file_name}.sha256' | tr -d '[:space:]'")
+      # Detect same-URL rebuilds; trim the checksum without a shell-specific pipeline.
+      checksum            = trimspace(run_cmd("--terragrunt-quiet", "curl", "-fsS", "${local.base_url}/${local.images_common.locals.image_definitions[name].file_name}.sha256"))
       node_name           = local.node.locals.node_name
       datastore_id        = local.datastore_id
       overwrite_unmanaged = true
