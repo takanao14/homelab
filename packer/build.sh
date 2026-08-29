@@ -62,8 +62,11 @@ check_overwrite() {
                 exit 0
             fi
         fi
-        [ -f "$image_file" ] && rm -f "$image_file"
-        [ -d "$output_dir" ] && rm -rf "$output_dir"
+        # Unconditional: rm -f/-rf tolerate a missing path, and a guarding
+        # test that fails here would be the function's exit status and trip
+        # set -e (only one of the two usually exists).
+        rm -f "$image_file"
+        rm -rf "$output_dir"
     fi
 }
 
