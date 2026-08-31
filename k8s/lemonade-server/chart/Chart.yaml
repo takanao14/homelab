@@ -2,4 +2,4 @@ apiVersion: v2
 name: lemonade-server
 description: Lemonade LLM server with AMD GPU support
 type: application
-version: 0.1.0
+version: 0.2.0

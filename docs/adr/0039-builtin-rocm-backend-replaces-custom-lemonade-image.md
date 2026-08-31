@@ -80,9 +80,10 @@ The base image bump is not a tag change. Verified on the v11.8.1 probe:
   `llama` hides shipped content.
 - **The CLI split.** `lemonade` is now an HTTP client and the server is a
   separate `lemond` binary; `lemonade serve` no longer exists.
-- **`rocm_requires_cwsr_fix` is true for this backend.** The built-in path
-  applies a CWSR workaround that the `system` backend bypasses entirely, so
-  behaviour may differ from every number ADR-0029 recorded.
+- **`rocm_requires_cwsr_fix` does not affect this GPU.** Despite the generic
+  descriptor flag, v11.8.1 uses it only to reject `gfx1151` (Strix Halo) when
+  required kernel sysfs properties are absent. It does not alter the ROCm
+  process environment and does not apply to this node's `gfx1200` GPU.
 
 ## Consequences
 
@@ -114,9 +115,8 @@ The base image bump is not a tag change. Verified on the v11.8.1 probe:
   release whose central defect is fixed upstream, and keeps a private image on
   the serving path for no remaining reason.
 - **Bump only the custom image's base to v11.8.1** — retains the `system`
-  backend hack after its justification disappeared, and keeps bypassing the
-  CWSR fix that the built-in backend applies. It also still requires solving
-  every migration constraint above, so it buys nothing.
+  backend hack after its justification disappeared. It also still requires
+  solving every migration constraint above, so it buys nothing.
 - **Use the ROCm `stable` channel instead of `nightly`** — stable resolves to
   `lemonade-sdk/llama.cpp`, a different repository with different build tags,
   and would change the binaries currently serving MXFP4. Worth measuring later;

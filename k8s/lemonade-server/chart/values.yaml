@@ -1,9 +1,14 @@
 replicaCount: 0
 
-# Vulkan bypasses lemonade's gfx1200 ROCm detection bug (README).
 image:
   repository: ghcr.io/lemonade-sdk/lemonade-server
-  tag: v10.8.0
+  tag: v11.8.1
+
+config:
+  rocm_channel: nightly
+  llamacpp:
+    # lemonade-sdk/llamacpp-rocm release tag; update deliberately after validation.
+    rocm_bin: b1319
 
 resources:
   limits:
@@ -15,8 +20,6 @@ storage:
   storageClassName: openebs-hostpath
   huggingface:
     size: 90Gi
-  llama:
-    size: 5Gi
   recipe:
     size: 5Gi
 
@@ -38,13 +41,3 @@ gateway:
   timeouts:
     request: null
     backendRequest: null
-
-# ROCm serving/benchmark variant; safe shared PVCs rely on GPU-switch exclusion.
-rocm:
-  replicaCount: 0
-  hostname: lemonade-rocm.prd.butaco.net
-  image:
-    repository: forgejo.home.butaco.net/takanao/lemonade-docker
-    # llamacpp-rocm build number; b1319 bundles ROCm 10.1.0a20260822 (b1302 was
-    # 7.15). Bump only after the lemonade-docker CI has pushed the tag.
-    tag: b1319

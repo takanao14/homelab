@@ -18,49 +18,58 @@ spec:
         app: lemonade-server
         homelab/gpu-switchable: "true"
     spec:
+      securityContext:
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
       nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
       tolerations: {{ toYaml .Values.tolerations | nindent 8 }}
       initContainers:
-        # Idempotently pin Vulkan on the recipe PVC to bypass the gfx1200 ROCm bug.
-        - name: set-llamacpp-backend
+        # Seed writable sparse overrides; the chart remains the source of truth.
+        - name: initialize-config
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           command:
             - /bin/sh
             - -c
             - |
               set -eu
-              f=/root/.cache/lemonade/config.json
-              mkdir -p "$(dirname "$f")"
-              [ -f "$f" ] || echo '{}' > "$f"
-              tmp="$(mktemp)"
-              jq '.llamacpp.backend = "vulkan"' "$f" > "$tmp" && mv "$tmp" "$f"
+              cp /defaults/config.json /config/config.json
           volumeMounts:
-            - name: recipe
-              mountPath: /root/.cache/lemonade
+            - name: config-defaults
+              mountPath: /defaults
+              readOnly: true
+            - name: config
+              mountPath: /config
       containers:
         - name: lemonade-server
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          command:
+            - /opt/lemonade/lemond
+          args:
+            - --host
+            - 0.0.0.0
           ports:
             - containerPort: 13305
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: huggingface
-              mountPath: /root/.cache/huggingface
-            - name: llama
-              mountPath: /opt/lemonade/llama
+              mountPath: /opt/lemonade/.cache/huggingface
             - name: recipe
-              mountPath: /root/.cache/lemonade
+              mountPath: /opt/lemonade/.cache/lemonade
+            - name: config
+              mountPath: /opt/lemonade/.config/lemonade
           # The device plugin injects permitted nodes; do not shadow them with hostPath.
           securityContext:
             seccompProfile:
               type: Unconfined
       volumes:
+        - name: config-defaults
+          configMap:
+            name: lemonade-server-config
+        - name: config
+          emptyDir: {}
         - name: huggingface
           persistentVolumeClaim:
             claimName: lemonade-huggingface
-        - name: llama
-          persistentVolumeClaim:
-            claimName: lemonade-llama
         - name: recipe
           persistentVolumeClaim:
             claimName: lemonade-recipe

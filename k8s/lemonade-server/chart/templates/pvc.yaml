@@ -16,21 +16,6 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: lemonade-llama
-  namespace: {{ .Release.Namespace }}
-  labels:
-    homelab/gpu-switchable: "true"
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: {{ .Values.storage.storageClassName }}
-  resources:
-    requests:
-      storage: {{ .Values.storage.llama.size }}
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
   name: lemonade-recipe
   namespace: {{ .Release.Namespace }}
   labels:
