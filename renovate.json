@@ -34,6 +34,12 @@
       "minimumReleaseAge": null
     },
     {
+      "description": "Open WebUI regenerates its Helm index frequently and rewrites existing releases' created timestamps, so the global release-age check can never elapse.",
+      "matchDatasources": ["helm"],
+      "matchPackageNames": ["open-webui"],
+      "minimumReleaseAge": null
+    },
+    {
       "description": "Apps & auxiliary components in k8s/ansible/tf: auto-merge non-major updates. Renovate-native automerge (platformAutomerge=false) gates on lint without branch protection, so direct pushes to main stay unrestricted.",
       "matchFileNames": ["k8s/**", "ansible/**", "tf/**"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
