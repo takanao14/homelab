@@ -249,11 +249,13 @@
       ansible.builtin.package_facts:
         manager: auto
 
+    # ROCm 7.14+ replaced the generic `rocm` metapackage with the per-GPU
+    # rocm_package_name (e.g. amdrocm10.0-gfx1200); `rocm` no longer exists.
     - name: Report ROCm package version
       ansible.builtin.debug:
         msg: >-
           {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
-            'rocm',
+            rocm_package_name,
             inventory_hostname,
             rocm_version,
             rocm_audit_installed,
@@ -261,7 +263,7 @@
           ) }}
       vars:
         rocm_audit_installed: >-
-          {{ (ansible_facts.packages.get('rocm', [{'version': 'unknown'}]) | first).version }}
+          {{ (ansible_facts.packages.get(rocm_package_name, [{'version': 'unknown'}]) | first).version }}
         rocm_audit_matches: >-
           {{ rocm_audit_installed == rocm_version
              or rocm_audit_installed.startswith(rocm_version ~ '.')
@@ -269,11 +271,15 @@
              or rocm_audit_installed.startswith(rocm_version ~ '+')
              or rocm_audit_installed.startswith(rocm_version ~ '~') }}
 
+    # amdgpu-dkms carries the kernel-module version (e.g. 1:7.1.3.31500000-...),
+    # which cannot be compared with the rocm_amdgpu_version repo number. Its
+    # firmware package is installed in lockstep and versions as 1:31.50.0.0-...,
+    # so audit that instead. Strip the epoch before comparing.
     - name: Report AMD GPU driver package version
       ansible.builtin.debug:
         msg: >-
           {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
-            'amdgpu-dkms',
+            'amdgpu-dkms-firmware',
             inventory_hostname,
             rocm_amdgpu_version,
             amdgpu_audit_installed,
@@ -281,7 +287,8 @@
           ) }}
       vars:
         amdgpu_audit_installed: >-
-          {{ (ansible_facts.packages.get('amdgpu-dkms', [{'version': 'unknown'}]) | first).version }}
+          {{ (ansible_facts.packages.get('amdgpu-dkms-firmware', [{'version': 'unknown'}]) | first).version
+             | regex_replace('^[0-9]+:', '') }}
         amdgpu_audit_matches: >-
           {{ amdgpu_audit_installed == rocm_amdgpu_version
              or amdgpu_audit_installed.startswith(rocm_amdgpu_version ~ '.')
