@@ -41,7 +41,7 @@ if [ "${GRAFANA_MCP_DISABLE_WRITE:-true}" = "true" ]; then
 fi
 
 # renovate: datasource=docker depName=grafana/mcp-grafana
-grafana_mcp_version="${GRAFANA_MCP_VERSION:-1.2.0}"
+grafana_mcp_version="${GRAFANA_MCP_VERSION:-1.3.0}"
 
 exec "${runtime}" run -i --rm \
   -e GRAFANA_URL \
