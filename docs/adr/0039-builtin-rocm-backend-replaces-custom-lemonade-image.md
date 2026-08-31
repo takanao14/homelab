@@ -1,10 +1,10 @@
 # ADR-0039: Lemonade v11 serves gfx1200 through the built-in ROCm backend, retiring the custom image and the second Deployment
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-09-01
 - **Related:** [ADR-0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md) and
-  [ADR-0029](0029-rocm-serving-path-for-mxfp4-models.md) (both candidates to
-  supersede once this is Accepted), [ADR-0027](0027-gpu-workload-switching-web-ui.md),
+  [ADR-0029](0029-rocm-serving-path-for-mxfp4-models.md) (both superseded by
+  this decision), [ADR-0027](0027-gpu-workload-switching-web-ui.md),
   [ADR-0035](0035-opencode-connects-to-ollama.md),
   [`k8s/lemonade-server/README.md`](../../k8s/lemonade-server/README.md)
 
@@ -56,15 +56,34 @@ This retires ADR-0028's per-Deployment `config.json` pin. That mechanism existed
 so two Deployments sharing one recipe PVC could disagree about the backend;
 with one Deployment there is nothing to disagree. Server-wide ROCm settings
 (`rocm_channel=nightly`, `llamacpp.rocm_bin` pinned to a build number) still
-belong in `config.json` and can keep using the `jq` initContainer.
+belong in `config.json`. The chart renders a sparse file from Helm values and an
+initContainer copies it from a ConfigMap to a writable per-Pod config volume;
+the v11 image does not contain `jq`.
 
 ADR-0029's finding stands and is better served by this shape: backend choice
 depends on model, quantization, and concurrency, so it belongs on the model,
 not on a Deployment.
 
-This ADR stays **Proposed** until the built-in path is confirmed `usable`
-end-to-end — installed, loaded, and offloading — on this hardware. The probe
-established `installable`, not a working serving path.
+## Validation
+
+Accepted after the production rollout on 2026-09-01:
+
+- Argo CD synced the single `lemonade-server` Deployment at v11.8.1 and pruned
+  the custom ROCm Deployment, Service, HTTPRoute, and the empty
+  `lemonade-llama` PVC.
+- The effective configuration reported `rocm_channel=nightly` and
+  `llamacpp.rocm_bin=b1319`; the built-in installer persisted that backend in
+  the recipe PVC.
+- Qwen3-0.6B Q4_0 loaded with `llamacpp_backend=rocm`, reported `gpu` / `ready`,
+  and completed an OpenAI-compatible request through the service.
+- Prometheus `amd_gpu_used_vram` rose from 65 MiB to 901 MiB. The running child
+  process came from `bin/llamacpp/rocm-nightly`, and its `version.txt` was
+  `b1319`.
+- The Service, external HTTPRoute, and Argo CD Application were healthy. Both
+  persistent caches were writable by the v11 process running as uid 10001.
+- The `takanao/lemonade-docker` Forgejo repository was archived read-only after
+  the rollout. Registry tags `b1302` and `b1319` remain available only as cold
+  rollback artifacts and are not referenced by active configuration.
 
 ## Migration constraints
 

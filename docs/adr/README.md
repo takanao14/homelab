@@ -70,8 +70,8 @@ deleting it:
 | [0025](0025-run-meshcentral-outside-managed-cluster.md) | Run MeshCentral outside the managed Proxmox and Kubernetes fleet | Accepted |
 | [0026](0026-eso-over-helm-secrets-for-in-cluster-secrets.md) | Inject in-cluster secrets with ESO instead of the helm-secrets plugin | Accepted |
 | [0027](0027-gpu-workload-switching-web-ui.md) | GPU workload switching through an authenticated in-cluster web UI | Accepted |
-| [0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md) | lemonade-server runs on the Vulkan backend, not ROCm, on RDNA4 | Accepted |
-| [0029](0029-rocm-serving-path-for-mxfp4-models.md) | ROCm serves concurrent MXFP4 workloads; Vulkan remains faster for one request | Proposed |
+| [0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md) | lemonade-server runs on the Vulkan backend, not ROCm, on RDNA4 | Superseded by ADR-0039 |
+| [0029](0029-rocm-serving-path-for-mxfp4-models.md) | ROCm serves concurrent MXFP4 workloads; Vulkan remains faster for one request | Superseded by ADR-0039 |
 | [0030](0030-in-house-full-service-resolver.md) | Run Knot Resolver 6 in dedicated resolver containers | Accepted |
 | [0031](0031-browser-editor-on-relocated-toolbox-vm.md) | Run a browser editor on toolbox1, relocated to pve | Proposed |
 | [0032](0032-reboot-and-planned-shutdown-orchestration.md) | Orchestrate reboots and planned shutdowns from Ansible | Accepted |
@@ -82,4 +82,5 @@ deleting it:
 | [0036](0036-planned-shutdown-restores-via-argocd-selfheal.md) | Planned-shutdown restore relies on Argo CD self-heal, not a replica snapshot | Accepted |
 | [0037](0037-bake-shared-toolchain-into-server-images.md) | Bake the shared CLI toolchain into the server images from one Packer template | Accepted |
 | [0038](0038-image-role-suffixes-base-tool-desktop.md) | Name custom images by role — base, tool, desktop | Accepted |
-| [0039](0039-builtin-rocm-backend-replaces-custom-lemonade-image.md) | Lemonade v11 serves gfx1200 through the built-in ROCm backend, retiring the custom image and the second Deployment | Proposed |
+| [0039](0039-builtin-rocm-backend-replaces-custom-lemonade-image.md) | Lemonade v11 serves gfx1200 through the built-in ROCm backend, retiring the custom image and the second Deployment | Accepted |
+| [0040](0040-select-lemonade-backend-by-model-and-concurrency.md) | Select the Lemonade backend by model and concurrency | Accepted |

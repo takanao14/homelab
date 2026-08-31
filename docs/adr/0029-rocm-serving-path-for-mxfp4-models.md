@@ -1,6 +1,6 @@
 # ADR-0029: ROCm serves concurrent MXFP4 workloads; Vulkan remains faster for one request
 
-- **Status:** Proposed
+- **Status:** Superseded by [ADR-0039](0039-builtin-rocm-backend-replaces-custom-lemonade-image.md)
 - **Date:** 2026-07-30
 - **Related:** [ADR-0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md) (candidate to supersede in part),
   [ADR-0027](0027-gpu-workload-switching-web-ui.md),

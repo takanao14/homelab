@@ -1,6 +1,6 @@
 # ADR-0028: lemonade-server runs on the Vulkan backend, not ROCm, on RDNA4
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0039](0039-builtin-rocm-backend-replaces-custom-lemonade-image.md)
 - **Date:** 2026-07-27
 - **Related:** [ADR-0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md),
   [ADR-0027](0027-gpu-workload-switching-web-ui.md),
