@@ -65,11 +65,12 @@ release instead, after the new one is installed.
 | `rocm_gpu_target` | `gfx1200` | GPU-specific ROCm package suffix (gfx1200 = RX 9060 XT); see the [ROCm install docs](https://rocm.docs.amd.com/en/latest/install/rocm.html) for the marketing-name-to-gfx-target mapping |
 | `rocm_ubuntu_codename` | `noble` | Ubuntu codename used by the amdgpu and device-metrics-exporter repos |
 | `rocm_hwe_kernel` | `6.17.0-35-generic` | Specific AMD-supported HWE kernel to pin; the role installs this exact kernel and refuses to proceed unless it is the running kernel, because amdgpu-dkms fails to build on unsupported kernels (e.g. 7.x from the rolling HWE meta) |
-| `rocm_amdgpu_version` | `31.40` | AMD GPU driver repository version; managed independently from ROCm |
+| `rocm_amdgpu_version` | `31.50` | AMD GPU driver repository version; AMD pairs 31.50 with ROCm 10.0, so keep it in step with `rocm_version` |
 | `rocm_amdgpu_package_state` | `present` | Desired state of `amdgpu-dkms`; use `latest` only for an explicit driver upgrade |
 | `rocm_amdgpu_minimum_boot_free_mb` | `300` | Minimum `/boot` free space required for an explicit driver upgrade |
-| `rocm_udev_rules` | `amdgpu-insecure-instinct-udev-rules_31.40.0.0-2364437.24.04_all.deb` | GPU access udev rules package |
-| `rocm_device_metrics_exporter_version` | `1.5.0` | Device metrics exporter repository version |
+| `rocm_udev_rules` | `amdgpu-insecure-instinct-udev-rules_31.50.0.0-2390945.24.04_all.deb` | GPU access udev rules package |
+| `rocm_device_metrics_exporter_version` | `1.5.1` | Device metrics exporter repository version |
+| `rocm_device_metrics_exporter_package_state` | `latest` | Desired state of `amdgpu-exporter`; `present` would pin the installed package and make a version bump a no-op |
 
 The default upgrade path keeps the installed AMD GPU driver version unchanged.
 After validating a ROCm userspace upgrade, explicitly upgrade the driver with:

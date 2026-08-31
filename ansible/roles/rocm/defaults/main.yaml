@@ -15,11 +15,16 @@ rocm_ubuntu_codename: noble
 # Pin an AMD-supported kernel; rolling HWE can outrun DKMS support.
 # Update with AMD's matrix; the role asserts the running kernel.
 rocm_hwe_kernel: 6.17.0-35-generic
+# AMD pairs 31.50 with ROCm 10.0; keep this in step with rocm_version.
 # renovate: datasource=custom.amdgpu depName=amdgpu
-rocm_amdgpu_version: "31.40"
+rocm_amdgpu_version: "31.50"
 rocm_amdgpu_package_state: present
 rocm_amdgpu_minimum_boot_free_mb: 300
 # Updated manually with rocm_amdgpu_version.
-rocm_udev_rules: amdgpu-insecure-instinct-udev-rules_31.40.0.0-2364437.24.04_all.deb
+rocm_udev_rules: amdgpu-insecure-instinct-udev-rules_31.50.0.0-2390945.24.04_all.deb
 # renovate: datasource=custom.amd-device-metrics-exporter depName=device-metrics-exporter
-rocm_device_metrics_exporter_version: "1.5.0"
+rocm_device_metrics_exporter_version: "1.5.1"
+# Userspace metrics agent, not a kernel driver: follow the repo like ROCm itself,
+# otherwise bumping the version above only swaps the apt source and the installed
+# package stays behind.
+rocm_device_metrics_exporter_package_state: latest

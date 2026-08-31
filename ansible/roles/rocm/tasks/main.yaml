@@ -349,7 +349,7 @@
   become: true
   ansible.builtin.apt:
     name: amdgpu-exporter
-    state: present
+    state: "{{ rocm_device_metrics_exporter_package_state }}"
     update_cache: true
 
 - name: Enable and start gpuagent
