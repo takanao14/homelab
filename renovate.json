@@ -65,12 +65,6 @@
       "labels": ["dependencies", "renovate", "manual-review", "infra-core"]
     },
     {
-      "description": "GPU userspace driver (ROCm): review manually, tied to amdgpu-dkms.",
-      "matchDatasources": ["custom.rocm"],
-      "automerge": false,
-      "labels": ["dependencies", "renovate", "manual-review"]
-    },
-    {
       "description": "These tools pin the CI lint/plan gates other automerges depend on; review manually so a breaking bump can't silently disable a gate.",
       "matchPackageNames": ["gruntwork-io/terragrunt", "ansible-lint", "hashicorp/packer"],
       "matchUpdateTypes": ["patch", "minor", "major"],
@@ -103,16 +97,14 @@
       "groupName": "homepage updates"
     },
     {
-      "matchDatasources": [
-        "custom.rocm",
-        "custom.amd-device-metrics-exporter"
-      ],
+      "matchDatasources": ["custom.amd-device-metrics-exporter"],
       "extractVersion": "^(?<version>\\d+\\.\\d+(?:\\.\\d+)?)/$",
       "versioning": "semver-coerced"
     },
     {
+      "description": "AMD GPU driver repo versions; keep to the 31.x line so a new driver generation is never proposed automatically.",
       "matchDatasources": ["custom.amdgpu"],
-      "allowedVersions": "/^30\\.30\\./",
+      "allowedVersions": "/^31\\./",
       "extractVersion": "^(?<version>\\d+\\.\\d+(?:\\.\\d+)?)/$",
       "versioning": "semver-coerced",
       "automerge": false,
@@ -124,10 +116,6 @@
     }
   ],
   "customDatasources": {
-    "rocm": {
-      "defaultRegistryUrlTemplate": "https://repo.radeon.com/rocm/apt/",
-      "format": "html"
-    },
     "amdgpu": {
       "defaultRegistryUrlTemplate": "https://repo.radeon.com/amdgpu/",
       "format": "html"

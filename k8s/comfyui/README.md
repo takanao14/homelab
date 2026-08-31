@@ -33,7 +33,7 @@ The container uses unconfined seccomp. The device plugin injects permitted
 ### ROCm
 
 The custom image bakes PyTorch `rocm7.2` wheels and their userspace, independent
-of host ROCm 7.14 except for AMD's supported driver/userspace skew window.
+of host ROCm 10.0 except for AMD's supported driver/userspace skew window.
 
 `rocm7.2` supports gfx1200 natively; do not set `HSA_OVERRIDE_GFX_VERSION`.
 Rebuild only when changing the PyTorch/ROCm wheel line.

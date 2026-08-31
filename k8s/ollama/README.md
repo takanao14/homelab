@@ -37,12 +37,15 @@ does not load host `/opt/rocm`:
 
 | Layer | Managed in | Current |
 |-------|-----------|---------|
-| Kernel driver (KMD) | `ansible/roles/rocm` (`rocm_amdgpu_version`, `rocm_version`) | amdgpu 31.40 / ROCm 7.14 |
+| Kernel driver (KMD) | `ansible/roles/rocm` (`rocm_amdgpu_version`, `rocm_version`) | amdgpu 31.40 / ROCm 10.0 |
 | Container userspace (UMD) | `chart/values.yaml` (`image.tag`) | ROCm 7.2.1, bundled in ollama 0.32.x |
 | GPU target | host GPU / image build | `gfx1200` (RX 9060 XT) |
 
-AMD's supported skew window covers bundled ROCm 7.2.1 with the 7.14 host
-driver; Ollama currently ships no newer backend.
+AMD's supported skew window covers bundled ROCm 7.2.1 with the 10.0 host
+userspace; Ollama currently ships no newer backend. Verified working after the
+7.14 -> 10.0 host upgrade: the bundled runtime reports
+`library=ROCm compute=gfx1200 libdirs=ollama,rocm_v7_2` and offloads 100% to
+the GPU.
 
 gfx1200 is native; do not set `HSA_OVERRIDE_GFX_VERSION`.
 

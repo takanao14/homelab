@@ -1,7 +1,12 @@
 ---
 # ROCm 7.14+ uses a rolling stable repo; update manually until Renovate supports it.
-rocm_version: "7.14.0"
+rocm_version: "10.0.0"
 rocm_package_state: latest
+# Major.minor of the release to remove after installing rocm_version. ROCm 7.13+
+# installs into versioned /opt/rocm/core-<major.minor> directories and declares no
+# Conflicts, so a previous release otherwise stays installed alongside the new one.
+# Set to an empty string once no older release remains on any host.
+rocm_previous_version: "7.14"
 # GPU package suffix (for example gfx1200); see ROCm install docs.
 rocm_gpu_target: gfx1200
 # ROCm apt package name for this host, e.g. amdrocm7.14-gfx1200.

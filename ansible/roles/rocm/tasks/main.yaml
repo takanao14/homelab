@@ -90,7 +90,7 @@
 - name: Download ROCm 7.14+ apt repository GPG key
   become: true
   ansible.builtin.get_url:
-    url: https://repo.amd.com/rocm/packages-multi-arch/gpg/rocm.gpg
+    url: https://stable.repo.amd.com/rocm/gpg/packages.gpg
     dest: /tmp/amdrocm.gpg.key
     mode: '0644'
   register: rocm_amd_gpg_key_download
@@ -142,7 +142,7 @@
     types:
       - deb
     uris:
-      - https://repo.amd.com/rocm/packages-multi-arch/ubuntu2404
+      - https://stable.repo.amd.com/rocm/core/packages/ubuntu2404
     suites:
       - stable
     components:
@@ -279,7 +279,19 @@
   async: 3600
   poll: 30
 
-# Discover ROCm 7.14 component library directories instead of hardcoding them.
+# Run after the install so a failed upgrade leaves the previous release serving
+# the GPU. update-alternatives repoints /opt/rocm/{core,bin,lib,...} to the higher
+# version on its own, but the discovery below globs the real core-* directories
+# and would otherwise write both releases' lib paths into ld.so.conf.
+- name: Remove the previous ROCm release
+  become: true
+  ansible.builtin.apt:
+    name: "amdrocm*{{ rocm_previous_version }}*"
+    state: absent
+    purge: true
+  when: rocm_previous_version | length > 0
+
+# Discover component library directories instead of hardcoding them.
 - name: Discover ROCm component library directories
   ansible.builtin.command:
     cmd: find /opt/rocm -mindepth 2 -maxdepth 2 -type d -name lib
