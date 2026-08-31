@@ -8,7 +8,9 @@ Installs and configures `prometheus-node-exporter` on Debian-based systems.
 - Installs `lm-sensors` on x86_64 for temperature metric collection, unless
   `node_exporter_install_lm_sensors` is false.
 - Configures command-line arguments via `/etc/default/prometheus-node-exporter`.
-- Sets up the textfile collector directory (`/var/lib/prometheus/node-exporter`).
+- Sets up the textfile collector directory (`/var/lib/prometheus/node-exporter`)
+  with a shared writer group and sticky group-writable mode. Only explicitly
+  selected service users join the writer group.
 - Supports service-specific collector flags through `node_exporter_extra_args`.
 - On ARM hosts (Raspberry Pi), installs a throttling metrics script and a cron job to collect it.
 - Masks `openipmi.service`, which APT pulls in behind the exporter (see below).
@@ -60,6 +62,17 @@ the hypervisor.
 Verify with data before adding a flag: `node_scrape_collector_success == 0`
 identifies the failing ones, and comparing a guest's series against its Proxmox
 host proves duplication.
+
+### Textfile collector
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `node_exporter_textfile_group` | `node-exporter-textfile` | Shared group for selected textfile writers |
+| `node_exporter_textfile_dir_mode` | `1775` | Sticky group-writable textfile directory mode |
+
+The node_exporter role owns the directory's group and mode. Service roles add
+only their dedicated writer users to `node_exporter_textfile_group`; they must
+not change the shared directory itself.
 
 ### Package installation
 

@@ -130,6 +130,10 @@ all:
       hosts:
         rpi4: null
 
+    dhcp_lease_observer:
+      hosts:
+        rpi4: null
+
     # Child order is the serial upgrade order in ops-package_upgrade.yaml.
     dns:
       children:
@@ -321,8 +325,9 @@ all:
     # All Vector agents; targeted by common-vector.yaml.
     vector:
       children:
-        vector_lxc: {}
         dhcp: {}
+        dhcp_lease_observer: {}
+        vector_lxc: {}
 
     # Rsyslog forwarders targeted by common-rsyslog.yaml.
     rsyslog:
@@ -337,6 +342,7 @@ all:
         authentik: {}
         caddy: {}
         dhcp: {}
+        dhcp_lease_observer: {}
         dns_auth: {}
         dns_resolver: {}
         dnsdist: {}

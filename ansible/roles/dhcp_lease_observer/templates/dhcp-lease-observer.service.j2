@@ -1,0 +1,41 @@
+[Unit]
+Description=Observe IX2106 DHCP leases
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User={{ dhcp_lease_observer_user }}
+Group={{ dhcp_lease_observer_group }}
+SupplementaryGroups={{ dhcp_lease_observer_textfile_group }}
+LoadCredential=ix2106-password:{{ dhcp_lease_observer_password_path }}
+LoadCredential=identity-key:{{ dhcp_lease_observer_identity_key_path }}
+ExecStart={{ dhcp_lease_observer_binary_path }} --config {{ dhcp_lease_observer_config_path }} --credentials-dir %d
+TimeoutStartSec={{ dhcp_lease_observer_service_timeout_seconds }}s
+UMask=0022
+
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+CapabilityBoundingSet=
+AmbientCapabilities=
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RemoveIPC=true
+RestrictAddressFamilies=AF_INET
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+SystemCallArchitectures=native
+ReadWritePaths={{ dhcp_lease_observer_state_dir }} {{ node_exporter_textfile_dir }}
+
+StandardOutput=journal
+StandardError=journal

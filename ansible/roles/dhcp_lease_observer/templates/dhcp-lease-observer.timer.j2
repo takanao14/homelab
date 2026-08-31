@@ -1,0 +1,12 @@
+[Unit]
+Description=Collect IX2106 DHCP leases
+
+[Timer]
+OnBootSec={{ dhcp_lease_observer_timer_on_boot_sec }}
+OnUnitInactiveSec={{ dhcp_lease_observer_timer_on_unit_inactive_sec }}
+RandomizedDelaySec={{ dhcp_lease_observer_timer_randomized_delay_sec }}
+AccuracySec={{ dhcp_lease_observer_timer_accuracy_sec }}
+Unit=dhcp-lease-observer.service
+
+[Install]
+WantedBy=timers.target

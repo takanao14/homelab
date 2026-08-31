@@ -1,0 +1,18 @@
+dhcp_lease_observer_ix2106_password: ENC[AES256_GCM,data:IxOaAYypV/pwBUBBVlo=,iv:OLlWHHJQ+pfpkPFNxMKBd8ERWD5sjpxkVCxrqK3DAEM=,tag:g185EWPwz8MBIbyT/8vmTQ==,type:str]
+dhcp_lease_observer_identity_key: ENC[AES256_GCM,data:QccfiwSr5D09RP2RndYvoQOKhkYSFmGzzObtQPrZ6xJEmyF/OsBBRwLpacnFeBC/2G2EX11I6XlT4sm8Ez/GJw==,iv:mL128ugrhC7PbfG9FkdtGrfxDUiyh/sWxayH8LcjB7E=,tag:DjgXS0Ky6sBUb25Y+nBF+A==,type:str]
+dhcp_lease_observer_ix2106_host_key_sha256: ENC[AES256_GCM,data:DgEylA/brdldJcm/p1aNfE8d6IhJbYEqoTwzeZEXhfbWvtoN37Gi6Ycu6A7Df19VbGM=,iv:sxh4IumwdjzJY7Q5hssE6qqrMfT2UD6uF2Tc9sWU8ro=,tag:kw32lbg7vfbVq9ZcKLIKlg==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSA5b3d6ZmxaWTQ4SG1RcHVa
+            a0J4WW9xS0RCOFdkNktkNWduNklUK2ZXajJZCkxRZVl6WEVFS21VODlmTk8ydGxD
+            VkRwYkF4QzZjVWNsY3J2bldlTGFtbHMKLS0tIGdFS2pER1Z1QldmOWlyQWFKMUY1
+            bkJNZXB6NXdqcjlkdW1GUXp5Q1JrRFUKLoUs7uqeb32ZxpHNmfqy1qyUYo9zxCml
+            6EUTW+sy843CoIBWuKv5iGE1UZI+cWyIG6ZtCF4+26cNA8TQJCo+iw==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
+    lastmodified: "2026-08-31T08:08:05Z"
+    mac: ENC[AES256_GCM,data:s2caMtHJF0fWjNRplWe9Nz0eKF6p0mGQ+L4SOjadzbRiNNvwdipm+tx8gYLlXLBcA584HZ1Ex5vtVEUCgBVqoggXXpWScpLnv4MKV5GGMsSOzcMeep31iD8ZvS3lH8NdaE/8xKmWCobqZCF1Z2VTBwpMmKo5bPcweye358u6fDE=,iv:6Be1rvjw6Xuv8MNwDImYKuZpYDY3qJK8E17piVlgG2k=,tag:gM4CskEvtwkcJjt9JDMpdg==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.13.3

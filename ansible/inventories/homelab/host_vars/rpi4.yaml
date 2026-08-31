@@ -4,6 +4,7 @@ vector_config:
     journald:
       type: journald
       include_units:
+        - dhcp-lease-observer
         - kea-dhcp4-server
         - meshcentral
         - ssh
@@ -14,8 +15,18 @@ vector_config:
       inputs:
         - journald
       source: |
-        .host = get_hostname!()
-        .unit = string(._SYSTEMD_UNIT) ?? string(.SYSLOG_IDENTIFIER) ?? "unknown"
+        observer_host = get_hostname!()
+        observer_unit = string(._SYSTEMD_UNIT) ?? string(.SYSLOG_IDENTIFIER) ?? "unknown"
+        .host = observer_host
+        .unit = observer_unit
+        if observer_unit == "dhcp-lease-observer.service" {
+          parsed, parse_error = parse_json(string(.message) ?? "")
+          if parse_error == null && is_object(parsed) {
+            . = merge(., object!(parsed))
+            .host = observer_host
+            .unit = observer_unit
+          }
+        }
   sinks:
     loki:
       type: loki

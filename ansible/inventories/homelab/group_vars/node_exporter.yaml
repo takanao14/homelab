@@ -1,4 +1,9 @@
 ---
+# Shared by node_exporter and explicitly authorized textfile writers.
+node_exporter_textfile_dir: /var/lib/prometheus/node-exporter
+node_exporter_textfile_group: node-exporter-textfile
+node_exporter_textfile_dir_mode: "1775"
+
 # Cardinality trimming: metrics no dashboard or alert reads.
 node_exporter_base_args:
     - --no-collector.schedstat

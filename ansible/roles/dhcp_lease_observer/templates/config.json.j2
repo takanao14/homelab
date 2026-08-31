@@ -1,0 +1,18 @@
+{{ {
+  "schema_version": 1,
+  "source_instance": dhcp_lease_observer_source_instance,
+  "scope": dhcp_lease_observer_scope,
+  "collection_timeout_seconds": dhcp_lease_observer_collection_timeout_seconds,
+  "ix2106": {
+    "address": dhcp_lease_observer_ix2106_address,
+    "username": dhcp_lease_observer_ix2106_username,
+    "host_key_sha256": dhcp_lease_observer_ix2106_host_key_sha256,
+    "connect_timeout_seconds": dhcp_lease_observer_connect_timeout_seconds,
+    "handshake_timeout_seconds": dhcp_lease_observer_handshake_timeout_seconds,
+    "auth_timeout_seconds": dhcp_lease_observer_auth_timeout_seconds,
+    "command_timeout_seconds": dhcp_lease_observer_command_timeout_seconds,
+    "max_frame_bytes": dhcp_lease_observer_max_frame_bytes
+  },
+  "state_path": dhcp_lease_observer_state_path,
+  "prometheus_path": dhcp_lease_observer_prometheus_path
+} | to_nice_json }}

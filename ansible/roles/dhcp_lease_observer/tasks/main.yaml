@@ -1,0 +1,296 @@
+---
+- name: Validate DHCP lease observer deployment inputs
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['architecture'] == "aarch64"
+      - dhcp_lease_observer_version is match('^v[0-9]+\.[0-9]+\.[0-9]+$')
+      - >-
+        dhcp_lease_observer_archive_checksum is
+        match('^sha256:[0-9a-f]{64}$')
+      - dhcp_lease_observer_service_timeout_seconds | int > dhcp_lease_observer_collection_timeout_seconds | int
+      - node_exporter_textfile_dir is defined
+      - node_exporter_textfile_group is defined
+    quiet: true
+
+- name: Validate DHCP lease observer secrets
+  ansible.builtin.assert:
+    that:
+      - dhcp_lease_observer_ix2106_password | default('') | length > 0
+      - dhcp_lease_observer_identity_key | default('') | length >= 32
+      - >-
+        dhcp_lease_observer_ix2106_host_key_sha256 | default('') is
+        match('^SHA256:[A-Za-z0-9+/]{43}$')
+    quiet: true
+  no_log: true
+
+- name: Check DHCP lease observer deployment prerequisites
+  ansible.builtin.command:
+    argv: "{{ item.argv }}"
+  loop:
+    - name: textfile writer group
+      argv:
+        - /usr/bin/getent
+        - group
+        - "{{ dhcp_lease_observer_textfile_group }}"
+    - name: service group
+      argv:
+        - /usr/bin/getent
+        - group
+        - "{{ dhcp_lease_observer_group }}"
+    - name: service user
+      argv:
+        - /usr/bin/getent
+        - passwd
+        - "{{ dhcp_lease_observer_user }}"
+    - name: cache directory
+      argv:
+        - /usr/bin/test
+        - -d
+        - "{{ dhcp_lease_observer_cache_dir }}"
+    - name: release archive
+      argv:
+        - /usr/bin/test
+        - -f
+        - "{{ dhcp_lease_observer_archive_path }}"
+    - name: release binary
+      argv:
+        - /usr/bin/test
+        - -x
+        - "{{ dhcp_lease_observer_install_dir }}/dhcp-lease-observer"
+  loop_control:
+    label: "{{ item.name }}"
+  register: dhcp_lease_observer_prerequisites
+  check_mode: false
+  changed_when: false
+  failed_when: false
+
+- name: Record DHCP lease observer prerequisite state
+  ansible.builtin.set_fact:
+    dhcp_lease_observer_textfile_group_exists: >-
+      {{ dhcp_lease_observer_prerequisites.results[0].rc == 0 }}
+    dhcp_lease_observer_group_exists: >-
+      {{ dhcp_lease_observer_prerequisites.results[1].rc == 0 }}
+    dhcp_lease_observer_user_exists: >-
+      {{ dhcp_lease_observer_prerequisites.results[2].rc == 0 }}
+    dhcp_lease_observer_cache_dir_exists: >-
+      {{ dhcp_lease_observer_prerequisites.results[3].rc == 0 }}
+    dhcp_lease_observer_archive_exists: >-
+      {{ dhcp_lease_observer_prerequisites.results[4].rc == 0 }}
+    dhcp_lease_observer_release_exists: >-
+      {{ dhcp_lease_observer_prerequisites.results[5].rc == 0 }}
+
+- name: Create DHCP lease observer group
+  become: true
+  ansible.builtin.group:
+    name: "{{ dhcp_lease_observer_group }}"
+    system: true
+    state: present
+
+- name: Create DHCP lease observer user
+  become: true
+  ansible.builtin.user:
+    name: "{{ dhcp_lease_observer_user }}"
+    group: "{{ dhcp_lease_observer_group }}"
+    groups:
+      - "{{ dhcp_lease_observer_textfile_group }}"
+    append: true
+    create_home: false
+    home: "{{ dhcp_lease_observer_state_dir }}"
+    shell: /usr/sbin/nologin
+    system: true
+    state: present
+  when: >-
+    not ansible_check_mode or
+    (dhcp_lease_observer_textfile_group_exists and
+    dhcp_lease_observer_group_exists)
+
+- name: Create root-owned DHCP lease observer directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ dhcp_lease_observer_install_root }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ dhcp_lease_observer_install_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ dhcp_lease_observer_cache_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+
+- name: Create service-owned DHCP lease observer directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ dhcp_lease_observer_config_dir }}"
+      owner: root
+      group: "{{ dhcp_lease_observer_group }}"
+      mode: "0750"
+    - path: "{{ dhcp_lease_observer_credentials_dir }}"
+      owner: root
+      group: root
+      mode: "0700"
+    - path: "{{ dhcp_lease_observer_state_dir }}"
+      owner: "{{ dhcp_lease_observer_user }}"
+      group: "{{ dhcp_lease_observer_group }}"
+      mode: "0700"
+  when: not ansible_check_mode or dhcp_lease_observer_user_exists
+
+- name: Report deferred DHCP lease observer check-mode tasks
+  ansible.builtin.debug:
+    msg: >-
+      Service-user-owned paths and artifact-dependent checks are deferred in
+      check mode until the node_exporter writer group and observer user exist.
+  when:
+    - ansible_check_mode
+    - >-
+      not dhcp_lease_observer_textfile_group_exists or
+      not dhcp_lease_observer_group_exists or
+      not dhcp_lease_observer_user_exists
+
+- name: Download pinned DHCP lease observer archive
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ dhcp_lease_observer_archive_url }}"
+    dest: "{{ dhcp_lease_observer_archive_path }}"
+    checksum: "{{ dhcp_lease_observer_archive_checksum }}"
+    owner: root
+    group: root
+    mode: "0644"
+    timeout: 60
+  retries: 3
+  delay: 5
+  when: not ansible_check_mode or dhcp_lease_observer_cache_dir_exists
+
+- name: Extract pinned DHCP lease observer archive
+  become: true
+  ansible.builtin.unarchive:
+    src: "{{ dhcp_lease_observer_archive_path }}"
+    dest: "{{ dhcp_lease_observer_install_dir }}"
+    remote_src: true
+    include:
+      - LICENSE
+      - dhcp-lease-observer
+    creates: "{{ dhcp_lease_observer_install_dir }}/dhcp-lease-observer"
+  when: not ansible_check_mode or dhcp_lease_observer_archive_exists
+
+- name: Set DHCP lease observer release file permissions
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ dhcp_lease_observer_install_dir }}/LICENSE"
+      mode: "0644"
+    - path: "{{ dhcp_lease_observer_install_dir }}/dhcp-lease-observer"
+      mode: "0755"
+  when: not ansible_check_mode or dhcp_lease_observer_release_exists
+
+- name: Link active DHCP lease observer binary
+  become: true
+  ansible.builtin.file:
+    src: "{{ dhcp_lease_observer_install_dir }}/dhcp-lease-observer"
+    dest: "{{ dhcp_lease_observer_binary_path }}"
+    owner: root
+    group: root
+    state: link
+    force: true
+  when: not ansible_check_mode or dhcp_lease_observer_release_exists
+
+- name: Install DHCP lease observer credentials
+  become: true
+  ansible.builtin.copy:
+    dest: "{{ item.path }}"
+    content: "{{ item.value }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop:
+    - path: "{{ dhcp_lease_observer_password_path }}"
+      value: "{{ dhcp_lease_observer_ix2106_password }}"
+    - path: "{{ dhcp_lease_observer_identity_key_path }}"
+      value: "{{ dhcp_lease_observer_identity_key }}"
+  no_log: true
+  when: not ansible_check_mode or dhcp_lease_observer_user_exists
+
+- name: Install DHCP lease observer configuration
+  become: true
+  ansible.builtin.template:
+    src: config.json.j2
+    dest: "{{ dhcp_lease_observer_config_path }}"
+    owner: root
+    group: "{{ dhcp_lease_observer_group }}"
+    mode: "0640"
+  no_log: true
+  when: not ansible_check_mode or dhcp_lease_observer_user_exists
+
+- name: Verify installed DHCP lease observer version
+  become: true
+  ansible.builtin.command:
+    argv:
+      - "{{ dhcp_lease_observer_binary_path }}"
+      - --version
+  register: dhcp_lease_observer_version_check
+  changed_when: false
+  failed_when: >-
+    dhcp_lease_observer_version_check.rc != 0 or
+    dhcp_lease_observer_version_check.stdout != dhcp_lease_observer_version
+  when: not ansible_check_mode
+
+- name: Validate installed DHCP lease observer configuration
+  become: true
+  become_user: "{{ dhcp_lease_observer_user }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ dhcp_lease_observer_binary_path }}"
+      - --config
+      - "{{ dhcp_lease_observer_config_path }}"
+      - --check-config
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Install DHCP lease observer systemd service
+  become: true
+  ansible.builtin.template:
+    src: dhcp-lease-observer.service.j2
+    dest: /etc/systemd/system/dhcp-lease-observer.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Install DHCP lease observer systemd timer
+  become: true
+  ansible.builtin.template:
+    src: dhcp-lease-observer.timer.j2
+    dest: /etc/systemd/system/dhcp-lease-observer.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Apply DHCP lease observer systemd unit changes
+  ansible.builtin.meta: flush_handlers
+
+- name: Configure DHCP lease observer timer rollout state
+  become: true
+  ansible.builtin.systemd_service:
+    name: dhcp-lease-observer.timer
+    enabled: "{{ dhcp_lease_observer_timer_enabled | bool }}"
+    state: "{{ 'started' if dhcp_lease_observer_timer_enabled | bool else 'stopped' }}"
+  when: not ansible_check_mode

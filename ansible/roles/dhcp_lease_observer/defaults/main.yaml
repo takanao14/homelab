@@ -1,0 +1,50 @@
+---
+dhcp_lease_observer_user: dhcp-lease-observer
+dhcp_lease_observer_group: dhcp-lease-observer
+dhcp_lease_observer_textfile_group: "{{ node_exporter_textfile_group }}"
+
+dhcp_lease_observer_repository: takanao14/dhcp-lease-observer
+dhcp_lease_observer_release_base_url: >-
+  https://github.com/{{ dhcp_lease_observer_repository }}/releases/download
+dhcp_lease_observer_archive_name: >-
+  dhcp-lease-observer_{{ dhcp_lease_observer_version }}_linux_arm64.tar.gz
+dhcp_lease_observer_archive_url: >-
+  {{ dhcp_lease_observer_release_base_url }}/{{ dhcp_lease_observer_version
+  }}/{{ dhcp_lease_observer_archive_name }}
+
+dhcp_lease_observer_install_root: /opt/dhcp-lease-observer
+dhcp_lease_observer_install_dir: >-
+  {{ dhcp_lease_observer_install_root }}/{{ dhcp_lease_observer_version }}
+dhcp_lease_observer_binary_path: /usr/local/bin/dhcp-lease-observer
+dhcp_lease_observer_cache_dir: /var/cache/dhcp-lease-observer
+dhcp_lease_observer_archive_path: >-
+  {{ dhcp_lease_observer_cache_dir }}/{{ dhcp_lease_observer_archive_name }}
+
+dhcp_lease_observer_config_dir: /etc/dhcp-lease-observer
+dhcp_lease_observer_config_path: >-
+  {{ dhcp_lease_observer_config_dir }}/config.json
+dhcp_lease_observer_credentials_dir: >-
+  {{ dhcp_lease_observer_config_dir }}/credentials
+dhcp_lease_observer_password_path: >-
+  {{ dhcp_lease_observer_credentials_dir }}/ix2106-password
+dhcp_lease_observer_identity_key_path: >-
+  {{ dhcp_lease_observer_credentials_dir }}/identity-key
+dhcp_lease_observer_state_dir: /var/lib/dhcp-lease-observer
+dhcp_lease_observer_state_path: >-
+  {{ dhcp_lease_observer_state_dir }}/last-good.json
+dhcp_lease_observer_prometheus_path: >-
+  {{ node_exporter_textfile_dir }}/dhcp_lease_observer.prom
+
+dhcp_lease_observer_collection_timeout_seconds: 30
+dhcp_lease_observer_connect_timeout_seconds: 5
+dhcp_lease_observer_handshake_timeout_seconds: 10
+dhcp_lease_observer_auth_timeout_seconds: 5
+dhcp_lease_observer_command_timeout_seconds: 10
+dhcp_lease_observer_max_frame_bytes: 1048576
+dhcp_lease_observer_service_timeout_seconds: 45
+
+dhcp_lease_observer_timer_enabled: false
+dhcp_lease_observer_timer_on_boot_sec: 1min
+dhcp_lease_observer_timer_on_unit_inactive_sec: 1min
+dhcp_lease_observer_timer_randomized_delay_sec: 5s
+dhcp_lease_observer_timer_accuracy_sec: 1s

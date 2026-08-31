@@ -27,6 +27,8 @@ ansible/
 │       │   ├── code_server.yaml
 │       │   ├── code_server.sops.yaml
 │       │   ├── dhcp.sops.yaml
+│       │   ├── dhcp_lease_observer.yaml
+│       │   ├── dhcp_lease_observer.sops.yaml
 │       │   ├── forgejo.yaml
 │       │   ├── forgejo.sops.yaml
 │       │   ├── forgejo_runner.sops.yaml
@@ -53,6 +55,7 @@ ansible/
 │   ├── knot-resolver.yaml
 │   ├── caddy.yaml
 │   ├── dhcp.yaml
+│   ├── dhcp_lease_observer.yaml
 │   ├── forgejo.yaml
 │   ├── forgejo_runner.yaml
 │   ├── netbox.yaml
@@ -93,6 +96,7 @@ ansible/
     ├── caddy/
     ├── vector/
     ├── kea/
+    ├── dhcp_lease_observer/
     ├── forgejo/
     ├── forgejo_runner/
     ├── netbox/
@@ -231,6 +235,10 @@ ansible-playbook playbooks/knot-resolver.yaml
 
 # DHCP server
 ansible-playbook playbooks/dhcp.yaml
+
+# IX2106 DHCP lease observer (timer remains disabled for the first rollout)
+ansible-playbook playbooks/common-node_exporter.yaml --limit rpi4
+ansible-playbook playbooks/dhcp_lease_observer.yaml --limit rpi4
 
 # Log collector (log1 build)
 ansible-playbook playbooks/log_collector.yaml
@@ -434,6 +442,7 @@ the decision behind the rebuild registration flow.
 | `dnsdist.yaml` | `dnsdist` | system |
 | `knot-resolver.yaml` | `dns_resolver` | system |
 | `dhcp.yaml` | `dhcp` | system |
+| `dhcp_lease_observer.yaml` | `dhcp_lease_observer` | system |
 | `caddy.yaml` | `caddy` | system |
 | `log_collector.yaml` | `log_collector` | system |
 | `blackbox_exporter.yaml` | `blackbox_exporter` | system |

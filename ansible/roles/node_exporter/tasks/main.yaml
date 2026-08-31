@@ -93,14 +93,43 @@
     mode: '0644'
   notify: Restart node_exporter
 
+- name: Check whether textfile collector writer group exists
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/getent
+      - group
+      - "{{ node_exporter_textfile_group }}"
+  register: node_exporter_textfile_group_status
+  check_mode: false
+  changed_when: false
+  failed_when: false
+
+- name: Create textfile collector writer group
+  become: true
+  ansible.builtin.group:
+    name: "{{ node_exporter_textfile_group }}"
+    system: true
+    state: present
+
 - name: Ensure textfile collector directory exists
   become: true
   ansible.builtin.file:
     path: "{{ node_exporter_textfile_dir }}"
     state: directory
     owner: root
-    group: root
-    mode: '0755'
+    group: "{{ node_exporter_textfile_group }}"
+    mode: "{{ node_exporter_textfile_dir_mode }}"
+  when: not ansible_check_mode or node_exporter_textfile_group_status.rc == 0
+
+- name: Report deferred textfile collector directory ownership
+  ansible.builtin.debug:
+    msg: >-
+      The {{ node_exporter_textfile_group }} group is pending creation in check
+      mode. Directory ownership validation is deferred until the first normal
+      node_exporter run.
+  when:
+    - ansible_check_mode
+    - node_exporter_textfile_group_status.rc != 0
 
 # Remove obsolete unscripted textfile path from the previous role layout.
 - name: Remove the superseded textfile collector directory

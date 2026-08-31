@@ -1,6 +1,6 @@
 # ADR-0035: Observe IX2106 DHCP leases from rpi4
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-08-16
 - **Related:** [ADR-0001](0001-service-oriented-ansible-playbook-organization.md),
   [ADR-0002](0002-dhcp-outside-proxmox-cluster-nodes.md),
@@ -55,8 +55,6 @@ matched the key used by the polling connection. An anonymized lease and ARP
 fixture set was generated without writing the raw response to disk.
 
 ## Decision
-
-*Proposed, not yet adopted.*
 
 Run `dhcp-lease-observer` on rpi4 as a systemd oneshot service invoked by a
 timer. Poll the IX2106 over SSH with a dedicated Monitor user and a fixed command

@@ -1,0 +1,13 @@
+---
+# renovate: datasource=github-releases depName=takanao14/dhcp-lease-observer
+dhcp_lease_observer_version: "v0.1.0"
+dhcp_lease_observer_archive_checksum: >-
+  sha256:96bd8afb34c22979fb7e04c9b9d586c2b66631c8fd026e20e0dadd22dee50974
+
+dhcp_lease_observer_source_instance: bgw1
+dhcp_lease_observer_scope: lan
+dhcp_lease_observer_ix2106_address: "192.168.10.1:22"
+dhcp_lease_observer_ix2106_username: dhcp-observer
+
+# Keep the first rollout inert until the artifact and one manual poll pass.
+dhcp_lease_observer_timer_enabled: false
