@@ -36,9 +36,18 @@ release instead, after the new one is installed.
 - Installs prerequisites (`wget`, `python3-debian`, `libatomic1`, `libquadmath0`).
 - Purges any legacy `rocm`/`rocm-core` packages from the old repo.radeon.com
   ROCm repo, since they are not upgraded in place by the new packages.
+- Purges `amdgpu-install` first, before any task refreshes the apt cache. It
+  owns `/etc/apt/sources.list.d/{amdgpu,rocm}.list` as conffiles, which
+  duplicate the amdgpu repository this role configures in deb822 form and add
+  unmanaged Radeon Software graphics repos (`graphics/<ver>`,
+  `rocmradeon/apt/<ver>`) that `rocm-pin-600` then elevates to priority 600.
+  Nothing depends on the package. It also owns `/etc/apt/keyrings/rocm.gpg`,
+  the key the amdgpu and device-metrics-exporter sources verify against, so the
+  purge must run before the keyring tasks — they skip when the keyring already
+  exists, and purging later would delete the key they declined to write and
+  leave apt unable to verify repo.radeon.com.
 - Configures the ROCm apt repository (stable.repo.amd.com) and the AMD GPU driver
-  and device-metrics-exporter repositories (repo.radeon.com) in Deb822
-  format; removes the now-obsolete `rocm-graphics` repo.
+  and device-metrics-exporter repositories (repo.radeon.com) in Deb822 format.
 - Installs a specific AMD-supported HWE kernel (`rocm_hwe_kernel`) with its
   headers and extra modules, holds the rolling `linux-generic-hwe-24.04`
   metapackages so apt cannot pull an unsupported kernel, and asserts that

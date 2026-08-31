@@ -1,4 +1,55 @@
 ---
+# AMD's installer owns files this role also manages: /etc/apt/keyrings/rocm.gpg,
+# a repo.radeon.com pin, and one-line .list conffiles that duplicate the amdgpu
+# source and add unmanaged Radeon Software graphics repos which the pin then
+# elevates to priority 600. Purge, not remove, or the conffiles survive.
+# Must precede the keyring tasks below: they skip when the keyring already
+# exists, so purging afterwards would delete the key they decided not to write.
+- name: Purge amdgpu-install and the apt sources and key it ships
+  become: true
+  ansible.builtin.apt:
+    name: amdgpu-install
+    state: absent
+    purge: true
+
+- name: Ensure apt keyrings directory exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+    recurse: true
+
+- name: Download ROCm GPG key
+  become: true
+  ansible.builtin.get_url:
+    url: https://repo.radeon.com/rocm/rocm.gpg.key
+    dest: /tmp/rocm.gpg.key
+    mode: '0644'
+  register: rocm_gpg_key_download
+  retries: 3
+  delay: 5
+
+- name: Check ROCm apt keyring
+  ansible.builtin.stat:
+    path: /etc/apt/keyrings/rocm.gpg
+  register: rocm_gpg_keyring
+
+- name: Add ROCm GPG key to keyring
+  become: true
+  ansible.builtin.command:
+    argv:
+      - gpg
+      - --dearmor
+      - --yes
+      - --output
+      - /etc/apt/keyrings/rocm.gpg
+      - /tmp/rocm.gpg.key
+  changed_when: true
+  when: rocm_gpg_key_download.changed or not rocm_gpg_keyring.stat.exists
+
 - name: Install prerequisites
   # https://rocm.docs.amd.com/en/latest/install/rocm.html (Prerequisites, Install additional packages)
   become: true
@@ -47,44 +98,6 @@
     state: present
     update_cache: true
   when: not ansible_check_mode
-
-- name: Ensure apt keyrings directory exists
-  become: true
-  ansible.builtin.file:
-    path: /etc/apt/keyrings
-    state: directory
-    mode: '0755'
-    owner: root
-    group: root
-    recurse: true
-
-- name: Download ROCm GPG key
-  become: true
-  ansible.builtin.get_url:
-    url: https://repo.radeon.com/rocm/rocm.gpg.key
-    dest: /tmp/rocm.gpg.key
-    mode: '0644'
-  register: rocm_gpg_key_download
-  retries: 3
-  delay: 5
-
-- name: Check ROCm apt keyring
-  ansible.builtin.stat:
-    path: /etc/apt/keyrings/rocm.gpg
-  register: rocm_gpg_keyring
-
-- name: Add ROCm GPG key to keyring
-  become: true
-  ansible.builtin.command:
-    argv:
-      - gpg
-      - --dearmor
-      - --yes
-      - --output
-      - /etc/apt/keyrings/rocm.gpg
-      - /tmp/rocm.gpg.key
-  changed_when: true
-  when: rocm_gpg_key_download.changed or not rocm_gpg_keyring.stat.exists
 
 # ROCm 7.14+ repo uses a separate key from amdgpu/device-metrics.
 - name: Download ROCm 7.14+ apt repository GPG key
