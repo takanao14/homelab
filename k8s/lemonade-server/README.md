@@ -44,6 +44,13 @@ recipe PVC by an init container.
 `lemonade-server-rocm` retains the custom ROCm `llama-server` for MXFP4 and
 repeatable comparisons ([ADR-0029](../../docs/adr/0029-rocm-serving-path-for-mxfp4-models.md)).
 
+`rocm.image.tag` is the `llamacpp-rocm` build number baked into the image by the
+separate `lemonade-docker` repository. `b1303` (2026-08-01) moved those builds
+from ROCm 7.15 to ROCm 10.1, so `b1319` bundles `10.1.0a20260822` — one minor
+ahead of the ROCm 10.0 host stack from `ansible/roles/rocm`. Rebuild and push
+the image there before bumping this tag, then re-verify GPU offload; ADR-0029's
+benchmark numbers were taken on `b1302` (ROCm 7.15) and need re-measuring.
+
 gpu-switch runs only one variant, making their shared PVCs safe. Both default
 to zero replicas:
 
@@ -84,4 +91,4 @@ kubectl -n lemonade-server logs deploy/lemonade-server | grep -iE "vulkan|RADV|g
 | `rocm.replicaCount` | `0` | ROCm variant, started through gpu-switch |
 | `rocm.hostname` | `lemonade-rocm.prd.butaco.net` | HTTPRoute hostname for the ROCm variant |
 | `rocm.image.repository` | `forgejo.home.butaco.net/takanao/lemonade-docker` | Custom ROCm image |
-| `rocm.image.tag` | `b1302` | Bundled `llamacpp-rocm` build number |
+| `rocm.image.tag` | `b1319` | Bundled `llamacpp-rocm` build number (ROCm 10.1) |

@@ -45,4 +45,6 @@ rocm:
   hostname: lemonade-rocm.prd.butaco.net
   image:
     repository: forgejo.home.butaco.net/takanao/lemonade-docker
-    tag: b1302
+    # llamacpp-rocm build number; b1319 bundles ROCm 10.1.0a20260822 (b1302 was
+    # 7.15). Bump only after the lemonade-docker CI has pushed the tag.
+    tag: b1319
