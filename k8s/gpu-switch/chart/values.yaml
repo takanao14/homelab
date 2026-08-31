@@ -16,8 +16,6 @@ gpuWorkloads:
     name: comfyui
   - namespace: lemonade-server
     name: lemonade-server
-  - namespace: lemonade-server
-    name: lemonade-server-rocm
   - namespace: ollama
     name: ollama
   - namespace: vllm
