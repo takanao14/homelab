@@ -38,7 +38,7 @@ does not load host `/opt/rocm`:
 | Layer | Managed in | Current |
 |-------|-----------|---------|
 | Kernel driver (KMD) | `ansible/roles/rocm` (`rocm_amdgpu_version`, `rocm_version`) | amdgpu 31.50 / ROCm 10.0 |
-| Container userspace (UMD) | `chart/values.yaml` (`image.tag`) | ROCm 7.2.1, bundled in ollama 0.32.x |
+| Container userspace (UMD) | `chart/values.yaml` (`image.tag`) | ROCm 7.2.1, bundled in ollama 0.33.x |
 | GPU target | host GPU / image build | `gfx1200` (RX 9060 XT) |
 
 AMD's supported skew window covers bundled ROCm 7.2.1 with the 10.0 host
@@ -75,7 +75,7 @@ incompatible pairing. Check upstream `ROCMVERSION` and `AMDGPU_TARGETS` on bumps
 | `hostname` | `ollama.prd.butaco.net` | HTTPRoute hostname |
 | `replicaCount` | `0` | Set to `1` to start (default off to save GPU) |
 | `image.repository` | `ollama/ollama` | Ollama image |
-| `image.tag` | `0.32.3-rocm` | ROCm-enabled image tag (bundles ROCm 7.2.1 userspace) |
+| `image.tag` | `0.33.2-rocm` | ROCm-enabled image tag (bundles ROCm 7.2.1 userspace) |
 | `numCtx` | `4096` (chart) / `131072` (`values.yaml`) | Context window size (tokens); 131072 is gemma4:12b's native max |
 | `gateway.timeouts.request` | unset (chart) / `10m` (`values.yaml`) | End-to-end HTTPRoute timeout for long LLM responses |
 | `gateway.timeouts.backendRequest` | unset (chart) / `10m` (`values.yaml`) | Gateway-to-Ollama request timeout |
@@ -87,7 +87,7 @@ incompatible pairing. Check upstream `ROCMVERSION` and `AMDGPU_TARGETS` on bumps
 - `replicaCount: 0` leaves activation to gpu-switch; Argo CD ignores drift.
 - The external route allows 10 minutes; in-cluster clients bypass Envoy.
 - Open WebUI is a separate upstream-chart Application.
-- `numCtx: 32768` / `kvCacheType: q8_0` (`values.yaml`) sizes the context window
+- `numCtx: 131072` / `kvCacheType: q8_0` (`values.yaml`) sizes the context window
   and KV cache for agent workloads (OpenCode), not just chat. Before running
   OpenCode, switch the GPU to this Deployment (`scripts/gpu-switch.sh ollama`)
   and pull the model it expects: `ollama pull gemma4:12b`.
