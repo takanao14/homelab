@@ -5,6 +5,7 @@
 - **Related:** [ADR-0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md) and
   [ADR-0029](0029-rocm-serving-path-for-mxfp4-models.md) (both candidates to
   supersede once this is Accepted), [ADR-0027](0027-gpu-workload-switching-web-ui.md),
+  [ADR-0035](0035-opencode-connects-to-ollama.md),
   [`k8s/lemonade-server/README.md`](../../k8s/lemonade-server/README.md)
 
 ## Context
@@ -100,9 +101,11 @@ The base image bump is not a tag change. Verified on the v11.8.1 probe:
 - **The chart loses its `-rocm` templates** (`deployment-rocm.yaml`,
   `service-rocm.yaml`, `httproute-rocm.yaml`) and the `rocm.*` values block,
   and gains an `fsGroup` and corrected mount paths.
-- **`lemonade-rocm.prd.butaco.net` disappears.** `opencode.json` selects
-  `lemonade-rocm/gpt-oss-20b-mxfp4-GGUF` and must move to the single endpoint;
-  the model keeps its ROCm backend through its own `recipe_options`.
+- **`lemonade-rocm.prd.butaco.net` disappears**, and no client configuration in
+  this repository depends on it: [ADR-0035](0035-opencode-connects-to-ollama.md)
+  already moved `opencode.json` to Ollama and removed the `lemonade-rocm`
+  provider. ADR-0029's claim that the ROCm Deployment sits on a configured
+  serving path no longer holds, which is what makes this migration low-risk.
 - gpu-switch (ADR-0027) loses one target, leaving one lemonade workload.
 
 ## Alternatives considered
@@ -118,10 +121,11 @@ The base image bump is not a tag change. Verified on the v11.8.1 probe:
   `lemonade-sdk/llama.cpp`, a different repository with different build tags,
   and would change the binaries currently serving MXFP4. Worth measuring later;
   not a safe move to make in the same step as the migration.
-- **Drop ROCm entirely and serve everything on Vulkan** — rejected by
-  ADR-0029's measurement: ROCm was 21.1% faster on four-request aggregate
-  throughput, which is what `opencode.json` actually exercises. Collapsing the
-  Deployments does not drop the backend.
+- **Drop ROCm entirely and serve everything on Vulkan** — ADR-0029 measured
+  ROCm 21.1% faster on four-request aggregate throughput, so discarding the
+  backend would discard a real result. Collapsing the Deployments keeps both
+  backends available at no structural cost, so there is nothing to gain by
+  dropping one.
 - **Keep two Deployments after unifying the image** — they would differ only by
   a config value, duplicating a Deployment, Service, HTTPRoute, and hostname to
   express a choice that now lives on the model. It also preserves the shared-PVC
