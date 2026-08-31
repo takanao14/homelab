@@ -283,13 +283,27 @@
 # the GPU. update-alternatives repoints /opt/rocm/{core,bin,lib,...} to the higher
 # version on its own, but the discovery below globs the real core-* directories
 # and would otherwise write both releases' lib paths into ld.so.conf.
+# Select the installed names explicitly: an apt wildcard that matches nothing is
+# an error, which would break every run made after the previous release is gone.
+- name: Gather package facts before removing the previous ROCm release
+  ansible.builtin.package_facts:
+    manager: auto
+  when: rocm_previous_version | length > 0
+
 - name: Remove the previous ROCm release
   become: true
   ansible.builtin.apt:
-    name: "amdrocm*{{ rocm_previous_version }}*"
+    name: "{{ rocm_previous_packages }}"
     state: absent
     purge: true
-  when: rocm_previous_version | length > 0
+  vars:
+    rocm_previous_packages: >-
+      {{ ansible_facts.packages | default({}) | list
+         | select('match', 'amdrocm[a-z-]*' ~ (rocm_previous_version | regex_escape) ~ '($|[^0-9.])')
+         | list }}
+  when:
+    - rocm_previous_version | length > 0
+    - rocm_previous_packages | length > 0
 
 # Discover component library directories instead of hardcoding them.
 - name: Discover ROCm component library directories
