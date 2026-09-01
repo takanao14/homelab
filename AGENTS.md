@@ -10,6 +10,25 @@
 - The active environments are `prd` and `sandbox`. The `dev` environment was
   retired by ADR-0019; do not reintroduce it without a new architecture decision.
 
+## Writing discipline
+
+- Keep comments and documentation proportional to the code change. Make the
+  smallest documentation update that leaves the repository accurate.
+- Add a comment only when it explains a non-obvious reason, invariant, safety
+  constraint, compatibility requirement, or operational hazard. Do not narrate
+  what the code or configuration already states.
+- Do not add docstrings, examples, background sections, or step-by-step
+  explanations to self-explanatory internal code.
+- Prefer replacing outdated text over appending historical commentary. READMEs
+  describe the current state, ADRs preserve decision rationale, and private
+  plans contain rollout steps. Do not duplicate the same explanation across
+  them.
+- Update an existing paragraph or list before creating a new section or file.
+- Preserve necessary detail for secrets, destructive operations, recovery,
+  infrastructure invariants, and externally consumed interfaces.
+- Before finishing, review the prose diff and remove every sentence that does
+  not add distinct operational or design information.
+
 ## Repository boundaries
 
 - Check `docs/adr/` before proposing structural changes and add an ADR for a
