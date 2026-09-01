@@ -282,19 +282,26 @@ this by hand; the client starts it.
 The vendor image is release-pinned and Renovate-managed; Docker's curated mirror
 offers only `latest`. The binary reports `(devel)`, so trust the image tag.
 
-Default tools cover read-only search, data sources, Prometheus, Loki, dashboards
-and navigation. Writes are disabled and Loki responses capped at 20 lines.
+Default tools cover read-only search, data sources, Prometheus, Loki, dashboards,
+navigation, and alerting. Alerting tools expose rule state plus Alertmanager
+notification policies, contact points, and time intervals. Writes are disabled
+and Loki responses capped at 20 lines.
 
 The launcher uses exported credentials or decrypts `.env/secrets.sops.env`
 relative to itself. It works from any cwd without embedding tokens in clients.
 
-Other clients just reference the absolute path, e.g. Codex (`~/.codex/config.toml`):
+A global client config is read from any working directory, so it needs the
+absolute path; the launcher is not resolved through a shell, so `~` is not
+expanded. Example for Codex (`~/.codex/config.toml`):
 
 ```toml
 [mcp_servers.grafana]
-command = "/Users/takanao/lab/homelab/scripts/grafana-mcp.sh"
+command = "/absolute/path/to/homelab/scripts/grafana-mcp.sh"
 startup_timeout_ms = 60000   # first run pulls the grafana/mcp-grafana image
 ```
+
+The repository-local `.codex/config.toml` instead pairs a relative `command`
+with `cwd = "."`, mirroring `.mcp.json`, so no absolute path is baked in.
 
 ### Goose workstation setup
 
@@ -351,7 +358,7 @@ and backend-request timeouts before changing Goose's extension timeout.
 | `GRAFANA_MCP_RUNTIME` | `docker` on macOS with OrbStack, otherwise `podman` | Force a runtime |
 | `GRAFANA_MCP_VERSION` | `1.1.0` | Pinned image tag; Renovate bumps this in place |
 | `GRAFANA_MCP_IMAGE`   | `docker.io/grafana/mcp-grafana:$GRAFANA_MCP_VERSION` | Full reference override for testing |
-| `GRAFANA_MCP_ENABLED_TOOLS` | `search,datasource,prometheus,loki,dashboard,navigation` | Comma-separated tool categories |
+| `GRAFANA_MCP_ENABLED_TOOLS` | `search,datasource,prometheus,loki,dashboard,navigation,alerting` | Comma-separated tool categories |
 | `GRAFANA_MCP_DISABLE_WRITE` | `true` | Set to `false` only for an explicitly approved write workflow |
 | `GRAFANA_MCP_MAX_LOKI_LOG_LIMIT` | `20` | Maximum log lines returned by a Loki query |
 
