@@ -1,7 +1,7 @@
 # ollama
 
 [Ollama](https://ollama.com/) ROCm inference on prd, consumed by Open WebUI and by
-OpenCode ([ADR-0035](../../docs/adr/0035-opencode-connects-to-ollama.md);
+OpenCode ([ADR-0041](../../docs/adr/0041-opencode-connects-to-ollama.md);
 `opencode.json` at the repo root).
 
 ## Directory Structure
