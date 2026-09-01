@@ -35,6 +35,10 @@ the trusted network; configure `LEMONADE_API_KEY` from a Secret before exposing
 it more broadly. Lemonade v11 otherwise exposes inference and `/internal/*`
 control endpoints without authentication.
 
+Lemonade accepts browser requests only from loopback origins (`127.0.0.1`,
+`[::1]`, `*.localhost`) unless `LEMONADE_ALLOWED_ORIGINS` names more. The
+Deployment therefore sets it to `https://{{ hostname }}`.
+
 ## Runtime Shape
 
 The chart runs `ghcr.io/lemonade-sdk/lemonade-server:v11.8.1` as uid 10001 and

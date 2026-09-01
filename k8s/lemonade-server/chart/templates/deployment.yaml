@@ -47,6 +47,12 @@ spec:
           args:
             - --host
             - 0.0.0.0
+          env:
+            # Lemonade allows only loopback browser origins by default, so the
+            # built-in web UI served over the Gateway hostname gets 403 on
+            # mutating endpoints such as /api/v1/pull.
+            - name: LEMONADE_ALLOWED_ORIGINS
+              value: {{ printf "https://%s" .Values.hostname | quote }}
           ports:
             - containerPort: 13305
           resources: {{ toYaml .Values.resources | nindent 12 }}
