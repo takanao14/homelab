@@ -7,7 +7,7 @@ releases:
     namespace: argocd
     createNamespace: true
     chart: argo/argo-cd
-    version: 10.4.2
+    version: 10.4.3
     # Allow the uncached ~200 MB bootstrap image pull.
     timeout: 600
     values:
