@@ -8,7 +8,7 @@
 #   - Fully qualified for Podman short-name compatibility.
 #
 # Tool exposure:
-#   - Read-only observability categories by default; write tools are disabled.
+#   - Read-only observability and alerting categories by default; write tools are disabled.
 #   - Override GRAFANA_MCP_ENABLED_TOOLS when needed.
 #
 # Credentials (GRAFANA_URL, GRAFANA_SERVICE_ACCOUNT_TOKEN):
@@ -29,7 +29,7 @@ export GRAFANA_URL GRAFANA_SERVICE_ACCOUNT_TOKEN
 runtime="$(mcp_resolve_container_runtime "${GRAFANA_MCP_RUNTIME:-}")" || exit $?
 
 # Keep stdin open without a TTY; pass only environment variable names.
-enabled_tools="${GRAFANA_MCP_ENABLED_TOOLS:-search,datasource,prometheus,loki,dashboard,navigation}"
+enabled_tools="${GRAFANA_MCP_ENABLED_TOOLS:-search,datasource,prometheus,loki,dashboard,navigation,alerting}"
 max_loki_log_limit="${GRAFANA_MCP_MAX_LOKI_LOG_LIMIT:-20}"
 server_args=(
   -t stdio
