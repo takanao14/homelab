@@ -106,7 +106,7 @@ Make sure your AGE key is listed in `.sops.yaml` before editing.
 [OpenCode](https://opencode.ai/) is an optional terminal AI coding agent.
 `opencode.json` at the repository root points it at the in-cluster Ollama
 deployment (`k8s/ollama/`) instead of a hosted provider — see
-[ADR-0035](docs/adr/0035-opencode-connects-to-ollama.md).
+[ADR-0041](docs/adr/0041-opencode-connects-to-ollama.md).
 
 ```bash
 curl -fsSL https://opencode.ai/install | bash
