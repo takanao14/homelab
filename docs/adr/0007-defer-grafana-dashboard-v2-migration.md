@@ -2,6 +2,8 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-21
+- **Review trigger:** The Foundation SDK ships a stable Dashboard v2 API and a
+  migration guide.
 - **Related:** `k8s/monitoring/dashboards/cmd/generate/`. The deferral plan (`docs/plans/grafana-dashboard-v2-migration.md`) has been removed now that the decision lives here; see git history.
 
 ## Context

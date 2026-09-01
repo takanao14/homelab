@@ -22,9 +22,19 @@ ADR — once a plan completes.
 ## Conventions
 
 - One decision per file: `NNNN-kebab-case-title.md` (zero-padded, sequential).
-- Status is one of `Proposed`, `Accepted`, `Superseded by ADR-NNNN`, `Deprecated`.
-- Records are **immutable**. When a decision changes, write a new ADR and mark the
-  old one `Superseded by ADR-NNNN` (do not edit the original rationale away).
+- Status is one of `Proposed`, `Accepted`, `Superseded by ADR-NNNN`,
+  `Deprecated`, or `Rejected`.
+- Decision rationale is **immutable**. Administrative metadata, links, and
+  status may be corrected as the lifecycle changes. When a decision changes,
+  write a new ADR and mark the old one `Superseded by ADR-NNNN`; do not edit the
+  original rationale away.
+- Keep implementation progress out of `Status`. Use metadata such as
+  `Implemented`, `Validated`, `Amended by`, or `Review trigger` instead.
+- Every `Proposed` record must have a `Review by` date or a `Review trigger`.
+  A proposal that is declined without ever being adopted becomes `Rejected`,
+  while an adopted decision whose subject is retired becomes `Deprecated`.
+- Do not move historical records to an archive directory. Stable paths and
+  successor links preserve the decision chain.
 - Keep it short. Link to the resulting `README`s instead of duplicating their
   content. Completed plans should be distilled into README updates and ADRs,
   then deleted.
@@ -68,19 +78,19 @@ deleting it:
 | [0023](0023-openbao-ansible-userpass-login.md) | Authenticate Ansible OpenBao operations via userpass login | Accepted |
 | [0024](0024-shared-proxmox-node-inventory-for-monitoring.md) | Shared Proxmox node inventory for monitoring | Accepted |
 | [0025](0025-run-meshcentral-outside-managed-cluster.md) | Run MeshCentral outside the managed Proxmox and Kubernetes fleet | Accepted |
-| [0026](0026-eso-over-helm-secrets-for-in-cluster-secrets.md) | Inject in-cluster secrets with ESO instead of the helm-secrets plugin | Accepted |
+| [0026](0026-eso-over-helm-secrets-for-in-cluster-secrets.md) | Inject in-cluster secrets with External Secrets Operator instead of the helm-secrets plugin | Accepted |
 | [0027](0027-gpu-workload-switching-web-ui.md) | GPU workload switching through an authenticated in-cluster web UI | Accepted |
 | [0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md) | lemonade-server runs on the Vulkan backend, not ROCm, on RDNA4 | Superseded by ADR-0039 |
 | [0029](0029-rocm-serving-path-for-mxfp4-models.md) | ROCm serves concurrent MXFP4 workloads; Vulkan remains faster for one request | Superseded by ADR-0039 |
 | [0030](0030-in-house-full-service-resolver.md) | Run Knot Resolver 6 in dedicated resolver containers | Accepted |
-| [0031](0031-browser-editor-on-relocated-toolbox-vm.md) | Run a browser editor on toolbox1, relocated to pve | Proposed |
+| [0031](0031-browser-editor-on-relocated-toolbox-vm.md) | Run a browser editor on toolbox1, relocated to pve | Accepted |
 | [0032](0032-reboot-and-planned-shutdown-orchestration.md) | Orchestrate reboots and planned shutdowns from Ansible | Accepted |
 | [0033](0033-sandbox-storage-openebs-localpv-and-truenas-nfs.md) | Use OpenEBS LocalPV and TrueNAS NFS for sandbox storage | Accepted |
 | [0034](0034-hubble-ui-for-service-traffic-visibility.md) | Visualize service-to-service traffic with Hubble UI | Proposed |
-| [0035](0035-observe-ix2106-dhcp-leases-from-rpi4.md) | Observe IX2106 DHCP leases from rpi4 | Proposed |
-| [0035](0035-opencode-connects-to-ollama.md) | OpenCode connects to Ollama instead of Lemonade Server | Accepted |
+| [0035](0035-observe-ix2106-dhcp-leases-from-rpi4.md) | Observe IX2106 DHCP leases from rpi4 | Accepted |
 | [0036](0036-planned-shutdown-restores-via-argocd-selfheal.md) | Planned-shutdown restore relies on Argo CD self-heal, not a replica snapshot | Accepted |
 | [0037](0037-bake-shared-toolchain-into-server-images.md) | Bake the shared CLI toolchain into the server images from one Packer template | Accepted |
 | [0038](0038-image-role-suffixes-base-tool-desktop.md) | Name custom images by role — base, tool, desktop | Accepted |
 | [0039](0039-builtin-rocm-backend-replaces-custom-lemonade-image.md) | Lemonade v11 serves gfx1200 through the built-in ROCm backend, retiring the custom image and the second Deployment | Accepted |
 | [0040](0040-select-lemonade-backend-by-model-and-concurrency.md) | Select the Lemonade backend by model and concurrency | Accepted |
+| [0041](0041-opencode-connects-to-ollama.md) | OpenCode connects to Ollama instead of Lemonade Server | Accepted |

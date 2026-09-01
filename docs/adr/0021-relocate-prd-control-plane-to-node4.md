@@ -1,6 +1,7 @@
 # ADR-0021: Relocate the prd control plane to node4 via k0s backup/restore
 
-- **Status:** Accepted (executed 2026-07-11)
+- **Status:** Accepted
+- **Implemented:** 2026-07-11
 - **Date:** 2026-07-11
 - **Related:** [ADR-0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md),
   [ADR-0020](0020-tf-tree-axes-host-vs-cluster.md),

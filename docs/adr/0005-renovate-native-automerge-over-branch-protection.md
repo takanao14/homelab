@@ -1,6 +1,7 @@
 # ADR-0005: Renovate-native automerge instead of branch protection
 
-- **Status:** Accepted (amended by [ADR-0017](0017-renovate-automerge-golive-adjustments.md))
+- **Status:** Accepted
+- **Amended by:** [ADR-0017](0017-renovate-automerge-golive-adjustments.md)
 - **Date:** 2026-06-21
 - **Related:** `renovate.json`. The strategy plan
   (`renovate-automerge-strategy.md` in the private plans repo) has been

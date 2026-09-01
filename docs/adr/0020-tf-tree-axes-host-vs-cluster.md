@@ -1,6 +1,7 @@
 # ADR-0020: tf tree axes — host-named trees, cluster tree with per-stack host binding
 
-- **Status:** Accepted (reorg executed 2026-07-11)
+- **Status:** Accepted
+- **Implemented:** 2026-07-11
 - **Date:** 2026-07-10
 - **Related:** [ADR-0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md),
   [ADR-0006](0006-custom-image-pipeline-monorepo-and-seaweedfs-s3.md)

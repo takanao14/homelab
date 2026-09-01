@@ -1,0 +1,21 @@
+name: ADR Lint
+
+on:
+  pull_request:
+    paths:
+      - "docs/adr/**"
+      - "scripts/adr-lint.py"
+      - ".github/workflows/adr-lint.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: adr-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Validate ADR lifecycle and links
+        run: python3 scripts/adr-lint.py

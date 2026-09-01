@@ -2,6 +2,7 @@
 
 - **Status:** Proposed
 - **Date:** 2026-08-14
+- **Review by:** 2026-11-14
 - **Related:** [ADR-0009](0009-longhorn-ui-exposed-through-authenticated-gateway-route.md),
   [ADR-0011](0011-cilium-gateway-to-envoy-gateway-migration.md),
   [ADR-0015](0015-headlamp-per-cluster-in-cluster-deployment.md),

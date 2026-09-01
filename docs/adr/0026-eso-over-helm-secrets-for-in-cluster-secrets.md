@@ -116,7 +116,7 @@ finally the CMP image and its build workflow were deleted.
 - Argo CD stays close to upstream. Upgrades no longer require validating a
   rendering toolchain.
 - The AGE key is no longer needed inside the cluster; the master key stays with
-  operators and in OpenBao (see [SOPS setup](../sops_presentation.md)).
+  operators and in OpenBao.
 - **ESO becomes a hard dependency for workload startup.** If ESO cannot
   authenticate to OpenBao, dependent workloads do not receive their `Secret`s.
   This is why a rebuilt cluster must be re-registered with OpenBao before its

@@ -5,7 +5,7 @@
 - **Related:** [ADR-0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md) and
   [ADR-0029](0029-rocm-serving-path-for-mxfp4-models.md) (both superseded by
   this decision), [ADR-0027](0027-gpu-workload-switching-web-ui.md),
-  [ADR-0035](0035-opencode-connects-to-ollama.md),
+  [ADR-0041](0041-opencode-connects-to-ollama.md),
   [`k8s/lemonade-server/README.md`](../../k8s/lemonade-server/README.md)
 
 ## Context
@@ -122,7 +122,7 @@ The base image bump is not a tag change. Verified on the v11.8.1 probe:
   `service-rocm.yaml`, `httproute-rocm.yaml`) and the `rocm.*` values block,
   and gains an `fsGroup` and corrected mount paths.
 - **`lemonade-rocm.prd.butaco.net` disappears**, and no client configuration in
-  this repository depends on it: [ADR-0035](0035-opencode-connects-to-ollama.md)
+  this repository depends on it: [ADR-0041](0041-opencode-connects-to-ollama.md)
   already moved `opencode.json` to Ollama and removed the `lemonade-rocm`
   provider. ADR-0029's claim that the ROCm Deployment sits on a configured
   serving path no longer holds, which is what makes this migration low-risk.

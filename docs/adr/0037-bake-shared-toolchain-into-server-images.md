@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-26
-- **Related:** [ADR-0001](0001-service-oriented-ansible-playbooks.md),
+- **Related:** [ADR-0001](0001-service-oriented-ansible-playbook-organization.md),
   [`packer/README.md`](../../packer/README.md),
   [`scripts/provision.sh`](../../scripts/provision.sh)
 

@@ -1,7 +1,9 @@
-# ADR-0035: OpenCode connects to Ollama instead of Lemonade Server
+# ADR-0041: OpenCode connects to Ollama instead of Lemonade Server
 
 - **Status:** Accepted
 - **Date:** 2026-08-22
+- **Administrative note:** Renumbered from the duplicate ADR-0035 on
+  2026-09-01; the decision content is unchanged.
 - **Related:** [ADR-0027](0027-gpu-workload-switching-web-ui.md),
   [ADR-0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md),
   [ADR-0029](0029-rocm-serving-path-for-mxfp4-models.md),
