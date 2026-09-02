@@ -9,7 +9,7 @@ readonly OS_ID="${ID}"
 
 # kubectl pins a repository minor; openbao pins its package asset.
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-readonly KUBECTL_VERSION="${KUBECTL_VERSION:-1.36}"
+readonly KUBECTL_VERSION="${KUBECTL_VERSION:-1.37}"
 # renovate: datasource=github-releases depName=openbao/openbao
 readonly OPENBAO_VERSION="${OPENBAO_VERSION:-2.6.2}"
 # renovate: datasource=github-releases depName=freelensapp/freelens

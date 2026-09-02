@@ -6,7 +6,7 @@ set -euo pipefail
 # renovate: datasource=github-releases depName=junegunn/fzf
 readonly FZF_VERSION="${FZF_VERSION:-0.74.3}"
 # renovate: datasource=github-releases depName=zellij-org/zellij
-readonly ZELLIJ_VERSION="${ZELLIJ_VERSION:-0.45.0}"
+readonly ZELLIJ_VERSION="${ZELLIJ_VERSION:-0.45.1}"
 # renovate: datasource=github-releases depName=sbstp/kubie
 readonly KUBIE_VERSION="${KUBIE_VERSION:-0.28.0}"
 # renovate: datasource=github-releases depName=derailed/k9s
@@ -20,17 +20,17 @@ readonly K0SCTL_VERSION="${K0SCTL_VERSION:-0.32.2}"
 # renovate: datasource=github-releases depName=getsops/sops
 readonly SOPS_VERSION="${SOPS_VERSION:-3.13.3}"
 # renovate: datasource=github-releases depName=gruntwork-io/terragrunt
-readonly TERRAGRUNT_VERSION="${TERRAGRUNT_VERSION:-1.1.3}"
+readonly TERRAGRUNT_VERSION="${TERRAGRUNT_VERSION:-1.1.4}"
 # renovate: datasource=github-releases depName=opentofu/opentofu
 readonly OPENTOFU_VERSION="${OPENTOFU_VERSION:-1.12.6}"
 # renovate: datasource=github-releases depName=helm/helm
 readonly HELM_VERSION="${HELM_VERSION:-4.2.4}"
 # renovate: datasource=github-releases depName=argoproj/argo-cd
-readonly ARGOCD_VERSION="${ARGOCD_VERSION:-3.5.1}"
+readonly ARGOCD_VERSION="${ARGOCD_VERSION:-3.5.2}"
 # renovate: datasource=github-releases depName=FiloSottile/age
-readonly AGE_VERSION="${AGE_VERSION:-1.3.1}"
+readonly AGE_VERSION="${AGE_VERSION:-1.3.2}"
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-readonly CILIUM_VERSION="${CILIUM_VERSION:-0.19.7}"
+readonly CILIUM_VERSION="${CILIUM_VERSION:-0.20.0}"
 # renovate: datasource=github-releases depName=eza-community/eza
 readonly EZA_VERSION="${EZA_VERSION:-0.23.5}"
 # renovate: datasource=github-releases depName=starship/starship
@@ -42,7 +42,7 @@ readonly DIRENV_VERSION="${DIRENV_VERSION:-2.37.1}"
 # renovate: datasource=github-releases depName=kubernetes-sigs/krew
 readonly KREW_VERSION="${KREW_VERSION:-0.5.0}"
 # renovate: datasource=github-releases depName=DNSControl/dnscontrol
-readonly DNSCONTROL_VERSION="${DNSCONTROL_VERSION:-4.46.0}"
+readonly DNSCONTROL_VERSION="${DNSCONTROL_VERSION:-5.0.2}"
 # renovate: datasource=github-releases depName=prometheus/prometheus
 readonly PROMETHEUS_VERSION="${PROMETHEUS_VERSION:-3.14.0}"
 # renovate: datasource=pypi depName=ansible-core
@@ -50,7 +50,7 @@ readonly ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION:-2.21.3}"
 # renovate: datasource=pypi depName=ansible-lint
 readonly ANSIBLE_LINT_VERSION="${ANSIBLE_LINT_VERSION:-26.8.0}"
 # renovate: datasource=github-tags depName=aws/aws-cli
-readonly AWS_CLI_VERSION="${AWS_CLI_VERSION:-2.36.30}"
+readonly AWS_CLI_VERSION="${AWS_CLI_VERSION:-2.36.36}"
 # renovate: datasource=github-releases depName=rclone/rclone
 readonly RCLONE_VERSION="${RCLONE_VERSION:-1.75.0}"
 # renovate: datasource=github-releases depName=rhysd/actionlint
@@ -68,9 +68,9 @@ readonly RIPGREP_VERSION="${RIPGREP_VERSION:-15.2.0}"
 # renovate: datasource=github-releases depName=dalance/procs
 readonly PROCS_VERSION="${PROCS_VERSION:-0.14.12}"
 # renovate: datasource=github-releases depName=bootandy/dust
-readonly DUST_VERSION="${DUST_VERSION:-1.2.4}"
+readonly DUST_VERSION="${DUST_VERSION:-1.2.5}"
 # renovate: datasource=github-releases depName=Byron/dua-cli
-readonly DUA_VERSION="${DUA_VERSION:-2.40.0}"
+readonly DUA_VERSION="${DUA_VERSION:-2.44.0}"
 # renovate: datasource=github-releases depName=mikefarah/yq
 readonly YQ_VERSION="${YQ_VERSION:-4.53.6}"
 
@@ -114,6 +114,18 @@ cleanup_tmp_paths() {
 }
 
 trap cleanup_tmp_paths EXIT
+
+# Run one installer and drop the temporary paths it created. Holding them all
+# until the trap fires accumulates ~1 GB of archives, which overflows a tmpfs
+# /tmp on small machines (systemd sizes it at 50% of RAM).
+run_install() {
+    local mark=${#TMP_PATHS[@]} i
+    "$@"
+    for ((i = ${#TMP_PATHS[@]} - 1; i >= mark; i--)); do
+        rm -rf "${TMP_PATHS[i]}"
+        unset "TMP_PATHS[$i]"
+    done
+}
 
 # Helpers
 
@@ -234,7 +246,7 @@ install_if_needed() {
     fi
     local cache_file="${VERSION_CACHE_DIR}/${cmd}"
     if ! command -v "$cmd" &>/dev/null || [[ "$(cat "$cache_file" 2>/dev/null)" != "$version" ]]; then
-        "$install_func"
+        run_install "$install_func"
         echo "$version" > "$cache_file"
     else
         log_info "${cmd} ${version} is already up to date, skipping"
@@ -716,8 +728,8 @@ main() {
 
     install_if_needed "helm"     "$HELM_VERSION"     install_helm
     install_if_needed "argocd"   "$ARGOCD_VERSION"   install_argocd
-    install_helm_diff_plugin
-    install_krew_if_needed
+    run_install install_helm_diff_plugin
+    run_install install_krew_if_needed
     install_if_needed "kubie"    "$KUBIE_VERSION"    install_kubie
     install_if_needed "k9s"      "$K9S_VERSION"      install_k9s
     install_if_needed "kdash"    "$KDASH_VERSION"    install_kdash

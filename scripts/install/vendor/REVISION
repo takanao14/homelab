@@ -2,5 +2,5 @@
 # files or packer/files/kitty.conf by hand; re-run sync.sh to update them.
 repo: takanao14/dotfiles
 ref:  main
-sha:  96f76aefc07900bf659a2a543381f873a5b22099
-date: 2026-08-26T13:03:19Z
+sha:  f142790e2c787b7fe1aab9680f301b494bb99348
+date: 2026-09-02T07:51:26Z
