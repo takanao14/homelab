@@ -18,6 +18,9 @@ target_image() {
         ubuntu24-base) echo "ubuntu-24.04-base.img" ;;
         ubuntu24-tool) echo "ubuntu-24.04-tool.img" ;;
         ubuntu24-desktop) echo "ubuntu-24.04-desktop.img" ;;
+        ubuntu26-base) echo "ubuntu-26.04-base.img" ;;
+        ubuntu26-tool) echo "ubuntu-26.04-tool.img" ;;
+        ubuntu26-desktop) echo "ubuntu-26.04-desktop.img" ;;
         rocky10-base) echo "rocky-10-base.img" ;;
         rocky10-tool) echo "rocky-10-tool.img" ;;
         rocky9-base) echo "rocky-9-base.img" ;;
@@ -41,6 +44,9 @@ list_targets() {
     ubuntu24-base     ubuntu-24.04-base.img
     ubuntu24-desktop  ubuntu-24.04-desktop.img
     ubuntu24-tool     ubuntu-24.04-tool.img
+    ubuntu26-base     ubuntu-26.04-base.img
+    ubuntu26-desktop  ubuntu-26.04-desktop.img
+    ubuntu26-tool     ubuntu-26.04-tool.img
 EOF
 }
 
