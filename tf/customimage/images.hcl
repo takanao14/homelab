@@ -18,6 +18,18 @@ locals {
       file_name    = "ubuntu-24.04-desktop.img"
       content_type = "iso"
     }
+    "ubuntu-26.04-base" = {
+      file_name    = "ubuntu-26.04-base.img"
+      content_type = "iso"
+    }
+    "ubuntu-26.04-tool" = {
+      file_name    = "ubuntu-26.04-tool.img"
+      content_type = "iso"
+    }
+    "ubuntu-26.04-desktop" = {
+      file_name    = "ubuntu-26.04-desktop.img"
+      content_type = "iso"
+    }
     "rocky-9-base" = {
       file_name    = "rocky-9-base.img"
       content_type = "iso"
