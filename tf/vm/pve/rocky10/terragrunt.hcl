@@ -19,11 +19,11 @@ locals {
 inputs = {
   vms = {
     "rocky10" = merge(local.base_vars, {
-      cores   = 2
-      memory  = 4096
+      cores   = 8
+      memory  = 8192
       on_boot = true
       bridge  = local.common.locals.pve.net10.bridge
-      ipv4    = "192.168.10.181/24"
+      ipv4    = "192.168.10.180/24"
       ipv4gw  = local.common.locals.pve.net10.ipv4gw
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
