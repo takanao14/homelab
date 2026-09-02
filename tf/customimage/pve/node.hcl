@@ -5,6 +5,8 @@ locals {
     "ubuntu-24.04-tool",
     "ubuntu-24.04-desktop",
     "ubuntu-26.04-base",
+    "ubuntu-26.04-tool",
+    "ubuntu-26.04-desktop",
     "rocky-9-base",
     "rocky-9-desktop",
     "rocky-10-base",
