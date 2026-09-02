@@ -5,7 +5,6 @@ echo "Installing KVM/QEMU virtualization tools..."
 
 apt-get update
 apt-get install -y \
-    qemu-kvm \
     qemu-system-x86 \
     qemu-utils \
     libvirt-daemon-system \
