@@ -23,6 +23,9 @@ TARGETS:
     ubuntu24-base     Ubuntu 24.04, agent and timezone only
     ubuntu24-tool     Ubuntu 24.04 with the shared CLI toolchain
     ubuntu24-desktop  Ubuntu 24.04 with XFCE/XRDP on top of the toolchain
+    ubuntu26-base     Ubuntu 26.04, agent and timezone only
+    ubuntu26-tool     Ubuntu 26.04 with the shared CLI toolchain
+    ubuntu26-desktop  Ubuntu 26.04 with XFCE/XRDP on top of the toolchain
     rocky10-base      Rocky 10, agent and timezone only
     rocky10-tool      Rocky 10 with the shared CLI toolchain
     rocky9-base       Rocky 9, agent and timezone only
@@ -143,6 +146,24 @@ build_target() {
                 "output-ubuntu-24.04-desktop/ubuntu-24.04-desktop.qcow2" \
                 "images/ubuntu-24.04-desktop.img"
             ;;
+        ubuntu26-base)
+            build_image \
+                "vars/ubuntu26-base.pkrvars.hcl" \
+                "output-ubuntu-26.04-base/ubuntu-26.04-base.qcow2" \
+                "images/ubuntu-26.04-base.img"
+            ;;
+        ubuntu26-tool)
+            build_image \
+                "vars/ubuntu26-tool.pkrvars.hcl" \
+                "output-ubuntu-26.04-tool/ubuntu-24.06-tool.qcow2" \
+                "images/ubuntu-26.04-tool.img"
+            ;;
+        ubuntu26-desktop)
+            build_image \
+                "vars/ubuntu26-desktop.pkrvars.hcl" \
+                "output-ubuntu-26.04-desktop/ubuntu-26.04-desktop.qcow2" \
+                "images/ubuntu-26.04-desktop.img"
+            ;;
         rocky10-base)
             build_image \
                 "vars/rocky10-base.pkrvars.hcl" \
@@ -189,9 +210,9 @@ build_target() {
 # All targets, in build order: the cheap base images first, so an interrupted
 # `all` still leaves the quickest-to-rebuild targets done.
 ALL_TARGETS=(
-    ubuntu24-base rocky10-base rocky9-base debian13-base
-    ubuntu24-tool rocky10-tool rocky9-tool
-    ubuntu24-desktop rocky9-desktop
+    ubuntu24-base rocky10-base rocky9-base debian13-base ubuntu26-base
+    ubuntu24-tool rocky10-tool rocky9-tool ubuntu26-tool
+    ubuntu24-desktop rocky9-desktop ubuntu26-desktop
 )
 
 FORCE_OVERWRITE=false
