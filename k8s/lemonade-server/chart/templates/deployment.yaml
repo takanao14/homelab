@@ -33,6 +33,7 @@ spec:
             - |
               set -eu
               cp /defaults/config.json /config/config.json
+              cp /defaults/recipe_options.json /config/recipe_options.json
           volumeMounts:
             - name: config-defaults
               mountPath: /defaults

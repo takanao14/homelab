@@ -6,3 +6,5 @@ metadata:
 data:
   config.json: |
 {{ .Values.config | toPrettyJson | nindent 4 }}
+  recipe_options.json: |
+{{ .Values.recipeOptions | toPrettyJson | nindent 4 }}

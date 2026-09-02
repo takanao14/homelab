@@ -45,11 +45,11 @@ The chart runs `ghcr.io/lemonade-sdk/lemonade-server:v11.8.1` as uid 10001 and
 gid 999. It starts `/opt/lemonade/lemond --host 0.0.0.0` and requests one
 `amd.com/gpu`.
 
-The sparse `config.json` is generated from `config` in `chart/values.yaml` and
-copied from a ConfigMap into a writable `emptyDir` on every Pod start. This
-keeps the release configuration declarative while allowing `lemond` to update
-the file during the Pod lifetime. Runtime config changes made through the API
-do not survive a Pod restart.
+The sparse `config.json` and per-model `recipe_options.json` are generated from
+the chart values and copied from a ConfigMap into a writable `emptyDir` on
+every Pod start. This keeps the release configuration declarative while
+allowing `lemond` to update the files during the Pod lifetime. Runtime config
+changes made through the API do not survive a Pod restart.
 
 The release pins:
 
@@ -58,6 +58,12 @@ config:
   rocm_channel: nightly
   llamacpp:
     rocm_bin: b1319
+
+recipeOptions:
+  builtin.gpt-oss-20b-mxfp4-GGUF:
+    ctx_size: 131072
+  builtin.Gemma-4-12B-it-MTP-GGUF:
+    ctx_size: 262144
 ```
 
 `b1319` is a release tag from `lemonade-sdk/llamacpp-rocm`. Do not use

@@ -10,6 +10,8 @@ config:
     # lemonade-sdk/llamacpp-rocm release tag; update deliberately after validation.
     rocm_bin: b1319
 
+recipeOptions: {}
+
 resources:
   limits:
     amd.com/gpu: "1"
