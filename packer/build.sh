@@ -1,6 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
+if [[ "$(uname -s)" == "Darwin" ]]; then
+    echo "Error: Packer image builds are supported only on a Linux amd64 build host; macOS is not supported." >&2
+    exit 1
+fi
+
 # Print help and exit with the specified status.
 usage() {
     local exit_status="${1:-1}"
