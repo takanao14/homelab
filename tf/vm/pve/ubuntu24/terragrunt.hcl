@@ -18,12 +18,12 @@ locals {
 
 inputs = {
   vms = {
-    "ubuntu2404-desktop" = merge(local.base_vars, {
+    "ubuntu24" = merge(local.base_vars, {
       cores   = 4
       memory  = 8192
       on_boot = true
       bridge  = local.common.locals.pve.net10.bridge
-      ipv4    = "192.168.10.178/24"
+      ipv4    = "192.168.10.177/24"
       ipv4gw  = local.common.locals.pve.net10.ipv4gw
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {

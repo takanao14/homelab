@@ -18,9 +18,9 @@ locals {
 
 inputs = {
   vms = {
-    "rocky9-server" = merge(local.base_vars, {
-      cores   = 2
-      memory  = 4096
+    "rocky9" = merge(local.base_vars, {
+      cores   = 4
+      memory  = 8192
       on_boot = true
       bridge  = local.common.locals.pve.net10.bridge
       ipv4    = "192.168.10.179/24"
