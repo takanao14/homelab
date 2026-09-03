@@ -200,7 +200,6 @@ Secrets consumed by Kubernetes applications via ESO. Scoped per application; not
 ```
 secret/k8s/cert-manager/cloudflare   # Cloudflare API token
 secret/k8s/gpu-switch/basic-auth     # GPU Switch UI htpasswd
-secret/k8s/headlamp/admin-token      # Headlamp login token
 secret/k8s/monitoring/grafana        # Grafana credentials
 secret/k8s/monitoring/alertmanager   # Alertmanager Discord webhook
 secret/k8s/argocd/{env}/admin        # ArgoCD admin password (per environment)
@@ -214,7 +213,10 @@ hash.
 
 ### `secret/kubeconfig/{cluster}`
 
-Kubeconfig files for accessing Kubernetes clusters. Shared across multiple consumers (ESO for Headlamp, VM provisioning via `bao` CLI, etc.).
+Kubeconfig files for accessing Kubernetes clusters, retrieved from a workstation
+with `scripts/secrets/get-kubeconfig.sh` and by VM provisioning via the `bao`
+CLI. No ESO policy grants access to this prefix: in-cluster workloads use their
+own ServiceAccount, so a cluster never reads a kubeconfig out of OpenBao.
 
 ```
 secret/kubeconfig/prd   # prd cluster kubeconfig

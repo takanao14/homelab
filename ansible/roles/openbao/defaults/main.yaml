@@ -57,7 +57,7 @@ openbao_k8s_clusters:
     ca_cert_file: "{{ openbao_config_dir }}/k8s-prd-ca.pem"
     role: k8s-eso
     # Argo CD policy is restricted to the prd secret path.
-    policies: "k8s-cert-manager,k8s-external-dns,k8s-homepage,k8s-monitoring,k8s-headlamp,k8s-gpu-switch,k8s-argocd-prd"
+    policies: "k8s-cert-manager,k8s-external-dns,k8s-homepage,k8s-monitoring,k8s-gpu-switch,k8s-argocd-prd"
   - name: sandbox
     mount_path: kubernetes-sandbox
     host: "{{ openbao_k8s_sandbox_host }}"
@@ -69,6 +69,7 @@ openbao_k8s_clusters:
 # Retired policies removed idempotently from the server.
 openbao_absent_policies:
   - k8s-longhorn-ui
+  - k8s-headlamp
 
 # SOPS-backed KV entries: path and data.
 # Example:
