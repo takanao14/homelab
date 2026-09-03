@@ -94,3 +94,4 @@ deleting it:
 | [0039](0039-builtin-rocm-backend-replaces-custom-lemonade-image.md) | Lemonade v11 serves gfx1200 through the built-in ROCm backend, retiring the custom image and the second Deployment | Accepted |
 | [0040](0040-select-lemonade-backend-by-model-and-concurrency.md) | Select the Lemonade backend by model and concurrency | Accepted |
 | [0041](0041-opencode-connects-to-ollama.md) | OpenCode connects to Ollama instead of Lemonade Server | Accepted |
+| [0042](0042-openbao-scheduled-snapshots-and-restore-path.md) | Scheduled OpenBao Raft snapshots kept on-premises with a restore path | Proposed |
