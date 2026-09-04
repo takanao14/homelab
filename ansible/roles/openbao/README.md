@@ -109,16 +109,12 @@ The ESO ArgoCD Application itself is rendered by the app-of-apps chart
 `k8s/argocd/<env>/apps-values.yaml`.
 
 Application policies grant read-only access to their own KV prefix. The prd ESO
-role includes `k8s-gpu-switch`, while sandbox deliberately does not because the
-gpu-switch Application is disabled there.
+role includes `k8s-cert-manager`, while sandbox deliberately does not because
+its Argo CD bootstrap runs HTTP-only without cert-manager (ADR-0010).
 
 Policies removed from the repository are listed in `openbao_absent_policies`.
 `ops-openbao_configure.yaml` deletes those server-side policy objects before it
 writes the active policies and Kubernetes roles.
-
-| Policy | KV prefix | Clusters |
-|---|---|---|
-| `k8s-gpu-switch` | `secret/k8s/gpu-switch/*` | prd |
 
 ### 1. Bootstrap Ansible userpass authentication
 
@@ -199,7 +195,6 @@ Secrets consumed by Kubernetes applications via ESO. Scoped per application; not
 
 ```
 secret/k8s/cert-manager/cloudflare   # Cloudflare API token
-secret/k8s/gpu-switch/basic-auth     # GPU Switch UI htpasswd
 secret/k8s/monitoring/grafana        # Grafana credentials
 secret/k8s/monitoring/alertmanager   # Alertmanager Discord webhook
 secret/k8s/argocd/{env}/admin        # ArgoCD admin password (per environment)
@@ -225,24 +220,7 @@ secret/kubeconfig/sandbox # sandbox cluster kubeconfig
 
 The distinction: `k8s/` is for secrets **used by** apps running in Kubernetes; `kubeconfig/` is for credentials **to access** Kubernetes clusters.
 
-Secrets are seeded from the SOPS-encrypted `openbao_secrets` list. For Basic
-Auth secrets used by Envoy Gateway, store an htpasswd entry in `{SHA}` format:
-
-```yaml
-- path: secret/k8s/gpu-switch/basic-auth
-  data:
-    htpasswd: "admin:{SHA}..."
-
-```
-
-Generate the value with:
-
-```bash
-htpasswd -ns admin
-```
-
-This prompts for the password instead of placing it in shell history. Copy the
-single `admin:{SHA}...` output line into the SOPS-encrypted inventory.
+Secrets are seeded from the SOPS-encrypted `openbao_secrets` list.
 
 For the Alertmanager Discord receiver, add:
 

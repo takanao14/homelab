@@ -22,13 +22,13 @@ gpuWorkloads:
     name: vllm
 
 securityPolicy:
-  # Preserve the name to avoid two policies targeting one route during sync.
+  # Legacy name kept deliberately: renaming would leave two policies targeting
+  # one route during sync.
   name: gpu-switch-basic-auth
-  secretName: gpu-switch-basic-auth
 
-# Shared Authentik forward auth; disable to restore OpenBao basicAuth (stage 14a).
+# Shared Authentik forward auth; the only gate since the Basic Auth fallback
+# was removed.
 forwardAuth:
-  enabled: true
   # Upstream HTTPRoute targeted by SecurityPolicy; the outpost route is excluded.
   targetRouteName: gpu-switch
   outpost:
@@ -58,13 +58,5 @@ networkPolicy:
   enabled: true
   # Envoy proxy-pod namespace, not the Gateway resource namespace.
   gatewayNamespace: envoy-gateway-system
-
-openbao:
-  secretStore:
-    name: openbao
-    kind: ClusterSecretStore
-  basicAuth:
-    key: k8s/gpu-switch/basic-auth
-    property: htpasswd
 
 resources: {}

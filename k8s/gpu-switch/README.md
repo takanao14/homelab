@@ -61,17 +61,11 @@ identity headers are forwarded purely so a future access log can name the user.
 A NetworkPolicy limits ingress to the Gateway's proxy pods, since reaching the
 Service directly would skip the policy entirely.
 
-A `SecurityPolicy` accepts either `basicAuth` or `extAuth`, never both, so the
-switch is all-or-nothing. `forwardAuth.enabled: false` in `chart/values.yaml`
-reverts to the previous Basic Auth in one sync, which is why the ExternalSecret
-below is still deployed. Remove it, and the OpenBao entry, once forward auth has
-proven itself.
-
-```text
-secret/k8s/gpu-switch/basic-auth
-```
-
-Property `htpasswd` becomes `.htpasswd` and must use Envoy's `{SHA}` format.
+Forward auth is the only gate. The Basic Auth fallback it replaced, along with
+its `ExternalSecret` and the `secret/k8s/gpu-switch/basic-auth` OpenBao entry,
+was removed once forward auth had proven itself. The `SecurityPolicy` name still
+reads `gpu-switch-basic-auth` because renaming it would leave two policies
+targeting one route mid-sync.
 
 ## Image release
 
