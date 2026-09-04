@@ -2,7 +2,9 @@
 
 [Lemonade](https://github.com/lemonade-sdk/lemonade) v11 inference on the prd
 AMD GPU worker. One upstream Deployment can select Vulkan or ROCm per model;
-the built-in ROCm backend is the validated serving path.
+the built-in ROCm backend is the validated serving path. OpenCode uses this
+service with `Gemma-4-12B-it-MTP-GGUF` per
+[ADR-0043](../../docs/adr/0043-opencode-connects-to-lemonade-mtp.md).
 
 ## Directory Structure
 
@@ -85,6 +87,9 @@ The Deployment defaults to zero replicas and is managed through gpu-switch:
 scripts/gpu-switch.sh lemonade-server
 scripts/gpu-switch.sh status
 ```
+
+The first command is required before starting OpenCode because the configured
+Lemonade model shares the GPU with the other switchable workloads.
 
 Switch to another workload, or stop all GPU workloads, when finished:
 

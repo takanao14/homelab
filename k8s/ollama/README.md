@@ -1,8 +1,6 @@
 # ollama
 
-[Ollama](https://ollama.com/) ROCm inference on prd, consumed by Open WebUI and by
-OpenCode ([ADR-0041](../../docs/adr/0041-opencode-connects-to-ollama.md);
-`opencode.json` at the repo root).
+[Ollama](https://ollama.com/) ROCm inference on prd, consumed by Open WebUI.
 
 ## Directory Structure
 
@@ -87,7 +85,6 @@ incompatible pairing. Check upstream `ROCMVERSION` and `AMDGPU_TARGETS` on bumps
 - `replicaCount: 0` leaves activation to gpu-switch; Argo CD ignores drift.
 - The external route allows 10 minutes; in-cluster clients bypass Envoy.
 - Open WebUI is a separate upstream-chart Application.
-- `numCtx: 131072` / `kvCacheType: q8_0` (`values.yaml`) sizes the context window
-  and KV cache for agent workloads (OpenCode), not just chat. Before running
-  OpenCode, switch the GPU to this Deployment (`scripts/gpu-switch.sh ollama`)
-  and pull the model it expects: `ollama pull gemma4:12b`.
+- `numCtx: 131072` / `kvCacheType: q8_0` (`values.yaml`) retains the validated
+  long-context profile for `gemma4:12b`. OpenCode now uses Lemonade Server per
+  [ADR-0043](../../docs/adr/0043-opencode-connects-to-lemonade-mtp.md).

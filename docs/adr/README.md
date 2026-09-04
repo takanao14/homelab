@@ -93,5 +93,6 @@ deleting it:
 | [0038](0038-image-role-suffixes-base-tool-desktop.md) | Name custom images by role — base, tool, desktop | Accepted |
 | [0039](0039-builtin-rocm-backend-replaces-custom-lemonade-image.md) | Lemonade v11 serves gfx1200 through the built-in ROCm backend, retiring the custom image and the second Deployment | Accepted |
 | [0040](0040-select-lemonade-backend-by-model-and-concurrency.md) | Select the Lemonade backend by model and concurrency | Accepted |
-| [0041](0041-opencode-connects-to-ollama.md) | OpenCode connects to Ollama instead of Lemonade Server | Accepted |
+| [0041](0041-opencode-connects-to-ollama.md) | OpenCode connects to Ollama instead of Lemonade Server | Superseded by ADR-0043 |
 | [0042](0042-rebuild-openbao-from-ansible-instead-of-snapshots.md) | Recover OpenBao by rebuilding from Ansible, not from snapshots | Accepted |
+| [0043](0043-opencode-connects-to-lemonade-mtp.md) | OpenCode connects to Lemonade Server with Gemma 4 MTP | Accepted |

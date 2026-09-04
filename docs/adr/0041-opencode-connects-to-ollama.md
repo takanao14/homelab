@@ -1,6 +1,6 @@
 # ADR-0041: OpenCode connects to Ollama instead of Lemonade Server
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0043](0043-opencode-connects-to-lemonade-mtp.md)
 - **Date:** 2026-08-22
 - **Administrative note:** Renumbered from the duplicate ADR-0035 on
   2026-09-01; the decision content is unchanged.
