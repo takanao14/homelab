@@ -89,9 +89,57 @@ The role starts the OpenBao service but does **not** initialize it. On first dep
 BAO_ADDR=http://127.0.0.1:8200 bao operator init
 ```
 
-Save the recovery keys securely. Store the root token only in the
-SOPS-encrypted inventory; it is required by the bootstrap and recovery path but
-is not used by routine operational playbooks.
+Store both the root token and the recovery keys in the SOPS-encrypted inventory
+(`openbao_root_token`, `openbao_recovery_keys`). Neither is used by routine
+operational playbooks. The recovery keys authorize `operator generate-root` and
+`operator rekey`; they do not unseal, because the static seal does that. Keep
+every share — rotating them requires the existing ones, so a lost set cannot be
+regenerated.
+
+## Rebuilding the host
+
+OpenBao is recovered by rebuilding it, not by restoring a snapshot (ADR-0042).
+Ten of the fourteen KV entries come from `openbao_secrets`; the other four are
+re-injected from a workstation. Run the steps in order:
+
+1. Re-create the VM, then `ansible-playbook playbooks/openbao.yaml`. The role
+   deploys `openbao.hcl` and the static seal key from SOPS, so the rebuilt host
+   unseals on its own once initialized.
+2. `BAO_ADDR=http://127.0.0.1:8200 bao operator init` on the server.
+3. **Update SOPS before continuing.** The new `operator init` issues a new root
+   token and new recovery keys, so the `openbao_root_token` and
+   `openbao_recovery_keys` already in `group_vars/openbao.sops.yaml` are dead.
+   Bootstrap authenticates with the stored root token and fails until they are
+   replaced.
+4. `ops-openbao_bootstrap.yaml`, then `ops-openbao_configure.yaml` for the KV
+   mount and policies, then `ops-openbao_configure_userpass.yaml`, then
+   `ops-openbao_seed_secrets.yaml`.
+5. Re-inject the hand-managed entries with `scripts/secrets/admin/`:
+   `set-sops-key.sh`, `set-env.sh`, `set-kubeconfig.sh`. These log in as the
+   `admin` userpass account created in the previous step.
+6. `ops-openbao_register_cluster.yaml -e cluster=prd` and again for `sandbox`.
+   Each run creates and configures that cluster's Kubernetes auth mount before
+   writing its ESO role.
+
+## Reconciling declared and stored secrets
+
+Out-of-band writes accumulate, so compare the declaration against the live store
+periodically. List the declared paths:
+
+```bash
+sops -d ansible/inventories/homelab/group_vars/openbao.sops.yaml | yq '.openbao_secrets[].path'
+```
+
+List what the server actually holds:
+
+```bash
+walk() { for p in $(bao kv list -format=json "secret/$1" 2>/dev/null | jq -r '.[]'); do case "$p" in */) walk "$1$p";; *) echo "secret/$1$p";; esac; done; }; walk ""
+```
+
+The server list also contains `secret/k8s/argocd/<env>/admin` (from
+`openbao_argocd_admin`) and the four hand-managed paths. Anything beyond those is
+an orphan and can be destroyed with `bao kv metadata delete`. A path that appears
+only in SOPS is worse: the next seed run recreates it on the server.
 
 ## Kubernetes ESO integration setup
 
