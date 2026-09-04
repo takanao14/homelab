@@ -8,7 +8,7 @@ gateway:
 
 image:
   repository: nginxinc/nginx-unprivileged
-  tag: 1.31.4-alpine
+  tag: 1.31.5-alpine
 
 pdns:
   # The hidden primary holds the complete zone data.
