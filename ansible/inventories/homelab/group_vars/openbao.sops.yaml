@@ -49,9 +49,6 @@ openbao_secrets:
     - path: ENC[AES256_GCM,data:Lojotq7LhEXQkb/8qp9v+nMYoRCKkr3sjJ86LskwaLqJVA==,iv:n/ZYRD1AYbX4U0WCwSYELjRGnci/2/TKfT6wjrE5PB8=,tag:hRPia6Co4xe5oihGJE3UPg==,type:str]
       data:
         discord-webhook-url: ENC[AES256_GCM,data:FP4ExFzhXDI8EA1LV45HMSli7OhDF7w7ZsiqfFbZ13fho2tmQ2A9lYj1dDcjlGlDRXnVHT1i1otZz9aXXsY6x+0TyNN95ekSIrVFdQJxI/YMSdyn/fLWZZjHmtYmzqqgHP6TWGx+EdgNoRemofjUxRslGYumyatSbQ==,iv:/oHXrVQoNl75HsMXVTj4lEK2WRsSQjPTiWyisuvIrds=,tag:AyZxNpLQy/U4W8//sc6N4Q==,type:str]
-    - path: ENC[AES256_GCM,data:iYY14V61KwtKfvPO4AAlcKGRmbHBQiVfjYtLxLKGfeU=,iv:b2qXoKcqV4YvOd4FjcfI6UxEdbigC9riK5wS8uDCwSE=,tag:tB/oqA5DGqMKTbdLanbyyw==,type:str]
-      data:
-        htpasswd: ENC[AES256_GCM,data:tCQcs4tgdmbDwvbIMw1pOa0G6+wJH566jjnVSIqQPwqjIv+IaSg6,iv:veNH8/JmGylJMX7tEQRjan6ofAkSjDMphNhBERt14Sg=,tag:nQffVfMWZdAWNulim6AoZg==,type:str]
 sops:
     age:
         - enc: |
@@ -63,7 +60,7 @@ sops:
             JOApvuBcVw/zpLimMrpKmFa51DD6fQPlWdZhPqfxUMexLacEdw/VMw==
             -----END AGE ENCRYPTED FILE-----
           recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
-    lastmodified: "2026-09-03T21:00:47Z"
-    mac: ENC[AES256_GCM,data:qzeD2IxH5nYNNuIdh1W/GWVRQQxyRuo6doL2dxY+NVpWonQLCog441Jp8M2Zd1EG4BZ7MD7KlYwyWJ6KNz4NVFn3fnxOIpIJdty36Y/KdOy6rpKHS8nirKDRHijZDxm8VKqaVHY9DxjsSEyPw9E0ONCG8WXM3yT/JlbDykHcgnw=,iv:BoFY+dkOFAiszDfEwl6WtfUPRIUOJ+SnWYH1/QHF+QM=,tag:/83VDws5/K1NlLADfd1Wcw==,type:str]
+    lastmodified: "2026-09-04T00:17:44Z"
+    mac: ENC[AES256_GCM,data:auj3up9Wq2NQJ+R7ipRxjvQI8RC9/FU4o3ECIdIM4HLJ/Gh+LOKgFbE1+OsQtrfeuG0FMVXtHtqp9sOrSHwnt0pyDBLEkE9ZwTN5X+bsiYSVqriSDO+1T0ouT2G8mY6Q3SBcq3GJhRW76UOyFGPWrGt9h2cgJtsS7AZtJb+vUNs=,iv:fo5MCrWBMqmcJU6ttNDUYFxjAScwYPD//stgaLo5U1s=,tag:5tfimp8csH0KIB16saWgXg==,type:str]
     unencrypted_suffix: _unencrypted
     version: 3.13.3
