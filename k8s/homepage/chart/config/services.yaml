@@ -149,6 +149,11 @@
         proxmoxVMID: "106"
         proxmoxType: lxc
 
+    - Authentik:
+        icon: authentik.png
+        href: https://auth.home.butaco.net
+        description: Identity Provider
+
     - DNS Record View:
         icon: powerdns.png
         href: https://pdns-ui.prd.butaco.net

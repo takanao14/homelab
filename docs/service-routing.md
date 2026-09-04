@@ -59,6 +59,7 @@ here.
 | `truenas-ui.home.butaco.net` | `192.168.20.10:443` | HTTPS upstream, self-signed (ADR-0008); not Ansible-managed, so the address is a literal |
 | `netbox-ui.home.butaco.net` | `netbox1:80` | IPAM |
 | `openbao.home.butaco.net` | `openbao1:8200` | Secrets |
+| `auth.home.butaco.net` | `authentik1:9000` | Identity provider |
 | `s3.home.butaco.net` | `seaweedfs1:8333` | S3 API — no UI, deliberately absent from the dashboard |
 | `seaweedfs-ui.home.butaco.net` | `seaweedfs1:23646` | SeaweedFS console |
 | `meshcentral.home.butaco.net` | `rpi4:8443` | Out-of-band management (ADR-0025) |
