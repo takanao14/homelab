@@ -9,6 +9,9 @@
       "models": {
         "gemma4:12b": {
           "name": "Gemma 4 12B (Ollama)"
+        },
+        "ornith-1.5:9b": {
+          "name": "Ornith 1.5 9B (Ollama)"
         }
       }
     }
