@@ -124,22 +124,10 @@ re-injected from a workstation. Run the steps in order:
 ## Reconciling declared and stored secrets
 
 Out-of-band writes accumulate, so compare the declaration against the live store
-periodically. List the declared paths:
-
-```bash
-sops -d ansible/inventories/homelab/group_vars/openbao.sops.yaml | yq '.openbao_secrets[].path'
-```
-
-List what the server actually holds:
-
-```bash
-walk() { for p in $(bao kv list -format=json "secret/$1" 2>/dev/null | jq -r '.[]'); do case "$p" in */) walk "$1$p";; *) echo "secret/$1$p";; esac; done; }; walk ""
-```
-
-The server list also contains `secret/k8s/argocd/<env>/admin` (from
-`openbao_argocd_admin`) and the four hand-managed paths. Anything beyond those is
-an orphan and can be destroyed with `bao kv metadata delete`. A path that appears
-only in SOPS is worse: the next seed run recreates it on the server.
+periodically with `scripts/check-openbao-secrets.sh` (see
+[`scripts/README.md`](../../../scripts/README.md)). It reports orphans, which are
+destroyed with `bao kv metadata delete`, and paths left in `openbao_secrets`
+after the secret was retired, which the next seed run recreates on the server.
 
 ## Kubernetes ESO integration setup
 

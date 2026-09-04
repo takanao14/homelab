@@ -10,6 +10,7 @@ scripts/
 ├── gpu-switch.sh                             # k8s GPU workload switch
 ├── check-image-refs.sh                       # CI: image filename map consistency check
 ├── check-proxy-routes.sh                     # CI: Caddy sites <-> Homepage dashboard drift check
+├── check-openbao-secrets.sh                  # declared secret paths <-> OpenBao KV drift check (local only)
 ├── grafana-mcp.sh                            # Grafana MCP server launcher (stdio)
 ├── grafana-mcp-token.sh                      # issue Grafana MCP service-account token
 ├── netbox-mcp.sh                             # NetBox MCP server launcher (stdio)
@@ -161,6 +162,30 @@ use the Gateway. CI runs the check on either source file changing.
 
 ```bash
 ./check-proxy-routes.sh
+```
+
+### `check-openbao-secrets.sh`
+
+Checks declared secret paths against the OpenBao KV store in both directions:
+
+- a path declared in SOPS but absent from the server — the next
+  `ops-openbao_seed_secrets.yaml` run recreates it, so a retired secret must be
+  removed from `openbao_secrets`, not only from the server
+- a path on the server that nothing declares — an orphan left by an out-of-band
+  write
+
+Paths written by `secrets/admin/` are declared in the script's
+`UNMANAGED_PATHS`; extend it when a new `set-*.sh` writes to a new path. Argo CD
+paths are derived from `openbao_argocd_admin`.
+
+Reports only, and reads path names alone — no secret value is extracted, and
+nothing is deleted. Exits `1` when either direction has a finding. It needs the
+AGE key and network access to OpenBao, so unlike the other `check-*` scripts it
+does not run in CI. `kv-read` is enough; the default user is `homelab`.
+
+```bash
+./check-openbao-secrets.sh
+BAO_TOKEN=xxx ./check-openbao-secrets.sh
 ```
 
 ## Secrets / environment
