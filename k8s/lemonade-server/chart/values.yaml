@@ -2,7 +2,7 @@ replicaCount: 0
 
 image:
   repository: ghcr.io/lemonade-sdk/lemonade-server
-  tag: v11.8.1
+  tag: v11.9.0
 
 config:
   rocm_channel: nightly
