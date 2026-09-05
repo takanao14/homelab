@@ -1,0 +1,10 @@
+---
+- name: Upgrade Authentik to the reviewed version
+  hosts: authentik
+  serial: 1
+  any_errors_fatal: true
+  tasks:
+    - name: Run Authentik upgrade tasks
+      ansible.builtin.include_role:
+        name: authentik
+        tasks_from: upgrade

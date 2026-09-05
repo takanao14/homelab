@@ -1,0 +1,229 @@
+---
+- name: Check required Authentik containers
+  become: true
+  ansible.builtin.command:
+    argv:
+      - podman
+      - container
+      - exists
+      - "{{ item }}"
+  loop:
+    - authentik-server
+    - "{{ authentik_worker_container }}"
+    - "{{ authentik_ldap_container }}"
+    - "{{ authentik_proxy_container }}"
+  register: authentik_upgrade_container_checks
+  changed_when: false
+  failed_when: authentik_upgrade_container_checks.rc not in [0, 1]
+  check_mode: false
+
+- name: Require an existing complete Authentik deployment
+  ansible.builtin.assert:
+    that:
+      - authentik_upgrade_container_checks.results | selectattr('rc', 'equalto', 0) | list | length == 4
+    fail_msg: >-
+      The explicit upgrade workflow requires the server, worker, LDAP Outpost,
+      and Proxy Outpost containers. Use playbooks/authentik.yaml for a new
+      deployment.
+
+- name: Read deployed Authentik component images
+  become: true
+  ansible.builtin.command:
+    argv:
+      - podman
+      - inspect
+      - --format
+      - "{{ '{{.ImageName}}' }}"
+      - "{{ item }}"
+  loop:
+    - authentik-server
+    - "{{ authentik_worker_container }}"
+    - "{{ authentik_ldap_container }}"
+    - "{{ authentik_proxy_container }}"
+  register: authentik_upgrade_image_inspects
+  changed_when: false
+  check_mode: false
+
+- name: Store deployed Authentik component versions
+  ansible.builtin.set_fact:
+    authentik_upgrade_installed_versions: >-
+      {{ authentik_upgrade_image_inspects.results
+         | map(attribute='stdout')
+         | map('regex_replace', '^.*:', '')
+         | list }}
+
+- name: Prevent an Authentik downgrade
+  ansible.builtin.assert:
+    that:
+      - authentik_version is version(item, '>=')
+    fail_msg: >-
+      Refusing to downgrade Authentik component {{ item }} to
+      {{ authentik_version }}.
+  loop: "{{ authentik_upgrade_installed_versions | unique }}"
+
+- name: Require review before changing the Authentik release series
+  ansible.builtin.assert:
+    that:
+      - >-
+        authentik_upgrade_allow_release_change | bool
+        or (item | regex_search('^[0-9]+[.][0-9]+'))
+           == (authentik_version | regex_search('^[0-9]+[.][0-9]+'))
+    fail_msg: >-
+      Authentik requires sequential release-series upgrades. Review the
+      intermediate release notes, set authentik_upgrade_allow_release_change to
+      true for this run, and request only the next reviewed series.
+  loop: "{{ authentik_upgrade_installed_versions | unique }}"
+
+- name: Determine whether Authentik requires an upgrade
+  ansible.builtin.set_fact:
+    authentik_upgrade_required: >-
+      {{ authentik_upgrade_installed_versions
+         | reject('equalto', authentik_version)
+         | list | length > 0 }}
+
+- name: Report the Authentik upgrade decision
+  ansible.builtin.debug:
+    msg: >-
+      Authentik installed={{ authentik_upgrade_installed_versions | unique | join(',') }}
+      desired={{ authentik_version }}
+      action={{ 'upgrade' if authentik_upgrade_required else 'none' }}
+
+- name: Upgrade Authentik to the reviewed version
+  when:
+    - authentik_upgrade_required
+    - not ansible_check_mode
+  block:
+    - name: Generate the Authentik backup timestamp
+      ansible.builtin.command:
+        argv:
+          - date
+          - -u
+          - +%Y%m%dT%H%M%SZ
+      register: authentik_upgrade_timestamp
+      changed_when: false
+
+    - name: Create the Authentik backup directory
+      become: true
+      ansible.builtin.file:
+        path: "{{ authentik_backup_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0700'
+
+    - name: Back up the Authentik database
+      vars:
+        authentik_upgrade_backup_name: >-
+          authentik-{{ authentik_upgrade_installed_versions | first }}-{{ authentik_upgrade_timestamp.stdout }}.dump
+        authentik_upgrade_container_backup: "/tmp/{{ authentik_upgrade_backup_name }}"
+        authentik_upgrade_host_backup: "{{ authentik_backup_dir }}/{{ authentik_upgrade_backup_name }}"
+      block:
+        - name: Dump the Authentik PostgreSQL database
+          become: true
+          ansible.builtin.command:
+            argv:
+              - podman
+              - exec
+              - "{{ authentik_pg_container }}"
+              - pg_dump
+              - --username={{ authentik_pg_user }}
+              - --dbname={{ authentik_pg_db }}
+              - --format=custom
+              - --clean
+              - --create
+              - --file={{ authentik_upgrade_container_backup }}
+          changed_when: true
+
+        - name: Copy the Authentik database backup to the host
+          become: true
+          ansible.builtin.command:
+            argv:
+              - podman
+              - cp
+              - "{{ authentik_pg_container }}:{{ authentik_upgrade_container_backup }}"
+              - "{{ authentik_upgrade_host_backup }}"
+          changed_when: true
+
+        - name: Inspect the Authentik database backup
+          become: true
+          ansible.builtin.stat:
+            path: "{{ authentik_upgrade_host_backup }}"
+          register: authentik_upgrade_backup_stat
+
+        - name: Require a non-empty Authentik database backup
+          ansible.builtin.assert:
+            that:
+              - authentik_upgrade_backup_stat.stat.exists
+              - authentik_upgrade_backup_stat.stat.size | int > 0
+            fail_msg: "The Authentik database backup is missing or empty."
+      always:
+        - name: Remove the temporary Authentik database backup
+          become: true
+          ansible.builtin.command:
+            argv:
+              - podman
+              - exec
+              - "{{ authentik_pg_container }}"
+              - rm
+              - -f
+              - "{{ authentik_upgrade_container_backup }}"
+          changed_when: false
+          failed_when: false
+
+    - name: Pull reviewed Authentik images
+      become: true
+      ansible.builtin.command:
+        argv:
+          - podman
+          - pull
+          - "{{ item }}:{{ authentik_version }}"
+      loop:
+        - "{{ authentik_image }}"
+        - "{{ authentik_ldap_image }}"
+        - "{{ authentik_proxy_image }}"
+      changed_when: true
+
+    - name: Apply the reviewed Authentik release
+      ansible.builtin.include_tasks: main.yaml
+      vars:
+        authentik_upgrade_mode: true
+
+    - name: Apply pending Authentik restarts
+      ansible.builtin.meta: flush_handlers
+
+    - name: Wait for the Authentik API after upgrade
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ authentik_http_port }}/-/health/ready/"
+        status_code: 200
+      register: authentik_upgrade_ready
+      until: authentik_upgrade_ready.status == 200
+      retries: 30
+      delay: 5
+
+    - name: Read Authentik component images after upgrade
+      become: true
+      ansible.builtin.command:
+        argv:
+          - podman
+          - inspect
+          - --format
+          - "{{ '{{.ImageName}}' }}"
+          - "{{ item }}"
+      loop:
+        - authentik-server
+        - "{{ authentik_worker_container }}"
+        - "{{ authentik_ldap_container }}"
+        - "{{ authentik_proxy_container }}"
+      register: authentik_upgrade_verified_images
+      changed_when: false
+
+    - name: Require the reviewed Authentik version on every component
+      ansible.builtin.assert:
+        that:
+          - item.stdout | regex_replace('^.*:', '') == authentik_version
+        fail_msg: >-
+          {{ item.item }} is not running the reviewed Authentik
+          {{ authentik_version }} image.
+      loop: "{{ authentik_upgrade_verified_images.results }}"
+      loop_control:
+        label: "{{ item.item }}"
