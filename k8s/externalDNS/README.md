@@ -32,7 +32,8 @@ externalDNS/
 | `policy` | `{env}/values.yaml` | DNS record lifecycle policy |
 
 The `gateway-httproute` source creates records; environments use distinct TXT
-owner IDs.
+owner IDs. Both environments use `sync`; domain filters and TXT ownership limit
+deletion to records managed by their own external-dns instance.
 
 > `butaco.net` is a personal domain. Replace it in each environment values file.
 

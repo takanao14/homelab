@@ -96,3 +96,4 @@ deleting it:
 | [0041](0041-opencode-connects-to-ollama.md) | OpenCode connects to Ollama instead of Lemonade Server | Superseded by ADR-0043 |
 | [0042](0042-rebuild-openbao-from-ansible-instead-of-snapshots.md) | Recover OpenBao by rebuilding from Ansible, not from snapshots | Accepted |
 | [0043](0043-opencode-connects-to-lemonade-mtp.md) | OpenCode connects to Lemonade Server with Gemma 4 MTP | Accepted |
+| [0044](0044-external-dns-syncs-owned-record-lifecycle.md) | ExternalDNS synchronizes its owned DNS record lifecycle | Accepted |
