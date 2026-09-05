@@ -25,6 +25,7 @@ spec:
             - --source={{ . }}
             {{- end }}
             - --provider=pdns
+            - --policy={{ .Values.policy }}
             - --pdns-server=$(PDNS_API_URL)
             - --pdns-server-id=$(PDNS_SERVER_ID)
             - --pdns-api-key=$(PDNS_HTTP_API_KEY)

@@ -8,6 +8,7 @@ pdns:
 
 ownerId: ""
 domainFilter: ""
+policy: upsert-only
 
 sources:
   - service
