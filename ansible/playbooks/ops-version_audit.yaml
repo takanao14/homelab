@@ -1,6 +1,55 @@
 ---
 # Read-only comparison of desired/candidate and installed component versions.
 
+- name: Audit Authentik versions
+  hosts: authentik
+  gather_facts: false
+  vars_files:
+    - ../roles/authentik/defaults/main.yaml
+  tasks:
+    - name: Read deployed Authentik component images
+      become: true
+      ansible.builtin.command:
+        argv:
+          - podman
+          - inspect
+          - --format
+          - "{{ '{{.ImageName}}' }}"
+          - "{{ item.container }}"
+      loop:
+        - name: authentik-server
+          container: authentik-server
+        - name: authentik-worker
+          container: "{{ authentik_worker_container }}"
+        - name: authentik-ldap
+          container: "{{ authentik_ldap_container }}"
+        - name: authentik-proxy
+          container: "{{ authentik_proxy_container }}"
+      register: authentik_audit_images
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Report Authentik component versions
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            item.item.name,
+            inventory_hostname,
+            authentik_version,
+            authentik_audit_installed,
+            'OK' if authentik_audit_installed == authentik_version else 'DIFF'
+          ) }}
+      vars:
+        authentik_audit_installed: >-
+          {{ (item.stdout | regex_replace('^.*:', ''))
+             if item.rc == 0 else 'unknown' }}
+      loop: "{{ authentik_audit_images.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
 - name: Audit Forgejo version
   hosts: forgejo
   gather_facts: false

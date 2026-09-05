@@ -61,6 +61,7 @@ Store these values in SOPS-encrypted group variables such as
 | `authentik_pg_db` / `authentik_pg_user` | `authentik` | PostgreSQL database and user |
 | `authentik_base_dir` | `/opt/authentik` | Parent directory for data, templates, certificates, and blueprints |
 | `authentik_pg_data_dir` | `/var/lib/authentik-postgresql` | PostgreSQL data directory |
+| `authentik_backup_dir` | `/var/backups/authentik` | Root-only pre-upgrade database dumps |
 | `authentik_env_file` | `/etc/authentik/authentik.env` | Shared PostgreSQL/server/worker environment file |
 | `authentik_http_port` | `9000` | Server HTTP port published for Caddy |
 | `authentik_ldap_outpost_name` | `homelab-ldap-outpost` | Must match `files/blueprints/ldap.yaml` |
@@ -71,8 +72,37 @@ Store these values in SOPS-encrypted group variables such as
 | `authentik_proxy_outpost_name` | `homelab-proxy-outpost` | Must match `files/blueprints/proxy.yaml` |
 | `authentik_proxy_http_port` | `9001` | Proxy Outpost port used by Envoy Gateway |
 | `authentik_external_url` | `https://auth.home.butaco.net` | Browser-facing Authentik URL |
+| `authentik_upgrade_allow_release_change` | `false` | Permit a reviewed move to the next release series |
 
 ## Operations
+
+### Upgrade
+
+`authentik_version` is the Renovate-managed reviewed release. The normal role
+refuses to change a deployed version; use the operational workflow instead:
+
+```sh
+# Read-only desired-versus-deployed check
+ansible-playbook playbooks/ops-version_audit.yaml --limit authentik
+
+# Validate the upgrade decision without changing the host
+ansible-playbook playbooks/ops-authentik_upgrade.yaml --limit authentik --check --diff
+
+# Perform and verify the upgrade
+ansible-playbook playbooks/ops-authentik_upgrade.yaml --limit authentik
+```
+
+The upgrade workflow prevents downgrades, saves a PostgreSQL dump, pulls the
+reviewed server and Outpost images, updates every component together, and
+verifies their image tags and API readiness. Dumps remain under
+`authentik_backup_dir` for manual retention management.
+
+Authentik requires sequential release-series upgrades. Review every
+intermediate release and upgrade to its latest patch before continuing. Set
+`-e authentik_upgrade_allow_release_change=true` only for the next reviewed
+series; patch updates within the current series do not require the override.
+
+### Recovery and credentials
 
 Bootstrap variables affect only a fresh database without an admin user. If
 bootstrap access is unavailable, create a time-limited recovery URL with:

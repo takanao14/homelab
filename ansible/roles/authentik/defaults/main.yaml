@@ -17,6 +17,7 @@ authentik_data_dir: "{{ authentik_base_dir }}/data"
 authentik_templates_dir: "{{ authentik_base_dir }}/custom-templates"
 authentik_certs_dir: "{{ authentik_base_dir }}/certs"
 authentik_pg_data_dir: /var/lib/authentik-postgresql
+authentik_backup_dir: /var/backups/authentik
 
 # Authentik watches /blueprints/local and auto-applies deployed YAML files.
 authentik_blueprints_dir: "{{ authentik_base_dir }}/blueprints"
@@ -50,3 +51,6 @@ authentik_external_url: "https://auth.home.butaco.net"
 authentik_ldap_cert_name: homelab-ldap
 authentik_ldap_cert_cn: ldap.home.butaco.net
 authentik_ldap_cert_validity_days: 365
+
+# Cross-release upgrades require explicit review of every intermediate release.
+authentik_upgrade_allow_release_change: false

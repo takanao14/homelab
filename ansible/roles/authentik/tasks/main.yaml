@@ -1,4 +1,47 @@
 ---
+- name: Check whether the Authentik server container exists
+  become: true
+  ansible.builtin.command:
+    argv:
+      - podman
+      - container
+      - exists
+      - authentik-server
+  register: authentik_server_exists
+  changed_when: false
+  failed_when: authentik_server_exists.rc not in [0, 1]
+  check_mode: false
+
+- name: Read the deployed Authentik server image
+  become: true
+  ansible.builtin.command:
+    argv:
+      - podman
+      - inspect
+      - --format
+      - "{{ '{{.ImageName}}' }}"
+      - authentik-server
+  register: authentik_deployed_server_image
+  changed_when: false
+  check_mode: false
+  when: authentik_server_exists.rc == 0
+
+- name: Require the explicit workflow for Authentik version changes
+  ansible.builtin.assert:
+    that:
+      - >-
+        authentik_deployed_server_version == authentik_version
+        or authentik_upgrade_mode | default(false) | bool
+    fail_msg: >-
+      Authentik {{ authentik_deployed_server_version }} is deployed, but
+      {{ authentik_version }} is requested. Use
+      playbooks/ops-authentik_upgrade.yaml so the database is backed up and all
+      Outposts are upgraded together.
+  vars:
+    authentik_deployed_server_version: >-
+      {{ authentik_deployed_server_image.stdout | regex_replace('^.*:', '') }}
+  when: authentik_server_exists.rc == 0
+
 - name: Create Ansible-owned Authentik directories
   become: true
   ansible.builtin.file:

@@ -82,6 +82,7 @@ ansible/
 │   ├── ops-nfs_storage_check.yaml      # NFS mount/read-write/fsync validation
 │   ├── ops-version_audit.yaml          # read-only desired vs installed version audit
 │   ├── ops-pdns_sync.yaml
+│   ├── ops-authentik_upgrade.yaml
 │   ├── ops-openbao_bootstrap.yaml
 │   ├── ops-openbao_configure.yaml
 │   ├── ops-openbao_configure_userpass.yaml
@@ -313,6 +314,9 @@ ansible-playbook playbooks/ops-startup.yaml --tags prd
 # Version audit for Renovate-managed Ansible components (read-only)
 ansible-playbook playbooks/ops-version_audit.yaml
 
+# Authentik explicit upgrade (dry-run first; the user runs without --check)
+ansible-playbook playbooks/ops-authentik_upgrade.yaml --limit authentik --check --diff
+
 # OpenBao explicit upgrade (dry-run first; the user runs without --check)
 ansible-playbook playbooks/ops-openbao_upgrade.yaml --limit openbao --check --diff
 
@@ -468,9 +472,10 @@ the decision behind the rebuild registration flow.
 | `ops-nfs_storage_check.yaml` | `prd_k8s:sandbox_k8s` (only clusters with NFS enabled) | ops |
 | `ops-shutdown.yaml` | `k8s_controller`, `k8s_worker`, `guest_shutdown_order`, `proxmox_shutdown_order` | ops (planned outage) |
 | `ops-startup.yaml` | `proxmox`, `prd_k8s_hypervisor`, `sandbox_k8s_hypervisor`, `guest_shutdown_order` (reversed), `k8s_controller` | ops (planned outage / per-cluster recovery) |
-| `ops-version_audit.yaml` | `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `dns_resolver`, `seaweedfs`, `openbao`, `gpuvm` | ops |
+| `ops-version_audit.yaml` | `authentik`, `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `dns_resolver`, `seaweedfs`, `openbao`, `gpuvm` | ops |
 | `ops-dns_failover_test.yaml` | delegated DNS hosts; orchestration on localhost | ops (state-changing failure test) |
 | `ops-pdns_sync.yaml` | `dns_primary`, `dns_secondary` | ops |
+| `ops-authentik_upgrade.yaml` | `authentik` | ops |
 | `ops-openbao_bootstrap.yaml` | `openbao` | ops |
 | `ops-openbao_configure.yaml` | `openbao` | ops |
 | `ops-openbao_configure_userpass.yaml` | `openbao` | ops |
