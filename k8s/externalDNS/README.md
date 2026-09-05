@@ -1,6 +1,7 @@
 # ExternalDNS
 
-Registers PowerDNS records from HTTPRoutes; ESO supplies the API key.
+Registers PowerDNS records from HTTPRoutes and annotated LoadBalancer Services;
+ESO supplies the API key.
 
 ## Directory Structure
 
@@ -28,6 +29,7 @@ externalDNS/
 | `pdns.serverId` | `values-common.yaml` | PowerDNS server ID (`localhost`) |
 | `pdns.apiKey` | OpenBao via ESO | PowerDNS API key materialized as a Kubernetes Secret |
 | `domainFilter` | `{env}/values.yaml` | Target domain filter |
+| `policy` | `{env}/values.yaml` | DNS record lifecycle policy |
 
 The `gateway-httproute` source creates records; environments use distinct TXT
 owner IDs.

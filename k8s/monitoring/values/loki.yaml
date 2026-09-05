@@ -62,7 +62,7 @@ loki:
       annotations:
         # Keep synchronized with Ansible loki_endpoint.
         io.cilium/lb-ipam-ips: 192.168.30.250
-        external-dns.alpha.kubernetes.io/hostname: loki.prd.butaco.net
+        external-dns.kubernetes.io/hostname: loki.prd.butaco.net
 
   backend:
     replicas: 0

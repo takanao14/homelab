@@ -5,7 +5,7 @@ metadata:
   namespace: monitoring
   annotations:
     io.cilium/lb-ipam-ips: {{ .Values.otlp.loadBalancerIP | quote }}
-    external-dns.alpha.kubernetes.io/hostname: {{ .Values.otlp.hostname }}
+    external-dns.kubernetes.io/hostname: {{ .Values.otlp.hostname }}
 spec:
   type: LoadBalancer
   selector:

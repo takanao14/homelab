@@ -1,2 +1,3 @@
 ownerId: prd-cluster
 domainFilter: prd.butaco.net.
+policy: upsert-only

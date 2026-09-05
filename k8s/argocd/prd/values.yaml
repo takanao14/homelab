@@ -11,5 +11,5 @@ server:
     sectionName: https
   service:
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: argocd.prd.butaco.net
+      external-dns.kubernetes.io/hostname: argocd.prd.butaco.net
     type: LoadBalancer
