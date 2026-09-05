@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=docker depName=goauthentik/server registryUrl=https://ghcr.io
-authentik_version: "2026.5.6"
+authentik_version: "2026.8.1"
 authentik_image: "ghcr.io/goauthentik/server"
 
 authentik_network: authentik
