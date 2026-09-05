@@ -293,9 +293,10 @@ CD health (ADR-0027). An unknown name lists available targets.
 
 ## Grafana MCP
 
-Scripts backing the Grafana MCP server registered in the repo-root `.mcp.json`.
-The server lets an MCP client (Claude Code, Codex, Cursor, …) query Grafana
-(PromQL/LogQL and dashboards) against `https://grafana.prd.butaco.net`.
+Scripts backing the Grafana MCP server registered in the repo-root `.mcp.json`
+and `opencode.json`. The server lets an MCP client (Claude Code, Codex,
+OpenCode, Cursor, …) query Grafana (PromQL/LogQL and dashboards) against
+`https://grafana.prd.butaco.net`.
 
 ### `grafana-mcp.sh`
 
@@ -327,6 +328,30 @@ startup_timeout_ms = 60000   # first run pulls the grafana/mcp-grafana image
 
 The repository-local `.codex/config.toml` instead pairs a relative `command`
 with `cwd = "."`, mirroring `.mcp.json`, so no absolute path is baked in.
+
+### OpenCode setup
+
+The repo-root `opencode.json` registers `grafana` as a local MCP server with a
+60-second startup timeout. OpenCode does not read the `mcpServers` shape in
+`.mcp.json`; it starts the same launcher through its own `mcp.grafana` entry.
+Grafana tools are disabled for normal agents and enabled only in the read-only
+`grafana` subagent, keeping their schemas out of ordinary model requests.
+
+Verify the connection from the repository root:
+
+```bash
+opencode mcp list --pure
+```
+
+In an interactive session, invoke the read-only tool loop explicitly with
+`@grafana`, for example:
+
+```text
+@grafana List each Grafana data source name and type.
+```
+
+The 2026-09-04 validation connected successfully and returned the Loki and
+Prometheus data sources through `grafana_list_datasources`.
 
 ### Goose workstation setup
 
@@ -381,7 +406,7 @@ and backend-request timeouts before changing Goose's extension timeout.
 | Env var | Default | Notes |
 |---------|---------|-------|
 | `GRAFANA_MCP_RUNTIME` | `docker` on macOS with OrbStack, otherwise `podman` | Force a runtime |
-| `GRAFANA_MCP_VERSION` | `1.1.0` | Pinned image tag; Renovate bumps this in place |
+| `GRAFANA_MCP_VERSION` | `1.3.0` | Pinned image tag; Renovate bumps this in place |
 | `GRAFANA_MCP_IMAGE`   | `docker.io/grafana/mcp-grafana:$GRAFANA_MCP_VERSION` | Full reference override for testing |
 | `GRAFANA_MCP_ENABLED_TOOLS` | `search,datasource,prometheus,loki,dashboard,navigation,alerting` | Comma-separated tool categories |
 | `GRAFANA_MCP_DISABLE_WRITE` | `true` | Set to `false` only for an explicitly approved write workflow |

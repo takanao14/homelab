@@ -13,5 +13,32 @@
       }
     }
   },
-  "model": "lemonade/Gemma-4-12B-it-MTP-GGUF"
+  "model": "lemonade/Gemma-4-12B-it-MTP-GGUF",
+  "mcp": {
+    "grafana": {
+      "type": "local",
+      "command": [
+        "./scripts/grafana-mcp.sh"
+      ],
+      "cwd": ".",
+      "enabled": true,
+      "timeout": 60000
+    }
+  },
+  "tools": {
+    "grafana_*": false
+  },
+  "agent": {
+    "grafana": {
+      "description": "Read-only Grafana observability queries",
+      "mode": "subagent",
+      "tools": {
+        "grafana_*": true
+      },
+      "permission": {
+        "edit": "deny",
+        "bash": "deny"
+      }
+    }
+  }
 }
