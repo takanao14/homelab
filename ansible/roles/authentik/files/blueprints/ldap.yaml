@@ -15,7 +15,7 @@ entries:
       base_dn: dc=ldap,dc=home,dc=butaco,dc=net
       certificate: !Find [authentik_crypto.certificatekeypair, [name, homelab-ldap]]
       tls_server_name: ldap.home.butaco.net
-      # See 決定事項14: 10000番台以降を基点とし、既存LDAP/ローカルアカウントと衝突しない範囲を確保する。
+      # See decision 14: IDs start at 10000 to avoid existing LDAP and local accounts.
       uid_start_number: 10000
       gid_start_number: 10000
       bind_mode: direct
