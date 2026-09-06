@@ -126,7 +126,7 @@ checksum is read from the bucket at plan time, so an image must be pushed
 (step 3) before it can be deployed.
 
 ```bash
-cd ../tf/customimage/prd
+cd ../tf/customimage/node2
 terragrunt apply
 ```
 

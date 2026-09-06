@@ -8,7 +8,7 @@ Infrastructure-as-code for a personal homelab environment.
 homelab/
 ├── ansible/           # Ansible playbooks and roles (server provisioning & configuration)
 │   ├── playbooks/     # Top-level playbooks (gpuvm, netbox, openbao, forgejo, etc.)
-│   ├── roles/         # Reusable roles (rocm, lemonade, caddy, dnsdist, vector, etc.)
+│   ├── roles/         # Reusable roles (rocm, caddy, dnsdist, vector, etc.)
 │   └── inventories/   # Inventory and group_vars per environment
 ├── packer/            # Packer templates building custom Proxmox cloud images
 ├── k0s/               # k0s cluster bootstrap — Helmfile for core in-cluster components
@@ -23,7 +23,7 @@ homelab/
 │   ├── gpu-switch/    # Authenticated web UI switching the AMD GPU (ADR-0027)
 │   ├── headlamp/      # Headlamp Kubernetes Web UI (in-cluster per environment)
 │   ├── homepage/      # Homepage dashboard
-│   ├── lemonade-server/ # Lemonade LLM server (Vulkan / AMD GPU, see ADR-0028)
+│   ├── lemonade-server/ # Lemonade LLM server (per-model Vulkan / ROCm, ADR-0040)
 │   ├── monitoring/    # Prometheus, Grafana, exporters, and dashboards
 │   ├── ollama/        # Ollama LLM server deployment
 │   ├── open-webui/    # Open WebUI values for the upstream chart
@@ -64,8 +64,10 @@ cd tf
 direnv allow   # first time only
 ```
 
-In-cluster secrets are not stored in this repository at all: they are served
-by OpenBao and synced via External Secrets Operator (see `k8s/eso/`).
+Application secrets are declared in SOPS-encrypted Ansible inventory, seeded
+into OpenBao, and synced by External Secrets Operator (see `k8s/eso/`).
+Workstation kubeconfigs, `.env` files, and the AGE key are stored separately
+through `scripts/secrets/admin/`; OpenBao does not mirror encrypted files.
 
 ### Using this repository on a new machine
 
@@ -104,9 +106,9 @@ Make sure your AGE key is listed in `.sops.yaml` before editing.
 ## AI Coding Agent (OpenCode)
 
 [OpenCode](https://opencode.ai/) is an optional terminal AI coding agent.
-`opencode.json` at the repository root points it at the in-cluster Ollama
-deployment (`k8s/ollama/`) instead of a hosted provider — see
-[ADR-0041](docs/adr/0041-opencode-connects-to-ollama.md).
+`opencode.json` uses the in-cluster Lemonade Server with
+`Gemma-4-12B-it-MTP-GGUF` — see
+[ADR-0043](docs/adr/0043-opencode-connects-to-lemonade-mtp.md).
 
 ```bash
 curl -fsSL https://opencode.ai/install | bash
@@ -115,6 +117,5 @@ curl -fsSL https://opencode.ai/install | bash
 opencode --version
 ```
 
-Before running it, the GPU must be switched to `ollama` and the expected model
-pulled — see [`k8s/ollama/README.md`](k8s/ollama/README.md#notes) for the
-exact commands.
+Before running it, activate `lemonade-server` through
+[GPU switching](k8s/lemonade-server/README.md#gpu-switching).

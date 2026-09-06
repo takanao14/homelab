@@ -299,8 +299,8 @@ ansible-playbook playbooks/ops-shutdown.yaml --tags workloads
 # Planned outage: recovery after power is restored. This explicitly ensures all
 # cluster guests are running, waits for dependencies, and restores the scaled-
 # down workloads. Explicit starts are idempotent with tf's on_boot behavior.
-# NFS-enabled clusters must pass a kubelet-backed mount probe before any
-# recorded replica count is restored.
+# NFS-enabled clusters must pass a kubelet-backed mount probe before GitOps
+# resumes and Argo CD restores workloads.
 ansible-playbook playbooks/ops-startup.yaml
 
 # Stop and restart one cluster while leaving its hypervisors running. The

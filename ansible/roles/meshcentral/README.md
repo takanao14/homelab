@@ -4,16 +4,9 @@ Runs MeshCentral as a rootful Podman container managed by systemd. The service
 is placed on `rpi4`, outside the Proxmox and Kubernetes failure domains that it
 is intended to recover.
 
-During cutover it listens on `192.168.10.241:8443`; production DNS and Caddy
-must not be switched until the fresh standalone instance has been configured
-and verified. There is no Kubernetes state to migrate: the previous prd move
-lost the MeshCentral configuration, so devices are registered again after this
-deployment.
-
 ## Persistent data
 
-The four directories below mirror the mounts used by the former Kubernetes
-Deployment:
+Persistent container mounts:
 
 | Host path | Container path |
 |---|---|
@@ -50,7 +43,7 @@ ansible-playbook playbooks/meshcentral.yaml
 ```
 
 Configure the administrator and device groups on the fresh instance, then
-verify it directly before the ingress cutover:
+verify the backend directly:
 
 ```bash
 curl --header 'Host: meshcentral.home.butaco.net' \
@@ -58,7 +51,7 @@ curl --header 'Host: meshcentral.home.butaco.net' \
 ```
 
 Port 8443 is intentionally plain HTTP because MeshCentral runs with
-`TLS_OFFLOAD=true`; Caddy terminates TLS after cutover. Do not expose this port
+`TLS_OFFLOAD=true`; Caddy terminates TLS. Do not expose this port
 outside the trusted LAN.
 
 The canonical hostname is `meshcentral.home.butaco.net`. It is outside the

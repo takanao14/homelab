@@ -4,8 +4,7 @@ Installs Docker CE (`docker-ce`, `docker-ce-cli`, `containerd.io`,
 `docker-compose-plugin`) from the upstream Docker apt repository on
 Debian-based systems, and ensures the service is running.
 
-Shared by roles that need a container runtime (`forgejo_runner`,
-`authentik`) instead of each duplicating the apt repo setup. Consumers add
+Shared by roles that need a container runtime (`forgejo_runner`) instead of each duplicating the apt repo setup. Consumers add
 their own user to the `docker` group and manage their own containers/compose
 files after this role runs.
 

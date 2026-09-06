@@ -3,13 +3,8 @@
 Installs and configures a standalone [SeaweedFS](https://github.com/seaweedfs/seaweedfs)
 server with the S3 gateway enabled, on Debian-based systems (LXC or VM).
 
-Intended as a self-hosted backend for Terraform/OpenTofu remote state. SeaweedFS
-is chosen over MinIO because it is actively maintained (roughly weekly releases)
-and supports both bucket **versioning** (state history) and **conditional writes**
-on versioned buckets, so Terraform native S3 state locking (`use_lockfile = true`)
-works without DynamoDB. The conditional-write-on-versioned-bucket bug
-([#8073](https://github.com/seaweedfs/seaweedfs/issues/8073)) was fixed in
-[#8080](https://github.com/seaweedfs/seaweedfs/pull/8080) — pin a recent version.
+Stores a versioned disaster-recovery copy of Terraform state from Cloudflare R2
+and serves public download buckets for firmware and cloud images.
 
 The role runs SeaweedFS in all-in-one mode (`weed server -filer -s3`), which
 starts master, volume, filer, and the S3 gateway in a single process — suitable
@@ -142,21 +137,10 @@ seaweedfs_s3_extra_identities:
 
 ## Single-node deployment
 
-This role deploys SeaweedFS as a **single node, single process** (`weed server
--filer -s3` runs master, volume, filer, and the S3 gateway together on one host).
-There is **no replication**, so the node — and the Proxmox host it runs on — is a
-single point of failure for the Terraform state backend.
-
-Bucket versioning protects against accidental overwrite/delete (version restore),
-but **not** against disk or node loss. For single-node operation, back up the data
-directory (`/var/lib/seaweedfs`) on a schedule, or mirror the state out separately
-(e.g. a `terragrunt state pull` cron). State is small, so the backup cost is
-negligible. If node-level durability is a hard requirement, use an external
-backend (Cloudflare R2) instead.
-
-SeaweedFS itself supports multi-node replication; expanding this role to a
-replicated cluster (separate master/volume nodes, `-defaultReplication=001`) is a
-future option.
+SeaweedFS has no replication. Losing its disk or host loses the local state
+backup history and public download objects; the primary Terraform state remains
+in Cloudflare R2. Bucket versioning protects against object overwrite or deletion,
+not disk loss. Preserve any download objects that cannot be rebuilt elsewhere.
 
 ## Operations and management
 
