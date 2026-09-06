@@ -115,7 +115,8 @@ waits up to 600 seconds for cloud-init; override with `CLOUD_INIT_WAIT_TIMEOUT`.
 ./provision.sh --local [username]    # local: provision this machine directly
 ./provision.sh --profile desktop <ip> [username]
 
-CLOUD_INIT_WAIT_TIMEOUT=900 ```
+CLOUD_INIT_WAIT_TIMEOUT=900 ./provision.sh 192.168.20.50 myuser
+```
 
 `--local` runs directly on the target Ubuntu, Debian, or Rocky host as `$USER`.
 It skips SSH/staging, performs a no-sudo package preflight, and installs remaining

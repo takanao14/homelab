@@ -21,8 +21,7 @@ Kubernetes manifests and Helm charts for homelab clusters managed via ArgoCD Git
   for prd; sandbox intentionally uses HTTP without cert-manager
 - **DNS**: external-dns with PowerDNS provider (`gateway-httproute` source)
 
-HTTPRoutes use `gateway-system/shared-gateway-envoy`. The Gateway terminates prd
-TLS with a wildcard certificate; sandbox remains HTTP-only. See
+HTTPRoutes use `gateway-system/shared-gateway-envoy`. See
 [`ADR-0011`](../docs/adr/0011-cilium-gateway-to-envoy-gateway-migration.md) for
 the Cilium Gateway to Envoy Gateway migration decision.
 
@@ -72,14 +71,6 @@ Two exceptions:
 
 ## Initial Cluster Bootstrap
 
-Bootstrap Argo CD with helmfile, then hand control to App of Apps.
-
-```bash
-# Bootstrap prd
-cd k8s/argocd/prd
-helmfile apply
-
-kubectl apply -f k8s/argocd/prd/root-apps.yaml
-```
-
-After applying `root-apps.yaml`, use GitOps for subsequent changes.
+Follow [Argo CD initial deployment](argocd/README.md#initial-deployment) to
+bootstrap with Helmfile and hand ownership to App of Apps. Subsequent changes
+go through GitOps.

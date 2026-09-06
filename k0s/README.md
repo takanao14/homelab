@@ -91,18 +91,12 @@ K0S_SSH_USER=ubuntu ./create_cluster.sh prd config
 ### Examples
 
 ```bash
-# Inspect the generated config
-./create_cluster.sh prd config
-
 # Build a new cluster
 ./create_cluster.sh prd bootstrap
 
 # Inspect and run an existing cluster upgrade
 ./create_cluster.sh sandbox upgrade-config
 ./create_cluster.sh sandbox upgrade
-
-# Re-apply Helmfile only
-./create_cluster.sh prd helmfile
 
 # Reset the cluster and reboot every node
 ./create_cluster.sh sandbox reset
@@ -113,8 +107,6 @@ K0S_SKIP_REBOOT=1 ./create_cluster.sh sandbox reset
 # Remove stale host keys after recreating all cluster VMs
 ./remove-known-hosts.sh sandbox
 ```
-
-Kubeconfig is written to `~/.kube/<env>.yaml`.
 
 ### Bootstrap and upgrade safety
 

@@ -8,11 +8,8 @@ the context, the option we chose, the options we rejected, and the trade-offs.
 | Location | Captures | Lifecycle |
 |----------|----------|-----------|
 | `README.md` (per directory) | **What** the system currently is / how to use it | Kept up to date |
-| `docs/adr/` | **Why** a decision was made | Append-only; never rewritten |
+| `docs/adr/` | **Why** a decision was made | Rationale immutable; metadata maintained |
 | Plans repo (private) | **What we are about to do** (steps, rollout) | Disposable once executed |
-
-A `README` tells you the current shape; an ADR tells you how we got there, so the
-rationale survives even after the README is rewritten.
 
 In-progress plans live in a **separate private repository**, not in this public
 repo: planning and design exploration should not be published here. Only the
@@ -36,8 +33,7 @@ ADR — once a plan completes.
 - Do not move historical records to an archive directory. Stable paths and
   successor links preserve the decision chain.
 - Keep it short. Link to the resulting `README`s instead of duplicating their
-  content. Completed plans should be distilled into README updates and ADRs,
-  then deleted.
+  content.
 
 ## When a plan completes
 
