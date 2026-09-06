@@ -20,3 +20,4 @@ k0s/k0sctl-*
 # a fresh clone, which is fine.
 docs/plans
 docs/md
+.ansible
