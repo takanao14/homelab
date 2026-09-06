@@ -9,5 +9,4 @@ dhcp_lease_observer_scope: lan
 dhcp_lease_observer_ix2106_address: "192.168.10.1:22"
 dhcp_lease_observer_ix2106_username: dhcp-observer
 
-# Keep the first rollout inert until the artifact and one manual poll pass.
-dhcp_lease_observer_timer_enabled: false
+dhcp_lease_observer_timer_enabled: true
