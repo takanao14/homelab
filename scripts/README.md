@@ -51,9 +51,7 @@ operation can be inspected and resumed directly with Terragrunt.
 | disk   | `80`         | GB                                                         |
 | image  | `ubuntu24-base` | `ubuntu24-{base,tool,desktop}`, `rocky10-base`, `rocky9-{base,desktop}`, `debian13-base` |
 
-The role suffix says how much is baked in: `base` (guest agent + timezone) <
-`tool` (+ shared CLI toolchain) < `desktop` (+ XFCE/XRDP and the GUI
-applications). See [packer/README.md](../packer/README.md).
+Image roles and build targets are described in [packer/README.md](../packer/README.md#image-roles).
 
 The `tool` and `desktop` images are downloaded only on `pve`, so VMs using them
 must be created there.
@@ -88,8 +86,6 @@ Destroys a VM created by `create-vm.sh` and removes its Terragrunt directory.
 ```bash
 ./remove-vm.sh <name> [node] [--keep]
 
-./remove-vm.sh myvm
-./remove-vm.sh myvm node2
 ./remove-vm.sh myvm pve --keep   # keep the directory after destroy
 ```
 
@@ -119,10 +115,7 @@ waits up to 600 seconds for cloud-init; override with `CLOUD_INIT_WAIT_TIMEOUT`.
 ./provision.sh --local [username]    # local: provision this machine directly
 ./provision.sh --profile desktop <ip> [username]
 
-./provision.sh 192.168.20.50 myuser
-CLOUD_INIT_WAIT_TIMEOUT=900 ./provision.sh 192.168.20.50 myuser
-./provision.sh --local               # run on the target Linux box as that user
-```
+CLOUD_INIT_WAIT_TIMEOUT=900 ```
 
 `--local` runs directly on the target Ubuntu, Debian, or Rocky host as `$USER`.
 It skips SSH/staging, performs a no-sudo package preflight, and installs remaining
@@ -195,7 +188,8 @@ OpenBao scripts run locally or over SSH. Authentication order is `BAO_TOKEN`,
 unset it to retry with password authentication.
 
 Common env vars: `OPENBAO_ADDR` (default `https://openbao.home.butaco.net`),
-`BAO_USERNAME`, `BAO_TOKEN`, `BAO_PASSWORD`.
+`BAO_USERNAME`, `BAO_TOKEN`, `BAO_PASSWORD`. Export credentials once for
+non-interactive use; the same authentication applies to all `secrets/` scripts.
 
 ### `get-env.sh`
 
@@ -204,7 +198,6 @@ expand when sourced; command substitutions are rejected.
 
 ```bash
 ./secrets/get-env.sh
-BAO_TOKEN=xxx ./secrets/get-env.sh
 ```
 
 ### `set-env.sh`
@@ -214,7 +207,6 @@ execute the file, so variables remain literal.
 
 ```bash
 ./secrets/admin/set-env.sh
-BAO_TOKEN=xxx ./secrets/admin/set-env.sh
 ```
 
 ### `get-kubeconfig.sh`
@@ -224,8 +216,6 @@ files are replaced only after both kubeconfigs are fetched successfully.
 
 ```bash
 ./secrets/get-kubeconfig.sh                       # local, interactive
-BAO_TOKEN=xxx ./secrets/get-kubeconfig.sh         # token auth
-BAO_PASSWORD=xxx ./secrets/get-kubeconfig.sh      # non-interactive
 ```
 
 ### `set-kubeconfig.sh`
@@ -236,8 +226,6 @@ OpenBao user and validates both files before writing either secret.
 
 ```bash
 ./secrets/admin/set-kubeconfig.sh
-BAO_TOKEN=xxx ./secrets/admin/set-kubeconfig.sh
-BAO_PASSWORD=xxx ./secrets/admin/set-kubeconfig.sh
 ```
 
 ### `get-sops-key.sh`
@@ -248,8 +236,6 @@ run it only on hosts that need repository decryption.
 
 ```bash
 ./secrets/get-sops-key.sh                       # local, interactive
-BAO_TOKEN=xxx ./secrets/get-sops-key.sh         # token auth
-BAO_PASSWORD=xxx ./secrets/get-sops-key.sh      # non-interactive
 ```
 
 ### `set-sops-key.sh`
@@ -260,8 +246,6 @@ the file before writing.
 
 ```bash
 ./secrets/admin/set-sops-key.sh
-BAO_TOKEN=xxx ./secrets/admin/set-sops-key.sh
-BAO_PASSWORD=xxx ./secrets/admin/set-sops-key.sh
 ```
 
 ## Kubernetes
@@ -349,9 +333,6 @@ In an interactive session, invoke the read-only tool loop explicitly with
 ```text
 @grafana List each Grafana data source name and type.
 ```
-
-The 2026-09-04 validation connected successfully and returned the Loki and
-Prometheus data sources through `grafana_list_datasources`.
 
 ### Goose workstation setup
 
@@ -529,57 +510,23 @@ TOOL_SKIP_SYSTEM_PACKAGES=1 ./install/packages.sh  # no-sudo preflight
 ./install/packages.sh global                       # system-wide version cache
 ```
 
-### `tools.sh`
+### Tools, terminal, and fonts
 
-Runs the vendored Ubuntu/Rocky CLI installer. Versions are pinned and
-Renovate-managed in dotfiles.
+`tools.sh` runs the vendored CLI installer with versions managed in dotfiles.
+`terminal.sh` installs kitty and `fonts.sh` installs UDEV Gothic NF; both skip
+installation unless `TOOL_MACHINE_PROFILE=desktop`.
 
-The install mode selects where the tools land:
+All three accept `local` (default, no sudo) or `global` (system-wide, needs sudo):
 
-| Mode | Target | Sudo |
-|------|--------|------|
-| `local` (default) | `$HOME/.local/bin` (per-user) | no |
-| `global` | `/usr/local/bin` (system-wide, for shared / golden-image VMs) | yes |
-
-```bash
-./install/tools.sh            # local (per-user)
-./install/tools.sh global     # system-wide
-```
-
-### `terminal.sh`
-
-Installs the kitty terminal emulator. Like `tools.sh`, the install mode
-selects where kitty lands:
-
-The installer runs only for `TOOL_MACHINE_PROFILE=desktop`; `server` exits
-successfully without installing anything.
-
-| Mode | Target | Sudo |
-|------|--------|------|
-| `local` (default) | `$HOME/.local/kitty.app` (per-user) | no |
-| `global` | `/usr/local/kitty.app` (system-wide, for shared / golden-image VMs) | yes |
+| Script | Local path | Global path |
+|--------|------------|-------------|
+| `tools.sh` | `$HOME/.local/bin` | `/usr/local/bin` |
+| `terminal.sh` | `$HOME/.local/kitty.app` | `/usr/local/kitty.app` |
+| `fonts.sh` | `$HOME/.local/share/fonts` | `/usr/local/share/fonts` |
 
 ```bash
-./install/terminal.sh            # local (per-user)
-./install/terminal.sh global     # system-wide
-```
-
-### `fonts.sh`
-
-Installs the UDEV Gothic NF font. Like `tools.sh`, the install mode
-selects where the font lands:
-
-The installer runs only for `TOOL_MACHINE_PROFILE=desktop`; `server` exits
-successfully without installing anything.
-
-| Mode | Target | Sudo |
-|------|--------|------|
-| `local` (default) | `$HOME/.local/share/fonts` (per-user) | no |
-| `global` | `/usr/local/share/fonts` (system-wide, for shared / golden-image VMs) | yes |
-
-```bash
-./install/fonts.sh            # local (per-user)
-./install/fonts.sh global     # system-wide
+./install/tools.sh
+./install/tools.sh global
 ```
 
 ### `vendor/`
