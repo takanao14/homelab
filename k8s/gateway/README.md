@@ -56,8 +56,6 @@ policy avoids Cilium L2 advertisement blackholes.
 
 `domain` is required and determines the TLS Secret name.
 
-> `butaco.net` is a personal domain. Replace it in `k8s/gateway/{env}/values.yaml`.
-
 ## Notes
 
 - Cilium ingress and Gateway controllers are disabled; `GatewayClass/cilium`

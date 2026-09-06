@@ -24,8 +24,6 @@ ollama/
 | External (browser) | `https://ollama.prd.butaco.net` |
 | In-cluster (Open-WebUI) | `http://ollama.ollama.svc.cluster.local:11434` |
 
-> `butaco.net` is a personal domain. Replace it in `values.yaml`.
-
 ## GPU / ROCm
 
 Requests one `amd.com/gpu` on a `gpu=amd` labelled and tainted node.

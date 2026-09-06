@@ -41,8 +41,6 @@ cert-manager/
 | Namespace | `cert-manager` |
 | Issuer | `letsencrypt-production` |
 
-> `butaco.net` is a personal domain. Replace it in `prd/values.yaml`.
-
 ## Secrets
 
 ESO fetches the Cloudflare API token from

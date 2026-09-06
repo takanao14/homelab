@@ -29,8 +29,6 @@ argocd/
 | prd | prd-homelab | `argocd.prd.butaco.net` |
 | sandbox | sandbox-homelab | `http://argocd.sandbox.butaco.net` |
 
-> `butaco.net` is a personal domain. Replace with your own domain in `prd/values.yaml` and `sandbox/values.yaml`.
-
 ## Initial Deployment
 
 Helmfile bootstraps Argo CD; App of Apps then takes ownership. Do not rerun
@@ -42,14 +40,13 @@ cd k8s/argocd/prd
 helmfile apply
 
 # Apply root App of Apps
-kubectl apply -f k8s/argocd/prd/root-apps.yaml
+kubectl apply -f root-apps.yaml
 ```
 
 Hooks reject the wrong context and self-managed releases.
 `ARGOCD_BOOTSTRAP_FORCE=1` permits deliberate re-bootstrap.
 
-For sandbox, use `k8s/argocd/sandbox`. It intentionally exposes ArgoCD over
-HTTP only and does not install cert-manager.
+For sandbox, use `k8s/argocd/sandbox`.
 
 ### Getting in on a fresh cluster
 
@@ -244,23 +241,9 @@ resync root-apps.
 
 ## Apps
 
-| Application | Namespace | Environment |
-|-------------|-----------|-------------|
-| argocd | argocd | prd, sandbox |
-| cert-manager | cert-manager | prd |
-| cert-manager-config | cert-manager | prd |
-| comfyui | comfyui | prd |
-| external-secrets (eso) | external-secrets | prd, sandbox |
-| external-dns | external-dns | prd, sandbox |
-| gateway | gateway-system | prd, sandbox |
-| gpu-switch | gpu-switch | prd |
-| headlamp | headlamp | prd |
-| homepage | homepage | prd, sandbox |
-| lemonade-server | lemonade-server | prd |
-| monitoring | monitoring (argocd in prd) | prd, sandbox |
-| ollama | ollama | prd |
-| open-webui | open-webui | prd |
-| reloader | reloader | prd |
+Enabled applications, namespaces, and environment differences are declared in
+[apps/values.yaml](apps/values.yaml), [prd/apps-values.yaml](prd/apps-values.yaml),
+and [sandbox/apps-values.yaml](sandbox/apps-values.yaml).
 
 Sandbox is HTTP-only without cert-manager. It uses the `kubernetes-sandbox`
 OpenBao mount and manages `sandbox.butaco.net.` through PowerDNS.

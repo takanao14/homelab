@@ -148,20 +148,10 @@ Keep these choices inline because density is panel-specific.
 
 ### Review checklist
 
-- Can scope and health be identified without scrolling?
-- Do row names and section order support detection, diagnosis, and detail?
-- Do intended grid lines total 24 columns?
-- Are LogQL zero baselines keyed on unfiltered selectors?
-- Do zoom-dependent log queries use `$__auto`?
-- Are sparse events counts rather than rates?
-- Do slow-scrape rate panels set a Min interval?
-- Do pod-hosted metrics aggregate `instance` and `pod` away so a long range
-  stays one series per legend entry?
-- Does every legend label survive its query's `by` clause?
-- Are dense panels ordered by value?
-- Does every coloured panel define thresholds?
-- Are descriptions environment-neutral?
-- Are generated JSON files updated with their Go definitions?
+- Review rendered dashboards against the query and layout conventions above.
+- Confirm scope and health are visible without scrolling and descriptions work
+  for either environment.
+- Run `make check` and commit generated JSON with its Go definitions.
 
 ## Development
 
@@ -200,10 +190,6 @@ make dev-stop
 
 `make generate` writes JSON to `charts/dashboards/dashboards/`.
 `make check` regenerates into a temporary directory and detects drift.
-
-```text
-Edit Go → make generate → make check → commit Go and JSON → Argo CD sync
-```
 
 ```bash
 make generate

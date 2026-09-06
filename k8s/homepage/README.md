@@ -31,8 +31,6 @@ homepage/
 
 An HTTPRoute uses the environment hostname and listener; sandbox is HTTP-only.
 
-> `butaco.net` is a personal domain. Replace it in `chart/values.yaml`.
-
 ## Configuration
 
 `chart/config/` is mounted as native Homepage YAML. Keep Helm and environment

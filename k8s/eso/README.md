@@ -40,15 +40,3 @@ After rebuilding a cluster, re-register its CA with OpenBao; see
 
 - OpenBao must be configured before ESO can sync secrets.
 - The `ClusterSecretStore` syncs at ArgoCD sync-wave `1` (after ESO CRDs are ready).
-
-## Usage
-
-App of Apps passes the environment override (ADR-0014):
-
-```yaml
-source:
-  path: k8s/eso
-  helm:
-    valueFiles:
-      - prd/values.yaml  # per-env override (openbao.mountPath)
-```

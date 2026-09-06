@@ -85,13 +85,6 @@ kube-state-metrics, default rules, and controller/scheduler endpoint wiring.
 Local charts cover fixed-IP hosts and external services. Do not move product
 runtime configuration here merely because it exposes metrics.
 
-Adding a new monitoring item:
-
-1. Use an upstream wrapper or dedicated chart for reusable exporters.
-2. Use a small CRD-only chart plus values for external targets.
-3. Keep safely deployable application metrics with their application.
-4. Document why centralized resources require bootstrap or cross-cluster scope.
-
 ## Environment Subsets
 
 prd enables the full stack. `values/apps-sandbox.yaml` enables only Prometheus,
@@ -119,10 +112,6 @@ Argo CD, Cilium, Envoy Gateway, or external-dns scraping.
 | Prometheus | `https://prometheus.prd.butaco.net` | HTTPRoute → shared-gateway-envoy |
 | Loki | `loki.prd.butaco.net` (LoadBalancer) | LoadBalancer (external log ingestion) |
 
-> `butaco.net` is a personal domain. Replace it in `values/prometheus.yaml` and `values/loki.yaml`.
-
-Loki uses a LoadBalancer for logs from external hosts and VMs.
-
 ## Secrets
 
 ESO fetches all secrets from OpenBao; plaintext is never committed.
@@ -144,7 +133,6 @@ ESO fetches all secrets from OpenBao; plaintext is never committed.
   regex, and dashboard derive from it; regenerate dashboards after changes.
 - DNS frontends are listed once in `values/dns-frontends.yaml`
   (ADR-0024 addendum); dnsdist and blackbox DNS probes derive from it.
-- Future plan: move k0s controller-manager/scheduler scraping into an explicit local chart (`docs/plans/control-plane-metrics-chart.md`)
 
 ## Alerting
 

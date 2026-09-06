@@ -21,8 +21,6 @@ comfyui/
 
 Exposed via Gateway API HTTPRoute at `comfyui.prd.butaco.net`.
 
-> `butaco.net` is a personal domain. Replace it in `values.yaml`.
-
 ## GPU
 
 Requests one `amd.com/gpu` on a `gpu=amd` labelled and tainted node.
@@ -57,4 +55,3 @@ Rebuild only when changing the PyTorch/ROCm wheel line.
 ## Notes
 
 - `replicaCount: 0` leaves GPU activation to gpu-switch; Argo CD ignores drift.
-- Forgejo hosts the custom ROCm image.

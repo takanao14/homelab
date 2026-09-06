@@ -81,26 +81,11 @@ Requirements and limits:
 
 See `docs/plans/identity-authentication-architecture.md` decision 20.
 
-## Login Token (removed)
+## ServiceAccount token
 
-There is no login token any more. The `headlamp-token` Secret — a long-lived
-`kubernetes.io/service-account-token` for the `cluster-admin` `headlamp`
-ServiceAccount — was deleted from prd on 2026-08-20; sandbox had already lost it
-in a rebuild and ran without it. **Do not recreate it.**
-
-Forward auth does not protect that Secret: the gate sits in front of Headlamp,
-not in front of kube-apiserver, so anyone holding the token could have used it
-against the API directly. Removing it is the part of the ADR-0015 cleanup that
-did not have to wait for OIDC (stage 13 of the identity plan).
-
-Nothing consumes it: Headlamp reaches the API server with the projected,
-pod-bound token of its own ServiceAccount, which is short-lived and rotated by
-the kubelet. Access is granted by Authentik group membership instead — see
-`ansible/roles/authentik/files/blueprints/proxy.yaml`.
-
-The `headlamp` ServiceAccount is still bound to `cluster-admin` by the chart,
-which is why the forward auth and NetworkPolicy above are load-bearing. Splitting
-that binding into per-user roles needs OIDC (decision 19).
+Do not recreate the long-lived `headlamp-token` Secret: it would grant direct
+cluster-admin API access outside forward auth. Headlamp uses its projected,
+pod-bound ServiceAccount token. Keep forward auth and the NetworkPolicy enabled.
 
 ## Design Note
 

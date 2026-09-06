@@ -35,8 +35,6 @@ The `gateway-httproute` source creates records; environments use distinct TXT
 owner IDs. Both environments use `sync`; domain filters and TXT ownership limit
 deletion to records managed by their own external-dns instance.
 
-> `butaco.net` is a personal domain. Replace it in each environment values file.
-
 ## Secrets
 
 ESO fetches the PowerDNS API key from `k8s/external-dns/pdns`; plaintext is
@@ -51,8 +49,3 @@ Seed it through the encrypted Ansible `openbao_secrets` list:
 ```bash
 ansible-playbook ansible/playbooks/ops-openbao_seed_secrets.yaml
 ```
-
-## Notes
-
-- RBAC includes Gateway API and namespace access required by the source.
-- A Secret checksum restarts the Deployment after credential changes.

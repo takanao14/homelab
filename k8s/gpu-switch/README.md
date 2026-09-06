@@ -4,7 +4,7 @@ Authenticated UI for assigning the single prd AMD GPU. It discovers labelled
 Deployments, scales all down, then starts the selected target. See
 [ADR-0027](../../docs/adr/0027-gpu-workload-switching-web-ui.md).
 
-App of Apps deploys it to prd at wave 1; sandbox remains disabled.
+App of Apps deploys it to prd at wave 1; sandbox has no GPU worker and remains disabled.
 
 ## Layout
 
@@ -49,23 +49,17 @@ The current write targets are:
 
 ## Authentication
 
-Envoy Gateway gates the HTTPRoute with a `SecurityPolicy`. Since stage 14a of
-the identity plan that policy runs `extAuth` against the shared Authentik proxy
-outpost on `authentik1`, so entry needs an Authentik login rather than a shared
-password. Admission is granted to `lab-platform-admins` and `lab-gpu-users`;
+Envoy Gateway gates the HTTPRoute with a `SecurityPolicy`. The policy runs `extAuth` against the shared Authentik proxy
+outpost on `authentik1`. Admission is granted to `lab-platform-admins` and `lab-gpu-users`;
 the bindings live in
 `ansible/roles/authentik/files/blueprints/proxy.yaml`.
 
-The app itself reads no identity — the Gateway is the only gate — so the
-identity headers are forwarded purely so a future access log can name the user.
+The Gateway enforces authentication; the app does not consume identity headers.
 A NetworkPolicy limits ingress to the Gateway's proxy pods, since reaching the
 Service directly would skip the policy entirely.
 
-Forward auth is the only gate. The Basic Auth fallback it replaced, along with
-its `ExternalSecret` and the `secret/k8s/gpu-switch/basic-auth` OpenBao entry,
-was removed once forward auth had proven itself. The `SecurityPolicy` name still
-reads `gpu-switch-basic-auth` because renaming it would leave two policies
-targeting one route mid-sync.
+The `SecurityPolicy` retains the name `gpu-switch-basic-auth` to avoid two
+policies targeting one route during a rename sync. There is no Basic Auth fallback.
 
 ## Image release
 
@@ -107,5 +101,3 @@ kubectl -n argocd get application gpu-switch \
 - `/healthz` probes process health only and never call the Kubernetes API.
 - Initial requests are `10m` CPU and `32Mi` memory, with no limits. Replace
   these with seven-day observations after deployment.
-- The sandbox Application remains disabled because that cluster has no GPU
-  worker.

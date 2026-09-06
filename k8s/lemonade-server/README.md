@@ -129,10 +129,6 @@ Confirm all three signals:
 2. Logs contain `Using LlamaCpp Backend: rocm-nightly` and a successful request.
 3. Prometheus `amd_gpu_used_vram` rises after the load.
 
-The 2026-09-01 migration validation loaded Qwen3-0.6B Q4_0 at context 2048,
-completed an OpenAI-compatible request, and moved VRAM from 65 MiB to 901 MiB.
-The running backend reported `b1319`.
-
 ## Storage
 
 | PVC | Default Size | Mount Path |

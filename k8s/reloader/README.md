@@ -24,16 +24,3 @@ or resource-specific annotations, preventing cluster-wide unintended restarts.
 ## Environments
 
 Deployed to the `prd` and `sandbox` clusters.
-
-## Usage
-
-App of Apps enables Reloader per environment and renders:
-
-```yaml
-source:
-  path: k8s/reloader
-  helm:
-    releaseName: reloader
-destination:
-  namespace: reloader
-```
