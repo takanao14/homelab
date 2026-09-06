@@ -14,7 +14,6 @@ Installs and configures `prometheus-node-exporter` on Debian-based systems.
 - Supports service-specific collector flags through `node_exporter_extra_args`.
 - On ARM hosts (Raspberry Pi), installs a throttling metrics script and a cron job to collect it.
 - Masks `openipmi.service`, which APT pulls in behind the exporter (see below).
-- Ensures the service is started and enabled.
 - Defers service lifecycle checks on a pristine host during Ansible check mode;
   APT does not create the systemd unit until a normal run installs the package.
 
@@ -120,16 +119,6 @@ and still shows up in `systemctl list-units --state=failed`. The role runs
 
 Set to `false` on a host that actually has a BMC.
 
-## Dependencies
-
-None.
-
 ## Usage
 
-```yaml
-# In playbooks/common-node_exporter.yaml
-- name: Install and configure prometheus-node-exporter
-  hosts: node_exporter
-  roles:
-    - node_exporter
-```
+Run [playbooks/common-node_exporter.yaml](../../playbooks/common-node_exporter.yaml).

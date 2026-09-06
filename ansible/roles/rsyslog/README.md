@@ -6,7 +6,6 @@ Installs and configures rsyslog to forward logs to a remote Vector log collector
 
 - Installs `rsyslog` from APT.
 - Deploys `/etc/rsyslog.d/99-forward.conf` from a Jinja2 template.
-- Ensures the `rsyslog` service is started and enabled.
 
 ## Variables
 
@@ -68,15 +67,6 @@ Behavior and assumptions:
 > global `maxMessageSize` default; no global override is set here so the
 > hypervisor's shared rsyslog limits are left untouched.
 
-## Dependencies
-
-None.
-
 ## Usage
 
-```yaml
-- name: Configure rpi3
-  hosts: rpi3
-  roles:
-    - role: rsyslog
-```
+Run [playbooks/common-rsyslog.yaml](../../playbooks/common-rsyslog.yaml).

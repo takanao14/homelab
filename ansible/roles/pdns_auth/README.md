@@ -135,9 +135,7 @@ Moving the train only repoints the repository — the apt task uses
 `state: present`, so the packages themselves are upgraded separately by
 `ops-package_upgrade.yaml`, which runs the `dns` group one host at a time.
 
-The 5.0 to 5.1 move (2026-07-31) needed no database schema change and no
-configuration change; `ns1` is upgraded first because it is the hidden primary
-and is not in dnsdist's `internal` pool, so it carries almost no live query load.
+Upgrade `ns1` first: the hidden primary is outside the dnsdist query pool.
 
 ## DNS Record Notes
 
@@ -148,10 +146,6 @@ With a hidden primary setup, the SOA and NS records are configured as follows:
 | SOA MNAME | `ns1.home.butaco.net.` | ns1 is the true origin of zone data (RFC 1035) |
 | NS records | `ns2`, `ns3` only | Only query-answering servers are listed |
 | `pdns_primary_nameserver` | `ns2.home.butaco.net.` | Must match a zone NS record for autoprimary verification |
-
-## Dependencies
-
-None.
 
 ## Usage
 

@@ -7,8 +7,6 @@ Installs and configures [Forgejo](https://forgejo.org/) self-hosted Git service 
 - Creates a dedicated system user/group (`git`).
 - Downloads the Forgejo binary from Codeberg releases.
 - Deploys `/etc/forgejo/app.ini` from a Jinja2 template.
-- Deploys and enables a systemd unit.
-- Ensures the service is started and enabled.
 
 ## Variables
 
@@ -38,15 +36,6 @@ Installs and configures [Forgejo](https://forgejo.org/) self-hosted Git service 
 | `forgejo_db_type` | `sqlite3` | Database backend |
 | `forgejo_db_path` | `{{ forgejo_home }}/data/forgejo.db` | SQLite database path |
 
-## Dependencies
-
-None.
-
 ## Usage
 
-```yaml
-- name: Setup Forgejo
-  hosts: forgejo
-  roles:
-    - role: forgejo
-```
+Run [playbooks/forgejo.yaml](../../playbooks/forgejo.yaml).

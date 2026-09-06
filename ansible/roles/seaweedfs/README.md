@@ -15,7 +15,6 @@ for a single-node homelab backend.
 - Creates the `seaweedfs` system user/group and required directories.
 - Downloads the pinned `weed` binary from GitHub releases.
 - Deploys the S3 identity config (`/etc/seaweedfs/s3.json`) and a systemd unit.
-- Ensures the service is started and enabled.
 - Creates configured public download buckets.
 
 ## Variables
@@ -158,20 +157,6 @@ not disk loss. Preserve any download objects that cannot be rebuilt elsewhere.
   `:8888`.
 - **CLI admin:** `weed shell` for advanced volume/maintenance operations.
 
-`weed mini` (an all-in-one command that also bundles the admin UI and a
-maintenance worker) was evaluated but not used: it is newer (introduced
-Dec 2025) and still rapidly changing, so the more established
-`weed server` + separate `weed admin` split is preferred for a state backend.
-
-## Dependencies
-
-None.
-
 ## Usage
 
-```yaml
-- name: Setup SeaweedFS
-  hosts: seaweedfs
-  roles:
-    - role: seaweedfs
-```
+Run [playbooks/seaweedfs.yaml](../../playbooks/seaweedfs.yaml).

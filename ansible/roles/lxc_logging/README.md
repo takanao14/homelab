@@ -4,15 +4,7 @@ Meta-role that aggregates the standard log-shipping stack applied to
 Vector-enabled LXC guests: the [`vector`](../vector/README.md) agent plus the
 [`journald`](../journald/README.md) policy.
 
-It exists purely to remove the repeated
-
-```yaml
-  - role: vector
-  - role: journald
-```
-
-block from every service playbook (caddy, dnsdist, pdns_auth, forgejo, netbox,
-seaweedfs, log_collector). Use it after the service role:
+Use it after the service role:
 
 ```yaml
 roles:

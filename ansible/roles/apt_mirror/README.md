@@ -16,15 +16,6 @@ Replaces the default Ubuntu apt mirror URL with a local mirror on Ubuntu hosts.
 |----------|---------|-------------|
 | `apt_mirror_url` | `http://ftp.udx.icscoe.jp/Linux/ubuntu` | Mirror URL to substitute for the default Ubuntu archive |
 
-## Dependencies
-
-None.
-
 ## Usage
 
-```yaml
-- name: Configure apt mirror
-  hosts: all
-  roles:
-    - apt_mirror
-```
+Run [playbooks/common-apt_mirror.yaml](../../playbooks/common-apt_mirror.yaml).

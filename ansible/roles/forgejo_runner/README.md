@@ -11,7 +11,6 @@ Installs and configures a [Forgejo Actions Runner](https://code.forgejo.org/forg
 - Adds the runner user to the `docker` group.
 - Downloads the forgejo-runner binary from Forgejo releases.
 - Registers the runner with the Forgejo instance (skipped if already registered).
-- Deploys and enables a systemd unit.
 
 ## Variables
 
@@ -43,12 +42,7 @@ tasks run.
 
 ## Usage
 
-```yaml
-- name: Setup Forgejo Runner
-  hosts: forgejo_runner
-  roles:
-    - role: forgejo_runner
-```
+Run [playbooks/forgejo_runner.yaml](../../playbooks/forgejo_runner.yaml).
 
 ## Notes
 

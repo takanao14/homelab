@@ -39,17 +39,9 @@ file survives a failed collection. The metrics service is ordered after Knot
 Resolver when both start together, but does not require or restart the resolver;
 an intentional resolver stop must remain stopped for failover testing.
 
-The interval is half the 30s Prometheus scrape on purpose. Writing slower than
-the scrape discards resolution, and the previous one-minute interval made the
-effective sample period 60s: every second scrape re-read an unchanged counter,
-so short rate windows aliased and reported zero while the resolver was still
-answering. At 15s every scrape sees a value that is both fresh and distinct.
-
-The collector queries the socket directly instead of running
-`kresctl metrics --prometheus`, which is the same endpoint but loads the whole
-kresctl CLI each time — 0.19s at 99% CPU against 0.02s, four times a minute on
-a two-core container. `kresctl metrics --prometheus` remains the convenient
-form for reading metrics by hand.
+The 15s collection interval keeps counters fresh for each 30s Prometheus scrape.
+The collector queries the socket directly to avoid loading the kresctl CLI on
+every run; use `kresctl metrics --prometheus` for manual inspection.
 
 ## Required variables
 

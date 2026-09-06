@@ -123,16 +123,6 @@ datasource for 10.0 and later. Bump `rocm_version` manually after checking the
 [ROCm release notes](https://rocm.docs.amd.com/en/latest/about/release-notes.html),
 and set `rocm_previous_version` to the release being replaced.
 
-## Dependencies
-
-None.
-
 ## Usage
 
-```yaml
-- name: Setup ROCm on GPU VM
-  hosts: gpuvm
-  roles:
-    - role: timezone
-    - role: rocm
-```
+Run [playbooks/gpuvm.yaml](../../playbooks/gpuvm.yaml).

@@ -11,7 +11,6 @@ Installs and configures [Vector](https://vector.dev/) as a log aggregator on Deb
 - Deploys `/etc/vector/vector.yaml` from a Jinja2 template.
 - Validates the installed configuration on every normal run, including when a
   package upgrade changes the Vector binary without changing the template.
-- Ensures the `vector` service is started and enabled.
 - Keeps check mode read-only when `python3-debian` is not installed yet; the
   repository task is reported as deferred until the prerequisite is applied.
 - Defers package-dependent configuration and service checks on a pristine host
@@ -46,25 +45,12 @@ vector_config:
       endpoint: "{{ vector_loki_endpoint }}"
 ```
 
-## Dependencies
-
-None.
-
 ## Usage
 
-```yaml
-- name: Setup Log Collector
-  hosts: log_collector
-  roles:
-    - role: vector
-```
+Run [playbooks/common-vector.yaml](../../playbooks/common-vector.yaml).
 
 ## Notes
 
-- The repository was previously registered by piping `setup.vector.dev` into
-  bash. The declarative task writes the same repo definition
-  (`deb https://apt.vector.dev/ stable vector-0`) as `vector.sources` and
-  cleans up the script-generated `vector.list` on already-provisioned hosts.
 - Vector 0.57 introduced template confinement for sink fields. Loki sinks that
   use event fields as complete label values explicitly set
   `dangerously_allow_unconfined_template_resolution: true` in inventory to

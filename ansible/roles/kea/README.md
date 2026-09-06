@@ -7,7 +7,6 @@ Installs and configures [Kea DHCPv4](https://www.isc.org/kea/) server on Debian-
 - Installs `kea-dhcp4-server` and `socat` from APT.
 - Ensures `/var/lib/kea` and `/run/kea` directories exist with correct permissions.
 - Deploys `/etc/kea/kea-dhcp4.conf` from a Jinja2 template.
-- Ensures the `kea-dhcp4-server` service is started and enabled.
 
 ## Variables
 
@@ -39,15 +38,6 @@ DHCP runs on rpi4, outside the Proxmox / cluster nodes, so that AMT out-of-band
 management of `node1`–`node3` keeps working during node outages. See
 [ADR-0002](../../../docs/adr/0002-dhcp-outside-proxmox-cluster-nodes.md).
 
-## Dependencies
-
-None.
-
 ## Usage
 
-```yaml
-- name: Setup DHCP Server
-  hosts: dhcp
-  roles:
-    - role: kea
-```
+Run [playbooks/dhcp.yaml](../../playbooks/dhcp.yaml).

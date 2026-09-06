@@ -6,8 +6,6 @@ Installs and configures [DNS-collector](https://github.com/dmachard/DNS-collecto
 
 - Downloads the dnscollector binary from GitHub releases.
 - Deploys `/etc/dnscollector/config.yaml` from a Jinja2 template.
-- Deploys and enables a systemd unit.
-- Ensures the service is started and enabled.
 
 ## Variables
 

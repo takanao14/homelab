@@ -4,11 +4,6 @@ Manages persistent kernel parameters via a `sysctl.d` drop-in using the
 `ansible.posix.sysctl` module. Each parameter is written to `sysctl_conf_file`
 and applied live (`reload: true`), so no reboot is required.
 
-## Functionality
-
-- Renders every key in `sysctl_settings` into `sysctl_conf_file`.
-- Verifies the running value matches (`sysctl_set: true`) and reloads.
-
 ## Variables
 
 | Variable | Default | Description |

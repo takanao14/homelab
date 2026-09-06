@@ -96,15 +96,6 @@ therefore already logs internal-zone responses, complete with the real client
 address in `network.query-ip` (dnsdist's own address is only the
 `network.response-ip`).
 
-This was verified against production Loki data (2026-08-05): before the
-`dnstap-queries` reorder above, internal-zone qnames appeared in Loki only as
-`CLIENT_RESPONSE` dnstap operations, never `CLIENT_QUERY`, while default-pool
-qnames appeared as matched `CLIENT_QUERY`/`CLIENT_RESPONSE` pairs — confirming
-the query and response chains are independent, and that internal-zone traffic
-was already attributable to a real client before this change. The reorder
-closes the remaining gap by also emitting the paired `CLIENT_QUERY` message
-for internal zones.
-
 ## Variables
 
 ### Secrets (from SOPS-encrypted `group_vars/dnsdist.sops.yaml`)
@@ -167,16 +158,6 @@ Moving the train only repoints the repository — the apt task uses
 `ops-package_upgrade.yaml`, which runs the `dns` group one host at a time and
 stops before the second host if the first fails to come back.
 
-## Dependencies
-
-None.
-
 ## Usage
 
-```yaml
-# playbooks/dnsdist.yaml
-- name: Setup dnsdist
-  hosts: dnsdist
-  roles:
-    - role: dnsdist
-```
+Run [playbooks/dnsdist.yaml](../../playbooks/dnsdist.yaml).

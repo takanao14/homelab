@@ -10,7 +10,6 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 - Deploys `/etc/openbao/openbao.hcl` from a Jinja2 template.
 - Deploys the static seal key to `/etc/openbao/seal.key`.
 - Applies a systemd drop-in to grant `CAP_IPC_LOCK` for mlock support.
-- Ensures the service is started and enabled.
 
 ## Variables
 
@@ -356,15 +355,6 @@ openbao_raft_retry_join:
   - "http://192.168.40.32:8200"
 ```
 
-## Dependencies
-
-None.
-
 ## Usage
 
-```yaml
-- name: Setup OpenBao
-  hosts: openbao
-  roles:
-    - role: openbao
-```
+Run [playbooks/openbao.yaml](../../playbooks/openbao.yaml).

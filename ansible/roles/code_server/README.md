@@ -80,15 +80,6 @@ The extension bundles its own CLI copy for the chat panel; running `claude` in
 the integrated terminal needs the standalone CLI installed separately. That
 install is not managed by this role.
 
-## Dependencies
-
-None.
-
 ## Usage
 
-```yaml
-- name: Setup code-server
-  hosts: code_server
-  roles:
-    - role: code_server
-```
+Run [playbooks/code_server.yaml](../../playbooks/code_server.yaml).

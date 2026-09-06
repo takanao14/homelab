@@ -113,9 +113,4 @@ is replaced.
 
 ## Usage
 
-```yaml
-- name: Deploy NetBox
-  hosts: netbox
-  roles:
-    - netbox
-```
+Run [playbooks/netbox.yaml](../../playbooks/netbox.yaml).

@@ -51,9 +51,4 @@ must not run their own NTP daemon.
 
 ## Usage
 
-```yaml
-- name: Configure chrony
-  hosts: all:!lxc
-  roles:
-    - chrony
-```
+Run [playbooks/common-chrony.yaml](../../playbooks/common-chrony.yaml).

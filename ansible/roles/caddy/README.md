@@ -14,7 +14,6 @@ other ingress paths, see [`docs/service-routing.md`](../../../docs/service-routi
 - Sets `CAP_NET_BIND_SERVICE` to allow binding to ports 80/443 without root.
 - Deploys `/etc/caddy/Caddyfile` from a Jinja2 template.
 - Deploys `/etc/caddy/caddy.env` with the Cloudflare API token, and removes it again when ACME is disabled.
-- Deploys and enables a systemd unit.
 
 ## ACME and HTTP-only hosts
 

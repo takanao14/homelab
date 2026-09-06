@@ -47,3 +47,14 @@ Verify a remote SimpleZone next-hop:
 ```bash
 ip route get 192.168.60.11
 ```
+
+The next hop must be the remote Proxmox node, not the IX2106 default gateway.
+For example, node3 reaches `192.168.60.11` through `192.168.10.14 dev vmbr0`.
+
+Rollback on the target node:
+
+```bash
+mv /etc/network/interfaces.d/ansible-simplezone-routes \
+  /root/ansible-simplezone-routes.disabled
+ifreload -a
+```

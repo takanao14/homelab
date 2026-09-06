@@ -22,15 +22,6 @@ Automatic reboots are **disabled** (`Automatic-Reboot "false"`). Unused dependen
 
 None. The upgrade policy is fully defined in the template.
 
-## Dependencies
-
-None.
-
 ## Usage
 
-```yaml
-- name: Enable unattended security upgrades
-  hosts: all:!proxmox
-  roles:
-    - unattended_upgrades
-```
+Run [playbooks/common-unattended_upgrades.yaml](../../playbooks/common-unattended_upgrades.yaml).

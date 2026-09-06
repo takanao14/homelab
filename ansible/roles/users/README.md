@@ -23,9 +23,4 @@ home directory. Returning the state to `enabled` reverses those restrictions.
 
 ## Usage
 
-```yaml
-- name: Create user accounts on shared VMs
-  hosts: shared_vms
-  roles:
-    - role: users
-```
+Run [playbooks/common-users.yaml](../../playbooks/common-users.yaml).

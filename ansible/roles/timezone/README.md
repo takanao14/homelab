@@ -2,10 +2,6 @@
 
 Sets the system timezone using the `community.general.timezone` module.
 
-## Functionality
-
-- Sets the system timezone to the value of `timezone`.
-
 ## Variables
 
 | Variable | Default | Description |
@@ -18,9 +14,4 @@ Sets the system timezone using the `community.general.timezone` module.
 
 ## Usage
 
-```yaml
-- name: Configure timezone
-  hosts: all
-  roles:
-    - timezone
-```
+Run [playbooks/common-timezone.yaml](../../playbooks/common-timezone.yaml).
