@@ -6,6 +6,11 @@ kube-prometheus-stack:
           release: prometheus
       alertmanagerConfigMatcherStrategy:
         type: None
+      # Requests only: 30-day p95/max 49/88 Mi; CPU p95/max 0.4/0.6m (2026-09-06).
+      resources:
+        requests:
+          cpu: 5m
+          memory: 200Mi
     config:
       global:
         resolve_timeout: 5m
