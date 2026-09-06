@@ -99,6 +99,9 @@ resolverAlerts:
 filesystemAlerts:
   enabled: true
 
+dhcpLeaseObserverAlerts:
+  enabled: true
+
 textfileAlerts:
   enabled: true
 

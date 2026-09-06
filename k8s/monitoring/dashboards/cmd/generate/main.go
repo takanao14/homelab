@@ -26,6 +26,7 @@ func main() {
 		"k8s-control-plane":      buildK8sControlPlaneOverview,
 		"monitoring-overview":    buildMonitoringOverview,
 		"dns-logs":               buildDnsLogs,
+		"dhcp-leases":            buildDhcpLeases,
 		"syslog":                 buildSyslog,
 		"proxmox-logs":           buildProxmoxLogs,
 		"service-logs":           buildServiceLogs,

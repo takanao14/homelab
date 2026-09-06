@@ -40,6 +40,16 @@ filesystemAlerts:
   inodesFreePercent: 20
   inodesFor: 1h
 
+dhcpLeaseObserverAlerts:
+  enabled: false
+  # Ten consecutive 1m polls, so a router configuration-mode session does not
+  # alert on its own.
+  collectionFailingFor: 10m
+  # Half an hour without a fresh snapshot makes the lease inventory unreliable
+  # for DNS incident lookups.
+  maxSuccessAgeSeconds: 1800
+  staleFor: 5m
+
 textfileAlerts:
   enabled: false
   # One hour permits four missed 15m timer runs and a reboot.

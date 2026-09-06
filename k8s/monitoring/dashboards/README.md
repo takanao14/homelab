@@ -17,6 +17,7 @@ generated as JSON.
 | `disk-health` | SMART health, failure precursors, wear, and temperature |
 | `dns-overview` | dnsdist, resolvers, authoritative DNS, CoreDNS, and external-dns |
 | `dns-logs` | DNS query logs |
+| `dhcp-leases` | IX2106 DHCP lease inventory, collector health, and lease events |
 | `network-overview` | SNMP traffic, errors, discards, and interface state |
 | `monitoring-overview` | Prometheus, Alertmanager, and Loki |
 | `syslog` | Network-device syslog |

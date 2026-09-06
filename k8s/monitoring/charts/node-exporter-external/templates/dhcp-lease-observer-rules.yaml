@@ -1,0 +1,47 @@
+{{- if .Values.dhcpLeaseObserverAlerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: dhcp-lease-observer-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: dhcp-lease-observer-external
+      rules:
+        # The collector rewrites the textfile with the last good snapshot even
+        # when a poll fails, so textfile staleness cannot see a router or SSH
+        # failure. Only this metric separates it from a stopped writer.
+        - alert: DHCPLeaseObserverCollectionFailing
+          expr: dhcp_lease_observer_up == 0
+          for: {{ .Values.dhcpLeaseObserverAlerts.collectionFailingFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: >-
+              DHCP lease collection is failing on
+              {{ "{{ $labels.instance }}" }}
+            description: >-
+              The collector cannot read the
+              {{ "{{ $labels.source_instance }}" }} lease table. Exported
+              leases stay at the last good snapshot and drift from the router.
+
+        # Catches a disabled timer or a repeatedly failing poll that never
+        # reaches the failure duration above.
+        - alert: DHCPLeaseObserverSnapshotStale
+          expr: >-
+            time() - dhcp_lease_observer_last_success_timestamp_seconds >
+            {{ .Values.dhcpLeaseObserverAlerts.maxSuccessAgeSeconds }}
+          for: {{ .Values.dhcpLeaseObserverAlerts.staleFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: >-
+              DHCP lease snapshot is stale for
+              {{ "{{ $labels.source_instance }}" }}
+            description: >-
+              The last successful lease collection was
+              {{ "{{ $value | humanizeDuration }}" }} ago, so device
+              identities cannot be resolved for recent DNS activity.
+{{- end }}
