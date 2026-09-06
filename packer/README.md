@@ -32,11 +32,6 @@ on a KVM/libguestfs builder.
   exported as `SEAWEEDFS_S3_ENDPOINT` / `SEAWEEDFS_S3_ACCESS_KEY` /
   `SEAWEEDFS_S3_SECRET_KEY` (inject via `.envrc` / sops — never hardcode).
 
-### Deployment
-
-[`../tf/customimage`](../tf/customimage) downloads pushed images through the
-shared `tf/modules/proxmox-cloudimage` module.
-
 ## Directory Structure
 
 ```
@@ -84,36 +79,17 @@ export PROXMOX_VE_SSH_AGENT=true
 ### 2. Build Images
 
 ```bash
-# Build Ubuntu 24.04 with the QEMU Guest Agent and the timezone only
 ./build.sh ubuntu24-base
-
-# Build Ubuntu 24.04 with the shared CLI toolchain
-./build.sh ubuntu24-tool
-
-# Build Ubuntu 24.04 with XRDP and XFCE desktop
-./build.sh ubuntu24-desktop
-
-# Build Rocky Linux 10 with the QEMU Guest Agent and the timezone only
-./build.sh rocky10-base
-
-# Build Rocky Linux 9 with XRDP and XFCE desktop
-./build.sh rocky9-desktop
-
-# Build Debian 13 with the QEMU Guest Agent and the timezone only
-./build.sh debian13-base
-
-# Import FreeBSD 15.1 upstream cloud-init image
-./import-upstream.sh freebsd151
 ```
+
+Choose other targets from [Available Build Targets](#available-build-targets).
+For FreeBSD, use [Upstream Image Imports](#upstream-image-imports).
 
 ### 3. Push Images to S3
 
 ```bash
 # Upload one target (image + .sha256) to the cloud-images bucket
 ./push.sh ubuntu24-base
-
-# Upload imported FreeBSD 15.1 image
-./push.sh freebsd151
 
 # Or upload every image currently in images/
 ./push.sh all
@@ -141,15 +117,7 @@ is baked into the image, and each role contains the one before it:
 | `tool` | `base` plus the shared CLI toolchain in `/usr/local` | `server` | `true` | 16G |
 | `desktop` | `tool` plus XFCE, XRDP, the Japanese IME and the GUI applications | `desktop` | `true` | 20G |
 
-`desktop` is reachable over RDP only — XRDP is the single GUI access path in
-this homelab. The suffix names the role rather than the protocol so the image
-name survives a change of access method.
-
-`base` is not a third machine profile. It writes `server` to
-`/etc/provisioning/machine-profile.local` like any other server image, because
-the shared installers accept `desktop`, `server` or `auto` and nothing else. A
-later `scripts/provision.sh` run therefore installs the server toolchain on a
-host built from a `base` image.
+`desktop` is reachable over RDP only through XRDP.
 
 ## Available Build Targets
 
@@ -200,28 +168,19 @@ To add a target, create a `vars/<target>.pkrvars.hcl` and register the target in
 
 ## Machine Profiles
 
-`machine_profile` (`server` by default, `desktop` for the `-desktop` targets) is
-written to `/etc/provisioning/machine-profile.local` and passed to the shared
-installers as `TOOL_MACHINE_PROFILE`. Together with `install_toolchain` it is
-what separates the three image roles:
+`machine_profile` is written to `/etc/provisioning/machine-profile.local` and
+passed to shared installers as `TOOL_MACHINE_PROFILE`. Both `base` and `tool`
+use `server`; a later `scripts/provision.sh` run installs any missing server
+tools on a `base` image.
 
-- **server** — the CLI toolchain only (Terraform, kubectl, helm, k9s, ansible,
-  sops, …), installed system-wide into `/usr/local/bin`.
-- **desktop** — the same toolchain plus the GUI components: Freelens, kitty and
-  the UDEV Gothic NF font. `terminal.sh` and `fonts.sh` no-op on `server`, so no
-  extra gating is needed. Packer also installs the shared kitty defaults under
-  `/etc/xdg/kitty/kitty.conf` only for this profile; per-user preferences remain
-  owned by the dotfiles repository.
+Only `desktop` installs Freelens, kitty, UDEV Gothic NF, and shared kitty
+settings under `/etc/xdg/kitty/kitty.conf`. Per-user preferences belong to
+the dotfiles repository.
 
 GUI applications that are not part of the shared toolchain (Firefox, VS Code,
 Wireshark, virt-manager) come from the distro provisioner lists
 (`scripts/<distro>/tools.sh`, `vm.sh`), which only the `-desktop` targets
 include.
-
-`install_toolchain = false` skips the shared toolchain entirely. It is what
-makes a target a `base` image, and `debian13-base` additionally has no choice:
-the toolchain's HashiCorp step resolves an apt suite from `VERSION_CODENAME` and
-`releases.hashicorp.com` publishes no `trixie` suite.
 
 Because the toolchain is installed system-wide, the version cache under
 `/usr/local/share/tool-versions` lets a later `scripts/provision.sh` run skip
@@ -284,14 +243,6 @@ Images install prerequisites and the CLI toolchain through the same
 maintained in `takanao14/dotfiles`; refresh the vendored copies with
 `../scripts/install/vendor/sync.sh`.
 
-Packer writes the image role to `/etc/provisioning/machine-profile.local`: XRDP
-images are `desktop` and basic cloud images are `server`. The same
-`TOOL_MACHINE_PROFILE=desktop|server` contract is passed to shared installers
-and later consumed by `scripts/provision.sh`.
-
-Builds use vendored installers from `../scripts/install/vendor/`; refresh them
-with `../scripts/install/vendor/sync.sh`.
-
 **Not tracked (always installed as latest):**
 - Unpinned APT/DNF packages installed by the shared package installer or Packer
   scripts (terraform, packer, vault, Firefox, VS Code, Wireshark, Podman, etc.)
@@ -313,44 +264,19 @@ packer build \
 
 ### Modifying Provisioning Scripts
 
-Edit scripts in the `scripts/` directory:
-- `scripts/common/` - distro-agnostic provisioners (`timezone.sh`) and the
-  shared toolchain step the template runs on its own (`toolchain.sh`)
-- `scripts/ubuntu/` - Ubuntu-specific provisioners
-- `scripts/rocky/` - Rocky Linux-specific provisioners
-- `scripts/debian/` - Debian-specific provisioners
+Select provisioners through each target's `vars/<target>.pkrvars.hcl`.
 
 `qemu-ga.sh` installs the guest agent and nothing else; the timezone is a
 separate `scripts/common/timezone.sh` step listed by every target. The Rocky
 targets omit `qemu-ga.sh` because GenericCloud already ships the agent.
 
-All scripts should be:
-- Idempotent
-- Follow bash best practices (`set -euo pipefail`)
-
-### Cloud-init Configuration
-
-Modify templates in `cinit/` directory to customize:
-- Network configuration
-- SSH key injection
-- Package installation
-- User creation
-
-## Security Considerations
-
-- **SSH Authentication**: Password authentication is disabled; SSH key-only access
-- **Default User**: Created via cloud-init with configurable password
-- **Minimal Surface**: Only necessary packages are installed
-- **Regular Updates**: Rebuild images regularly to include security patches
-- **No Hardcoded Secrets**: All sensitive data passed via environment variables
+Cloud-init templates live in `cinit/`. Keep SSH password authentication disabled
+and inject credentials through environment variables.
 
 ## Troubleshooting
 
 ### Build Fails with "Permission Denied"
 Ensure the Packer user has sudo access in the base cloud image.
-
-### Image Already Exists
-Confirm overwrite or pass `-y`.
 
 ### Packer Cannot Connect to VM
 Check that:
@@ -372,7 +298,3 @@ map `s3.home.butaco.net` to Caddy (`192.168.10.244`) in that node's `/etc/hosts`
 Multi-GB transfers charge page cache to the SeaweedFS LXC cgroup and can OOM
 `weed`. Keep sufficient RAM/swap (currently 8 GB + 4 GB) and run
 `tf/customimage` with `-parallelism=1`.
-
-## License
-
-MIT License. See the [repository root LICENSE](../LICENSE).
