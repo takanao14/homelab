@@ -4,122 +4,16 @@ Ansible playbooks and roles for provisioning and configuring homelab infrastruct
 
 ## Directory Structure
 
-```
+```text
 ansible/
-├── .ansible-lint                    # Lint exclusions for generated/vendor files
-├── ansible.cfg                      # Ansible configuration (SOPS plugin enabled)
-├── requirements.yaml                # Ansible Galaxy collection dependencies
-├── collections/                     # Locally installed collections (gitignored)
-├── inventories/
-│   └── homelab/
-│       ├── hosts.yaml               # Inventory (no secrets)
-│       ├── group_vars/
-│       │   ├── all.yaml             # Shared non-secret variables
-│       │   ├── dns.yaml             # Shared DNS variables (primary/secondary server addresses)
-│       │   ├── dns_auth.yaml        # pdns_auth group variables
-│       │   ├── dns_primary.yaml     # Primary-specific pdns_auth variables
-│       │   ├── dns_secondary.yaml   # Secondary-specific pdns_auth variables
-│       │   ├── dnsdist.yaml
-│       │   ├── dns_resolver.yaml
-│       │   ├── dnsdist.sops.yaml
-│       │   ├── caddy.yaml
-│       │   ├── caddy.sops.yaml
-│       │   ├── code_server.yaml
-│       │   ├── code_server.sops.yaml
-│       │   ├── dhcp.sops.yaml
-│       │   ├── dhcp_lease_observer.yaml
-│       │   ├── dhcp_lease_observer.sops.yaml
-│       │   ├── forgejo.yaml
-│       │   ├── forgejo.sops.yaml
-│       │   ├── forgejo_runner.sops.yaml
-│       │   ├── lxc.sops.yaml
-│       │   ├── netbox.yaml
-│       │   ├── netbox.sops.yaml
-│       │   ├── node_exporter.yaml
-│       │   ├── node_exporter_rpi.yaml
-│       │   ├── openbao.yaml
-│       │   ├── openbao.sops.yaml
-│       │   ├── proxmox.yaml
-│       │   ├── proxmox.sops.yaml
-│       │   ├── seaweedfs.yaml
-│       │   ├── seaweedfs.sops.yaml
-│       │   ├── log_collector.yaml
-│       │   └── vector_lxc.yaml       # journald policy for Vector-enabled LXC guests
-│       └── host_vars/
-│           ├── <hostname>.sops.yaml # Host-specific secrets, including PowerDNS API keys
-│           └── rpi4.yaml            # Non-secret host-specific overrides
-├── playbooks/                          # see "Naming convention" below
-│   ├── bootstrap.yaml                   # new-host baseline (imports common-* hygiene)
-│   ├── pdns_auth.yaml                   # system (no prefix)
-│   ├── dnsdist.yaml
-│   ├── knot-resolver.yaml
-│   ├── caddy.yaml
-│   ├── dhcp.yaml
-│   ├── dhcp_lease_observer.yaml
-│   ├── forgejo.yaml
-│   ├── forgejo_runner.yaml
-│   ├── netbox.yaml
-│   ├── meshcentral.yaml
-│   ├── code_server.yaml
-│   ├── seaweedfs.yaml
-│   ├── log_collector.yaml
-│   ├── blackbox_exporter.yaml
-│   ├── openbao.yaml
-│   ├── proxmox.yaml
-│   ├── gpuvm.yaml
-│   ├── common-vector.yaml              # cross-cutting (common- prefix)
-│   ├── common-journald.yaml
-│   ├── common-timezone.yaml
-│   ├── common-rsyslog.yaml
-│   ├── common-node_exporter.yaml
-│   ├── common-chrony.yaml
-│   ├── common-apt_mirror.yaml
-│   ├── common-unattended_upgrades.yaml
-│   ├── common-k8s-storage-client.yaml  # client packages for enabled k0s storage providers
-│   ├── common-maintenance_user.yaml
-│   ├── common-users.yaml
-│   ├── ops-package_upgrade.yaml        # day-2 / operational (ops- prefix)
-│   ├── ops-nfs_storage_check.yaml      # NFS mount/read-write/fsync validation
-│   ├── ops-version_audit.yaml          # read-only desired vs installed version audit
-│   ├── ops-pdns_sync.yaml
-│   ├── ops-authentik_upgrade.yaml
-│   ├── ops-openbao_bootstrap.yaml
-│   ├── ops-openbao_configure.yaml
-│   ├── ops-openbao_configure_userpass.yaml
-│   ├── ops-openbao_register_cluster.yaml
-│   ├── ops-openbao_upgrade.yaml
-│   └── ops-openbao_seed_secrets.yaml
-└── roles/
-    ├── pdns_auth/
-    ├── dnsdist/
-    ├── knot_resolver/
-    ├── dnscollector/
-    ├── caddy/
-    ├── vector/
-    ├── kea/
-    ├── dhcp_lease_observer/
-    ├── forgejo/
-    ├── forgejo_runner/
-    ├── netbox/
-    ├── meshcentral/
-    ├── code_server/
-    ├── seaweedfs/
-    ├── node_exporter/
-    ├── blackbox_exporter/
-    ├── openbao/
-    ├── apt_mirror/
-    ├── proxmox_metric_server/
-    ├── proxmox_simplezone_routes/
-    ├── chrony/
-    ├── unattended_upgrades/
-    ├── maintenance_user/
-    ├── rocm/
-    ├── sysctl/
-    ├── timezone/
-    ├── users/
-    ├── journald/
-    ├── lxc_logging/                     # meta-role: vector + journald bundle
-    └── rsyslog/
+├── ansible.cfg        # SOPS vars plugin and local collection paths
+├── requirements.yaml # Collection dependencies
+├── inventories/homelab/
+│   ├── hosts.yaml     # Managed hosts and groups
+│   ├── group_vars/    # Shared settings and encrypted secrets
+│   └── host_vars/     # Host overrides and encrypted secrets
+├── playbooks/         # Service, common, and operational entry points
+└── roles/             # Reusable roles with individual READMEs
 ```
 
 ## Naming convention
@@ -225,61 +119,16 @@ sops edit inventories/homelab/host_vars/ns1.sops.yaml
 Ensure your environment is ready (e.g., `SOPS_AGE_KEY` environment variable is set or age key file exists at `~/.config/sops/age/keys.txt`). Ansible will automatically decrypt `.sops.yaml` files during execution.
 
 ```bash
-# PowerDNS Authoritative Server
-ansible-playbook playbooks/pdns_auth.yaml
+ansible-playbook playbooks/<system>.yaml --limit <host> --check --diff
+ansible-playbook playbooks/<system>.yaml --limit <host>
+```
 
-# dnsdist
-ansible-playbook playbooks/dnsdist.yaml
+Use the [Playbooks](#playbooks) index to choose an entry point. Service-specific
+prerequisites and procedures live in the corresponding role README.
 
-# Knot Resolver
-ansible-playbook playbooks/knot-resolver.yaml
+Operational examples:
 
-# DHCP server
-ansible-playbook playbooks/dhcp.yaml
-
-# IX2106 DHCP lease observer (timer remains disabled for the first rollout)
-ansible-playbook playbooks/common-node_exporter.yaml --limit rpi4
-ansible-playbook playbooks/dhcp_lease_observer.yaml --limit rpi4
-
-# Log collector (log1 build)
-ansible-playbook playbooks/log_collector.yaml
-
-# Vector agent, all Vector hosts at once (e.g. version bump)
-ansible-playbook playbooks/common-vector.yaml
-
-# Node Exporter
-ansible-playbook playbooks/common-node_exporter.yaml
-
-# SeaweedFS (standalone object storage for Terraform state)
-ansible-playbook playbooks/seaweedfs.yaml
-
-# Forgejo
-ansible-playbook playbooks/forgejo.yaml
-
-# Forgejo Runner
-ansible-playbook playbooks/forgejo_runner.yaml
-
-# OpenBao
-ansible-playbook playbooks/openbao.yaml
-
-# Bootstrap runtime userpass authentication (first install or password rotation)
-ansible-playbook playbooks/ops-openbao_bootstrap.yaml
-
-# Configure OpenBao using a short-lived token obtained at runtime
-ansible-playbook playbooks/ops-openbao_configure.yaml
-
-# Proxmox maintenance user setup
-ansible-playbook playbooks/proxmox.yaml
-
-# Proxmox SimpleZone static routes only (file render; user runs ifreload -a)
-ansible-playbook playbooks/proxmox.yaml --tags proxmox_simplezone_routes
-
-# Maintenance user on LXC containers
-ansible-playbook playbooks/common-maintenance_user.yaml
-
-# Bulk user accounts on shared VMs
-ansible-playbook playbooks/common-users.yaml
-
+```bash
 # OS package upgrade (all hosts; apt on Debian/Ubuntu, dnf on Rocky/RHEL).
 # DNS hosts and k0s nodes are upgraded one at a time; k0s workers are drained
 # before the reboot and only uncordoned after the LocalPV mount is present. On
@@ -320,123 +169,21 @@ ansible-playbook playbooks/ops-authentik_upgrade.yaml --limit authentik --check 
 # OpenBao explicit upgrade (dry-run first; the user runs without --check)
 ansible-playbook playbooks/ops-openbao_upgrade.yaml --limit openbao --check --diff
 
-# Time synchronization (chrony -> router; physical hosts and VMs, not LXC)
-ansible-playbook playbooks/common-chrony.yaml
-
-# Reapply journald policy to all Vector-enabled LXC guests (normally applied by each
-# Vector-enabled LXC service playbook)
-ansible-playbook playbooks/common-journald.yaml
-
-# Dry run
-ansible-playbook playbooks/pdns_auth.yaml --check
 ```
 
 ### Proxmox SimpleZone Static Routes
 
-The Proxmox nodes each own one routed SDN SimpleZone behind their management-LAN
-address:
+[The role README](roles/proxmox_simplezone_routes/README.md#apply-flow) covers
+preview, manual network reload, verification, and rollback. Ansible only writes
+the route file; review the diff before running `ifreload -a` on the target.
 
-| Node | Management IP | SimpleZone segment |
-|------|---------------|--------------------|
-| `pve` | `192.168.10.10` | `192.168.20.0/24` |
-| `node1` | `192.168.10.11` | `192.168.30.0/24` |
-| `node2` | `192.168.10.12` | `192.168.40.0/24` |
-| `node3` | `192.168.10.13` | `192.168.50.0/24` |
-| `node4` | `192.168.10.14` | `192.168.60.0/24` |
+### OpenBao operations
 
-`proxmox_simplezone_routes` writes routes to every *other* SimpleZone into
-`/etc/network/interfaces.d/ansible-simplezone-routes`, attached to `vmbr0`
-using ifupdown2 `post-up` / `pre-down` hooks. Ansible renders the file and
-checks syntax during apply, but intentionally does not run `ifreload -a`; the
-operator performs the live network reload after reviewing the diff.
+Use the OpenBao role README for:
 
-Dry-run a single node first:
-
-```bash
-ANSIBLE_ROLES_PATH=$PWD/roles \
-ansible-playbook --check --diff -i inventories/homelab/hosts.yaml \
-  playbooks/proxmox.yaml --limit node3 --tags proxmox_simplezone_routes
-```
-
-Render the file on a single node:
-
-```bash
-ANSIBLE_ROLES_PATH=$PWD/roles \
-ansible-playbook --diff -i inventories/homelab/hosts.yaml \
-  playbooks/proxmox.yaml --limit node3 --tags proxmox_simplezone_routes
-```
-
-Then apply the network change on that node:
-
-```bash
-ifreload -a
-```
-
-Verify that remote SimpleZone traffic takes the direct Proxmox-node next-hop,
-not the IX2106 default gateway:
-
-```bash
-ip route get 192.168.60.11
-ip route show 192.168.60.0/24
-```
-
-Expected from `node3`:
-
-```text
-192.168.60.11 via 192.168.10.14 dev vmbr0
-```
-
-Rollback on the target node:
-
-```bash
-mv /etc/network/interfaces.d/ansible-simplezone-routes \
-  /root/ansible-simplezone-routes.disabled
-ifreload -a
-```
-
-### OpenBao operational authentication
-
-Routine OpenBao playbooks authenticate as the dedicated `ansible-admin`
-userpass account. Set `openbao_ansible_password` in the SOPS-encrypted OpenBao
-group variables, then run `ops-openbao_bootstrap.yaml` with the stored root
-token. Bootstrap enables userpass and creates or updates the account.
-
-Each subsequent operational playbook logs in at runtime, uses the resulting
-one-hour token only for that play, and does not persist it. The root token is
-reserved for bootstrap, password rotation, and recovery.
-
-### OpenBao registration after k0s cluster rebuild
-
-OpenBao runs outside the k0s clusters, so rebuilding a cluster does not remove
-KV secret values. What must be refreshed is the OpenBao Kubernetes auth config
-for the rebuilt cluster. After ArgoCD has reconciled the ESO app and the
-`external-secrets-auth-delegator` ClusterRoleBinding exists, run:
-
-```bash
-ansible-playbook playbooks/ops-openbao_register_cluster.yaml -e cluster=sandbox
-ansible-playbook playbooks/ops-openbao_register_cluster.yaml -e cluster=prd
-```
-
-The playbook reads `~/.kube/<cluster>.yaml` and uses the `<cluster>-homelab`
-kube context by default. Override either value when needed:
-
-```bash
-ansible-playbook playbooks/ops-openbao_register_cluster.yaml \
-  -e cluster=sandbox \
-  -e kubeconfig=/path/to/kubeconfig \
-  -e kube_context=sandbox-homelab
-```
-
-Verify ESO after registration:
-
-```bash
-kubectl --kubeconfig ~/.kube/<cluster>.yaml get clustersecretstore openbao
-kubectl --kubeconfig ~/.kube/<cluster>.yaml get externalsecret -A
-```
-
-See
-[`ADR-0012`](../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md) for
-the decision behind the rebuild registration flow.
+- [Operational authentication and ESO setup](roles/openbao/README.md#kubernetes-eso-integration-setup)
+- [Cluster registration after rebuild](roles/openbao/README.md#4-register-each-cluster-with-openbao)
+- [Host recovery](roles/openbao/README.md#rebuilding-the-host)
 
 ## Playbooks
 
@@ -505,51 +252,13 @@ ansible-playbook playbooks/ops-dns_failover_test.yaml \
   -e dns_failover_action=restore
 ```
 
-## Secret Variables
+## Configuration
 
-| Variable | Sops file | Description |
-|----------|-----------|-------------|
-| `PDNS_PRIMARY_API_KEY` | `host_vars/ns1.sops.yaml` | PowerDNS primary API key |
-| `PDNS_SECONDARY_API_KEY` | `host_vars/ns2.sops.yaml`, `host_vars/ns3.sops.yaml` | Per-secondary PowerDNS API key |
-| `DNSDIST_WEB_PASSWORD` | `group_vars/dnsdist.sops.yaml` | dnsdist web UI password |
-| `DNSDIST_WEB_API_KEY` | `group_vars/dnsdist.sops.yaml` | dnsdist API key |
-| `DNSDIST_CONSOLE_KEY` | `group_vars/dnsdist.sops.yaml` | dnsdist console key |
-| `MAINTENANCE_USER` | `group_vars/proxmox.sops.yaml` | Proxmox maintenance username |
-| `MAINTENANCE_PASSWORD_HASH` | `group_vars/proxmox.sops.yaml` | Hashed password (`openssl passwd -6`) |
-| `SSH_KEY_PATH` | `group_vars/proxmox.sops.yaml` | Path to SSH public key file |
-| `netbox_db_password` | `group_vars/netbox.sops.yaml` | NetBox PostgreSQL password |
-| `netbox_secret_key` | `group_vars/netbox.sops.yaml` | NetBox Django secret key |
-| `netbox_superuser_password` | `group_vars/netbox.sops.yaml` | NetBox superuser password |
-| `openbao_seal_key` | `group_vars/openbao.sops.yaml` | OpenBao static seal key (base64-encoded 32 bytes) |
-| `openbao_root_token` | `group_vars/openbao.sops.yaml` | OpenBao root token for bootstrap and recovery only |
-| `openbao_ansible_password` | `group_vars/openbao.sops.yaml` | Password used to obtain a short-lived token for OpenBao operational playbooks |
-| `openbao_secrets` | `group_vars/openbao.sops.yaml` | Application secrets seeded into OpenBao KV, including the Alertmanager Discord webhook |
-| `seaweedfs_s3_access_key` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS S3 access key for the Terraform identity |
-| `seaweedfs_s3_secret_key` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS S3 secret key for the Terraform identity |
-| `seaweedfs_admin_password` | `group_vars/seaweedfs.sops.yaml` | SeaweedFS admin UI password (empty = auth disabled) |
-| `users_accounts` | `group_vars/shared_vms.sops.yaml` (create when enabling `shared_vms`) | List of `{name, password}` accounts created by `users.yaml` |
+Each role README documents its secret variables and inventory locations.
+Keep secret values in SOPS-encrypted `group_vars` or `host_vars`; the vars plugin
+loads them during execution.
 
-## Non-Secret Configuration
-
-DNS backend server addresses are defined in
-`inventories/homelab/group_vars/dns.yaml` and shared across the `pdns_auth`,
-`dnsdist`, and `knot_resolver` roles. Resolver addresses derive from host
-inventory (`hostvars[...].ansible_host`) so dnsdist routing and resolver ACLs
-do not carry independent IP literals:
-
-```yaml
-primary_auth_server: "{{ hostvars['ns1']['ansible_host'] }}:53"
-secondary_auth_servers:
-  - name: ns2
-    address: "{{ hostvars['ns2']['ansible_host'] }}:53"
-  - name: ns3
-    address: "{{ hostvars['ns3']['ansible_host'] }}:53"
-dns_resolver_servers:
-  - name: resolver1
-    address: "{{ hostvars['resolver1']['ansible_host'] }}:53"
-  - name: resolver2
-    address: "{{ hostvars['resolver2']['ansible_host'] }}:53"
-```
+DNS roles share backend lists in `inventories/homelab/group_vars/dns.yaml`.
 
 ### IP addresses: one source of truth
 
@@ -578,9 +287,3 @@ Kubernetes LoadBalancer IP (`all.yaml`'s `loki_endpoint` /
 `pdns_webserver_allow_from`). Comment on any such literal explaining why it
 can't be derived, so it doesn't get "fixed" into a broken `hostvars` lookup
 later.
-
-## Tips
-
-- Use `--check` for dry runs.
-- Ensure your SSH keys are loaded (`ssh-add`) before running playbooks.
-- `community.sops.sops` plugin is used to handle encrypted variables. It is enabled via `vars_plugins_enabled` in `ansible.cfg`.
