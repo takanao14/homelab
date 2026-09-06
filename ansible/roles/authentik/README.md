@@ -123,6 +123,91 @@ tokens from the API on every run, so they are not stored in SOPS.
 for SSSD validation. When the account is no longer needed, remove the
 blueprint, its environment-template entry, and its SOPS variable together.
 
+### Backup and restore
+
+Blueprints and `authentik_users` describe providers, applications, groups,
+Outposts, and managed accounts, so rebuilding from Ansible is the primary
+recovery path, as it is for OpenBao (ADR-0042). Only the database holds
+UI-side state: passwords and profile edits made after account creation, MFA
+enrollments, sessions, tokens issued outside blueprints, and the event log.
+
+`ops-authentik_upgrade.yaml` dumps the database before every upgrade, which
+covers the moment of highest risk. Nothing schedules a dump and nothing copies
+one off the host, so losing the VM loses the dumps with it. Copy a dump
+elsewhere before risky work. A dump carries password hashes and tokens;
+`authentik_backup_dir` is mode `0700`, so keep every copy root-only.
+
+```sh
+podman exec authentik-postgresql pg_dump --username=authentik \
+  --dbname=authentik --format=custom --clean --create --file=/tmp/authentik.dump
+podman cp authentik-postgresql:/tmp/authentik.dump /var/backups/authentik/
+podman exec authentik-postgresql rm /tmp/authentik.dump
+```
+
+Restore with the server and worker stopped, then start them again:
+
+```sh
+systemctl stop authentik-server authentik-worker
+podman cp <dump> authentik-postgresql:/tmp/restore.dump
+podman exec authentik-postgresql pg_restore --username=authentik \
+  --dbname=postgres --clean --create /tmp/restore.dump
+systemctl start authentik-server authentik-worker
+```
+
+Restore a dump only with the `authentik_secret_key` it was taken with; a
+different key invalidates existing sessions and stored tokens. A rebuild
+without a restore regenerates the LDAPS certificate, so export it into the
+`sssd` role and rerun that playbook before clients can validate the endpoint.
+
+### Health checks
+
+```sh
+systemctl is-active authentik-postgresql authentik-server authentik-worker \
+  authentik-ldap authentik-proxy
+curl -fsS http://127.0.0.1:9000/-/health/ready/
+openssl s_client -connect ldap.home.butaco.net:636 </dev/null 2>/dev/null \
+  | openssl x509 -noout -enddate
+```
+
+Host metrics arrive through node_exporter (`service="authentik"`) and journals
+reach Loki as `{host="authentik1"}`. Authentik exports no Prometheus metrics
+here, and neither the readiness endpoint nor the LDAPS certificate expiry is
+probed, so both checks above are manual.
+
+Failed forward auth appears as a 302 to the Authentik URL. A session that
+expires while a page is open leaves Headlamp on its loading spinner, because
+lazy-loaded requests are redirected instead of the navigation; a hard reload
+starts the login flow.
+
+### Onboarding
+
+1. Add the account to `authentik_users` with the groups it needs.
+   `files/blueprints/groups.yaml` defines them; Linux login requires
+   `lab-linux-users` and sudo additionally requires `lab-linux-admins`.
+2. Run `ansible-playbook playbooks/authentik.yaml`.
+3. Verify on an SSSD host that `getent passwd <user>` and `id <user>` agree,
+   and that `sss_ssh_authorizedkeys <user>` returns the key.
+
+### Offboarding
+
+1. Set `is_active: false` in `authentik_users` and run the playbook. Deleting
+   only the SOPS entry is not enough, because the role reapplies the users
+   blueprint and recreates an account deleted in the UI. Remove both when the
+   account must disappear rather than stay disabled for audit.
+2. Revocation is delayed by the Outpost and SSSD caches
+   (`roles/sssd/README.md`). Invalidate the host caches for immediate effect:
+
+   ```sh
+   ansible sssd -b -m command -a "sss_cache -u <user>"
+   ```
+
+3. Existing access survives revocation. Open SSH sessions stay open, so check
+   `loginctl` and terminate them, and delete the user's sessions in the
+   Authentik UI: a forward-auth session otherwise remains valid for its
+   eight-hour access token.
+4. Confirm that `id <user>` no longer lists the `lab-*` groups, that SSH is
+   refused, and that the UI shows the account inactive with no sessions.
+
 ### Managed users
 
 Each entry in `authentik_users` accepts:
