@@ -1,0 +1,20 @@
+# Exists only so that Prometheus has a scrape endpoint; nothing routes traffic
+# to the bot.
+apiVersion: v1
+kind: Service
+metadata:
+  name: slack-bot
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: slack-bot
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: slack-bot
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP

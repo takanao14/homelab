@@ -1,3 +1,7 @@
 ---
 # USB-SSD boot took about 19 minutes; extend the post-reboot wait.
 package_upgrade_reboot_timeout: 1800
+
+# Reuse the journal-only forwarder to avoid duplicate imuxsock forwarding.
+rsyslog_forward_protocol: tcp
+rsyslog_journal_input: true

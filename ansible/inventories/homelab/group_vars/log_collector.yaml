@@ -76,6 +76,24 @@ vector_config:
         if !exists(.appname) || is_null(.appname) { .appname = "unknown" }
         if !exists(.severity) || is_null(.severity) { .severity = "unknown" }
 
+    parse_led_service:
+      type: remap
+      inputs:
+        - parse_syslog
+      source: |
+        if .appname == "led-server" {
+          app, err = parse_json(string(.message) ?? "")
+          if err == null && is_object(app) && is_string(app.level) && is_string(app.fields.message) {
+            .app = app
+            .level = downcase(string!(app.level))
+            .event = string(app.fields.event) ?? string!(app.fields.message)
+            .app_parse_error = false
+          } else {
+            # Keep non-JSON native-library and startup errors searchable.
+            .app_parse_error = true
+          }
+        }
+
     parse_journald:
       type: remap
       inputs:
@@ -88,7 +106,7 @@ vector_config:
     loki:
       type: loki
       inputs:
-        - parse_syslog
+        - parse_led_service
       endpoint: "{{ loki_endpoint }}"
       encoding:
         codec: json
@@ -117,3 +135,45 @@ vector_config:
       labels:
         host: !unsafe "{{ host }}"
         unit: !unsafe "{{ unit }}"
+
+  tests:
+    - name: LED JSON preserves syslog severity and exposes application level
+      inputs:
+        - insert_at: parse_led_service
+          type: log
+          log_fields:
+            appname: led-server
+            host: rpi3
+            severity: info
+            message: '{"level":"ERROR","fields":{"message":"display error","error":"invalid image"}}'
+      outputs:
+        - extract_from: parse_led_service
+          conditions:
+            - type: vrl
+              source: >-
+                .level == "error" && .severity == "info" && .event == "display error" &&
+                .app.fields.error == "invalid image" && .app_parse_error == false
+    - name: LED plaintext is retained
+      inputs:
+        - insert_at: parse_led_service
+          type: log
+          log_fields:
+            appname: led-server
+            message: 'Error: startup failed'
+      outputs:
+        - extract_from: parse_led_service
+          conditions:
+            - type: vrl
+              source: '.message == "Error: startup failed" && .app_parse_error == true'
+    - name: Other services remain unchanged
+      inputs:
+        - insert_at: parse_led_service
+          type: log
+          log_fields:
+            appname: sshd
+            message: 'session opened'
+      outputs:
+        - extract_from: parse_led_service
+          conditions:
+            - type: vrl
+              source: '.appname == "sshd" && .message == "session opened" && !exists(.app) && !exists(.level)'
