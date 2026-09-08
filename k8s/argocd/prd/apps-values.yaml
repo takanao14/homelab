@@ -40,5 +40,7 @@ apps:
     enabled: true
   reloader:
     enabled: true
+  slack-bot:
+    enabled: true
   vllm:
     enabled: true

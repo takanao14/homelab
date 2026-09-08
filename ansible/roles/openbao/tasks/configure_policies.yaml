@@ -62,6 +62,21 @@
     BAO_TOKEN: "{{ openbao_admin_token }}"
   changed_when: true
 
+- name: Write policy for slack-bot namespace
+  ansible.builtin.command:
+    cmd: "{{ openbao_binary }} policy write k8s-slack-bot -"
+    stdin: |
+      path "secret/data/k8s/slack-bot/*" {
+        capabilities = ["read"]
+      }
+      path "secret/metadata/k8s/slack-bot/*" {
+        capabilities = ["read"]
+      }
+  environment:
+    BAO_ADDR: "{{ openbao_local_addr }}"
+    BAO_TOKEN: "{{ openbao_admin_token }}"
+  changed_when: true
+
 - name: Write policy for monitoring namespace
   ansible.builtin.command:
     cmd: "{{ openbao_binary }} policy write k8s-monitoring -"
