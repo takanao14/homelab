@@ -10,10 +10,19 @@ dnsFrontends: []
 icmp:
   targets: []
 
+# Service ports probed with the tcp_connect module.
+tcp:
+  targets: []
+
 dnsProbeAlerts:
   enabled: false
   # Client-visible failure across two independently probed frontends.
   failedFor: 2m
+
+tcpProbeAlerts:
+  enabled: false
+  # A closed port is unambiguous; wait only long enough to skip a restart.
+  downFor: 10m
 
 icmpProbeAlerts:
   enabled: false

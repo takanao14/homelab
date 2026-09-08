@@ -16,9 +16,18 @@ icmp:
     - ip: "192.168.10.254"
       name: "wifi-ap1"
 
+# Service ports whose failure is invisible to ICMP.
+tcp:
+  targets:
+    - address: "192.168.10.240:50051"
+      name: "led-rpi3"
+
 # DNS modules probe the shared frontend inventory.
 
 dnsProbeAlerts:
+  enabled: true
+
+tcpProbeAlerts:
   enabled: true
 
 icmpProbeAlerts:

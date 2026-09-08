@@ -6,6 +6,13 @@ modules:
     icmp:
       preferred_ip_protocol: ip4
 
+  # Service-port liveness for hosts already covered by the icmp module.
+  tcp_connect:
+    prober: tcp
+    timeout: 5s
+    tcp:
+      preferred_ip_protocol: ip4
+
   dns_external:
     prober: dns
     timeout: 5s

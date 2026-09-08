@@ -1,0 +1,26 @@
+{{- if .Values.tcpProbeAlerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: tcp-probe-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: tcp-probe-external
+      rules:
+        # Distinct from IcmpProbeFailed on the same host: the machine answers
+        # ping while the service behind the port is gone.
+        - alert: TcpServiceUnreachable
+          expr: probe_success{job="scrapeConfig/monitoring/tcp-services"} == 0
+          for: {{ .Values.tcpProbeAlerts.downFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ "{{ $labels.instance }}" }} is not accepting connections"
+            description: >-
+              The service port for {{ "{{ $labels.instance }}" }} refuses TCP
+              connections. Check the host's ICMP alert first: if it is silent,
+              the host is up and only the service is down.
+{{- end }}
