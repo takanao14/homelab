@@ -28,9 +28,12 @@
   },
   "packageRules": [
     {
-      "description": "The in-repo gpu-switch image is released intentionally and should be deployable immediately without the global release-age delay.",
+      "description": "Project-owned images are released intentionally and should be deployable immediately without the global release-age delay.",
       "matchDatasources": ["docker"],
-      "matchPackageNames": ["ghcr.io/takanao14/homelab/gpu-switch"],
+      "matchPackageNames": [
+        "ghcr.io/takanao14/homelab/gpu-switch",
+        "ghcr.io/takanao14/slack-bot"
+      ],
       "minimumReleaseAge": null
     },
     {

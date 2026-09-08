@@ -1,0 +1,16 @@
+image:
+  repository: ghcr.io/takanao14/slack-bot
+  tag: 0.1.0
+  pullPolicy: IfNotPresent
+
+led:
+  # LED service on rpi3, outside the cluster; an IP avoids depending on the LAN
+  # resolver for a short hostname the cluster cannot complete.
+  addr: ""
+
+secret:
+  key: k8s/slack-bot/tokens
+  botTokenProperty: bot-token
+  appTokenProperty: app-token
+
+resources: {}

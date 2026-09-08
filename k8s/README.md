@@ -51,6 +51,7 @@ k8s/
 ├── open-webui/       # LLM frontend
 ├── pdns-ui/          # Read-only PowerDNS UI
 ├── headlamp/         # Kubernetes UI
+├── slack-bot/        # Slack bot rendering to the LED matrix
 └── homepage/         # Service dashboard
 ```
 

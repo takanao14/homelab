@@ -79,6 +79,9 @@ apps:
   reloader:
     enabled: false
     wave: "1"
+  slack-bot:
+    enabled: false
+    wave: "1"
   vllm:
     enabled: false
     wave: "1"
