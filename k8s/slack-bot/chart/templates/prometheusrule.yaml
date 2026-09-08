@@ -1,0 +1,35 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: slack-bot
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: slack-bot
+      rules:
+        # The only signal that separates a disconnected bot from a working one:
+        # the process stays healthy and Ready either way.
+        - alert: SlackBotSocketDisconnected
+          expr: slack_bot_socket_connected == 0
+          for: {{ .Values.alerts.socketDisconnectedFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "slack-bot is not connected to Slack"
+            description: >-
+              The Socket Mode connection has been down long enough to rule out
+              Slack's routine connection cycling. Messages posted meanwhile are
+              not rendered, and Slack does not redeliver them.
+
+        - alert: SlackBotLedSendFailing
+          expr: increase(slack_bot_led_send_total{result="error"}[15m]) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: "slack-bot cannot reach the LED service"
+            description: >-
+              An image send failed in the last 15 minutes. Check
+              TcpServiceUnreachable for led-rpi3 first: if it is silent, the
+              port is open and the failure is in the send itself.

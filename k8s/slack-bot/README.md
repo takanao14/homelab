@@ -23,11 +23,12 @@ slack-bot/
 └── prd/values.yaml         # LED address
 ```
 
-## No inbound traffic
+## No routed traffic
 
-The bot dials out to Slack and to the LED service; nothing connects to it. It
-therefore has no Service, HTTPRoute, or NetworkPolicy, and `/healthz` is reached
-by the kubelet liveness probe only.
+The bot dials out to Slack and to the LED service; nothing routes requests to
+it. There is no HTTPRoute and no NetworkPolicy — the ClusterIP Service exists
+only so Prometheus can scrape `/metrics`, and it fronts no authentication
+boundary worth defending. `/healthz` is reached by the kubelet liveness probe.
 
 `SLACK_BOT_LED_ADDR` is an IP because the LED service runs outside the cluster
 on rpi3 (`192.168.10.240:50051`) over plaintext gRPC, and cluster DNS cannot
@@ -43,12 +44,27 @@ requires the `k8s-slack-bot` policy on the prd Kubernetes auth role.
 
 Reloader restarts the Deployment when the Secret changes.
 
+## Monitoring
+
+Pod-level failures are already covered by the kube-prometheus-stack defaults
+(`KubePodCrashLooping`, `KubePodNotReady`). The chart adds what those cannot
+see, because the process stays healthy while the function stops:
+
+| Alert | Condition |
+|---|---|
+| `SlackBotSocketDisconnected` | `slack_bot_socket_connected == 0` for `alerts.socketDisconnectedFor` |
+| `SlackBotLedSendFailing` | any failed LED send in 15 minutes |
+
+The LED service itself is probed separately from rpi4
+(`TcpServiceUnreachable` for `led-rpi3`), so a send failure can be attributed
+to the device or to the bot.
+
 ## Image release
 
 The Deployment uses:
 
 ```text
-ghcr.io/takanao14/slack-bot:0.1.0
+ghcr.io/takanao14/slack-bot:0.2.0
 ```
 
 The public image needs no pull Secret; Renovate updates its tag once the source

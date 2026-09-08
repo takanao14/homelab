@@ -2,6 +2,8 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-08
+- **Amended:** 2026-09-08 — a ClusterIP Service was added for metrics
+  scraping; the property below concerns routed traffic, not scrapes.
 - **Related:** [ADR-0014](0014-argocd-app-of-apps-shared-helm-chart.md),
   [ADR-0026](0026-eso-over-helm-secrets-for-in-cluster-secrets.md),
   [ADR-0027](0027-gpu-workload-switching-web-ui.md),
