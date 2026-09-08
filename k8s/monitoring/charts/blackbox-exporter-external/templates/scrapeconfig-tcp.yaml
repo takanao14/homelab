@@ -1,0 +1,33 @@
+{{- if .Values.tcp.targets }}
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: tcp-services
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  # External probe targets: opt out of the default cluster-prd scrape class.
+  scrapeClass: external
+  metricsPath: /probe
+  params:
+    module: [tcp_connect]
+  staticConfigs:
+    # Service ports on hosts the icmp module already covers.
+    {{- range .Values.tcp.targets }}
+    - targets: [{{ .address | quote }}]
+      labels:
+        __tmp_name: {{ .name | quote }}
+    {{- end }}
+  relabelings:
+    - action: replace
+      sourceLabels: [__address__]
+      targetLabel: __param_target
+    - action: replace
+      sourceLabels: [__tmp_name]
+      targetLabel: instance
+    - action: replace
+      targetLabel: __address__
+      replacement: {{ .Values.blackboxExporterURL | quote }}
+  scrapeInterval: {{ .Values.scrapeInterval }}
+{{- end }}

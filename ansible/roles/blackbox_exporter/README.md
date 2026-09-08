@@ -10,11 +10,12 @@ Installs and configures [Prometheus Blackbox Exporter](https://github.com/promet
 
 ## Probe Modules
 
-The deployed config defines three modules:
+The deployed config defines four modules:
 
 | Module | Prober | Description |
 |--------|--------|-------------|
 | `icmp` | icmp | ICMP ping (IPv4) |
+| `tcp_connect` | tcp | TCP connect to a `host:port` target (IPv4) |
 | `dns_external` | dns | DNS query for `google.com` against the target resolver |
 | `dns_internal` | dns | DNS query for `blackbox_exporter_dns_internal_query` against the target resolver |
 

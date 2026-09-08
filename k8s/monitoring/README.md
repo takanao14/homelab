@@ -12,7 +12,7 @@ Argo CD-managed monitoring for prd, with a sandbox subset and OpenBao secrets.
 | `alloy` | `alloy` | OTLP ingestion for Proxmox metrics and remote_write into Prometheus |
 | `dashboards` | local chart | Generated Grafana dashboard ConfigMaps (sidecar-discovered; JSON written by the generator in `dashboards/`) |
 | `control-plane-metrics` | local chart | k0s controller host scrape contracts (node-exporter ScrapeConfig) |
-| `blackbox-exporter-external` | local chart | ScrapeConfigs for ICMP and DNS probes through an external blackbox_exporter |
+| `blackbox-exporter-external` | local chart | ScrapeConfigs for ICMP, TCP, and DNS probes through an external blackbox_exporter |
 | `snmp-exporter` | `prometheus-snmp-exporter` | SNMP metrics polling |
 | `node-exporter-external` | local chart | Scrape external node-exporter instances |
 | `amd-gpu-external` | local chart | AMD GPU metrics (amd-metrics-exporter on GPU VM) |
