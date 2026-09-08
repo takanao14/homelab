@@ -56,3 +56,5 @@ Run [playbooks/common-vector.yaml](../../playbooks/common-vector.yaml).
   `dangerously_allow_unconfined_template_resolution: true` in inventory to
   preserve the existing label values. Keep this exception visible per sink;
   adding a static prefix would change labels and break existing Loki queries.
+
+On `log1`, `log_collector.yaml` parses `led-server` JSON into `app`, `level`, and `event` while retaining the original syslog `message` and `severity`. These fields stay in the payload, not Loki labels. Non-JSON LED logs are retained with `app_parse_error=true`; other applications pass through unchanged. Run `vector test /etc/vector/vector.yaml` to check the embedded cases. Query with `{host="rpi3",appname="led-server"} | json | level="error"` or filter `event`.

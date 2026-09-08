@@ -70,3 +70,5 @@ Behavior and assumptions:
 ## Usage
 
 Run [playbooks/common-rsyslog.yaml](../../playbooks/common-rsyslog.yaml).
+
+`rpi3` uses journal-only TCP forwarding with the bounded disk-assisted queue, replacing its legacy UDP catch-all. Local imuxsock input remains available for local files; only the journal ruleset forwards to Loki. First activation starts at the journal tail.
