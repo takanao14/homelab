@@ -94,6 +94,7 @@
   notify: Restart node_exporter
 
 - name: Check whether textfile collector writer group exists
+  tags: node_exporter_textfile
   ansible.builtin.command:
     argv:
       - /usr/bin/getent
@@ -105,6 +106,7 @@
   failed_when: false
 
 - name: Create textfile collector writer group
+  tags: node_exporter_textfile
   become: true
   ansible.builtin.group:
     name: "{{ node_exporter_textfile_group }}"
@@ -112,6 +114,7 @@
     state: present
 
 - name: Ensure textfile collector directory exists
+  tags: node_exporter_textfile
   become: true
   ansible.builtin.file:
     path: "{{ node_exporter_textfile_dir }}"
@@ -122,6 +125,7 @@
   when: not ansible_check_mode or node_exporter_textfile_group_status.rc == 0
 
 - name: Report deferred textfile collector directory ownership
+  tags: node_exporter_textfile
   ansible.builtin.debug:
     msg: >-
       The {{ node_exporter_textfile_group }} group is pending creation in check

@@ -1,0 +1,150 @@
+evaluation_interval: 30s
+tests:
+- name: healthy
+  interval: 30s
+  input_series:
+  - series: up{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  - series: led_service_check_timestamp_seconds{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 0+30x10
+  - series: led_service_active{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  - series: led_service_grpc_success{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  promql_expr_test:
+  - expr: led_service:check_fresh
+    eval_time: 5m
+    exp_samples:
+    - labels: led_service:check_fresh{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+      value: 1
+  - expr: led_service:available
+    eval_time: 5m
+    exp_samples:
+    - labels: led_service:available{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+      value: 1
+- name: grpc failure
+  interval: 30s
+  input_series:
+  - series: up{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  - series: led_service_check_timestamp_seconds{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 0+30x10
+  - series: led_service_active{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  - series: led_service_grpc_success{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 0+0x10
+  promql_expr_test:
+  - expr: led_service:check_fresh
+    eval_time: 5m
+    exp_samples:
+    - labels: led_service:check_fresh{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+      value: 1
+  - expr: led_service:available
+    eval_time: 5m
+    exp_samples:
+    - labels: led_service:available{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+      value: 0
+- name: service stopped
+  interval: 30s
+  input_series:
+  - series: up{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  - series: led_service_check_timestamp_seconds{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 0+30x10
+  - series: led_service_active{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 0+0x10
+  - series: led_service_grpc_success{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  promql_expr_test:
+  - expr: led_service:check_fresh
+    eval_time: 5m
+    exp_samples:
+    - labels: led_service:check_fresh{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+      value: 1
+  - expr: led_service:available
+    eval_time: 5m
+    exp_samples:
+    - labels: led_service:available{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+      value: 0
+- name: stale result
+  interval: 30s
+  input_series:
+  - series: up{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  - series: led_service_check_timestamp_seconds{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 0+0x10
+  - series: led_service_active{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  - series: led_service_grpc_success{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  promql_expr_test:
+  - expr: led_service:check_fresh
+    eval_time: 5m
+    exp_samples:
+    - labels: led_service:check_fresh{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+      value: 0
+  - expr: led_service:available
+    eval_time: 5m
+    exp_samples:
+    - labels: led_service:available{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+      value: 0
+- name: missing snapshot
+  interval: 30s
+  input_series:
+  - series: up{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  promql_expr_test:
+  - expr: led_service:check_fresh
+    eval_time: 5m
+    exp_samples:
+    - labels: led_service:check_fresh{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+      value: 0
+  - expr: led_service:available
+    eval_time: 5m
+    exp_samples:
+    - labels: led_service:available{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+      value: 0
+- name: host down
+  interval: 30s
+  input_series:
+  - series: up{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 0+0x10
+  - series: led_service_check_timestamp_seconds{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 0+30x10
+  - series: led_service_active{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  - series: led_service_grpc_success{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  promql_expr_test:
+  - expr: led_service:check_fresh
+    eval_time: 5m
+    exp_samples:
+    - labels: led_service:check_fresh{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+      value: 0
+  - expr: led_service:available
+    eval_time: 5m
+    exp_samples:
+    - labels: led_service:available{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+      value: 0
+- name: future timestamp
+  interval: 30s
+  input_series:
+  - series: up{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  - series: led_service_check_timestamp_seconds{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 600+0x10
+  - series: led_service_active{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  - series: led_service_grpc_success{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x10
+  promql_expr_test:
+  - expr: led_service:check_fresh
+    eval_time: 5m
+    exp_samples:
+    - labels: led_service:check_fresh{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+      value: 0
+  - expr: led_service:available
+    eval_time: 5m
+    exp_samples:
+    - labels: led_service:available{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+      value: 0

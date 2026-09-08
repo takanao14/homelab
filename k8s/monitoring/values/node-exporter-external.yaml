@@ -107,3 +107,9 @@ textfileAlerts:
 
 zoneSerialAlerts:
   enabled: true
+
+# Availability recording only; notifications are enabled after observation.
+ledServiceMonitor:
+  enabled: true
+  instances: [rpi3]
+  maxAgeSeconds: 180

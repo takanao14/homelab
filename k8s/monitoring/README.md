@@ -165,3 +165,7 @@ ansible-playbook playbooks/ops-openbao_seed_secrets.yaml
 ```
 
 Do not use manual `bao kv put`; Ansible is the source of truth.
+
+LED availability uses the `led_service2_monitor` timer from the led-service2 repository and the shared node-exporter textfile directory. `led_service:check_fresh` is 0 for missing, stale, future-dated snapshots or a failed host scrape; `led_service:available` additionally requires systemd and gRPC success. These recording rules do not send notifications and do not verify display-worker progress.
+
+After rendering the external node-exporter chart with its Argo CD values, run `python3 tests/test_led_service_rules.py <rendered.yaml>` from this directory (requires PyYAML and promtool). It checks healthy, failed, stale, missing and future-dated snapshots plus host scrape failure.

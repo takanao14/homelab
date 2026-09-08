@@ -1,0 +1,37 @@
+{{- if .Values.ledServiceMonitor.enabled }}
+{{- $instances := join "|" .Values.ledServiceMonitor.instances }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: led-service-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: led-service-external
+      rules:
+        - record: led_service:check_fresh
+          expr: >-
+            (
+              (
+                (time() - led_service_check_timestamp_seconds{job="scrapeConfig/monitoring/node-exporter-external",instance=~"{{ $instances }}"}
+                  <= bool {{ .Values.ledServiceMonitor.maxAgeSeconds }})
+                *
+                (time() - led_service_check_timestamp_seconds{job="scrapeConfig/monitoring/node-exporter-external",instance=~"{{ $instances }}"} >= bool 0)
+              )
+              and on(instance)
+              (up{job="scrapeConfig/monitoring/node-exporter-external",instance=~"{{ $instances }}"} == 1)
+            )
+            or on(instance)
+            (0 * up{job="scrapeConfig/monitoring/node-exporter-external",instance=~"{{ $instances }}"})
+        - record: led_service:available
+          expr: >-
+            (
+              led_service:check_fresh{instance=~"{{ $instances }}"}
+              * on(instance) group_left led_service_active{job="scrapeConfig/monitoring/node-exporter-external"}
+              * on(instance) group_left led_service_grpc_success{job="scrapeConfig/monitoring/node-exporter-external"}
+            )
+            or on(instance)
+            (0 * up{job="scrapeConfig/monitoring/node-exporter-external",instance=~"{{ $instances }}"})
+{{- end }}

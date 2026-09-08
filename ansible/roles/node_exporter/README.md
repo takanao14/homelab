@@ -10,7 +10,8 @@ Installs and configures `prometheus-node-exporter` on Debian-based systems.
 - Configures command-line arguments via `/etc/default/prometheus-node-exporter`.
 - Sets up the textfile collector directory (`/var/lib/prometheus/node-exporter`)
   with a shared writer group and sticky group-writable mode. Only explicitly
-  selected service users join the writer group.
+  selected service users join the writer group. Use `--tags node_exporter_textfile`
+  with `common-node_exporter.yaml --limit <host>` to update these permissions alone.
 - Supports service-specific collector flags through `node_exporter_extra_args`.
 - On ARM hosts (Raspberry Pi), installs a throttling metrics script and a cron job to collect it.
 - Masks `openipmi.service`, which APT pulls in behind the exporter (see below).

@@ -60,3 +60,8 @@ textfileAlerts:
     staleFor: 5m
     maxAgeSeconds: 180
   scrapeErrorFor: 10m
+
+ledServiceMonitor:
+  enabled: false
+  instances: []
+  maxAgeSeconds: 180
