@@ -28,6 +28,7 @@ generated as JSON.
 | `envoy-gateway-overview` | Envoy traffic, latency, and xDS health |
 | `argocd-overview` | Argo CD applications, syncs, reconciliation, and Git |
 | `openbao-overview` | OpenBao status, requests, Raft, leases, and tokens |
+| `slack-bot-overview` | Slack connection, LED delivery, and bot process health |
 | `uptime` | ICMP and DNS probe availability |
 
 ## Structure
