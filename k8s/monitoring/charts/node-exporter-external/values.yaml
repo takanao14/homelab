@@ -65,3 +65,5 @@ ledServiceMonitor:
   enabled: false
   instances: []
   maxAgeSeconds: 180
+  unavailableFor: 10m
+  restartsThreshold: 3

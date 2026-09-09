@@ -148,3 +148,60 @@ tests:
     exp_samples:
     - labels: led_service:available{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
       value: 0
+- name: unavailable alert
+  interval: 30s
+  input_series:
+  - series: up{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x40
+  - series: led_service_check_timestamp_seconds{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 0+30x40
+  - series: led_service_active{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x40
+  - series: led_service_grpc_success{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 0+0x40
+  alert_rule_test:
+  - alertname: LedServiceUnavailable
+    eval_time: 9m
+    exp_alerts: []
+  - alertname: LedServiceUnavailable
+    eval_time: 11m
+    exp_alerts:
+    - exp_labels:
+        instance: rpi3
+        job: scrapeConfig/monitoring/node-exporter-external
+        service: rpi
+        severity: warning
+      exp_annotations:
+        summary: LED service is unavailable on rpi3
+        description: >-
+          The recording rule is 0 when the unit is inactive, the gRPC probe fails, or the snapshot is stale, so check all three. Messages sent meanwhile are lost; Slack does not redeliver them. A host outage also lands here, behind the more specific ICMP and scrape alerts.
+- name: restart loop alert
+  interval: 30s
+  input_series:
+  - series: up{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x40
+  - series: led_service_check_timestamp_seconds{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 0+30x40
+  - series: led_service_active{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x40
+  - series: led_service_grpc_success{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 1+0x40
+  # One restart per minute: below the threshold at first, a loop by 15 minutes.
+  - series: led_service_restarts_total{instance="rpi3",job="scrapeConfig/monitoring/node-exporter-external",service="rpi"}
+    values: 0+0x4 1+0x1 2+0x1 3+0x1 4+0x1 5+0x30
+  alert_rule_test:
+  - alertname: LedServiceRestarting
+    eval_time: 2m
+    exp_alerts: []
+  - alertname: LedServiceRestarting
+    eval_time: 10m
+    exp_alerts:
+    - exp_labels:
+        instance: rpi3
+        job: scrapeConfig/monitoring/node-exporter-external
+        service: rpi
+        severity: warning
+      exp_annotations:
+        summary: LED service is restarting repeatedly on rpi3
+        description: >-
+          systemd restarted the unit 5 times in fifteen minutes. A single restart after a deployment is expected; a sustained count means the process exits on startup.

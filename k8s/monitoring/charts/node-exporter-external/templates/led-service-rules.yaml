@@ -34,4 +34,33 @@ spec:
             )
             or on(instance)
             (0 * up{job="scrapeConfig/monitoring/node-exporter-external",instance=~"{{ $instances }}"})
+        - alert: LedServiceUnavailable
+          expr: led_service:available{instance=~"{{ $instances }}"} == 0
+          for: {{ .Values.ledServiceMonitor.unavailableFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: >-
+              LED service is unavailable on {{ "{{" }} $labels.instance {{ "}}" }}
+            description: >-
+              The recording rule is 0 when the unit is inactive, the gRPC probe
+              fails, or the snapshot is stale, so check all three. Messages sent
+              meanwhile are lost; Slack does not redeliver them. A host outage
+              also lands here, behind the more specific ICMP and scrape alerts.
+
+        - alert: LedServiceRestarting
+          # A crash loop keeps the unit active between restarts, so the
+          # availability probe above sees a healthy service throughout.
+          expr: >-
+            increase(led_service_restarts_total{job="scrapeConfig/monitoring/node-exporter-external",instance=~"{{ $instances }}"}[15m])
+            >= {{ .Values.ledServiceMonitor.restartsThreshold }}
+          labels:
+            severity: warning
+          annotations:
+            summary: >-
+              LED service is restarting repeatedly on {{ "{{" }} $labels.instance {{ "}}" }}
+            description: >-
+              systemd restarted the unit {{ "{{" }} $value {{ "}}" }} times in
+              fifteen minutes. A single restart after a deployment is expected;
+              a sustained count means the process exits on startup.
 {{- end }}
