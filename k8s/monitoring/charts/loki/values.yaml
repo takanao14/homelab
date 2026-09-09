@@ -1,6 +1,11 @@
 # Shared Proxmox inventory.
 proxmoxNodes: []
 
+# Hosts running led-server; their journals reach Loki through Vector.
+ledAlerts:
+  enabled: false
+  hosts: []
+
 proxmoxAlerts:
   enabled: false
   rules:

@@ -83,6 +83,10 @@ loki:
   resultsCache:
     enabled: false
 
+ledAlerts:
+  enabled: true
+  hosts: [rpi3]
+
 proxmoxAlerts:
   enabled: true
   rules:

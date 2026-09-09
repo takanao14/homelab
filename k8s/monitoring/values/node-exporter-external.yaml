@@ -113,3 +113,7 @@ ledServiceMonitor:
   enabled: true
   instances: [rpi3]
   maxAgeSeconds: 180
+  # Let the ICMP and scrape alerts fire first when the whole host is gone.
+  unavailableFor: 10m
+  # One restart follows every deployment; a loop restarts every five seconds.
+  restartsThreshold: 3

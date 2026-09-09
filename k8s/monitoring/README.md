@@ -139,7 +139,11 @@ ESO fetches all secrets from OpenBao; plaintext is never committed.
 Alertmanager routes metric and Loki alerts:
 
 - Prometheus evaluates `PrometheusRule`; Loki evaluates Proxmox LogQL rules.
-- `values/loki.yaml` enables all seven Proxmox rules.
+- `values/loki.yaml` enables all seven Proxmox rules and both led-server rules.
+- `LedServiceDisplayErrors` and `LedServiceQueueFull` read the led-server journal,
+  which reaches Loki through Vector with its JSON fields parsed. They report the
+  failures the gRPC probe cannot: a display loop that fails after accepting a
+  request, and a saturated ten-slot display queue.
 - Only `warning` and `critical` alerts are routed to Discord.
 - `Watchdog`, `InfoInhibitor`, informational alerts, and alerts without a
   supported severity remain on the null receiver.
@@ -166,6 +170,6 @@ ansible-playbook playbooks/ops-openbao_seed_secrets.yaml
 
 Do not use manual `bao kv put`; Ansible is the source of truth.
 
-LED availability uses the `led_service2_monitor` timer from the led-service2 repository and the shared node-exporter textfile directory. `led_service:check_fresh` is 0 for missing, stale, future-dated snapshots or a failed host scrape; `led_service:available` additionally requires systemd and gRPC success. These recording rules do not send notifications and do not verify display-worker progress.
+LED availability uses the `led_service2_monitor` timer from the led-service2 repository and the shared node-exporter textfile directory. `led_service:check_fresh` is 0 for missing, stale, future-dated snapshots or a failed host scrape; `led_service:available` additionally requires systemd and gRPC success. `LedServiceUnavailable` notifies on that composite after ten minutes, long enough for the more specific ICMP and scrape alerts to fire first when the whole host is gone. `LedServiceRestarting` covers what availability cannot see: a crash loop leaves the unit active between restarts. Display-worker progress is still not verified by any probe; the Loki rules below carry that signal instead.
 
-After rendering the external node-exporter chart with its Argo CD values, run `python3 tests/test_led_service_rules.py <rendered.yaml>` from this directory (requires PyYAML and promtool). It checks healthy, failed, stale, missing and future-dated snapshots plus host scrape failure.
+After rendering the external node-exporter chart with its Argo CD values, run `python3 tests/test_led_service_rules.py <rendered.yaml>` from this directory (requires PyYAML and promtool). It checks healthy, failed, stale, missing and future-dated snapshots, host scrape failure, and both alerts' firing thresholds.

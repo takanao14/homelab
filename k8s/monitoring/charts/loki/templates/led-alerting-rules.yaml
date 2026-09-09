@@ -1,0 +1,59 @@
+{{- if .Values.ledAlerts.enabled }}
+{{- $ledHostRegex := join "|" .Values.ledAlerts.hosts | required "ledAlerts.hosts must be set when ledAlerts is enabled" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: led-alerting-rules
+  namespace: {{ .Release.Namespace }}
+  labels:
+    loki_rule: "1"
+data:
+  led.yaml: |
+    groups:
+      - name: led-service.logs
+        interval: 1m
+        rules:
+          # The availability probe only opens a connection, so a failing display
+          # loop keeps reporting a healthy service. Only the logs show it.
+          - alert: LedServiceDisplayErrors
+            expr: |
+              sum by (host) (
+                count_over_time(
+                  {host=~"{{ $ledHostRegex }}", appname="led-server"}
+                    | json
+                    | __error__=""
+                    | app_level="ERROR"
+                  [15m]
+                )
+              ) > 0
+            labels:
+              service: led-service
+              source: loki
+              severity: warning
+            annotations:
+              summary: 'LED service logged an error on {{ "{{" }} $labels.host {{ "}}" }}'
+              description: 'The display loop or the display worker failed in the last fifteen minutes. The image was dropped; the sender is not told.'
+              dashboard_url: https://grafana.prd.butaco.net/d/service-logs/service-logs
+
+          # Capacity is ten requests. The client sees ResourceExhausted, but the
+          # bot only logs it, so nothing else surfaces a saturated display queue.
+          - alert: LedServiceQueueFull
+            expr: |
+              sum by (host) (
+                count_over_time(
+                  {host=~"{{ $ledHostRegex }}", appname="led-server"}
+                    | json
+                    | __error__=""
+                    | event=~".*display queue is full.*"
+                  [15m]
+                )
+              ) > 0
+            labels:
+              service: led-service
+              source: loki
+              severity: warning
+            annotations:
+              summary: 'LED display queue is full on {{ "{{" }} $labels.host {{ "}}" }}'
+              description: 'Requests were rejected because the display queue holds ten pending images. Either the display loop is stuck on a long request or the sender is bursting faster than the panel can render.'
+              dashboard_url: https://grafana.prd.butaco.net/d/service-logs/service-logs
+{{- end }}
