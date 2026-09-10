@@ -73,9 +73,6 @@
         icon: truenas.png
         href: https://truenas-ui.home.butaco.net/ui/
         description: Network Storage
-        proxmoxNode: pve
-        proxmoxVMID: "100"
-        proxmoxType: qemu
         widget:
           type: truenas
           version: 2
@@ -85,69 +82,45 @@
 
     - SeaweedFS:
         icon: sh-seaweedfs.png
-        href: https://seaweedfs-ui.home.butaco.net
+        href: https://seaweedfs.home.butaco.net
         description: Object Storage
-        proxmoxNode: node3
-        proxmoxVMID: "103"
-        proxmoxType: lxc
 
     - OpenBAO:
         icon: openbao.png
         href: https://openbao.home.butaco.net/
         description: Secret Management
-        proxmoxNode: node2
-        proxmoxVMID: "100"
-        proxmoxType: qemu
 
 - DNS:
     - PowerDNS origin:
         icon: powerdns.png
         href: https://pdns1.home.butaco.net
         description: Primary Authoritative DNS (ns1.home.butaco.net:53)
-        proxmoxNode: node2
-        proxmoxVMID: "108"
-        proxmoxType: lxc
 
     - PowerDNS auth1:
         icon: powerdns.png
         href: https://pdns2.home.butaco.net
         description: Secondary1 Authoritative DNS (ns2.home.butaco.net:53)
-        proxmoxNode: node3
-        proxmoxVMID: "100"
-        proxmoxType: lxc
 
     - PowerDNS auth2:
         icon: powerdns.png
         href: https://pdns3.home.butaco.net
         description: Secondary2 Authoritative DNS (ns3.home.butaco.net:53)
-        proxmoxNode: node2
-        proxmoxVMID: "109"
-        proxmoxType: lxc
 
     - dnsdist1:
         icon: mdi-dns
         href: https://dnsdist1.home.butaco.net
         description: DNS Load Balancer (dist1.home.butaco.net:53)
-        proxmoxNode: node2
-        proxmoxVMID: "107"
-        proxmoxType: lxc
 
     - dnsdist2:
         icon: mdi-dns
         href: https://dnsdist2.home.butaco.net
         description: DNS Load Balancer (dist2.home.butaco.net:53)
-        proxmoxNode: node3
-        proxmoxVMID: "101"
-        proxmoxType: lxc
 
 - Infrastructure:
     - NetBox:
         icon: netbox.png
         href: https://netbox.home.butaco.net
         description: IP Management
-        proxmoxNode: node2
-        proxmoxVMID: "106"
-        proxmoxType: lxc
 
     - Authentik:
         icon: authentik.png
@@ -161,9 +134,6 @@
     - Caddy:
         icon: caddy.png
         description: Reverse Proxy for *.home.butaco.net (no web UI)
-        proxmoxNode: node2
-        proxmoxVMID: "105"
-        proxmoxType: lxc
 
 - Monitoring:
     - Grafana:
@@ -213,9 +183,6 @@
         icon: forgejo.png
         href: https://forgejo.home.butaco.net
         description: Git Repository
-        proxmoxNode: node2
-        proxmoxVMID: "103"
-        proxmoxType: lxc
 
     - code-server:
         icon: code-server.png
