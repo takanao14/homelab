@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/takanao14/slack-bot
-  tag: 0.2.0
+  tag: 0.2.2
   pullPolicy: IfNotPresent
 
 led:
