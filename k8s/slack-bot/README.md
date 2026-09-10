@@ -61,14 +61,11 @@ to the device or to the bot.
 
 ## Image release
 
-The Deployment uses:
+The Deployment uses the image repository and tag defined by `image.repository`
+and `image.tag` in `chart/values.yaml`.
 
-```text
-ghcr.io/takanao14/slack-bot:0.2.0
-```
-
-The public image needs no pull Secret; Renovate updates its tag once the source
-repository publishes a `v*` tag.
+The public image needs no pull Secret. Renovate updates `image.tag` after the
+source repository publishes a supported release tag.
 
 ## Render
 
