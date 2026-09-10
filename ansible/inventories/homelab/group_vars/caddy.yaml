@@ -18,7 +18,7 @@ caddy_upstreams:
     backend: 192.168.20.10:443
     scheme: https
     tls_insecure: true   # Self-signed cert on the internal Caddy-to-TrueNAS leg.
-  - hostname: netbox-ui.home.butaco.net
+  - hostname: netbox.home.butaco.net
     backend: "{{ hostvars['netbox1']['ansible_host'] }}:80"
   - hostname: openbao.home.butaco.net
     backend: "{{ hostvars['openbao1']['ansible_host'] }}:8200"
@@ -26,7 +26,7 @@ caddy_upstreams:
     backend: "{{ hostvars['authentik1']['ansible_host'] }}:9000"
   - hostname: s3.home.butaco.net
     backend: "{{ hostvars['seaweedfs1']['ansible_host'] }}:8333"
-  - hostname: seaweedfs-ui.home.butaco.net
+  - hostname: seaweedfs.home.butaco.net
     backend: "{{ hostvars['seaweedfs1']['ansible_host'] }}:23646"
   - hostname: meshcentral.home.butaco.net
     backend: "{{ hostvars['rpi4']['ansible_host'] }}:8443"
