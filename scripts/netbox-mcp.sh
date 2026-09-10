@@ -17,7 +17,7 @@ source "${script_dir}/lib/mcp-launcher.sh"
 
 mcp_load_sops_env NETBOX_TOKEN
 
-: "${NETBOX_URL:=https://netbox-ui.home.butaco.net/}"
+: "${NETBOX_URL:=https://netbox.home.butaco.net/}"
 : "${VERIFY_SSL:=true}"
 : "${ENABLE_PLUGIN_DISCOVERY:=false}"
 

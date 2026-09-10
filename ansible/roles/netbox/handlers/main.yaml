@@ -4,20 +4,15 @@
   ansible.builtin.systemd:
     daemon_reload: true
 
-- name: Restart netbox
+- name: Restart netbox containers
   become: true
-  ansible.builtin.service:
-    name: netbox
+  ansible.builtin.systemd:
+    name: "{{ item }}"
     state: restarted
-
-- name: Restart netbox-rq
-  become: true
-  ansible.builtin.service:
-    name: netbox-rq
-    state: restarted
-
-- name: Restart nginx
-  become: true
-  ansible.builtin.service:
-    name: nginx
-    state: restarted
+    daemon_reload: true
+  loop:
+    - netbox-postgres.service
+    - netbox-redis.service
+    - netbox-redis-cache.service
+    - netbox.service
+    - netbox-worker.service

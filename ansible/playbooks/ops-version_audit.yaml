@@ -144,15 +144,19 @@
   vars_files:
     - ../roles/netbox/defaults/main.yaml
   tasks:
-    - name: Read installed NetBox symlink target
+    - name: Read the deployed NetBox image
+      become: true
       ansible.builtin.command:
         argv:
-          - readlink
-          - "-f"
-          - "{{ netbox_home }}"
-      register: netbox_audit_target
+          - podman
+          - inspect
+          - --format
+          - "{{ '{{.ImageName}}' }}"
+          - "{{ netbox_container }}"
+      register: netbox_audit_image
       changed_when: false
       failed_when: false
+      check_mode: false
 
     - name: Report NetBox version
       ansible.builtin.debug:
@@ -160,16 +164,15 @@
           {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
             'netbox',
             inventory_hostname,
-            netbox_version,
+            netbox_audit_desired,
             netbox_audit_installed,
-            'OK' if netbox_audit_installed == netbox_version else 'DIFF'
+            'OK' if netbox_audit_installed == netbox_audit_desired else 'DIFF'
           ) }}
       vars:
+        netbox_audit_desired: "v{{ netbox_version }}-{{ netbox_docker_version }}"
         netbox_audit_installed: >-
-          {{ netbox_audit_target.stdout
-             | basename
-             | regex_replace('^netbox-', '')
-             | default('unknown', true) }}
+          {{ (netbox_audit_image.stdout | regex_replace('^.*:', ''))
+             if netbox_audit_image.rc == 0 else 'unknown' }}
 
 - name: Audit DNS-collector version
   hosts: dnsdist

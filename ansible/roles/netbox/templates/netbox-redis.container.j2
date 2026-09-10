@@ -1,0 +1,23 @@
+[Unit]
+Description=NetBox task queue Valkey
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+ContainerName={{ netbox_redis_container }}
+Image={{ netbox_redis_image }}
+Network={{ netbox_network }}.network
+# Queued jobs must survive a restart; the caching instance is disposable.
+Exec=valkey-server --appendonly yes
+Volume={{ netbox_redis_data_dir }}:/data
+HealthCmd=valkey-cli ping
+HealthInterval=10s
+HealthRetries=5
+HealthStartPeriod=10s
+HealthTimeout=3s
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

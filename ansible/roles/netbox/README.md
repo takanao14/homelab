@@ -1,20 +1,33 @@
 # netbox Role
 
-Deploys [NetBox](https://github.com/netbox-community/netbox) IPAM/DCIM on Debian-based systems using PostgreSQL, Redis, gunicorn, and nginx.
+Deploys [NetBox](https://github.com/netbox-community/netbox) IPAM/DCIM from the
+upstream [netbox-docker](https://github.com/netbox-community/netbox-docker)
+images as rootful Podman containers managed by systemd Quadlet (ADR-0046).
 
 ## Functionality
 
-- Installs system dependencies (PostgreSQL, Redis, nginx, Python build tools).
-- Creates a dedicated `netbox` PostgreSQL database and user with full privileges.
-- Creates a `netbox` system user and group.
-- Downloads and extracts NetBox from GitHub releases to `/opt/netbox-<version>` and symlinks to `netbox_home`.
-- Creates a Python virtualenv and installs requirements including gunicorn.
-- Deploys `configuration.py` from a Jinja2 template.
-- Runs database migrations and collects static files.
-- Creates the superuser if not already present.
-- Deploys `gunicorn.py` config and systemd units for `netbox` and `netbox-rq` services.
-- Deploys and enables the nginx virtual host config; removes the default site.
+- Deploys the `netbox` Podman network and five Quadlet units: `netbox`
+  (Granian), `netbox-worker` (`manage.py rqworker`), `netbox-postgres`,
+  `netbox-redis` (task queue) and `netbox-redis-cache`.
+- Renders `netbox.env` and `netbox-postgres.env` under `/etc/netbox` at mode
+  `0600`; the image reads all of its configuration from those variables.
+- Creates the bind-mounted media, reports and scripts directories owned by the
+  image's `netbox` account, plus the PostgreSQL and Valkey data directories.
 - Provisions the read-only identity used by the NetBox MCP server (see below).
+
+Database migrations, `collectstatic`, and superuser creation all run in the
+image entrypoint on container start, so the role does not invoke them.
+Housekeeping needs nothing either: NetBox registers it as a built-in system job
+that the worker's scheduler runs daily.
+
+## Networking
+
+Only `netbox` publishes a port (`netbox_port` → Granian's 8080), and Granian
+serves `/static` itself, so the deployment has no reverse proxy of its own;
+Caddy terminates TLS and proxies straight to that port. PostgreSQL and both
+Valkey instances are reachable only from the `netbox` Podman network and
+therefore run without passwords — nothing outside that network can connect to
+them.
 
 ## MCP identity
 
@@ -27,11 +40,11 @@ Deploys [NetBox](https://github.com/netbox-community/netbox) IPAM/DCIM on Debian
   from that group,
 - the matching v2 API token with `write_enabled = False`.
 
-Both steps run through `manage.py shell` reading a rendered script on stdin;
-NetBox has no Ansible module, and stdin keeps the token plaintext out of the
-process arguments. They are idempotent, correct drift (a re-enabled write flag,
-extra actions, a directly attached permission), and prune superseded tokens on
-the account.
+Both steps run through `podman exec -i netbox … manage.py shell` reading a
+rendered script on stdin; NetBox has no Ansible module, and stdin keeps the
+token plaintext out of the process arguments. They are idempotent, correct
+drift (a re-enabled write flag, extra actions, a directly attached permission),
+and prune superseded tokens on the account.
 
 ### What makes it read-only
 
@@ -88,13 +101,17 @@ is replaced.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `netbox_version` | `4.6.0` | NetBox version to install |
-| `netbox_user` | `netbox` | System user |
-| `netbox_group` | `netbox` | System group |
-| `netbox_home` | `/opt/netbox` | Symlink path to the active NetBox installation |
-| `netbox_venv` | `/opt/netbox/venv` | Python virtualenv path |
-| `netbox_domain` | `netbox-ui.home.butaco.net` | Domain name for the nginx virtual host |
-| `netbox_port` | `8080` | gunicorn listen port |
+| `netbox_version` | `4.7.0` | NetBox release half of the image tag |
+| `netbox_docker_version` | `5.1.1` | netbox-docker release half of the image tag |
+| `netbox_pg_image` | `docker.io/postgres:18-alpine` | PostgreSQL image; track the upstream compose file |
+| `netbox_redis_image` | `docker.io/valkey/valkey:9.1-alpine` | Valkey image; track the upstream compose file |
+| `netbox_domain` | `netbox.home.butaco.net` | `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` entry |
+| `netbox_port` | `8080` | Published port Caddy proxies to |
+| `netbox_base_dir` | `/opt/netbox` | Parent of the media, reports and scripts bind mounts |
+| `netbox_pg_data_dir` | `/var/lib/netbox-postgresql` | PostgreSQL data directory |
+| `netbox_redis_data_dir` | `/var/lib/netbox-redis` | Task-queue Valkey append-only file |
+| `netbox_config_dir` | `/etc/netbox` | Directory holding both env files |
+| `netbox_container_uid` / `netbox_container_gid` | `999` / `0` | Ownership the image expects on the bind mounts |
 | `netbox_db_name` | `netbox` | PostgreSQL database name |
 | `netbox_db_user` | `netbox` | PostgreSQL username |
 | `netbox_superuser_name` | `admin` | Django superuser username |
@@ -109,7 +126,7 @@ is replaced.
 
 ## Dependencies
 
-- `community.postgresql` Ansible collection (`community.postgresql.postgresql_db`, etc.).
+- [`podman`](../podman/README.md), declared in `meta/main.yaml`.
 
 ## Usage
 

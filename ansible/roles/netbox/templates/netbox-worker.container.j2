@@ -1,0 +1,26 @@
+[Unit]
+Description=NetBox background worker
+After=network-online.target netbox.service
+Wants=network-online.target
+Requires=netbox.service
+
+[Container]
+ContainerName={{ netbox_worker_container }}
+Image=docker.io/netboxcommunity/netbox:v{{ netbox_version }}-{{ netbox_docker_version }}
+Network={{ netbox_network }}.network
+User={{ netbox_container_uid }}
+Group={{ netbox_container_gid }}
+EnvironmentFile={{ netbox_env_file }}
+# Replacing CMD skips docker-entrypoint.sh, so only the netbox container ever
+# runs migrations. The worker crash-loops until that finishes.
+Exec=/opt/netbox/venv/bin/python /opt/netbox/netbox/manage.py rqworker
+Volume={{ netbox_media_dir }}:/opt/netbox/netbox/media:rw
+Volume={{ netbox_reports_dir }}:/opt/netbox/netbox/reports:rw
+Volume={{ netbox_scripts_dir }}:/opt/netbox/netbox/scripts:rw
+
+[Service]
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

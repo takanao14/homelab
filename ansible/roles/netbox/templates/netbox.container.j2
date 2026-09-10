@@ -1,0 +1,29 @@
+[Unit]
+Description=NetBox
+After=network-online.target netbox-postgres.service netbox-redis.service netbox-redis-cache.service
+Wants=network-online.target
+Requires=netbox-postgres.service netbox-redis.service netbox-redis-cache.service
+
+[Container]
+ContainerName={{ netbox_container }}
+Image=docker.io/netboxcommunity/netbox:v{{ netbox_version }}-{{ netbox_docker_version }}
+Network={{ netbox_network }}.network
+User={{ netbox_container_uid }}
+Group={{ netbox_container_gid }}
+EnvironmentFile={{ netbox_env_file }}
+PublishPort={{ netbox_port }}:8080
+Volume={{ netbox_media_dir }}:/opt/netbox/netbox/media:rw
+Volume={{ netbox_reports_dir }}:/opt/netbox/netbox/reports:rw
+Volume={{ netbox_scripts_dir }}:/opt/netbox/netbox/scripts:rw
+HealthCmd=/opt/netbox/health.sh
+HealthInterval=15s
+# Upstream allows 90s; migrations on a cold database keep Granian down longer.
+HealthStartPeriod=600s
+HealthTimeout=3s
+
+[Service]
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

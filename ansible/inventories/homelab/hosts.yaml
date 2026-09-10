@@ -56,10 +56,10 @@ all:
       ansible_host: 192.168.10.245
     runner1:
       ansible_host: 192.168.10.246
-    netbox1:
-      ansible_host: 192.168.10.247
     authentik1:
       ansible_host: 192.168.10.248
+    netbox1:
+      ansible_host: 192.168.10.249
     openbao1:
       ansible_host: 192.168.40.30
     seaweedfs1:
@@ -192,6 +192,7 @@ all:
     sssd:
       hosts:
         sssdtest1: null
+        sssdtest2: null
 
     # =================================================================
     # Platform — hypervisors, containers, Kubernetes clusters.
@@ -212,7 +213,6 @@ all:
         dist2: null
         forgejo1: null
         log1: null
-        netbox1: null
         ns1: null
         ns2: null
         ns3: null
@@ -281,7 +281,6 @@ all:
             dist2: null
             forgejo1: null
             log1: null
-            netbox1: null
             ns1: null
             ns2: null
             ns3: null
@@ -294,6 +293,7 @@ all:
             authentik1: null
             # No kubelet on k0s controllers; scrape the host and kine DB disk directly.
             k0s-cp1: null
+            netbox1: null
             openbao1: null
             runner1: null
             toolbox1: null
@@ -319,7 +319,6 @@ all:
         dnsdist: {}
         forgejo: {}
         log_collector: {}
-        netbox: {}
         seaweedfs: {}
 
     # All Vector agents; targeted by common-vector.yaml.
@@ -371,6 +370,7 @@ all:
       hosts:
         runner1: null
         sssdtest1: null
+        sssdtest2: null
         toolbox1: null
         authentik1: null
         forgejo1: null

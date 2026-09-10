@@ -481,7 +481,7 @@ the local image.
 
 | Env var | Default | Notes |
 |---------|---------|-------|
-| `NETBOX_URL` | `https://netbox-ui.home.butaco.net/` | Target NetBox instance |
+| `NETBOX_URL` | `https://netbox.home.butaco.net/` | Target NetBox instance |
 | `NETBOX_TOKEN` | none | Required read-only API token |
 | `VERIFY_SSL` | `true` | Keep TLS verification enabled |
 | `ENABLE_PLUGIN_DISCOVERY` | `false` | Enable only when NetBox plugin models are needed |

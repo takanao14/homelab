@@ -143,7 +143,7 @@
 - Infrastructure:
     - NetBox:
         icon: netbox.png
-        href: https://netbox-ui.home.butaco.net
+        href: https://netbox.home.butaco.net
         description: IP Management
         proxmoxNode: node2
         proxmoxVMID: "106"

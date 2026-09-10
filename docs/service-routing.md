@@ -57,7 +57,7 @@ here.
 | `dnsdist2.home.butaco.net` | `dist2:8083` | dnsdist console |
 | `forgejo.home.butaco.net` | `forgejo1:3000` | Git |
 | `truenas-ui.home.butaco.net` | `192.168.20.10:443` | HTTPS upstream, self-signed (ADR-0008); not Ansible-managed, so the address is a literal |
-| `netbox-ui.home.butaco.net` | `netbox1:80` | IPAM |
+| `netbox.home.butaco.net` | `netbox1:8080` | IPAM |
 | `openbao.home.butaco.net` | `openbao1:8200` | Secrets |
 | `auth.home.butaco.net` | `authentik1:9000` | Identity provider |
 | `s3.home.butaco.net` | `seaweedfs1:8333` | S3 API — no UI, deliberately absent from the dashboard |

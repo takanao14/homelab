@@ -1,13 +1,37 @@
 ---
+# The image tag combines both versions as `v<netbox_version>-<netbox_docker_version>`.
 # renovate: datasource=github-releases depName=netbox-community/netbox
 netbox_version: "4.7.0"
-netbox_user: netbox
-netbox_group: netbox
-netbox_home: /opt/netbox
-netbox_venv: /opt/netbox/venv
+# renovate: datasource=github-releases depName=netbox-community/netbox-docker
+netbox_docker_version: "5.1.1"
+netbox_pg_image: docker.io/postgres:18-alpine
+netbox_redis_image: docker.io/valkey/valkey:9.1-alpine
 
-netbox_domain: "netbox-ui.home.butaco.net"
+netbox_network: netbox
+netbox_container: netbox
+netbox_worker_container: netbox-worker
+netbox_pg_container: netbox-postgres
+netbox_redis_container: netbox-redis
+netbox_redis_cache_container: netbox-redis-cache
+
+netbox_domain: "netbox.home.butaco.net"
+# Caddy terminates TLS and reaches this published Granian port.
 netbox_port: 8080
+
+netbox_base_dir: /opt/netbox
+netbox_media_dir: "{{ netbox_base_dir }}/media"
+netbox_reports_dir: "{{ netbox_base_dir }}/reports"
+netbox_scripts_dir: "{{ netbox_base_dir }}/scripts"
+netbox_pg_data_dir: /var/lib/netbox-postgresql
+netbox_redis_data_dir: /var/lib/netbox-redis
+netbox_config_dir: /etc/netbox
+netbox_env_file: "{{ netbox_config_dir }}/netbox.env"
+netbox_pg_env_file: "{{ netbox_config_dir }}/netbox-postgres.env"
+
+# The image's `netbox` account is uid 999, gid 0, and the image has no USER
+# directive; bind mounts must carry that ownership or uploads and scripts fail.
+netbox_container_uid: 999
+netbox_container_gid: 0
 
 netbox_db_name: netbox
 netbox_db_user: netbox

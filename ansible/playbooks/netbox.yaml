@@ -6,5 +6,3 @@
       tags: timezone
     - role: netbox
       tags: netbox
-    - role: lxc_logging
-      tags: logging
