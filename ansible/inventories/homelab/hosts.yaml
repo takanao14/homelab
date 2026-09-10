@@ -56,10 +56,10 @@ all:
       ansible_host: 192.168.10.245
     runner1:
       ansible_host: 192.168.10.246
+    netbox1:
+      ansible_host: 192.168.10.247
     authentik1:
       ansible_host: 192.168.10.248
-    netbox1:
-      ansible_host: 192.168.10.249
     openbao1:
       ansible_host: 192.168.40.30
     seaweedfs1:

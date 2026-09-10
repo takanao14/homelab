@@ -32,8 +32,8 @@ in the change.
 **Deploy NetBox from the upstream netbox-docker images as five rootful Podman
 Quadlet units, on a new Ubuntu VM on node3, cutting over through a second IP.**
 
-- The VM is `tf/vm/node3/netbox` (2 cores, 4 GiB, 40 GiB) at
-  `192.168.10.249`, keeping the `netbox1` inventory name. node3 already hosts
+- The VM is `tf/vm/node3/netbox` (2 cores, 4 GiB, 40 GiB), keeping both the
+  `netbox1` inventory name and the old guest's `192.168.10.247`. node3 already hosts
   `authentik1`, the fleet's other Podman platform-service VM, and node2 — the
   most heavily loaded LXC host — gives back the old guest's memory.
 - Units: `netbox`, `netbox-worker`, `netbox-postgres`, `netbox-redis` and
@@ -43,9 +43,10 @@ Quadlet units, on a new Ubuntu VM on node3, cutting over through a second IP.**
 - PostgreSQL and both Valkey instances run without passwords. They publish no
   ports and are reachable only from the `netbox` Podman network, so a password
   would protect nothing that the network boundary does not already close.
-- Cutover is staged: build the VM alongside the running LXC guest, repoint the
-  inventory, restore a dump, verify on the new address, switch Caddy, and only
-  then destroy `tf/lxc/node2/netbox`.
+- Cutover is staged: build the VM on a temporary `192.168.10.249` alongside the
+  running LXC guest, repoint the inventory, restore a dump, verify on that
+  address, switch Caddy, then destroy `tf/lxc/node2/netbox` and move the VM onto
+  the freed `192.168.10.247`.
 
 ## Alternatives considered
 
