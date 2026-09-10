@@ -1,2 +1,4 @@
 led:
   addr: 192.168.10.240:50051
+  scrollCycles: 2
+  minDisplaySeconds: 5

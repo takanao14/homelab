@@ -34,6 +34,12 @@ spec:
             # SLACK_BOT_FONT_PATH stays unset so the image's bundled font wins.
             - name: SLACK_BOT_LED_ADDR
               value: {{ required "led.addr must be set" .Values.led.addr | quote }}
+            - name: SLACK_BOT_LED_IMAGE_DURATION_SECONDS
+              value: {{ .Values.led.imageDurationSeconds | quote }}
+            - name: SLACK_BOT_LED_SCROLL_CYCLES
+              value: {{ .Values.led.scrollCycles | quote }}
+            - name: SLACK_BOT_LED_MIN_DISPLAY_SECONDS
+              value: {{ .Values.led.minDisplaySeconds | quote }}
             - name: SLACK_BOT_TOKEN
               valueFrom:
                 secretKeyRef:

@@ -7,6 +7,9 @@ led:
   # LED service on rpi3, outside the cluster; an IP avoids depending on the LAN
   # resolver for a short hostname the cluster cannot complete.
   addr: ""
+  imageDurationSeconds: 10
+  scrollCycles: 0
+  minDisplaySeconds: 0
 
 alerts:
   # Slack cycles connections routinely; only a sustained gap is a fault.
