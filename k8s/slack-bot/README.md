@@ -29,6 +29,8 @@ The bot dials out to Slack and to the LED service; nothing routes requests to
 it. There is no HTTPRoute and no NetworkPolicy — the ClusterIP Service exists
 only so Prometheus can scrape `/metrics`, and it fronts no authentication
 boundary worth defending. `/healthz` is reached by the kubelet liveness probe.
+Add a NetworkPolicy if metrics gain channel or user labels, or when the cluster
+adopts default-deny.
 
 `SLACK_BOT_LED_ADDR` is an IP because the LED service runs outside the cluster
 on rpi3 (`192.168.10.240:50051`) over plaintext gRPC, and cluster DNS cannot
@@ -54,6 +56,9 @@ see, because the process stays healthy while the function stops:
 |---|---|
 | `SlackBotSocketDisconnected` | `slack_bot_socket_connected == 0` for `alerts.socketDisconnectedFor` |
 | `SlackBotLedSendFailing` | any failed LED send in 15 minutes |
+
+There is deliberately no alert on zero rendered messages; a quiet night is
+indistinguishable from a stalled pipeline.
 
 The LED service itself is probed separately from rpi4
 (`TcpServiceUnreachable` for `led-rpi3`), so a send failure can be attributed
