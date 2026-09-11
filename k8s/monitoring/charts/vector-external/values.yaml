@@ -1,0 +1,3 @@
+vectorPort: 9598
+vectorMetricsPath: /metrics
+targets: []

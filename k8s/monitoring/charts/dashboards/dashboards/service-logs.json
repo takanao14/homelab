@@ -450,12 +450,363 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Volume Trends",
+      "title": "Vector Pipeline",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 14
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(up{job=\"scrapeConfig/monitoring/vector-external\"}) or vector(0)",
+          "instant": true,
+          "legendFormat": "targets",
+          "range": false
+        }
+      ],
+      "title": "Vector Targets Up",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 15
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 5,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 4,
+                "color": "yellow"
+              },
+              {
+                "value": 5,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(increase(vector_component_errors_total{job=\"scrapeConfig/monitoring/vector-external\",component_id=\"loki\"}[15m])) or vector(0)",
+          "instant": true,
+          "legendFormat": "errors",
+          "range": false
+        }
+      ],
+      "title": "Loki Sink Errors (15m)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 15
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(increase(vector_component_discarded_events_total{job=\"scrapeConfig/monitoring/vector-external\",intentional=\"false\"}[15m])) or vector(0)",
+          "instant": true,
+          "legendFormat": "discards",
+          "range": false
+        }
+      ],
+      "title": "Unintentional Discards (15m)",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 15
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(vector_buffer_size_events{job=\"scrapeConfig/monitoring/vector-external\",component_id=\"loki\"}) or vector(0)",
+          "instant": true,
+          "legendFormat": "events",
+          "range": false
+        }
+      ],
+      "title": "Loki Buffer Events",
+      "description": "Current events queued in the in-memory Loki sink buffers. Observe the baseline before alerting.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 15
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (instance) (rate(vector_component_received_events_total{job=\"scrapeConfig/monitoring/vector-external\",component_id=\"journald\"}[$__rate_interval]))",
+          "legendFormat": "{{instance}} received"
+        },
+        {
+          "expr": "sum by (instance) (rate(vector_component_sent_events_total{job=\"scrapeConfig/monitoring/vector-external\",component_id=\"loki\"}[$__rate_interval]))",
+          "legendFormat": "{{instance}} sent"
+        }
+      ],
+      "title": "Journald to Loki Event Rate",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "cps",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "max by (instance) (vector_source_buffer_utilization_level{job=\"scrapeConfig/monitoring/vector-external\",component_id=\"journald\"}) * 100",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "title": "Journald Source Buffer Utilization",
+      "description": "Current source-buffer utilization by VM; observe the baseline before setting alert thresholds.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          },
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Volume Trends",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 27
       },
       "id": 0,
       "panels": []
@@ -478,7 +829,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 15
+        "y": 28
       },
       "repeatDirection": "h",
       "interval": "1m",
@@ -527,7 +878,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 15
+        "y": 28
       },
       "repeatDirection": "h",
       "interval": "1m",
@@ -566,7 +917,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 36
       },
       "id": 0,
       "panels": []
@@ -590,7 +941,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 37
       },
       "repeatDirection": "h",
       "interval": "1m",
@@ -640,7 +991,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 37
       },
       "repeatDirection": "h",
       "interval": "1m",
@@ -680,7 +1031,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 45
       },
       "id": 0,
       "panels": []
@@ -703,7 +1054,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 33
+        "y": 46
       },
       "repeatDirection": "h",
       "options": {
@@ -729,6 +1080,19 @@
         "label": "Datasource",
         "skipUrlSync": false,
         "query": "loki",
+        "multi": false,
+        "allowCustomValue": true,
+        "includeAll": false,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30
+      },
+      {
+        "type": "datasource",
+        "name": "prometheus",
+        "label": "Prometheus",
+        "skipUrlSync": false,
+        "query": "prometheus",
         "multi": false,
         "allowCustomValue": true,
         "includeAll": false,

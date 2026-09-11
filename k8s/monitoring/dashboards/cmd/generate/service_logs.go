@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 	"github.com/grafana/grafana-foundation-sdk/go/logs"
 	"github.com/grafana/grafana-foundation-sdk/go/loki"
+	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
 	"github.com/grafana/grafana-foundation-sdk/go/stat"
 	"github.com/grafana/grafana-foundation-sdk/go/statetimeline"
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
@@ -19,6 +20,9 @@ import (
 // and count_over_time bars for sparse errors and warnings.
 func buildServiceLogs() (*dashboard.Dashboard, error) {
 	ds := lokiDatasource()
+	promType := "prometheus"
+	promUID := "$prometheus"
+	promDS := common.DataSourceRef{Type: &promType, Uid: &promUID}
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
 	logShippingVMs, err := loadLogShippingVMs()
@@ -98,6 +102,14 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 		)
 	}
 	reportingVMs := strings.Join(reportingVMExpressions, " + ")
+	vectorJob := `job="scrapeConfig/monitoring/vector-external"`
+	vectorTargetThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "red"},
+			{Value: new(float64(len(logShippingVMs) - 1)), Color: "yellow"},
+			{Value: new(float64(len(logShippingVMs))), Color: "green"},
+		})
 
 	d, err := dashboard.NewDashboardBuilder("Service Logs").
 		Uid("service-logs").
@@ -108,6 +120,11 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 		Tooltip(dashboard.DashboardCursorSyncCrosshair).
 		WithVariable(
 			lokiDatasourceVariable(),
+		).
+		WithVariable(
+			dashboard.NewDatasourceVariableBuilder("prometheus").
+				Label("Prometheus").
+				Type("prometheus"),
 		).
 		WithVariable(
 			dashboard.NewQueryVariableBuilder("host").
@@ -201,6 +218,102 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 		WithRow(dashboard.NewRowBuilder("Delivery Status")).
 		WithPanel(logsByVM).
 		WithPanel(vmActivity).
+		WithRow(dashboard.NewRowBuilder("Vector Pipeline")).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Vector Targets Up").
+				Datasource(promDS).
+				Span(6).Height(4).
+				Unit("short").
+				Min(0).Max(float64(len(logShippingVMs))).
+				Thresholds(vectorTargetThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(up{` + vectorJob + `}) or vector(0)`).
+					Instant().
+					LegendFormat("targets"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Loki Sink Errors (15m)").
+				Datasource(promDS).
+				Span(6).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(issueThresholds()).
+				ColorMode(common.BigValueColorModeBackground).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(increase(vector_component_errors_total{` + vectorJob + `,component_id="loki"}[15m])) or vector(0)`).
+					Instant().
+					LegendFormat("errors"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Unintentional Discards (15m)").
+				Datasource(promDS).
+				Span(6).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(issueThresholds()).
+				ColorMode(common.BigValueColorModeBackground).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(increase(vector_component_discarded_events_total{` + vectorJob + `,intentional="false"}[15m])) or vector(0)`).
+					Instant().
+					LegendFormat("discards"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Loki Buffer Events").
+				Description("Current events queued in the in-memory Loki sink buffers. Observe the baseline before alerting.").
+				Datasource(promDS).
+				Span(6).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(measurementThresholds()).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(vector_buffer_size_events{` + vectorJob + `,component_id="loki"}) or vector(0)`).
+					Instant().
+					LegendFormat("events"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Journald to Loki Event Rate").
+				Datasource(promDS).
+				Span(12).Height(8).
+				Unit("cps").
+				Min(0).
+				Thresholds(measurementThresholds()).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum by (instance) (rate(vector_component_received_events_total{` + vectorJob + `,component_id="journald"}[$__rate_interval]))`).
+					LegendFormat("{{instance}} received"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum by (instance) (rate(vector_component_sent_events_total{` + vectorJob + `,component_id="loki"}[$__rate_interval]))`).
+					LegendFormat("{{instance}} sent"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Journald Source Buffer Utilization").
+				Description("Current source-buffer utilization by VM; observe the baseline before setting alert thresholds.").
+				Datasource(promDS).
+				Span(12).Height(8).
+				Unit("percentunit").
+				Min(0).Max(100).
+				Thresholds(measurementThresholds()).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`max by (instance) (vector_source_buffer_utilization_level{` + vectorJob + `,component_id="journald"}) * 100`).
+					LegendFormat("{{instance}}"),
+				),
+		).
 		WithRow(dashboard.NewRowBuilder("Volume Trends")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
