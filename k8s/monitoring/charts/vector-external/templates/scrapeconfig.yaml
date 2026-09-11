@@ -1,0 +1,34 @@
+{{- $targets := list }}
+{{- range .Values.targets }}
+{{- if .logShipping }}
+{{- $targets = append $targets . }}
+{{- end }}
+{{- end }}
+{{- if eq (len $targets) 0 }}
+{{- fail "at least one targets entry must enable logShipping" }}
+{{- end }}
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: vector-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  # Service VMs are LAN targets and do not inherit the prd cluster label.
+  scrapeClass: external
+  staticConfigs:
+    {{- range $targets }}
+    - targets: ["{{ .ip }}:{{ $.Values.vectorPort }}"]
+      labels:
+        __tmp_name: {{ .name | quote }}
+        {{- with .service }}
+        service: {{ . | quote }}
+        {{- end }}
+    {{- end }}
+  relabelings:
+    - action: replace
+      sourceLabels: [__tmp_name]
+      targetLabel: instance
+  metricsPath: {{ .Values.vectorMetricsPath }}
+  scrapeInterval: 30s

@@ -101,6 +101,13 @@ apps:
     valueFiles:
       - ../../values/node-exporter-external.yaml
       - ../../values/proxmox-nodes.yaml
+  vector-external:
+    enabled: true
+    wave: "1"
+    path: k8s/monitoring/charts/vector-external
+    valueFiles:
+      - ../../values/node-exporter-external.yaml
+      - ../../values/vector-external.yaml
   control-plane-metrics:
     enabled: true
     wave: "1"

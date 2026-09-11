@@ -19,6 +19,8 @@ apps:
     enabled: false
   node-exporter-external:
     enabled: false
+  vector-external:
+    enabled: false
   control-plane-metrics:
     enabled: false
   amd-gpu-external:
