@@ -19,16 +19,30 @@ locals {
 inputs = {
   vms = {
     "sssdtest1" = merge(local.base_vars, {
-      cores   = 1
-      memory  = 1024
+      cores   = 4
+      memory  = 4096
       on_boot = true
       bridge  = local.common.locals.pve.net10.bridge
       ipv4    = "192.168.10.176/24"
       ipv4gw  = local.common.locals.pve.net10.ipv4gw
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
-          size    = 16
-          file_id = "local:iso/ubuntu-24.04-base.img"
+          size    = 100
+          file_id = "local:iso/ubuntu-24.04-desktop.img"
+        })
+      }
+    })
+    "sssdtest2" = merge(local.base_vars, {
+      cores   = 4
+      memory  = 4096
+      on_boot = true
+      bridge  = local.common.locals.pve.net10.bridge
+      ipv4    = "192.168.10.183/24"
+      ipv4gw  = local.common.locals.pve.net10.ipv4gw
+      disks = {
+        scsi0 = merge(local.env.locals.disk_defaults, {
+          size    = 100
+          file_id = "local:iso/rocky-9-desktop.img"
         })
       }
     })
