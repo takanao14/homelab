@@ -16,6 +16,8 @@ Installs and configures [Vector](https://vector.dev/) on Debian-based systems. M
 - Defers package-dependent configuration and service checks on a pristine host
   during check mode because a repository pending creation is not yet visible to
   APT.
+- Optionally exposes Vector internal metrics through a Prometheus exporter
+  bound to an inventory-selected address.
 
 ## Variables
 
@@ -25,6 +27,8 @@ Installs and configures [Vector](https://vector.dev/) on Debian-based systems. M
 | `vector_repo_key_url` | `https://keys.datadoghq.com/DATADOG_APT_KEY_CURRENT.public` | Repository signing key |
 | `vector_journald_units` | `[]` | Units the standard pipeline collects |
 | `vector_loki_extra_labels` | `{}` | Labels merged into the standard `host`/`unit` pair |
+| `vector_internal_metrics_enabled` | `false` | Add an `internal_metrics` source and Prometheus exporter sink |
+| `vector_internal_metrics_address` | `127.0.0.1:9598` | Prometheus exporter listen address when enabled |
 | `vector_config` | standard pipeline | Full pipeline (sources, transforms, sinks) |
 
 The default `vector_config` is a journald-to-Loki pipeline labelled by `host`
@@ -41,6 +45,10 @@ different pipeline replaces it entirely in inventory. `log_collector` (syslog
 reception plus led-server parsing) and `rpi4` (DHCP lease JSON merged into the
 event) do this; inventory outranks these defaults, so such a host must carry
 `since_now` in its own journald source.
+
+The `vector_vm` inventory group enables internal metrics on each VM's managed
+address. The observability API remains disabled; it is unauthenticated and is
+not needed for Prometheus collection.
 
 Loki index labels stay low-cardinality. Keep request paths, users, and source
 IPs in the payload, where LogQL can still filter them.

@@ -1,0 +1,3 @@
+---
+vector_internal_metrics_enabled: true
+vector_internal_metrics_address: "{{ ansible_host }}:9598"
