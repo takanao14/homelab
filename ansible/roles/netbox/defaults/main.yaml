@@ -27,6 +27,7 @@ netbox_redis_data_dir: /var/lib/netbox-redis
 netbox_config_dir: /etc/netbox
 netbox_env_file: "{{ netbox_config_dir }}/netbox.env"
 netbox_pg_env_file: "{{ netbox_config_dir }}/netbox-postgres.env"
+netbox_extra_config_file: "{{ netbox_config_dir }}/extra.py"
 
 # The image's `netbox` account is uid 999, gid 0, and the image has no USER
 # directive; bind mounts must carry that ownership or uploads and scripts fail.

@@ -12,6 +12,7 @@ User={{ netbox_container_uid }}
 Group={{ netbox_container_gid }}
 EnvironmentFile={{ netbox_env_file }}
 PublishPort={{ netbox_port }}:8080
+Volume={{ netbox_extra_config_file }}:/etc/netbox/config/extra.py:ro
 Volume={{ netbox_media_dir }}:/opt/netbox/netbox/media:rw
 Volume={{ netbox_reports_dir }}:/opt/netbox/netbox/reports:rw
 Volume={{ netbox_scripts_dir }}:/opt/netbox/netbox/scripts:rw

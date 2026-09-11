@@ -14,6 +14,7 @@ EnvironmentFile={{ netbox_env_file }}
 # Replacing CMD skips docker-entrypoint.sh, so only the netbox container ever
 # runs migrations. The worker crash-loops until that finishes.
 Exec=/opt/netbox/venv/bin/python /opt/netbox/netbox/manage.py rqworker
+Volume={{ netbox_extra_config_file }}:/etc/netbox/config/extra.py:ro
 Volume={{ netbox_media_dir }}:/opt/netbox/netbox/media:rw
 Volume={{ netbox_reports_dir }}:/opt/netbox/netbox/reports:rw
 Volume={{ netbox_scripts_dir }}:/opt/netbox/netbox/scripts:rw
