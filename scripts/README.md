@@ -513,7 +513,10 @@ TOOL_SKIP_SYSTEM_PACKAGES=1 ./install/packages.sh  # no-sudo preflight
 
 ### Tools, terminal, and fonts
 
-`tools.sh` runs the vendored CLI installer with versions managed in dotfiles.
+`tools.sh` runs mise with the vendored, version-pinned config managed in
+dotfiles. Local mode installs mise and tools per user; global mode installs the
+golden-image baseline system-wide. User shims take precedence over system
+shims, so local versions can override the image baseline.
 `terminal.sh` installs kitty and `fonts.sh` installs UDEV Gothic NF; both skip
 installation unless `TOOL_MACHINE_PROFILE=desktop`.
 
@@ -521,7 +524,7 @@ All three accept `local` (default, no sudo) or `global` (system-wide, needs sudo
 
 | Script | Local path | Global path |
 |--------|------------|-------------|
-| `tools.sh` | `$HOME/.local/bin` | `/usr/local/bin` |
+| `tools.sh` | `$HOME/.local/share/mise` | `/usr/local/share/mise` |
 | `terminal.sh` | `$HOME/.local/kitty.app` | `/usr/local/kitty.app` |
 | `fonts.sh` | `$HOME/.local/share/fonts` | `/usr/local/share/fonts` |
 
@@ -532,8 +535,9 @@ All three accept `local` (default, no sudo) or `global` (system-wide, needs sudo
 
 ### `vendor/`
 
-Vendored dotfiles installers remove runtime GitHub dependencies. Their source
-commit is recorded in `vendor/REVISION`.
+Vendored dotfiles installers and the mise config remove the runtime dependency
+on the dotfiles repository. Their source commit is recorded in
+`vendor/REVISION`.
 
 Do not edit the `run_onchange_*.sh` files by hand — they are kept in sync with
 `takanao14/dotfiles` by `vendor/sync.sh`:

@@ -182,9 +182,10 @@ Wireshark, virt-manager) come from the distro provisioner lists
 (`scripts/<distro>/tools.sh`, `vm.sh`), which only the `-desktop` targets
 include.
 
-Because the toolchain is installed system-wide, the version cache under
-`/usr/local/share/tool-versions` lets a later `scripts/provision.sh` run skip
-everything the image already provides.
+The CLI toolchain is installed system-wide under `/usr/local/share/mise` with
+its config in `/etc/mise/config.toml`. Per-user mise shims precede the system
+shims, allowing dotfiles to reuse the baseline or install a local override
+without modifying the image.
 
 ## Upstream Image Imports
 

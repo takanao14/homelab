@@ -187,10 +187,10 @@ install_base_dependencies() {
     local packages=()
     case "$OS_ID" in
         ubuntu|debian)
-            packages=(ca-certificates curl coreutils file findutils git gnupg gzip make tar unzip xz-utils mosh tmux podman)
+            packages=(ca-certificates curl coreutils file findutils git gnupg gzip make tar unzip xz-utils mosh tmux podman zsh)
             ;;
         rocky)
-            packages=(ca-certificates curl coreutils file findutils git gnupg2 gzip make tar unzip xz mosh tmux podman)
+            packages=(ca-certificates curl coreutils file findutils git gnupg2 gzip make tar unzip xz mosh tmux podman zsh)
             ;;
         *)
             log_error "Unsupported OS: ${OS_ID}"
@@ -380,7 +380,7 @@ preflight_packages() {
     local missing=() cmd
     # Check base and package-managed tool dependencies.
     for cmd in curl tar gzip unzip xz gpg git file find make sha256sum install \
-               terraform packer vault kubectl bao pipx mosh tmux podman; do
+               terraform packer vault kubectl bao pipx mosh tmux podman zsh; do
         command -v "$cmd" &>/dev/null || missing+=("$cmd")
     done
     if is_desktop_machine; then
