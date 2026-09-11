@@ -47,7 +47,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 1
       },
@@ -86,6 +86,68 @@
       "type": "stat",
       "targets": [
         {
+          "expr": "((sum(count_over_time({host=\"authentik1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"netbox1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"openbao1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"runner1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"toolbox1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0)",
+          "legendFormat": "reporting",
+          "instant": true
+        }
+      ],
+      "title": "Reporting VMs (24h)",
+      "description": "Expected Vector-enabled VMs with at least one journald log received by Loki in the last 24 hours.",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 5,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 4,
+                "color": "yellow"
+              },
+              {
+                "value": 5,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
           "expr": "sum(count_over_time({host=~\"$host\", unit=~\"$unit\"} | json | __error__=\"\" | PRIORITY =~ \"[0-3]\" [1h])) or vector(0)",
           "legendFormat": "errors",
           "instant": true
@@ -99,8 +161,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 12,
         "y": 1
       },
       "repeatDirection": "h",
@@ -155,8 +217,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 18,
         "y": 1
       },
       "repeatDirection": "h",
@@ -197,12 +259,203 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Volume Trends",
+      "title": "Delivery Status",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 5
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "sum(count_over_time({host=\"authentik1\", unit=~\".+\"}[24h])) or vector(0)",
+          "legendFormat": "authentik1",
+          "instant": true
+        },
+        {
+          "expr": "sum(count_over_time({host=\"netbox1\", unit=~\".+\"}[24h])) or vector(0)",
+          "legendFormat": "netbox1",
+          "instant": true
+        },
+        {
+          "expr": "sum(count_over_time({host=\"openbao1\", unit=~\".+\"}[24h])) or vector(0)",
+          "legendFormat": "openbao1",
+          "instant": true
+        },
+        {
+          "expr": "sum(count_over_time({host=\"runner1\", unit=~\".+\"}[24h])) or vector(0)",
+          "legendFormat": "runner1",
+          "instant": true
+        },
+        {
+          "expr": "sum(count_over_time({host=\"toolbox1\", unit=~\".+\"}[24h])) or vector(0)",
+          "legendFormat": "toolbox1",
+          "instant": true
+        }
+      ],
+      "title": "Logs Received by VM (24h)",
+      "description": "A zero means Loki received no journald logs from that expected VM in the last 24 hours.",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "values": true,
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 1,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "state-timeline",
+      "targets": [
+        {
+          "expr": "((sum(count_over_time({host=\"authentik1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
+          "legendFormat": "authentik1"
+        },
+        {
+          "expr": "((sum(count_over_time({host=\"netbox1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
+          "legendFormat": "netbox1"
+        },
+        {
+          "expr": "((sum(count_over_time({host=\"openbao1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
+          "legendFormat": "openbao1"
+        },
+        {
+          "expr": "((sum(count_over_time({host=\"runner1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
+          "legendFormat": "runner1"
+        },
+        {
+          "expr": "((sum(count_over_time({host=\"toolbox1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
+          "legendFormat": "toolbox1"
+        }
+      ],
+      "title": "VM Log Activity",
+      "description": "Receiving means at least one log arrived in the preceding 15 minutes. Quiet can be normal for low-volume VMs.",
+      "transparent": false,
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "repeatDirection": "h",
+      "options": {
+        "showValue": "never",
+        "rowHeight": 0.9,
+        "mergeValues": true,
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        },
+        "perPage": 20
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "QUIET",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "RECEIVING",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 1,
+                "color": "green"
+              }
+            ]
+          },
+          "custom": {
+            "lineWidth": 0,
+            "fillOpacity": 70
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Volume Trends",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
       },
       "id": 0,
       "panels": []
@@ -225,7 +478,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 6
+        "y": 15
       },
       "repeatDirection": "h",
       "interval": "1m",
@@ -274,7 +527,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 6
+        "y": 15
       },
       "repeatDirection": "h",
       "interval": "1m",
@@ -313,7 +566,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 23
       },
       "id": 0,
       "panels": []
@@ -337,7 +590,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 15
+        "y": 24
       },
       "repeatDirection": "h",
       "interval": "1m",
@@ -387,7 +640,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 15
+        "y": 24
       },
       "repeatDirection": "h",
       "interval": "1m",
@@ -427,7 +680,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 32
       },
       "id": 0,
       "panels": []
@@ -450,7 +703,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 33
       },
       "repeatDirection": "h",
       "options": {
