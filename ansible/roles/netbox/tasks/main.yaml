@@ -22,6 +22,17 @@
     - netbox-postgres.env
   notify: Restart netbox containers
 
+# Holds no secrets, and the container's netbox account must be able to read it.
+- name: Deploy the NetBox Python configuration overrides
+  become: true
+  ansible.builtin.copy:
+    src: extra.py
+    dest: "{{ netbox_extra_config_file }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart netbox containers
+
 # The image's netbox account owns these at build time; a bind mount replaces
 # that ownership, and reports/scripts additionally need g+w.
 - name: Create the NetBox application data directories

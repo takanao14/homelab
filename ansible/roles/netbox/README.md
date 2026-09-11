@@ -10,7 +10,8 @@ images as rootful Podman containers managed by systemd Quadlet (ADR-0046).
   (Granian), `netbox-worker` (`manage.py rqworker`), `netbox-postgres`,
   `netbox-redis` (task queue) and `netbox-redis-cache`.
 - Renders `netbox.env` and `netbox-postgres.env` under `/etc/netbox` at mode
-  `0600`; the image reads all of its configuration from those variables.
+  `0600`, and mounts `files/extra.py` over the image's example `extra.py` for
+  settings netbox-docker does not read from the environment (secure cookies).
 - Creates the bind-mounted media, reports and scripts directories owned by the
   image's `netbox` account, plus the PostgreSQL and Valkey data directories.
 - Provisions the read-only identity used by the NetBox MCP server (see below).
@@ -25,9 +26,9 @@ that the worker's scheduler runs daily.
 Only `netbox` publishes a port (`netbox_port` → Granian's 8080), and Granian
 serves `/static` itself, so the deployment has no reverse proxy of its own;
 Caddy terminates TLS and proxies straight to that port. PostgreSQL and both
-Valkey instances are reachable only from the `netbox` Podman network and
-therefore run without passwords — nothing outside that network can connect to
-them.
+Valkey instances are reachable only from the `netbox` Podman network, so the
+Valkey instances run without passwords — nothing outside that network can
+connect to them.
 
 ## MCP identity
 
@@ -110,7 +111,7 @@ is replaced.
 | `netbox_base_dir` | `/opt/netbox` | Parent of the media, reports and scripts bind mounts |
 | `netbox_pg_data_dir` | `/var/lib/netbox-postgresql` | PostgreSQL data directory |
 | `netbox_redis_data_dir` | `/var/lib/netbox-redis` | Task-queue Valkey append-only file |
-| `netbox_config_dir` | `/etc/netbox` | Directory holding both env files |
+| `netbox_config_dir` | `/etc/netbox` | Directory holding the env files and `extra.py` |
 | `netbox_container_uid` / `netbox_container_gid` | `999` / `0` | Ownership the image expects on the bind mounts |
 | `netbox_db_name` | `netbox` | PostgreSQL database name |
 | `netbox_db_user` | `netbox` | PostgreSQL username |

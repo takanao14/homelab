@@ -40,9 +40,10 @@ Quadlet units, on a new Ubuntu VM on node3, cutting over through a second IP.**
   `netbox-redis-cache`, on a dedicated `netbox` Podman network.
 - Only `netbox` publishes a port. Granian serves `/static` itself, so nginx is
   dropped and Caddy proxies straight to port 8080.
-- PostgreSQL and both Valkey instances run without passwords. They publish no
-  ports and are reachable only from the `netbox` Podman network, so a password
-  would protect nothing that the network boundary does not already close.
+- PostgreSQL and both Valkey instances publish no ports and are reachable only
+  from the `netbox` Podman network. The Valkey instances run without passwords,
+  since a password would protect nothing that the network boundary does not
+  already close; PostgreSQL keeps the image's password authentication.
 - Cutover is staged: build the VM on a temporary `192.168.10.249` alongside the
   running LXC guest, repoint the inventory, restore a dump, verify on that
   address, switch Caddy, then destroy `tf/lxc/node2/netbox` and move the VM onto
