@@ -22,10 +22,12 @@ targets:
     name: "netbox1"
     service: "netbox"
     kind: "vm"
+    logShipping: true
   - ip: "192.168.40.30"
     name: "openbao1"
     service: "openbao"
     kind: "vm"
+    logShipping: true
   - ip: "192.168.50.31"
     name: "seaweedfs1"
     service: "seaweedfs"
@@ -34,11 +36,13 @@ targets:
     name: "authentik1"
     service: "authentik"
     kind: "vm"
+    logShipping: true
   # Validate 16 GiB sizing (ADR-0031).
   - ip: "192.168.20.21"
     name: "toolbox1"
     service: "toolbox"
     kind: "vm"
+    logShipping: true
   # Authoritative DNS filesystems and textfile-exported zone serials.
   - ip: "192.168.10.233"
     name: "ns1"
@@ -66,6 +70,7 @@ targets:
     name: "runner1"
     service: "forgejo-runner"
     kind: "vm"
+    logShipping: true
   # Vector log colletor.
   - ip: "192.168.10.243"
     name: "log1"

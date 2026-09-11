@@ -128,6 +128,8 @@ ESO fetches all secrets from OpenBao; plaintext is never committed.
 - Default scrapeClasses stamp cluster labels (ADR-0016). External LAN resources
   must use `scrapeClass: external` to stay out of cluster dashboard queries.
 - External exporter IPs live in `values/`.
+- `node-exporter-external.yaml` marks Vector-enabled VMs with `logShipping`;
+  the service-logs dashboard derives its expected VM set from those entries.
 - Proxmox hypervisors are listed once in `values/proxmox-nodes.yaml`
   (ADR-0024). node-exporter targets, ICMP/AMT probes, the Loki alert host
   regex, and dashboard derive from it; regenerate dashboards after changes.

@@ -1,11 +1,16 @@
 package main
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/grafana/grafana-foundation-sdk/go/bargauge"
 	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 	"github.com/grafana/grafana-foundation-sdk/go/logs"
 	"github.com/grafana/grafana-foundation-sdk/go/loki"
 	"github.com/grafana/grafana-foundation-sdk/go/stat"
+	"github.com/grafana/grafana-foundation-sdk/go/statetimeline"
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
@@ -16,6 +21,10 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 	ds := lokiDatasource()
 	tooltipAll := defaultTooltip()
 	legend := defaultLegend()
+	logShippingVMs, err := loadLogShippingVMs()
+	if err != nil {
+		return nil, err
+	}
 
 	const (
 		base     = `{host=~"$host", unit=~"$unit"}`
@@ -30,6 +39,65 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 			{Value: nil, Color: "green"},
 			{Value: new(float64(1)), Color: "yellow"},
 		})
+	reportingThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "red"},
+			{Value: new(float64(len(logShippingVMs) - 1)), Color: "yellow"},
+			{Value: new(float64(len(logShippingVMs))), Color: "green"},
+		})
+	activityThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "red"},
+			{Value: new(float64(1)), Color: "green"},
+		})
+	activityMappings := []dashboard.ValueMapping{
+		{ValueMap: &dashboard.ValueMap{
+			Type: dashboard.MappingTypeValueToText,
+			Options: map[string]dashboard.ValueMappingResult{
+				"0": {Text: new("QUIET"), Color: new("red")},
+				"1": {Text: new("RECEIVING"), Color: new("green")},
+			},
+		}},
+	}
+
+	reportingVMExpressions := make([]string, 0, len(logShippingVMs))
+	logsByVM := bargauge.NewPanelBuilder().
+		Title("Logs Received by VM (24h)").
+		Description("A zero means Loki received no journald logs from that expected VM in the last 24 hours.").
+		Datasource(ds).
+		Span(12).Height(8).
+		Unit("short").
+		Min(0).
+		Thresholds(activityThresholds).
+		Orientation(common.VizOrientationHorizontal).
+		ReduceOptions(common.NewReduceDataOptionsBuilder().Values(true))
+	vmActivity := statetimeline.NewPanelBuilder().
+		Title("VM Log Activity").
+		Description("Receiving means at least one log arrived in the preceding 15 minutes. Quiet can be normal for low-volume VMs.").
+		Datasource(ds).
+		Span(12).Height(8).
+		Thresholds(activityThresholds).
+		Mappings(activityMappings).
+		ShowValue(common.VisibilityModeNever).
+		MergeValues(true).
+		Tooltip(tooltipAll)
+	for _, host := range logShippingVMs {
+		selector := fmt.Sprintf(`{host=%q, unit=~".+"}`, host)
+		last24h := `sum(count_over_time(` + selector + `[24h])) or vector(0)`
+		reportingVMExpressions = append(reportingVMExpressions, `((`+last24h+`) > bool 0)`)
+		logsByVM.WithTarget(loki.NewDataqueryBuilder().
+			Expr(last24h).
+			Instant(true).
+			LegendFormat(host),
+		)
+		vmActivity.WithTarget(loki.NewDataqueryBuilder().
+			Expr(`((sum(count_over_time(` + selector + `[15m])) or vector(0)) > bool 0)`).
+			LegendFormat(host),
+		)
+	}
+	reportingVMs := strings.Join(reportingVMExpressions, " + ")
 
 	d, err := dashboard.NewDashboardBuilder("Service Logs").
 		Uid("service-logs").
@@ -70,7 +138,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Log Rate").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(6).Height(4).
 				Unit("cps").
 				Min(0).
 				Thresholds(measurementThresholds()).
@@ -83,9 +151,26 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
+				Title("Reporting VMs (24h)").
+				Description("Expected Vector-enabled VMs with at least one journald log received by Loki in the last 24 hours.").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("short").
+				Min(0).Max(float64(len(logShippingVMs))).
+				Thresholds(reportingThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(loki.NewDataqueryBuilder().
+					Expr(reportingVMs).
+					Instant(true).
+					LegendFormat("reporting"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
 				Title("Errors (1h)").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(6).Height(4).
 				Unit("short").
 				Min(0).
 				Orientation(common.VizOrientationAuto).
@@ -101,7 +186,7 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Warnings (1h)").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(6).Height(4).
 				Unit("short").
 				Min(0).
 				Orientation(common.VizOrientationAuto).
@@ -113,6 +198,9 @@ func buildServiceLogs() (*dashboard.Dashboard, error) {
 					LegendFormat("warnings"),
 				),
 		).
+		WithRow(dashboard.NewRowBuilder("Delivery Status")).
+		WithPanel(logsByVM).
+		WithPanel(vmActivity).
 		WithRow(dashboard.NewRowBuilder("Volume Trends")).
 		WithPanel(
 			timeseries.NewPanelBuilder().
