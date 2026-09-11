@@ -2,6 +2,11 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-11
+- **Reviewed:** 2026-09-05 — prd stays OpenEBS-only: its PVCs are RWO with no
+  multi-node sharing, most are pinned to the GPU node, and TrueNAS `tank1` is
+  SMR HDD. GPU-node capacity pressure is solved by growing its local disk.
+- **Review trigger:** a multi-node RWX consumer in prd, an SSD-backed TrueNAS
+  dataset, or Loki and metrics moving to object storage.
 - **Related:** [ADR-0009](0009-longhorn-ui-exposed-through-authenticated-gateway-route.md),
   [ADR-0013](0013-truenas-nfs-for-proxmox-shared-images.md),
   [ADR-0032](0032-reboot-and-planned-shutdown-orchestration.md),
