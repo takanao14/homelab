@@ -513,10 +513,11 @@ TOOL_SKIP_SYSTEM_PACKAGES=1 ./install/packages.sh  # no-sudo preflight
 
 ### Tools, terminal, and fonts
 
-`tools.sh` runs mise with the vendored, version-pinned config managed in
-dotfiles. Local mode installs mise and tools per user; global mode installs the
+`tools.sh` runs mise with the vendored rolling config managed in dotfiles.
+Local mode installs mise and tools per user; global mode installs the
 golden-image baseline system-wide. User shims take precedence over system
-shims, so local versions can override the image baseline.
+shims, so `mise upgrade` can install a newer local version without changing the
+image baseline.
 `terminal.sh` installs kitty and `fonts.sh` installs UDEV Gothic NF; both skip
 installation unless `TOOL_MACHINE_PROFILE=desktop`.
 

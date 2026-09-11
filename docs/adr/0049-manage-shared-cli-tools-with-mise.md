@@ -20,10 +20,12 @@ CLI releases.
 
 ## Decision
 
-Use one version-pinned mise config from the dotfiles repository for standalone
-Linux CLI tools. `chezmoi apply` installs mise and its tools per user. Packer
-vendors the same installer and config from a pinned dotfiles commit, then uses
-mise system mode to install the golden-image baseline under `/usr/local`.
+Use one mise config from the dotfiles repository for standalone Linux CLI
+tools. Tools track `latest`, matching the rolling Homebrew policy on macOS;
+mise itself remains version- and checksum-pinned. `chezmoi apply` installs mise
+and its tools per user. Packer vendors the same installer and config from a
+pinned dotfiles commit, then uses mise system mode to install the golden-image
+baseline under `/usr/local`.
 
 Shell PATH ordering prefers user mise shims over system mise shims, so a user
 can install a different version without changing the image. macOS remains on
@@ -32,10 +34,14 @@ moving them to Ansible is a separate change.
 
 ## Consequences
 
-- Stock Ubuntu plus dotfiles and a tool/desktop image expose the same pinned CLI
-  set, with only the installation scope differing.
+- Stock Ubuntu plus dotfiles and a tool/desktop image expose the same declared
+  CLI set, with only the installation scope differing.
 - Golden images avoid per-user state while retaining local overrides.
-- Tool additions and upgrades move from custom Bash functions to mise config.
+- `mise upgrade` advances user tools without modifying the `latest` config or
+  the system baseline.
+- Rebuilding the same commit at different times can resolve different tool
+  versions, consistent with the existing Homebrew and APT/DNF rolling policy.
+- Tool additions move from custom Bash functions to mise config.
 - Packer does not depend on the dotfiles repository during a build because the
   resolved installer and config are committed here.
 - Krew remains activated per user; helm-diff uses a shared plugin directory in

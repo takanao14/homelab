@@ -184,8 +184,9 @@ include.
 
 The CLI toolchain is installed system-wide under `/usr/local/share/mise` with
 its config in `/etc/mise/config.toml`. Per-user mise shims precede the system
-shims, allowing dotfiles to reuse the baseline or install a local override
-without modifying the image.
+shims, allowing dotfiles to reuse the baseline or install a rolling local
+upgrade without modifying the image. Tool declarations track `latest`, so an
+image rebuild resolves the versions available at build time.
 
 ## Upstream Image Imports
 
