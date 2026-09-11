@@ -8,6 +8,14 @@ gateway:
     request: 10m
     backendRequest: 10m
 
+# Requests only; merged with the chart's GPU request. Loaded-model RSS p95/max
+# 8914/8914 Mi, active CPU p50/p95 139/902m (2026-09-11). Working set peaks at
+# 12.3 GiB from reclaimable model page cache, so memory is sized from RSS.
+resources:
+  requests:
+    cpu: 200m
+    memory: 11Gi
+
 recipeOptions:
   builtin.gpt-oss-20b-mxfp4-GGUF:
     ctx_size: 131072
