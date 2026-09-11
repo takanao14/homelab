@@ -1,0 +1,8 @@
+---
+vector_journald_units:
+  - authentik-server
+  - authentik-worker
+  - authentik-postgresql
+  - authentik-proxy
+  - authentik-ldap
+  - ssh

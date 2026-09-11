@@ -47,10 +47,12 @@ authentik_proxy_http_port: 9001
 # Browser-facing Caddy URL; must match `authentik_host` in proxy.yaml.
 authentik_external_url: "https://auth.home.butaco.net"
 
-# Generate an API-created LDAPS cert whose CN/SAN matches the service name.
+# Generate a standards-compliant self-signed LDAPS certificate outside Authentik.
 authentik_ldap_cert_name: homelab-ldap
 authentik_ldap_cert_cn: ldap.home.butaco.net
 authentik_ldap_cert_validity_days: 365
+authentik_ldap_cert_rotate: false
+authentik_ldap_cert_sssd_path: "{{ role_path }}/../sssd/files/authentik-ldap-server.pem"
 
 # Cross-release upgrades require explicit review of every intermediate release.
 authentik_upgrade_allow_release_change: false

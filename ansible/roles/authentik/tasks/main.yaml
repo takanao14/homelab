@@ -119,47 +119,8 @@
   retries: 30
   delay: 5
 
-# The API ignores name filters; filter client-side to avoid reminting.
-- name: Check whether the LDAPS certificate already exists
-  ansible.builtin.uri:
-    url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/crypto/certificatekeypairs/"
-    headers:
-      Authorization: "Bearer {{ authentik_bootstrap_token }}"
-    status_code: 200
-  register: authentik_ldap_cert
-  no_log: true
-
-- name: Generate the LDAPS certificate whose CN/SAN matches the LDAP service name
-  ansible.builtin.uri:
-    url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/crypto/certificatekeypairs/generate/"
-    method: POST
-    headers:
-      Authorization: "Bearer {{ authentik_bootstrap_token }}"
-    body_format: json
-    body:
-      common_name: "{{ authentik_ldap_cert_cn }}"
-      subject_alt_name: "{{ authentik_ldap_cert_cn }}"
-      validity_days: "{{ authentik_ldap_cert_validity_days }}"
-    status_code: [200, 201]
-  register: authentik_ldap_cert_generated
-  when: >-
-    authentik_ldap_cert.json.results
-    | selectattr('name', 'equalto', authentik_ldap_cert_name)
-    | list | length == 0
-  no_log: true
-
-- name: Give the generated certificate the name the blueprint looks up
-  ansible.builtin.uri:
-    url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/crypto/certificatekeypairs/{{ authentik_ldap_cert_generated.json.pk }}/"
-    method: PATCH
-    headers:
-      Authorization: "Bearer {{ authentik_bootstrap_token }}"
-    body_format: json
-    body:
-      name: "{{ authentik_ldap_cert_name }}"
-    status_code: 200
-  when: authentik_ldap_cert_generated is not skipped
-  no_log: true
+- name: Ensure the LDAPS certificate exists
+  ansible.builtin.include_tasks: ldap_certificate.yaml
 
 - name: Deploy Authentik blueprints
   become: true

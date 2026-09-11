@@ -1,4 +1,15 @@
 ---
+- name: Require a supported operating system
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] in sssd_supported_versions
+      - >-
+        ansible_facts['distribution_version'] is
+        match(sssd_supported_versions.get(ansible_facts['distribution'], 'a^'))
+    fail_msg: >-
+      The sssd role supports Ubuntu 24.04 and Rocky Linux 9 only; found
+      {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}.
+
 # Establish local recovery before introducing the Authentik dependency.
 - name: Create the break-glass local account
   become: true
@@ -7,6 +18,7 @@
     shell: /bin/bash
     create_home: true
     state: present
+  register: sssd_breakglass_account
 
 - name: Grant the break-glass account passwordless sudo
   become: true
@@ -29,14 +41,22 @@
     # Prune revoked keys, but skip empty input to prevent lockout.
     exclusive: true
     state: present
-  when: sssd_breakglass_authorized_keys | length > 0
+  when:
+    - sssd_breakglass_authorized_keys | length > 0
+    - not (ansible_check_mode and sssd_breakglass_account is changed)
+
+- name: Update the apt cache
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+  when: ansible_facts['distribution'] == 'Ubuntu'
 
 - name: Install SSSD packages
   become: true
-  ansible.builtin.apt:
+  ansible.builtin.package:
     name: "{{ sssd_packages }}"
     state: present
-    update_cache: true
+  register: sssd_package_install
 
 - name: Deploy the Authentik LDAP certificate SSSD must trust
   become: true
@@ -64,19 +84,94 @@
     - Invalidate the sssd cache
 
 # Enable pam_mkhomedir through Ubuntu's PAM manager; report only real changes.
-- name: Check whether pam_mkhomedir is already enabled
+- name: Check whether pam_mkhomedir is already enabled on Ubuntu
   ansible.builtin.command:
     cmd: grep -q pam_mkhomedir /etc/pam.d/common-session
   register: sssd_mkhomedir_check
   changed_when: false
   failed_when: false
+  when: ansible_facts['distribution'] == 'Ubuntu'
 
-- name: Enable automatic home directory creation on first login
+- name: Enable automatic home directory creation on Ubuntu
   become: true
   ansible.builtin.command:
     cmd: pam-auth-update --enable mkhomedir
-  when: sssd_mkhomedir_check.rc != 0
+  when:
+    - ansible_facts['distribution'] == 'Ubuntu'
+    - sssd_mkhomedir_check.rc != 0
   changed_when: true
+
+- name: Read the active authselect profile on Rocky Linux
+  become: true
+  ansible.builtin.command:
+    cmd: authselect current --raw
+  register: sssd_authselect_profile
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: ansible_facts['distribution'] == 'Rocky'
+
+- name: Verify pristine PAM and NSS packages before initial authselect migration # noqa command-instead-of-module
+  become: true
+  ansible.builtin.command:
+    cmd: rpm --verify pam glibc
+  changed_when: false
+  check_mode: false
+  when:
+    - ansible_facts['distribution'] == 'Rocky'
+    - sssd_authselect_profile.rc != 0
+
+- name: Initialize the SSS authselect profile on Rocky Linux
+  become: true
+  ansible.builtin.command:
+    cmd: authselect select sssd with-mkhomedir --force
+  when:
+    - ansible_facts['distribution'] == 'Rocky'
+    - sssd_authselect_profile.rc != 0
+  changed_when: true
+
+- name: Select the SSS authselect profile on Rocky Linux
+  become: true
+  ansible.builtin.command:
+    cmd: authselect select sssd with-mkhomedir
+  when:
+    - ansible_facts['distribution'] == 'Rocky'
+    - sssd_authselect_profile.rc == 0
+    - sssd_authselect_profile.stdout.split() | first != 'sssd'
+  changed_when: true
+
+- name: Read the active authselect features on Rocky Linux
+  become: true
+  ansible.builtin.command:
+    cmd: authselect current
+  register: sssd_authselect_current
+  changed_when: false
+  check_mode: false
+  when:
+    - ansible_facts['distribution'] == 'Rocky'
+    - sssd_authselect_profile.rc == 0
+    - sssd_authselect_profile.stdout.split() | first == 'sssd'
+
+- name: Enable automatic home directory creation on Rocky Linux
+  become: true
+  ansible.builtin.command:
+    cmd: authselect enable-feature with-mkhomedir
+  when:
+    - ansible_facts['distribution'] == 'Rocky'
+    - sssd_authselect_profile.rc == 0
+    - sssd_authselect_profile.stdout.split() | first == 'sssd'
+    - "'with-mkhomedir' not in sssd_authselect_current.stdout"
+  changed_when: true
+
+- name: Ensure oddjobd is started and enabled on Rocky Linux
+  become: true
+  ansible.builtin.service:
+    name: oddjobd
+    state: started
+    enabled: true
+  when:
+    - ansible_facts['distribution'] == 'Rocky'
+    - not (ansible_check_mode and sssd_package_install is changed)
 
 # Manage sudo by SSSD group locally; validate with visudo before install.
 - name: Grant sudo to the Authentik admin group
@@ -112,3 +207,4 @@
     name: sssd
     state: started
     enabled: true
+  when: not (ansible_check_mode and sssd_package_install is changed)

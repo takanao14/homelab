@@ -1,0 +1,44 @@
+---
+- name: Rotate the Authentik LDAPS certificate
+  hosts: authentik
+  serial: 1
+  any_errors_fatal: true
+  vars:
+    authentik_ldap_cert_rotate: true
+  tasks:
+    - name: Rotate and export the LDAPS certificate
+      ansible.builtin.include_role:
+        name: authentik
+        tasks_from: ldap_certificate
+
+- name: Deploy the rotated LDAPS certificate to SSSD clients
+  ansible.builtin.import_playbook: sssd.yaml
+
+- name: Verify LDAP identity lookup from every SSSD client
+  hosts: sssd
+  any_errors_fatal: true
+  vars:
+    sssd_verify_domain: home.butaco.net
+  tasks:
+    - name: Check the SSSD domain status
+      become: true
+      ansible.builtin.command:
+        argv:
+          - sssctl
+          - domain-status
+          - "{{ sssd_verify_domain }}"
+      changed_when: false
+      register: sssd_domain_status
+      until: "'Online status: Online' in sssd_domain_status.stdout"
+      retries: 12
+      delay: 5
+      when: not ansible_check_mode
+
+    - name: Resolve the LDAP verification account
+      ansible.builtin.command:
+        argv:
+          - getent
+          - passwd
+          - sssdtest
+      changed_when: false
+      when: not ansible_check_mode

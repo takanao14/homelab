@@ -1,11 +1,33 @@
 ---
-sssd_packages:
-  - sssd
-  - sssd-ldap
-  - sssd-tools
-  - libnss-sss
-  - libpam-sss
-  - ldap-utils
+sssd_supported_versions:
+  Ubuntu: '^24\.04'
+  Rocky: '^9\.'
+
+sssd_platforms:
+  Ubuntu:
+    packages:
+      - sssd
+      - sssd-ldap
+      - sssd-tools
+      - libnss-sss
+      - libpam-sss
+      - ldap-utils
+    ssh_service: ssh
+    ldap_ca_cert_path: /etc/ssl/certs/authentik-ldap-ca.pem
+  Rocky:
+    packages:
+      - authselect
+      - oddjob
+      - oddjob-mkhomedir
+      - openldap-clients
+      - sssd
+      - sssd-ldap
+      - sssd-tools
+    ssh_service: sshd
+    ldap_ca_cert_path: /etc/openldap/certs/authentik-ldap-ca.pem
+
+sssd_packages: "{{ sssd_platforms[ansible_facts['distribution']]['packages'] }}"
+sssd_ssh_service: "{{ sssd_platforms[ansible_facts['distribution']]['ssh_service'] }}"
 
 sssd_domain: home.butaco.net
 
@@ -14,8 +36,8 @@ sssd_ldap_uri: ldaps://ldap.home.butaco.net:636
 sssd_ldap_search_base: dc=ldap,dc=home,dc=butaco,dc=net
 
 # Public self-signed LDAPS certificate; monitor expiry and trust it directly.
-sssd_ldap_ca_cert_src: authentik-ldap-ca.pem
-sssd_ldap_ca_cert_path: /etc/ssl/certs/authentik-ldap-ca.pem
+sssd_ldap_ca_cert_src: authentik-ldap-server.pem
+sssd_ldap_ca_cert_path: "{{ sssd_platforms[ansible_facts['distribution']]['ldap_ca_cert_path'] }}"
 
 # Shared lookup bind account from ldap.yaml; password comes from SOPS.
 sssd_ldap_bind_dn: cn=ldapbind,ou=users,dc=ldap,dc=home,dc=butaco,dc=net

@@ -20,7 +20,7 @@ adapted for Podman.
   0750; forcing root ownership or mode 0755 breaks subsequent starts.
 - Copies static blueprints from `files/blueprints/` and renders managed users
   from the SOPS-encrypted `authentik_users` list.
-- Uses the Authentik API to generate the LDAPS certificate, apply the managed
+- Uses OpenSSL and the Authentik API to manage the LDAPS certificate, apply the managed
   users blueprint, grant LDAP search permission, and retrieve standalone
   Outpost tokens.
 
@@ -158,6 +158,8 @@ Restore a dump only with the `authentik_secret_key` it was taken with; a
 different key invalidates existing sessions and stored tokens. A rebuild
 without a restore regenerates the LDAPS certificate, so export it into the
 `sssd` role and rerun that playbook before clients can validate the endpoint.
+Use `playbooks/ops-authentik_rotate_ldap_certificate.yaml` to perform those
+steps together during planned rotation.
 
 ### Health checks
 

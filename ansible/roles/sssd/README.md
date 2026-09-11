@@ -1,8 +1,8 @@
 # sssd Role
 
-Connects Linux hosts to the Authentik LDAP Outpost for NSS/PAM lookups,
-password authentication, and SSH public keys. This implements stage 6 of
-`docs/plans/identity-authentication-architecture.md`.
+Connects Ubuntu 24.04 and Rocky Linux 9 hosts to the Authentik LDAP Outpost for
+NSS/PAM lookups, password authentication, and SSH public keys. This implements
+stage 6 of `docs/plans/identity-authentication-architecture.md`.
 
 ```text
 Linux host -> NSS/PAM -> SSSD -> LDAPS -> Authentik LDAP Outpost
@@ -64,7 +64,12 @@ recovery does not depend on SOPS. An empty list leaves existing keys unchanged.
 | `sssd_sudoers_file` | `/etc/sudoers.d/60-lab-linux-admins` | Managed sudoers file |
 | `sssd_offline_credentials_expiration` | `2` | Offline-login days |
 | `sssd_entry_cache_timeout` | `600` | Host cache lifetime in seconds |
-| `sssd_ldap_ca_cert_path` | `/etc/ssl/certs/authentik-ldap-ca.pem` | Trusted LDAP certificate |
+| `sssd_ldap_ca_cert_path` | `/etc/ssl/certs/…` (Ubuntu), `/etc/openldap/certs/…` (Rocky) | Trusted LDAP certificate |
+
+Ubuntu enables home creation through `pam-auth-update`. Rocky Linux selects
+the SSSD `authselect` profile with `with-mkhomedir` and runs `oddjobd`. On a host
+not yet managed by authselect, the role verifies the PAM and glibc packages
+before allowing authselect's required initial overwrite.
 
 ## Operational notes
 
@@ -108,10 +113,7 @@ local account and its SSH keys remain the recovery path.
 ### Certificate rotation
 
 The committed LDAP certificate is public data and avoids distributing an
-Authentik admin token to every client. Monitor the LDAPS certificate expiry.
-To rotate it:
-
-1. Delete the `homelab-ldap` certificate in Authentik.
-2. Run the Authentik playbook to regenerate it.
-3. Export the new certificate into this role.
-4. Run the SSSD playbook.
+Authentik admin token to every client. Rotate and verify it with the explicit
+`playbooks/ops-authentik_rotate_ldap_certificate.yaml` workflow. The workflow
+updates the Authentik key pair, exports only the public certificate into this
+role, deploys it to every SSSD client, and verifies the domain and test user.

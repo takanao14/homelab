@@ -1,0 +1,124 @@
+---
+# Authentik-generated certificates can have a non-self-signed issuer, which
+# OpenLDAP on Rocky Linux refuses when the leaf is used as a trust anchor.
+- name: Read the Authentik certificate inventory
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/crypto/certificatekeypairs/"
+    headers:
+      Authorization: "Bearer {{ authentik_bootstrap_token }}"
+    status_code: 200
+  register: authentik_ldap_cert_inventory
+  no_log: true
+  check_mode: false
+
+- name: Select the existing LDAPS certificate
+  ansible.builtin.set_fact:
+    authentik_ldap_existing_certs: >-
+      {{ authentik_ldap_cert_inventory.json.results
+         | selectattr('name', 'equalto', authentik_ldap_cert_name) | list }}
+  no_log: true
+
+- name: Replace the LDAPS certificate
+  when:
+    - authentik_ldap_cert_rotate | bool or authentik_ldap_existing_certs | length == 0
+    - not ansible_check_mode
+  block:
+    - name: Create a private certificate workspace
+      become: true
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: authentik-ldap-cert-
+      register: authentik_ldap_cert_workspace
+
+    - name: Generate a self-signed LDAPS certificate and private key
+      become: true
+      ansible.builtin.command:
+        argv:
+          - openssl
+          - req
+          - -x509
+          - -newkey
+          - rsa:4096
+          - -sha256
+          - -nodes
+          - -days
+          - "{{ authentik_ldap_cert_validity_days | string }}"
+          - -keyout
+          - "{{ authentik_ldap_cert_workspace.path }}/ldap.key"
+          - -out
+          - "{{ authentik_ldap_cert_workspace.path }}/ldap.crt"
+          - -subj
+          - "/CN={{ authentik_ldap_cert_cn }}"
+          - -addext
+          - "subjectAltName=DNS:{{ authentik_ldap_cert_cn }}"
+          - -addext
+          - "basicConstraints=critical,CA:FALSE"
+          - -addext
+          - "keyUsage=critical,digitalSignature,keyEncipherment"
+          - -addext
+          - "extendedKeyUsage=serverAuth"
+      changed_when: true
+
+    - name: Read the generated LDAPS certificate
+      become: true
+      ansible.builtin.slurp:
+        src: "{{ authentik_ldap_cert_workspace.path }}/ldap.crt"
+      register: authentik_ldap_cert_data
+
+    - name: Read the generated LDAPS private key
+      become: true
+      ansible.builtin.slurp:
+        src: "{{ authentik_ldap_cert_workspace.path }}/ldap.key"
+      register: authentik_ldap_key_data
+      no_log: true
+
+    - name: Create the Authentik LDAPS certificate pair
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/crypto/certificatekeypairs/"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ authentik_bootstrap_token }}"
+        body_format: json
+        body:
+          name: "{{ authentik_ldap_cert_name }}"
+          certificate_data: "{{ authentik_ldap_cert_data.content | b64decode }}"
+          key_data: "{{ authentik_ldap_key_data.content | b64decode }}"
+        status_code: [200, 201]
+      when: authentik_ldap_existing_certs | length == 0
+      notify: Restart authentik ldap outpost
+      changed_when: true
+      no_log: true
+
+    - name: Update the Authentik LDAPS certificate pair
+      ansible.builtin.uri:
+        url: >-
+          http://127.0.0.1:{{ authentik_http_port }}/api/v3/crypto/certificatekeypairs/{{
+          (authentik_ldap_existing_certs | first).pk }}/
+        method: PATCH
+        headers:
+          Authorization: "Bearer {{ authentik_bootstrap_token }}"
+        body_format: json
+        body:
+          certificate_data: "{{ authentik_ldap_cert_data.content | b64decode }}"
+          key_data: "{{ authentik_ldap_key_data.content | b64decode }}"
+        status_code: 200
+      when: authentik_ldap_existing_certs | length > 0
+      notify: Restart authentik ldap outpost
+      changed_when: true
+      no_log: true
+
+    - name: Export the public LDAPS certificate for the SSSD role
+      become: true
+      ansible.builtin.fetch:
+        src: "{{ authentik_ldap_cert_workspace.path }}/ldap.crt"
+        dest: "{{ authentik_ldap_cert_sssd_path }}"
+        flat: true
+
+  always:
+    - name: Remove the private certificate workspace
+      become: true
+      ansible.builtin.file:
+        path: "{{ authentik_ldap_cert_workspace.path }}"
+        state: absent
+      when: authentik_ldap_cert_workspace.path is defined
+      no_log: true
