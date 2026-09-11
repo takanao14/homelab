@@ -1,0 +1,24 @@
+{{- if .Values.vectorAlerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: vector-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: vector-external
+      rules:
+        - alert: VectorExternalTargetDown
+          expr: up{job="scrapeConfig/monitoring/vector-external"} == 0
+          for: {{ .Values.vectorAlerts.targetDownFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "Vector metrics target {{ "{{ $labels.instance }}" }} is down"
+            description: >-
+              Prometheus cannot scrape Vector on
+              {{ "{{ $labels.instance }}" }}. Vector may be stopped or its
+              metrics endpoint may be unreachable; verify log delivery to Loki.
+{{- end }}

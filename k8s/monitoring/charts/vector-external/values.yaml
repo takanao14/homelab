@@ -1,3 +1,7 @@
 vectorPort: 9598
 vectorMetricsPath: /metrics
 targets: []
+
+vectorAlerts:
+  enabled: true
+  targetDownFor: 5m
