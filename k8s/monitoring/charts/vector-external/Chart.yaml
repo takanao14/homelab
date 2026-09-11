@@ -2,4 +2,4 @@ apiVersion: v2
 name: vector-external
 description: ScrapeConfig for Vector internal metrics on external service VMs
 type: application
-version: 0.1.0
+version: 0.1.1
