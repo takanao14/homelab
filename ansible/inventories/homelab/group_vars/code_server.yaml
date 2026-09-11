@@ -1,0 +1,5 @@
+---
+# Templated so the instance user stays in code_server.sops.yaml.
+vector_journald_units:
+  - "code-server@{{ code_server_user }}"
+  - ssh
