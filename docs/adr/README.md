@@ -96,3 +96,4 @@ deleting it:
 | [0045](0045-deploy-slack-bot-from-its-own-repository.md) | Deploy slack-bot from its own repository into prd only | Accepted |
 | [0046](0046-netbox-containers-on-a-node3-vm.md) | Run NetBox as Podman containers on a node3 VM | Accepted |
 | [0047](0047-service-vm-logs-via-vector-journald-agent.md) | Collect service VM logs with a Vector journald agent | Accepted |
+| [0048](0048-service-vm-vector-internal-metrics.md) | Expose Vector internal metrics on service VMs | Accepted |

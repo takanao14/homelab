@@ -12,6 +12,9 @@ vector_journald_units: []
 # Merged into the Loki labels; keep additions low-cardinality.
 vector_loki_extra_labels: {}
 
+vector_internal_metrics_enabled: false
+vector_internal_metrics_address: "127.0.0.1:9598"
+
 # Vector's own template syntax, resolved by Vector and not by Ansible.
 vector_loki_base_labels:
   host: !unsafe "{{ host }}"
@@ -19,7 +22,7 @@ vector_loki_base_labels:
 
 # Standard journald-to-Loki pipeline. Hosts that receive external syslog or
 # parse a service payload replace vector_config wholesale in inventory.
-vector_config:
+vector_log_config:
   sources:
     journald:
       type: journald
@@ -47,3 +50,27 @@ vector_config:
         enabled: false
       dangerously_allow_unconfined_template_resolution: true
       labels: "{{ vector_loki_base_labels | combine(vector_loki_extra_labels) }}"
+
+vector_internal_metrics_config:
+  sources:
+    internal_metrics:
+      type: internal_metrics
+      namespace: vector
+      scrape_interval_secs: 5
+      tags:
+        host_key: ""
+  sinks:
+    internal_metrics_prometheus:
+      type: prometheus_exporter
+      inputs:
+        - internal_metrics
+      address: "{{ vector_internal_metrics_address }}"
+
+vector_config: >-
+  {{
+    vector_log_config
+    | combine(
+        vector_internal_metrics_config if vector_internal_metrics_enabled else {},
+        recursive=true
+      )
+  }}
