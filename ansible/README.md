@@ -31,7 +31,7 @@ Playbooks are named by class so the kind is obvious at a glance:
 A system playbook embeds only **service-coupled** concerns: the service role
 plus the roles whose configuration the service *owns* — i.e. the log-shipping
 stack (`vector` + `journald`, via the `lxc_logging` meta-role), since each
-service supplies its own `vector_config`. `timezone` is also embedded as a
+service supplies its own `vector_journald_units`. `timezone` is also embedded as a
 pragmatic exception (cheap, idempotent, keeps log timestamps correct on a
 single-playbook run).
 

@@ -1,0 +1,5 @@
+---
+# Job containers log through docker; the runner unit carries the job outcome.
+vector_journald_units:
+  - forgejo-runner
+  - ssh

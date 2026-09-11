@@ -7,32 +7,6 @@ pdns_webserver_port: 8081
 # Subnet ACL cannot be derived from one inventory host.
 pdns_webserver_allow_from: "192.168.10.0/24,192.168.20.0/24,192.168.30.0/24,192.168.40.0/24,192.168.50.0/24,192.168.60.0/24,192.168.70.0/24"
 
-vector_config:
-  sources:
-    journald:
-      type: journald
-      include_units:
-        - pdns
-        - ssh
-  transforms:
-    parse_journald:
-      type: remap
-      inputs:
-        - journald
-      source: |
-        .host = get_hostname!()
-        .unit = string(._SYSTEMD_UNIT) ?? string(.SYSLOG_IDENTIFIER) ?? "unknown"
-  sinks:
-    loki:
-      type: loki
-      inputs:
-        - parse_journald
-      endpoint: "{{ loki_endpoint }}"
-      encoding:
-        codec: json
-      healthcheck:
-        enabled: false
-      dangerously_allow_unconfined_template_resolution: true
-      labels:
-        host: !unsafe "{{ host }}"
-        unit: !unsafe "{{ unit }}"
+vector_journald_units:
+  - pdns
+  - ssh

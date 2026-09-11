@@ -94,3 +94,5 @@ deleting it:
 | [0043](0043-opencode-connects-to-lemonade-mtp.md) | OpenCode connects to Lemonade Server with Gemma 4 MTP | Accepted |
 | [0044](0044-external-dns-syncs-owned-record-lifecycle.md) | ExternalDNS synchronizes its owned DNS record lifecycle | Accepted |
 | [0045](0045-deploy-slack-bot-from-its-own-repository.md) | Deploy slack-bot from its own repository into prd only | Accepted |
+| [0046](0046-netbox-containers-on-a-node3-vm.md) | Run NetBox as Podman containers on a node3 VM | Accepted |
+| [0047](0047-service-vm-logs-via-vector-journald-agent.md) | Collect service VM logs with a Vector journald agent | Accepted |

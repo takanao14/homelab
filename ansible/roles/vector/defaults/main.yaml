@@ -6,4 +6,44 @@ vector_binary_path: /usr/bin/vector
 vector_repo_url: "https://apt.vector.dev/"
 vector_repo_key_url: "https://keys.datadoghq.com/DATADOG_APT_KEY_CURRENT.public"
 
-vector_config: {}
+# Units collected by the standard pipeline below; set per group or host.
+vector_journald_units: []
+
+# Merged into the Loki labels; keep additions low-cardinality.
+vector_loki_extra_labels: {}
+
+# Vector's own template syntax, resolved by Vector and not by Ansible.
+vector_loki_base_labels:
+  host: !unsafe "{{ host }}"
+  unit: !unsafe "{{ unit }}"
+
+# Standard journald-to-Loki pipeline. Hosts that receive external syslog or
+# parse a service payload replace vector_config wholesale in inventory.
+vector_config:
+  sources:
+    journald:
+      type: journald
+      include_units: "{{ vector_journald_units }}"
+      # Loki rejects entries older than its chunk window, so a first run must
+      # not replay the journal. Later restarts resume from the checkpoint.
+      since_now: true
+  transforms:
+    parse_journald:
+      type: remap
+      inputs:
+        - journald
+      source: |
+        .host = get_hostname!()
+        .unit = string(._SYSTEMD_UNIT) ?? string(.SYSLOG_IDENTIFIER) ?? "unknown"
+  sinks:
+    loki:
+      type: loki
+      inputs:
+        - parse_journald
+      endpoint: "{{ loki_endpoint }}"
+      encoding:
+        codec: json
+      healthcheck:
+        enabled: false
+      dangerously_allow_unconfined_template_resolution: true
+      labels: "{{ vector_loki_base_labels | combine(vector_loki_extra_labels) }}"

@@ -3,3 +3,11 @@ netbox_domain: "netbox.home.butaco.net"
 netbox_port: 8080
 netbox_superuser_name: admin
 netbox_superuser_email: "admin@home.butaco.net"
+
+vector_journald_units:
+  - netbox
+  - netbox-worker
+  - netbox-postgres
+  - netbox-redis
+  - netbox-redis-cache
+  - ssh

@@ -321,12 +321,22 @@ all:
         log_collector: {}
         seaweedfs: {}
 
+    # VM guests read by Vector; journald keeps its stock syslog forwarding.
+    vector_vm:
+      children:
+        authentik: {}
+        code_server: {}
+        forgejo_runner: {}
+        netbox: {}
+        openbao: {}
+
     # All Vector agents; targeted by common-vector.yaml.
     vector:
       children:
         dhcp: {}
         dhcp_lease_observer: {}
         vector_lxc: {}
+        vector_vm: {}
 
     # Rsyslog forwarders targeted by common-rsyslog.yaml.
     rsyslog:

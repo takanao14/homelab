@@ -25,6 +25,7 @@ vector_config:
       include_units:
         - vector
         - ssh
+      since_now: true
 
   transforms:
     parse_syslog:

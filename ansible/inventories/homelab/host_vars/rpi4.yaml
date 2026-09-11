@@ -9,6 +9,7 @@ vector_config:
         - meshcentral
         - ssh
         - tailscaled
+      since_now: true
   transforms:
     parse_journald:
       type: remap

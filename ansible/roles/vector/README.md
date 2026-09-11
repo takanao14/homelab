@@ -1,6 +1,6 @@
 # vector Role
 
-Installs and configures [Vector](https://vector.dev/) as a log aggregator on Debian-based systems. Receives syslog (UDP 514) from external hosts and forwards to Loki.
+Installs and configures [Vector](https://vector.dev/) on Debian-based systems. Most hosts ship their own journal to Loki; `log1` additionally receives syslog (UDP/TCP 514) from hosts and network appliances that cannot.
 
 ## Functionality
 
@@ -23,27 +23,27 @@ Installs and configures [Vector](https://vector.dev/) as a log aggregator on Deb
 |----------|---------|-------------|
 | `vector_repo_url` | `https://apt.vector.dev/` | Vector apt repository URL |
 | `vector_repo_key_url` | `https://keys.datadoghq.com/DATADOG_APT_KEY_CURRENT.public` | Repository signing key |
-| `vector_loki_endpoint` | `http://loki:3100` | Loki push endpoint |
-| `vector_config` | `{}` | Vector pipeline configuration (sources, transforms, sinks) |
+| `vector_journald_units` | `[]` | Units the standard pipeline collects |
+| `vector_loki_extra_labels` | `{}` | Labels merged into the standard `host`/`unit` pair |
+| `vector_config` | standard pipeline | Full pipeline (sources, transforms, sinks) |
 
-`vector_config` is passed directly into the template. Define it in
-`group_vars/log_collector.yaml` for the central collector.
-
-Example:
+The default `vector_config` is a journald-to-Loki pipeline labelled by `host`
+and `unit`, so a normal host only declares which units to collect:
 
 ```yaml
-vector_config:
-  sources:
-    syslog_in:
-      type: syslog
-      address: "0.0.0.0:514"
-      mode: udp
-  sinks:
-    loki_out:
-      type: loki
-      inputs: [syslog_in]
-      endpoint: "{{ vector_loki_endpoint }}"
+vector_journald_units:
+  - caddy
+  - ssh
 ```
+
+`vector_config` is passed directly into the template, so a host that needs a
+different pipeline replaces it entirely in inventory. `log_collector` (syslog
+reception plus led-server parsing) and `rpi4` (DHCP lease JSON merged into the
+event) do this; inventory outranks these defaults, so such a host must carry
+`since_now` in its own journald source.
+
+Loki index labels stay low-cardinality. Keep request paths, users, and source
+IPs in the payload, where LogQL can still filter them.
 
 ## Usage
 
@@ -53,8 +53,8 @@ Run [playbooks/common-vector.yaml](../../playbooks/common-vector.yaml).
 
 - Vector 0.57 introduced template confinement for sink fields. Loki sinks that
   use event fields as complete label values explicitly set
-  `dangerously_allow_unconfined_template_resolution: true` in inventory to
-  preserve the existing label values. Keep this exception visible per sink;
+  `dangerously_allow_unconfined_template_resolution: true` to preserve the
+  existing label values. Keep this exception visible per sink;
   adding a static prefix would change labels and break existing Loki queries.
 
 On `log1`, `log_collector.yaml` parses `led-server` JSON into `app`, `level`, and `event` while retaining the original syslog `message` and `severity`. These fields stay in the payload, not Loki labels. Non-JSON LED logs are retained with `app_parse_error=true`; other applications pass through unchanged. Run `vector test /etc/vector/vector.yaml` to check the embedded cases. Query with `{host="rpi3",appname="led-server"} | json | level="error"` or filter `event`.
