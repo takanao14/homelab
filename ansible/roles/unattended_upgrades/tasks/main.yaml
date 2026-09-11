@@ -1,4 +1,8 @@
 ---
+- name: Skip non-Debian systems
+  ansible.builtin.meta: end_host
+  when: ansible_facts['os_family'] != 'Debian'
+
 - name: Install unattended-upgrades
   become: true
   ansible.builtin.apt:
