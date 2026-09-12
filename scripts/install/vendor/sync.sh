@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Sync dotfiles installers, the mise config, and kitty defaults used by Packer.
+# Sync dotfiles installers, the mise config and lockfile, and kitty defaults.
 #
 # Usage:
 #   sync.sh            Fetch the latest main and overwrite the vendored copies.
@@ -21,6 +21,8 @@ MISE_INSTALLER_SOURCE=".chezmoiscripts/run_onchange_after_linux1_mise.sh.tmpl"
 MISE_INSTALLER_DEST="run_onchange_linux1_mise.sh"
 MISE_CONFIG_SOURCE="dot_config/mise/config.toml"
 MISE_CONFIG_DEST="mise-config.toml"
+MISE_LOCK_SOURCE="dot_config/mise/mise.lock"
+MISE_LOCK_DEST="mise.lock"
 KITTY_CONFIG_SOURCE="dot_config/kitty/kitty.conf"
 
 VENDOR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -50,15 +52,21 @@ curl -fsSL "https://raw.githubusercontent.com/${REPO}/${SHA}/${KITTY_CONFIG_SOUR
   -o "${tmp_dir}/kitty.conf"
 curl -fsSL "https://raw.githubusercontent.com/${REPO}/${SHA}/${MISE_CONFIG_SOURCE}" \
   -o "${tmp_dir}/${MISE_CONFIG_DEST}"
+curl -fsSL "https://raw.githubusercontent.com/${REPO}/${SHA}/${MISE_LOCK_SOURCE}" \
+  -o "${tmp_dir}/${MISE_LOCK_DEST}"
 curl -fsSL "https://raw.githubusercontent.com/${REPO}/${SHA}/${MISE_INSTALLER_SOURCE}" \
   -o "${tmp_dir}/${MISE_INSTALLER_DEST}.tmpl"
 
 if command -v sha256sum >/dev/null 2>&1; then
   mise_config_sha=$(sha256sum "${tmp_dir}/${MISE_CONFIG_DEST}" | awk '{print $1}')
+  mise_lock_sha=$(sha256sum "${tmp_dir}/${MISE_LOCK_DEST}" | awk '{print $1}')
 else
   mise_config_sha=$(shasum -a 256 "${tmp_dir}/${MISE_CONFIG_DEST}" | awk '{print $1}')
+  mise_lock_sha=$(shasum -a 256 "${tmp_dir}/${MISE_LOCK_DEST}" | awk '{print $1}')
 fi
-sed "s#{{ include \"dot_config/mise/config.toml\" | sha256sum }}#${mise_config_sha}#" \
+sed \
+  -e "s#{{ include \"dot_config/mise/config.toml\" | sha256sum }}#${mise_config_sha}#" \
+  -e "s#{{ include \"dot_config/mise/mise.lock\" | sha256sum }}#${mise_lock_sha}#" \
   "${tmp_dir}/${MISE_INSTALLER_DEST}.tmpl" > "${tmp_dir}/${MISE_INSTALLER_DEST}"
 
 if [[ "$CHECK" -eq 1 ]]; then
@@ -69,7 +77,7 @@ if [[ "$CHECK" -eq 1 ]]; then
       drift=1
     fi
   done
-  for name in "$MISE_INSTALLER_DEST" "$MISE_CONFIG_DEST"; do
+  for name in "$MISE_INSTALLER_DEST" "$MISE_CONFIG_DEST" "$MISE_LOCK_DEST"; do
     if ! diff -q "${VENDOR_DIR}/${name}" "${tmp_dir}/${name}" >/dev/null 2>&1; then
       echo "DRIFT: ${name} differs from ${REPO}@${SHA}" >&2
       drift=1
@@ -92,11 +100,12 @@ for name in "${!FILES[@]}"; do
 done
 install -m 0755 "${tmp_dir}/${MISE_INSTALLER_DEST}" "${VENDOR_DIR}/${MISE_INSTALLER_DEST}"
 install -m 0644 "${tmp_dir}/${MISE_CONFIG_DEST}" "${VENDOR_DIR}/${MISE_CONFIG_DEST}"
+install -m 0644 "${tmp_dir}/${MISE_LOCK_DEST}" "${VENDOR_DIR}/${MISE_LOCK_DEST}"
 install -m 0644 "${tmp_dir}/kitty.conf" "$KITTY_CONFIG_DEST"
 
 cat > "$REVISION_FILE" <<EOF
 # Vendored from ${REPO}, synced by sync.sh. Do not edit the installers,
-# mise-config.toml, or packer/files/kitty.conf; re-run sync.sh to update them.
+# mise-config.toml, mise.lock, or packer/files/kitty.conf; re-run sync.sh to update them.
 repo: ${REPO}
 ref:  ${REF}
 sha:  ${SHA}

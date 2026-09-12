@@ -183,10 +183,10 @@ Wireshark, virt-manager) come from the distro provisioner lists
 include.
 
 The CLI toolchain is installed system-wide under `/usr/local/share/mise` with
-its config in `/etc/mise/config.toml`. Per-user mise shims precede the system
-shims, allowing dotfiles to reuse the baseline or install a rolling local
-upgrade without modifying the image. Tool declarations track `latest`, so an
-image rebuild resolves the versions available at build time.
+its config and lockfile in `/etc/mise`. Per-user mise shims precede the system
+shims, allowing project-specific mise configs to override the image baseline.
+Tool declarations use concrete versions and `mise install --locked` consumes
+the committed Linux artifact URLs and checksums without live release resolution.
 
 ## Upstream Image Imports
 
@@ -241,8 +241,8 @@ Root `renovate.json` manages tracked dependency versions.
 
 Images install prerequisites and the CLI toolchain through the same
 `scripts/install` wrappers as `scripts/provision.sh`, driven by
-[scripts/common/toolchain.sh](scripts/common/toolchain.sh). Tool pins are
-maintained in `takanao14/dotfiles`; refresh the vendored copies with
+[scripts/common/toolchain.sh](scripts/common/toolchain.sh). Tool pins and their
+mise lockfile are maintained in `takanao14/dotfiles`; refresh the vendored copies with
 `../scripts/install/vendor/sync.sh`.
 
 **Not tracked (always installed as latest):**

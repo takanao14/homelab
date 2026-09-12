@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# mise-config-sha256: 99ea91ac0f3e2abf3b474e0f2ac10bb6e0e15dd3f751585daceab44760162b1f
+# mise-config-sha256: f8360aab8b3df5933ebdb2133b79f1ac311b0283267e74822a011c9e9380f049
+# mise-lock-sha256: 5482cf59d175d417595da6f58848e4b8add5dfcf02fd6daa376aaf529383e14a
 
 [[ "$(uname)" == "Linux" ]] || exit 0
 
@@ -84,10 +85,10 @@ if [[ "$MISE_INSTALL_SCOPE" == "system" ]]; then
     export MISE_SYSTEM_DATA_DIR
 fi
 if [[ -n "$MISE_SYSTEM_FLAG" ]]; then
-    "$MISE_BIN" install --yes "$MISE_SYSTEM_FLAG"
+    "$MISE_BIN" install --yes --locked "$MISE_SYSTEM_FLAG"
     "$MISE_BIN" reshim "$MISE_SYSTEM_FLAG"
 else
-    "$MISE_BIN" install --yes
+    "$MISE_BIN" install --yes --locked
     "$MISE_BIN" reshim
 fi
 

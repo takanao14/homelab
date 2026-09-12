@@ -14,9 +14,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENDOR_DIR="${VENDOR_DIR:-${SCRIPT_DIR}/vendor}"
 INSTALLER="${VENDOR_DIR}/run_onchange_linux1_mise.sh"
 VENDORED_CONFIG="${VENDOR_DIR}/mise-config.toml"
+VENDORED_LOCK="${VENDOR_DIR}/mise.lock"
 
-if [[ ! -f "$INSTALLER" || ! -f "$VENDORED_CONFIG" ]]; then
-  echo "Error: vendored mise installer or config not found in ${VENDOR_DIR}" >&2
+if [[ ! -f "$INSTALLER" || ! -f "$VENDORED_CONFIG" || ! -f "$VENDORED_LOCK" ]]; then
+  echo "Error: vendored mise installer, config, or lockfile not found in ${VENDOR_DIR}" >&2
   echo "Run vendor/sync.sh to populate them." >&2
   exit 1
 fi
@@ -25,6 +26,7 @@ case "$MODE" in
   local)
     MISE_CONFIG_FILE="${HOME}/.config/mise/config.toml"
     install -D -m 0644 "$VENDORED_CONFIG" "$MISE_CONFIG_FILE"
+    install -D -m 0644 "$VENDORED_LOCK" "${MISE_CONFIG_FILE%.toml}.lock"
     RUNNER=(env
       "MISE_INSTALL_SCOPE=user"
       "MISE_CONFIG_FILE=${MISE_CONFIG_FILE}"
@@ -33,6 +35,7 @@ case "$MODE" in
   global)
     MISE_CONFIG_FILE="/etc/mise/config.toml"
     sudo install -D -m 0644 "$VENDORED_CONFIG" "$MISE_CONFIG_FILE"
+    sudo install -D -m 0644 "$VENDORED_LOCK" "${MISE_CONFIG_FILE%.toml}.lock"
     # Preserve assignments through sudo without requiring sudoers setenv.
     RUNNER=(sudo env
       "MISE_INSTALL_SCOPE=system"

@@ -20,12 +20,14 @@ CLI releases.
 
 ## Decision
 
-Use one mise config from the dotfiles repository for standalone Linux CLI
-tools. Tools track `latest`, matching the rolling Homebrew policy on macOS;
-mise itself remains version- and checksum-pinned. `chezmoi apply` installs mise
-and its tools per user. Packer vendors the same installer and config from a
-pinned dotfiles commit, then uses mise system mode to install the golden-image
-baseline under `/usr/local`.
+Use one mise config and lockfile from the dotfiles repository for standalone
+Linux CLI tools. The config pins concrete versions so cloud Renovate can update
+them. GitHub Actions regenerates the Linux x64 and arm64 lock entries on the
+same update branch. mise itself remains version- and checksum-pinned.
+`chezmoi apply` installs mise and its tools per user with `--locked`. Packer
+vendors the same installer, config, and lockfile from a pinned dotfiles commit,
+then uses mise system mode to install the golden-image baseline under
+`/usr/local` with `--locked`.
 
 Shell PATH ordering prefers user mise shims over system mise shims, so a user
 can install a different version without changing the image. macOS remains on
@@ -37,12 +39,12 @@ moving them to Ansible is a separate change.
 - Stock Ubuntu plus dotfiles and a tool/desktop image expose the same declared
   CLI set, with only the installation scope differing.
 - Golden images avoid per-user state while retaining local overrides.
-- `mise upgrade` advances user tools without modifying the `latest` config or
-  the system baseline.
-- Rebuilding the same commit at different times can resolve different tool
-  versions, consistent with the existing Homebrew and APT/DNF rolling policy.
+- Renovate advances tool versions in reviewable changes; the lock update records
+  platform-specific download URLs and checksums.
+- Rebuilding the same commit installs the same resolved tool artifacts and does
+  not depend on unauthenticated GitHub API availability.
 - Tool additions move from custom Bash functions to mise config.
 - Packer does not depend on the dotfiles repository during a build because the
-  resolved installer and config are committed here.
+  resolved installer, config, and lockfile are committed here.
 - Krew remains activated per user; helm-diff uses a shared plugin directory in
   golden images.
