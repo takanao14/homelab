@@ -4,9 +4,10 @@ set -euo pipefail
 # Sync dotfiles installers, the mise config and lockfile, and kitty defaults.
 #
 # Usage:
-#   sync.sh            Fetch the latest main and overwrite the vendored copies.
-#   sync.sh --check    Check vendored copies against their recorded revision.
-#   REF=<sha|tag> sync.sh   Pin to a specific ref instead of main.
+#   sync.sh                     Fetch the latest main and overwrite the vendored copies.
+#   sync.sh --check             Check vendored copies against their recorded revision.
+#   sync.sh --check --upstream  Check vendored copies against the latest main.
+#   REF=<sha|tag> sync.sh       Pin to a specific ref instead of main.
 
 REPO="${REPO:-takanao14/dotfiles}"
 REF_PROVIDED="${REF+x}"
@@ -31,9 +32,19 @@ REVISION_FILE="${VENDOR_DIR}/REVISION"
 KITTY_CONFIG_DEST="${VENDOR_DIR}/../../../packer/files/kitty.conf"
 
 CHECK=0
-[[ "${1:-}" == "--check" ]] && CHECK=1
+UPSTREAM=0
+for arg in "$@"; do
+  case "$arg" in
+    --check)    CHECK=1 ;;
+    --upstream) UPSTREAM=1 ;;
+    *) echo "Unknown option: ${arg}" >&2; exit 1 ;;
+  esac
+done
 
-if [[ "$CHECK" -eq 1 && -z "$REF_PROVIDED" && -f "$REVISION_FILE" ]]; then
+# A bare --check validates the vendored copies against their own pin, so it
+# never reports that the pin itself fell behind. --upstream drops that override
+# and compares against REF (main by default) instead.
+if [[ "$CHECK" -eq 1 && "$UPSTREAM" -eq 0 && -z "$REF_PROVIDED" && -f "$REVISION_FILE" ]]; then
   REPO="$(awk '$1 == "repo:" { print $2 }' "$REVISION_FILE")"
   REF="$(awk '$1 == "sha:" { print $2 }' "$REVISION_FILE")"
 fi
