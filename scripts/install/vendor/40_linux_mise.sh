@@ -80,6 +80,29 @@ install_mise() {
 
 mise_version_matches || install_mise
 
+# pipx builds its venvs with its own interpreter, which on Rocky 9 is the
+# distro python3.9 that ansible-core no longer supports. Hand it the newer
+# python that run_onchange_10_linux_package.sh installs alongside it. This must
+# happen here because that script runs as a separate process.
+select_pipx_python() {
+    if [[ -n "${PIPX_DEFAULT_PYTHON:-}" ]]; then
+        return
+    fi
+    local candidate path
+    for candidate in python3 python3.14 python3.13 python3.12; do
+        path="$(command -v "$candidate" 2>/dev/null)" || continue
+        "$path" -c 'import sys; raise SystemExit(0 if sys.version_info[:2] >= (3, 12) else 1)' 2>/dev/null || continue
+        if [[ "$candidate" != "python3" ]]; then
+            export PIPX_DEFAULT_PYTHON="$path"
+        fi
+        return
+    done
+    echo "No python >=3.12 found; the pipx backend cannot install ansible-core" >&2
+    exit 1
+}
+
+select_pipx_python
+
 export MISE_CONFIG_FILE MISE_DATA_DIR
 if [[ "$MISE_INSTALL_SCOPE" == "system" ]]; then
     export MISE_SYSTEM_DATA_DIR
