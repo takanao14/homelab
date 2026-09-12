@@ -1,8 +1,10 @@
 name: Vendor Sync Check
 
-# Check vendored dotfiles (main) and powerdns-webui (tag) against upstream.
-# The weekly run detects upstream drift; PR filters cover local edits and
-# Renovate tag bumps.
+# Check vendored dotfiles and powerdns-webui against upstream.
+# Pull requests validate the vendored copies against their recorded pin, so a
+# deliberate pin does not fail review. The weekly run compares dotfiles against
+# main instead, because nothing else advances that pin; Renovate bumps the
+# powerdns-webui tag.
 on:
   pull_request:
     paths:
@@ -22,8 +24,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Check vendored installers against dotfiles
+      - name: Check vendored installers against their recorded revision
+        if: github.event_name == 'pull_request'
         run: ./scripts/install/vendor/sync.sh --check
+
+      - name: Check vendored installers against the latest dotfiles main
+        if: github.event_name != 'pull_request'
+        run: ./scripts/install/vendor/sync.sh --check --upstream
 
       - name: Check vendored powerdns-webui against upstream
         if: always()
