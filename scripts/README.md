@@ -546,5 +546,5 @@ Do not edit the `run_onchange_*.sh` files by hand — they are kept in sync with
 ```bash
 ./install/vendor/sync.sh           # refresh to the latest dotfiles main
 REF=<sha|tag> ./install/vendor/sync.sh   # pin to a specific ref
-./install/vendor/sync.sh --check   # CI: fail if the vendored copies have drifted
+./install/vendor/sync.sh --check   # CI: compare with vendor/REVISION
 ```

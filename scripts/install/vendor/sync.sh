@@ -5,10 +5,11 @@ set -euo pipefail
 #
 # Usage:
 #   sync.sh            Fetch the latest main and overwrite the vendored copies.
-#   sync.sh --check    Check vendored copies for drift.
+#   sync.sh --check    Check vendored copies against their recorded revision.
 #   REF=<sha|tag> sync.sh   Pin to a specific ref instead of main.
 
 REPO="${REPO:-takanao14/dotfiles}"
+REF_PROVIDED="${REF+x}"
 REF="${REF:-main}"
 
 # Map: <vendored filename> -> <path within the dotfiles repo>
@@ -31,6 +32,11 @@ KITTY_CONFIG_DEST="${VENDOR_DIR}/../../../packer/files/kitty.conf"
 
 CHECK=0
 [[ "${1:-}" == "--check" ]] && CHECK=1
+
+if [[ "$CHECK" -eq 1 && -z "$REF_PROVIDED" && -f "$REVISION_FILE" ]]; then
+  REPO="$(awk '$1 == "repo:" { print $2 }' "$REVISION_FILE")"
+  REF="$(awk '$1 == "sha:" { print $2 }' "$REVISION_FILE")"
+fi
 
 # Resolve the ref to a concrete commit SHA so the result is reproducible.
 commits_json=$(curl -fsSL "https://api.github.com/repos/${REPO}/commits/${REF}")
