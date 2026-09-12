@@ -336,9 +336,9 @@ fi
 echo "Running tool installation..."
 run_remote "install/tools.sh"
 
-echo "Ensuring \$HOME/.local/bin is in PATH..."
+echo "Ensuring user and system mise shims are in PATH..."
 run_shell \
-  "grep -qF '\$HOME/.local/bin' ~/.bashrc || echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc"
+  "grep -qF '\$HOME/.local/share/mise/shims' ~/.bashrc || echo 'export PATH=\"\$HOME/.local/share/mise/shims:/usr/local/share/mise/shims:\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc"
 
 echo "Ensuring ~/.env is sourced in ~/.bashrc..."
 run_shell \

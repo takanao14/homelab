@@ -1,6 +1,6 @@
-# Vendored from takanao14/dotfiles, synced by sync.sh. Do not edit the run_onchange_*.sh
-# files or packer/files/kitty.conf by hand; re-run sync.sh to update them.
+# Vendored from takanao14/dotfiles, synced by sync.sh. Do not edit the installers,
+# mise-config.toml, mise.lock, or packer/files/kitty.conf; re-run sync.sh to update them.
 repo: takanao14/dotfiles
-ref:  main
-sha:  f142790e2c787b7fe1aab9680f301b494bb99348
-date: 2026-09-02T07:51:26Z
+ref:  a6ea715
+sha:  a6ea715cfef05c0d3c9fa350a9ca05de00baf83e
+date: 2026-09-12T00:55:01Z

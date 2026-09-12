@@ -28,9 +28,9 @@ export VENDOR_DIR="${INSTALL_DIR}/vendor"
 
 echo "Installing the ${TOOL_MACHINE_PROFILE} toolchain system-wide..."
 
-# global mode installs into /usr/local, which outlives the build user that
-# cleanup deletes. packages.sh must run first: it provides the OS-level
-# dependencies (pipx, python>=3.12) that tools.sh refuses to run without.
+# global mode installs mise into /usr/local/bin and its managed tools under
+# /usr/local/share/mise, which outlive the build user that cleanup deletes.
+# packages.sh runs first because mise backends use the OS-level prerequisites.
 bash "${INSTALL_DIR}/packages.sh" global
 bash "${INSTALL_DIR}/tools.sh" global
 bash "${INSTALL_DIR}/terminal.sh" global

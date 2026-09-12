@@ -513,7 +513,11 @@ TOOL_SKIP_SYSTEM_PACKAGES=1 ./install/packages.sh  # no-sudo preflight
 
 ### Tools, terminal, and fonts
 
-`tools.sh` runs the vendored CLI installer with versions managed in dotfiles.
+`tools.sh` runs mise with the vendored config and lockfile managed in dotfiles.
+Local mode installs mise and tools per user; global mode installs the
+golden-image baseline system-wide. Both use `mise install --locked` so a build
+does not resolve releases through GitHub APIs. User shims take precedence over
+system shims, and project-specific mise configs can override the baseline.
 `terminal.sh` installs kitty and `fonts.sh` installs UDEV Gothic NF; both skip
 installation unless `TOOL_MACHINE_PROFILE=desktop`.
 
@@ -521,7 +525,7 @@ All three accept `local` (default, no sudo) or `global` (system-wide, needs sudo
 
 | Script | Local path | Global path |
 |--------|------------|-------------|
-| `tools.sh` | `$HOME/.local/bin` | `/usr/local/bin` |
+| `tools.sh` | `$HOME/.local/share/mise` | `/usr/local/share/mise` |
 | `terminal.sh` | `$HOME/.local/kitty.app` | `/usr/local/kitty.app` |
 | `fonts.sh` | `$HOME/.local/share/fonts` | `/usr/local/share/fonts` |
 
@@ -532,8 +536,9 @@ All three accept `local` (default, no sudo) or `global` (system-wide, needs sudo
 
 ### `vendor/`
 
-Vendored dotfiles installers remove runtime GitHub dependencies. Their source
-commit is recorded in `vendor/REVISION`.
+Vendored dotfiles installers, mise config, and mise lockfile remove the runtime
+dependency on the dotfiles repository. Their source commit is recorded in
+`vendor/REVISION`.
 
 Do not edit the `run_onchange_*.sh` files by hand — they are kept in sync with
 `takanao14/dotfiles` by `vendor/sync.sh`:
@@ -541,5 +546,5 @@ Do not edit the `run_onchange_*.sh` files by hand — they are kept in sync with
 ```bash
 ./install/vendor/sync.sh           # refresh to the latest dotfiles main
 REF=<sha|tag> ./install/vendor/sync.sh   # pin to a specific ref
-./install/vendor/sync.sh --check   # CI: fail if the vendored copies have drifted
+./install/vendor/sync.sh --check   # CI: compare with vendor/REVISION
 ```
