@@ -2,14 +2,14 @@
 set -euo pipefail
 
 # mise-config-sha256: f8360aab8b3df5933ebdb2133b79f1ac311b0283267e74822a011c9e9380f049
-# mise-lock-sha256: 5482cf59d175d417595da6f58848e4b8add5dfcf02fd6daa376aaf529383e14a
+# mise-lock-sha256: 7b7592958b0421e0fcb2d9af43680367545253d3c5ef1cfe483ffb54d765d208
 
 [[ "$(uname)" == "Linux" ]] || exit 0
 
 # renovate: datasource=github-releases depName=jdx/mise
 readonly MISE_VERSION="${MISE_VERSION:-2026.9.5}"
 # renovate: datasource=github-releases depName=databus23/helm-diff
-readonly HELM_DIFF_VERSION="${HELM_DIFF_VERSION:-3.15.11}"
+readonly HELM_DIFF_VERSION="${HELM_DIFF_VERSION:-3.15.12}"
 readonly MISE_CONFIG_FILE="${MISE_CONFIG_FILE:-$HOME/.config/mise/config.toml}"
 readonly MISE_INSTALL_SCOPE="${MISE_INSTALL_SCOPE:-user}"
 
@@ -67,7 +67,7 @@ mise_version_matches() {
 install_mise() {
     local tmp actual
     tmp="$(mktemp)"
-    trap 'rm -f "$tmp"' EXIT
+    trap 'rm -f "${tmp:-}"' EXIT
     curl -fsSL "$MISE_URL" -o "$tmp"
     actual="$(sha256sum "$tmp" | awk '{print $1}')"
     if [[ "$actual" != "$MISE_SHA256" ]]; then
