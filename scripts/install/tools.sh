@@ -25,8 +25,9 @@ fi
 case "$MODE" in
   local)
     MISE_CONFIG_FILE="${HOME}/.config/mise/config.toml"
+    MISE_LOCK_FILE="${HOME}/.config/mise/mise.lock"
     install -D -m 0644 "$VENDORED_CONFIG" "$MISE_CONFIG_FILE"
-    install -D -m 0644 "$VENDORED_LOCK" "${MISE_CONFIG_FILE%.toml}.lock"
+    install -D -m 0644 "$VENDORED_LOCK" "$MISE_LOCK_FILE"
     RUNNER=(env
       "MISE_INSTALL_SCOPE=user"
       "MISE_CONFIG_FILE=${MISE_CONFIG_FILE}"
@@ -34,8 +35,9 @@ case "$MODE" in
     ;;
   global)
     MISE_CONFIG_FILE="/etc/mise/config.toml"
+    MISE_LOCK_FILE="/etc/mise/mise.lock"
     sudo install -D -m 0644 "$VENDORED_CONFIG" "$MISE_CONFIG_FILE"
-    sudo install -D -m 0644 "$VENDORED_LOCK" "${MISE_CONFIG_FILE%.toml}.lock"
+    sudo install -D -m 0644 "$VENDORED_LOCK" "$MISE_LOCK_FILE"
     # Preserve assignments through sudo without requiring sudoers setenv.
     RUNNER=(sudo env
       "MISE_INSTALL_SCOPE=system"
