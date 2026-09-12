@@ -49,7 +49,7 @@ RUNNER=("${PRIV[@]}" "${ENVS[@]}" bash)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Packer can override the separately staged vendor directory.
 VENDOR_DIR="${VENDOR_DIR:-${SCRIPT_DIR}/vendor}"
-INSTALLER="${VENDOR_DIR}/run_onchange_linux2_terminal.sh"
+INSTALLER="${VENDOR_DIR}/20_linux_terminal.sh"
 if [[ ! -f "$INSTALLER" ]]; then
   echo "Error: vendored installer not found: $INSTALLER" >&2
   echo "Run vendor/sync.sh to populate it." >&2

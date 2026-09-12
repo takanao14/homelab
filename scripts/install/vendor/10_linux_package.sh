@@ -22,7 +22,7 @@ readonly BIN_ARCH
 # TOOL_SKIP_SYSTEM_PACKAGES=1 only verifies preinstalled dependencies.
 readonly SKIP_PACKAGES="${TOOL_SKIP_SYSTEM_PACKAGES:-0}"
 
-# Share linux1's cache layout for consistent baseline deferral.
+# Shared cache layout lets a per-user install defer to the golden-image baseline.
 readonly VERSION_CACHE_DIR="${TOOL_VERSION_CACHE_DIR:-$HOME/.local/share/tool-versions}"
 readonly SYSTEM_CACHE_DIR="/usr/local/share/tool-versions"
 
@@ -154,7 +154,8 @@ gpgkey=${gpgkey_url}
 EOF
 }
 
-# Idempotency helpers (mirrors run_onchange_linux1_tool.sh)
+# Idempotency helpers (mirrored by run_onchange_20_linux_terminal.sh and
+# run_onchange_30_linux_fonts.sh)
 
 # True when a per-user install can defer to the system baseline.
 baseline_satisfies() {
@@ -325,7 +326,7 @@ install_freelens() {
     esac
 }
 
-# pipx toolchain bootstrap (consumed by the ansible installs in linux1)
+# pipx toolchain bootstrap (consumed by the mise pipx backend)
 
 # Install Python 3.12 when the distro default cannot run ansible-core.
 have_python312() {

@@ -12,14 +12,14 @@ REPO="${REPO:-takanao14/dotfiles}"
 REF_PROVIDED="${REF+x}"
 REF="${REF:-main}"
 
-# Map: <vendored filename> -> <path within the dotfiles repo>
+# Map: <vendored filename, the chezmoi target name> -> <path within the dotfiles repo>
 declare -A FILES=(
-  ["run_onchange_linux0_package.sh"]=".chezmoiscripts/run_onchange_linux0_package.sh"
-  ["run_onchange_linux2_terminal.sh"]=".chezmoiscripts/run_onchange_linux2_terminal.sh"
-  ["run_onchange_linux3_fonts.sh"]=".chezmoiscripts/run_onchange_linux3_fonts.sh"
+  ["10_linux_package.sh"]=".chezmoiscripts/run_onchange_10_linux_package.sh"
+  ["20_linux_terminal.sh"]=".chezmoiscripts/run_onchange_20_linux_terminal.sh"
+  ["30_linux_fonts.sh"]=".chezmoiscripts/run_onchange_30_linux_fonts.sh"
 )
-MISE_INSTALLER_SOURCE=".chezmoiscripts/run_onchange_after_linux1_mise.sh.tmpl"
-MISE_INSTALLER_DEST="run_onchange_linux1_mise.sh"
+MISE_INSTALLER_SOURCE=".chezmoiscripts/run_onchange_after_40_linux_mise.sh.tmpl"
+MISE_INSTALLER_DEST="40_linux_mise.sh"
 MISE_CONFIG_SOURCE="dot_config/mise/config.toml"
 MISE_CONFIG_DEST="mise-config.toml"
 MISE_LOCK_SOURCE="dot_config/mise/mise.lock"

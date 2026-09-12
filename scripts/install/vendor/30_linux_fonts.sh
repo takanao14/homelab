@@ -98,7 +98,8 @@ is_desktop_machine() {
     return 1
 }
 
-# This script never calls sudo; linux0 must provide its OS-level dependencies.
+# This script never calls sudo; the 10_linux_package script must provide its
+# OS-level dependencies.
 check_dependencies() {
     local missing_deps=()
     for cmd in curl unzip fc-cache fc-list; do
@@ -108,7 +109,7 @@ check_dependencies() {
     done
     if [[ ${#missing_deps[@]} -gt 0 ]]; then
         log_error "Missing dependencies: ${missing_deps[*]}"
-        log_error "Run run_onchange_linux0_package.sh first (it installs curl, unzip and fontconfig)."
+        log_error "Run run_onchange_10_linux_package.sh first (it installs curl, unzip and fontconfig)."
         exit 1
     fi
 }

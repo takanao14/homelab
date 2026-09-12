@@ -1,6 +1,6 @@
 # Vendored from takanao14/dotfiles, synced by sync.sh. Do not edit the installers,
 # mise-config.toml, mise.lock, or packer/files/kitty.conf; re-run sync.sh to update them.
 repo: takanao14/dotfiles
-ref:  c84375a
-sha:  c84375ab5c5be5c8e20f784a33d1c4512fc2034e
-date: 2026-09-12T01:17:40Z
+ref:  38da8c45cb592fa5d503168b66866f20a4ccd80a
+sha:  38da8c45cb592fa5d503168b66866f20a4ccd80a
+date: 2026-09-12T03:13:28Z
