@@ -55,7 +55,7 @@ The source of truth is `takanao14/dotfiles`:
 
 - `dot_config/mise/config.toml` contains concrete tool versions.
 - `dot_config/mise/mise.lock` contains Linux x64 and arm64 artifact metadata.
-- `.chezmoiscripts/run_onchange_after_linux1_mise.sh.tmpl` installs the pinned
+- `.chezmoiscripts/run_onchange_after_40_linux_mise.sh.tmpl` installs the pinned
   mise binary and runs `mise install --locked`.
 - Cloud Renovate updates versions in `config.toml`.
 - The `Refresh mise lockfile` GitHub Actions workflow runs on a same-repository
@@ -85,7 +85,11 @@ The system lockfile path was corrected through dotfiles PR 183 and homelab PR
 427 after the first Packer test showed that mise does not discover
 `/etc/mise/config.lock`. The supported system path is `/etc/mise/mise.lock`.
 
-An Ubuntu 24 tool image was built successfully from the correction branch.
+An Ubuntu 24 tool image was built successfully from the correction branch. The
+legacy direct-download installer and its rollback documentation were removed
+after the soak period, ending duplicate Renovate dependency detection. The
+dotfiles scripts were then renumbered into a single execution-order sequence,
+which is why the vendored copies carry their chezmoi target names.
 Repository checks cover vendored-file drift, shell syntax and lint, Packer
 format and validation, and ADR formatting. Renovate's Dependency Dashboard
 detects all 36 mise tool declarations.
@@ -98,8 +102,5 @@ detects all 36 mise tool declarations.
   image; this validates the per-user path after lockfile adoption.
 - Build representative Debian and Rocky Linux tool images. Linux arm64 lock
   entries are generated but have not yet been exercised by Packer.
-- Keep the legacy direct-download installer only during the initial soak
-  period, then remove it and its rollback documentation to eliminate duplicate
-  Renovate dependency detection.
 - Evaluate moving global APT and DNF package installation to Ansible as a
   separate decision; it is not part of the mise migration.

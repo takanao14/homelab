@@ -12,7 +12,7 @@ MODE="${1:-local}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Packer can override the separately staged vendor directory.
 VENDOR_DIR="${VENDOR_DIR:-${SCRIPT_DIR}/vendor}"
-INSTALLER="${VENDOR_DIR}/run_onchange_linux1_mise.sh"
+INSTALLER="${VENDOR_DIR}/40_linux_mise.sh"
 VENDORED_CONFIG="${VENDOR_DIR}/mise-config.toml"
 VENDORED_LOCK="${VENDOR_DIR}/mise.lock"
 

@@ -540,8 +540,9 @@ Vendored dotfiles installers, mise config, and mise lockfile remove the runtime
 dependency on the dotfiles repository. Their source commit is recorded in
 `vendor/REVISION`.
 
-Do not edit the `run_onchange_*.sh` files by hand — they are kept in sync with
-`takanao14/dotfiles` by `vendor/sync.sh`:
+Do not edit the numbered installer scripts by hand — they keep the chezmoi
+target names of their sources and are synced from `takanao14/dotfiles` by
+`vendor/sync.sh`:
 
 ```bash
 ./install/vendor/sync.sh           # refresh to the latest dotfiles main
