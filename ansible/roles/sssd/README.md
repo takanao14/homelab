@@ -1,6 +1,6 @@
 # sssd Role
 
-Connects Ubuntu 24.04 and Rocky Linux 9 hosts to the Authentik LDAP Outpost for
+Connects Ubuntu 24.04/26.04 and Rocky Linux 9 hosts to the Authentik LDAP Outpost for
 NSS/PAM lookups, password authentication, and SSH public keys. This implements
 stage 6 of `docs/plans/identity-authentication-architecture.md`.
 

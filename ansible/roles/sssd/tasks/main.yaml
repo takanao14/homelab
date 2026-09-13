@@ -7,7 +7,7 @@
         ansible_facts['distribution_version'] is
         match(sssd_supported_versions.get(ansible_facts['distribution'], 'a^'))
     fail_msg: >-
-      The sssd role supports Ubuntu 24.04 and Rocky Linux 9 only; found
+      The sssd role supports Ubuntu 24.04/26.04 and Rocky Linux 9 only; found
       {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}.
 
 # Establish local recovery before introducing the Authentik dependency.
