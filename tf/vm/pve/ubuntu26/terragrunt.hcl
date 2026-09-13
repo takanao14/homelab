@@ -27,7 +27,7 @@ inputs = {
       ipv4gw  = local.common.locals.pve.net10.ipv4gw
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
-          size    = 40
+          size    = 80
           file_id = "local:iso/ubuntu-26.04-desktop.img"
         })
       }
