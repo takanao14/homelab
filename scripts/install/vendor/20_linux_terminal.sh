@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-[[ "$(uname)" == "Linux" ]] || exit 0
+[[ "$(uname -s)" == "Linux" ]] || exit 0
 
 # renovate: datasource=github-releases depName=kovidgoyal/kitty
 readonly KITTY_VERSION="${KITTY_VERSION:-0.48.2}"
@@ -19,14 +19,17 @@ readonly KITTY_APP="${KITTY_PREFIX}/kitty.app"
 
 # Logging
 
-readonly RED='\033[0;31m'
-readonly GREEN='\033[0;32m'
-readonly YELLOW='\033[1;33m'
-readonly NC='\033[0m'
+log_info() {
+    printf '[INFO] %s\n' "$*"
+}
 
-log_info()  { echo -e "${GREEN}[INFO]${NC} $*"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+log_warn() {
+    printf '[WARN] %s\n' "$*"
+}
+
+log_error() {
+    printf '[ERROR] %s\n' "$*" >&2
+}
 
 TMP_PATHS=()
 
@@ -42,7 +45,8 @@ trap cleanup_tmp_paths EXIT
 # Helpers
 
 make_tmp_dir() {
-    local __var_name="$1" path
+    local __var_name="$1"
+    local path
     path="$(mktemp -d)"
     TMP_PATHS+=("$path")
     printf -v "$__var_name" '%s' "$path"
@@ -148,7 +152,8 @@ install_kitty() {
 # True when a system-wide baseline already provides KEY at VERSION. Only
 # meaningful for a per-user install (our cache dir is not the system one).
 baseline_satisfies() {
-    local key="$1" version="$2"
+    local key="$1"
+    local version="$2"
     [[ "$VERSION_CACHE_DIR" != "$SYSTEM_CACHE_DIR" ]] || return 1
     [[ "$(cat "${SYSTEM_CACHE_DIR}/${key}" 2>/dev/null)" == "$version" ]]
 }
@@ -158,16 +163,16 @@ main() {
 
     is_desktop_machine "Skipping kitty installation" || return 0
 
-    if baseline_satisfies "kitty" "$KITTY_VERSION" && command -v kitty &>/dev/null; then
+    if baseline_satisfies "kitty" "$KITTY_VERSION" && command -v kitty >/dev/null 2>&1; then
         log_info "kitty ${KITTY_VERSION} provided system-wide, skipping per-user install"
-        exit 0
+        return 0
     fi
 
     local cache_file="$VERSION_CACHE_DIR/kitty"
-    if command -v kitty &>/dev/null && \
+    if command -v kitty >/dev/null 2>&1 && \
        [[ "$(cat "$cache_file" 2>/dev/null)" == "$KITTY_VERSION" ]]; then
         log_info "kitty ${KITTY_VERSION} is already up to date, skipping"
-        exit 0
+        return 0
     fi
 
     install_kitty

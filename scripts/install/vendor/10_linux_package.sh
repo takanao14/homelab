@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-[[ "$(uname)" == "Linux" ]] || exit 0
+[[ "$(uname -s)" == "Linux" ]] || exit 0
 
 # shellcheck source=/dev/null
 . /etc/os-release
@@ -28,16 +28,20 @@ readonly SYSTEM_CACHE_DIR="/usr/local/share/tool-versions"
 
 # Logging
 
-readonly RED='\033[0;31m'
-readonly GREEN='\033[0;32m'
-readonly YELLOW='\033[1;33m'
-readonly NC='\033[0m'
+log_info() {
+    printf '[INFO] %s\n' "$*"
+}
 
-log_info()  { echo -e "${GREEN}[INFO]${NC} $*"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+log_warn() {
+    printf '[WARN] %s\n' "$*"
+}
+
+log_error() {
+    printf '[ERROR] %s\n' "$*" >&2
+}
 
 is_desktop_machine() {
+    local skip_msg="${1:-}"
     local profile="${TOOL_MACHINE_PROFILE:-auto}"
 
     case "$profile" in
@@ -47,6 +51,7 @@ is_desktop_machine() {
             ;;
         server)
             log_info "Server machine profile selected"
+            [[ -n "$skip_msg" ]] && log_info "$skip_msg"
             return 1
             ;;
         auto) ;;
@@ -66,6 +71,7 @@ is_desktop_machine() {
                 ;;
             server)
                 log_info "Server machine profile read from ${profile_file}"
+                [[ -n "$skip_msg" ]] && log_info "$skip_msg"
                 return 1
                 ;;
             *)
@@ -83,6 +89,7 @@ is_desktop_machine() {
     fi
 
     log_warn "No explicit machine profile or image marker; defaulting to server"
+    [[ -n "$skip_msg" ]] && log_warn "$skip_msg"
     return 1
 }
 
@@ -106,7 +113,8 @@ cleanup_tmp_paths() {
 trap cleanup_tmp_paths EXIT
 
 make_tmp_dir() {
-    local __var_name="$1" path
+    local __var_name="$1"
+    local path
     path="$(mktemp -d)"
     TMP_PATHS+=("$path")
     printf -v "$__var_name" '%s' "$path"
@@ -120,6 +128,26 @@ update_package_cache() {
         rocky)  sudo dnf makecache --refresh -q ;;
         *) log_error "Unsupported OS: ${OS_ID}"; exit 1 ;;
     esac
+}
+
+refresh_hashicorp_apt_key_if_configured() {
+    [[ "$OS_ID" == "ubuntu" || "$OS_ID" == "debian" ]] || return 0
+
+    local source_file
+    for source_file in \
+        /etc/apt/sources.list \
+        /etc/apt/sources.list.d/*.list \
+        /etc/apt/sources.list.d/*.sources; do
+        [[ -r "$source_file" ]] || continue
+        grep -qF 'apt.releases.hashicorp.com' "$source_file" || continue
+
+        log_info "Refreshing HashiCorp APT signing key..."
+        curl -fsSL https://apt.releases.hashicorp.com/gpg \
+            | gpg --dearmor \
+            | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
+        sudo chmod 644 /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        return 0
+    done
 }
 
 install_packages() {
@@ -159,19 +187,20 @@ EOF
 
 # True when a per-user install can defer to the system baseline.
 baseline_satisfies() {
-    local key="$1" version="$2"
+    local key="$1"
+    local version="$2"
     [[ "$VERSION_CACHE_DIR" != "$SYSTEM_CACHE_DIR" ]] || return 1
     [[ "$(cat "${SYSTEM_CACHE_DIR}/${key}" 2>/dev/null)" == "$version" ]]
 }
 
 install_if_needed() {
     local cmd="$1" version="$2" install_func="$3"
-    if baseline_satisfies "$cmd" "$version" && command -v "$cmd" &>/dev/null; then
+    if baseline_satisfies "$cmd" "$version" && command -v "$cmd" >/dev/null 2>&1; then
         log_info "${cmd} ${version} provided system-wide, skipping reinstall"
         return
     fi
     local cache_file="${VERSION_CACHE_DIR}/${cmd}"
-    if ! command -v "$cmd" &>/dev/null || [[ "$(cat "$cache_file" 2>/dev/null)" != "$version" ]]; then
+    if ! command -v "$cmd" >/dev/null 2>&1 || [[ "$(cat "$cache_file" 2>/dev/null)" != "$version" ]]; then
         "$install_func"
         mkdir -p "$VERSION_CACHE_DIR"
         echo "$version" > "$cache_file"
@@ -330,13 +359,13 @@ install_freelens() {
 
 # Install Python 3.12 when the distro default cannot run ansible-core.
 have_python312() {
-    command -v python3.12 &>/dev/null && return 0
-    command -v python3 &>/dev/null && \
+    command -v python3.12 >/dev/null 2>&1 && return 0
+    command -v python3 >/dev/null 2>&1 && \
         python3 -c 'import sys; raise SystemExit(0 if sys.version_info[:2] >= (3, 12) else 1)' 2>/dev/null
 }
 
 ensure_pipx_toolchain() {
-    if ! command -v pipx &>/dev/null; then
+    if ! command -v pipx >/dev/null 2>&1; then
         log_info "Installing pipx..."
         update_package_cache
         case "$OS_ID" in
@@ -382,11 +411,11 @@ preflight_packages() {
     # Check base and package-managed tool dependencies.
     for cmd in curl tar gzip unzip xz gpg git file find make sha256sum install \
                terraform packer vault kubectl bao pipx mosh tmux podman zsh; do
-        command -v "$cmd" &>/dev/null || missing+=("$cmd")
+        command -v "$cmd" >/dev/null 2>&1 || missing+=("$cmd")
     done
     if is_desktop_machine; then
         for cmd in fc-cache fc-list; do
-            command -v "$cmd" &>/dev/null || missing+=("$cmd")
+            command -v "$cmd" >/dev/null 2>&1 || missing+=("$cmd")
         done
         [[ "$(freelens_installed_version)" == "$FREELENS_VERSION" ]] || \
             missing+=("freelens=${FREELENS_VERSION}")
@@ -417,19 +446,21 @@ main() {
         exit 1
     fi
 
+    # Repair a rotated key before any apt operation uses an existing repo.
+    refresh_hashicorp_apt_key_if_configured
     install_base_dependencies
 
-    if ! command -v terraform &>/dev/null || ! command -v packer &>/dev/null || ! command -v vault &>/dev/null; then
+    if ! command -v terraform >/dev/null 2>&1 || \
+       ! command -v packer >/dev/null 2>&1 || \
+       ! command -v vault >/dev/null 2>&1; then
         install_hashicorp_tools
     fi
 
     install_if_needed "kubectl" "$KUBECTL_VERSION" install_kubectl
     install_if_needed "bao"     "$OPENBAO_VERSION" install_openbao
 
-    if is_desktop_machine; then
+    if is_desktop_machine "Skipping Freelens installation"; then
         install_freelens
-    else
-        log_info "Skipping Freelens installation on server profile"
     fi
 
     ensure_pipx_toolchain
@@ -437,4 +468,4 @@ main() {
     log_info "=== Package installation completed ==="
 }
 
-main
+main "$@"

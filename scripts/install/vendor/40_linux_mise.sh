@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# mise-config-sha256: 6b9d14c1142ab82f4d8817330a3c18a16db84437912bdc36c7ab2fd75902f911
-# mise-lock-sha256: dac44dd390cef93bfe1bef17d4c7ff38b21d2a075cf5694cbcadc41d90eff3a5
+# mise-config-sha256: 5e25e3817cab84ccf48108884983a95cf1205fcda676433c994e3c07b2ce0045
+# mise-lock-sha256: 12f44244b3e4a20b7f0f44801f089eb72c7a76b4f0554c50c1bc990c1bfdce8d
 
-[[ "$(uname)" == "Linux" ]] || exit 0
+[[ "$(uname -s)" == "Linux" ]] || exit 0
 
 # renovate: datasource=github-releases depName=jdx/mise
 readonly MISE_VERSION="${MISE_VERSION:-2026.9.5}"
 # renovate: datasource=github-releases depName=databus23/helm-diff
-readonly HELM_DIFF_VERSION="${HELM_DIFF_VERSION:-3.15.12}"
+readonly HELM_DIFF_VERSION="${HELM_DIFF_VERSION:-3.15.13}"
 readonly MISE_CONFIG_FILE="${MISE_CONFIG_FILE:-$HOME/.config/mise/config.toml}"
 readonly MISE_INSTALL_SCOPE="${MISE_INSTALL_SCOPE:-user}"
 
@@ -60,14 +60,28 @@ esac
 readonly MISE_BIN="$MISE_BIN_DIR/mise"
 readonly MISE_URL="https://github.com/jdx/mise/releases/download/v${MISE_VERSION}/mise-v${MISE_VERSION}-linux-${MISE_ARCH}"
 
+TMP_PATHS=()
+
+cleanup_tmp_paths() {
+    local path
+
+    for path in "${TMP_PATHS[@]}"; do
+        rm -f "$path"
+    done
+}
+
+trap cleanup_tmp_paths EXIT
+
 mise_version_matches() {
     [[ -x "$MISE_BIN" ]] && "$MISE_BIN" --version 2>/dev/null | grep -q "^${MISE_VERSION} "
 }
 
 install_mise() {
-    local tmp actual
+    local tmp
+    local actual
+
     tmp="$(mktemp)"
-    trap 'rm -f "${tmp:-}"' EXIT
+    TMP_PATHS+=("$tmp")
     curl -fsSL "$MISE_URL" -o "$tmp"
     actual="$(sha256sum "$tmp" | awk '{print $1}')"
     if [[ "$actual" != "$MISE_SHA256" ]]; then

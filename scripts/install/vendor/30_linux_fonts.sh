@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-[[ "$(uname)" == "Linux" ]] || exit 0
+[[ "$(uname -s)" == "Linux" ]] || exit 0
 
 # renovate: datasource=github-releases depName=yuru7/udev-gothic
 readonly UDEV_GOTHIC_VERSION="${UDEV_GOTHIC_VERSION:-2.2.0}"
@@ -16,14 +16,17 @@ readonly DOWNLOAD_URL="https://github.com/yuru7/udev-gothic/releases/download/v$
 
 # Logging
 
-readonly RED='\033[0;31m'
-readonly GREEN='\033[0;32m'
-readonly YELLOW='\033[1;33m'
-readonly NC='\033[0m'
+log_info() {
+    printf '[INFO] %s\n' "$*"
+}
 
-log_info()  { echo -e "${GREEN}[INFO]${NC} $*"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+log_warn() {
+    printf '[WARN] %s\n' "$*"
+}
+
+log_error() {
+    printf '[ERROR] %s\n' "$*" >&2
+}
 
 TMP_PATHS=()
 
@@ -39,7 +42,8 @@ trap cleanup_tmp_paths EXIT
 # Helpers
 
 make_tmp_dir() {
-    local __var_name="$1" path
+    local __var_name="$1"
+    local path
     path="$(mktemp -d)"
     TMP_PATHS+=("$path")
     printf -v "$__var_name" '%s' "$path"
@@ -103,7 +107,7 @@ is_desktop_machine() {
 check_dependencies() {
     local missing_deps=()
     for cmd in curl unzip fc-cache fc-list; do
-        if ! command -v "$cmd" &>/dev/null; then
+        if ! command -v "$cmd" >/dev/null 2>&1; then
             missing_deps+=("$cmd")
         fi
     done
@@ -143,7 +147,8 @@ rebuild_font_cache() {
 # True when a system-wide baseline already provides KEY at VERSION. Only
 # meaningful for a per-user install (our cache dir is not the system one).
 baseline_satisfies() {
-    local key="$1" version="$2"
+    local key="$1"
+    local version="$2"
     [[ "$VERSION_CACHE_DIR" != "$SYSTEM_CACHE_DIR" ]] || return 1
     [[ "$(cat "${SYSTEM_CACHE_DIR}/${key}" 2>/dev/null)" == "$version" ]]
 }
