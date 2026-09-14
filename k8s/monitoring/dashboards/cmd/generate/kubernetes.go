@@ -74,6 +74,21 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
+				Title("Nodes NotReady").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`count(kube_node_status_condition{` + clusterFilter + `,condition="Ready",status="true"} == 0) or vector(0)`).
+					LegendFormat("NotReady"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
 				Title("Nodes Total").
 				Datasource(ds).
 				Span(6).Height(4).
@@ -84,6 +99,22 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count(kube_node_info{` + clusterFilter + `})`).
 					LegendFormat("Total"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Node Pressure Conditions").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					// Any active MemoryPressure, DiskPressure, or PIDPressure across all nodes.
+					Expr(`count(kube_node_status_condition{` + clusterFilter + `,condition=~"MemoryPressure|DiskPressure|PIDPressure",status="true"} == 1) or vector(0)`).
+					LegendFormat("Pressure"),
 				),
 		).
 		WithPanel(
@@ -119,10 +150,42 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			stat.NewPanelBuilder().
+				Title("Container Restarts (1h)").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`ceil(sum(increase(kube_pod_container_status_restarts_total{` + clusterFilter + `,` + nsFilter + `}[1h]))) or vector(0)`).
+					LegendFormat("Restarts"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("OOMKilled Containers").
+				Description("Containers that exist right now and whose last exit was an OOM kill -- a standing state, not a rate, so unlike the (1h) tiles around it there is no window. It clears when the pod is replaced, which in practice is quick: over the last 30 days this read non-zero for one hour out of 720. For OOM activity within a window, use \"Container OOM Events (1h)\" below, which counts cgroup events instead and can legitimately disagree with this.").
+				Datasource(ds).
+				Span(6).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					// Counts containers whose most recent termination reason was OOMKilled.
+					Expr(`count(kube_pod_container_status_last_terminated_reason{` + clusterFilter + `,reason="OOMKilled",` + nsFilter + `} == 1) or vector(0)`).
+					LegendFormat("OOMKilled"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
 				Title("Deployments Healthy").
 				Description("Deployments meant to be running that are. Ones deliberately scaled to zero are not counted, so this plus Degraded is less than the total whenever something is parked.").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(6).Height(4).
 				Unit("short").
 				Min(0).
 				Thresholds(measurementThresholds()).
@@ -138,7 +201,7 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 			stat.NewPanelBuilder().
 				Title("Deployments Degraded").
 				Datasource(ds).
-				Span(8).Height(4).
+				Span(6).Height(4).
 				Unit("short").
 				Min(0).
 				Thresholds(issueThresholds).
@@ -147,21 +210,6 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count(kube_deployment_status_replicas_available{` + clusterFilter + `,` + nsFilter + `} < kube_deployment_spec_replicas{` + clusterFilter + `,` + nsFilter + `}) or vector(0)`).
 					LegendFormat("Degraded"),
-				),
-		).
-		WithPanel(
-			stat.NewPanelBuilder().
-				Title("Container Restarts (1h)").
-				Datasource(ds).
-				Span(8).Height(4).
-				Unit("short").
-				Min(0).
-				Thresholds(issueThresholds).
-				ColorMode(common.BigValueColorModeBackground).
-				Orientation(common.VizOrientationAuto).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					Expr(`ceil(sum(increase(kube_pod_container_status_restarts_total{` + clusterFilter + `,` + nsFilter + `}[1h]))) or vector(0)`).
-					LegendFormat("Restarts"),
 				),
 		).
 		WithPanel(
@@ -192,39 +240,6 @@ func buildKubernetesOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`count(kube_statefulset_status_replicas_ready{` + clusterFilter + `,` + nsFilter + `} < kube_statefulset_replicas{` + clusterFilter + `,` + nsFilter + `}) or vector(0)`).
 					LegendFormat("Degraded"),
-				),
-		).
-		WithPanel(
-			stat.NewPanelBuilder().
-				Title("OOMKilled Containers").
-				Description("Containers that exist right now and whose last exit was an OOM kill -- a standing state, not a rate, so unlike the (1h) tiles around it there is no window. It clears when the pod is replaced, which in practice is quick: over the last 30 days this read non-zero for one hour out of 720. For OOM activity within a window, use \"Container OOM Events (1h)\" below, which counts cgroup events instead and can legitimately disagree with this.").
-				Datasource(ds).
-				Span(6).Height(4).
-				Unit("short").
-				Min(0).
-				Thresholds(issueThresholds).
-				ColorMode(common.BigValueColorModeBackground).
-				Orientation(common.VizOrientationAuto).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					// Counts containers whose most recent termination reason was OOMKilled.
-					Expr(`count(kube_pod_container_status_last_terminated_reason{` + clusterFilter + `,reason="OOMKilled",` + nsFilter + `} == 1) or vector(0)`).
-					LegendFormat("OOMKilled"),
-				),
-		).
-		WithPanel(
-			stat.NewPanelBuilder().
-				Title("Node Pressure Conditions").
-				Datasource(ds).
-				Span(6).Height(4).
-				Unit("short").
-				Min(0).
-				Thresholds(issueThresholds).
-				ColorMode(common.BigValueColorModeBackground).
-				Orientation(common.VizOrientationAuto).
-				WithTarget(prometheus.NewDataqueryBuilder().
-					// Any active MemoryPressure, DiskPressure, or PIDPressure across all nodes.
-					Expr(`count(kube_node_status_condition{` + clusterFilter + `,condition=~"MemoryPressure|DiskPressure|PIDPressure",status="true"} == 1) or vector(0)`).
-					LegendFormat("Pressure"),
 				),
 		).
 		WithRow(dashboard.NewRowBuilder("Resource Usage")).

@@ -84,11 +84,11 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(kube_node_info{cluster=~\"$cluster\"})",
-          "legendFormat": "Total"
+          "expr": "count(kube_node_status_condition{cluster=~\"$cluster\",condition=\"Ready\",status=\"true\"} == 0) or vector(0)",
+          "legendFormat": "NotReady"
         }
       ],
-      "title": "Nodes Total",
+      "title": "Nodes NotReady",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -103,7 +103,7 @@
       "repeatDirection": "h",
       "options": {
         "graphMode": "area",
-        "colorMode": "value",
+        "colorMode": "background",
         "justifyMode": "auto",
         "textMode": "auto",
         "wideLayout": true,
@@ -123,7 +123,11 @@
             "steps": [
               {
                 "value": null,
-                "color": "blue"
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
               }
             ]
           }
@@ -135,11 +139,11 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(kube_pod_status_phase{cluster=~\"$cluster\",phase=\"Running\",namespace=~\"$namespace\"} == 1) or vector(0)",
-          "legendFormat": "Running"
+          "expr": "count(kube_node_info{cluster=~\"$cluster\"})",
+          "legendFormat": "Total"
         }
       ],
-      "title": "Pods Running",
+      "title": "Nodes Total",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -186,11 +190,11 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(kube_pod_status_phase{cluster=~\"$cluster\",phase!=\"Running\",phase!=\"Succeeded\",namespace=~\"$namespace\"} == 1) or vector(0)",
-          "legendFormat": "Issues"
+          "expr": "count(kube_node_status_condition{cluster=~\"$cluster\",condition=~\"MemoryPressure|DiskPressure|PIDPressure\",status=\"true\"} == 1) or vector(0)",
+          "legendFormat": "Pressure"
         }
       ],
-      "title": "Pods Not Running",
+      "title": "Node Pressure Conditions",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -241,12 +245,11 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count((kube_deployment_status_replicas_available{cluster=~\"$cluster\",namespace=~\"$namespace\"} == kube_deployment_spec_replicas{cluster=~\"$cluster\",namespace=~\"$namespace\"}) and (kube_deployment_spec_replicas{cluster=~\"$cluster\",namespace=~\"$namespace\"} \u003e 0)) or vector(0)",
-          "legendFormat": "Healthy"
+          "expr": "count(kube_pod_status_phase{cluster=~\"$cluster\",phase=\"Running\",namespace=~\"$namespace\"} == 1) or vector(0)",
+          "legendFormat": "Running"
         }
       ],
-      "title": "Deployments Healthy",
-      "description": "Deployments meant to be running that are. Ones deliberately scaled to zero are not counted, so this plus Degraded is less than the total whenever something is parked.",
+      "title": "Pods Running",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -254,7 +257,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 5
       },
@@ -293,11 +296,11 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(kube_deployment_status_replicas_available{cluster=~\"$cluster\",namespace=~\"$namespace\"} \u003c kube_deployment_spec_replicas{cluster=~\"$cluster\",namespace=~\"$namespace\"}) or vector(0)",
-          "legendFormat": "Degraded"
+          "expr": "count(kube_pod_status_phase{cluster=~\"$cluster\",phase!=\"Running\",phase!=\"Succeeded\",namespace=~\"$namespace\"} == 1) or vector(0)",
+          "legendFormat": "Issues"
         }
       ],
-      "title": "Deployments Degraded",
+      "title": "Pods Not Running",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
@@ -305,8 +308,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 6,
         "y": 5
       },
       "repeatDirection": "h",
@@ -360,119 +363,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 12,
         "y": 5
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "background",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "count(kube_daemonset_status_number_ready{cluster=~\"$cluster\",namespace=~\"$namespace\"} \u003c kube_daemonset_status_desired_number_scheduled{cluster=~\"$cluster\",namespace=~\"$namespace\"}) or vector(0)",
-          "legendFormat": "Degraded"
-        }
-      ],
-      "title": "DaemonSets Degraded",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 0,
-        "y": 9
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "background",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "count(kube_statefulset_status_replicas_ready{cluster=~\"$cluster\",namespace=~\"$namespace\"} \u003c kube_statefulset_replicas{cluster=~\"$cluster\",namespace=~\"$namespace\"}) or vector(0)",
-          "legendFormat": "Degraded"
-        }
-      ],
-      "title": "StatefulSets Degraded",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 6,
-        "y": 9
       },
       "repeatDirection": "h",
       "options": {
@@ -527,6 +420,168 @@
       "gridPos": {
         "h": 4,
         "w": 6,
+        "x": 18,
+        "y": 5
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count((kube_deployment_status_replicas_available{cluster=~\"$cluster\",namespace=~\"$namespace\"} == kube_deployment_spec_replicas{cluster=~\"$cluster\",namespace=~\"$namespace\"}) and (kube_deployment_spec_replicas{cluster=~\"$cluster\",namespace=~\"$namespace\"} \u003e 0)) or vector(0)",
+          "legendFormat": "Healthy"
+        }
+      ],
+      "title": "Deployments Healthy",
+      "description": "Deployments meant to be running that are. Ones deliberately scaled to zero are not counted, so this plus Degraded is less than the total whenever something is parked.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 9
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count(kube_deployment_status_replicas_available{cluster=~\"$cluster\",namespace=~\"$namespace\"} \u003c kube_deployment_spec_replicas{cluster=~\"$cluster\",namespace=~\"$namespace\"}) or vector(0)",
+          "legendFormat": "Degraded"
+        }
+      ],
+      "title": "Deployments Degraded",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 9
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "count(kube_daemonset_status_number_ready{cluster=~\"$cluster\",namespace=~\"$namespace\"} \u003c kube_daemonset_status_desired_number_scheduled{cluster=~\"$cluster\",namespace=~\"$namespace\"}) or vector(0)",
+          "legendFormat": "Degraded"
+        }
+      ],
+      "title": "DaemonSets Degraded",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
         "x": 12,
         "y": 9
       },
@@ -569,11 +624,11 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(kube_node_status_condition{cluster=~\"$cluster\",condition=~\"MemoryPressure|DiskPressure|PIDPressure\",status=\"true\"} == 1) or vector(0)",
-          "legendFormat": "Pressure"
+          "expr": "count(kube_statefulset_status_replicas_ready{cluster=~\"$cluster\",namespace=~\"$namespace\"} \u003c kube_statefulset_replicas{cluster=~\"$cluster\",namespace=~\"$namespace\"}) or vector(0)",
+          "legendFormat": "Degraded"
         }
       ],
-      "title": "Node Pressure Conditions",
+      "title": "StatefulSets Degraded",
       "transparent": false,
       "datasource": {
         "type": "prometheus",
