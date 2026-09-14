@@ -365,6 +365,30 @@
     state: "{{ rocm_device_metrics_exporter_package_state }}"
     update_cache: true
 
+# The Debian package disables this service, leaving the device plugin without
+# its non-privileged per-GPU health source. Preserve the vendor configuration
+# so package upgrades can add fields without duplicating them in this role.
+- name: Enable AMD metrics exporter health service
+  become: true
+  ansible.builtin.replace:
+    path: /etc/metrics/config.json
+    regexp: '(?s)("HealthService"\s*:\s*\{.*?"Enable"\s*:\s*)false'
+    replace: '\g<1>true'
+  register: rocm_metrics_exporter_health_config
+
+- name: Read AMD metrics exporter configuration
+  become: true
+  ansible.builtin.slurp:
+    src: /etc/metrics/config.json
+  register: rocm_metrics_exporter_config
+
+- name: Verify AMD metrics exporter health service is enabled
+  ansible.builtin.assert:
+    that:
+      - (rocm_metrics_exporter_config.content | b64decode | from_json).CommonConfig.HealthService.Enable | bool
+    fail_msg: "HealthService.Enable is missing or disabled in /etc/metrics/config.json."
+  when: not ansible_check_mode
+
 - name: Enable and start gpuagent
   become: true
   ansible.builtin.service:
@@ -376,7 +400,7 @@
   become: true
   ansible.builtin.service:
     name: amd-metrics-exporter
-    state: started
+    state: "{{ rocm_metrics_exporter_health_config.changed | ternary('restarted', 'started') }}"
     enabled: true
 
 - name: Read installed ROCm package version

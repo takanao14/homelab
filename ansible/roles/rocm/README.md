@@ -61,7 +61,9 @@ release instead, after the new one is installed.
   directories, writes `/etc/ld.so.conf.d/rocm.conf`, and runs `ldconfig`.
 - Reboots when the AMD GPU driver changes.
 - Adds the AMD device-metrics-exporter APT repository and installs `amdgpu-exporter`.
-- Enables and starts `gpuagent` and `amd-metrics-exporter` services.
+- Enables the exporter's per-GPU health service and starts `gpuagent` and
+  `amd-metrics-exporter`; its gRPC socket supplies health to the Kubernetes
+  device plugin without making that plugin privileged.
 - Verifies the installed ROCm version, HIP compiler, and GPU detection.
 
 ## Variables
