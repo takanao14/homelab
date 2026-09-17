@@ -24,6 +24,7 @@ func main() {
 	}{
 		{name: "uptime-v2-poc", build: buildUptime},
 		{name: "dhcp-leases-v2-poc", build: buildDhcpLeases},
+		{name: "cert-manager-v2-poc", build: buildCertManager},
 	}
 	for _, dashboard := range dashboards {
 		d, err := dashboard.build()

@@ -193,20 +193,21 @@ make dev-stop
 
 `make poc-v2-up` starts a separate Grafana 13.2.0 at
 <http://localhost:3300/d/uptime-v2-poc> using the same `.env` datasources.
-It provisions both the uptime and DHCP leases v2 dashboards.
+It provisions the uptime, DHCP leases, and cert-manager v2 dashboards.
 The Classic comparison is at <http://localhost:3300/d/uptime>.
 `make poc-v2-stop` removes the PoC container.
 
 `make poc-v2` generates local copies in `poc-generated/`.
 `make generate` also includes it in the shared dashboard Helm chart, so prd
 and sandbox receive the v2 PoCs alongside their Classic dashboards through the
-existing ConfigMap sidecar. Their separate UIDs are `uptime-v2-poc` and
-`dhcp-leases-v2-poc`.
+existing ConfigMap sidecar. Their separate UIDs are `uptime-v2-poc`,
+`dhcp-leases-v2-poc`, and `cert-manager-v2-poc`.
 The uptime v2 resource reproduces all 13 panels with rows and fixed grids. The
 DHCP leases v2 resource also covers Prometheus and Loki datasource variables,
-query variables, table transformations, and logs. `go test ./...` compares the
-v2 resources against the committed Classic JSON and checks invalid v2
-references, IDs, and missing thresholds.
+query variables, table transformations, and logs. The cert-manager v2 resource
+adds merged table queries, field overrides, and value mappings. `go test ./...`
+compares the v2 resources against the committed Classic JSON and checks invalid
+v2 references, IDs, and missing thresholds.
 
 Compare both dashboards using the same datasource and absolute time range.
 Check values, colors, legends, row collapse, datasource switching, and reload
