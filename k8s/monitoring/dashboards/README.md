@@ -213,9 +213,10 @@ Compare both dashboards using the same datasource and absolute time range.
 Check values, colors, legends, row collapse, datasource switching, and reload
 after regeneration. The user reported no apparent issues during local Grafana
 verification. Sandbox sidecar compatibility remains unverified.
-On prd Grafana 13.2.2, Argo CD and the sidecar delivered both resources. Visual
-comparison against the Classic dashboards matched the uptime panels and the
-DHCP panels, including Loki, query variables, and table transformations.
+On prd Grafana 13.2.2, Argo CD and the sidecar delivered all three resources.
+Visual comparison against the Classic dashboards matched the uptime, DHCP, and
+cert-manager panels, including Loki, query variables, table transformations,
+merged queries, field overrides, and value mappings.
 Provisioning logged the upstream [managedFields schema error](https://github.com/grafana/grafana/issues/128991);
 registration and rendering still succeeded.
 ADR-0007 continues to defer replacement of the Classic dashboards; this
