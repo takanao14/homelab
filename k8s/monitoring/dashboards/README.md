@@ -211,12 +211,12 @@ references, IDs, and missing thresholds.
 Compare both dashboards using the same datasource and absolute time range.
 Check values, colors, legends, row collapse, datasource switching, and reload
 after regeneration. The user reported no apparent issues during local Grafana
-verification. Sandbox sidecar compatibility, Loki, query variables, and
-transformations remain unverified.
-On prd Grafana 13.2.2, Argo CD and the sidecar delivered the resource, and the
-Grafana API returned it as provisioned with all 13 panels and five rows.
+verification. Sandbox sidecar compatibility remains unverified.
+On prd Grafana 13.2.2, Argo CD and the sidecar delivered both resources. Visual
+comparison against the Classic dashboards matched the uptime panels and the
+DHCP panels, including Loki, query variables, and table transformations.
 Provisioning logged the upstream [managedFields schema error](https://github.com/grafana/grafana/issues/128991);
-registration succeeded, but prd visual verification remains pending.
+registration and rendering still succeeded.
 ADR-0007 continues to defer replacement of the Classic dashboards; this
 additional dashboard tests v2 delivery without replacing them.
 
