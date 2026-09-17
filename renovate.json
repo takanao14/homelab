@@ -7,7 +7,7 @@
     ":rebaseStalePrs"
   ],
   "timezone": "Asia/Tokyo",
-  "minimumReleaseAge": "1 day",
+  "minimumReleaseAge": "2 days",
   "ignorePaths": [
     "**/node_modules/**",
     "**/bower_components/**",
