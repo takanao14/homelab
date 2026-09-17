@@ -33,7 +33,7 @@ generated as JSON.
 
 ## Structure
 
-- `cmd/poc-v2/`: isolated Dashboard v2 uptime experiment
+- `cmd/poc-v2/`: isolated Dashboard v2 experiments
 - `cmd/generate/main.go`: dashboard registry and JSON output
 - `cmd/generate/helpers.go`: shared visual conventions
 - `cmd/generate/proxmox_nodes.go`: shared Proxmox inventory loader
@@ -193,17 +193,20 @@ make dev-stop
 
 `make poc-v2-up` starts a separate Grafana 13.2.0 at
 <http://localhost:3300/d/uptime-v2-poc> using the same `.env` datasources.
+It provisions both the uptime and DHCP leases v2 dashboards.
 The Classic comparison is at <http://localhost:3300/d/uptime>.
 `make poc-v2-stop` removes the PoC container.
 
-`make poc-v2` generates a local copy in `poc-generated/uptime-v2-poc.json`.
+`make poc-v2` generates local copies in `poc-generated/`.
 `make generate` also includes it in the shared dashboard Helm chart, so prd
-and sandbox receive `Uptime V2 PoC` alongside Classic `Uptime` through the
-existing ConfigMap sidecar. The separate UID is `uptime-v2-poc`.
-The v2 resource reproduces all 13 uptime
-panels with rows and fixed grids. `go test ./...` compares queries, field
-configuration, visualization options, and layout against the committed Classic
-JSON, and checks invalid v2 references, IDs, and missing thresholds.
+and sandbox receive the v2 PoCs alongside their Classic dashboards through the
+existing ConfigMap sidecar. Their separate UIDs are `uptime-v2-poc` and
+`dhcp-leases-v2-poc`.
+The uptime v2 resource reproduces all 13 panels with rows and fixed grids. The
+DHCP leases v2 resource also covers Prometheus and Loki datasource variables,
+query variables, table transformations, and logs. `go test ./...` compares the
+v2 resources against the committed Classic JSON and checks invalid v2
+references, IDs, and missing thresholds.
 
 Compare both dashboards using the same datasource and absolute time range.
 Check values, colors, legends, row collapse, datasource switching, and reload
