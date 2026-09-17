@@ -32,6 +32,10 @@ jobs:
           go-version-file: k8s/monitoring/dashboards/go.mod
           cache-dependency-path: k8s/monitoring/dashboards/go.sum
 
+      - name: Test dashboard generators
+        working-directory: k8s/monitoring/dashboards
+        run: go test ./...
+
       - name: Check generated dashboard JSON
         working-directory: k8s/monitoring/dashboards
         run: make check

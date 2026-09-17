@@ -33,6 +33,7 @@ generated as JSON.
 
 ## Structure
 
+- `cmd/poc-v2/`: isolated Dashboard v2 uptime experiment
 - `cmd/generate/main.go`: dashboard registry and JSON output
 - `cmd/generate/helpers.go`: shared visual conventions
 - `cmd/generate/proxmox_nodes.go`: shared Proxmox inventory loader
@@ -187,6 +188,30 @@ Stop Grafana with:
 ```bash
 make dev-stop
 ```
+
+### Dashboard v2 PoC
+
+`make poc-v2-up` starts a separate Grafana 13.2.0 at
+<http://localhost:3300/d/uptime-v2-poc> using the same `.env` datasources.
+The Classic comparison is at <http://localhost:3300/d/uptime>.
+`make poc-v2-stop` removes the PoC container.
+
+`make poc-v2` generates a local copy in `poc-generated/uptime-v2-poc.json`.
+`make generate` also includes it in the shared dashboard Helm chart, so prd
+and sandbox receive `Uptime V2 PoC` alongside Classic `Uptime` through the
+existing ConfigMap sidecar. The separate UID is `uptime-v2-poc`.
+The v2 resource reproduces all 13 uptime
+panels with rows and fixed grids. `go test ./...` compares queries, field
+configuration, visualization options, and layout against the committed Classic
+JSON, and checks invalid v2 references, IDs, and missing thresholds.
+
+Compare both dashboards using the same datasource and absolute time range.
+Check values, colors, legends, row collapse, datasource switching, and reload
+after regeneration. The user reported no apparent issues during local Grafana
+verification. Sandbox sidecar compatibility, Loki, query variables, and
+transformations remain unverified.
+ADR-0007 continues to defer replacement of the Classic dashboards; this
+additional dashboard tests v2 delivery without replacing them.
 
 ## Production
 

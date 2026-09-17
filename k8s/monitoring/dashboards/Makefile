@@ -2,7 +2,7 @@ CHART_DASHBOARDS_DIR := ../charts/dashboards/dashboards
 
 # Prefer real Docker Compose, then podman-compose. Exclude the podman-docker shim
 # and delegated `podman compose` providers; set COMPOSE to use one explicitly.
-# Recursive expansion limits probing to dev/dev-stop.
+# Recursive expansion limits probing to Compose targets.
 # Override with: make dev COMPOSE=podman-compose
 COMPOSE ?= $(shell \
 	if command -v docker >/dev/null 2>&1 \
@@ -14,6 +14,7 @@ COMPOSE ?= $(shell \
 .PHONY: generate
 generate:
 	go run ./cmd/generate/ $(CHART_DASHBOARDS_DIR)/
+	go run ./cmd/poc-v2/ $(CHART_DASHBOARDS_DIR)/
 
 .PHONY: build
 build:
@@ -21,9 +22,10 @@ build:
 
 .PHONY: check
 check:
-	@tmp=$$(mktemp -d); \
+	@set -e; tmp=$$(mktemp -d); \
 	trap 'rm -rf "$$tmp"' EXIT; \
 	go run ./cmd/generate/ "$$tmp" >/dev/null; \
+	go run ./cmd/poc-v2/ "$$tmp" >/dev/null; \
 	diff -ruN "$(CHART_DASHBOARDS_DIR)" "$$tmp"
 
 .PHONY: compose-check
@@ -43,3 +45,16 @@ dev: compose-check generate
 .PHONY: dev-stop
 dev-stop: compose-check
 	$(COMPOSE) down
+
+.PHONY: poc-v2
+poc-v2:
+	go run ./cmd/poc-v2/ poc-generated/
+
+.PHONY: poc-v2-up
+poc-v2-up: compose-check poc-v2
+	$(COMPOSE) -p dashboards-v2-poc -f docker-compose.poc-v2.yml up -d
+	@echo "Grafana PoC: http://localhost:3300/d/uptime-v2-poc"
+
+.PHONY: poc-v2-stop
+poc-v2-stop: compose-check
+	$(COMPOSE) -p dashboards-v2-poc -f docker-compose.poc-v2.yml down

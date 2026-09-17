@@ -1,0 +1,14 @@
+services:
+  grafana:
+    image: mirror.gcr.io/grafana/grafana:13.2.0
+    ports:
+      - "127.0.0.1:3300:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - PROMETHEUS_URL=${PROMETHEUS_URL:?Set PROMETHEUS_URL in .env}
+      - LOKI_URL=${LOKI_URL:?Set LOKI_URL in .env}
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning:ro,z
+      - ./poc-generated:/var/lib/grafana/dashboards/poc:ro,z
+      - ../charts/dashboards/dashboards/uptime.json:/var/lib/grafana/dashboards/uptime-classic.json:ro,z
