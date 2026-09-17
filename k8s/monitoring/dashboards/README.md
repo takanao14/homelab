@@ -210,6 +210,10 @@ Check values, colors, legends, row collapse, datasource switching, and reload
 after regeneration. The user reported no apparent issues during local Grafana
 verification. Sandbox sidecar compatibility, Loki, query variables, and
 transformations remain unverified.
+On prd Grafana 13.2.2, Argo CD and the sidecar delivered the resource, and the
+Grafana API returned it as provisioned with all 13 panels and five rows.
+Provisioning logged the upstream [managedFields schema error](https://github.com/grafana/grafana/issues/128991);
+registration succeeded, but prd visual verification remains pending.
 ADR-0007 continues to defer replacement of the Classic dashboards; this
 additional dashboard tests v2 delivery without replacing them.
 
