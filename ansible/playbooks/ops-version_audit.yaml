@@ -368,130 +368,55 @@
              or exporter_audit_installed.startswith(rocm_device_metrics_exporter_version ~ '+')
              or exporter_audit_installed.startswith(rocm_device_metrics_exporter_version ~ '~') }}
 
-- name: Audit Knot Resolver package version
-  hosts: dns_resolver
+- name: Audit DNS package versions
+  hosts: dns_resolver:dnsdist:dns_auth
   gather_facts: false
   vars_files:
     - ../roles/knot_resolver/defaults/main.yaml
+  vars:
+    dns_audit_packages:
+      - name: knot-resolver
+        package: "{{ knot_resolver_package }}"
+        group: dns_resolver
+      - name: dnsdist
+        package: dnsdist
+        group: dnsdist
+      - name: pdns-server
+        package: pdns-server
+        group: dns_auth
   tasks:
-    - name: Read Knot Resolver package policy
+    - name: Read DNS package policies
       ansible.builtin.command:
         argv:
           - apt-cache
           - policy
-          - "{{ knot_resolver_package }}"
-      register: knot_resolver_audit_policy
+          - "{{ item.package }}"
+      loop: "{{ dns_audit_packages | selectattr('group', 'in', group_names) }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: dns_audit_policies
       changed_when: false
       failed_when: false
 
-    - name: Report Knot Resolver package version
+    - name: Report DNS package versions
       ansible.builtin.debug:
         msg: >-
           {{ '%-18s %-20s candidate=%-24s installed=%-24s %s' | format(
-            'knot-resolver',
+            item.item.name,
             inventory_hostname,
-            knot_resolver_audit_candidate,
-            knot_resolver_audit_installed,
+            dns_audit_candidate,
+            dns_audit_installed,
             'OK' if (
-              knot_resolver_audit_installed != 'unknown'
-              and knot_resolver_audit_installed == knot_resolver_audit_candidate
+              dns_audit_installed != 'unknown'
+              and dns_audit_installed == dns_audit_candidate
             ) else 'DIFF'
           ) }}
       vars:
-        knot_resolver_audit_installed: >-
-          {{ knot_resolver_audit_policy.stdout
-             | regex_findall('Installed: ([!-~]+)')
-             | default([], true)
-             | union(['unknown'])
-             | first }}
-        knot_resolver_audit_candidate: >-
-          {{ knot_resolver_audit_policy.stdout
-             | regex_findall('Candidate: ([!-~]+)')
-             | default([], true)
-             | union(['unknown'])
-             | first }}
-
-- name: Audit dnsdist package version
-  hosts: dnsdist
-  gather_facts: false
-  tasks:
-    - name: Read dnsdist package policy
-      ansible.builtin.command:
-        argv:
-          - apt-cache
-          - policy
-          - dnsdist
-      register: dnsdist_audit_policy
-      changed_when: false
-      failed_when: false
-
-    - name: Report dnsdist package version
-      ansible.builtin.debug:
-        msg: >-
-          {{ '%-18s %-20s candidate=%-24s installed=%-24s %s' | format(
-            'dnsdist',
-            inventory_hostname,
-            dnsdist_audit_candidate,
-            dnsdist_audit_installed,
-            'OK' if (
-              dnsdist_audit_installed != 'unknown'
-              and dnsdist_audit_installed == dnsdist_audit_candidate
-            ) else 'DIFF'
-          ) }}
-      vars:
-        dnsdist_audit_installed: >-
-          {{ dnsdist_audit_policy.stdout
-             | regex_findall('Installed: ([!-~]+)')
-             | default([], true)
-             | union(['unknown'])
-             | first }}
-        dnsdist_audit_candidate: >-
-          {{ dnsdist_audit_policy.stdout
-             | regex_findall('Candidate: ([!-~]+)')
-             | default([], true)
-             | union(['unknown'])
-             | first }}
-
-- name: Audit PowerDNS authoritative package version
-  hosts: dns_auth
-  gather_facts: false
-  tasks:
-    - name: Read pdns-server package policy
-      ansible.builtin.command:
-        argv:
-          - apt-cache
-          - policy
-          - pdns-server
-      register: pdns_auth_audit_policy
-      changed_when: false
-      failed_when: false
-
-    - name: Report pdns-server package version
-      ansible.builtin.debug:
-        msg: >-
-          {{ '%-18s %-20s candidate=%-24s installed=%-24s %s' | format(
-            'pdns-server',
-            inventory_hostname,
-            pdns_auth_audit_candidate,
-            pdns_auth_audit_installed,
-            'OK' if (
-              pdns_auth_audit_installed != 'unknown'
-              and pdns_auth_audit_installed == pdns_auth_audit_candidate
-            ) else 'DIFF'
-          ) }}
-      vars:
-        pdns_auth_audit_installed: >-
-          {{ pdns_auth_audit_policy.stdout
-             | regex_findall('Installed: ([!-~]+)')
-             | default([], true)
-             | union(['unknown'])
-             | first }}
-        pdns_auth_audit_candidate: >-
-          {{ pdns_auth_audit_policy.stdout
-             | regex_findall('Candidate: ([!-~]+)')
-             | default([], true)
-             | union(['unknown'])
-             | first }}
+        dns_audit_installed: "{{ (item.stdout | regex_findall('Installed: ([!-~]+)') + ['unknown']) | first }}"
+        dns_audit_candidate: "{{ (item.stdout | regex_findall('Candidate: ([!-~]+)') + ['unknown']) | first }}"
+      loop: "{{ dns_audit_policies.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
 
 - name: Audit code-server version
   hosts: code_server
