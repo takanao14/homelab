@@ -8,3 +8,5 @@ metadata:
 data:
   index.html: |-
 {{ .Files.Get "web/index.html" | indent 4 }}
+  LICENSE: |2
+{{ .Files.Get "web/LICENSE" | indent 4 }}

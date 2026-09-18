@@ -15,10 +15,11 @@ pdns-ui/
     ├── values.yaml         # hostname, image, PowerDNS backend, OpenBao path
     ├── web/                # vendored upstream webapp (see Vendoring)
     │   ├── index.html
-    │   ├── REVISION        # pinned tag + sha256, read by sync.sh and Renovate
+    │   ├── LICENSE         # upstream GPLv3 text, served at /LICENSE
+    │   ├── REVISION        # pinned tag + checksums, read by sync.sh and Renovate
     │   └── sync.sh         # fetch / --check the vendored copy
     └── templates/
-        ├── configmap-web.yaml    # index.html as a ConfigMap
+        ├── configmap-web.yaml    # index.html and LICENSE as a ConfigMap
         ├── configmap-nginx.yaml  # nginx vhost template (read-only guard)
         ├── external-secret.yaml  # ESO → PowerDNS API key
         ├── deployment.yaml
@@ -43,11 +44,15 @@ guard requires revisiting dnscontrol ownership. Write verbs must return 403.
 
 ## Vendoring
 
-`chart/web/index.html` vendors MIT-licensed
-[powerdns-webui](https://github.com/james-stevens/powerdns-webui) for review.
-`REVISION` pins its tag and SHA-256.
+`chart/web/index.html` is an unmodified copy of
+[powerdns-webui](https://github.com/james-stevens/powerdns-webui), copyright
+James Stevens, under GPLv3; see [the upstream license](chart/web/LICENSE), also
+served at `/LICENSE`. This third-party license applies to the vendored app,
+not the independently authored chart or sync script. `REVISION` records the
+shared upstream tag and separate SHA-256 checksums for the HTML and license.
 
-The app is self-contained and same-origin; `sync.sh` rejects external resources.
+`sync.sh` rejects explicit HTTP(S) URLs in double-quoted `src`/`href` attributes;
+this check does not cover all external requests, so review HTML changes.
 
 ### Updating
 
@@ -60,9 +65,9 @@ k8s/pdns-ui/chart/web/sync.sh --check    # what CI runs
 Renovate bumps `ref:`; vendor-sync CI requires matching bytes and detects
 retagged releases.
 
-Do not edit `index.html` by hand; `--check` rejects drift.
+Do not edit `index.html` or `LICENSE` by hand; `--check` rejects drift.
 
-After any update, re-verify the read-only behaviour below before merging.
+After any update, re-verify the read-only behaviour described above before merging.
 
 ## Secrets
 

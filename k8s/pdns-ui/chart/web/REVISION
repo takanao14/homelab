@@ -1,8 +1,7 @@
-# Vendored from james-stevens/powerdns-webui, synced by sync.sh. Do not edit index.html by hand;
-# re-run sync.sh to update it. Bumping the ref alone fails CI until the
-# vendored bytes are refreshed.
+# Vendored from james-stevens/powerdns-webui; update with sync.sh, not by hand.
 repo: james-stevens/powerdns-webui
 # renovate: datasource=github-tags depName=james-stevens/powerdns-webui
 ref: v3.6
 sha256: 6315be5a60487500e420898a8b6d8bb70bb6257533b3eafe4749a372a8970894
-date: 2026-07-20T07:37:07Z
+license_sha256: 3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986
+date: 2026-09-18T02:27:30Z

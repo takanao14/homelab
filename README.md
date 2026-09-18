@@ -87,3 +87,9 @@ opencode --version
 
 Before running it, activate `lemonade-server` through
 [GPU switching](k8s/lemonade-server/README.md#gpu-switching).
+
+## License
+
+Original code in this repository is covered by the [MIT License](LICENSE).
+Vendored third-party code retains its upstream license; the
+[powerdns-webui app](k8s/pdns-ui/README.md#vendoring) is covered by GPLv3.

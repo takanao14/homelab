@@ -4,18 +4,16 @@ set -euo pipefail
 # Sync the reviewable, vendored powerdns-webui app.
 #
 # Usage:
-#   sync.sh            Fetch the ref recorded in REVISION and overwrite index.html.
+#   sync.sh            Fetch the ref recorded in REVISION and overwrite index.html and LICENSE.
 #   sync.sh --check    Check the vendored copy for drift.
 #   REF=<tag> sync.sh  Fetch a different ref and record it.
 #
 # Renovate ref bumps fail CI until the vendored bytes are refreshed.
 
 REPO="${REPO:-james-stevens/powerdns-webui}"
-SRC_PATH="htdocs/index.html"
 
 VENDOR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REVISION_FILE="${VENDOR_DIR}/REVISION"
-TARGET="${VENDOR_DIR}/index.html"
 
 sha256_of() {
   if command -v sha256sum >/dev/null 2>&1; then
@@ -45,8 +43,12 @@ tmp_dir="$(mktemp -d)"
 cleanup() { rm -rf "$tmp_dir"; }
 trap cleanup EXIT
 
-curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/${SRC_PATH}" \
-  -o "${tmp_dir}/index.html"
+for file in index.html LICENSE; do
+  src_path="$file"
+  [[ "$file" == "index.html" ]] && src_path="htdocs/index.html"
+  curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/${src_path}" \
+    -o "${tmp_dir}/${file}"
+done
 
 # Reject new external resource loads that could exfiltrate zone data.
 if grep -qE '(src|href)="https?://' "${tmp_dir}/index.html"; then
@@ -55,28 +57,36 @@ if grep -qE '(src|href)="https?://' "${tmp_dir}/index.html"; then
 fi
 
 sha="$(sha256_of "${tmp_dir}/index.html")"
+license_sha="$(sha256_of "${tmp_dir}/LICENSE")"
 
 if [[ "$CHECK" -eq 1 ]]; then
   drift=0
-  if ! diff -q "$TARGET" "${tmp_dir}/index.html" >/dev/null 2>&1; then
-    echo "DRIFT: index.html differs from ${REPO}@${REF}" >&2
-    drift=1
-  fi
-  recorded_sha="$(field_of sha256)"
-  if [[ "$recorded_sha" != "$sha" ]]; then
-    echo "DRIFT: REVISION records sha256 ${recorded_sha}, upstream ${REF} is ${sha}" >&2
-    drift=1
-  fi
+  for file in index.html LICENSE; do
+    if ! diff -q "${VENDOR_DIR}/${file}" "${tmp_dir}/${file}" >/dev/null 2>&1; then
+      echo "DRIFT: ${file} differs from ${REPO}@${REF}" >&2
+      drift=1
+    fi
+    sha_field="sha256"
+    [[ "$file" == "LICENSE" ]] && sha_field="license_sha256"
+    recorded_sha="$(field_of "$sha_field")"
+    upstream_sha="$(sha256_of "${tmp_dir}/${file}")"
+    if [[ "$recorded_sha" != "$upstream_sha" ]]; then
+      echo "DRIFT: ${file} checksum differs from ${sha_field} in REVISION" >&2
+      drift=1
+    fi
+  done
   if [[ "$drift" -eq 1 ]]; then
     echo "Run k8s/pdns-ui/chart/web/sync.sh, then re-verify the read-only behaviour" >&2
     echo "documented in k8s/pdns-ui/README.md before merging." >&2
     exit 1
   fi
-  echo "Vendored index.html is in sync with ${REPO}@${REF}."
+  echo "Vendored index.html and LICENSE are in sync with ${REPO}@${REF}."
   exit 0
 fi
 
-install -m 0644 "${tmp_dir}/index.html" "$TARGET"
+for file in index.html LICENSE; do
+  install -m 0644 "${tmp_dir}/${file}" "${VENDOR_DIR}/${file}"
+done
 
 cat > "$REVISION_FILE" <<EOF
 # Vendored from ${REPO}; update with sync.sh, not by hand.
@@ -84,8 +94,9 @@ repo: ${REPO}
 # renovate: datasource=github-tags depName=james-stevens/powerdns-webui
 ref: ${REF}
 sha256: ${sha}
+license_sha256: ${license_sha}
 date: $(date -u +%Y-%m-%dT%H:%M:%SZ)
 EOF
 
-echo "Synced index.html from ${REPO}@${REF} (sha256 ${sha})."
+echo "Synced index.html and LICENSE from ${REPO}@${REF} (sha256 ${sha})."
 echo "Re-verify the read-only behaviour before merging (see k8s/pdns-ui/README.md)."
