@@ -170,7 +170,7 @@
   changed_when: false
   no_log: true
 
-- name: Wait for the blueprint-created objects to appear
+- name: Wait for the Authentik API to answer again after the blueprint apply
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ authentik_http_port }}/-/health/ready/"
     status_code: 200
@@ -337,9 +337,10 @@
   register: authentik_user_check
   changed_when: false
   failed_when: false
-  until: authentik_user_check.stdout is search('USERCHECK_(OK|FAIL)')
+  until: authentik_user_check.stdout is search('USERCHECK_OK')
   retries: 12
   delay: 5
+  ignore_errors: true
 
 - name: Fail when a managed user is missing or has no usable password
   ansible.builtin.assert:
