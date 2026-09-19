@@ -80,12 +80,10 @@ all:
       ansible_host: 192.168.10.179
     rocky-desktop:
       ansible_host: 192.168.10.180
-    rocky10:
-      ansible_host: 192.168.10.181
     debian13:
-      ansible_host: 192.168.10.182
+      ansible_host: 192.168.10.181
     sssdtest2:
-      ansible_host: 192.168.10.183
+      ansible_host: 192.168.10.182
 
     # k0s prd; one node per SDN vnet, gpuvm1 is the GPU worker (ADR-0019).
     k0s-cp1:
