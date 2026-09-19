@@ -32,15 +32,16 @@ sssd_ssh_service: "{{ sssd_platforms[ansible_facts['distribution']]['ssh_service
 sssd_domain: home.butaco.net
 
 # Authentik LDAPS service name; also the verified certificate CN/SAN.
-sssd_ldap_uri: ldaps://ldap.home.butaco.net:636
-sssd_ldap_search_base: dc=ldap,dc=home,dc=butaco,dc=net
+sssd_ldap_uri: "ldaps://{{ identity_ldap_host }}:{{ identity_ldaps_port }}"
+sssd_ldap_search_base: "{{ identity_ldap_base_dn }}"
 
 # Public self-signed LDAPS certificate; monitor expiry and trust it directly.
 sssd_ldap_ca_cert_src: authentik-ldap-server.pem
 sssd_ldap_ca_cert_path: "{{ sssd_platforms[ansible_facts['distribution']]['ldap_ca_cert_path'] }}"
 
-# Shared lookup bind account from ldap.yaml; password comes from SOPS.
-sssd_ldap_bind_dn: cn=ldapbind,ou=users,dc=ldap,dc=home,dc=butaco,dc=net
+# Shared lookup bind account from ldap.yaml; password comes from SOPS. The
+# Outpost flattens every account into ou=users regardless of its Authentik path.
+sssd_ldap_bind_dn: "cn={{ identity_ldap_bind_user }},ou=users,{{ identity_ldap_base_dn }}"
 
 # Use cn for login; uid is opaque. Membership uses memberOf and real groups.
 sssd_ldap_user_name_attr: cn
@@ -49,10 +50,10 @@ sssd_ldap_user_object_class: user
 sssd_ldap_group_object_class: group
 
 # Restrict Linux login to this Authentik group.
-sssd_allowed_login_group: lab-linux-users
+sssd_allowed_login_group: "{{ identity_linux_login_group }}"
 
 # Manage sudo locally by Authentik group; require the LDAP password.
-sssd_sudo_group: lab-linux-admins
+sssd_sudo_group: "{{ identity_linux_sudo_group }}"
 sssd_sudoers_file: /etc/sudoers.d/60-lab-linux-admins
 
 # Limit disabled-user cache lifetime; not a break-glass mechanism.

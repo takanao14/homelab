@@ -29,7 +29,7 @@ Both environments sit behind Authentik. Envoy Gateway calls the Authentik proxy
 outpost on `authentik1` over ext_authz, so every request on the Headlamp
 hostname is authenticated before it reaches the Service, and there is no second
 entry point to guard. Admission is by Authentik group
-(`files/blueprints/proxy.yaml` in the `authentik` role).
+(`templates/blueprints/proxy.yaml.j2` in the `authentik` role).
 
 ```text
 browser -> Envoy Gateway -> /outpost.goauthentik.io/*  -> authentik1:9100 (login/callback)

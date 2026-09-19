@@ -52,7 +52,7 @@ The current write targets are:
 Envoy Gateway gates the HTTPRoute with a `SecurityPolicy`. The policy runs `extAuth` against the shared Authentik proxy
 outpost on `authentik1`. Admission is granted to `lab-platform-admins` and `lab-gpu-users`;
 the bindings live in
-`ansible/roles/authentik/files/blueprints/proxy.yaml`.
+`ansible/roles/authentik/templates/blueprints/proxy.yaml.j2`.
 
 The Gateway enforces authentication; the app does not consume identity headers.
 A NetworkPolicy limits ingress to the Gateway's proxy pods, since reaching the

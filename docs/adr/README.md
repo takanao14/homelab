@@ -98,3 +98,4 @@ deleting it:
 | [0047](0047-service-vm-logs-via-vector-journald-agent.md) | Collect service VM logs with a Vector journald agent | Accepted |
 | [0048](0048-service-vm-vector-internal-metrics.md) | Expose Vector internal metrics on service VMs | Accepted |
 | [0049](0049-manage-shared-cli-tools-with-mise.md) | Manage shared Linux CLI tools with mise | Accepted |
+| [0050](0050-single-definition-for-the-authentik-ldap-contract.md) | Render every Authentik blueprint from one set of variables | Accepted |

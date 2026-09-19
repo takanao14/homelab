@@ -31,7 +31,7 @@ ldap_default_authtok_type = password
 ldap_default_authtok = {{ sssd_ldap_bind_password }}
 
 # Authentik puts the login name in `cn`; `uid` is an opaque hash and must not
-# be used as the username. See roles/authentik/files/blueprints/ldap.yaml.
+# be used as the username. See roles/authentik/templates/blueprints/ldap.yaml.j2.
 ldap_schema = rfc2307bis
 ldap_user_object_class = {{ sssd_ldap_user_object_class }}
 ldap_user_name = {{ sssd_ldap_user_name_attr }}
