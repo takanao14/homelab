@@ -18,9 +18,9 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 	ds := lokiDatasource()
 
 	const (
-		baseJSON     = `{job="dns", host=~"$host"} | json | __error__=""`
-		queryJSON    = `{job="dns", host=~"$host"} | json | __error__="" | dnstap_operation="CLIENT_QUERY"`
-		responseJSON = `{job="dns", host=~"$host"} | json | __error__="" | dnstap_operation="CLIENT_RESPONSE"`
+		baseJSON     = `{job="dns", identity=~"$host"} | json | __error__=""`
+		queryJSON    = `{job="dns", identity=~"$host"} | json | __error__="" | dnstap_operation="CLIENT_QUERY"`
+		responseJSON = `{job="dns", identity=~"$host"} | json | __error__="" | dnstap_operation="CLIENT_RESPONSE"`
 		nxdomainJSON = responseJSON + ` | dns_rcode="NXDOMAIN"`
 
 		// Categorize common PTR, WPAD, DNS-SD, mDNS, gRPC, and search-suffix
@@ -60,7 +60,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 			dashboard.NewQueryVariableBuilder("host").
 				Label("Host").
 				Datasource(ds).
-				Query(dashboard.StringOrMap{String: new(`label_values({job="dns"}, host)`)}).
+				Query(dashboard.StringOrMap{String: new(`label_values({job="dns"}, identity)`)}).
 				Refresh(dashboard.VariableRefreshOnTimeRangeChanged).
 				Sort(dashboard.VariableSortAlphabeticalAsc).
 				Multi(true).
@@ -246,9 +246,9 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (host) (rate(` + queryJSON + `[$__auto]))` +
-						` or sum by (host) (count_over_time(` + queryJSON + `[$__range])) * 0`).
-					LegendFormat("{{host}}"),
+					Expr(`sum by (identity) (rate(` + queryJSON + `[$__auto]))` +
+						` or sum by (identity) (count_over_time(` + queryJSON + `[$__range])) * 0`).
+					LegendFormat("{{identity}}"),
 				),
 		).
 		WithPanel(
@@ -261,9 +261,9 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (host) (rate(` + responseJSON + ` | dns_rcode="NXDOMAIN" [$__auto]))` +
-						` or sum by (host) (count_over_time(` + responseJSON + `[$__range])) * 0`).
-					LegendFormat("{{host}}"),
+					Expr(`sum by (identity) (rate(` + responseJSON + ` | dns_rcode="NXDOMAIN" [$__auto]))` +
+						` or sum by (identity) (count_over_time(` + responseJSON + `[$__range])) * 0`).
+					LegendFormat("{{identity}}"),
 				),
 		).
 		WithPanel(
@@ -277,9 +277,9 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				Tooltip(tooltipAll).
 				Legend(legend).
 				WithTarget(loki.NewDataqueryBuilder().
-					Expr(`sum by (host) (rate(` + responseJSON + ` | dns_rcode="SERVFAIL" [$__auto]))` +
-						` or sum by (host) (count_over_time(` + responseJSON + `[$__range])) * 0`).
-					LegendFormat("{{host}}"),
+					Expr(`sum by (identity) (rate(` + responseJSON + ` | dns_rcode="SERVFAIL" [$__auto]))` +
+						` or sum by (identity) (count_over_time(` + responseJSON + `[$__range])) * 0`).
+					LegendFormat("{{identity}}"),
 				),
 		).
 		WithRow(dashboard.NewRowBuilder("Logs")).
@@ -297,7 +297,7 @@ func buildDnsLogs() (*dashboard.Dashboard, error) {
 				WithTarget(loki.NewDataqueryBuilder().
 					// line_format persists displayed fields. Exclude policy-action because its
 					// proto2 default claims NXDOMAIN even for successful queries.
-					Expr(baseJSON + ` | line_format "{{.host}} {{.dnstap_operation}} {{.network_query_ip}} -> {{.dns_qname}} {{.dns_qtype}} {{.dns_rcode}} latency={{.dnstap_latency_ms}}ms"`).
+					Expr(baseJSON + ` | line_format "{{.identity}} {{.dnstap_operation}} {{.network_query_ip}} -> {{.dns_qname}} {{.dns_qtype}} {{.dns_rcode}} latency={{.dnstap_latency_ms}}ms"`).
 					MaxLines(500),
 				),
 		).

@@ -34,7 +34,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__auto]))",
+          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__auto]))",
           "legendFormat": "queries/s"
         }
       ],
@@ -85,7 +85,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "count(sum by (network_query_ip) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\" | network_query_ip != \"\" [$__range])))",
+          "expr": "count(sum by (network_query_ip) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\" | network_query_ip != \"\" [$__range])))",
           "legendFormat": "clients"
         }
       ],
@@ -149,7 +149,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (dns_qtype) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__auto])) or sum by (dns_qtype) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__range])) * 0",
+          "expr": "sum by (dns_qtype) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__auto])) or sum by (dns_qtype) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__range])) * 0",
           "legendFormat": "{{dns_qtype}}"
         }
       ],
@@ -197,7 +197,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (dns_rcode) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__auto])) or sum by (dns_rcode) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__range])) * 0",
+          "expr": "sum by (dns_rcode) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__auto])) or sum by (dns_rcode) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__range])) * 0",
           "legendFormat": "{{dns_rcode}}"
         }
       ],
@@ -306,31 +306,31 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\".*\\\\._dns-sd\\\\._udp\\\\..*\" [$__auto])) or vector(0)",
+          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\".*\\\\._dns-sd\\\\._udp\\\\..*\" [$__auto])) or vector(0)",
           "legendFormat": "dns-sd discovery"
         },
         {
-          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\"_grpclb\\\\._tcp\\\\..*\" [$__auto])) or vector(0)",
+          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\"_grpclb\\\\._tcp\\\\..*\" [$__auto])) or vector(0)",
           "legendFormat": "grpc lb discovery"
         },
         {
-          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\"(.+\\\\.)?local\" [$__auto])) or vector(0)",
+          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\"(.+\\\\.)?local\" [$__auto])) or vector(0)",
           "legendFormat": "mdns (.local)"
         },
         {
-          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\".+\\\\.arpa\" | dns_qname!~\".*\\\\._dns-sd\\\\._udp\\\\..*\" [$__auto])) or vector(0)",
+          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\".+\\\\.arpa\" | dns_qname!~\".*\\\\._dns-sd\\\\._udp\\\\..*\" [$__auto])) or vector(0)",
           "legendFormat": "reverse lookup (PTR)"
         },
         {
-          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\"wpad\\\\..*\" [$__auto])) or vector(0)",
+          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\"wpad\\\\..*\" [$__auto])) or vector(0)",
           "legendFormat": "wpad"
         },
         {
-          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\".+\\\\..+\\\\.home\\\\.butaco\\\\.net\" | dns_qname!~\".*\\\\._dns-sd\\\\._udp\\\\..*\" | dns_qname!~\"_grpclb\\\\._tcp\\\\..*\" | dns_qname!~\"wpad\\\\..*\" [$__auto])) or vector(0)",
+          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\".+\\\\..+\\\\.home\\\\.butaco\\\\.net\" | dns_qname!~\".*\\\\._dns-sd\\\\._udp\\\\..*\" | dns_qname!~\"_grpclb\\\\._tcp\\\\..*\" | dns_qname!~\"wpad\\\\..*\" [$__auto])) or vector(0)",
           "legendFormat": "search-domain suffix"
         },
         {
-          "expr": "sum(rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname!~\".+\\\\.arpa\" | dns_qname!~\"wpad\\\\..*\" | dns_qname!~\".*\\\\._dns-sd\\\\._udp\\\\..*\" | dns_qname!~\"(.+\\\\.)?local\" | dns_qname!~\"_grpclb\\\\._tcp\\\\..*\" | dns_qname!~\".+\\\\..+\\\\.home\\\\.butaco\\\\.net\" [$__auto])) or vector(0)",
+          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname!~\".+\\\\.arpa\" | dns_qname!~\"wpad\\\\..*\" | dns_qname!~\".*\\\\._dns-sd\\\\._udp\\\\..*\" | dns_qname!~\"(.+\\\\.)?local\" | dns_qname!~\"_grpclb\\\\._tcp\\\\..*\" | dns_qname!~\".+\\\\..+\\\\.home\\\\.butaco\\\\.net\" [$__auto])) or vector(0)",
           "legendFormat": "unexpected"
         }
       ],
@@ -408,7 +408,7 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc(topk(10, sum by (dns_qname) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\" | dns_qname != \"\" [5m]))))",
+          "expr": "sort_desc(topk(10, sum by (dns_qname) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\" | dns_qname != \"\" [5m]))))",
           "legendFormat": "{{dns_qname}}",
           "range": false,
           "instant": true
@@ -460,7 +460,7 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sort_desc(topk(10, sum by (dns_qname) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname != \"\" [$__range]))))",
+          "expr": "sort_desc(topk(10, sum by (dns_qname) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname != \"\" [$__range]))))",
           "legendFormat": "{{dns_qname}}",
           "range": false,
           "instant": true
@@ -526,8 +526,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__auto])) or sum by (host) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__range])) * 0",
-          "legendFormat": "{{host}}"
+          "expr": "sum by (identity) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__auto])) or sum by (identity) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__range])) * 0",
+          "legendFormat": "{{identity}}"
         }
       ],
       "title": "Query Rate by Host",
@@ -568,8 +568,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" [$__auto])) or sum by (host) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__range])) * 0",
-          "legendFormat": "{{host}}"
+          "expr": "sum by (identity) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" [$__auto])) or sum by (identity) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__range])) * 0",
+          "legendFormat": "{{identity}}"
         }
       ],
       "title": "NXDOMAIN Rate by Host",
@@ -610,8 +610,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "sum by (host) (rate({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"SERVFAIL\" [$__auto])) or sum by (host) (count_over_time({job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__range])) * 0",
-          "legendFormat": "{{host}}"
+          "expr": "sum by (identity) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"SERVFAIL\" [$__auto])) or sum by (identity) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__range])) * 0",
+          "legendFormat": "{{identity}}"
         }
       ],
       "title": "SERVFAIL Rate by Host",
@@ -666,7 +666,7 @@
       "type": "logs",
       "targets": [
         {
-          "expr": "{job=\"dns\", host=~\"$host\"} | json | __error__=\"\" | line_format \"{{.host}} {{.dnstap_operation}} {{.network_query_ip}} -\u003e {{.dns_qname}} {{.dns_qtype}} {{.dns_rcode}} latency={{.dnstap_latency_ms}}ms\"",
+          "expr": "{job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | line_format \"{{.identity}} {{.dnstap_operation}} {{.network_query_ip}} -\u003e {{.dns_qname}} {{.dns_qtype}} {{.dns_rcode}} latency={{.dnstap_latency_ms}}ms\"",
           "maxLines": 500
         }
       ],
@@ -718,7 +718,7 @@
         "name": "host",
         "label": "Host",
         "skipUrlSync": false,
-        "query": "label_values({job=\"dns\"}, host)",
+        "query": "label_values({job=\"dns\"}, identity)",
         "datasource": {
           "type": "loki",
           "uid": "$datasource"

@@ -121,7 +121,7 @@ dnsdist_config:
         type: All
       action:
         type: DnstapLog
-        identity: dnsdist
+        identity: "{{ inventory_hostname }}"
         logger_name: dnsdist
     - name: internal-no-recurse
       selector:
@@ -145,5 +145,5 @@ dnsdist_config:
         type: All
       action:
         type: DnstapLog
-        identity: dnsdist
+        identity: "{{ inventory_hostname }}"
         logger_name: dnsdist

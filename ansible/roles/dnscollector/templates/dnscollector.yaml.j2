@@ -19,9 +19,4 @@ pipelines:
       server-url: "{{ dnscollector_loki_url }}/loki/api/v1/push"
       job-name: dns
       mode: flat-json
-      relabel-configs:
-        - target_label: host
-          replacement: "{{ inventory_hostname }}"
-        - target_label: producer
-          replacement: dnsdist
 {% endif %}
