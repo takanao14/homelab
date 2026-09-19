@@ -7,6 +7,8 @@
       - knot_resolver_server_addr | length > 0
       - knot_resolver_allowed_clients | length == 2
       - knot_resolver_workers | int > 0
+      - knot_resolver_forwarders is sequence
+      - knot_resolver_forwarders is not string
     fail_msg: >-
       Knot Resolver requires Ubuntu Noble, one listen address, and exactly two
       dnsdist client networks.

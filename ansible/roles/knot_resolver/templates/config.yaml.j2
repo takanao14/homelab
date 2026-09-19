@@ -1,2 +1,12 @@
 # Managed by Ansible (roles/knot_resolver) - do not edit on the host.
-{{ knot_resolver_config | to_json | from_json | to_nice_yaml(indent=2, width=120) }}
+{% set rendered_config = knot_resolver_config %}
+{% if knot_resolver_forwarders | length > 0 %}
+{% set rendered_config = rendered_config | combine({
+  'forward': [{
+    'subtree': '.',
+    'servers': knot_resolver_forwarders,
+    'options': {'dnssec': true}
+  }]
+}, recursive=true) %}
+{% endif %}
+{{ rendered_config | to_json | from_json | to_nice_yaml(indent=2, width=120) }}

@@ -7,6 +7,13 @@ knot_resolver_allowed_clients:
   - "{{ hostvars['dist1']['ansible_host'] }}/32"
   - "{{ hostvars['dist2']['ansible_host'] }}/32"
 
+knot_resolver_forwarders:
+  - address:
+      - 8.8.8.8
+      - 8.8.4.4
+    transport: tls
+    hostname: dns.google
+
 vector_journald_units:
   - knot-resolver
   - ssh

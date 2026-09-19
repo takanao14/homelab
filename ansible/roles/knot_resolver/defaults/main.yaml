@@ -20,6 +20,10 @@ knot_resolver_cache_storage: "/var/cache/knot-resolver"
 # 100M exhausted LMDB; see the ADR-0030 addendum.
 knot_resolver_cache_size: "256M"
 
+# Empty keeps full-service recursion. Define upstream servers to forward cache
+# misses.
+knot_resolver_forwarders: []
+
 # Use node_exporter's textfile directory.
 knot_resolver_metrics_path: "{{ node_exporter_textfile_dir | default('/var/lib/prometheus/node-exporter') }}/knot_resolver.prom"
 knot_resolver_metrics_script_path: "/usr/local/sbin/knot-resolver-metrics"

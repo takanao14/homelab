@@ -1,7 +1,9 @@
 # knot_resolver
 
 Installs Knot Resolver 6 from the official CZ.NIC Labs repository and configures
-it as a private full-service recursive resolver.
+it as a private caching and DNSSEC-validating resolver. It performs full-service
+recursion by default and can forward cache misses when
+`knot_resolver_forwarders` is configured.
 
 The role:
 
@@ -50,6 +52,18 @@ knot_resolver_server_addr: "192.0.2.53"
 knot_resolver_allowed_clients:
   - "192.0.2.10/32"
   - "192.0.2.11/32"
+```
+
+To forward cache misses over authenticated DNS-over-TLS while retaining the
+local persistent cache and DNSSEC validation:
+
+```yaml
+knot_resolver_forwarders:
+  - address:
+      - 8.8.8.8
+      - 8.8.4.4
+    transport: tls
+    hostname: dns.google
 ```
 
 Run the homelab playbook in check mode before provisioning:
