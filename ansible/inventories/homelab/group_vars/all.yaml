@@ -16,3 +16,13 @@ host_poweroff_timeout: 300
 
 # SSH-up timeout, including hypervisor firmware checks and guest startup.
 host_startup_timeout: 900
+
+# LDAP contract between the Authentik LDAP Outpost and its SSSD clients. Both
+# roles derive from these; defining either side separately silently breaks
+# login. The group names are the `authentik_groups` entries of roles/authentik.
+identity_ldap_host: ldap.home.butaco.net
+identity_ldaps_port: 636
+identity_ldap_base_dn: dc=ldap,dc=home,dc=butaco,dc=net
+identity_ldap_bind_user: ldapbind
+identity_linux_login_group: lab-linux-users
+identity_linux_sudo_group: lab-linux-admins

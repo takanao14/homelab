@@ -122,51 +122,48 @@
 - name: Ensure the LDAPS certificate exists
   ansible.builtin.include_tasks: ldap_certificate.yaml
 
-- name: Deploy Authentik blueprints
-  become: true
-  ansible.builtin.copy:
-    src: blueprints/
-    dest: "{{ authentik_blueprints_dir }}/"
-    owner: root
-    group: root
-    mode: '0644'
-
-# Render users from the SOPS-encrypted authentik_users list.
-- name: Deploy the Authentik users blueprint
+# Every blueprint renders from role variables: group names, the identity_*
+# contract shared with roles/sssd, and the SOPS-encrypted account list.
+- name: Deploy the Authentik blueprints
   become: true
   ansible.builtin.template:
-    src: blueprints/users.yaml.j2
-    dest: "{{ authentik_blueprints_dir }}/users.yaml"
+    src: "blueprints/{{ item }}.j2"
+    dest: "{{ authentik_blueprints_dir }}/{{ item }}"
     owner: root
     group: root
     mode: '0644'
+  loop: "{{ authentik_blueprint_paths | map('basename') | list }}"
 
-# Explicit apply restores deleted users; page_size keeps the instance discoverable.
-- name: Look up the users blueprint instance
+# Discovery creates one instance per deployed file; page_size keeps them visible.
+- name: Look up the deployed blueprint instances
   ansible.builtin.uri:
     url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/managed/blueprints/?page_size=200"
     headers:
       Authorization: "Bearer {{ authentik_bootstrap_token }}"
     status_code: 200
-  register: authentik_users_blueprint
+  register: authentik_blueprints
   until: >-
-    authentik_users_blueprint.json.results
-    | selectattr('path', 'equalto', 'local/users.yaml') | list | length > 0
+    authentik_blueprints.json.results | map(attribute='path') | list
+    | intersect(authentik_blueprint_paths) | length
+    == authentik_blueprint_paths | length
   retries: 12
   delay: 5
   no_log: true
 
-# Convergent; the final user check reports failures.
-- name: Apply the users blueprint
+# Discovery only reapplies a file whose content changed, so an edit would
+# otherwise wait for the next discovery pass. Applying also restores objects
+# deleted in the UI. Convergent; the status check at the end reports failures.
+- name: Apply the blueprints
   ansible.builtin.uri:
     url: >-
       http://127.0.0.1:{{ authentik_http_port }}/api/v3/managed/blueprints/{{
-      (authentik_users_blueprint.json.results
-      | selectattr('path', 'equalto', 'local/users.yaml') | first).pk }}/apply/
+      (authentik_blueprints.json.results
+      | selectattr('path', 'equalto', item) | first).pk }}/apply/
     method: POST
     headers:
       Authorization: "Bearer {{ authentik_bootstrap_token }}"
     status_code: 200
+  loop: "{{ authentik_blueprint_paths }}"
   changed_when: false
   no_log: true
 
@@ -354,3 +351,38 @@
       wrong. Delete each listed account in Authentik and run this playbook
       again — the explicit blueprint apply above then re-runs the creation path.
     success_msg: All accounts in authentik_users have a usable password.
+
+# Authentik keeps the previous status until the worker finishes, so a failure
+# introduced by this run can surface on the next one. Group names cannot drift
+# here: they render from authentik_groups and an unknown key fails templating.
+- name: Check that every deployed blueprint applied successfully
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/managed/blueprints/?page_size=200"
+    headers:
+      Authorization: "Bearer {{ authentik_bootstrap_token }}"
+    status_code: 200
+  register: authentik_blueprint_status
+  until: >-
+    authentik_blueprint_status.json.results
+    | selectattr('path', 'in', authentik_blueprint_paths)
+    | rejectattr('status', 'equalto', 'successful') | list | length == 0
+  retries: 12
+  delay: 5
+  no_log: true
+  ignore_errors: true
+
+- name: Fail when a blueprint did not apply
+  ansible.builtin.assert:
+    that: >-
+      authentik_blueprint_status.json.results | default([])
+      | selectattr('path', 'in', authentik_blueprint_paths)
+      | rejectattr('status', 'equalto', 'successful') | list | length == 0
+    fail_msg: >-
+      Blueprint did not apply:
+      {{ authentik_blueprint_status.json.results | default([])
+      | selectattr('path', 'in', authentik_blueprint_paths)
+      | rejectattr('status', 'equalto', 'successful')
+      | map(attribute='path') | list | join(', ') | default('unknown', true) }}.
+      Read the recorded error under System > Blueprints in the Authentik admin
+      interface; an unresolved !Find target is the usual cause.
+    success_msg: All deployed blueprints report a successful apply.

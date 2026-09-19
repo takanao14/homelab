@@ -18,8 +18,9 @@ adapted for Podman.
   The data, certificate, and PostgreSQL directories keep container-managed
   ownership. PostgreSQL requires its data directory to remain mode 0700 or
   0750; forcing root ownership or mode 0755 breaks subsequent starts.
-- Copies static blueprints from `files/blueprints/` and renders managed users
-  from the SOPS-encrypted `authentik_users` list.
+- Renders every blueprint from `templates/blueprints/`, applies each one
+  explicitly, and fails the run when any of them reports an unsuccessful
+  apply (ADR-0050).
 - Uses OpenSSL and the Authentik API to manage the LDAPS certificate, apply the managed
   users blueprint, grant LDAP search permission, and retrieve standalone
   Outpost tokens.
@@ -64,12 +65,13 @@ Store these values in SOPS-encrypted group variables such as
 | `authentik_backup_dir` | `/var/backups/authentik` | Root-only pre-upgrade database dumps |
 | `authentik_env_file` | `/etc/authentik/authentik.env` | Shared PostgreSQL/server/worker environment file |
 | `authentik_http_port` | `9000` | Server HTTP port published for Caddy |
-| `authentik_ldap_outpost_name` | `homelab-ldap-outpost` | Must match `files/blueprints/ldap.yaml` |
-| `authentik_ldaps_port` | `636` | Published LDAPS port; plaintext LDAP is not exposed |
+| `authentik_groups` | 8 `lab-*` names | The only definition of the lab group names; every binding resolves against it |
+| `authentik_ldap_outpost_name` | `homelab-ldap-outpost` | Rendered into the LDAP blueprint |
+| `authentik_ldaps_port` | `{{ identity_ldaps_port }}` | Published LDAPS port; plaintext LDAP is not exposed |
 | `authentik_ldap_cert_name` | `homelab-ldap` | Certificate name referenced by the LDAP blueprint |
-| `authentik_ldap_cert_cn` | `ldap.home.butaco.net` | Generated certificate CN and SAN |
+| `authentik_ldap_cert_cn` | `{{ identity_ldap_host }}` | Generated certificate CN and SAN |
 | `authentik_ldap_cert_validity_days` | `365` | Generated certificate validity |
-| `authentik_proxy_outpost_name` | `homelab-proxy-outpost` | Must match `files/blueprints/proxy.yaml` |
+| `authentik_proxy_outpost_name` | `homelab-proxy-outpost` | Rendered into the proxy blueprint |
 | `authentik_proxy_http_port` | `9001` | Proxy Outpost port used by Envoy Gateway |
 | `authentik_external_url` | `https://auth.home.butaco.net` | Browser-facing Authentik URL |
 | `authentik_upgrade_allow_release_change` | `false` | Permit a reviewed move to the next release series |
@@ -114,12 +116,15 @@ podman exec authentik-worker ak create_recovery_key <minutes> akadmin
 Do not rotate `authentik_secret_key` without a migration plan. Keep all
 plaintext credentials in SOPS; rendered environment files are mode 0600.
 
-Static provider, application, group, and Outpost configuration belongs in
-`files/blueprints/`. Authentik watches the mounted `/blueprints/local`
-directory and applies changed files. The role retrieves LDAP and Proxy Outpost
-tokens from the API on every run, so they are not stored in SOPS.
+Provider, application, group, and Outpost configuration belongs in
+`templates/blueprints/`, listed in apply order by `authentik_blueprint_paths`.
+Group names come from `authentik_groups` and the LDAP endpoint from the
+`identity_*` variables that `roles/sssd` also reads, so a binding cannot name a
+group that does not exist: templating fails first (ADR-0050). The role
+retrieves LDAP and Proxy Outpost tokens from the API on every run, so they are
+not stored in SOPS.
 
-`files/blueprints/test-users.yaml` creates the disposable `sssdtest` account
+`templates/blueprints/test-users.yaml.j2` creates the disposable `sssdtest` account
 for SSSD validation. When the account is no longer needed, remove the
 blueprint, its environment-template entry, and its SOPS variable together.
 
@@ -184,8 +189,8 @@ starts the login flow.
 ### Onboarding
 
 1. Add the account to `authentik_users` with the groups it needs.
-   `files/blueprints/groups.yaml` defines them; Linux login requires
-   `lab-linux-users` and sudo additionally requires `lab-linux-admins`.
+   `authentik_groups` defines them; Linux login requires `lab-linux-users`
+   and sudo additionally requires `lab-linux-admins`.
 2. Run `ansible-playbook playbooks/authentik.yaml`.
 3. Verify on an SSSD host that `getent passwd <user>` and `id <user>` agree,
    and that `sss_ssh_authorizedkeys <user>` returns the key.
@@ -237,7 +242,7 @@ account exists with a usable password.
 
 ### Proxy Outpost
 
-`files/blueprints/proxy.yaml` defines forward-auth providers for Headlamp and
+`templates/blueprints/proxy.yaml.j2` defines forward-auth providers for Headlamp and
 the GPU switch. The standalone Proxy Outpost serves both `prd` and `sandbox`.
 It answers authorization checks but is not a reverse proxy in the request path;
 each cluster's Envoy Gateway calls `authentik_proxy_http_port` directly over the

@@ -1,0 +1,22 @@
+{#
+  Creates exactly the groups in `authentik_groups`, which is also what every
+  policy binding resolves against. Removing a key here therefore breaks the
+  blueprints that reference it at render time.
+#}
+version: 1
+metadata:
+  name: homelab groups
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+entries:
+  # Lab privilege groups, not Authentik UI superusers; see the identity plan.
+{% for name in authentik_groups.values() %}
+  - model: authentik_core.group
+    identifiers:
+      name: {{ name }}
+    attrs:
+      is_superuser: false
+{% if not loop.last %}
+
+{% endif %}
+{% endfor %}

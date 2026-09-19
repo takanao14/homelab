@@ -14,7 +14,7 @@ entries:
       is_active: true
       path: users
       groups:
-        - !Find [authentik_core.group, [name, lab-linux-users]]
+        - !Find [authentik_core.group, [name, {{ authentik_groups.linux_users }}]]
       attributes:
         sshPublicKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ0tkBI+/IMh3FxcPiKisnn4s2eNujC0AB9kobFQW0Rd sssdtest@home.butaco.net"
       # Authentik hashes the environment-sourced value; plaintext is not stored here.

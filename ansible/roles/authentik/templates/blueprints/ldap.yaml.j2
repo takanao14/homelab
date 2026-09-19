@@ -1,3 +1,7 @@
+{#
+  Templated so the LDAP service contract has one definition: `identity_*` in
+  group_vars/all.yaml is what roles/sssd also reads.
+#}
 version: 1
 metadata:
   name: homelab LDAP provider
@@ -12,9 +16,9 @@ entries:
     attrs:
       authorization_flow: !Find [authentik_flows.flow, [slug, default-authentication-flow]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
-      base_dn: dc=ldap,dc=home,dc=butaco,dc=net
-      certificate: !Find [authentik_crypto.certificatekeypair, [name, homelab-ldap]]
-      tls_server_name: ldap.home.butaco.net
+      base_dn: {{ identity_ldap_base_dn }}
+      certificate: !Find [authentik_crypto.certificatekeypair, [name, {{ authentik_ldap_cert_name }}]]
+      tls_server_name: {{ identity_ldap_host }}
       # See decision 14: IDs start at 10000 to avoid existing LDAP and local accounts.
       uid_start_number: 10000
       gid_start_number: 10000
@@ -30,7 +34,7 @@ entries:
 
   - model: authentik_core.group
     identifiers:
-      name: lab-ldap-service
+      name: {{ authentik_ldap_service_group }}
     attrs:
       is_superuser: false
       roles:
@@ -38,14 +42,14 @@ entries:
 
   - model: authentik_core.user
     identifiers:
-      username: ldapbind
+      username: {{ identity_ldap_bind_user }}
     attrs:
       name: LDAP Search Service Account
       type: service_account
       is_active: true
       path: service-accounts
       groups:
-        - !Find [authentik_core.group, [name, lab-ldap-service]]
+        - !Find [authentik_core.group, [name, {{ authentik_ldap_service_group }}]]
       password: !Env LDAP_BIND_PASSWORD
 
   - model: authentik_core.application
@@ -57,11 +61,11 @@ entries:
       provider: !KeyOf ldap-provider
       policy_engine_mode: any
 
-  # Allow lab-linux-users or the SSSD lookup service; sudo admins also need login membership.
+  # Allow {{ authentik_groups.linux_users }} or the SSSD lookup service; sudo admins also need login membership.
   - model: authentik_policies.policybinding
     identifiers:
       target: !KeyOf ldap-application
-      group: !Find [authentik_core.group, [name, lab-linux-users]]
+      group: !Find [authentik_core.group, [name, {{ authentik_groups.linux_users }}]]
     attrs:
       order: 0
       enabled: true
@@ -69,14 +73,14 @@ entries:
   - model: authentik_policies.policybinding
     identifiers:
       target: !KeyOf ldap-application
-      group: !Find [authentik_core.group, [name, lab-ldap-service]]
+      group: !Find [authentik_core.group, [name, {{ authentik_ldap_service_group }}]]
     attrs:
       order: 1
       enabled: true
 
   - model: authentik_outposts.outpost
     identifiers:
-      name: homelab-ldap-outpost
+      name: {{ authentik_ldap_outpost_name }}
     attrs:
       type: ldap
       providers:

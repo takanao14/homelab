@@ -1,3 +1,7 @@
+{#
+  Group names and the browser-facing URL come from the role defaults so the
+  bindings cannot drift from groups.yaml or from authentik_external_url.
+#}
 version: 1
 metadata:
   name: homelab proxy provider
@@ -82,7 +86,7 @@ entries:
   - model: authentik_policies.policybinding
     identifiers:
       target: !KeyOf headlamp-prd-application
-      group: !Find [authentik_core.group, [name, lab-platform-admins]]
+      group: !Find [authentik_core.group, [name, {{ authentik_groups.platform_admins }}]]
       order: 0
     attrs:
       enabled: true
@@ -90,7 +94,7 @@ entries:
   - model: authentik_policies.policybinding
     identifiers:
       target: !KeyOf headlamp-prd-application
-      group: !Find [authentik_core.group, [name, lab-k8s-prd-admins]]
+      group: !Find [authentik_core.group, [name, {{ authentik_groups.k8s_prd_admins }}]]
       order: 1
     attrs:
       enabled: true
@@ -98,7 +102,7 @@ entries:
   - model: authentik_policies.policybinding
     identifiers:
       target: !KeyOf headlamp-sandbox-application
-      group: !Find [authentik_core.group, [name, lab-platform-admins]]
+      group: !Find [authentik_core.group, [name, {{ authentik_groups.platform_admins }}]]
       order: 0
     attrs:
       enabled: true
@@ -107,16 +111,16 @@ entries:
   - model: authentik_policies.policybinding
     identifiers:
       target: !KeyOf headlamp-sandbox-application
-      group: !Find [authentik_core.group, [name, lab-k8s-sandbox-users]]
+      group: !Find [authentik_core.group, [name, {{ authentik_groups.k8s_sandbox_users }}]]
       order: 1
     attrs:
       enabled: true
 
-  # ADR-0027-scoped RBAC permits the broader lab-gpu-users group.
+  # ADR-0027-scoped RBAC permits the broader {{ authentik_groups.gpu_users }} group.
   - model: authentik_policies.policybinding
     identifiers:
       target: !KeyOf gpu-switch-prd-application
-      group: !Find [authentik_core.group, [name, lab-platform-admins]]
+      group: !Find [authentik_core.group, [name, {{ authentik_groups.platform_admins }}]]
       order: 0
     attrs:
       enabled: true
@@ -124,7 +128,7 @@ entries:
   - model: authentik_policies.policybinding
     identifiers:
       target: !KeyOf gpu-switch-prd-application
-      group: !Find [authentik_core.group, [name, lab-gpu-users]]
+      group: !Find [authentik_core.group, [name, {{ authentik_groups.gpu_users }}]]
       order: 1
     attrs:
       enabled: true
@@ -132,7 +136,7 @@ entries:
   - model: authentik_outposts.outpost
     id: proxy-outpost
     identifiers:
-      name: homelab-proxy-outpost
+      name: {{ authentik_proxy_outpost_name }}
     attrs:
       type: proxy
       # One external outpost serves every application and environment.
@@ -143,6 +147,6 @@ entries:
       # Proxy outposts require non-empty config with authentik_host.
       config:
         # Browser-facing URL; backchannel calls use the container environment.
-        authentik_host: https://auth.home.butaco.net
+        authentik_host: {{ authentik_external_url }}
         authentik_host_insecure: false
         log_level: info

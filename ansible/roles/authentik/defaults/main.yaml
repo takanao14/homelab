@@ -19,8 +19,33 @@ authentik_certs_dir: "{{ authentik_base_dir }}/certs"
 authentik_pg_data_dir: /var/lib/authentik-postgresql
 authentik_backup_dir: /var/backups/authentik
 
-# Authentik watches /blueprints/local and auto-applies deployed YAML files.
+# Authentik indexes deployed files under local/. Rendered from
+# templates/blueprints/<basename>.j2 and applied in this order, so the groups
+# exist before the blueprints that bind to them.
 authentik_blueprints_dir: "{{ authentik_base_dir }}/blueprints"
+authentik_blueprint_paths:
+  - local/groups.yaml
+  - local/ldap.yaml
+  - local/proxy.yaml
+  - local/test-users.yaml
+  - local/users.yaml
+
+# The only definition of the lab group names. groups.yaml creates exactly these
+# and every policy binding addresses them by key, so a reference to a group
+# that is not defined here fails while rendering instead of at login.
+authentik_groups:
+  platform_admins: lab-platform-admins
+  linux_users: "{{ identity_linux_login_group }}"
+  linux_admins: "{{ identity_linux_sudo_group }}"
+  k8s_prd_viewers: lab-k8s-prd-viewers
+  k8s_prd_operators: lab-k8s-prd-operators
+  k8s_prd_admins: lab-k8s-prd-admins
+  k8s_sandbox_users: lab-k8s-sandbox-users
+  gpu_users: lab-gpu-users
+
+# Kept out of authentik_groups: it carries an RBAC role and is created by the
+# LDAP blueprint, not by groups.yaml.
+authentik_ldap_service_group: lab-ldap-service
 
 authentik_env_file: /etc/authentik/authentik.env
 
@@ -35,7 +60,7 @@ authentik_ldap_image: "ghcr.io/goauthentik/ldap"
 authentik_ldap_container: authentik-ldap
 authentik_ldap_outpost_name: homelab-ldap-outpost
 authentik_ldap_env_file: /etc/authentik/authentik-ldap.env
-authentik_ldaps_port: 636
+authentik_ldaps_port: "{{ identity_ldaps_port }}"
 
 # Shared external Proxy Outpost for Headlamp forward auth (stage 8b-1).
 authentik_proxy_image: "ghcr.io/goauthentik/proxy"
@@ -49,7 +74,7 @@ authentik_external_url: "https://auth.home.butaco.net"
 
 # Generate a standards-compliant self-signed LDAPS certificate outside Authentik.
 authentik_ldap_cert_name: homelab-ldap
-authentik_ldap_cert_cn: ldap.home.butaco.net
+authentik_ldap_cert_cn: "{{ identity_ldap_host }}"
 authentik_ldap_cert_validity_days: 365
 authentik_ldap_cert_rotate: false
 authentik_ldap_cert_sssd_path: "{{ role_path }}/../sssd/files/authentik-ldap-server.pem"
