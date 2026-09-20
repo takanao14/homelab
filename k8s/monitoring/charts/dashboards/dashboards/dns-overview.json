@@ -1146,12 +1146,274 @@
     {
       "type": "row",
       "collapsed": false,
-      "title": "Knot Resolver DNSSEC Validation Logs",
+      "title": "Authoritative DNS Path",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 84
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "state-timeline",
+      "targets": [
+        {
+          "expr": "probe_success{job=~\"scrapeConfig/monitoring/dns-authoritative-(udp|tcp)\"}",
+          "legendFormat": "{{probe_source}} {{transport}} {{dns_server}}"
+        }
+      ],
+      "title": "Authoritative DNS Probe Status",
+      "description": "Direct non-recursive root NS probes from each resolver. A UDP-only failure indicates a transport-specific path problem.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 85
+      },
+      "repeatDirection": "h",
+      "options": {
+        "showValue": "never",
+        "rowHeight": 0.9,
+        "mergeValues": true,
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        },
+        "perPage": 20
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 1,
+                "color": "green"
+              }
+            ]
+          },
+          "custom": {
+            "lineWidth": 0,
+            "fillOpacity": 70
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "probe_duration_seconds{job=~\"scrapeConfig/monitoring/dns-authoritative-(udp|tcp)\"}",
+          "legendFormat": "{{probe_source}} {{transport}} {{dns_server}}"
+        }
+      ],
+      "title": "Authoritative DNS Probe Duration",
+      "description": "End-to-end duration of direct root NS probes, split by resolver, transport, and root server.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 85
+      },
+      "repeatDirection": "h",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "bargauge",
+      "targets": [
+        {
+          "expr": "avg_over_time(probe_success{job=~\"scrapeConfig/monitoring/dns-authoritative-(udp|tcp)\"}[$__range]) * 100",
+          "instant": true,
+          "legendFormat": "{{probe_source}} {{transport}} {{dns_server}}",
+          "range": false
+        }
+      ],
+      "title": "Authoritative DNS Availability",
+      "description": "Successful direct root NS probes over the selected dashboard time range.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 93
+      },
+      "repeatDirection": "h",
+      "options": {
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "namePlacement": "auto",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false,
+          "calcs": []
+        },
+        "reduceOptions": {
+          "values": true,
+          "calcs": []
+        },
+        "maxVizHeight": 300,
+        "orientation": "horizontal"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 99,
+                "color": "yellow"
+              },
+              {
+                "value": 99.9,
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(probe_success{job=~\"scrapeConfig/monitoring/dns-authoritative-(udp|tcp)\"} == 0) or vector(0)",
+          "instant": true,
+          "legendFormat": "Failed",
+          "range": false
+        }
+      ],
+      "title": "Failed Authoritative DNS Probes",
+      "description": "Current failed direct root NS probes across both resolvers and transports.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 93
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": ""
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "Knot Resolver DNSSEC Validation Logs",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 101
       },
       "id": 0,
       "panels": []
@@ -1175,7 +1437,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 85
+        "y": 102
       },
       "repeatDirection": "h",
       "options": {
@@ -1198,7 +1460,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 97
+        "y": 114
       },
       "id": 0,
       "panels": []
@@ -1222,7 +1484,7 @@
         "h": 4,
         "w": 12,
         "x": 0,
-        "y": 98
+        "y": 115
       },
       "repeatDirection": "h",
       "options": {
@@ -1273,7 +1535,7 @@
         "h": 4,
         "w": 12,
         "x": 12,
-        "y": 98
+        "y": 115
       },
       "repeatDirection": "h",
       "options": {
@@ -1322,7 +1584,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 102
+        "y": 119
       },
       "id": 0,
       "panels": []
@@ -1349,7 +1611,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 103
+        "y": 120
       },
       "repeatDirection": "h",
       "options": {
@@ -1402,7 +1664,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 111
+        "y": 128
       },
       "repeatDirection": "h",
       "options": {
@@ -1509,7 +1771,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 119
+        "y": 136
       },
       "repeatDirection": "h",
       "options": {
@@ -1567,7 +1829,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 119
+        "y": 136
       },
       "repeatDirection": "h",
       "options": {
@@ -1615,7 +1877,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 127
+        "y": 144
       },
       "id": 0,
       "panels": []
@@ -1640,7 +1902,7 @@
         "h": 4,
         "w": 6,
         "x": 0,
-        "y": 128
+        "y": 145
       },
       "repeatDirection": "h",
       "options": {
@@ -1693,7 +1955,7 @@
         "h": 4,
         "w": 6,
         "x": 6,
-        "y": 128
+        "y": 145
       },
       "repeatDirection": "h",
       "options": {
@@ -1749,7 +2011,7 @@
         "h": 4,
         "w": 6,
         "x": 12,
-        "y": 128
+        "y": 145
       },
       "repeatDirection": "h",
       "options": {
@@ -1806,7 +2068,7 @@
         "h": 4,
         "w": 6,
         "x": 18,
-        "y": 128
+        "y": 145
       },
       "repeatDirection": "h",
       "options": {
@@ -1854,7 +2116,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 132
+        "y": 149
       },
       "id": 0,
       "panels": []
@@ -1878,7 +2140,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 133
+        "y": 150
       },
       "repeatDirection": "h",
       "options": {
@@ -1920,7 +2182,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 141
+        "y": 158
       },
       "repeatDirection": "h",
       "options": {
@@ -1962,7 +2224,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 141
+        "y": 158
       },
       "repeatDirection": "h",
       "options": {
@@ -2005,7 +2267,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 149
+        "y": 166
       },
       "repeatDirection": "h",
       "options": {
@@ -2036,7 +2298,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 157
+        "y": 174
       },
       "id": 0,
       "panels": []
@@ -2062,7 +2324,7 @@
         "h": 4,
         "w": 8,
         "x": 0,
-        "y": 158
+        "y": 175
       },
       "repeatDirection": "h",
       "options": {
@@ -2120,7 +2382,7 @@
         "h": 4,
         "w": 8,
         "x": 8,
-        "y": 158
+        "y": 175
       },
       "repeatDirection": "h",
       "options": {
@@ -2178,7 +2440,7 @@
         "h": 4,
         "w": 8,
         "x": 16,
-        "y": 158
+        "y": 175
       },
       "repeatDirection": "h",
       "options": {
@@ -2227,7 +2489,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 162
+        "y": 179
       },
       "id": 0,
       "panels": []
@@ -2255,7 +2517,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 163
+        "y": 180
       },
       "repeatDirection": "h",
       "options": {
@@ -2301,7 +2563,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 163
+        "y": 180
       },
       "repeatDirection": "h",
       "options": {
@@ -2347,7 +2609,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 171
+        "y": 188
       },
       "repeatDirection": "h",
       "options": {

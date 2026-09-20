@@ -1,12 +1,14 @@
 package main
 
 import (
+	"github.com/grafana/grafana-foundation-sdk/go/bargauge"
 	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboard"
 	"github.com/grafana/grafana-foundation-sdk/go/logs"
 	"github.com/grafana/grafana-foundation-sdk/go/loki"
 	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
 	"github.com/grafana/grafana-foundation-sdk/go/stat"
+	"github.com/grafana/grafana-foundation-sdk/go/statetimeline"
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
@@ -24,6 +26,7 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		pdns                   = `job="scrapeConfig/monitoring/pdns-auth-external"`
 		coredns                = `job="coredns"`
 		extdns                 = `job="external-dns"`
+		authoritativeDNSJobs   = `job=~"scrapeConfig/monitoring/dns-authoritative-(udp|tcp)"`
 		resolverValidationLogs = `{job="dns-resolver", unit="knot-resolver.service"} | json | __error__="" |~ "(?i)(bogus|dnssec|validation)" | line_format "{{.message}}"`
 	)
 
@@ -52,6 +55,31 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 		})
 
 	issueThresholds := issueThresholds()
+
+	probeThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "red"},
+			{Value: new(float64(1)), Color: "green"},
+		})
+
+	availabilityThresholds := dashboard.NewThresholdsConfigBuilder().
+		Mode(dashboard.ThresholdsModeAbsolute).
+		Steps([]dashboard.Threshold{
+			{Value: nil, Color: "red"},
+			{Value: new(float64(99)), Color: "yellow"},
+			{Value: new(float64(99.9)), Color: "green"},
+		})
+
+	probeValueMappings := []dashboard.ValueMapping{
+		{ValueMap: &dashboard.ValueMap{
+			Type: dashboard.MappingTypeValueToText,
+			Options: map[string]dashboard.ValueMappingResult{
+				"0": {Text: new("DOWN"), Color: new("red")},
+				"1": {Text: new("UP"), Color: new("green")},
+			},
+		}},
+	}
 
 	// Match resolver alert ratios: healthy >=90%, critical <60%.
 	resolverCacheHitRateThresholds := dashboard.NewThresholdsConfigBuilder().
@@ -446,6 +474,71 @@ func buildDnsOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`time() - node_textfile_mtime_seconds{` + resolver + `,file=~".*knot_resolver\\.prom"}`).
 					LegendFormat("{{instance}}"),
+				),
+		).
+		WithRow(dashboard.NewRowBuilder("Authoritative DNS Path")).
+		WithPanel(
+			statetimeline.NewPanelBuilder().
+				Title("Authoritative DNS Probe Status").
+				Description("Direct non-recursive root NS probes from each resolver. A UDP-only failure indicates a transport-specific path problem.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Thresholds(probeThresholds).
+				Mappings(probeValueMappings).
+				ShowValue(common.VisibilityModeNever).
+				MergeValues(true).
+				Tooltip(tooltipAll).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`probe_success{` + authoritativeDNSJobs + `}`).
+					LegendFormat("{{probe_source}} {{transport}} {{dns_server}}"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("Authoritative DNS Probe Duration").
+				Description("End-to-end duration of direct root NS probes, split by resolver, transport, and root server.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("s").
+				Min(0).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`probe_duration_seconds{` + authoritativeDNSJobs + `}`).
+					LegendFormat("{{probe_source}} {{transport}} {{dns_server}}"),
+				),
+		).
+		WithPanel(
+			bargauge.NewPanelBuilder().
+				Title("Authoritative DNS Availability").
+				Description("Successful direct root NS probes over the selected dashboard time range.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("percent").
+				Min(0).Max(100).
+				Thresholds(availabilityThresholds).
+				Orientation(common.VizOrientationHorizontal).
+				ReduceOptions(common.NewReduceDataOptionsBuilder().Values(true)).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`avg_over_time(probe_success{` + authoritativeDNSJobs + `}[$__range]) * 100`).
+					Instant().
+					LegendFormat("{{probe_source}} {{transport}} {{dns_server}}"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Failed Authoritative DNS Probes").
+				Description("Current failed direct root NS probes across both resolvers and transports.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("short").
+				Min(0).
+				Thresholds(issueThresholds).
+				ColorMode(common.BigValueColorModeBackground).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`sum(probe_success{` + authoritativeDNSJobs + `} == 0) or vector(0)`).
+					Instant().
+					LegendFormat("Failed"),
 				),
 		).
 		WithRow(dashboard.NewRowBuilder("Knot Resolver DNSSEC Validation Logs")).
