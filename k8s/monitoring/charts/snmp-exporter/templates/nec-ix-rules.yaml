@@ -1,0 +1,38 @@
+{{- if and .Values.necIx.enabled .Values.necIx.alerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: snmp-ix2106-napt
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: snmp-ix2106-napt.rules
+      rules:
+        - alert: Ix2106NaptCacheHigh
+          expr: >-
+            naptCacheEntries{instance="{{ .Values.necIx.instance }}"}
+            / {{ .Values.necIx.naptCapacity }}
+            > {{ divf .Values.necIx.alerts.utilizationPercent 100 }}
+          for: {{ .Values.necIx.alerts.utilizationFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: 'IX2106 NAPT cache utilization is high'
+            description: >-
+              {{ "{{ $labels.ifDescr }}" }} on {{ "{{ $labels.instance }}" }} is using
+              {{ "{{ $value | humanizePercentage }}" }} of the configured
+              {{ .Values.necIx.naptCapacity }}-entry capacity.
+
+        - alert: Ix2106NaptCacheOverflow
+          expr: >-
+            increase(naptCacheOverflows{instance="{{ .Values.necIx.instance }}"}[10m]) > 0
+          labels:
+            severity: critical
+          annotations:
+            summary: 'IX2106 NAPT cache overflow detected'
+            description: >-
+              {{ "{{ $labels.ifDescr }}" }} on {{ "{{ $labels.instance }}" }} recorded
+              {{ "{{ printf \"%.0f\" $value }}" }} NAPT cache overflows in ten minutes.
+{{- end }}

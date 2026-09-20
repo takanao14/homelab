@@ -50,6 +50,7 @@ monitoring/
 │   ├── pdns-auth.yaml
 │   └── openbao.yaml
 ├── dashboards/                   # Dashboard generator (Go, grafana-foundation-sdk)
+├── snmp-generator/               # Pinned inputs for generated vendor SNMP modules
 └── charts/                       # Local Helm charts
     ├── prometheus/               # kube-prometheus-stack wrapper + shared scrape/rule resources
     ├── grafana/

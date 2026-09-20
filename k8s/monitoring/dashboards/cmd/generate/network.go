@@ -214,6 +214,101 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 					LegendFormat("{{instance}} {{ifDescr}} {{ifAlias}} Out"),
 				),
 		).
+		WithRow(dashboard.NewRowBuilder("IX2106 NAPT")).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Current NAPT Entries").
+				Datasource(ds).
+				Span(8).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(measurementThresholds()).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`naptCacheEntries{instance="bgw1"}`).
+					LegendFormat("{{ifDescr}} {{ifAlias}}"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("NAPT Utilization").
+				Description("Current entries divided by the IX2106 default 65,535-entry capacity. Update the chart value if the router config overrides it.").
+				Datasource(ds).
+				Span(8).Height(4).
+				Unit("percentunit").
+				Min(0).Max(1).
+				Thresholds(measurementThresholds()).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`naptCacheEntries{instance="bgw1"} / 65535`).
+					LegendFormat("{{ifDescr}} {{ifAlias}}"),
+				),
+		).
+		WithPanel(
+			stat.NewPanelBuilder().
+				Title("Peak NAPT Entries").
+				Datasource(ds).
+				Span(8).Height(4).
+				Unit("short").
+				Min(0).
+				Thresholds(measurementThresholds()).
+				Orientation(common.VizOrientationAuto).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`naptCachePeak{instance="bgw1"}`).
+					LegendFormat("{{ifDescr}} {{ifAlias}}"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("NAPT Cache Activity").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("ops").
+				Min(0).
+				Interval(snmpMinInterval).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(naptCacheCreates{instance="bgw1"}[$__rate_interval])`).
+					LegendFormat("{{ifDescr}} creates"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(naptCacheOverflows{instance="bgw1"}[$__rate_interval])`).
+					LegendFormat("{{ifDescr}} overflows"),
+				),
+		).
+		WithPanel(
+			timeseries.NewPanelBuilder().
+				Title("IPv4 and UDP Discards").
+				Description("Device-wide MIB-II counters. These counters do not identify an ACL or firewall rule.").
+				Datasource(ds).
+				Span(12).Height(8).
+				Unit("pps").
+				Min(0).
+				Interval(snmpMinInterval).
+				Tooltip(tooltipAll).
+				Legend(legend).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(ipInDiscards{instance="bgw1"}[$__rate_interval])`).
+					LegendFormat("IPv4 input discards"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(ipOutDiscards{instance="bgw1"}[$__rate_interval])`).
+					LegendFormat("IPv4 output discards"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(ipOutNoRoutes{instance="bgw1"}[$__rate_interval])`).
+					LegendFormat("IPv4 no route"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(udpInErrors{instance="bgw1"}[$__rate_interval])`).
+					LegendFormat("UDP input errors"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(udpNoPorts{instance="bgw1"}[$__rate_interval])`).
+					LegendFormat("UDP no port"),
+				),
+		).
 		Build()
 
 	if err != nil {

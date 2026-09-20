@@ -1,0 +1,17 @@
+modules:
+  nec_ix_napt:
+    walk:
+      - naptCacheTable
+      - IP-MIB::ipInDiscards
+      - IP-MIB::ipOutDiscards
+      - IP-MIB::ipOutNoRoutes
+      - UDP-MIB::udpNoPorts
+      - UDP-MIB::udpInErrors
+    lookups:
+      - source_indexes: [naptCacheIfIndex]
+        lookup: IF-MIB::ifDescr
+      - source_indexes: [naptCacheIfIndex]
+        lookup: IF-MIB::ifAlias
+    overrides:
+      naptCacheIfIndex:
+        ignore: true

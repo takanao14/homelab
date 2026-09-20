@@ -1,0 +1,27 @@
+{{- if .Values.necIx.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: snmp-ix2106-napt
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  scrapeClass: external
+  interval: 60s
+  module: nec_ix_napt
+  prober:
+    url: snmp-exporter-prometheus-snmp-exporter:9116
+    path: /snmp
+  targets:
+    staticConfig:
+      relabelingConfigs:
+        - action: replace
+          targetLabel: __param_auth
+          replacement: homelab_v2
+        - action: replace
+          targetLabel: instance
+          replacement: {{ .Values.necIx.instance | quote }}
+      static:
+        - {{ .Values.necIx.target | quote }}
+{{- end }}

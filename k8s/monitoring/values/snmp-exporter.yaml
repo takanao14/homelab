@@ -1,6 +1,16 @@
 interfaceAlerts:
   enabled: true
 
+necIx:
+  enabled: true
+  target: 192.168.10.1
+  instance: bgw1
+  # IX2106 default. Keep this synchronized with the router if ip napt
+  # translation max-entries is configured explicitly.
+  naptCapacity: 65535
+  alerts:
+    enabled: true
+
 prometheus-snmp-exporter:
   podAnnotations:
     reloader.stakater.com/auto: "true"
@@ -13,6 +23,13 @@ prometheus-snmp-exporter:
   extraArgs:
     - --config.file=/etc/snmp_exporter/snmp.yml
     - --config.file=/etc/snmp-exporter-auth/snmp-auth.yaml
+    - --config.file=/etc/snmp-exporter-nec/nec-ix.yml
+
+  extraConfigmapMounts:
+    - name: snmp-exporter-nec-ix
+      mountPath: /etc/snmp-exporter-nec
+      configMap: snmp-exporter-nec-ix
+      readOnly: true
 
   extraSecretMounts:
     - name: snmp-exporter-auth

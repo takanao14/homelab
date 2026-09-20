@@ -488,6 +488,281 @@
         },
         "overrides": []
       }
+    },
+    {
+      "type": "row",
+      "collapsed": false,
+      "title": "IX2106 NAPT",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 0,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "naptCacheEntries{instance=\"bgw1\"}",
+          "legendFormat": "{{ifDescr}} {{ifAlias}}"
+        }
+      ],
+      "title": "Current NAPT Entries",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 36
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "naptCacheEntries{instance=\"bgw1\"} / 65535",
+          "legendFormat": "{{ifDescr}} {{ifAlias}}"
+        }
+      ],
+      "title": "NAPT Utilization",
+      "description": "Current entries divided by the IX2106 default 65,535-entry capacity. Update the chart value if the router config overrides it.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 36
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "naptCachePeak{instance=\"bgw1\"}",
+          "legendFormat": "{{ifDescr}} {{ifAlias}}"
+        }
+      ],
+      "title": "Peak NAPT Entries",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 36
+      },
+      "repeatDirection": "h",
+      "options": {
+        "graphMode": "area",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": []
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(naptCacheCreates{instance=\"bgw1\"}[$__rate_interval])",
+          "legendFormat": "{{ifDescr}} creates"
+        },
+        {
+          "expr": "rate(naptCacheOverflows{instance=\"bgw1\"}[$__rate_interval])",
+          "legendFormat": "{{ifDescr}} overflows"
+        }
+      ],
+      "title": "NAPT Cache Activity",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 40
+      },
+      "repeatDirection": "h",
+      "interval": "2m",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(ipInDiscards{instance=\"bgw1\"}[$__rate_interval])",
+          "legendFormat": "IPv4 input discards"
+        },
+        {
+          "expr": "rate(ipOutDiscards{instance=\"bgw1\"}[$__rate_interval])",
+          "legendFormat": "IPv4 output discards"
+        },
+        {
+          "expr": "rate(ipOutNoRoutes{instance=\"bgw1\"}[$__rate_interval])",
+          "legendFormat": "IPv4 no route"
+        },
+        {
+          "expr": "rate(udpInErrors{instance=\"bgw1\"}[$__rate_interval])",
+          "legendFormat": "UDP input errors"
+        },
+        {
+          "expr": "rate(udpNoPorts{instance=\"bgw1\"}[$__rate_interval])",
+          "legendFormat": "UDP no port"
+        }
+      ],
+      "title": "IPv4 and UDP Discards",
+      "description": "Device-wide MIB-II counters. These counters do not identify an ACL or firewall rule.",
+      "transparent": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
+      "repeatDirection": "h",
+      "interval": "2m",
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": ""
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps",
+          "min": 0,
+          "custom": {}
+        },
+        "overrides": []
+      }
     }
   ],
   "templating": {

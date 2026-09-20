@@ -7,3 +7,13 @@ interfaceAlerts:
   # Seven-day physical-port baseline is zero; tolerate fewer than 10 stray frames/hour.
   errorsPerHour: 10
   errorsFor: 15m
+
+necIx:
+  enabled: false
+  target: ""
+  instance: bgw1
+  naptCapacity: 65535
+  alerts:
+    enabled: false
+    utilizationPercent: 80
+    utilizationFor: 15m
