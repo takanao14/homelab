@@ -23,6 +23,7 @@ knot_resolver_cache_size: "256M"
 # Empty keeps full-service recursion. Define upstream servers to forward cache
 # misses.
 knot_resolver_forwarders: []
+knot_resolver_forward_dnssec: true
 
 # Use node_exporter's textfile directory.
 knot_resolver_metrics_path: "{{ node_exporter_textfile_dir | default('/var/lib/prometheus/node-exporter') }}/knot_resolver.prom"

@@ -5,7 +5,7 @@
   'forward': [{
     'subtree': '.',
     'servers': knot_resolver_forwarders,
-    'options': {'dnssec': true}
+    'options': {'dnssec': knot_resolver_forward_dnssec}
   }]
 }, recursive=true) %}
 {% endif %}

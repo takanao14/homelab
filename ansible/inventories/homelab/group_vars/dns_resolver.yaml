@@ -13,6 +13,7 @@ knot_resolver_forwarders:
       - 8.8.4.4
     transport: tls
     hostname: dns.google
+knot_resolver_forward_dnssec: false
 
 vector_journald_units:
   - knot-resolver

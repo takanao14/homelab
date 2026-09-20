@@ -9,6 +9,7 @@
       - knot_resolver_workers | int > 0
       - knot_resolver_forwarders is sequence
       - knot_resolver_forwarders is not string
+      - knot_resolver_forward_dnssec is boolean
     fail_msg: >-
       Knot Resolver requires Ubuntu Noble, one listen address, and exactly two
       dnsdist client networks.

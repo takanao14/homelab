@@ -66,6 +66,9 @@ knot_resolver_forwarders:
     hostname: dns.google
 ```
 
+Set `knot_resolver_forward_dnssec: false` only when an authenticated validating
+upstream is responsible for DNSSEC validation.
+
 Run the homelab playbook in check mode before provisioning:
 
 ```bash

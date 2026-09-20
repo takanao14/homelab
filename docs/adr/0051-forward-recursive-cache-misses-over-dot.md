@@ -19,7 +19,7 @@ explain the failure.
 Authenticated DNS-over-TLS tests from both resolvers to Google Public DNS
 succeeded on every connection. The tests covered normal answers, signed data,
 DNSSEC-bogus data, and NXDOMAIN. Knot Resolver forwarding retains its local
-persistent cache and validates forwarded answers locally.
+persistent cache.
 
 Forwarding to the bgw1 router is not suitable for this mitigation. Its UDP DNS
 service timed out during the incident, and its previous treatment of
@@ -32,10 +32,12 @@ preserves full-service recursion. Configure resolver1 as a canary to forward the
 root subtree to Google Public DNS over authenticated TLS using both `8.8.8.8`
 and `8.8.4.4` with the certificate name `dns.google`.
 
-Keep the existing 256 MB persistent cache, client views, local DNSSEC
-validation, metrics, and dnsdist routing unchanged. Do not clear the cache when
-switching modes. Validate cache misses explicitly during rollout so cached
-answers do not conceal an upstream failure.
+Keep the existing 256 MB persistent cache, client views, metrics, and dnsdist
+routing unchanged. Google performs DNSSEC validation and its answers are trusted
+over authenticated TLS. Local revalidation is disabled because it produced
+`NSEC Missing` for valid CNAME chains such as `ios.chat.openai.com`. Do not clear
+the cache when switching modes. Validate cache misses explicitly during rollout
+so cached answers do not conceal an upstream failure.
 
 After the canary meets the acceptance criteria, move the forwarder definition
 from resolver1 host variables to the shared resolver group variables and apply
@@ -49,6 +51,7 @@ the change to resolver2 serially.
   domains, but share Google Public DNS as an upstream dependency after rollout.
 - DoT avoids the failing UDP path and authenticates the upstream, but does not
   repair or identify the underlying network fault.
+- DNSSEC enforcement depends on Google Public DNS while forwarding is enabled.
 - Google can observe cache-miss query names. This reverses ADR-0030's preference
   to avoid third-party query disclosure and is accepted only after the canary
   is reviewed.
