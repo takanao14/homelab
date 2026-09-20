@@ -7,8 +7,10 @@
       - knot_resolver_server_addr | length > 0
       - knot_resolver_allowed_clients | length == 2
       - knot_resolver_workers | int > 0
+      - knot_resolver_mode in ['recursive', 'emergency_forward']
       - knot_resolver_forwarders is sequence
       - knot_resolver_forwarders is not string
+      - knot_resolver_mode != 'emergency_forward' or knot_resolver_forwarders | length > 0
       - knot_resolver_forward_dnssec is boolean
     fail_msg: >-
       Knot Resolver requires Ubuntu Noble, one listen address, and exactly two
@@ -192,6 +194,26 @@
     - ansible_check_mode
     - knot_resolver_installed.rc != 0
 
+- name: Check the installed Knot Resolver configuration
+  ansible.builtin.stat:
+    path: "{{ knot_resolver_config_path }}"
+  register: knot_resolver_installed_config_file
+
+- name: Read the installed Knot Resolver configuration
+  become: true
+  ansible.builtin.slurp:
+    path: "{{ knot_resolver_config_path }}"
+  register: knot_resolver_installed_config
+  when: knot_resolver_installed_config_file.stat.exists
+
+- name: Record the installed Knot Resolver mode
+  ansible.builtin.set_fact:
+    knot_resolver_previous_mode: >-
+      {{ 'emergency_forward'
+         if (knot_resolver_installed_config.content | default('') | b64decode
+             | regex_search('(?m)^forward:'))
+         else 'recursive' }}
+
 - name: Configure Knot Resolver
   become: true
   ansible.builtin.template:
@@ -224,6 +246,29 @@
 
 - name: Apply pending Knot Resolver reload
   ansible.builtin.meta: flush_handlers
+
+- name: Clear cache after restoring local DNSSEC validation
+  become: true
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/kresctl
+      - cache
+      - clear
+      - --json
+  when:
+    - not ansible_check_mode
+    - knot_resolver_previous_mode == 'emergency_forward'
+    - knot_resolver_mode == 'recursive'
+
+- name: Report planned cache clear after restoring local DNSSEC validation
+  ansible.builtin.debug:
+    msg: >-
+      The normal run will clear this resolver's cache after loading the
+      recursive configuration.
+  when:
+    - ansible_check_mode
+    - knot_resolver_previous_mode == 'emergency_forward'
+    - knot_resolver_mode == 'recursive'
 
 - name: Install Knot Resolver metrics collector
   become: true

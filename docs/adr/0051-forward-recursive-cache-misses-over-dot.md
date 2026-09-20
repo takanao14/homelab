@@ -27,10 +27,11 @@ DNSSEC-bogus answers did not meet the deterministic validation requirement.
 
 ## Decision
 
-Add optional forwarding to the Knot Resolver role. An empty forwarder list
-preserves full-service recursion. Configure resolver1 as a canary to forward the
-root subtree to Google Public DNS over authenticated TLS using both `8.8.8.8`
-and `8.8.4.4` with the certificate name `dns.google`.
+Add explicit `recursive` and `emergency_forward` modes to the Knot Resolver
+role. `recursive` remains the role default. During recurring external DNS
+reachability incidents, `emergency_forward` forwards the root subtree to Google
+Public DNS over authenticated TLS using both `8.8.8.8` and `8.8.4.4` with the
+certificate name `dns.google`.
 
 Keep the existing 256 MB persistent cache, client views, metrics, and dnsdist
 routing unchanged. Google performs DNSSEC validation and its answers are trusted
@@ -39,9 +40,9 @@ over authenticated TLS. Local revalidation is disabled because it produced
 the cache when switching modes. Validate cache misses explicitly during rollout
 so cached answers do not conceal an upstream failure.
 
-After the canary meets the acceptance criteria, move the forwarder definition
-from resolver1 host variables to the shared resolver group variables and apply
-the change to resolver2 serially.
+Keep production in `emergency_forward` while observing whether direct external
+DNS reachability remains stable. Mode changes are made in shared resolver group
+variables and applied serially, with resolver1 as the canary.
 
 ## Consequences
 
@@ -55,8 +56,10 @@ the change to resolver2 serially.
 - Google can observe cache-miss query names. This reverses ADR-0030's preference
   to avoid third-party query disclosure and is accepted only after the canary
   is reviewed.
-- Removing the forwarder definition and reapplying the role restores
-  full-service recursion without clearing cached data.
+- Setting the mode to `recursive` restores full-service recursion. Because the
+  emergency mode trusts upstream DNSSEC validation, the serial resolver
+  playbook clears each cache automatically after loading the recursive
+  configuration and before continuing to the peer.
 
 ## Acceptance criteria
 
@@ -70,5 +73,6 @@ the change to resolver2 serially.
    contact authoritative servers directly.
 5. Observe latency, downstream timeouts, SERVFAIL share, and cache hit rate for
    at least 30 minutes before enabling forwarding on resolver2.
-6. Remove the resolver1 host override and restore full-service recursion if the
-   canary increases failures or does not materially improve the incident.
+6. Restore `recursive` mode if the canary increases failures or does not
+   materially improve the incident. Confirm that the role cleared cache data
+   accepted while local validation was disabled.

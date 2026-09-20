@@ -1,6 +1,6 @@
 # Managed by Ansible (roles/knot_resolver) - do not edit on the host.
 {% set rendered_config = knot_resolver_config %}
-{% if knot_resolver_forwarders | length > 0 %}
+{% if knot_resolver_mode == 'emergency_forward' %}
 {% set rendered_config = rendered_config | combine({
   'forward': [{
     'subtree': '.',

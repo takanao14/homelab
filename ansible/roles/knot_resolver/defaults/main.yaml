@@ -20,8 +20,9 @@ knot_resolver_cache_storage: "/var/cache/knot-resolver"
 # 100M exhausted LMDB; see the ADR-0030 addendum.
 knot_resolver_cache_size: "256M"
 
-# Empty keeps full-service recursion. Define upstream servers to forward cache
-# misses.
+# Keep recursive as the safe default. emergency_forward uses the configured
+# upstream servers for cache misses.
+knot_resolver_mode: "recursive"
 knot_resolver_forwarders: []
 knot_resolver_forward_dnssec: true
 

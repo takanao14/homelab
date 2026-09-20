@@ -1,17 +1,17 @@
 # knot_resolver
 
 Installs Knot Resolver 6 from the official CZ.NIC Labs repository and configures
-it as a private caching and DNSSEC-validating resolver. It performs full-service
-recursion by default and can forward cache misses when
-`knot_resolver_forwarders` is configured.
+it as a private caching resolver. It performs full-service recursion and local
+DNSSEC validation by default, and can use authenticated forwarding during an
+external DNS reachability incident.
 
 The role:
 
 - listens on the host's fixed service address on port 53;
 - permits recursion only from the two dnsdist hosts;
 - keeps the management API on its package-default Unix socket;
-- enables DNSSEC validation and a persistent cache
-  (`knot_resolver_cache_size`, 256 MB);
+- enables local DNSSEC validation in recursive mode and keeps a persistent
+  cache (`knot_resolver_cache_size`, 256 MB);
 - exports Prometheus metrics through the node_exporter textfile collector.
 
 The repository signing key is downloaded with a pinned SHA-256 checksum. The
@@ -54,10 +54,11 @@ knot_resolver_allowed_clients:
   - "192.0.2.11/32"
 ```
 
-To forward cache misses over authenticated DNS-over-TLS while retaining the
-local persistent cache and DNSSEC validation:
+Set `knot_resolver_mode` to `emergency_forward` to forward cache misses over
+authenticated DNS-over-TLS while retaining the local persistent cache:
 
 ```yaml
+knot_resolver_mode: emergency_forward
 knot_resolver_forwarders:
   - address:
       - 8.8.8.8
@@ -68,6 +69,12 @@ knot_resolver_forwarders:
 
 Set `knot_resolver_forward_dnssec: false` only when an authenticated validating
 upstream is responsible for DNSSEC validation.
+
+Return to full-service recursion by setting `knot_resolver_mode: recursive`.
+The serial resolver playbook detects a transition from emergency forwarding,
+reloads the recursive configuration, and clears that resolver's cache before
+continuing to the peer. This prevents answers accepted under the upstream's
+validation policy from remaining available in the locally validating mode.
 
 Run the homelab playbook in check mode before provisioning:
 
