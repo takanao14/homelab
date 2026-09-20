@@ -1,0 +1,37 @@
+{{- if and .Values.authoritativeDns.exporters .Values.authoritativeDns.targets }}
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: dns-authoritative-udp
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  scrapeClass: external
+  metricsPath: /probe
+  params:
+    module: [dns_authoritative_udp]
+  staticConfigs:
+    {{- range $exporter := .Values.authoritativeDns.exporters }}
+    {{- range $target := $.Values.authoritativeDns.targets }}
+    - targets: [{{ $target.address | quote }}]
+      labels:
+        __tmp_exporter: {{ $exporter.address | quote }}
+        probe_source: {{ $exporter.name | quote }}
+        dns_server: {{ $target.name | quote }}
+        transport: udp
+    {{- end }}
+    {{- end }}
+  relabelings:
+    - action: replace
+      sourceLabels: [__address__]
+      targetLabel: __param_target
+    - action: replace
+      sourceLabels: [probe_source, dns_server]
+      separator: /
+      targetLabel: instance
+    - action: replace
+      sourceLabels: [__tmp_exporter]
+      targetLabel: __address__
+  scrapeInterval: {{ .Values.scrapeInterval }}
+{{- end }}

@@ -308,6 +308,8 @@ all:
 
     blackbox_exporter:
       hosts:
+        resolver1: null
+        resolver2: null
         rpi4: null
 
     # LXC guests read directly by Vector from journald.

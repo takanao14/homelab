@@ -7,6 +7,11 @@ proxmoxNodes: []
 # Shared frontend inventory for both DNS probe modules.
 dnsFrontends: []
 
+# Direct authoritative DNS probes made from each exporter host.
+authoritativeDns:
+  exporters: []
+  targets: []
+
 icmp:
   targets: []
 
@@ -18,6 +23,11 @@ dnsProbeAlerts:
   enabled: false
   # Client-visible failure across two independently probed frontends.
   failedFor: 2m
+
+authoritativeDnsProbeAlerts:
+  enabled: false
+  failedFor: 5m
+  minimumFailedTargets: 2
 
 tcpProbeAlerts:
   enabled: false

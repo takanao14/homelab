@@ -10,7 +10,7 @@ Installs and configures [Prometheus Blackbox Exporter](https://github.com/promet
 
 ## Probe Modules
 
-The deployed config defines four modules:
+The deployed config defines these modules:
 
 | Module | Prober | Description |
 |--------|--------|-------------|
@@ -18,12 +18,15 @@ The deployed config defines four modules:
 | `tcp_connect` | tcp | TCP connect to a `host:port` target (IPv4) |
 | `dns_external` | dns | DNS query for `google.com` against the target resolver |
 | `dns_internal` | dns | DNS query for `blackbox_exporter_dns_internal_query` against the target resolver |
+| `dns_authoritative_udp` | dns | Non-recursive root NS query over UDP |
+| `dns_authoritative_tcp` | dns | Non-recursive root NS query over TCP |
 
 ## Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `blackbox_exporter_port` | `9115` | Port the exporter listens on |
+| `blackbox_exporter_listen_address` | `ansible_host` | Address the exporter listens on |
 | `blackbox_exporter_config_path` | `/etc/prometheus/blackbox.yml` | Path to the deployed config file |
 | `blackbox_exporter_dns_internal_query` | `ns1.home.butaco.net` | Hostname used for the `dns_internal` probe |
 

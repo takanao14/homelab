@@ -18,13 +18,29 @@
     mode: '0644'
   notify: Restart blackbox_exporter
 
+- name: Configure blackbox_exporter listen address
+  become: true
+  ansible.builtin.template:
+    src: prometheus-blackbox-exporter.default.j2
+    dest: /etc/default/prometheus-blackbox-exporter
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart blackbox_exporter
+
+- name: Check for installed blackbox_exporter binary
+  ansible.builtin.stat:
+    path: /usr/bin/prometheus-blackbox-exporter
+  register: blackbox_exporter_binary
+
 # Grant CAP_NET_RAW directly for reliable ICMP probes.
 - name: Grant CAP_NET_RAW to blackbox_exporter binary (for ICMP)
   become: true
   community.general.capabilities:
     path: /usr/bin/prometheus-blackbox-exporter
-    capability: cap_net_raw+ep
+    capability: cap_net_raw=ep
     state: present
+  when: blackbox_exporter_binary.stat.exists
 
 - name: Ensure prometheus-blackbox-exporter is started and enabled
   become: true
@@ -32,3 +48,4 @@
     name: prometheus-blackbox-exporter
     state: started
     enabled: true
+  when: blackbox_exporter_binary.stat.exists

@@ -4,3 +4,4 @@
   ansible.builtin.service:
     name: prometheus-blackbox-exporter
     state: restarted
+  when: blackbox_exporter_binary.stat.exists

@@ -1,5 +1,6 @@
 ---
 blackbox_exporter_port: 9115
+blackbox_exporter_listen_address: "{{ ansible_host }}"
 blackbox_exporter_config_path: /etc/prometheus/blackbox.yml
 
 # Internal domain to resolve for the DNS internal probe

@@ -30,3 +30,27 @@ modules:
       query_type: A
       valid_rcodes:
         - NOERROR
+
+  dns_authoritative_udp:
+    prober: dns
+    timeout: 5s
+    dns:
+      transport_protocol: udp
+      preferred_ip_protocol: ip4
+      query_name: "."
+      query_type: NS
+      recursion_desired: false
+      valid_rcodes:
+        - NOERROR
+
+  dns_authoritative_tcp:
+    prober: dns
+    timeout: 5s
+    dns:
+      transport_protocol: tcp
+      preferred_ip_protocol: ip4
+      query_name: "."
+      query_type: NS
+      recursion_desired: false
+      valid_rcodes:
+        - NOERROR

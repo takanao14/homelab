@@ -1,0 +1,46 @@
+{{- if .Values.authoritativeDnsProbeAlerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: dns-authoritative-probe
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: dns-authoritative-probe
+      rules:
+        - alert: AuthoritativeDnsUdpPathDegraded
+          expr: >-
+            count by (probe_source) (
+              probe_success{job="scrapeConfig/monitoring/dns-authoritative-udp"} == 0
+            ) >= {{ .Values.authoritativeDnsProbeAlerts.minimumFailedTargets }}
+            and on (probe_source)
+            count by (probe_source) (
+              probe_success{job="scrapeConfig/monitoring/dns-authoritative-tcp"} == 1
+            ) >= {{ .Values.authoritativeDnsProbeAlerts.minimumFailedTargets }}
+          for: {{ .Values.authoritativeDnsProbeAlerts.failedFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "Authoritative DNS over UDP is degraded from {{ "{{ $labels.probe_source }}" }}"
+            description: >-
+              Direct UDP queries to multiple root servers are failing from
+              {{ "{{ $labels.probe_source }}" }} while TCP queries still succeed.
+
+        - alert: AuthoritativeDnsPathUnavailable
+          expr: >-
+            count by (probe_source) (
+              max by (probe_source, dns_server) (
+                probe_success{job=~"scrapeConfig/monitoring/dns-authoritative-(udp|tcp)"}
+              ) == 0
+            ) >= {{ .Values.authoritativeDnsProbeAlerts.minimumFailedTargets }}
+          for: {{ .Values.authoritativeDnsProbeAlerts.failedFor }}
+          labels:
+            severity: critical
+          annotations:
+            summary: "Authoritative DNS is unreachable from {{ "{{ $labels.probe_source }}" }}"
+            description: >-
+              Both UDP and TCP queries to multiple root servers are failing from
+              {{ "{{ $labels.probe_source }}" }}.
+{{- end }}

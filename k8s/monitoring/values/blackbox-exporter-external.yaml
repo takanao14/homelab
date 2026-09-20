@@ -24,7 +24,24 @@ tcp:
 
 # DNS modules probe the shared frontend inventory.
 
+authoritativeDns:
+  exporters:
+    - name: resolver1
+      address: "192.168.10.236:9115"
+    - name: resolver2
+      address: "192.168.10.237:9115"
+  targets:
+    - name: a-root
+      address: "198.41.0.4:53"
+    - name: i-root
+      address: "192.36.148.17:53"
+    - name: m-root
+      address: "202.12.27.33:53"
+
 dnsProbeAlerts:
+  enabled: true
+
+authoritativeDnsProbeAlerts:
   enabled: true
 
 tcpProbeAlerts:
