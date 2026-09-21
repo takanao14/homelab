@@ -4,3 +4,11 @@
   ansible.builtin.service:
     name: systemd-journald
     state: restarted
+
+# A restarted journald keeps writing to /run until it is told to flush, so
+# without this the switch to persistent storage waits for the next boot.
+- name: Flush the journal to persistent storage
+  become: true
+  ansible.builtin.command: journalctl --flush
+  changed_when: true
+  when: journald_storage == "persistent"

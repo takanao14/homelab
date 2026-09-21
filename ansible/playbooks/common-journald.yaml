@@ -1,6 +1,6 @@
 ---
 - name: Configure systemd-journald
-  hosts: vector_lxc
+  hosts: journald
   serial: 1
   any_errors_fatal: false
   roles:

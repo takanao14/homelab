@@ -24,3 +24,9 @@ networkmanager_connections:
       - home.butaco.net
     method6: auto
 
+# Raspberry Pi OS forces Storage=volatile to spare SD cards; rpi3 boots from a
+# USB SSD, and a volatile journal loses the previous boot exactly when an
+# incident needs it. Local syslog stays the rsyslog input, so keep forwarding on.
+journald_forward_to_syslog: true
+journald_storage: persistent
+journald_system_max_use: 512M

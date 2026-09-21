@@ -1,0 +1,6 @@
+# Managed by Ansible
+[Journal]
+Storage={{ journald_storage }}
+{% if journald_system_max_use %}
+SystemMaxUse={{ journald_system_max_use }}
+{% endif %}

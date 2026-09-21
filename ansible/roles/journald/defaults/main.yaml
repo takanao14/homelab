@@ -2,3 +2,6 @@
 journald_forward_to_syslog: false
 journald_forward_to_syslog_dropin: zz-forward-to-syslog.conf
 journald_disable_rsyslog: false
+journald_storage: auto
+journald_storage_dropin: zz-storage.conf
+journald_system_max_use: ""

@@ -340,6 +340,13 @@ all:
         vector_lxc: {}
         vector_vm: {}
 
+    # Journald-managed hosts; the stock configuration stands everywhere else.
+    journald:
+      children:
+        vector_lxc: {}
+      hosts:
+        rpi3: null
+
     # Rsyslog forwarders targeted by common-rsyslog.yaml.
     rsyslog:
       children:
