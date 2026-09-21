@@ -1,0 +1,7 @@
+---
+- name: Configure netplan interfaces on all netplan-managed hosts
+  hosts: netplan
+  serial: 1
+  roles:
+    - role: netplan
+      tags: netplan

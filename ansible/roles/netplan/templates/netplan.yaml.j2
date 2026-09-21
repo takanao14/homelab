@@ -1,0 +1,2 @@
+# Managed by Ansible
+{{ {"network": {"version": 2, "renderer": netplan_renderer, "ethernets": netplan_ethernets}} | to_nice_yaml(indent=2) }}

@@ -1,0 +1,14 @@
+---
+# Reapplying can drop the SSH connection, so fire and forget, then reconnect.
+# Handlers run in definition order.
+- name: Apply netplan
+  become: true
+  ansible.builtin.command: netplan apply
+  changed_when: true
+  async: 60
+  poll: 0
+
+- name: Wait for the host to come back
+  ansible.builtin.wait_for_connection:
+    delay: 5
+    timeout: 120

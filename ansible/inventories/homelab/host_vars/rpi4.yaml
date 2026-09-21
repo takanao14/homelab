@@ -42,3 +42,26 @@ vector_config:
       labels:
         host: !unsafe "{{ host }}"
         unit: !unsafe "{{ unit }}"
+
+# rpi4 serves AMT addressing (ADR-0002) and MeshCentral (ADR-0025), so it stays
+# out of its own recovery path: it resolves through public DNS rather than
+# dist1/dist2. Do not point it at the in-house resolvers. Two operators, because
+# a single one failing takes the recovery path with it; bgw1 was dropped after
+# ADR-0051 recorded its DNS timing out and mishandling DNSSEC-bogus answers.
+netplan_ethernets:
+  eth0:
+    optional: true
+    dhcp4: false
+    dhcp6: false
+    addresses:
+      - "{{ ansible_host }}/24"
+    routes:
+      - to: default
+        via: 192.168.10.1
+    nameservers:
+      addresses:
+        - 9.9.9.9
+        - 8.8.8.8
+netplan_obsolete_files:
+  - 50-cloud-init.yaml
+netplan_disable_cloud_init_network: true

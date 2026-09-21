@@ -380,6 +380,10 @@ all:
       hosts:
         rpi3: null
 
+    netplan:
+      hosts:
+        rpi4: null
+
     # =================================================================
     # Operational sequencing — host order is execution order. Do not sort.
     # =================================================================

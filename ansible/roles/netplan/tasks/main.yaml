@@ -1,0 +1,48 @@
+---
+- name: Require an interface definition
+  ansible.builtin.assert:
+    that: netplan_ethernets | length > 0
+    fail_msg: netplan_ethernets must define at least one interface.
+
+- name: Configure netplan interfaces
+  become: true
+  ansible.builtin.template:
+    src: netplan.yaml.j2
+    dest: "/etc/netplan/{{ netplan_file }}"
+    owner: root
+    group: root
+    mode: "0600"
+  notify:
+    - Apply netplan
+    - Wait for the host to come back
+
+# Netplan concatenates list values such as nameservers.addresses across files
+# instead of replacing them, so an obsolete file leaves stale entries behind.
+- name: Remove superseded netplan files
+  become: true
+  ansible.builtin.file:
+    path: "/etc/netplan/{{ item }}"
+    state: absent
+  loop: "{{ netplan_obsolete_files }}"
+  notify:
+    - Apply netplan
+    - Wait for the host to come back
+
+- name: Stop cloud-init from regenerating network configuration
+  become: true
+  ansible.builtin.copy:
+    content: |
+      # Managed by Ansible
+      network: {config: disabled}
+    dest: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+    owner: root
+    group: root
+    mode: "0644"
+  when: netplan_disable_cloud_init_network
+
+# A configuration that only fails at generate time leaves the host without a
+# network on the next boot, so fail the play before the handlers apply it.
+- name: Validate the netplan configuration
+  become: true
+  ansible.builtin.command: netplan generate
+  changed_when: false

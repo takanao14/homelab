@@ -1,0 +1,7 @@
+---
+# Sorts after the cloud-init file it overrides.
+netplan_file: 99-ansible.yaml
+netplan_renderer: networkd
+netplan_ethernets: {}
+netplan_obsolete_files: []
+netplan_disable_cloud_init_network: false
