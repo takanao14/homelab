@@ -5,3 +5,22 @@ package_upgrade_reboot_timeout: 1800
 # Reuse the journal-only forwarder to avoid duplicate imuxsock forwarding.
 rsyslog_forward_protocol: tcp
 rsyslog_journal_input: true
+
+# NetworkManager's DHCP client wedged after a failed renewal on 2026-08-29 and
+# 2026-09-19, dropping 192.168.10.240 and never retrying; each outage ended only
+# with a power cycle (ADR-0052). The IX2106 static binding stays as a reservation.
+networkmanager_connections:
+  - conn_name: netplan-eth0
+    type: ethernet
+    method4: manual
+    ip4:
+      - "{{ ansible_host }}/24"
+    gw4: 192.168.10.1
+    routes4: []
+    dns4:
+      - "{{ hostvars['dist1']['ansible_host'] }}"
+      - "{{ hostvars['dist2']['ansible_host'] }}"
+    dns4_search:
+      - home.butaco.net
+    method6: auto
+

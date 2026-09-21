@@ -1,0 +1,19 @@
+---
+# A modified profile stays dormant until the connection is brought up, and doing
+# so drops the SSH session, so fire and forget, then reconnect. Handlers run in
+# definition order.
+- name: Activate NetworkManager connections
+  become: true
+  ansible.builtin.command: nmcli connection up {{ connection.conn_name | quote }}
+  loop: "{{ networkmanager_connections }}"
+  loop_control:
+    loop_var: connection
+    label: "{{ connection.conn_name }}"
+  changed_when: true
+  async: 60
+  poll: 0
+
+- name: Wait for the host to come back
+  ansible.builtin.wait_for_connection:
+    delay: 5
+    timeout: 120

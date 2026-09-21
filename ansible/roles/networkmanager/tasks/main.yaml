@@ -1,0 +1,27 @@
+---
+# `ifname` is left out on purpose: NetworkManager persists these profiles
+# through netplan, which writes `match: {}` and so clears
+# connection.interface-name on every write. Pinning it would make every run
+# report a change. The module only falls back to `conn_name` when it creates a
+# connection, so the profiles listed here must already exist.
+- name: Configure NetworkManager connections
+  become: true
+  community.general.nmcli:
+    conn_name: "{{ connection.conn_name }}"
+    type: "{{ connection.type | default(omit) }}"
+    ifname: "{{ connection.ifname | default(omit) }}"
+    method4: "{{ connection.method4 | default(omit) }}"
+    ip4: "{{ connection.ip4 | default(omit) }}"
+    gw4: "{{ connection.gw4 | default(omit) }}"
+    routes4: "{{ connection.routes4 | default(omit) }}"
+    dns4: "{{ connection.dns4 | default(omit) }}"
+    dns4_search: "{{ connection.dns4_search | default(omit) }}"
+    method6: "{{ connection.method6 | default(omit) }}"
+    state: present
+  loop: "{{ networkmanager_connections }}"
+  loop_control:
+    loop_var: connection
+    label: "{{ connection.conn_name }}"
+  notify:
+    - Activate NetworkManager connections
+    - Wait for the host to come back

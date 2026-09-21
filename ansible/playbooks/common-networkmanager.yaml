@@ -1,0 +1,7 @@
+---
+- name: Configure NetworkManager connections on all NetworkManager-managed hosts
+  hosts: networkmanager
+  serial: 1
+  roles:
+    - role: networkmanager
+      tags: networkmanager

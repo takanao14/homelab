@@ -368,6 +368,11 @@ all:
       hosts:
         rpi3: null
 
+    # Hosts whose addressing is code rather than a DHCP lease.
+    networkmanager:
+      hosts:
+        rpi3: null
+
     # =================================================================
     # Operational sequencing — host order is execution order. Do not sort.
     # =================================================================
