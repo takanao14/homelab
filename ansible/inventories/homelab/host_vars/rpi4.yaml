@@ -43,11 +43,8 @@ vector_config:
         host: !unsafe "{{ host }}"
         unit: !unsafe "{{ unit }}"
 
-# rpi4 serves AMT addressing (ADR-0002) and MeshCentral (ADR-0025), so it stays
-# out of its own recovery path: it resolves through public DNS rather than
-# dist1/dist2. Do not point it at the in-house resolvers. Two operators, because
-# a single one failing takes the recovery path with it; bgw1 was dropped after
-# ADR-0051 recorded its DNS timing out and mishandling DNSSEC-bogus answers.
+# Public resolvers keep the recovery path off the cluster it recovers
+# (ADR-0053). Do not point rpi4 at dist1/dist2.
 netplan_ethernets:
   eth0:
     optional: true
