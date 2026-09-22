@@ -255,6 +255,7 @@
       - cache
       - clear
       - --json
+  changed_when: true
   when:
     - not ansible_check_mode
     - knot_resolver_previous_mode == 'emergency_forward'
