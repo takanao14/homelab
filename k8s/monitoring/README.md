@@ -115,6 +115,7 @@ Argo CD, Cilium, Envoy Gateway, or external-dns scraping.
 | Grafana | `https://grafana.prd.butaco.net` | HTTPRoute → shared-gateway-envoy |
 | Prometheus | `https://prometheus.prd.butaco.net` | HTTPRoute → shared-gateway-envoy |
 | Loki | `loki.prd.butaco.net` (LoadBalancer) | LoadBalancer (external log ingestion) |
+| Alertmanager | Grafana → Alerting (silences, notifications) | Grafana datasource proxy; no HTTPRoute |
 
 ## Secrets
 

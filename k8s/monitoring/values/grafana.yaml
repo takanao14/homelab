@@ -37,6 +37,16 @@ grafana:
           type: loki
           url: http://loki:3100
           access: proxy
+        # Read-only view of the notification hub (ADR-0004); routing stays in
+        # Alertmanager. The datasource proxy is the only path to its UI, which
+        # has no HTTPRoute of its own.
+        - name: Alertmanager
+          type: alertmanager
+          url: http://prometheus-kube-prometheus-alertmanager:9093
+          access: proxy
+          jsonData:
+            implementation: prometheus
+            handleGrafanaManagedAlerts: false
   persistence:
     enabled: true
     type: pvc
