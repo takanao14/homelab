@@ -9,7 +9,7 @@ metadata:
 spec:
   scrapeClass: external
   interval: 60s
-  module: nec_ix
+  module: nec_ix_homelab
   prober:
     url: snmp-exporter-prometheus-snmp-exporter:9116
     path: /snmp
