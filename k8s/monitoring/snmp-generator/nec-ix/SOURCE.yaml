@@ -9,4 +9,4 @@ mib:
   sha256: 049313b57a4ebefbda2815cccb7f2a1254d729ae29a9032ce1cd9777f72e2090
 output:
   path: k8s/monitoring/charts/snmp-exporter/files/nec-ix.yml
-  sha256: 7f9784cc335cd3c670e7dedaee68d5163000c44da8c271a140c056acb490f44f
+  sha256: 1167fe389086906ac6ea37d2333bf622143ccac0fffbaa50f164678d4ace5d4c

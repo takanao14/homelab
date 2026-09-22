@@ -2,14 +2,14 @@
 apiVersion: monitoring.coreos.com/v1
 kind: Probe
 metadata:
-  name: snmp-ix2106-napt
+  name: snmp-ix2106
   namespace: {{ .Release.Namespace }}
   labels:
     release: prometheus
 spec:
   scrapeClass: external
   interval: 60s
-  module: nec_ix_napt
+  module: nec_ix
   prober:
     url: snmp-exporter-prometheus-snmp-exporter:9116
     path: /snmp

@@ -2,13 +2,13 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: snmp-ix2106-napt
+  name: snmp-ix2106
   namespace: {{ .Release.Namespace }}
   labels:
     release: prometheus
 spec:
   groups:
-    - name: snmp-ix2106-napt.rules
+    - name: snmp-ix2106.rules
       rules:
         - alert: Ix2106NaptCacheHigh
           expr: >-
