@@ -1,7 +1,6 @@
 modules:
-  nec_ix_homelab:
+  ix2106_ip_diagnostics:
     walk:
-      - naptCacheTable
       - IP-MIB::ipInDiscards
       - IP-MIB::ipOutDiscards
       - IP-MIB::ipOutNoRoutes
@@ -11,11 +10,3 @@ modules:
       - IP-MIB::icmpOutDestUnreachs
       - UDP-MIB::udpNoPorts
       - UDP-MIB::udpInErrors
-    lookups:
-      - source_indexes: [naptCacheIfIndex]
-        lookup: IF-MIB::ifDescr
-      - source_indexes: [naptCacheIfIndex]
-        lookup: IF-MIB::ifAlias
-    overrides:
-      naptCacheIfIndex:
-        ignore: true

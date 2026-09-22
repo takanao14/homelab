@@ -23,12 +23,12 @@ prometheus-snmp-exporter:
   extraArgs:
     - --config.file=/etc/snmp_exporter/snmp.yml
     - --config.file=/etc/snmp-exporter-auth/snmp-auth.yaml
-    - --config.file=/etc/snmp-exporter-nec/nec-ix.yml
+    - --config.file=/etc/snmp-exporter-ix2106/ix2106-ip-diagnostics.yml
 
   extraConfigmapMounts:
-    - name: snmp-exporter-nec-ix
-      mountPath: /etc/snmp-exporter-nec
-      configMap: snmp-exporter-nec-ix
+    - name: snmp-exporter-ix2106-ip-diagnostics
+      mountPath: /etc/snmp-exporter-ix2106
+      configMap: snmp-exporter-ix2106-ip-diagnostics
       readOnly: true
 
   extraSecretMounts:

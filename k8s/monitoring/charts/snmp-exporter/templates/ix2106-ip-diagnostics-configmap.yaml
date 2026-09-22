@@ -1,0 +1,10 @@
+{{- if .Values.necIx.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: snmp-exporter-ix2106-ip-diagnostics
+  namespace: {{ .Release.Namespace }}
+data:
+  ix2106-ip-diagnostics.yml: |-
+{{ .Files.Get "files/ix2106-ip-diagnostics.yml" | indent 4 }}
+{{- end }}
