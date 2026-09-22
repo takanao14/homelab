@@ -720,6 +720,22 @@
           "legendFormat": "IPv4 no route"
         },
         {
+          "expr": "rate(ipFragFails{instance=\"bgw1\"}[$__rate_interval])",
+          "legendFormat": "IPv4 fragmentation failures"
+        },
+        {
+          "expr": "rate(ipFragCreates{instance=\"bgw1\"}[$__rate_interval])",
+          "legendFormat": "IPv4 fragments created"
+        },
+        {
+          "expr": "rate(ipReasmFails{instance=\"bgw1\"}[$__rate_interval])",
+          "legendFormat": "IPv4 reassembly failures"
+        },
+        {
+          "expr": "rate(icmpOutDestUnreachs{instance=\"bgw1\"}[$__rate_interval])",
+          "legendFormat": "ICMP destination unreachable"
+        },
+        {
           "expr": "rate(udpInErrors{instance=\"bgw1\"}[$__rate_interval])",
           "legendFormat": "UDP input errors"
         },
@@ -728,8 +744,8 @@
           "legendFormat": "UDP no port"
         }
       ],
-      "title": "IPv4 and UDP Discards",
-      "description": "Device-wide MIB-II counters. These counters do not identify an ACL or firewall rule.",
+      "title": "IPv4 Forwarding Diagnostics",
+      "description": "Device-wide MIB-II counters. Compare failures with sub-interface errors; these counters do not identify the affected interface, ACL, or destination.",
       "transparent": false,
       "datasource": {
         "type": "prometheus",

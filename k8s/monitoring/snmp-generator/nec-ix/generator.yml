@@ -5,6 +5,10 @@ modules:
       - IP-MIB::ipInDiscards
       - IP-MIB::ipOutDiscards
       - IP-MIB::ipOutNoRoutes
+      - IP-MIB::ipReasmFails
+      - IP-MIB::ipFragFails
+      - IP-MIB::ipFragCreates
+      - IP-MIB::icmpOutDestUnreachs
       - UDP-MIB::udpNoPorts
       - UDP-MIB::udpInErrors
     lookups:

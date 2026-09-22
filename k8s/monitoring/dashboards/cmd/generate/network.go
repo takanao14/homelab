@@ -279,8 +279,8 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 		).
 		WithPanel(
 			timeseries.NewPanelBuilder().
-				Title("IPv4 and UDP Discards").
-				Description("Device-wide MIB-II counters. These counters do not identify an ACL or firewall rule.").
+				Title("IPv4 Forwarding Diagnostics").
+				Description("Device-wide MIB-II counters. Compare failures with sub-interface errors; these counters do not identify the affected interface, ACL, or destination.").
 				Datasource(ds).
 				Span(12).Height(8).
 				Unit("pps").
@@ -299,6 +299,22 @@ func buildNetworkOverview() (*dashboard.Dashboard, error) {
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`rate(ipOutNoRoutes{instance="bgw1"}[$__rate_interval])`).
 					LegendFormat("IPv4 no route"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(ipFragFails{instance="bgw1"}[$__rate_interval])`).
+					LegendFormat("IPv4 fragmentation failures"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(ipFragCreates{instance="bgw1"}[$__rate_interval])`).
+					LegendFormat("IPv4 fragments created"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(ipReasmFails{instance="bgw1"}[$__rate_interval])`).
+					LegendFormat("IPv4 reassembly failures"),
+				).
+				WithTarget(prometheus.NewDataqueryBuilder().
+					Expr(`rate(icmpOutDestUnreachs{instance="bgw1"}[$__rate_interval])`).
+					LegendFormat("ICMP destination unreachable"),
 				).
 				WithTarget(prometheus.NewDataqueryBuilder().
 					Expr(`rate(udpInErrors{instance="bgw1"}[$__rate_interval])`).
