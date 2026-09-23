@@ -2,7 +2,9 @@ replicaCount: 0
 
 image:
   repository: forgejo.home.butaco.net/takanao/comfyui-docker
+  # Set by the pull request that comfyui-docker CI opens after each build.
   tag: latest
+  pullPolicy: IfNotPresent
 
 resources:
   limits:
@@ -13,6 +15,9 @@ resources:
 storage:
   size: 100Gi
   storageClassName: openebs-hostpath
+
+stateStorage:
+  size: 20Gi
 
 nodeSelector:
   gpu: amd

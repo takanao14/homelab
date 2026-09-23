@@ -99,3 +99,7 @@ deleting it:
 | [0048](0048-service-vm-vector-internal-metrics.md) | Expose Vector internal metrics on service VMs | Accepted |
 | [0049](0049-manage-shared-cli-tools-with-mise.md) | Manage shared Linux CLI tools with mise | Accepted |
 | [0050](0050-single-definition-for-the-authentik-ldap-contract.md) | Render every Authentik blueprint from one set of variables | Accepted |
+| [0051](0051-forward-recursive-cache-misses-over-dot.md) | Forward recursive cache misses over authenticated DNS-over-TLS | Accepted |
+| [0052](0052-static-addressing-for-rpi3.md) | Configure rpi3 with static addressing instead of a DHCP lease | Accepted |
+| [0053](0053-rpi4-resolves-from-public-dns.md) | Resolve from public DNS on rpi4 | Accepted |
+| [0054](0054-comfyui-image-updates-via-ci-opened-pull-requests.md) | Update the ComfyUI image through pinned tags and CI-opened pull requests | Accepted |

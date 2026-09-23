@@ -23,12 +23,18 @@ spec:
       containers:
         - name: comfyui
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: 8188
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: data
               mountPath: /app/ComfyUI/models
+            {{- range list "input" "output" "user" "custom_nodes" }}
+            - name: state
+              mountPath: /app/ComfyUI/{{ . }}
+              subPath: {{ . }}
+            {{- end }}
           # The device plugin injects permitted nodes; do not shadow them with hostPath.
           securityContext:
             seccompProfile:
@@ -37,3 +43,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: comfyui-data
+        - name: state
+          persistentVolumeClaim:
+            claimName: comfyui-state
