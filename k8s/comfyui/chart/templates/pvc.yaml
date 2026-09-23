@@ -12,3 +12,18 @@ spec:
   resources:
     requests:
       storage: {{ .Values.storage.size }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: comfyui-state
+  namespace: {{ .Release.Namespace }}
+  labels:
+    homelab/gpu-switchable: "true"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.storage.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.stateStorage.size }}
