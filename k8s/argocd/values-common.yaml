@@ -88,7 +88,7 @@ configs:
         end
       end
       return hs
-    resource.customizations.health._PersistentVolumeClaim: |
+    resource.customizations.health.PersistentVolumeClaim: |
       hs = {}
       hs.status = "Progressing"
       hs.message = ""
