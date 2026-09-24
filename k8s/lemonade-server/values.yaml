@@ -17,6 +17,8 @@ resources:
     memory: 11Gi
 
 recipeOptions:
+  builtin.Whisper-Small:
+    whispercpp_backend: vulkan
   builtin.gpt-oss-20b-mxfp4-GGUF:
     ctx_size: 131072
   builtin.Gemma-4-12B-it-MTP-GGUF:

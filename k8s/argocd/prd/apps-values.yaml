@@ -1,6 +1,8 @@
 env: prd
 
 apps:
+  butako-voice:
+    enabled: true
   argocd:
     enabled: true
   cert-manager:

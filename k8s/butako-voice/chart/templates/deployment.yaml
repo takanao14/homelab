@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: butako-voice
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: butako-voice
+  template:
+    metadata:
+      labels:
+        app: butako-voice
+    spec:
+      containers:
+        - name: app
+          image: {{ printf "%s:%s" .Values.app.image.repository .Values.app.image.tag | quote }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: LEMONADE_URL
+              value: http://lemonade-server.lemonade-server.svc.cluster.local:13305
+            - name: VOICEVOX_URL
+              value: http://voicevox.butako-voice.svc.cluster.local:50021
+            - name: CONVERSATION_DEADLINE_SECONDS
+              value: "120"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+          resources: {{ toYaml .Values.app.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voicevox
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: voicevox
+  template:
+    metadata:
+      labels:
+        app: voicevox
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      containers:
+        - name: voicevox
+          image: {{ .Values.voicevox.image | quote }}
+          command: [/bin/bash, -c]
+          args:
+            - exec /entrypoint.sh gosu user /opt/voicevox_engine/run --host 0.0.0.0 >/dev/null 2>&1
+          env:
+            - name: VV_CPU_NUM_THREADS
+              value: {{ .Values.voicevox.threads | quote }}
+          ports:
+            - containerPort: 50021
+          startupProbe:
+            httpGet:
+              path: /version
+              port: 50021
+            periodSeconds: 10
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /version
+              port: 50021
+          resources: {{ toYaml .Values.voicevox.resources | nindent 12 }}

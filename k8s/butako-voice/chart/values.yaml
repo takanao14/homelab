@@ -1,0 +1,26 @@
+hostname: ""
+
+gateway:
+  name: shared-gateway-envoy
+  namespace: gateway-system
+  sectionName: https
+  timeout: 120s
+  allowedClientCIDRs:
+    - 192.168.10.0/24
+
+app:
+  image:
+    repository: ghcr.io/takanao14/butaco-voice-chat
+    tag: v0.1.0
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+voicevox:
+  image: voicevox/voicevox_engine:cpu-0.25.2@sha256:ab700b3768d0a2e9230d53e054b321f60409fda34fe794a333ae7202ab1c87f4
+  threads: 4
+  resources:
+    requests:
+      cpu: 1
+      memory: 2Gi

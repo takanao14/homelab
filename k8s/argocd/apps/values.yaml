@@ -8,6 +8,9 @@ repo:
 
 # App enablement, sync waves, and Renovate-visible upstream chart coordinates.
 apps:
+  butako-voice:
+    enabled: false
+    wave: "1"
   argocd:
     enabled: false
     wave: "1"
