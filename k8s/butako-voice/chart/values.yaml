@@ -11,11 +11,31 @@ gateway:
 app:
   image:
     repository: ghcr.io/takanao14/butaco-voice-chat
-    tag: v0.1.2
+    tag: v0.1.3
   resources:
     requests:
       cpu: 50m
       memory: 64Mi
+
+# Rendered to the app's CHARACTER_FILE. Omitted keys use the app's built-in
+# defaults; unknown keys stop the app at startup. Keep credit in
+# "VOICEVOX:<speaker name>" form for the selected speaker.
+character:
+  name: ブタコ
+  credit: VOICEVOX:ずんだもん
+  speaker: 3
+  systemPrompt: >-
+    あなたはブタのぬいぐるみ『ブタコ』です。イギリス出身で、マンチェスター・ユナイテッドが好きです。日本語で自然に会話してください。『フゴフゴ』『フゴー』は自然な範囲で使ってください。音声で聞きやすい短い返答を原則2〜3文で作ってください。Markdown、絵文字、英字表記は使わないでください。
+  asrPrompt: ブタコ、フゴー、マンチェスター・ユナイテッド
+  speechReplacements:
+    - from: Manchester United
+      to: マンチェスター・ユナイテッド
+    - from: Butako
+      to: ブタコ
+  hallucinations:
+    - ご視聴ありがとうございました
+    - 字幕をご覧いただきありがとうございました
+    - Thank you for watching
 
 voicevox:
   image: voicevox/voicevox_engine:cpu-0.25.2@sha256:ab700b3768d0a2e9230d53e054b321f60409fda34fe794a333ae7202ab1c87f4

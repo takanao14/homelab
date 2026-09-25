@@ -12,7 +12,13 @@ spec:
     metadata:
       labels:
         app: butako-voice
+      annotations:
+        checksum/character: {{ toJson .Values.character | sha256sum }}
     spec:
+      volumes:
+        - name: character
+          configMap:
+            name: butako-character
       containers:
         - name: app
           image: {{ printf "%s:%s" .Values.app.image.repository .Values.app.image.tag | quote }}
@@ -25,6 +31,12 @@ spec:
               value: http://voicevox.butako-voice.svc.cluster.local:50021
             - name: CONVERSATION_DEADLINE_SECONDS
               value: "120"
+            - name: CHARACTER_FILE
+              value: /etc/butako/character.json
+          volumeMounts:
+            - name: character
+              mountPath: /etc/butako
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /healthz
