@@ -17,6 +17,17 @@ spec:
         - path:
             type: PathPrefix
             value: /
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            remove:
+              - If-Modified-Since
+              - If-None-Match
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            set:
+              - name: Cache-Control
+                value: no-store
       timeouts:
         request: {{ .Values.gateway.timeout | quote }}
         backendRequest: {{ .Values.gateway.timeout | quote }}
