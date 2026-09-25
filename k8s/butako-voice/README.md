@@ -11,6 +11,12 @@ chart renders it to the `butako-character` ConfigMap as the app's
 `CHARACTER_FILE`; a checksum annotation restarts the app when it changes. The
 app rejects unknown keys at startup, so a typo shows as a failed rollout.
 
+`character.football` makes the app fetch match facts for the listed ESPN team
+IDs from ESPN's unofficial API every 30 minutes and append them to the system
+prompt (ADR-0056). Requests carry only fixed league slugs and IDs, never user
+speech. Removing the key disables the feature. Deploy an app version that
+knows the key before adding it, or the app refuses to start.
+
 `values.yaml` pins the app release tag and the official VOICEVOX 0.25.2 amd64
 digest. VOICEVOX's entrypoint prints requests containing the synthesis text,
 so the container redirects stdout and stderr to `/dev/null`. Inspect Pod and

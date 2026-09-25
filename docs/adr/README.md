@@ -103,3 +103,5 @@ deleting it:
 | [0052](0052-static-addressing-for-rpi3.md) | Configure rpi3 with static addressing instead of a DHCP lease | Accepted |
 | [0053](0053-rpi4-resolves-from-public-dns.md) | Resolve from public DNS on rpi4 | Accepted |
 | [0054](0054-comfyui-image-updates-via-ci-opened-pull-requests.md) | Update the ComfyUI image through pinned tags and CI-opened pull requests | Accepted |
+| [0055](0055-voice-ui-observes-gpu-switch-without-controlling-it.md) | Voice UI observes GPU availability without switching workloads | Accepted |
+| [0056](0056-butako-reads-football-data-from-espn.md) | Butako reads football data from ESPN's unofficial API | Accepted |
