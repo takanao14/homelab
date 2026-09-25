@@ -71,6 +71,7 @@ openbao_absent_policies:
   - k8s-longhorn-ui
   - k8s-headlamp
   - k8s-gpu-switch
+  - k8s-butako-voice
 
 # SOPS-backed KV entries: path and data.
 # Example:
