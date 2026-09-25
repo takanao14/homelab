@@ -2,7 +2,7 @@
 
 The prd Argo CD Application deploys the Go/TypeScript app and VOICEVOX CPU
 engine in the `butako-voice` namespace. The HTTPRoute exposes
-`https://butako.prd.butaco.net`; ExternalDNS creates its PowerDNS record.
+`https://butaco.prd.butaco.net`; ExternalDNS creates its PowerDNS record.
 The app calls Lemonade and VOICEVOX through ClusterIP Services.
 
 `values.yaml` pins the app release tag and the official VOICEVOX 0.25.2 amd64
