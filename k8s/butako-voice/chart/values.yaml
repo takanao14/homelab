@@ -11,30 +11,11 @@ gateway:
 app:
   image:
     repository: ghcr.io/takanao14/butaco-voice-chat
-    tag: v0.2.0
+    tag: v0.1.0
   resources:
     requests:
       cpu: 50m
       memory: 64Mi
-
-search:
-  image:
-    repository: ghcr.io/takanao14/butaco-voice-chat-search
-    tag: v0.2.0
-  resources:
-    requests:
-      cpu: 50m
-      memory: 64Mi
-
-searxng:
-  image: ghcr.io/searxng/searxng:2026.9.18-0d6910ae5@sha256:012e7557a611d4a7043a413bd1939eed81a1e1077ac33c89890236119e8eea80
-  secret:
-    key: k8s/butako-voice/searxng
-    property: secret-key
-  resources:
-    requests:
-      cpu: 100m
-      memory: 256Mi
 
 voicevox:
   image: voicevox/voicevox_engine:cpu-0.25.2@sha256:ab700b3768d0a2e9230d53e054b321f60409fda34fe794a333ae7202ab1c87f4

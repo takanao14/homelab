@@ -1,5 +1,5 @@
 apiVersion: v2
 name: butako-voice
-description: Butako voice chat, VOICEVOX, and internal web search
+description: Butako voice chat and VOICEVOX engine
 type: application
-version: 0.2.0
+version: 0.1.0
