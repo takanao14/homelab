@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: butako-voice
+  name: butaco-voice
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: butako-voice
+      app: butaco-voice
   template:
     metadata:
       labels:
-        app: butako-voice
+        app: butaco-voice
       annotations:
         checksum/character: {{ toJson .Values.character | sha256sum }}
     spec:
       volumes:
         - name: character
           configMap:
-            name: butako-character
+            name: butaco-character
       containers:
         - name: app
           image: {{ printf "%s:%s" .Values.app.image.repository .Values.app.image.tag | quote }}
@@ -28,14 +28,14 @@ spec:
             - name: LEMONADE_URL
               value: http://lemonade-server.lemonade-server.svc.cluster.local:13305
             - name: VOICEVOX_URL
-              value: http://voicevox.butako-voice.svc.cluster.local:50021
+              value: http://voicevox.butaco-voice.svc.cluster.local:50021
             - name: CONVERSATION_DEADLINE_SECONDS
               value: "120"
             - name: CHARACTER_FILE
-              value: /etc/butako/character.json
+              value: /etc/butaco/character.json
           volumeMounts:
             - name: character
-              mountPath: /etc/butako
+              mountPath: /etc/butaco
               readOnly: true
           readinessProbe:
             httpGet:

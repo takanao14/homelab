@@ -1,9 +1,9 @@
-{{- $app := index .Values.apps "butako-voice" }}
+{{- $app := index .Values.apps "butaco-voice" }}
 {{- if $app.enabled }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: butako-voice
+  name: butaco-voice
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: {{ $app.wave | quote }}
@@ -12,18 +12,18 @@ spec:
   sources:
     - repoURL: {{ .Values.repo.url }}
       targetRevision: {{ .Values.repo.targetRevision }}
-      path: k8s/butako-voice/chart
+      path: k8s/butaco-voice/chart
       helm:
-        releaseName: butako-voice
+        releaseName: butaco-voice
         valueFiles:
-          - $values/k8s/butako-voice/values.yaml
-          - $values/k8s/butako-voice/{{ include "argocd-apps.env" . }}/values.yaml
+          - $values/k8s/butaco-voice/values.yaml
+          - $values/k8s/butaco-voice/{{ include "argocd-apps.env" . }}/values.yaml
     - repoURL: {{ .Values.repo.url }}
       targetRevision: {{ .Values.repo.targetRevision }}
       ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: butako-voice
+    namespace: butaco-voice
   syncPolicy:
     automated:
       prune: true

@@ -46,7 +46,7 @@ k8s/
 ├── gpu-switch/       # Exclusive GPU workload controller
 ├── comfyui/          # GPU image generation
 ├── lemonade-server/  # GPU LLM inference
-├── butako-voice/     # Voice chat and VOICEVOX CPU engine
+├── butaco-voice/     # Voice chat and VOICEVOX CPU engine
 ├── ollama/           # GPU LLM inference
 ├── vllm/             # OpenAI-compatible GPU inference
 ├── open-webui/       # LLM frontend

@@ -1,13 +1,13 @@
-# Butako voice chat
+# Butaco voice chat
 
 The prd Argo CD Application deploys the Go/TypeScript app and VOICEVOX CPU
-engine in the `butako-voice` namespace. The HTTPRoute exposes
+engine in the `butaco-voice` namespace. The HTTPRoute exposes
 `https://butaco.prd.butaco.net`; ExternalDNS creates its PowerDNS record.
 The app calls Lemonade and VOICEVOX through ClusterIP Services.
 
 `chart/values.yaml` `character` sets the persona, ASR vocabulary hint, VOICEVOX
 speaker, UI name and credit, speech replacements, and hallucination list. The
-chart renders it to the `butako-character` ConfigMap as the app's
+chart renders it to the `butaco-character` ConfigMap as the app's
 `CHARACTER_FILE`; a checksum annotation restarts the app when it changes. The
 app rejects unknown keys at startup, so a typo shows as a failed rollout.
 

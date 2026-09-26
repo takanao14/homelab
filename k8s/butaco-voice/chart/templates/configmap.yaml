@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: butako-character
+  name: butaco-character
   namespace: {{ .Release.Namespace }}
 data:
   character.json: {{ toPrettyJson .Values.character | quote }}

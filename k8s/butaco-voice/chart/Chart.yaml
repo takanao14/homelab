@@ -1,0 +1,5 @@
+apiVersion: v2
+name: butaco-voice
+description: Butaco voice chat and VOICEVOX engine
+type: application
+version: 0.1.0

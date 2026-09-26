@@ -1,4 +1,4 @@
-# ADR-0056: Butako reads football data from ESPN's unofficial API
+# ADR-0056: Butaco reads football data from ESPN's unofficial API
 
 - **Status:** Accepted
 - **Date:** 2026-09-25
@@ -7,7 +7,7 @@
 
 ## Context
 
-Butako should answer questions about Arsenal and Manchester United matches:
+Butaco should answer questions about Arsenal and Manchester United matches:
 recent results, the next fixture, scorers, and league position. An earlier
 general web search design (SearXNG through an MCP server) was withdrawn after
 Gemma could not produce grounded answers from search results. That design also
@@ -28,7 +28,7 @@ Candidate data sources were compared with live requests on 2026-09-25:
 
 ## Decision
 
-The Butako app reads football data from ESPN's site API. A background fetcher
+The Butaco app reads football data from ESPN's site API. A background fetcher
 inside the app requests fixed URLs for the configured teams and competitions,
 keeps the latest data in memory, and refreshes it every 30 to 60 minutes.
 Requests contain only competition slugs, team IDs, and event IDs; no user
@@ -47,7 +47,7 @@ No API key or secret is needed.
 
 ## Consequences
 
-- Butako can answer match questions across the Premier League, Champions
+- Butaco can answer match questions across the Premier League, Champions
   League, League Cup, and FA Cup without an external search engine or LLM tool
   calling.
 - An ESPN format change or block makes match answers unavailable until the

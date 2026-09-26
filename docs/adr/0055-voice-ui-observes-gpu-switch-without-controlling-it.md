@@ -7,7 +7,7 @@
 
 ## Context
 
-The planned Butako voice UI will stay reachable on the LAN while Lemonade may
+The planned Butaco voice UI will stay reachable on the LAN while Lemonade may
 be scaled to zero by `gpu-switch`. Starting Lemonade would stop another GPU
 workload, including an active ComfyUI job. The voice UI serves family members
 who cannot be expected to manage that tradeoff during a conversation.
@@ -29,7 +29,7 @@ playback controls stuck. Operators switch workloads through the existing
 
 ## Consequences
 
-- Opening Butako does not interrupt other GPU work.
+- Opening Butaco does not interrupt other GPU work.
 - Voice conversation is unavailable while another workload owns the GPU.
 - The application needs distinct unavailable, model-loading, timeout, and
   recovery states, verified on an iPhone before production use.
