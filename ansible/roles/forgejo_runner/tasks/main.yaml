@@ -47,6 +47,7 @@
   ansible.builtin.get_url:
     url: "https://code.forgejo.org/forgejo/runner/releases/download/v{{ forgejo_runner_version }}/forgejo-runner-{{ forgejo_runner_version }}-linux-amd64"
     dest: "{{ forgejo_runner_binary }}"
+    checksum: "sha256:{{ forgejo_runner_sha256 }}"
     owner: root
     group: root
     mode: '0755'
@@ -83,6 +84,12 @@
     mode: '0640'
   notify: Restart forgejo-runner
 
+- name: Check runner registration
+  become: true
+  ansible.builtin.stat:
+    path: "{{ forgejo_runner_home }}/.runner"
+  register: forgejo_runner_registration_file
+
 - name: Get runner registration token from Forgejo API
   ansible.builtin.uri:
     url: "{{ forgejo_runner_url }}/api/v1/admin/runners/registration-token"
@@ -91,7 +98,8 @@
       Authorization: "token {{ forgejo_admin_token }}"
     status_code: 200
   register: forgejo_runner_registration
-  when: not (forgejo_runner_home + '/.runner') is file
+  no_log: true
+  when: not forgejo_runner_registration_file.stat.exists
 
 - name: Register forgejo-runner
   become: true
@@ -106,7 +114,8 @@
       --labels {{ forgejo_runner_labels | join(',') }}
       --config {{ forgejo_runner_config }}
     creates: "{{ forgejo_runner_home }}/.runner"
-  when: not (forgejo_runner_home + '/.runner') is file
+  when: not forgejo_runner_registration_file.stat.exists
+  no_log: true
 
 - name: Deploy forgejo-runner systemd unit
   become: true

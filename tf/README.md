@@ -59,6 +59,10 @@ terragrunt plan
 terragrunt apply
 ```
 
+VMs ignore `disk.file_id` after creation because Proxmox clears it. To rebuild
+a VM from a new image, import the image on its node, then use `-replace` for
+that VM in both the plan and apply commands.
+
 ### DNS LXC rebuilds
 
 `lxc/dns-images.hcl` selects the OS template for each DNS host. Change one
