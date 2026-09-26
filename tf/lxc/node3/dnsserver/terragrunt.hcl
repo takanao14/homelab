@@ -7,13 +7,15 @@ terraform {
 }
 
 locals {
-  env    = read_terragrunt_config(find_in_parent_folders("env.hcl"))
-  common = read_terragrunt_config(find_in_parent_folders("common.hcl"))
+  env        = read_terragrunt_config(find_in_parent_folders("env.hcl"))
+  common     = read_terragrunt_config(find_in_parent_folders("common.hcl"))
+  dns_images = read_terragrunt_config("${get_parent_terragrunt_dir()}/lxc/dns-images.hcl")
 }
 
 inputs = {
   containers = {
     "ns2" = merge(local.env.locals.container_defaults, {
+      os_template = local.dns_images.locals.templates[local.dns_images.locals.releases.ns2]
       cores       = 1
       memory      = 1024
       bridge      = local.common.locals.node3.net10.bridge
@@ -27,6 +29,7 @@ inputs = {
       }
     })
     "dist2" = merge(local.env.locals.container_defaults, {
+      os_template = local.dns_images.locals.templates[local.dns_images.locals.releases.dist2]
       cores       = 2
       memory      = 1024
       bridge      = local.common.locals.node3.net10.bridge

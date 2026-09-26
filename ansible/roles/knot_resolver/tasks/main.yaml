@@ -3,7 +3,7 @@
   ansible.builtin.assert:
     that:
       - ansible_facts['distribution'] == "Ubuntu"
-      - ansible_facts['distribution_release'] == "noble"
+      - ansible_facts['distribution_release'] in ["noble", "resolute"]
       - knot_resolver_server_addr | length > 0
       - knot_resolver_allowed_clients | length == 2
       - knot_resolver_workers | int > 0
@@ -13,8 +13,8 @@
       - knot_resolver_mode != 'emergency_forward' or knot_resolver_forwarders | length > 0
       - knot_resolver_forward_dnssec is boolean
     fail_msg: >-
-      Knot Resolver requires Ubuntu Noble, one listen address, and exactly two
-      dnsdist client networks.
+      Knot Resolver requires Ubuntu Noble or Resolute, one listen address,
+      and exactly two dnsdist client networks.
 
 - name: Install APT repository prerequisites
   become: true

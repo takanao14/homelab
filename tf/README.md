@@ -59,6 +59,32 @@ terragrunt plan
 terragrunt apply
 ```
 
+### DNS LXC rebuilds
+
+`lxc/dns-images.hcl` selects the OS template for each DNS host. Change one
+`releases` entry at a time. `node2/dnsserver` and `node3/dnsserver` each
+manage multiple containers. In those stacks, use Terraform's `-target` with
+the selected container key for both plan and apply, and verify that exactly
+one container is replaced. Never apply a plan replacing a peer. A changed
+`TF_VM_SSH_PUBLIC_KEY` also forces replacement, even for hosts whose OS
+template has not changed.
+
+Download `ubuntu-26.04-standard_26.04-1_amd64.tar.zst` to the target node's
+`local` template storage before planning. Rebuild `resolver2`, `resolver1`,
+`ns3`, `ns2`, `ns1`, `dist2`, then `dist1`, checking DNS service and failover
+after each host. Run the corresponding Ansible playbook with `--limit` after
+each replacement. After rebuilding a secondary, run `ops-pdns_sync.yaml` with
+the primary and that secondary in `--limit`, then compare zone SOA serials.
+
+After rebuilding `ns1`, run `make check`, `make preview-all`, and `make push-all`
+from `homelab-private/dns-record`. DNSControl restores the home and reverse
+zones and the prd/sandbox authority records. The prd and sandbox ExternalDNS
+instances (`policy: sync`, 30-second interval) recreate their application
+records when their clusters are running. Run `ops-pdns_sync.yaml` for
+`ns1:ns2:ns3` and compare forward and reverse answers on all three servers.
+If a cluster is stopped, its application records will be absent until it
+restarts; verify their return and run the sync playbook again then.
+
 ### Provider lock files
 
 Commit each stack's `.terraform.lock.hcl` with `darwin_arm64` and `linux_amd64`
