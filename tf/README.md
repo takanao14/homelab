@@ -104,17 +104,12 @@ root:
 The helper discovers stacks, loads each direnv environment, upgrades providers,
 and records both platform hashes. Review the lock diff and representative plans.
 
-### Log collector resource rename
+### Log collector
 
-The Vector collector is named `log1`; keep its directory named `syslog/` to
-preserve the backend state key.
-
-```bash
-cd tf/lxc/node2/syslog
-terragrunt plan
-```
-
-The plan must preserve container `192.168.10.243`; reject replacement plans.
+`lxc/node2/log_collector` manages `log1` (`192.168.10.243`). Its directory
+determines the backend state key; migrate the state before planning if the
+directory moves. An intentional OS rebuild must replace only `log1` after its
+disk buffer has drained.
 
 To apply all components in an environment at once:
 

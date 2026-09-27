@@ -14,6 +14,7 @@ locals {
 inputs = {
   containers = {
     "log1" = merge(local.env.locals.container_defaults, {
+      os_template = "local:vztmpl/ubuntu-26.04-standard_26.04-1_amd64.tar.zst"
       cores       = 2
       memory      = 1024
       bridge      = local.common.locals.node2.net10.bridge
