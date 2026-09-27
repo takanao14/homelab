@@ -14,17 +14,18 @@ Apply the OpenBao configuration and re-register prd ESO first.
 the Argo CD application. It does not print values. Re-run it after rotation;
 ESO refreshes hourly and Reloader restarts the affected Pod.
 
-After cluster checks pass, add these local client entries and restart each client.
+After cluster checks pass, add these entries under separate names while the
+stdio registrations remain active, then restart each client.
 Use the same entries with `headersHelper` instead of `http_headers_helper` in
 Claude Code's user-scope JSON configuration (`type: "http"`). The helper reads
 the encrypted file directly, so no terminal environment inheritance is needed.
 
 ```toml
-[mcp_servers.grafana]
+[mcp_servers.grafana-cluster]
 url = "https://mcp-grafana.prd.butaco.net/mcp"
 http_headers_helper = "/usr/bin/python3 /Users/takanao/lab/homelab/scripts/mcp-http-headers.py grafana"
 
-[mcp_servers.netbox]
+[mcp_servers.netbox-cluster]
 url = "https://mcp-netbox.prd.butaco.net/mcp"
 http_headers_helper = "/usr/bin/python3 /Users/takanao/lab/homelab/scripts/mcp-http-headers.py netbox"
 ```
@@ -32,12 +33,12 @@ http_headers_helper = "/usr/bin/python3 /Users/takanao/lab/homelab/scripts/mcp-h
 ```json
 {
   "mcpServers": {
-    "grafana": {
+    "grafana-cluster": {
       "type": "http",
       "url": "https://mcp-grafana.prd.butaco.net/mcp",
       "headersHelper": "/usr/bin/python3 /Users/takanao/lab/homelab/scripts/mcp-http-headers.py grafana"
     },
-    "netbox": {
+    "netbox-cluster": {
       "type": "http",
       "url": "https://mcp-netbox.prd.butaco.net/mcp",
       "headersHelper": "/usr/bin/python3 /Users/takanao/lab/homelab/scripts/mcp-http-headers.py netbox"

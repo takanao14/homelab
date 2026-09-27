@@ -4,6 +4,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $name }}-mcp
+  annotations:
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   strategy:
@@ -13,8 +15,6 @@ spec:
       app.kubernetes.io/name: {{ $name }}-mcp
   template:
     metadata:
-      annotations:
-        reloader.stakater.com/auto: "true"
       labels:
         app.kubernetes.io/name: {{ $name }}-mcp
     spec:
