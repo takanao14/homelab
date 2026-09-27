@@ -108,12 +108,6 @@
       "enabled": false
     },
     {
-      "description": "KUBECTL_VERSION selects a pkgs.k8s.io minor channel (e.g. 1.37), so track Kubernetes releases at minor granularity.",
-      "matchDatasources": ["github-releases"],
-      "matchPackageNames": ["kubernetes/kubernetes"],
-      "extractVersion": "^v(?<version>\\d+\\.\\d+)\\.\\d+$"
-    },
-    {
       "matchPackageNames": ["ghcr.io/gethomepage/homepage"],
       "groupName": "homepage updates"
     },
@@ -247,15 +241,14 @@
       "datasourceTemplate": "helm"
     },
     {
-      "description": "Version pins in scripts/ (e.g. the MCP server tag in netbox-mcp.sh, tool versions in install/vendor/), written as `[readonly ]name=\"${OVERRIDE:-value}\"` under a renovate comment. Values omit the release tag's `v` prefix.",
+      "description": "Version pins in the top-level scripts/ launchers (e.g. the MCP server tag in netbox-mcp.sh), written as `name=\"${OVERRIDE:-value}\"` under a renovate comment. scripts/install/vendor/ is vendored from dotfiles and tracked there.",
       "customType": "regex",
       "managerFilePatterns": [
-        "/(^|/)scripts/.+\\.sh$/"
+        "/(^|/)scripts/[^/]+\\.sh$/"
       ],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?\\n(?:readonly\\s+)?\\w+=\"\\$\\{\\w+:-(?<currentValue>[^}\"]+)\\}\""
-      ],
-      "extractVersionTemplate": "^v?(?<version>.+)$"
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: registryUrl=(?<registryUrl>\\S+))?\\n\\w+=\"\\$\\{\\w+:-(?<currentValue>[^}\"]+)\\}\""
+      ]
     }
   ]
 }
