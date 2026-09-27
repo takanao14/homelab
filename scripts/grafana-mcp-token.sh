@@ -39,8 +39,12 @@ if [ -z "${admin_user}" ] || [ -z "${admin_pass}" ]; then
   admin_pass="$(kubectl --context "${KUBE_CONTEXT}" -n monitoring get secret grafana-admin -o jsonpath='{.data.admin-password}' | base64 -d)"
 fi
 
-auth=(-u "${admin_user}:${admin_pass}")
-api() { curl -fsSk "${auth[@]}" -H 'Content-Type: application/json' "$@"; }
+api() {
+  local user_config
+  user_config="$(jq -nc --arg user "${admin_user}" --arg pass "${admin_pass}" '$user + ":" + $pass')"
+  printf 'user = %s\n' "${user_config}" |
+    curl -fsSk --config - -H 'Content-Type: application/json' "$@"
+}
 
 # Find or create the service account.
 sa_id="$(api "${GRAFANA_URL}/api/serviceaccounts/search?query=${SA_NAME}" \
