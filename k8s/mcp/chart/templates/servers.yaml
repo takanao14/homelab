@@ -114,7 +114,9 @@ metadata:
     external-dns.kubernetes.io/hostname: {{ $hostname }}
 spec:
   parentRefs:
-    - name: {{ $.Values.gateway.name }}
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ $.Values.gateway.name }}
       namespace: {{ $.Values.gateway.namespace }}
       sectionName: https
   hostnames:
@@ -125,8 +127,11 @@ spec:
             type: PathPrefix
             value: /mcp
       backendRefs:
-        - name: {{ $name }}-mcp
+        - group: ""
+          kind: Service
+          name: {{ $name }}-mcp
           port: 8000
+          weight: 1
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: SecurityPolicy
