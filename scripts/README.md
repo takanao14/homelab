@@ -282,6 +282,8 @@ Scripts backing the Grafana MCP server registered in the repo-root `.mcp.json`
 and `opencode.json`. The server lets an MCP client (Claude Code, Codex,
 OpenCode, Cursor, …) query Grafana (PromQL/LogQL and dashboards) against
 `https://grafana.prd.butaco.net`.
+For cluster-hosted Codex and Claude Code, see [`k8s/mcp/README.md`](../k8s/mcp/README.md);
+this stdio launcher remains the cluster-outage fallback.
 
 ### `grafana-mcp.sh`
 
@@ -433,6 +435,8 @@ revoke unused tokens in the Grafana UI or via the API.
 [`netboxlabs/netbox-mcp-server`](https://github.com/netboxlabs/netbox-mcp-server)
 container over stdio. The image is pinned to `1.2.1`, and the server exposes
 read-only NetBox query tools.
+It remains the fallback for the cluster-hosted service in
+[`k8s/mcp/README.md`](../k8s/mcp/README.md).
 
 The image includes upstream `uv.lock`, pinning transitive dependencies; a tagged
 `uvx` install would re-resolve them. Upstream signs its multi-arch images.

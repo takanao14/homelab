@@ -34,6 +34,8 @@ apps:
     # Central kube-prometheus-stack app-of-apps (see k8s/monitoring).
     path: k8s/monitoring/apps
     namespace: argocd
+  mcp:
+    enabled: true
   ollama:
     enabled: true
   open-webui:

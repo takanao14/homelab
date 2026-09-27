@@ -105,3 +105,4 @@ deleting it:
 | [0054](0054-comfyui-image-updates-via-ci-opened-pull-requests.md) | Update the ComfyUI image through pinned tags and CI-opened pull requests | Accepted |
 | [0055](0055-voice-ui-observes-gpu-switch-without-controlling-it.md) | Voice UI observes GPU availability without switching workloads | Accepted |
 | [0056](0056-butaco-reads-football-data-from-espn.md) | Butaco reads football data from ESPN's unofficial API | Accepted |
+| [0057](0057-cluster-hosted-authenticated-mcp.md) | Host authenticated MCP servers in the prd cluster | Accepted |

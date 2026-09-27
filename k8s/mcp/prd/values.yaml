@@ -1,0 +1,11 @@
+gateway:
+  allowedClientCIDRs:
+    - 192.168.10.0/24
+
+servers:
+  grafana:
+    hostname: mcp-grafana.prd.butaco.net
+  netbox:
+    hostname: mcp-netbox.prd.butaco.net
+
+netboxIP: 192.168.10.244/32

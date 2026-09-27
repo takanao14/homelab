@@ -119,6 +119,7 @@ re-injected from a workstation. Run the steps in order:
 6. `ops-openbao_register_cluster.yaml -e cluster=prd` and again for `sandbox`.
    Each run creates and configures that cluster's Kubernetes auth mount before
    writing its ESO role.
+7. Run `scripts/secrets/admin/seed-mcp.sh` for the prd MCP secrets.
 
 ## Reconciling declared and stored secrets
 
@@ -146,6 +147,12 @@ The ESO ArgoCD Application itself is rendered by the app-of-apps chart
 Application policies grant read-only access to their own KV prefix. The prd ESO
 role includes `k8s-cert-manager`, while sandbox deliberately does not because
 its Argo CD bootstrap runs HTTP-only without cert-manager (ADR-0010).
+The prd role also includes `k8s-mcp`; `scripts/secrets/admin/seed-mcp.sh`
+idempotently seeds its two paths from `.env/secrets.sops.env` after policy
+configuration. Re-run it after rotating either upstream or caller token.
+Apply `ops-openbao_configure.yaml`, then
+`ops-openbao_register_cluster.yaml -e cluster=prd` to attach the new policy to
+the live ESO role before seeding or syncing MCP.
 
 Policies removed from the repository are listed in `openbao_absent_policies`.
 `ops-openbao_configure.yaml` deletes those server-side policy objects before it

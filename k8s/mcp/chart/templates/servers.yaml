@@ -1,0 +1,202 @@
+{{- range $name, $server := .Values.servers }}
+{{- $hostname := required (printf "servers.%s.hostname is required" $name) $server.hostname }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}-mcp
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $name }}-mcp
+  template:
+    metadata:
+      annotations:
+        reloader.stakater.com/auto: "true"
+      labels:
+        app.kubernetes.io/name: {{ $name }}-mcp
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: mcp
+          image: {{ $server.image | quote }}
+          imagePullPolicy: IfNotPresent
+          command: [{{ $server.command | quote }}]
+          args: {{ toYaml $server.args | nindent 12 }}
+            {{- if eq $name "grafana" }}
+            - --allowed-hosts
+            - {{ $hostname | quote }}
+            {{- end }}
+          env:
+            - name: {{ ternary "GRAFANA_URL" "NETBOX_URL" (eq $name "grafana") }}
+              value: {{ $server.upstream | quote }}
+            - name: {{ $server.upstreamTokenEnv }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $name }}-mcp
+                  key: upstream-token
+            - name: {{ $server.callerTokenEnv }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $name }}-mcp
+                  key: caller-token
+            {{- if eq $name "netbox" }}
+            - name: VERIFY_SSL
+              value: "true"
+            - name: ENABLE_PLUGIN_DISCOVERY
+              value: "false"
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8000
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}-mcp
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ $name }}-mcp
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ $name }}-mcp
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: openbao
+    kind: ClusterSecretStore
+  target:
+    name: {{ $name }}-mcp
+    creationPolicy: Owner
+  data:
+    - secretKey: upstream-token
+      remoteRef:
+        key: {{ $server.secretPath }}
+        property: upstream-token
+    - secretKey: caller-token
+      remoteRef:
+        key: {{ $server.secretPath }}
+        property: caller-token
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $name }}-mcp
+  annotations:
+    external-dns.kubernetes.io/hostname: {{ $hostname }}
+spec:
+  parentRefs:
+    - name: {{ $.Values.gateway.name }}
+      namespace: {{ $.Values.gateway.namespace }}
+      sectionName: https
+  hostnames:
+    - {{ $hostname }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /mcp
+      backendRefs:
+        - name: {{ $name }}-mcp
+          port: 8000
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: {{ $name }}-mcp-source
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $name }}-mcp
+  authorization:
+    defaultAction: Deny
+    rules:
+      - action: Allow
+        principal:
+          clientCIDRs: {{ toYaml (required "gateway.allowedClientCIDRs is required" $.Values.gateway.allowedClientCIDRs) | nindent 12 }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $name }}-mcp
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $name }}-mcp
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $.Values.gateway.proxyNamespace }}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: envoy
+              gateway.envoyproxy.io/owning-gateway-name: {{ $.Values.gateway.name }}
+              gateway.envoyproxy.io/owning-gateway-namespace: {{ $.Values.gateway.namespace }}
+      ports:
+        - protocol: TCP
+          port: 8000
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    {{- if eq $name "grafana" }}
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: grafana
+      ports:
+        - protocol: TCP
+          port: 3000
+    {{- else }}
+    - to:
+        - ipBlock:
+            cidr: {{ required "netboxIP is required" $.Values.netboxIP }}
+      ports:
+        - protocol: TCP
+          port: 443
+    {{- end }}
+---
+{{- end }}

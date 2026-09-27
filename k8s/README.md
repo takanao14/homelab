@@ -42,6 +42,7 @@ k8s/
 ├── externalDNS/      # PowerDNS record reconciliation
 ├── gateway/          # Shared Gateway API resources
 ├── monitoring/       # Metrics, logs, exporters, and dashboard generator
+├── mcp/              # Authenticated Grafana and NetBox MCP servers (prd)
 ├── reloader/         # Secret/ConfigMap-triggered restarts
 ├── gpu-switch/       # Exclusive GPU workload controller
 ├── comfyui/          # GPU image generation

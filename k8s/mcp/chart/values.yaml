@@ -1,0 +1,42 @@
+gateway:
+  name: shared-gateway-envoy
+  namespace: gateway-system
+  proxyNamespace: envoy-gateway-system
+  allowedClientCIDRs: []
+
+servers:
+  grafana:
+    image: docker.io/grafana/mcp-grafana:1.5.1@sha256:07c6614a8f8b6477e572444874c8c07baf145473977f014497cb59262af1944c
+    command: /app/mcp-grafana
+    hostname: ""
+    upstream: http://grafana.monitoring.svc.cluster.local
+    secretPath: k8s/mcp/grafana
+    upstreamTokenEnv: GRAFANA_SERVICE_ACCOUNT_TOKEN
+    callerTokenEnv: MCP_GRAFANA_SERVER_TOKEN
+    args:
+      - -t
+      - streamable-http
+      - --address
+      - 0.0.0.0:8000
+      - --disable-write
+      - --enabled-tools
+      - search,datasource,prometheus,loki,dashboard,navigation,alerting
+      - --max-loki-log-limit
+      - "20"
+  netbox:
+    image: docker.io/netboxlabs/netbox-mcp-server:1.2.1@sha256:eba97a5ce807a8a77d627d55f46a5fdc70799e84383224de8dba5436e3cac92d
+    command: netbox-mcp-server
+    hostname: ""
+    upstream: https://netbox.home.butaco.net/
+    secretPath: k8s/mcp/netbox
+    upstreamTokenEnv: NETBOX_TOKEN
+    callerTokenEnv: MCP_AUTH_TOKEN
+    args:
+      - --transport
+      - http
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+
+netboxIP: ""

@@ -27,6 +27,8 @@ secret/sops/age
 secret/provision/env
 secret/kubeconfig/prd
 secret/kubeconfig/sandbox
+secret/k8s/mcp/grafana
+secret/k8s/mcp/netbox
 "
 
 BAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"

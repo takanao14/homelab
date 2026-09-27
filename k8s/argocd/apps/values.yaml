@@ -66,6 +66,9 @@ apps:
     namespace: ""
     helm: {}
     syncOptions: []
+  mcp:
+    enabled: false
+    wave: "1"
   ollama:
     enabled: false
     wave: "1"

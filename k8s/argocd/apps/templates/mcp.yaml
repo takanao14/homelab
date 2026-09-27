@@ -1,0 +1,27 @@
+{{- $app := index .Values.apps "mcp" }}
+{{- if $app.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mcp
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $app.wave | quote }}
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.repo.url }}
+    targetRevision: {{ .Values.repo.targetRevision }}
+    path: k8s/mcp/chart
+    helm:
+      releaseName: mcp
+      valueFiles:
+        - ../prd/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mcp
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+{{- end }}
