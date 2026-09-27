@@ -8,7 +8,7 @@ authentik_pg_container: authentik-postgresql
 # Applies blueprints, so it is also where the post-apply user check runs.
 authentik_worker_container: authentik-worker
 
-authentik_pg_image: docker.io/library/postgres:16-alpine
+authentik_pg_image: docker.io/library/postgres:18-alpine
 authentik_pg_db: authentik
 authentik_pg_user: authentik
 
