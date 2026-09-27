@@ -1,10 +1,14 @@
 {
   "mcpServers": {
     "grafana": {
-      "command": "./scripts/grafana-mcp.sh"
+      "type": "http",
+      "url": "https://mcp-grafana.prd.butaco.net/mcp",
+      "headersHelper": "./scripts/mcp-http-headers.py grafana"
     },
     "netbox": {
-      "command": "./scripts/netbox-mcp.sh"
+      "type": "http",
+      "url": "https://mcp-netbox.prd.butaco.net/mcp",
+      "headersHelper": "./scripts/mcp-http-headers.py netbox"
     }
   }
 }
