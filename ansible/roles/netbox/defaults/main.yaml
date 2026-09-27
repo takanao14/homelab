@@ -5,7 +5,7 @@ netbox_version: "4.7.1"
 # renovate: datasource=github-releases depName=netbox-community/netbox-docker
 netbox_docker_version: "5.1.1"
 netbox_pg_image: docker.io/postgres:18-alpine
-netbox_redis_image: docker.io/valkey/valkey:9.1-alpine
+netbox_redis_image: docker.io/valkey/valkey:9.2-alpine
 
 netbox_network: netbox
 netbox_container: netbox
