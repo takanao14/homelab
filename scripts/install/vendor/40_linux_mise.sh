@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# mise-config-sha256: 5e25e3817cab84ccf48108884983a95cf1205fcda676433c994e3c07b2ce0045
-# mise-lock-sha256: 12f44244b3e4a20b7f0f44801f089eb72c7a76b4f0554c50c1bc990c1bfdce8d
+# mise-config-sha256: cd7a37242e990943414bf481fcac3a2156b82ca050ea1c33af6a41db7f54e556
+# mise-lock-sha256: 8efcf6a9f94da88f2c54cb7bff6ec374a2b1c63609d574761a656683fb20e2dc
 
 [[ "$(uname -s)" == "Linux" ]] || exit 0
 
 # renovate: datasource=github-releases depName=jdx/mise
-readonly MISE_VERSION="${MISE_VERSION:-2026.9.5}"
+readonly MISE_VERSION="${MISE_VERSION:-2026.9.14}"
 # renovate: datasource=github-releases depName=databus23/helm-diff
-readonly HELM_DIFF_VERSION="${HELM_DIFF_VERSION:-3.15.13}"
+readonly HELM_DIFF_VERSION="${HELM_DIFF_VERSION:-3.15.15}"
 readonly MISE_CONFIG_FILE="${MISE_CONFIG_FILE:-$HOME/.config/mise/config.toml}"
 readonly MISE_INSTALL_SCOPE="${MISE_INSTALL_SCOPE:-user}"
 
 case "$(uname -m)" in
     x86_64)
         readonly MISE_ARCH="x64"
-        readonly MISE_SHA256="32f644d8c291bb182f702c6d2b0dda9f8b01441e940d74d328aad5f08446b2fd"
+        readonly MISE_SHA256="2b289d1b3074e0b1d3f95bad0bd78bbc517c1a5bcb020cbc1643d260f5d1a351"
         ;;
     aarch64 | arm64)
         readonly MISE_ARCH="arm64"
-        readonly MISE_SHA256="3721d44253d0a014545eb1fe13258333da270b98d8c7523e07e7619e74e2f77f"
+        readonly MISE_SHA256="b405a2ea062c4d9560eee0a3c45b79e53c8834cf38e956bb47ca70e0d2e7479a"
         ;;
     *)
         echo "Unsupported architecture: $(uname -m)" >&2
@@ -94,28 +94,10 @@ install_mise() {
 
 mise_version_matches || install_mise
 
-# pipx builds its venvs with its own interpreter, which on Rocky 9 is the
-# distro python3.9 that ansible-core no longer supports. Hand it the newer
-# python that run_onchange_10_linux_package.sh installs alongside it. This must
-# happen here because that script runs as a separate process.
-select_pipx_python() {
-    if [[ -n "${PIPX_DEFAULT_PYTHON:-}" ]]; then
-        return
-    fi
-    local candidate path
-    for candidate in python3 python3.14 python3.13 python3.12; do
-        path="$(command -v "$candidate" 2>/dev/null)" || continue
-        "$path" -c 'import sys; raise SystemExit(0 if sys.version_info[:2] >= (3, 12) else 1)' 2>/dev/null || continue
-        if [[ "$candidate" != "python3" ]]; then
-            export PIPX_DEFAULT_PYTHON="$path"
-        fi
-        return
-    done
-    echo "No python >=3.12 found; the pipx backend cannot install ansible-core" >&2
-    exit 1
-}
-
-select_pipx_python
+# mise's minimum_release_age does not reach `uv tool install` for pinned pypi
+# tools, so their transitive dependencies would resolve to the newest releases.
+# Apply the same two-day cutoff here, scoped to this install only.
+export UV_EXCLUDE_NEWER="${UV_EXCLUDE_NEWER:-2 days}"
 
 export MISE_CONFIG_FILE MISE_DATA_DIR
 if [[ "$MISE_INSTALL_SCOPE" == "system" ]]; then

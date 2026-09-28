@@ -11,7 +11,7 @@ readonly OS_ID="${ID}"
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 readonly KUBECTL_VERSION="${KUBECTL_VERSION:-1.37}"
 # renovate: datasource=github-releases depName=openbao/openbao
-readonly OPENBAO_VERSION="${OPENBAO_VERSION:-2.6.2}"
+readonly OPENBAO_VERSION="${OPENBAO_VERSION:-2.7.0}"
 # renovate: datasource=github-releases depName=freelensapp/freelens
 readonly FREELENS_VERSION="${FREELENS_VERSION:-1.10.3}"
 
@@ -220,6 +220,9 @@ install_base_dependencies() {
             packages=(ca-certificates curl coreutils file findutils git gnupg gzip make tar unzip xz-utils mosh tmux podman zsh)
             ;;
         rocky)
+            # mosh ships only in EPEL on Rocky.
+            install_packages epel-release
+            update_package_cache
             packages=(ca-certificates curl coreutils file findutils git gnupg2 gzip make tar unzip xz mosh tmux podman zsh)
             ;;
         *)
@@ -355,7 +358,7 @@ install_freelens() {
     esac
 }
 
-# pipx toolchain bootstrap (consumed by the mise pipx backend)
+# Python interpreter for the mise pypi tools (uv builds their venvs)
 
 # Install Python 3.12 when the distro default cannot run ansible-core.
 have_python312() {
@@ -364,29 +367,11 @@ have_python312() {
         python3 -c 'import sys; raise SystemExit(0 if sys.version_info[:2] >= (3, 12) else 1)' 2>/dev/null
 }
 
-ensure_pipx_toolchain() {
-    if ! command -v pipx >/dev/null 2>&1; then
-        log_info "Installing pipx..."
-        update_package_cache
-        case "$OS_ID" in
-            ubuntu|debian)
-                install_packages python3 python3-pip pipx
-                ;;
-            rocky)
-                install_packages epel-release
-                update_package_cache
-                install_packages python3 python3-pip pipx
-            ;;
-        esac
-    fi
+ensure_python312() {
     if ! have_python312; then
         log_info "Installing python3.12 (ansible controller interpreter)..."
-        local python_packages=()
-        case "$OS_ID" in
-            ubuntu|debian) python_packages=(python3.12 python3.12-venv) ;;
-            rocky)         python_packages=(python3.12 python3.12-pip) ;;
-        esac
-        if ! install_packages "${python_packages[@]}"; then
+        update_package_cache
+        if ! install_packages python3.12; then
             log_error "Python >=3.12 is required but is not available from the configured ${OS_ID} repositories."
             log_error "Use a supported release/repository that provides python3.12, then rerun this script."
             exit 1
@@ -410,7 +395,7 @@ preflight_packages() {
     local missing=() cmd
     # Check base and package-managed tool dependencies.
     for cmd in curl tar gzip unzip xz gpg git file find make sha256sum install \
-               terraform packer vault kubectl bao pipx mosh tmux podman zsh; do
+               terraform packer vault kubectl bao mosh tmux podman zsh; do
         command -v "$cmd" >/dev/null 2>&1 || missing+=("$cmd")
     done
     if is_desktop_machine; then
@@ -463,7 +448,7 @@ main() {
         install_freelens
     fi
 
-    ensure_pipx_toolchain
+    ensure_python312
 
     log_info "=== Package installation completed ==="
 }
