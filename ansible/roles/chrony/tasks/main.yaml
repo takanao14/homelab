@@ -64,6 +64,18 @@
       {% endfor %}
   notify: Restart chrony
 
+- name: Disable Ubuntu default NTP sources
+  become: true
+  ansible.builtin.command:
+    argv:
+      - mv
+      - -f
+      - /etc/chrony/sources.d/ubuntu-ntp-pools.sources
+      - /etc/chrony/sources.d/ubuntu-ntp-pools.sources.disabled
+    removes: /etc/chrony/sources.d/ubuntu-ntp-pools.sources
+  when: ansible_facts['distribution'] == 'Ubuntu'
+  notify: Restart chrony
+
 # Disable main-config sources so the managed file is authoritative.
 - name: Disable unmanaged NTP sources in main config
   become: true
