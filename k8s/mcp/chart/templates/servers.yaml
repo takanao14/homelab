@@ -133,22 +133,6 @@ spec:
           port: 8000
           weight: 1
 ---
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: SecurityPolicy
-metadata:
-  name: {{ $name }}-mcp-source
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      name: {{ $name }}-mcp
-  authorization:
-    defaultAction: Deny
-    rules:
-      - action: Allow
-        principal:
-          clientCIDRs: {{ toYaml (required "gateway.allowedClientCIDRs is required" $.Values.gateway.allowedClientCIDRs) | nindent 12 }}
----
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

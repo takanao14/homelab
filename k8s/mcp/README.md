@@ -2,9 +2,8 @@
 
 The prd app-of-apps deploys Grafana and NetBox MCP into `mcp`. Each HTTPRoute
 publishes `/mcp` through `gateway-system/shared-gateway-envoy` on HTTPS.
-The Gateway policy allows `192.168.10.0/24`; verify the source IP seen by Envoy
-before adding a VPN range. The wildcard prd certificate covers both hostnames,
-and prd external-dns owns records created from HTTPRoutes.
+The wildcard prd certificate covers both hostnames, and prd external-dns owns
+records created from HTTPRoutes. Each server requires its own bearer token.
 
 The `k8s-mcp` OpenBao policy grants prd ESO read access to `k8s/mcp/*` only.
 Apply the OpenBao configuration and re-register prd ESO first.
@@ -20,8 +19,7 @@ reads the encrypted file directly, so no terminal environment inheritance is
 needed.
 
 Check `ExternalSecret` readiness, then confirm each HTTPS endpoint returns `401`
-without a bearer token and with the other server's token. From an allowed
-client, initialize both MCP connections, list tools, query a bounded Loki range,
-and fetch a known NetBox object. Confirm disallowed source ranges cannot access
-the routes. The stdio launchers remain available for rollback; restore their
+without a bearer token and with the other server's token. Initialize both MCP
+connections, list tools, query a bounded Loki range, and fetch a known NetBox
+object. The stdio launchers remain available for rollback; restore their
 registrations if needed. Keep the upstream API tokens active.

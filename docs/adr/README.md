@@ -108,3 +108,4 @@ deleting it:
 | [0057](0057-cluster-hosted-authenticated-mcp.md) | Host authenticated MCP servers in the prd cluster | Accepted |
 | [0058](0058-select-authentik-features-and-update-them-individually.md) | Select Authentik features and update them individually | Accepted |
 | [0059](0059-group-ansible-playbooks-by-purpose.md) | Group Ansible playbooks by purpose | Accepted |
+| [0060](0060-mcp-relies-on-bearer-authentication.md) | Rely on bearer authentication for MCP access | Accepted |

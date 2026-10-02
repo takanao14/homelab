@@ -2,7 +2,6 @@ gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
   proxyNamespace: envoy-gateway-system
-  allowedClientCIDRs: []
 
 servers:
   grafana:
