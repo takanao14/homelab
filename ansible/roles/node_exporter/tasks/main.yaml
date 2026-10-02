@@ -1,10 +1,13 @@
 ---
+# Bootstrap enables unattended-upgrades first; on a fresh VM its initial run
+# can hold the dpkg lock for several minutes.
 - name: Install prometheus-node-exporter
   become: true
   ansible.builtin.apt:
     name: "{{ node_exporter_package }}"
     state: present
     update_cache: true
+    lock_timeout: 600
 
 - name: Check whether node_exporter is already installed
   ansible.builtin.command:
