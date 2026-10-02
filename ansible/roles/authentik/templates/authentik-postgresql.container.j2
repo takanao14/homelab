@@ -10,7 +10,7 @@ Network={{ authentik_network }}.network
 EnvironmentFile={{ authentik_env_file }}
 Environment=POSTGRES_DB={{ authentik_pg_db }}
 Environment=POSTGRES_USER={{ authentik_pg_user }}
-Volume={{ authentik_pg_data_dir }}:/var/lib/postgresql/data
+Volume={{ authentik_pg_data_dir }}:/var/lib/postgresql
 HealthCmd=pg_isready -d {{ authentik_pg_db }} -U {{ authentik_pg_user }}
 HealthInterval=30s
 HealthRetries=5

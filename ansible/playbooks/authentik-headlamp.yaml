@@ -1,0 +1,10 @@
+---
+- name: Update Authentik Headlamp
+  hosts: authentik
+  tasks:
+    - name: Update the selected Headlamp feature
+      ansible.builtin.include_role:
+        name: authentik
+        tasks_from: update
+      vars:
+        authentik_update_feature: headlamp

@@ -1,14 +1,9 @@
-{#
-  Group names and the browser-facing URL come from the role defaults so the
-  bindings cannot drift from groups.yaml or from authentik_external_url.
-#}
 version: 1
 metadata:
-  name: homelab proxy provider
+  name: homelab headlamp
   labels:
     blueprints.goauthentik.io/instantiate: "true"
 entries:
-  # Per-app forward auth keeps Envoy proxying and preserves group bindings.
   - model: authentik_providers_proxy.proxyprovider
     id: headlamp-prd-provider
     identifiers:
@@ -17,7 +12,6 @@ entries:
       authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
       mode: forward_single
-      # Browser entry point and post-login return URL; must match the HTTPRoute.
       external_host: https://headlamp.prd.butaco.net
       basic_auth_enabled: false
       access_token_validity: hours=8
@@ -35,19 +29,6 @@ entries:
       basic_auth_enabled: false
       access_token_validity: hours=8
 
-  # Replaces OpenBao basicAuth in prd; sandbox has no GPU worker (stage 14a).
-  - model: authentik_providers_proxy.proxyprovider
-    id: gpu-switch-prd-provider
-    identifiers:
-      name: gpu-switch-prd
-    attrs:
-      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
-      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
-      mode: forward_single
-      external_host: https://gpu-switch.prd.butaco.net
-      basic_auth_enabled: false
-      access_token_validity: hours=8
-
   - model: authentik_core.application
     id: headlamp-prd-application
     identifiers:
@@ -55,7 +36,6 @@ entries:
     attrs:
       name: Headlamp (prd)
       provider: !KeyOf headlamp-prd-provider
-      # Admit on any matching binding; the group bindings below are the gate.
       policy_engine_mode: any
       meta_description: prd Kubernetes dashboard. Everyone admitted here shares
         the same cluster-admin ServiceAccount inside Headlamp.
@@ -70,17 +50,6 @@ entries:
       policy_engine_mode: any
       meta_description: sandbox Kubernetes dashboard. Everyone admitted here
         shares the same cluster-admin ServiceAccount inside Headlamp.
-
-  - model: authentik_core.application
-    id: gpu-switch-prd-application
-    identifiers:
-      slug: gpu-switch-prd
-    attrs:
-      name: GPU Switch (prd)
-      provider: !KeyOf gpu-switch-prd-provider
-      policy_engine_mode: any
-      meta_description: Assigns the single prd AMD GPU by scaling labelled
-        Deployments. Scoped RBAC, not cluster-admin (ADR-0027).
 
   # Headlamp uses cluster-admin, so admit only groups trusted at that level.
   - model: authentik_policies.policybinding
@@ -107,7 +76,6 @@ entries:
     attrs:
       enabled: true
 
-  # Sandbox users are elevated until OIDC restores per-user RBAC (decision 22).
   - model: authentik_policies.policybinding
     identifiers:
       target: !KeyOf headlamp-sandbox-application
@@ -115,38 +83,3 @@ entries:
       order: 1
     attrs:
       enabled: true
-
-  # ADR-0027-scoped RBAC permits the broader {{ authentik_groups.gpu_users }} group.
-  - model: authentik_policies.policybinding
-    identifiers:
-      target: !KeyOf gpu-switch-prd-application
-      group: !Find [authentik_core.group, [name, {{ authentik_groups.platform_admins }}]]
-      order: 0
-    attrs:
-      enabled: true
-
-  - model: authentik_policies.policybinding
-    identifiers:
-      target: !KeyOf gpu-switch-prd-application
-      group: !Find [authentik_core.group, [name, {{ authentik_groups.gpu_users }}]]
-      order: 1
-    attrs:
-      enabled: true
-
-  - model: authentik_outposts.outpost
-    id: proxy-outpost
-    identifiers:
-      name: {{ authentik_proxy_outpost_name }}
-    attrs:
-      type: proxy
-      # One external outpost serves every application and environment.
-      providers:
-        - !KeyOf headlamp-prd-provider
-        - !KeyOf headlamp-sandbox-provider
-        - !KeyOf gpu-switch-prd-provider
-      # Proxy outposts require non-empty config with authentik_host.
-      config:
-        # Browser-facing URL; backchannel calls use the container environment.
-        authentik_host: {{ authentik_external_url }}
-        authentik_host_insecure: false
-        log_level: info

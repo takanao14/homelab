@@ -1,0 +1,66 @@
+---
+- name: Check the Authentik feature selection
+  ansible.builtin.include_tasks: feature_selection.yaml
+
+- name: Require a completed Authentik deployment
+  ansible.builtin.assert:
+    that:
+      - authentik_feature_selection_stat.stat.exists
+      - authentik_update_feature in authentik_enabled_features
+    fail_msg: >-
+      Run playbooks/authentik.yaml to build the selected features before a
+      feature-specific update.
+
+- name: Check the Authentik server container
+  become: true
+  ansible.builtin.command:
+    argv:
+      - podman
+      - container
+      - exists
+      - authentik-server
+  register: authentik_update_server_exists
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Require a running Authentik server
+  ansible.builtin.assert:
+    that: authentik_update_server_exists.rc == 0
+
+- name: Read the deployed Authentik version
+  become: true
+  ansible.builtin.command:
+    argv:
+      - podman
+      - inspect
+      - --format
+      - "{{ '{{.ImageName}}' }}"
+      - authentik-server
+  register: authentik_update_server_image
+  changed_when: false
+  check_mode: false
+
+- name: Require the reviewed version before a feature update
+  ansible.builtin.assert:
+    that: authentik_update_server_image.stdout | regex_replace('^.*:', '') == authentik_version
+    fail_msg: Use playbooks/ops-authentik_upgrade.yaml before updating a feature.
+
+- name: Update LDAP
+  ansible.builtin.include_tasks: ldap.yaml
+  when: authentik_update_feature == 'ldap'
+
+- name: Update Headlamp
+  ansible.builtin.include_tasks: headlamp.yaml
+  when: authentik_update_feature == 'headlamp'
+
+- name: Update GPU Switch
+  ansible.builtin.include_tasks: gpu_switch.yaml
+  when: authentik_update_feature == 'gpu_switch'
+
+- name: Update the shared proxy Outpost
+  ansible.builtin.include_tasks: proxy_outpost.yaml
+  when: authentik_update_feature in ['headlamp', 'gpu_switch']
+
+- name: Apply pending Authentik Outpost restarts
+  ansible.builtin.meta: flush_handlers

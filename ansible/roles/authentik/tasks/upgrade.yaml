@@ -1,4 +1,18 @@
 ---
+- name: Check the Authentik feature selection
+  ansible.builtin.include_tasks: feature_selection.yaml
+
+- name: Select Authentik components to upgrade
+  ansible.builtin.set_fact:
+    authentik_upgrade_containers: >-
+      {{ ['authentik-server', authentik_worker_container]
+         + ([authentik_ldap_container] if 'ldap' in authentik_enabled_features else [])
+         + ([authentik_proxy_container] if authentik_enabled_features | intersect(['headlamp', 'gpu_switch']) | length > 0 else []) }}
+    authentik_upgrade_images: >-
+      {{ [authentik_image]
+         + ([authentik_ldap_image] if 'ldap' in authentik_enabled_features else [])
+         + ([authentik_proxy_image] if authentik_enabled_features | intersect(['headlamp', 'gpu_switch']) | length > 0 else []) }}
+
 - name: Check required Authentik containers
   become: true
   ansible.builtin.command:
@@ -7,11 +21,7 @@
       - container
       - exists
       - "{{ item }}"
-  loop:
-    - authentik-server
-    - "{{ authentik_worker_container }}"
-    - "{{ authentik_ldap_container }}"
-    - "{{ authentik_proxy_container }}"
+  loop: "{{ authentik_upgrade_containers }}"
   register: authentik_upgrade_container_checks
   changed_when: false
   failed_when: authentik_upgrade_container_checks.rc not in [0, 1]
@@ -20,11 +30,10 @@
 - name: Require an existing complete Authentik deployment
   ansible.builtin.assert:
     that:
-      - authentik_upgrade_container_checks.results | selectattr('rc', 'equalto', 0) | list | length == 4
+      - authentik_upgrade_container_checks.results | selectattr('rc', 'equalto', 0) | list | length == authentik_upgrade_containers | length
     fail_msg: >-
-      The explicit upgrade workflow requires the server, worker, LDAP Outpost,
-      and Proxy Outpost containers. Use playbooks/authentik.yaml for a new
-      deployment.
+      The explicit upgrade workflow requires every selected Authentik component.
+      Use playbooks/authentik.yaml for a new deployment.
 
 - name: Read deployed Authentik component images
   become: true
@@ -35,11 +44,7 @@
       - --format
       - "{{ '{{.ImageName}}' }}"
       - "{{ item }}"
-  loop:
-    - authentik-server
-    - "{{ authentik_worker_container }}"
-    - "{{ authentik_ldap_container }}"
-    - "{{ authentik_proxy_container }}"
+  loop: "{{ authentik_upgrade_containers }}"
   register: authentik_upgrade_image_inspects
   changed_when: false
   check_mode: false
@@ -177,10 +182,7 @@
           - podman
           - pull
           - "{{ item }}:{{ authentik_version }}"
-      loop:
-        - "{{ authentik_image }}"
-        - "{{ authentik_ldap_image }}"
-        - "{{ authentik_proxy_image }}"
+      loop: "{{ authentik_upgrade_images }}"
       changed_when: true
 
     - name: Apply the reviewed Authentik release
@@ -209,11 +211,7 @@
           - --format
           - "{{ '{{.ImageName}}' }}"
           - "{{ item }}"
-      loop:
-        - authentik-server
-        - "{{ authentik_worker_container }}"
-        - "{{ authentik_ldap_container }}"
-        - "{{ authentik_proxy_container }}"
+      loop: "{{ authentik_upgrade_containers }}"
       register: authentik_upgrade_verified_images
       changed_when: false
 

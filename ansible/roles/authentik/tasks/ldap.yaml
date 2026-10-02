@@ -1,0 +1,101 @@
+---
+- name: Ensure the LDAPS certificate exists
+  ansible.builtin.include_tasks: ldap_certificate.yaml
+  when: not ansible_check_mode
+
+- name: Apply LDAP blueprints
+  ansible.builtin.include_tasks: apply_blueprints.yaml
+  vars:
+    authentik_apply_paths:
+      - local/ldap.yaml
+      - local/test-users.yaml
+
+- name: Look up the LDAP outpost created by the ldap.yaml blueprint
+  when: not ansible_check_mode
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/outposts/instances/?name__iexact={{ authentik_ldap_outpost_name }}"
+    headers:
+      Authorization: "Bearer {{ authentik_bootstrap_token }}"
+    status_code: 200
+  register: authentik_ldap_outpost
+  until: authentik_ldap_outpost.json.results | length > 0
+  retries: 12
+  delay: 5
+  no_log: true
+
+# Blueprints cannot assign object permissions; filter unsupported role names locally.
+- name: Look up the LDAP search Role created by the ldap.yaml blueprint
+  when: not ansible_check_mode
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/rbac/roles/"
+    headers:
+      Authorization: "Bearer {{ authentik_bootstrap_token }}"
+    status_code: 200
+  register: authentik_ldap_search_role
+  until: authentik_ldap_search_role.json.results | selectattr('name', 'equalto', 'ldap-search') | list | length > 0
+  retries: 12
+  delay: 5
+  no_log: true
+
+- name: Grant the LDAP search Role "Search full LDAP directory" on the LDAP provider
+  when: not ansible_check_mode
+  vars:
+    authentik_ldap_search_role_pk: >-
+      {{ (authentik_ldap_search_role.json.results
+        | selectattr('name', 'equalto', 'ldap-search') | first).pk }}
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/rbac/permissions/assigned_by_roles/{{ authentik_ldap_search_role_pk }}/assign/"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ authentik_bootstrap_token }}"
+    body_format: json
+    body:
+      model: authentik_providers_ldap.ldapprovider
+      object_pk: "{{ (authentik_ldap_outpost.json.results | first).providers | first }}"
+      permissions:
+        - authentik_providers_ldap.search_full_directory
+    status_code: [200, 201]
+  no_log: true
+
+- name: Reveal the LDAP outpost token
+  when: not ansible_check_mode
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/core/tokens/{{ (authentik_ldap_outpost.json.results | first).token_identifier }}/view_key/"
+    headers:
+      Authorization: "Bearer {{ authentik_bootstrap_token }}"
+    status_code: 200
+  register: authentik_ldap_outpost_token
+  no_log: true
+
+- name: Deploy Authentik LDAP outpost env file
+  when: not ansible_check_mode
+  become: true
+  no_log: true
+  ansible.builtin.template:
+    src: authentik-ldap.env.j2
+    dest: "{{ authentik_ldap_env_file }}"
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Restart authentik ldap outpost
+
+- name: Deploy Authentik LDAP outpost Quadlet unit
+  become: true
+  ansible.builtin.template:
+    src: authentik-ldap.container.j2
+    dest: "{{ podman_quadlet_dir }}/authentik-ldap.container"
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart authentik ldap outpost
+
+- name: Ensure Authentik LDAP outpost service is enabled and started
+  when: not ansible_check_mode
+  become: true
+  ansible.builtin.systemd:
+    name: authentik-ldap.service
+    state: started
+    enabled: true
+    daemon_reload: true

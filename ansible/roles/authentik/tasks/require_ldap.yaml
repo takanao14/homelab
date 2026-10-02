@@ -1,0 +1,9 @@
+---
+- name: Check the Authentik feature selection
+  ansible.builtin.include_tasks: feature_selection.yaml
+
+- name: Require deployed LDAP before certificate rotation
+  ansible.builtin.assert:
+    that:
+      - authentik_feature_selection_stat.stat.exists
+      - "'ldap' in authentik_enabled_features"

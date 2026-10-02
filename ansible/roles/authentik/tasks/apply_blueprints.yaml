@@ -1,0 +1,72 @@
+---
+- name: Deploy Authentik blueprints
+  become: true
+  ansible.builtin.template:
+    src: "blueprints/{{ item | basename }}.j2"
+    dest: "{{ authentik_blueprints_dir }}/{{ item | basename }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: "{{ authentik_apply_paths }}"
+
+- name: Look up deployed blueprint instances
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/managed/blueprints/?page_size=200"
+    headers:
+      Authorization: "Bearer {{ authentik_bootstrap_token }}"
+    status_code: 200
+  register: authentik_blueprints
+  until: >-
+    authentik_blueprints.json.results | map(attribute='path') | list
+    | intersect(authentik_apply_paths) | length == authentik_apply_paths | length
+  retries: 12
+  delay: 5
+  no_log: true
+  when: not ansible_check_mode
+
+- name: Apply Authentik blueprints
+  ansible.builtin.uri:
+    url: >-
+      http://127.0.0.1:{{ authentik_http_port }}/api/v3/managed/blueprints/{{
+      (authentik_blueprints.json.results
+      | selectattr('path', 'equalto', item) | first).pk }}/apply/
+    method: POST
+    headers:
+      Authorization: "Bearer {{ authentik_bootstrap_token }}"
+    status_code: 200
+  loop: "{{ authentik_apply_paths }}"
+  changed_when: false
+  no_log: true
+  when: not ansible_check_mode
+
+- name: Check blueprint apply status
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ authentik_http_port }}/api/v3/managed/blueprints/?page_size=200"
+    headers:
+      Authorization: "Bearer {{ authentik_bootstrap_token }}"
+    status_code: 200
+  register: authentik_blueprint_status
+  until: >-
+    authentik_blueprint_status.json.results
+    | selectattr('path', 'in', authentik_apply_paths)
+    | rejectattr('status', 'equalto', 'successful') | list | length == 0
+  retries: 12
+  delay: 5
+  no_log: true
+  ignore_errors: true
+  when: not ansible_check_mode
+
+- name: Require successful blueprint apply
+  ansible.builtin.assert:
+    that: >-
+      authentik_blueprint_status.json.results | default([])
+      | selectattr('path', 'in', authentik_apply_paths)
+      | rejectattr('status', 'equalto', 'successful') | list | length == 0
+    fail_msg: >-
+      Blueprint did not apply:
+      {{ authentik_blueprint_status.json.results | default([])
+      | selectattr('path', 'in', authentik_apply_paths)
+      | rejectattr('status', 'equalto', 'successful')
+      | map(attribute='path') | list | join(', ') | default('unknown', true) }}.
+      Read the recorded error under System > Blueprints in Authentik.
+  when: not ansible_check_mode

@@ -1,4 +1,6 @@
 ---
+authentik_enabled_features: [ldap, headlamp, gpu_switch]
+
 vector_journald_units:
   - authentik-server
   - authentik-worker

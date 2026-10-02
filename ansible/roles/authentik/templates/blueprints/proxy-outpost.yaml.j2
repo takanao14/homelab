@@ -1,0 +1,25 @@
+version: 1
+metadata:
+  name: homelab proxy outpost
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+entries:
+  - model: authentik_outposts.outpost
+    id: proxy-outpost
+    identifiers:
+      name: {{ authentik_proxy_outpost_name }}
+    attrs:
+      type: proxy
+      # Keep the complete provider list when one application is updated.
+      providers:
+{% if "headlamp" in authentik_enabled_features %}
+        - !Find [authentik_providers_proxy.proxyprovider, [name, headlamp-prd]]
+        - !Find [authentik_providers_proxy.proxyprovider, [name, headlamp-sandbox]]
+{% endif %}
+{% if "gpu_switch" in authentik_enabled_features %}
+        - !Find [authentik_providers_proxy.proxyprovider, [name, gpu-switch-prd]]
+{% endif %}
+      config:
+        authentik_host: {{ authentik_external_url }}
+        authentik_host_insecure: false
+        log_level: info

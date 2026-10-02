@@ -6,6 +6,11 @@
   vars:
     authentik_ldap_cert_rotate: true
   tasks:
+    - name: Check that LDAP is selected
+      ansible.builtin.include_role:
+        name: authentik
+        tasks_from: require_ldap
+
     - name: Rotate and export the LDAPS certificate
       ansible.builtin.include_role:
         name: authentik

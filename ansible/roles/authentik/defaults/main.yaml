@@ -19,16 +19,9 @@ authentik_certs_dir: "{{ authentik_base_dir }}/certs"
 authentik_pg_data_dir: /var/lib/authentik-postgresql
 authentik_backup_dir: /var/backups/authentik
 
-# Authentik indexes deployed files under local/. Rendered from
-# templates/blueprints/<basename>.j2 and applied in this order, so the groups
-# exist before the blueprints that bind to them.
 authentik_blueprints_dir: "{{ authentik_base_dir }}/blueprints"
-authentik_blueprint_paths:
-  - local/groups.yaml
-  - local/ldap.yaml
-  - local/proxy.yaml
-  - local/test-users.yaml
-  - local/users.yaml
+authentik_supported_features: [ldap, headlamp, gpu_switch]
+authentik_feature_selection_file: /etc/authentik/enabled-features
 
 # The only definition of the lab group names. groups.yaml creates exactly these
 # and every policy binding addresses them by key, so a reference to a group
@@ -62,14 +55,14 @@ authentik_ldap_outpost_name: homelab-ldap-outpost
 authentik_ldap_env_file: /etc/authentik/authentik-ldap.env
 authentik_ldaps_port: "{{ identity_ldaps_port }}"
 
-# Shared external Proxy Outpost for Headlamp forward auth (stage 8b-1).
+# Shared external Proxy Outpost for selected applications.
 authentik_proxy_image: "ghcr.io/goauthentik/proxy"
 authentik_proxy_container: authentik-proxy
 authentik_proxy_outpost_name: homelab-proxy-outpost
 authentik_proxy_env_file: /etc/authentik/authentik-proxy.env
 # Keep aligned with forwardAuth.outpost.port; 9100 belongs to node_exporter.
 authentik_proxy_http_port: 9001
-# Browser-facing Caddy URL; must match `authentik_host` in proxy.yaml.
+# Browser-facing Caddy URL; must match `authentik_host` in proxy-outpost.yaml.
 authentik_external_url: "https://auth.home.butaco.net"
 
 # Generate a standards-compliant self-signed LDAPS certificate outside Authentik.

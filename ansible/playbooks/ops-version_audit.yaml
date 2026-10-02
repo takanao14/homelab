@@ -16,15 +16,13 @@
           - --format
           - "{{ '{{.ImageName}}' }}"
           - "{{ item.container }}"
-      loop:
-        - name: authentik-server
-          container: authentik-server
-        - name: authentik-worker
-          container: "{{ authentik_worker_container }}"
-        - name: authentik-ldap
-          container: "{{ authentik_ldap_container }}"
-        - name: authentik-proxy
-          container: "{{ authentik_proxy_container }}"
+      loop: >-
+        {{ [{'name': 'authentik-server', 'container': 'authentik-server'},
+            {'name': 'authentik-worker', 'container': authentik_worker_container}]
+           + ([{'name': 'authentik-ldap', 'container': authentik_ldap_container}]
+              if 'ldap' in authentik_enabled_features else [])
+           + ([{'name': 'authentik-proxy', 'container': authentik_proxy_container}]
+              if authentik_enabled_features | intersect(['headlamp', 'gpu_switch']) | length > 0 else []) }}
       register: authentik_audit_images
       changed_when: false
       failed_when: false

@@ -9,18 +9,16 @@ adapted for Podman.
 
 - Depends on the `podman` role and creates a dedicated Podman network for
   container-name resolution.
-- Deploys and enables five services: `authentik-postgresql`,
-  `authentik-server`, `authentik-worker`, `authentik-ldap`, and
-  `authentik-proxy`.
-- Publishes the server HTTP port for Caddy, LDAPS for SSSD, and the Proxy
-  Outpost HTTP port for Envoy Gateway.
+- Deploys PostgreSQL, server, and worker services, plus LDAP and Proxy Outposts
+  when their features are selected.
+- Publishes the server HTTP port for Caddy and the selected Outpost ports for
+  SSSD and Envoy Gateway.
 - Deploys root-owned templates, blueprints, and mode-0600 environment files.
   The data, certificate, and PostgreSQL directories keep container-managed
   ownership. PostgreSQL requires its data directory to remain mode 0700 or
   0750; forcing root ownership or mode 0755 breaks subsequent starts.
-- Renders every blueprint from `templates/blueprints/`, applies each one
-  explicitly, and fails the run when any of them reports an unsuccessful
-  apply (ADR-0050).
+- Renders selected blueprints from `templates/blueprints/`, applies each one
+  explicitly, and checks its recorded status (ADR-0050).
 - Uses OpenSSL and the Authentik API to manage the LDAPS certificate, apply the managed
   users blueprint, grant LDAP search permission, and retrieve standalone
   Outpost tokens.
@@ -49,15 +47,15 @@ Store these values in SOPS-encrypted group variables such as
 | `authentik_bootstrap_email` | no | Initial `akadmin` email; defaults to an empty string |
 | `authentik_bootstrap_password` | yes | Initial `akadmin` password |
 | `authentik_bootstrap_token` | yes | API token used by this role; bootstrap creates it only on a fresh database |
-| `authentik_test_user_password` | yes | Password for the disposable `sssdtest` account |
-| `authentik_ldap_bind_password` | yes | Password for the `ldapbind` SSSD lookup account |
+| `authentik_test_user_password` | with LDAP | Password for the disposable `sssdtest` account |
+| `authentik_ldap_bind_password` | with LDAP | Password for the `ldapbind` SSSD lookup account |
 | `authentik_users` | yes | Managed account list rendered into `users.yaml` |
 
 ### Operator-facing defaults
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `authentik_version` | `2026.5.6` | Authentik server and Outpost image tag |
+| `authentik_version` | `2026.8.1` | Authentik server and Outpost image tag |
 | `authentik_network` | `authentik` | Podman network name |
 | `authentik_pg_db` / `authentik_pg_user` | `authentik` | PostgreSQL database and user |
 | `authentik_base_dir` | `/opt/authentik` | Parent directory for data, templates, certificates, and blueprints |
@@ -75,6 +73,7 @@ Store these values in SOPS-encrypted group variables such as
 | `authentik_proxy_http_port` | `9001` | Proxy Outpost port used by Envoy Gateway |
 | `authentik_external_url` | `https://auth.home.butaco.net` | Browser-facing Authentik URL |
 | `authentik_upgrade_allow_release_change` | `false` | Permit a reviewed move to the next release series |
+| `authentik_enabled_features` | inventory: `ldap`, `headlamp`, `gpu_switch` | Features chosen on first deployment; later runs must keep the selection |
 
 ## Operations
 
@@ -117,7 +116,18 @@ Do not rotate `authentik_secret_key` without a migration plan. Keep all
 plaintext credentials in SOPS; rendered environment files are mode 0600.
 
 Provider, application, group, and Outpost configuration belongs in
-`templates/blueprints/`, listed in apply order by `authentik_blueprint_paths`.
+`templates/blueprints/`. The full playbook applies common identity objects,
+selected features, then the shared Proxy Outpost. The initial feature selection
+is recorded in `/etc/authentik/enabled-features`; changing it later fails rather
+than implicitly adding or removing deployed objects. Use the feature playbooks
+to update an already selected feature:
+
+```sh
+ansible-playbook playbooks/authentik-ldap.yaml
+ansible-playbook playbooks/authentik-headlamp.yaml
+ansible-playbook playbooks/authentik-gpu-switch.yaml
+```
+
 Group names come from `authentik_groups` and the LDAP endpoint from the
 `identity_*` variables that `roles/sssd` also reads, so a binding cannot name a
 group that does not exist: templating fails first (ADR-0050). The role
@@ -242,8 +252,9 @@ account exists with a usable password.
 
 ### Proxy Outpost
 
-`templates/blueprints/proxy.yaml.j2` defines forward-auth providers for Headlamp and
-the GPU switch. The standalone Proxy Outpost serves both `prd` and `sandbox`.
+`templates/blueprints/headlamp.yaml.j2` and `gpu-switch.yaml.j2` define their
+own forward-auth providers. `proxy-outpost.yaml.j2` registers every selected
+Proxy provider. The standalone Proxy Outpost serves both `prd` and `sandbox`.
 It answers authorization checks but is not a reverse proxy in the request path;
 each cluster's Envoy Gateway calls `authentik_proxy_http_port` directly over the
 LAN through a `SecurityPolicy`.

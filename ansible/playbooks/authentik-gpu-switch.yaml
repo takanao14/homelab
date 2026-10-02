@@ -1,0 +1,10 @@
+---
+- name: Update Authentik GPU Switch
+  hosts: authentik
+  tasks:
+    - name: Update the selected GPU Switch feature
+      ansible.builtin.include_role:
+        name: authentik
+        tasks_from: update
+      vars:
+        authentik_update_feature: gpu_switch

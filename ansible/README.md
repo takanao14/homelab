@@ -61,7 +61,7 @@ Host hygiene is applied at host bring-up, before services, via `bootstrap.yaml`
 
 ```bash
 # 1. Baseline a freshly created host (apt_mirror first, then timezone, chrony,
-#    unattended_upgrades, node_exporter, k0s storage clients). Per-play host
+#    unattended_upgrades, node_exporter, Vector, k0s storage clients). Per-play host
 #    patterns + --limit select the applicable subset automatically.
 ansible-playbook playbooks/bootstrap.yaml --limit <newhost>
 
@@ -69,7 +69,7 @@ ansible-playbook playbooks/bootstrap.yaml --limit <newhost>
 ansible-playbook playbooks/<system>.yaml --limit <newhost>
 ```
 
-`bootstrap.yaml` covers only the universal baseline; narrow roles applied to a
+`bootstrap.yaml` applies the baseline to each play's host group; narrow roles applied to a
 few hosts (`rsyslog`, `maintenance_user`) are run via their own `common-*.yaml`.
 
 ## Getting Started
@@ -200,6 +200,8 @@ Use the OpenBao role README for:
 | `forgejo.yaml` | `forgejo` | system |
 | `forgejo_runner.yaml` | `forgejo_runner` | system |
 | `netbox.yaml` | `netbox` | system |
+| `authentik.yaml` | `authentik` | system |
+| `authentik-{ldap,headlamp,gpu-switch}.yaml` | `authentik` | selected feature update |
 | `seaweedfs.yaml` | `seaweedfs` | system |
 | `openbao.yaml` | `openbao` | system |
 | `proxmox.yaml` | `proxmox` | system (platform) |
