@@ -131,4 +131,4 @@ is replaced.
 
 ## Usage
 
-Run [playbooks/netbox.yaml](../../playbooks/netbox.yaml).
+Run [playbooks/services/netbox.yaml](../../playbooks/services/netbox.yaml).

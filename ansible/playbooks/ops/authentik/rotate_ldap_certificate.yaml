@@ -17,7 +17,7 @@
         tasks_from: ldap_certificate
 
 - name: Deploy the rotated LDAPS certificate to SSSD clients
-  ansible.builtin.import_playbook: sssd.yaml
+  ansible.builtin.import_playbook: ../../services/sssd.yaml
 
 - name: Verify LDAP identity lookup from every SSSD client
   hosts: sssd

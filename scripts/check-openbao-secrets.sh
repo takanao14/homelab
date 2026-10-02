@@ -5,7 +5,7 @@ set -euo pipefail
 #
 # Reports, in both directions:
 #   1. paths declared in SOPS but absent from the server, which the next
-#      `ops-openbao_seed_secrets.yaml` run recreates
+#      `playbooks/ops/openbao/seed_secrets.yaml` run recreates
 #   2. paths stored on the server that nothing declares
 #
 # Reports only. Destroying an orphan stays a deliberate `bao kv metadata delete`.

@@ -134,7 +134,7 @@ all:
       hosts:
         rpi4: null
 
-    # Child order is the serial upgrade order in ops-package_upgrade.yaml.
+    # Child order is the serial upgrade order in playbooks/ops/package_upgrade.yaml.
     dns:
       children:
         dns_auth:
@@ -332,7 +332,7 @@ all:
         netbox: {}
         openbao: {}
 
-    # All Vector agents; targeted by common-vector.yaml.
+    # All Vector agents; targeted by playbooks/common/vector.yaml.
     vector:
       children:
         dhcp: {}
@@ -347,7 +347,7 @@ all:
       hosts:
         rpi3: null
 
-    # Rsyslog forwarders targeted by common-rsyslog.yaml.
+    # Rsyslog forwarders targeted by playbooks/common/rsyslog.yaml.
     rsyslog:
       children:
         proxmox: {}

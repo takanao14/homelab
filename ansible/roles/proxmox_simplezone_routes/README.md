@@ -32,7 +32,7 @@ Dry-run first:
 ```bash
 ANSIBLE_ROLES_PATH=$PWD/ansible/roles \
 ansible-playbook --check --diff -i ansible/inventories/homelab/hosts.yaml \
-  ansible/playbooks/proxmox.yaml --limit node3 --tags proxmox_simplezone_routes
+  ansible/playbooks/services/proxmox.yaml --limit node3 --tags proxmox_simplezone_routes
 ```
 
 After applying the Ansible file change, reload networking manually on the target

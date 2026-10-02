@@ -60,7 +60,7 @@ Keep it until ESO syncs after OpenBao cluster registration
 ([ADR-0012](../../docs/adr/0012-openbao-eso-cluster-rebuild-registration.md)):
 
 1. Re-register the cluster
-   (`ops-openbao_register_cluster.yaml -e cluster=<env>`).
+   (`playbooks/ops/openbao/register_cluster.yaml -e cluster=<env>`).
 2. Wait for `kubectl -n argocd get externalsecret argocd-admin-password` to
    report `SecretSynced`.
 3. Log in with the password from OpenBao.
@@ -108,7 +108,7 @@ Each key holds:
 | `mtime` | RFC3339 timestamp | Ansible, automatically |
 
 Store only the hash in the SOPS-encrypted `openbao_argocd_admin` list.
-`ops-openbao_seed_secrets.yaml` writes it and stamps UTC `mtime`. See
+`playbooks/ops/openbao/seed_secrets.yaml` writes it and stamps UTC `mtime`. See
 [`ansible/roles/openbao/README.md`](../../ansible/roles/openbao/README.md) for
 the entry format and the hash command.
 
@@ -131,15 +131,15 @@ block waves; failed ExternalSecrets retry.
 2. Seed them and grant read access:
 
    ```bash
-   ansible-playbook ansible/playbooks/ops-openbao_seed_secrets.yaml
-   ansible-playbook ansible/playbooks/ops-openbao_configure.yaml
+   ansible-playbook ansible/playbooks/ops/openbao/seed_secrets.yaml
+   ansible-playbook ansible/playbooks/ops/openbao/configure.yaml
    ```
 
    Re-register each cluster so the ESO role receives the new policy:
 
    ```bash
-   ansible-playbook ansible/playbooks/ops-openbao_register_cluster.yaml -e cluster=prd
-   ansible-playbook ansible/playbooks/ops-openbao_register_cluster.yaml -e cluster=sandbox
+   ansible-playbook ansible/playbooks/ops/openbao/register_cluster.yaml -e cluster=prd
+   ansible-playbook ansible/playbooks/ops/openbao/register_cluster.yaml -e cluster=sandbox
    ```
 
 3. Commit and push; the `argocd` Application syncs automatically.
@@ -152,7 +152,7 @@ Complete OpenBao steps before pushing; otherwise the ExternalSecret waits in
 
 #### Rotating the password
 
-Replace the hash and rerun `ops-openbao_seed_secrets.yaml`.
+Replace the hash and rerun `playbooks/ops/openbao/seed_secrets.yaml`.
 
 **Hourly ESO refresh.** Force immediate synchronization with:
 

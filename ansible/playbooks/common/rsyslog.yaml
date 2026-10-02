@@ -1,5 +1,5 @@
 ---
-# Fleet rsyslog entry point; proxmox.yaml also embeds the role for self-containment.
+# Fleet rsyslog entry point; playbooks/services/proxmox.yaml also embeds the role for self-containment.
 - name: Configure rsyslog forwarding on all rsyslog hosts
   hosts: rsyslog
   roles:

@@ -118,6 +118,6 @@ local account and its SSH keys remain the recovery path.
 
 The committed LDAP certificate is public data and avoids distributing an
 Authentik admin token to every client. Rotate and verify it with the explicit
-`playbooks/ops-authentik_rotate_ldap_certificate.yaml` workflow. The workflow
+`playbooks/ops/authentik/rotate_ldap_certificate.yaml` workflow. The workflow
 updates the Authentik key pair, exports only the public certificate into this
 role, deploys it to every SSSD client, and verifies the domain and test user.

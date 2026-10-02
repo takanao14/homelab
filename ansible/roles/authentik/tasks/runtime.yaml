@@ -35,7 +35,7 @@
     fail_msg: >-
       Authentik {{ authentik_deployed_server_version }} is deployed, but
       {{ authentik_version }} is requested. Use
-      playbooks/ops-authentik_upgrade.yaml so the database is backed up and all
+      playbooks/ops/authentik/upgrade.yaml so the database is backed up and all
       Outposts are upgraded together.
   vars:
     authentik_deployed_server_version: >-

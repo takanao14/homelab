@@ -40,4 +40,4 @@ management of `node1`–`node3` keeps working during node outages. See
 
 ## Usage
 
-Run [playbooks/dhcp.yaml](../../playbooks/dhcp.yaml).
+Run [playbooks/services/dhcp.yaml](../../playbooks/services/dhcp.yaml).

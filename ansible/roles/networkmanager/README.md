@@ -37,4 +37,4 @@ then wait out.
 
 ## Usage
 
-Run [playbooks/common-networkmanager.yaml](../../playbooks/common-networkmanager.yaml).
+Run [playbooks/common/networkmanager.yaml](../../playbooks/common/networkmanager.yaml).

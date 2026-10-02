@@ -43,7 +43,7 @@ tasks run.
 
 ## Usage
 
-Run [playbooks/forgejo_runner.yaml](../../playbooks/forgejo_runner.yaml).
+Run [playbooks/services/forgejo_runner.yaml](../../playbooks/services/forgejo_runner.yaml).
 
 ## Notes
 

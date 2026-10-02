@@ -133,7 +133,7 @@ convention and fetches the same key file.
 
 Moving the train only repoints the repository — the apt task uses
 `state: present`, so the packages themselves are upgraded separately by
-`ops-package_upgrade.yaml`, which runs the `dns` group one host at a time.
+`playbooks/ops/package_upgrade.yaml`, which runs the `dns` group one host at a time.
 
 Upgrade `ns1` first: the hidden primary is outside the dnsdist query pool.
 
@@ -150,7 +150,7 @@ With a hidden primary setup, the SOA and NS records are configured as follows:
 ## Usage
 
 ```yaml
-# playbooks/pdns_auth.yaml
+# playbooks/services/pdns_auth.yaml
 # Primary must be set up before secondaries so zone transfers can proceed.
 - name: Setup Primary DNS Server
   hosts: dns_primary

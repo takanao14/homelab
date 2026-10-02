@@ -38,4 +38,4 @@ Installs and configures [Forgejo](https://forgejo.org/) self-hosted Git service 
 
 ## Usage
 
-Run [playbooks/forgejo.yaml](../../playbooks/forgejo.yaml).
+Run [playbooks/services/forgejo.yaml](../../playbooks/services/forgejo.yaml).

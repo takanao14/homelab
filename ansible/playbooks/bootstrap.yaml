@@ -2,16 +2,22 @@
 # Baseline a new host before deploying its service:
 #   ansible-playbook playbooks/bootstrap.yaml --limit <newhost>
 - name: Baseline - apt mirror
-  import_playbook: common-apt_mirror.yaml
+  import_playbook: common/apt_mirror.yaml
+- name: Baseline - LXC maintenance access
+  import_playbook: common/maintenance_user.yaml
 - name: Baseline - timezone
-  import_playbook: common-timezone.yaml
+  import_playbook: common/timezone.yaml
 - name: Baseline - chrony time sync
-  import_playbook: common-chrony.yaml
+  import_playbook: common/chrony.yaml
 - name: Baseline - unattended security upgrades
-  import_playbook: common-unattended_upgrades.yaml
+  import_playbook: common/unattended_upgrades.yaml
 - name: Baseline - node exporter
-  import_playbook: common-node_exporter.yaml
+  import_playbook: common/node_exporter.yaml
+- name: Baseline - journald
+  import_playbook: common/journald.yaml
 - name: Baseline - Vector log agent
-  import_playbook: common-vector.yaml
+  import_playbook: common/vector.yaml
+- name: Baseline - rsyslog forwarding
+  import_playbook: common/rsyslog.yaml
 - name: Baseline - Kubernetes storage clients
-  import_playbook: common-k8s-storage-client.yaml
+  import_playbook: common/k8s-storage-client.yaml

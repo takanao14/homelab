@@ -23,4 +23,4 @@ home directory. Returning the state to `enabled` reverses those restrictions.
 
 ## Usage
 
-Run [playbooks/common-users.yaml](../../playbooks/common-users.yaml).
+Run [playbooks/common/users.yaml](../../playbooks/common/users.yaml).

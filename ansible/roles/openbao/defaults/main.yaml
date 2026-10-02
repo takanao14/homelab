@@ -49,7 +49,7 @@ openbao_k8s_host: ""
 # sandbox Kubernetes auth.
 openbao_k8s_sandbox_host: ""
 
-# Cluster CAs are harvested by ops-openbao_register_cluster.yaml.
+# Cluster CAs are harvested by playbooks/ops/openbao/register_cluster.yaml.
 openbao_k8s_clusters:
   - name: prd
     mount_path: kubernetes

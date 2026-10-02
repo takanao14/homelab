@@ -20,6 +20,9 @@
         state: present
         update_cache: true
         cache_valid_time: 3600
+        lock_timeout: 120
+      retries: 12
+      delay: 10
       when: ansible_facts['os_family'] == "Debian"
 
     - name: Create the maintenance user

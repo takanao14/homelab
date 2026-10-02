@@ -87,7 +87,7 @@ The default upgrade path keeps the installed AMD GPU driver version unchanged.
 After validating a ROCm userspace upgrade, explicitly upgrade the driver with:
 
 ```bash
-ansible-playbook playbooks/gpuvm.yaml --tags rocm --limit gpuvm1 \
+ansible-playbook playbooks/services/gpuvm.yaml --tags rocm --limit gpuvm1 \
   -e rocm_amdgpu_package_state=latest
 ```
 
@@ -127,4 +127,4 @@ and set `rocm_previous_version` to the release being replaced.
 
 ## Usage
 
-Run [playbooks/gpuvm.yaml](../../playbooks/gpuvm.yaml).
+Run [playbooks/services/gpuvm.yaml](../../playbooks/services/gpuvm.yaml).

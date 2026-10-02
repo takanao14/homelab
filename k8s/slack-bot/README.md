@@ -41,7 +41,7 @@ complete the short hostname used on the LAN.
 `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN` come from OpenBao
 `secret/k8s/slack-bot/tokens` (`bot-token`, `app-token`) through ESO. Seed them
 from the encrypted `openbao_secrets` inventory with
-`ops-openbao_seed_secrets.yaml`; do not use manual `bao kv put`. Reading them
+`playbooks/ops/openbao/seed_secrets.yaml`; do not use manual `bao kv put`. Reading them
 requires the `k8s-slack-bot` policy on the prd Kubernetes auth role.
 
 Reloader restarts the Deployment when the Secret changes.

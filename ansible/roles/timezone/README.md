@@ -14,4 +14,4 @@ Sets the system timezone using the `community.general.timezone` module.
 
 ## Usage
 
-Run [playbooks/common-timezone.yaml](../../playbooks/common-timezone.yaml).
+Run [playbooks/common/timezone.yaml](../../playbooks/common/timezone.yaml).

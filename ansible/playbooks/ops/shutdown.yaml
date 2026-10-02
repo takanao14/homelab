@@ -7,7 +7,7 @@
 #   --tags prd          stop only the prd cluster
 #   --tags sandbox      stop only the sandbox cluster
 # rpi3/rpi4 stay up for DHCP/probes and are powered off manually.
-# Startup differs; see ops-startup.yaml. Clusters stop serially: sandbox, then prd.
+# Startup differs; see playbooks/ops/startup.yaml. Clusters stop serially: sandbox, then prd.
 
 # Phase 1 — sandbox. Scale to zero because no eviction target remains.
 - name: Stop application workloads on sandbox
@@ -19,7 +19,7 @@
     - sandbox
   tasks:
     - name: Scale workloads down and wait for storage to release
-      ansible.builtin.import_tasks: tasks/k8s_workload_stop.yaml
+      ansible.builtin.import_tasks: ../tasks/k8s_workload_stop.yaml
 
 - name: Verify sandbox NFS mounts are released
   hosts: sandbox_k8s
@@ -30,7 +30,7 @@
     - sandbox
   tasks:
     - name: Confirm the NFS export has no active mounts
-      ansible.builtin.import_tasks: tasks/k8s_nfs_mounts_released.yaml
+      ansible.builtin.import_tasks: ../tasks/k8s_nfs_mounts_released.yaml
       when: "'nfs' in k8s_storage_providers"
 
 # Stop workers before the API controller; nodes within each role stop in parallel.
@@ -48,7 +48,7 @@
         state: stopped
 
     - name: Power off the worker
-      ansible.builtin.import_tasks: tasks/host_poweroff.yaml
+      ansible.builtin.import_tasks: ../tasks/host_poweroff.yaml
 
 - name: Stop and power off the sandbox k0s controller
   hosts: sandbox_k8s_controller
@@ -65,7 +65,7 @@
         state: stopped
 
     - name: Power off the controller
-      ansible.builtin.import_tasks: tasks/host_poweroff.yaml
+      ansible.builtin.import_tasks: ../tasks/host_poweroff.yaml
 
 # Phase 2 — prd, after sandbox; differences live in group_vars.
 - name: Stop application workloads on prd
@@ -77,7 +77,7 @@
     - prd
   tasks:
     - name: Scale workloads down and wait for storage to release
-      ansible.builtin.import_tasks: tasks/k8s_workload_stop.yaml
+      ansible.builtin.import_tasks: ../tasks/k8s_workload_stop.yaml
 
 - name: Verify prd NFS mounts are released
   hosts: prd_k8s
@@ -88,7 +88,7 @@
     - prd
   tasks:
     - name: Confirm the NFS export has no active mounts
-      ansible.builtin.import_tasks: tasks/k8s_nfs_mounts_released.yaml
+      ansible.builtin.import_tasks: ../tasks/k8s_nfs_mounts_released.yaml
       when: "'nfs' in k8s_storage_providers"
 
 - name: Stop and power off prd k0s workers
@@ -105,7 +105,7 @@
         state: stopped
 
     - name: Power off the worker
-      ansible.builtin.import_tasks: tasks/host_poweroff.yaml
+      ansible.builtin.import_tasks: ../tasks/host_poweroff.yaml
 
 - name: Stop and power off the prd k0s controller
   hosts: prd_k8s_controller
@@ -121,7 +121,7 @@
         state: stopped
 
     - name: Power off the controller
-      ansible.builtin.import_tasks: tasks/host_poweroff.yaml
+      ansible.builtin.import_tasks: ../tasks/host_poweroff.yaml
 
 # Phase 3 — shared guests in dependency order, confirmed down one at a time.
 - name: Power off VMs and LXC guests
@@ -131,7 +131,7 @@
   tags: guests
   tasks:
     - name: Power off the guest
-      ansible.builtin.import_tasks: tasks/host_poweroff.yaml
+      ansible.builtin.import_tasks: ../tasks/host_poweroff.yaml
 
 # Phase 4 — hypervisors in declared shutdown order.
 - name: Power off the Proxmox nodes
@@ -199,4 +199,4 @@
         success_msg: No guests running
 
     - name: Power off the hypervisor
-      ansible.builtin.import_tasks: tasks/host_poweroff.yaml
+      ansible.builtin.import_tasks: ../tasks/host_poweroff.yaml

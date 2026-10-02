@@ -90,7 +90,7 @@ These are reached directly and will never appear in `caddy_upstreams`:
    needed:
 
 ```bash
-ansible-playbook playbooks/caddy.yaml --check --diff
+ansible-playbook playbooks/services/caddy.yaml --check --diff
 ```
 
 Homepage is reconciled by Argo CD once the change is on `main`.

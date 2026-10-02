@@ -32,4 +32,4 @@ The deployed config defines these modules:
 
 ## Usage
 
-Run [playbooks/blackbox_exporter.yaml](../../playbooks/blackbox_exporter.yaml).
+Run [playbooks/services/blackbox_exporter.yaml](../../playbooks/services/blackbox_exporter.yaml).

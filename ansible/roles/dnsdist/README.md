@@ -155,9 +155,9 @@ convention and fetches the same key file.
 
 Moving the train only repoints the repository — the apt task uses
 `state: present`, so the package itself is upgraded separately by
-`ops-package_upgrade.yaml`, which runs the `dns` group one host at a time and
+`playbooks/ops/package_upgrade.yaml`, which runs the `dns` group one host at a time and
 stops before the second host if the first fails to come back.
 
 ## Usage
 
-Run [playbooks/dnsdist.yaml](../../playbooks/dnsdist.yaml).
+Run [playbooks/services/dnsdist.yaml](../../playbooks/services/dnsdist.yaml).

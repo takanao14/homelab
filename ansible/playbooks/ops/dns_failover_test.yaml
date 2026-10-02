@@ -1,14 +1,14 @@
 ---
 # Controlled DNS failover tests (ADR-0030). One scenario:
-#   ansible-playbook playbooks/ops-dns_failover_test.yaml \
+#   ansible-playbook playbooks/ops/dns_failover_test.yaml \
 #     -e dns_failover_scenario=resolver1 \
 #     -e confirm_dns_disruption=true
 # All scenarios, restoring after each:
-#   ansible-playbook playbooks/ops-dns_failover_test.yaml \
+#   ansible-playbook playbooks/ops/dns_failover_test.yaml \
 #     -e dns_failover_scenario=all \
 #     -e confirm_dns_disruption=true
 # Emergency restore after interruption:
-#   ansible-playbook playbooks/ops-dns_failover_test.yaml \
+#   ansible-playbook playbooks/ops/dns_failover_test.yaml \
 #     -e dns_failover_action=restore
 
 - name: Exercise DNS resolver and failure-domain failover
@@ -290,7 +290,7 @@
         label: "{{ item.item }}"
 
     - name: Run selected DNS failover scenarios
-      ansible.builtin.include_tasks: tasks/dns-failover-scenario.yaml
+      ansible.builtin.include_tasks: ../tasks/dns-failover-scenario.yaml
       loop: "{{ dns_failover_selected_scenarios }}"
       loop_control:
         loop_var: dns_failover_scenario_name

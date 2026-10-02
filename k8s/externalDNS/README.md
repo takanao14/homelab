@@ -47,5 +47,5 @@ never committed.
 Seed it through the encrypted Ansible `openbao_secrets` list:
 
 ```bash
-ansible-playbook ansible/playbooks/ops-openbao_seed_secrets.yaml
+ansible-playbook ansible/playbooks/ops/openbao/seed_secrets.yaml
 ```

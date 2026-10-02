@@ -32,7 +32,7 @@
     - prd
   tasks:
     - name: Ensure prd guests are running
-      ansible.builtin.import_tasks: tasks/proxmox_guests_start.yaml
+      ansible.builtin.import_tasks: ../tasks/proxmox_guests_start.yaml
       vars:
         startup_guests: "{{ startup_prd_guests }}"
 
@@ -44,7 +44,7 @@
     - sandbox
   tasks:
     - name: Ensure sandbox guests are running
-      ansible.builtin.import_tasks: tasks/proxmox_guests_start.yaml
+      ansible.builtin.import_tasks: ../tasks/proxmox_guests_start.yaml
       vars:
         startup_guests: "{{ startup_sandbox_guests }}"
 
@@ -74,7 +74,7 @@
     - prd
   tasks:
     - name: Wait for every node to report Ready
-      ansible.builtin.import_tasks: tasks/k8s_cluster_wait_ready.yaml
+      ansible.builtin.import_tasks: ../tasks/k8s_cluster_wait_ready.yaml
 
 - name: Restore prd application workloads
   hosts: prd_k8s_controller
@@ -84,11 +84,11 @@
     - prd
   tasks:
     - name: Verify NFS before restoring workloads
-      ansible.builtin.import_tasks: tasks/k8s_nfs_ready.yaml
+      ansible.builtin.import_tasks: ../tasks/k8s_nfs_ready.yaml
       when: "'nfs' in k8s_storage_providers"
 
     - name: Resume GitOps and wait for it to self-heal
-      ansible.builtin.import_tasks: tasks/k8s_workload_start.yaml
+      ansible.builtin.import_tasks: ../tasks/k8s_workload_start.yaml
 
 # Phase 4 — sandbox.
 - name: Wait for the sandbox cluster to be ready
@@ -99,7 +99,7 @@
     - sandbox
   tasks:
     - name: Wait for every node to report Ready
-      ansible.builtin.import_tasks: tasks/k8s_cluster_wait_ready.yaml
+      ansible.builtin.import_tasks: ../tasks/k8s_cluster_wait_ready.yaml
 
 - name: Restore sandbox application workloads
   hosts: sandbox_k8s_controller
@@ -109,8 +109,8 @@
     - sandbox
   tasks:
     - name: Verify NFS before restoring workloads
-      ansible.builtin.import_tasks: tasks/k8s_nfs_ready.yaml
+      ansible.builtin.import_tasks: ../tasks/k8s_nfs_ready.yaml
       when: "'nfs' in k8s_storage_providers"
 
     - name: Resume GitOps and wait for it to self-heal
-      ansible.builtin.import_tasks: tasks/k8s_workload_start.yaml
+      ansible.builtin.import_tasks: ../tasks/k8s_workload_start.yaml

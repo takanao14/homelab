@@ -18,4 +18,4 @@ Replaces the default Ubuntu apt mirror URL with a local mirror on Ubuntu hosts.
 
 ## Usage
 
-Run [playbooks/common-apt_mirror.yaml](../../playbooks/common-apt_mirror.yaml).
+Run [playbooks/common/apt_mirror.yaml](../../playbooks/common/apt_mirror.yaml).

@@ -15,7 +15,7 @@
   gather_facts: false
   tags: sync_dns
   vars_files:
-    - "{{ playbook_dir }}/../inventories/homelab/group_vars/caddy.yaml"
+    - "{{ playbook_dir }}/../../inventories/homelab/group_vars/caddy.yaml"
   vars:
     homelab_private_path: "{{ lookup('env', 'HOMELAB_PRIVATE_PATH') | default(lookup('env', 'HOME') + '/homelab-private', true) }}"
     dnsconfig_path: "{{ homelab_private_path }}/dns-record/home-zone.js"

@@ -51,7 +51,7 @@ ESO fetches the Cloudflare API token from
 | `api-token` | Cloudflare API token with `Zone:DNS:Edit` permission |
 
 Seed it through the encrypted Ansible `openbao_secrets` list and
-`ops-openbao_seed_secrets.yaml`; do not use manual `bao kv put`.
+`playbooks/ops/openbao/seed_secrets.yaml`; do not use manual `bao kv put`.
 
 ## Notes
 

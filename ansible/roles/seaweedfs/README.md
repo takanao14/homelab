@@ -159,4 +159,4 @@ not disk loss. Preserve any download objects that cannot be rebuilt elsewhere.
 
 ## Usage
 
-Run [playbooks/seaweedfs.yaml](../../playbooks/seaweedfs.yaml).
+Run [playbooks/services/seaweedfs.yaml](../../playbooks/services/seaweedfs.yaml).

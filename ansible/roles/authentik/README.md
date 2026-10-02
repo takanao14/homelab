@@ -84,13 +84,13 @@ refuses to change a deployed version; use the operational workflow instead:
 
 ```sh
 # Read-only desired-versus-deployed check
-ansible-playbook playbooks/ops-version_audit.yaml --limit authentik
+ansible-playbook playbooks/ops/version_audit.yaml --limit authentik
 
 # Validate the upgrade decision without changing the host
-ansible-playbook playbooks/ops-authentik_upgrade.yaml --limit authentik --check --diff
+ansible-playbook playbooks/ops/authentik/upgrade.yaml --limit authentik --check --diff
 
 # Perform and verify the upgrade
-ansible-playbook playbooks/ops-authentik_upgrade.yaml --limit authentik
+ansible-playbook playbooks/ops/authentik/upgrade.yaml --limit authentik
 ```
 
 The upgrade workflow prevents downgrades, saves a PostgreSQL dump, pulls the
@@ -123,9 +123,9 @@ than implicitly adding or removing deployed objects. Use the feature playbooks
 to update an already selected feature:
 
 ```sh
-ansible-playbook playbooks/authentik-ldap.yaml
-ansible-playbook playbooks/authentik-headlamp.yaml
-ansible-playbook playbooks/authentik-gpu-switch.yaml
+ansible-playbook playbooks/services/authentik/ldap.yaml
+ansible-playbook playbooks/services/authentik/headlamp.yaml
+ansible-playbook playbooks/services/authentik/gpu-switch.yaml
 ```
 
 Group names come from `authentik_groups` and the LDAP endpoint from the
@@ -146,7 +146,7 @@ recovery path, as it is for OpenBao (ADR-0042). Only the database holds
 UI-side state: passwords and profile edits made after account creation, MFA
 enrollments, sessions, tokens issued outside blueprints, and the event log.
 
-`ops-authentik_upgrade.yaml` dumps the database before every upgrade, which
+`playbooks/ops/authentik/upgrade.yaml` dumps the database before every upgrade, which
 covers the moment of highest risk. Nothing schedules a dump and nothing copies
 one off the host, so losing the VM loses the dumps with it. Copy a dump
 elsewhere before risky work. A dump carries password hashes and tokens;
@@ -173,7 +173,7 @@ Restore a dump only with the `authentik_secret_key` it was taken with; a
 different key invalidates existing sessions and stored tokens. A rebuild
 without a restore regenerates the LDAPS certificate, so export it into the
 `sssd` role and rerun that playbook before clients can validate the endpoint.
-Use `playbooks/ops-authentik_rotate_ldap_certificate.yaml` to perform those
+Use `playbooks/ops/authentik/rotate_ldap_certificate.yaml` to perform those
 steps together during planned rotation.
 
 ### Health checks
@@ -201,7 +201,7 @@ starts the login flow.
 1. Add the account to `authentik_users` with the groups it needs.
    `authentik_groups` defines them; Linux login requires `lab-linux-users`
    and sudo additionally requires `lab-linux-admins`.
-2. Run `ansible-playbook playbooks/authentik.yaml`.
+2. Run `ansible-playbook playbooks/services/authentik/main.yaml`.
 3. Verify on an SSSD host that `getent passwd <user>` and `id <user>` agree,
    and that `sss_ssh_authorizedkeys <user>` returns the key.
 

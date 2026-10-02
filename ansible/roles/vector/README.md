@@ -55,7 +55,7 @@ IPs in the payload, where LogQL can still filter them.
 
 ## Usage
 
-Run [playbooks/common-vector.yaml](../../playbooks/common-vector.yaml).
+Run [playbooks/common/vector.yaml](../../playbooks/common/vector.yaml).
 
 ## Notes
 

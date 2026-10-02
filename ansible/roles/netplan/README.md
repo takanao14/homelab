@@ -32,4 +32,4 @@ play instead of surviving until the next boot.
 
 ## Usage
 
-Run [playbooks/common-netplan.yaml](../../playbooks/common-netplan.yaml).
+Run [playbooks/common/netplan.yaml](../../playbooks/common/netplan.yaml).

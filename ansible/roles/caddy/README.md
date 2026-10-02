@@ -110,7 +110,7 @@ sops edit ansible/inventories/homelab/group_vars/caddy.sops.yaml
 ## Usage
 
 ```bash
-ansible-playbook playbooks/caddy.yaml
+ansible-playbook playbooks/services/caddy.yaml
 ```
 
 The playbook's `sync_dns` play also writes one `home.butaco.net` A record per

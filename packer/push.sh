@@ -110,7 +110,7 @@ Upload failed. If the error above is S3 403 AccessDenied, update the
 SeaweedFS S3 identity and managed buckets on the server:
 
   cd ../ansible
-  ansible-playbook playbooks/seaweedfs.yaml --tags seaweedfs
+  ansible-playbook playbooks/services/seaweedfs.yaml --tags seaweedfs
 
 EOF
         exit 1

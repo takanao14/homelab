@@ -10,7 +10,7 @@
   tags: dns
   tasks:
     - name: Run package upgrade tasks
-      ansible.builtin.import_tasks: tasks/package_upgrade.yaml
+      ansible.builtin.import_tasks: ../tasks/package_upgrade.yaml
 
 # Drain and restore k0s workers serially, including node-local storage readiness.
 - name: Upgrade OS packages on k0s workers one at a time
@@ -20,13 +20,13 @@
   tags: k8s
   tasks:
     - name: Drain the node
-      ansible.builtin.import_tasks: tasks/k8s_node_drain.yaml
+      ansible.builtin.import_tasks: ../tasks/k8s_node_drain.yaml
 
     - name: Run package upgrade tasks
-      ansible.builtin.import_tasks: tasks/package_upgrade.yaml
+      ansible.builtin.import_tasks: ../tasks/package_upgrade.yaml
 
     - name: Restore the node to service
-      ansible.builtin.import_tasks: tasks/k8s_node_restore.yaml
+      ansible.builtin.import_tasks: ../tasks/k8s_node_restore.yaml
 
 # Reboot workload-free controllers after workers to preserve the drain API.
 - name: Upgrade OS packages on k0s controllers
@@ -36,7 +36,7 @@
   tags: k8s
   tasks:
     - name: Run package upgrade tasks
-      ansible.builtin.import_tasks: tasks/package_upgrade.yaml
+      ansible.builtin.import_tasks: ../tasks/package_upgrade.yaml
 
 # Upgrade independent single-service hosts in parallel.
 - name: Upgrade OS packages on remaining hosts
@@ -45,4 +45,4 @@
   tags: others
   tasks:
     - name: Run package upgrade tasks
-      ansible.builtin.import_tasks: tasks/package_upgrade.yaml
+      ansible.builtin.import_tasks: ../tasks/package_upgrade.yaml

@@ -24,4 +24,4 @@ None. The upgrade policy is fully defined in the template.
 
 ## Usage
 
-Run [playbooks/common-unattended_upgrades.yaml](../../playbooks/common-unattended_upgrades.yaml).
+Run [playbooks/common/unattended_upgrades.yaml](../../playbooks/common/unattended_upgrades.yaml).

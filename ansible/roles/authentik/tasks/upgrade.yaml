@@ -33,7 +33,7 @@
       - authentik_upgrade_container_checks.results | selectattr('rc', 'equalto', 0) | list | length == authentik_upgrade_containers | length
     fail_msg: >-
       The explicit upgrade workflow requires every selected Authentik component.
-      Use playbooks/authentik.yaml for a new deployment.
+      Use playbooks/services/authentik/main.yaml for a new deployment.
 
 - name: Read deployed Authentik component images
   become: true

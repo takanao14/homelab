@@ -5,7 +5,7 @@
   hosts: authentik
   gather_facts: false
   vars_files:
-    - ../roles/authentik/defaults/main.yaml
+    - ../../roles/authentik/defaults/main.yaml
   tasks:
     - name: Read deployed Authentik component images
       become: true
@@ -52,7 +52,7 @@
   hosts: forgejo
   gather_facts: false
   vars_files:
-    - ../roles/forgejo/defaults/main.yaml
+    - ../../roles/forgejo/defaults/main.yaml
   tasks:
     - name: Read installed Forgejo version marker
       ansible.builtin.slurp:
@@ -96,7 +96,7 @@
   hosts: forgejo_runner
   gather_facts: false
   vars_files:
-    - ../roles/forgejo_runner/defaults/main.yaml
+    - ../../roles/forgejo_runner/defaults/main.yaml
   tasks:
     - name: Read installed Forgejo Runner version marker
       ansible.builtin.slurp:
@@ -140,7 +140,7 @@
   hosts: netbox
   gather_facts: false
   vars_files:
-    - ../roles/netbox/defaults/main.yaml
+    - ../../roles/netbox/defaults/main.yaml
   tasks:
     - name: Read the deployed NetBox image
       become: true
@@ -176,7 +176,7 @@
   hosts: dnsdist
   gather_facts: false
   vars_files:
-    - ../roles/dnscollector/defaults/main.yaml
+    - ../../roles/dnscollector/defaults/main.yaml
   tasks:
     - name: Read installed DNS-collector version marker
       ansible.builtin.slurp:
@@ -220,7 +220,7 @@
   hosts: seaweedfs
   gather_facts: false
   vars_files:
-    - ../roles/seaweedfs/defaults/main.yaml
+    - ../../roles/seaweedfs/defaults/main.yaml
   tasks:
     - name: Read installed SeaweedFS version marker
       ansible.builtin.slurp:
@@ -264,7 +264,7 @@
   hosts: openbao
   gather_facts: false
   vars_files:
-    - ../roles/openbao/defaults/main.yaml
+    - ../../roles/openbao/defaults/main.yaml
   tasks:
     - name: Gather package facts
       ansible.builtin.package_facts:
@@ -293,7 +293,7 @@
   hosts: gpuvm
   gather_facts: false
   vars_files:
-    - ../roles/rocm/defaults/main.yaml
+    - ../../roles/rocm/defaults/main.yaml
   tasks:
     - name: Gather package facts
       ansible.builtin.package_facts:
@@ -370,7 +370,7 @@
   hosts: dns_resolver:dnsdist:dns_auth
   gather_facts: false
   vars_files:
-    - ../roles/knot_resolver/defaults/main.yaml
+    - ../../roles/knot_resolver/defaults/main.yaml
   vars:
     dns_audit_packages:
       - name: knot-resolver
@@ -420,7 +420,7 @@
   hosts: code_server
   gather_facts: false
   vars_files:
-    - ../roles/code_server/defaults/main.yaml
+    - ../../roles/code_server/defaults/main.yaml
   tasks:
     - name: Read installed code-server version marker
       ansible.builtin.slurp:

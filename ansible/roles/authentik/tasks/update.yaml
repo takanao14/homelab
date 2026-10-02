@@ -8,7 +8,7 @@
       - authentik_feature_selection_stat.stat.exists
       - authentik_update_feature in authentik_enabled_features
     fail_msg: >-
-      Run playbooks/authentik.yaml to build the selected features before a
+      Run playbooks/services/authentik/main.yaml to build the selected features before a
       feature-specific update.
 
 - name: Check the Authentik server container
@@ -44,7 +44,7 @@
 - name: Require the reviewed version before a feature update
   ansible.builtin.assert:
     that: authentik_update_server_image.stdout | regex_replace('^.*:', '') == authentik_version
-    fail_msg: Use playbooks/ops-authentik_upgrade.yaml before updating a feature.
+    fail_msg: Use playbooks/ops/authentik/upgrade.yaml before updating a feature.
 
 - name: Update LDAP
   ansible.builtin.include_tasks: ldap.yaml

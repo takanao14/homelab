@@ -9,7 +9,7 @@ IX2106 password and device identity key through systemd credentials. It writes
 last-good state under `/var/lib/dhcp-lease-observer` and Prometheus metrics to
 the node_exporter textfile directory.
 
-Run `playbooks/common-node_exporter.yaml` first so the shared textfile writer
+Run `playbooks/common/node_exporter.yaml` first so the shared textfile writer
 group and directory exist. The observer user joins that group; this role does
 not change ownership of the shared directory.
 

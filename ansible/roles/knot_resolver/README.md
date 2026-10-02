@@ -27,7 +27,7 @@ official CZ.NIC source.
 
 The role follows the current Knot Resolver 6 package from the repository with
 APT `state: present`; it does not pin a minor or patch version. Package
-candidate drift is reported by `playbooks/ops-version_audit.yaml`.
+candidate drift is reported by `playbooks/ops/version_audit.yaml`.
 
 Configuration is stored at `/etc/knot-resolver/config.yaml`. Candidate and
 installed files are validated with `kresctl validate`, and valid changes are
@@ -79,7 +79,7 @@ validation policy from remaining available in the locally validating mode.
 Run the homelab playbook in check mode before provisioning:
 
 ```bash
-ansible-playbook -i inventories/homelab playbooks/knot-resolver.yaml --check --diff
+ansible-playbook -i inventories/homelab playbooks/services/knot-resolver.yaml --check --diff
 ```
 
 On a pristine host, package-dependent checks are intentionally deferred because
@@ -88,8 +88,8 @@ the package is not installed during Ansible check mode.
 Provision or update one resolver at a time:
 
 ```bash
-ansible-playbook -i inventories/homelab playbooks/knot-resolver.yaml --limit resolver1
-ansible-playbook -i inventories/homelab playbooks/knot-resolver.yaml --limit resolver2
+ansible-playbook -i inventories/homelab playbooks/services/knot-resolver.yaml --limit resolver1
+ansible-playbook -i inventories/homelab playbooks/services/knot-resolver.yaml --limit resolver2
 ```
 
 Useful read-only diagnostics:

@@ -50,7 +50,7 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_ansible_user` | `ansible-admin` | Dedicated userpass account for OpenBao operational playbooks |
 | `openbao_k8s_host` | `""` | prd cluster API server URL (e.g. `https://192.168.60.11:6443`) |
 | `openbao_k8s_sandbox_host` | `""` | sandbox cluster API server URL (e.g. `https://192.168.20.31:6443`) |
-| `openbao_k8s_clusters` | see defaults | List of Kubernetes clusters to configure auth for. Each entry defines `name`, `mount_path`, `host`, `ca_cert_file`, `role`, and `policies`. Runtime CA data is injected by `ops-openbao_register_cluster.yaml`. |
+| `openbao_k8s_clusters` | see defaults | List of Kubernetes clusters to configure auth for. Each entry defines `name`, `mount_path`, `host`, `ca_cert_file`, `role`, and `policies`. Runtime CA data is injected by `playbooks/ops/openbao/register_cluster.yaml`. |
 
 ## Upgrade
 
@@ -60,16 +60,16 @@ only through the operational playbook:
 
 ```bash
 # Read-only desired-versus-installed check
-ansible-playbook playbooks/ops-version_audit.yaml --limit openbao
+ansible-playbook playbooks/ops/version_audit.yaml --limit openbao
 
 # Validate the upgrade without changing the host
-ansible-playbook playbooks/ops-openbao_upgrade.yaml --limit openbao --check --diff
+ansible-playbook playbooks/ops/openbao/upgrade.yaml --limit openbao --check --diff
 
 # The operator performs the state-changing upgrade
-ansible-playbook playbooks/ops-openbao_upgrade.yaml --limit openbao
+ansible-playbook playbooks/ops/openbao/upgrade.yaml --limit openbao
 
 # Verify the resulting package version
-ansible-playbook playbooks/ops-version_audit.yaml --limit openbao
+ansible-playbook playbooks/ops/version_audit.yaml --limit openbao
 ```
 
 The upgrade playbook runs one OpenBao host at a time, requires an initialized
@@ -101,7 +101,7 @@ OpenBao is recovered by rebuilding it, not by restoring a snapshot (ADR-0042).
 Ten of the fourteen KV entries come from `openbao_secrets`; the other four are
 re-injected from a workstation. Run the steps in order:
 
-1. Re-create the VM, then `ansible-playbook playbooks/openbao.yaml`. The role
+1. Re-create the VM, then `ansible-playbook playbooks/services/openbao.yaml`. The role
    deploys `openbao.hcl` and the static seal key from SOPS, so the rebuilt host
    unseals on its own once initialized.
 2. `BAO_ADDR=http://127.0.0.1:8200 bao operator init` on the server.
@@ -110,13 +110,13 @@ re-injected from a workstation. Run the steps in order:
    `openbao_recovery_keys` already in `group_vars/openbao.sops.yaml` are dead.
    Bootstrap authenticates with the stored root token and fails until they are
    replaced.
-4. `ops-openbao_bootstrap.yaml`, then `ops-openbao_configure.yaml` for the KV
-   mount and policies, then `ops-openbao_configure_userpass.yaml`, then
-   `ops-openbao_seed_secrets.yaml`.
+4. `playbooks/ops/openbao/bootstrap.yaml`, then `playbooks/ops/openbao/configure.yaml` for the KV
+   mount and policies, then `playbooks/ops/openbao/configure_userpass.yaml`, then
+   `playbooks/ops/openbao/seed_secrets.yaml`.
 5. Re-inject the hand-managed entries with `scripts/secrets/admin/`:
    `set-sops-key.sh`, `set-env.sh`, `set-kubeconfig.sh`. These log in as the
    `admin` userpass account created in the previous step.
-6. `ops-openbao_register_cluster.yaml -e cluster=prd` and again for `sandbox`.
+6. `playbooks/ops/openbao/register_cluster.yaml -e cluster=prd` and again for `sandbox`.
    Each run creates and configures that cluster's Kubernetes auth mount before
    writing its ESO role.
 7. Run `scripts/secrets/admin/seed-mcp.sh` for the prd MCP secrets.
@@ -150,12 +150,12 @@ its Argo CD bootstrap runs HTTP-only without cert-manager (ADR-0010).
 The prd role also includes `k8s-mcp`; `scripts/secrets/admin/seed-mcp.sh`
 idempotently seeds its two paths from `.env/secrets.sops.env` after policy
 configuration. Re-run it after rotating either upstream or caller token.
-Apply `ops-openbao_configure.yaml`, then
-`ops-openbao_register_cluster.yaml -e cluster=prd` to attach the new policy to
+Apply `playbooks/ops/openbao/configure.yaml`, then
+`playbooks/ops/openbao/register_cluster.yaml -e cluster=prd` to attach the new policy to
 the live ESO role before seeding or syncing MCP.
 
 Policies removed from the repository are listed in `openbao_absent_policies`.
-`ops-openbao_configure.yaml` deletes those server-side policy objects before it
+`playbooks/ops/openbao/configure.yaml` deletes those server-side policy objects before it
 writes the active policies and Kubernetes roles.
 
 ### 1. Bootstrap Ansible userpass authentication
@@ -171,7 +171,7 @@ openbao_ansible_password: "<output of openssl rand -base64 24>"
 Run the bootstrap playbook:
 
 ```bash
-ansible-playbook playbooks/ops-openbao_bootstrap.yaml
+ansible-playbook playbooks/ops/openbao/bootstrap.yaml
 ```
 
 The playbook enables userpass and creates or updates `ansible-admin` with the
@@ -183,11 +183,11 @@ not require a stored admin token. Re-run bootstrap after changing
 ### 2. Configure OpenBao base objects
 
 ```bash
-ansible-playbook playbooks/ops-openbao_configure.yaml
+ansible-playbook playbooks/ops/openbao/configure.yaml
 ```
 
 This enables KV v2 and configures policies. Kubernetes auth mounts, auth config,
-and roles are refreshed per cluster by `ops-openbao_register_cluster.yaml` so
+and roles are refreshed per cluster by `playbooks/ops/openbao/register_cluster.yaml` so
 cluster CA rotation does not require editing SOPS secrets.
 
 ### 3. Install ESO via ArgoCD
@@ -207,19 +207,19 @@ auth config with `disable_local_ca_jwt=true`, restarts ESO, and validates
 `ExternalSecret` readiness.
 
 ```bash
-ansible-playbook playbooks/ops-openbao_register_cluster.yaml -e cluster=prd
-ansible-playbook playbooks/ops-openbao_register_cluster.yaml -e cluster=sandbox
+ansible-playbook playbooks/ops/openbao/register_cluster.yaml -e cluster=prd
+ansible-playbook playbooks/ops/openbao/register_cluster.yaml -e cluster=sandbox
 ```
 
 By default the playbook reads `~/.kube/<cluster>.yaml` and uses the
 `<cluster>-homelab` kube context. Override either value when needed:
 
 ```bash
-ansible-playbook playbooks/ops-openbao_register_cluster.yaml \
+ansible-playbook playbooks/ops/openbao/register_cluster.yaml \
   -e cluster=sandbox \
   -e kubeconfig=/path/to/kubeconfig
 
-ansible-playbook playbooks/ops-openbao_register_cluster.yaml \
+ansible-playbook playbooks/ops/openbao/register_cluster.yaml \
   -e cluster=sandbox \
   -e kube_context=sandbox-homelab
 ```
@@ -316,7 +316,7 @@ See [`k8s/argocd/README.md`](../../../k8s/argocd/README.md) for the consuming
 Then run:
 
 ```bash
-ansible-playbook playbooks/ops-openbao_seed_secrets.yaml
+ansible-playbook playbooks/ops/openbao/seed_secrets.yaml
 ```
 
 ## Userpass auth
@@ -343,7 +343,7 @@ Available policies:
 Run the playbook to apply:
 
 ```bash
-ansible-playbook playbooks/ops-openbao_configure_userpass.yaml
+ansible-playbook playbooks/ops/openbao/configure_userpass.yaml
 ```
 
 Login with the bao CLI:
@@ -364,4 +364,4 @@ openbao_raft_retry_join:
 
 ## Usage
 
-Run [playbooks/openbao.yaml](../../playbooks/openbao.yaml).
+Run [playbooks/services/openbao.yaml](../../playbooks/services/openbao.yaml).

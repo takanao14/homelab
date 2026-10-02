@@ -10,7 +10,7 @@ itself serves plain HTTP and is never published to the internet.
 
 - Downloads the release `.deb` from GitHub and installs it with `apt`.
 - Records the installed version under `/usr/local/share/homelab-versions`
-  for `playbooks/ops-version_audit.yaml`.
+  for `playbooks/ops/version_audit.yaml`.
 - Deploys `~/.config/code-server/config.yaml` (bind address, argon2 password).
 - Seeds `settings.json` once, then leaves editor preferences to the user.
 - Deploys a systemd drop-in pinning the workspace folder.
@@ -82,4 +82,4 @@ install is not managed by this role.
 
 ## Usage
 
-Run [playbooks/code_server.yaml](../../playbooks/code_server.yaml).
+Run [playbooks/services/code_server.yaml](../../playbooks/services/code_server.yaml).

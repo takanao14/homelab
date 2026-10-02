@@ -33,13 +33,13 @@ a mismatch causes MeshCentral to reject the login WebSocket origin.
 Preview the host changes first:
 
 ```bash
-ansible-playbook playbooks/meshcentral.yaml --check --diff
+ansible-playbook playbooks/services/meshcentral.yaml --check --diff
 ```
 
 The user performs the actual deployment:
 
 ```bash
-ansible-playbook playbooks/meshcentral.yaml
+ansible-playbook playbooks/services/meshcentral.yaml
 ```
 
 Configure the administrator and device groups on the fresh instance, then

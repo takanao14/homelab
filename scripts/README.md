@@ -163,7 +163,7 @@ use the Gateway. CI runs the check on either source file changing.
 Checks declared secret paths against the OpenBao KV store in both directions:
 
 - a path declared in SOPS but absent from the server — the next
-  `ops-openbao_seed_secrets.yaml` run recreates it, so a retired secret must be
+  `playbooks/ops/openbao/seed_secrets.yaml` run recreates it, so a retired secret must be
   removed from `openbao_secrets`, not only from the server
 - a path on the server that nothing declares — an orphan left by an out-of-band
   write
@@ -469,10 +469,10 @@ stores only an HMAC, so generate the plaintext locally, then preview and apply:
 
 ```bash
 cd ansible
-ansible-playbook playbooks/netbox.yaml --check --diff --tags netbox
+ansible-playbook playbooks/services/netbox.yaml --check --diff --tags netbox
 
 # The operator performs the live change after reviewing the check output.
-ansible-playbook playbooks/netbox.yaml --tags netbox
+ansible-playbook playbooks/services/netbox.yaml --tags netbox
 ```
 
 Identity steps use `manage.py` and are skipped in check mode. Rotate by
