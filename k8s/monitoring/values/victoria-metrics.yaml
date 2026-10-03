@@ -1,0 +1,29 @@
+victoria-metrics-single:
+  server:
+    fullnameOverride: victoria-metrics
+    # A bare number means months; keep the unit.
+    retentionPeriod: 180d
+    persistentVolume:
+      enabled: true
+      storageClassName: openebs-hostpath
+      # Not enforced by hostpath; sized for retention plus one monthly partition.
+      size: 100Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+    # Keep the long-term copy off the Prometheus node so recent data survives
+    # the loss of either worker.
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  operator.prometheus.io/name: prometheus-kube-prometheus-prometheus
+    serviceMonitor:
+      enabled: true
+      extraLabels:
+        release: prometheus

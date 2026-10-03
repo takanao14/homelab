@@ -109,3 +109,4 @@ deleting it:
 | [0058](0058-select-authentik-features-and-update-them-individually.md) | Select Authentik features and update them individually | Accepted |
 | [0059](0059-group-ansible-playbooks-by-purpose.md) | Group Ansible playbooks by purpose | Accepted |
 | [0060](0060-mcp-relies-on-bearer-authentication.md) | Rely on bearer authentication for MCP access | Accepted |
+| [0061](0061-long-term-metrics-in-victoriametrics-single.md) | Keep long-term metrics in VictoriaMetrics single-node | Accepted |

@@ -38,6 +38,12 @@ apps:
         jsonPointers:
           - /spec/shards
           - /spec/replicas
+  victoria-metrics:
+    enabled: true
+    wave: "0"
+    path: k8s/monitoring/charts/victoria-metrics
+    valueFiles:
+      - ../../values/victoria-metrics.yaml
   grafana:
     enabled: true
     wave: "1"

@@ -9,6 +9,8 @@ apps:
       - ../../values/grafana-sandbox.yaml
   dashboards:
     enabled: true
+  victoria-metrics:
+    enabled: false
   loki:
     enabled: false
   alloy:

@@ -73,6 +73,7 @@
         "argo-cd",
         "kube-prometheus-stack",
         "loki",
+        "victoria-metrics-single",
         "external-secrets"
       ],
       "matchUpdateTypes": ["patch", "minor", "major"],

@@ -7,6 +7,7 @@ Argo CD-managed monitoring for prd, with a sandbox subset and OpenBao secrets.
 | Application | Chart | Description |
 |-------------|-------|-------------|
 | `prometheus` | `kube-prometheus-stack` | Prometheus and Alertmanager with Discord notification routing |
+| `victoria-metrics` | `victoria-metrics-single` | 180-day metrics store fed by Prometheus `remote_write` (prd only, ADR-0061) |
 | `grafana` | `grafana` | Grafana UI, datasources, dashboard sidecar, and HTTPRoute |
 | `loki` | `loki` | Log aggregation, Proxmox log alert ruler, LoadBalancer ingestion, and Loki self-scrape ServiceMonitor |
 | `alloy` | `alloy` | OTLP ingestion for Proxmox metrics and remote_write into Prometheus |
@@ -33,6 +34,7 @@ monitoring/
 ├── values/                       # Helm values per component
 │   ├── prometheus.yaml           # kube-prometheus-stack + Prometheus/Alertmanager config
 │   ├── prometheus-sandbox.yaml   # sandbox subset Prometheus config
+│   ├── victoria-metrics.yaml     # long-term metrics store (ADR-0061)
 │   ├── grafana.yaml
 │   ├── grafana-sandbox.yaml
 │   ├── apps-sandbox.yaml         # sandbox Application subset overlay
@@ -53,6 +55,7 @@ monitoring/
 ├── snmp-generator/               # Pinned inputs for generated vendor SNMP modules
 └── charts/                       # Local Helm charts
     ├── prometheus/               # kube-prometheus-stack wrapper + shared scrape/rule resources
+    ├── victoria-metrics/
     ├── grafana/
     ├── loki/
     ├── alloy/
