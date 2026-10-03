@@ -96,15 +96,18 @@ kube-prometheus-stack:
           # ScrapeConfigs/Probes and Alloy's proxmox-ve), except
           # control-plane-node-exporter, which sets its own.
           writeRelabelConfigs:
-            - sourceLabels: [job]
+            - action: replace
+              sourceLabels: [job]
               regex: (scrapeConfig|probe)/.+|proxmox-ve
               targetLabel: __tmp_external
               replacement: "true"
-            - sourceLabels: [job]
+            - action: replace
+              sourceLabels: [job]
               regex: scrapeConfig/monitoring/control-plane-node-exporter
               targetLabel: __tmp_external
               replacement: ""
-            - sourceLabels: [__tmp_external]
+            - action: replace
+              sourceLabels: [__tmp_external]
               regex: "true"
               targetLabel: cluster
               replacement: ""
