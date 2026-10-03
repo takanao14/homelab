@@ -77,8 +77,16 @@ kube-prometheus-stack:
           release: prometheus
       scrapeConfigNamespaceSelector: {}
       enableRemoteWriteReceiver: true
-      externalLabels:
-        cluster: prd
+      # No external labels: remote_write and remote read must carry exactly
+      # the local TSDB labels (ADR-0016, ADR-0061). Alerts still need a
+      # cluster label for Alertmanager grouping.
+      prometheusExternalLabelNameClear: true
+      replicaExternalLabelNameClear: true
+      additionalAlertRelabelConfigs:
+        - source_labels: [cluster]
+          regex: ""
+          target_label: cluster
+          replacement: prd
       # Target relabeling stamps synthetic series too; external/per-cluster
       # targets opt out to avoid incorrect dashboard and alert joins.
       scrapeClasses:
@@ -91,28 +99,6 @@ kube-prometheus-stack:
         - name: external
       remoteWrite:
         - url: http://victoria-metrics.monitoring.svc:8428/api/v1/write
-          # remote_write applies externalLabels to every series. Strip cluster
-          # again from the targets ADR-0016 keeps cluster-less (external
-          # ScrapeConfigs/Probes and Alloy's proxmox-ve), except
-          # control-plane-node-exporter, which sets its own.
-          writeRelabelConfigs:
-            - action: replace
-              sourceLabels: [job]
-              regex: (scrapeConfig|probe)/.+|proxmox-ve
-              targetLabel: __tmp_external
-              replacement: "true"
-            - action: replace
-              sourceLabels: [job]
-              regex: scrapeConfig/monitoring/control-plane-node-exporter
-              targetLabel: __tmp_external
-              replacement: ""
-            - action: replace
-              sourceLabels: [__tmp_external]
-              regex: "true"
-              targetLabel: cluster
-              replacement: ""
-            - action: labeldrop
-              regex: __tmp_external
       retention: 30d
       retentionSize: 40GB
       # Requests only: 30-day mean/p95/max 994/1108/1143 Mi;

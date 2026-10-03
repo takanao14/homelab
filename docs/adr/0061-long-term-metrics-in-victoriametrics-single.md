@@ -41,9 +41,10 @@ two workers.
   plus one month. A bare `retentionPeriod` number means months.
 - History older than 30 days exists only on the VictoriaMetrics node until
   `vmbackup` is added.
-- remote_write stamps `cluster=prd` from `externalLabels` on every series.
-  `writeRelabelConfigs` strips it again by job name (`scrapeConfig/*`,
-  `probe/*`, `proxmox-ve`), so an in-cluster ScrapeConfig on the default
-  scrape class would lose its label in VictoriaMetrics.
+- prd Prometheus sets no external labels, because remote_write and remote
+  read would add them to every series, including the external targets that
+  ADR-0016 keeps cluster-less. VictoriaMetrics therefore holds the same labels
+  as the local TSDB. Alerts get `cluster=prd` through alert relabeling only
+  when the series has no `cluster` label.
 - MetricsQL does not extrapolate `increase()`, so a few panels differ slightly
   between the two datasources. Alerts are unaffected.
