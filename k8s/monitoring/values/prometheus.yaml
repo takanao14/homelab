@@ -89,6 +89,27 @@ kube-prometheus-stack:
               targetLabel: cluster
               replacement: prd
         - name: external
+      remoteWrite:
+        - url: http://victoria-metrics.monitoring.svc:8428/api/v1/write
+          # remote_write applies externalLabels to every series. Strip cluster
+          # again from the targets ADR-0016 keeps cluster-less (external
+          # ScrapeConfigs/Probes and Alloy's proxmox-ve), except
+          # control-plane-node-exporter, which sets its own.
+          writeRelabelConfigs:
+            - sourceLabels: [job]
+              regex: (scrapeConfig|probe)/.+|proxmox-ve
+              targetLabel: __tmp_external
+              replacement: "true"
+            - sourceLabels: [job]
+              regex: scrapeConfig/monitoring/control-plane-node-exporter
+              targetLabel: __tmp_external
+              replacement: ""
+            - sourceLabels: [__tmp_external]
+              regex: "true"
+              targetLabel: cluster
+              replacement: ""
+            - action: labeldrop
+              regex: __tmp_external
       retention: 30d
       retentionSize: 40GB
       # Requests only: 30-day mean/p95/max 994/1108/1143 Mi;

@@ -41,5 +41,9 @@ two workers.
   plus one month. A bare `retentionPeriod` number means months.
 - History older than 30 days exists only on the VictoriaMetrics node until
   `vmbackup` is added.
+- remote_write stamps `cluster=prd` from `externalLabels` on every series.
+  `writeRelabelConfigs` strips it again by job name (`scrapeConfig/*`,
+  `probe/*`, `proxmox-ve`), so an in-cluster ScrapeConfig on the default
+  scrape class would lose its label in VictoriaMetrics.
 - MetricsQL does not extrapolate `increase()`, so a few panels differ slightly
   between the two datasources. Alerts are unaffected.
