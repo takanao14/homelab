@@ -3,6 +3,11 @@ victoria-metrics-single:
     fullnameOverride: victoria-metrics
     # A bare number means months; keep the unit.
     retentionPeriod: 180d
+    # Prometheus forwards repeated samples for exporters with explicit
+    # timestamps (cAdvisor) that its own TSDB drops. 1ms removes only
+    # same-timestamp duplicates and keeps every distinct sample.
+    extraArgs:
+      dedup.minScrapeInterval: 1ms
     persistentVolume:
       enabled: true
       storageClassName: openebs-hostpath
