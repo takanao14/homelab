@@ -70,6 +70,8 @@ all:
       ansible_host: 192.168.20.21
     openclaw1:
       ansible_host: 192.168.20.23
+    hermes1:
+      ansible_host: 192.168.20.24
 
     # PoC guests.
     sssdtest1:
@@ -168,6 +170,10 @@ all:
     gpuvm:
       hosts:
         gpuvm1: null
+
+    hermes:
+      hosts:
+        hermes1: null
 
     log_collector:
       hosts:
@@ -273,6 +279,11 @@ all:
     # =================================================================
     # Cross-cutting agents and baseline configuration.
     # =================================================================
+    mcp_client:
+      children:
+        openclaw: {}
+        hermes: {}
+
     node_exporter:
       children:
         node_exporter_rpi:
@@ -297,6 +308,7 @@ all:
         node_exporter_vm:
           hosts:
             authentik1: null
+            hermes1: null
             # No kubelet on k0s controllers; scrape the host and kine DB disk directly.
             k0s-cp1: null
             netbox1: null
@@ -336,6 +348,7 @@ all:
         authentik: {}
         code_server: {}
         forgejo_runner: {}
+        hermes: {}
         netbox: {}
         openclaw: {}
         openbao: {}
@@ -375,6 +388,7 @@ all:
         forgejo: {}
         forgejo_runner: {}
         gpuvm: {}
+        hermes: {}
         log_collector: {}
         netbox: {}
         openclaw: {}
@@ -406,6 +420,7 @@ all:
     guest_shutdown_order:
       hosts:
         runner1: null
+        hermes1: null
         openclaw1: null
         sssdtest1: null
         sssdtest2: null

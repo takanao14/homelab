@@ -1,0 +1,60 @@
+---
+- name: Install Podman
+  become: true
+  ansible.builtin.apt:
+    name: podman
+    state: present
+    update_cache: true
+    lock_timeout: 300
+
+- name: Check whether Podman is installed
+  ansible.builtin.stat:
+    path: /usr/bin/podman
+  register: hermes_podman_binary
+
+- name: Create Hermes state directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ hermes_state_dir }}"
+    state: directory
+    owner: '10000'
+    group: '10000'
+    mode: '0700'
+
+- name: Deploy Hermes configuration
+  become: true
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "{{ hermes_state_dir }}/config.yaml"
+    owner: '10000'
+    group: '10000'
+    mode: '0640'
+
+- name: Check whether the Hermes image is present
+  become: true
+  ansible.builtin.command:
+    argv: [podman, image, exists, "{{ hermes_image }}"]
+  register: hermes_image_present
+  changed_when: false
+  failed_when: hermes_image_present.rc not in [0, 1]
+  check_mode: false
+  when: hermes_podman_binary.stat.exists
+
+- name: Pull the Hermes image
+  become: true
+  ansible.builtin.command:
+    argv: [podman, pull, "{{ hermes_image }}"]
+  when:
+    - hermes_podman_binary.stat.exists
+    - hermes_image_present.rc == 1
+    - not ansible_check_mode
+  changed_when: true
+
+- name: Install Hermes evaluation command
+  become: true
+  ansible.builtin.template:
+    src: hermes-eval.j2
+    dest: /usr/local/bin/hermes-eval
+    owner: root
+    group: root
+    mode: '0755'

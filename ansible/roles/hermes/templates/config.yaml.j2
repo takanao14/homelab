@@ -1,0 +1,47 @@
+# Match the pinned image schema so CLI migrations preserve managed settings.
+_config_version: 46
+
+model:
+  provider: custom
+  default: {{ hermes_model_id | to_json }}
+  base_url: {{ hermes_model_url | to_json }}
+  api_mode: chat_completions
+  api_key: sk-local
+
+platform_toolsets:
+  cli:
+    - clarify
+    - memory
+    - skills
+    - web
+{% for name in mcp_client_servers %}
+    - mcp-{{ name }}
+{% endfor %}
+
+skills:
+  write_approval: true
+
+memory:
+  write_approval: true
+
+mcp_servers:
+{% for name, server in mcp_client_servers.items() %}
+  {{ name }}:
+    url: {{ server.url | to_json }}
+    headers:
+      Authorization: "Bearer ${MCP_{{ name | upper }}_SERVER_TOKEN}"
+    connect_timeout: 30
+    timeout: 60
+    ssl_verify: true
+    tools:
+      include: {{ server.tools | to_json }}
+      resources: false
+      prompts: false
+{% endfor %}
+
+web:
+  search_backend: parallel
+  extract_backend: parallel
+  extract_char_limit: 12000
+  extract_timeout: 60
+  keyless_fallback: true
