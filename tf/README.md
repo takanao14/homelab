@@ -157,6 +157,20 @@ directly to `tf/cloudimage/images.hcl`.
 Use `packer/import-upstream.sh` to verify, decompress, and checksum it; publish
 with `packer/push.sh freebsd151`, then consume it through `tf/customimage`.
 
+`proxmox-vm` accepts optional per-VM `cloud_init.user_data` and
+`cloud_init.network_data` YAML strings. Each supplied payload replaces its
+corresponding generated `user_account` or `ip_config`/`dns` configuration.
+`cloud_init.type` selects the datasource; omitted values preserve the provider
+default. `cloud_init.snippet_datastore` defaults to `local`, which must allow
+snippets. Its child module uploads files using the `proxmox.snippets` provider
+and returns their IDs. Do not put decrypted secrets in snippet content.
+
+`vm/pve/freebsd` supplies NoCloud user-data and version 2 network-data using
+`cloudinit.hcl`. The migrated verification VM in `freebsd/snippet-test` uses
+the same module and is intentionally stopped (`started = false`). Both use
+`192.168.10.183`; run only one at a time. Snippet edits apply to a guest only
+after explicit VM replacement, as with generated initialization.
+
 ## Architecture
 
 - **Backend**: Cloudflare R2 (S3-compatible) remote state with native lockfile
