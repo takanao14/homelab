@@ -91,7 +91,7 @@ Before running it, activate `lemonade-server` through
 [OpenClaw](ansible/roles/openclaw/README.md) runs separately on `openclaw1` with
 the same Lemonade model and a VPN-only Web UI through Caddy.
 [Hermes Agent](ansible/roles/hermes/README.md) runs on `hermes1` with that model
-for SSH-only CLI evaluation. Both use the shared Grafana and NetBox MCP
+for CLI and Web Dashboard evaluation through Caddy. Both use the shared Grafana and NetBox MCP
 tool allowlist in `ansible/inventories/homelab/group_vars/mcp_client.yaml`.
 
 ## License
