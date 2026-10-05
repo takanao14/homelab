@@ -10,6 +10,12 @@ locals {
   env     = read_terragrunt_config(find_in_parent_folders("env.hcl"))
   common  = read_terragrunt_config(find_in_parent_folders("common.hcl"))
   freebsd = read_terragrunt_config("${get_terragrunt_dir()}/cloudinit.hcl")
+
+  user_config = merge(local.freebsd.locals.user_config, {
+    hostname = "freebsd"
+    fqdn     = "freebsd.${local.common.locals.dns_domain}"
+  })
+  user_data = format("#cloud-config\n%s", yamlencode(local.user_config))
 }
 
 inputs = {
@@ -30,11 +36,8 @@ inputs = {
         })
       }
       cloud_init = {
-        type = "nocloud"
-        user_data = "#cloud-config\n${yamlencode(merge(local.freebsd.locals.user_config, {
-          hostname = "freebsd"
-          fqdn     = "freebsd.${local.common.locals.dns_domain}"
-        }))}"
+        type      = "nocloud"
+        user_data = local.user_data
         network_data = yamlencode({
           version = 2
           ethernets = {
