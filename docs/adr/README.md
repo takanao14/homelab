@@ -112,3 +112,5 @@ deleting it:
 | [0061](0061-long-term-metrics-in-victoriametrics-single.md) | Keep long-term metrics in VictoriaMetrics single-node | Accepted |
 | [0062](0062-compose-vm-cloud-init-snippets.md) | Compose VM initialization with optional cloud-init snippets | Accepted |
 | [0063](0063-openclaw-on-dedicated-vm-with-lemonade.md) | Run OpenClaw on a dedicated VM with Lemonade inference | Accepted |
+| [0064](0064-hermes-evaluation-on-dedicated-vm.md) | Evaluate Hermes Agent on a dedicated VM | Accepted |
+| [0065](0065-agent-mcp-caller-credentials.md) | Connect VM agents to shared read-only MCP servers | Accepted |

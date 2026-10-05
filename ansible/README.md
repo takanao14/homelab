@@ -39,7 +39,8 @@ plus the roles whose configuration the service *owns* — i.e. the log-shipping
 stack (`vector` + `journald`, via the `lxc_logging` meta-role), since each
 service supplies its own `vector_journald_units`. `timezone` is also embedded as a
 pragmatic exception (cheap, idempotent, keeps log timestamps correct on a
-single-playbook run).
+single-playbook run). OpenClaw and Hermes also embed `mcp_client` to distribute
+their service-owned caller credentials from SOPS.
 
 It deliberately does **not** embed fleet-uniform **host hygiene** (`apt_mirror`,
 `chrony`, `unattended_upgrades`, `node_exporter`): that config is identical on
