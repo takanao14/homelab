@@ -1,0 +1,13 @@
+[Unit]
+Description=Restrict Hermes Dashboard to Caddy
+Before=hermes-dashboard.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=-/usr/sbin/nft delete table inet hermes
+ExecStart=/usr/sbin/nft -f {{ hermes_config_dir }}/firewall.nft
+ExecStop=/usr/sbin/nft delete table inet hermes
+
+[Install]
+WantedBy=multi-user.target

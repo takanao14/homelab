@@ -3,3 +3,9 @@ hermes_image: docker.io/nousresearch/hermes-agent:v2026.9.24@sha256:fca358f12efd
 hermes_state_dir: /var/lib/hermes
 hermes_model_id: Gemma-4-12B-it-MTP-GGUF
 hermes_model_url: https://lemonade.prd.butaco.net/v1
+hermes_container_name: hermes-dashboard
+hermes_config_dir: /etc/hermes
+hermes_dashboard_port: 9119
+hermes_dashboard_username: takanao
+hermes_dashboard_public_url: https://hermes.home.butaco.net
+hermes_caddy_address: "{{ hostvars[groups['caddy'][0]]['ansible_host'] }}"

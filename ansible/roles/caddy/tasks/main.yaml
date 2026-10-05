@@ -53,6 +53,10 @@
     owner: "{{ caddy_user }}"
     group: "{{ caddy_group }}"
     mode: "0640"
+    validate: "{{ caddy_binary }} validate --config %s --adapter caddyfile"
+  environment:
+    CF_API_TOKEN: "{{ cloudflare_api_token | default('') }}"
+  no_log: true
   notify: Restart caddy
 
 - name: Deploy caddy environment file

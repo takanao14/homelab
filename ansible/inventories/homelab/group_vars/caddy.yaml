@@ -34,6 +34,8 @@ caddy_upstreams:
     backend: 192.168.20.21:8080
   - hostname: openclaw.home.butaco.net
     backend: "{{ hostvars['openclaw1']['ansible_host'] }}:18789"
+  - hostname: hermes.home.butaco.net
+    backend: "{{ hostvars['hermes1']['ansible_host'] }}:9119"
 
 vector_journald_units:
   - caddy

@@ -1,0 +1,27 @@
+[Unit]
+Description=Hermes Agent Web Dashboard
+Wants=network-online.target
+After=network-online.target
+Requires=hermes-firewall.service
+After=hermes-firewall.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+TimeoutStopSec=45s
+ExecStartPre=-/usr/bin/podman rm --force {{ hermes_container_name }}
+ExecStart=/usr/bin/podman run --rm --init --name {{ hermes_container_name }} \
+  --pull=never \
+  --publish=127.0.0.1:{{ hermes_dashboard_port }}:{{ hermes_dashboard_port }} \
+  --publish={{ ansible_host }}:{{ hermes_dashboard_port }}:{{ hermes_dashboard_port }} \
+  --env-file={{ hermes_config_dir }}/mcp.env \
+  --env-file={{ hermes_config_dir }}/dashboard.env \
+  --env=HERMES_SKIP_CONFIG_MIGRATION=1 \
+  --volume={{ hermes_state_dir }}:/opt/data \
+  --security-opt=no-new-privileges \
+  {{ hermes_image }} dashboard --host 0.0.0.0 --port {{ hermes_dashboard_port }} --no-open
+ExecStop=/usr/bin/podman stop --time 30 {{ hermes_container_name }}
+
+[Install]
+WantedBy=multi-user.target

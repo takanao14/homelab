@@ -45,3 +45,6 @@ web:
   extract_char_limit: 12000
   extract_timeout: 60
   keyless_fallback: true
+
+dashboard:
+  public_url: {{ hermes_dashboard_public_url | to_json }}

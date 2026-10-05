@@ -1,8 +1,15 @@
 ---
+- name: Require dashboard authentication
+  ansible.builtin.assert:
+    that:
+      - hermes_dashboard_password_hash is match('^scrypt\$16384\$8\$1\$')
+      - hermes_dashboard_session_secret | length >= 32
+  no_log: true
+
 - name: Install Podman
   become: true
   ansible.builtin.apt:
-    name: podman
+    name: [podman, nftables]
     state: present
     update_cache: true
     lock_timeout: 300
@@ -21,6 +28,27 @@
     group: '10000'
     mode: '0700'
 
+- name: Create Hermes configuration directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ hermes_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Deploy dashboard credentials
+  become: true
+  ansible.builtin.template:
+    src: dashboard.env.j2
+    dest: "{{ hermes_config_dir }}/dashboard.env"
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+  diff: false
+  notify: Restart hermes dashboard
+
 - name: Deploy Hermes configuration
   become: true
   ansible.builtin.template:
@@ -29,6 +57,7 @@
     owner: '10000'
     group: '10000'
     mode: '0640'
+  notify: Restart hermes dashboard
 
 - name: Check whether the Hermes image is present
   become: true
@@ -49,6 +78,7 @@
     - hermes_image_present.rc == 1
     - not ansible_check_mode
   changed_when: true
+  notify: Restart hermes dashboard
 
 - name: Install Hermes evaluation command
   become: true
@@ -58,3 +88,45 @@
     owner: root
     group: root
     mode: '0755'
+
+- name: Deploy Hermes firewall rules
+  become: true
+  ansible.builtin.template:
+    src: firewall.nft.j2
+    dest: "{{ hermes_config_dir }}/firewall.nft"
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Restart hermes firewall
+
+- name: Deploy Hermes systemd units
+  become: true
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: [hermes-firewall.service, hermes-dashboard.service]
+  notify:
+    - Reload hermes systemd
+    - Restart hermes firewall
+    - Restart hermes dashboard
+
+- name: Ensure Hermes firewall is enabled and started
+  become: true
+  ansible.builtin.systemd:
+    name: hermes-firewall
+    state: started
+    enabled: true
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: Ensure Hermes dashboard is enabled and started
+  become: true
+  ansible.builtin.systemd:
+    name: hermes-dashboard
+    state: started
+    enabled: true
+    daemon_reload: true
+  when: not ansible_check_mode

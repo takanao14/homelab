@@ -8,5 +8,6 @@
       tags: [hermes, mcp_client]
       vars:
         mcp_client_env_file: /etc/hermes/mcp.env
+        mcp_client_notify: [Restart hermes dashboard]
     - role: hermes
       tags: hermes

@@ -69,6 +69,26 @@
       changed_when: false
       when: homelab_private_stat.stat.exists
 
+    - name: Validate generated DNS configuration
+      ansible.builtin.command:
+        argv: [direnv, exec, ., make, check]
+        chdir: "{{ homelab_private_path }}/dns-record"
+      changed_when: false
+      when:
+        - homelab_private_stat.stat.exists
+        - caddy_dnsconfig_git_status.stdout | default('') | length > 0
+        - not ansible_check_mode
+
+    - name: Preview generated home DNS changes
+      ansible.builtin.command:
+        argv: [direnv, exec, ., make, preview]
+        chdir: "{{ homelab_private_path }}/dns-record"
+      changed_when: false
+      when:
+        - homelab_private_stat.stat.exists
+        - caddy_dnsconfig_git_status.stdout | default('') | length > 0
+        - not ansible_check_mode
+
     - name: Stage dnsconfig.js changes  # noqa command-instead-of-module
       ansible.builtin.command:
         argv:

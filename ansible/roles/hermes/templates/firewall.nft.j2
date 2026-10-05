@@ -1,0 +1,6 @@
+table inet hermes {
+  chain prerouting {
+    type filter hook prerouting priority mangle; policy accept;
+    ip daddr {{ ansible_host }} tcp dport {{ hermes_dashboard_port }} ip saddr != {{ hermes_caddy_address }} drop
+  }
+}

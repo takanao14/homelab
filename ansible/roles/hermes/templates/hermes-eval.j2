@@ -6,12 +6,6 @@ if [ -t 0 ] && [ -t 1 ]; then
   hermes_tty=--tty
 fi
 
-# CLI sessions use Podman's init instead of the image's gateway supervision.
-exec sudo /usr/bin/podman run --rm --interactive --init ${hermes_tty:+--tty} \
-  --name=hermes-eval \
-  --pull=never \
-  --security-opt=no-new-privileges \
-  --env=HERMES_SKIP_CONFIG_MIGRATION=1 \
-  --env-file=/etc/hermes/mcp.env \
-  --volume={{ hermes_state_dir }}:/opt/data \
-  {{ hermes_image }} "$@"
+exec sudo /usr/bin/podman exec --interactive ${hermes_tty:+--tty} \
+  --user=10000:10000 --workdir=/opt/data --env=HOME=/opt/data \
+  {{ hermes_container_name }} /opt/hermes/.venv/bin/hermes "$@"

@@ -1,0 +1,18 @@
+hermes_dashboard_password: ENC[AES256_GCM,data:3PPeANKqmsiRjPWF8zRs8B/JAdzIhNZK30n/+IPjt/jrInbbtHIu17C5O5Eenfpf,iv:JxftEjqkBR4Es2GVVnp8SNswnK9UUQ2Rs/qGivcVcoY=,tag:/AbloWZW4hqMAJebhQifcQ==,type:str]
+hermes_dashboard_password_hash: ENC[AES256_GCM,data:OCDXR1JgZ6bZif5UXQHwyzd4T1eQGWze2OvPKLf+16Kj92qhtzPSzE6rqimh+PXcxyNFDk6E+1MNSTGUyWz7BHJSaWLf5mEIRW5av5iTyGtH4jQtjjQ=,iv:gStmULeLtHDdkNXi80ofta5Q7o4vvp4AKuIaAzgd0k8=,tag:dNsEba1ugDhvwq+aqQtCQA==,type:str]
+hermes_dashboard_session_secret: ENC[AES256_GCM,data:JbdzCBTmxnnl4KTyZs/iibU96meSu6+Gh+64xXPp+6dk9wtGt9ZT/rYp6QWoUXhCuKzIN95B3fJ6Yu5i5zrDnw==,iv:O9i3oHEGhMuiTEw1Vme9mDhMsRTxpSNV21jvb4NP7rM=,tag:JUDmv9vfyhRBnR3mO3BZNg==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBzaWNXUjJLNFp3elZnUWQw
+            NXlZWW8wWmZSdlJ0VWVxZjZIc3Z5dWRzVlM0CmtUTGMvYUtIYkVrZDhPZExEejlR
+            REhoNWNmM0ErajJmVktBZEM4aGxpR3MKLS0tIEtUL2NUNWNBcUdVS2srRmVCQzYv
+            S3E4QVNSUlAxeHVOcXY5dWdiOCs2bncK/FYwxKHZ7gPPM53C1YVoR8MC8qA6EDBn
+            vr/yHEW4HZUQp1egSEj94+TnTVu8pkmVm33uPjrQebYz7ajdVyftUA==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
+    lastmodified: "2026-10-05T10:43:32Z"
+    mac: ENC[AES256_GCM,data:Wrga1XIJvFO1UhtlRU/0xJC41Oy5Qwed2pkinsulOpPkBQrHjvbHU9HnW0GIwuyFC4Y/RW+WfjIDCU9X58VFGJT3Vec/PmBrxvBHmp1xC0fJYGnF30LuizIiwrSMFFiHSkOx/PQUUsqNVtc6zzHfgbWZ8JP9ZGZUvdnhjcQcSTU=,iv:ViWEXtp+5pNh0AtvNlaBY0I73xl4FxjXtUrc2gm4ptU=,tag:4fMtojTxmghvt+QL3doo7A==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.13.3

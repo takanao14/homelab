@@ -1,0 +1,20 @@
+---
+- name: Reload hermes systemd
+  become: true
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart hermes firewall
+  become: true
+  ansible.builtin.systemd:
+    name: hermes-firewall
+    state: restarted
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: Restart hermes dashboard
+  become: true
+  ansible.builtin.systemd:
+    name: hermes-dashboard
+    state: restarted
+  when: not ansible_check_mode
