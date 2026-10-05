@@ -17,9 +17,10 @@ stay usable over 90–180 day ranges. At about 150k active series and
 Run VictoriaMetrics single-node (Community edition) in prd with
 `retentionPeriod: 180d`. Prometheus keeps scraping, evaluating rules, and
 alerting with its 30-day retention, and forwards every sample with
-`remote_write`. Grafana gets a second Prometheus-type datasource for it.
-Schedule it away from the Prometheus pod so the most recent 30 days exist on
-two workers.
+`remote_write`. Grafana gets a second Prometheus-type datasource for it;
+Prometheus stays the default, and dashboards switch to VictoriaMetrics through
+their `$datasource` variable for ranges beyond 30 days. Schedule it away from
+the Prometheus pod so the most recent 30 days exist on two workers.
 
 ## Alternatives considered
 
@@ -46,5 +47,7 @@ two workers.
   ADR-0016 keeps cluster-less. VictoriaMetrics therefore holds the same labels
   as the local TSDB. Alerts get `cluster=prd` through alert relabeling only
   when the series has no `cluster` label.
-- MetricsQL does not extrapolate `increase()`, so a few panels differ slightly
-  between the two datasources. Alerts are unaffected.
+- MetricsQL does not extrapolate `rate()`/`increase()` and looks back one step
+  in range queries. With identical samples, short-range `rate` panels differ
+  by about 13% per point (median), while 30-day views match within 0.3%.
+  Alerts are unaffected.
