@@ -206,6 +206,11 @@
         description: Continuous Delivery (sandbox)
 
 - AI:
+    - OpenClaw:
+        icon: mdi-robot
+        href: https://openclaw.home.butaco.net
+        description: Local AI assistant
+
     - GPU Switch:
         icon: mdi-expansion-card-variant
         href: https://gpu-switch.prd.butaco.net

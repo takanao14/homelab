@@ -34,6 +34,7 @@ remote_state {
 }
 
 inputs = {
-  password       = get_env("TF_VM_PASSWORD")
-  ssh_public_key = get_env("TF_VM_SSH_PUBLIC_KEY")
+  proxmox_ssh_username = get_env("PROXMOX_VE_SSH_USERNAME", "root")
+  password             = get_env("TF_VM_PASSWORD")
+  ssh_public_key       = get_env("TF_VM_SSH_PUBLIC_KEY")
 }

@@ -64,6 +64,7 @@ here.
 | `seaweedfs-ui.home.butaco.net` | `seaweedfs1:23646` | SeaweedFS console |
 | `meshcentral.home.butaco.net` | `rpi4:8443` | Out-of-band management (ADR-0025) |
 | `vscode.home.butaco.net` | `192.168.20.21:8080` | code-server on `toolbox1` (ADR-0031) |
+| `openclaw.home.butaco.net` | `192.168.20.23:18789` | OpenClaw on `openclaw1` (ADR-0063) |
 
 ## Not behind Caddy
 

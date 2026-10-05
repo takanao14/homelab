@@ -65,9 +65,11 @@ all:
     seaweedfs1:
       ansible_host: 192.168.50.31
 
-    # Toolbox
+    # pve service and toolbox VMs.
     toolbox1:
       ansible_host: 192.168.20.21
+    openclaw1:
+      ansible_host: 192.168.20.23
 
     # PoC guests.
     sssdtest1:
@@ -178,6 +180,10 @@ all:
     netbox:
       hosts:
         netbox1: null
+
+    openclaw:
+      hosts:
+        openclaw1: null
 
     openbao:
       hosts:
@@ -294,6 +300,7 @@ all:
             # No kubelet on k0s controllers; scrape the host and kine DB disk directly.
             k0s-cp1: null
             netbox1: null
+            openclaw1: null
             openbao1: null
             runner1: null
             toolbox1: null
@@ -330,6 +337,7 @@ all:
         code_server: {}
         forgejo_runner: {}
         netbox: {}
+        openclaw: {}
         openbao: {}
 
     # All Vector agents; targeted by playbooks/common/vector.yaml.
@@ -369,6 +377,7 @@ all:
         gpuvm: {}
         log_collector: {}
         netbox: {}
+        openclaw: {}
         openbao: {}
         seaweedfs: {}
         sssd: {}
@@ -397,6 +406,7 @@ all:
     guest_shutdown_order:
       hosts:
         runner1: null
+        openclaw1: null
         sssdtest1: null
         sssdtest2: null
         toolbox1: null

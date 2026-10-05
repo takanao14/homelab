@@ -110,3 +110,5 @@ deleting it:
 | [0059](0059-group-ansible-playbooks-by-purpose.md) | Group Ansible playbooks by purpose | Accepted |
 | [0060](0060-mcp-relies-on-bearer-authentication.md) | Rely on bearer authentication for MCP access | Accepted |
 | [0061](0061-long-term-metrics-in-victoriametrics-single.md) | Keep long-term metrics in VictoriaMetrics single-node | Accepted |
+| [0062](0062-compose-vm-cloud-init-snippets.md) | Compose VM initialization with optional cloud-init snippets | Accepted |
+| [0063](0063-openclaw-on-dedicated-vm-with-lemonade.md) | Run OpenClaw on a dedicated VM with Lemonade inference | Accepted |

@@ -32,6 +32,8 @@ caddy_upstreams:
     backend: "{{ hostvars['rpi4']['ansible_host'] }}:8443"
   - hostname: vscode.home.butaco.net
     backend: 192.168.20.21:8080
+  - hostname: openclaw.home.butaco.net
+    backend: "{{ hostvars['openclaw1']['ansible_host'] }}:18789"
 
 vector_journald_units:
   - caddy

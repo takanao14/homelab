@@ -1,0 +1,13 @@
+[Unit]
+Description=Restrict OpenClaw Gateway to Caddy
+Before=openclaw.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=-/usr/sbin/nft delete table inet openclaw
+ExecStart=/usr/sbin/nft -f {{ openclaw_config_dir }}/firewall.nft
+ExecStop=/usr/sbin/nft delete table inet openclaw
+
+[Install]
+WantedBy=multi-user.target

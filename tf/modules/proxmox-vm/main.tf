@@ -11,6 +11,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
   }
 
   on_boot = each.value.on_boot
+  started = each.value.started
 
   cpu {
     cores = each.value.cores
@@ -76,25 +77,37 @@ resource "proxmox_virtual_environment_vm" "vm" {
   }
 
   initialization {
-    datastore_id = each.value.config_datastore
-    interface    = each.value.config_interface
+    datastore_id         = each.value.config_datastore
+    interface            = each.value.config_interface
+    type                 = each.value.cloud_init.type
+    user_data_file_id    = try(module.cloudinit_snippets[each.key].file_ids["user"], null)
+    network_data_file_id = try(module.cloudinit_snippets[each.key].file_ids["network"], null)
 
-    ip_config {
-      ipv4 {
-        address = each.value.ipv4
-        gateway = each.value.ipv4gw
+    dynamic "ip_config" {
+      for_each = each.value.cloud_init.network_data == null ? [each.value] : []
+      content {
+        ipv4 {
+          address = ip_config.value.ipv4
+          gateway = ip_config.value.ipv4gw
+        }
       }
     }
 
-    dns {
-      domain  = each.value.dns_domain
-      servers = each.value.dns_servers
+    dynamic "dns" {
+      for_each = each.value.cloud_init.network_data == null ? [each.value] : []
+      content {
+        domain  = dns.value.dns_domain
+        servers = dns.value.dns_servers
+      }
     }
 
-    user_account {
-      username = each.value.username
-      password = var.password
-      keys     = [trimspace(data.local_file.ssh_public_key.content)]
+    dynamic "user_account" {
+      for_each = each.value.cloud_init.user_data == null ? [each.value] : []
+      content {
+        username = user_account.value.username
+        password = var.password
+        keys     = [trimspace(data.local_file.ssh_public_key.content)]
+      }
     }
   }
 }

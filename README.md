@@ -88,6 +88,9 @@ opencode --version
 Before running it, activate `lemonade-server` through
 [GPU switching](k8s/lemonade-server/README.md#gpu-switching).
 
+[OpenClaw](ansible/roles/openclaw/README.md) runs separately on `openclaw1` with
+the same Lemonade model and a VPN-only Web UI through Caddy.
+
 ## License
 
 Original code in this repository is covered by the [MIT License](LICENSE).

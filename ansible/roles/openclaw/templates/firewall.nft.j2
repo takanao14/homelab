@@ -1,0 +1,6 @@
+table inet openclaw {
+  chain prerouting {
+    type filter hook prerouting priority mangle; policy accept;
+    ip daddr {{ ansible_host }} tcp dport {{ openclaw_listen_port }} ip saddr != {{ openclaw_caddy_address }} drop
+  }
+}

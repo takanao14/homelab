@@ -19,7 +19,7 @@ tf/
 ├── common.hcl        # Shared network settings
 ├── provider.tf       # Provider constraints
 ├── .env/             # Shared and per-node SOPS secrets
-├── modules/          # proxmox-vm, proxmox-container, proxmox-cloudimage
+├── modules/          # proxmox-vm (cloudinit-snippets child), proxmox-container, proxmox-cloudimage
 ├── cloudimage/       # Stock images: images.hcl, base.hcl, <node>/
 ├── customimage/      # Packer images: images.hcl, base.hcl, <node>/
 ├── vm/<host>/<service>/
@@ -40,6 +40,7 @@ defaults. Image stacks use `node.hcl` for host binding and image selection.
 | `PROXMOX_VE_ENDPOINT` | Proxmox API endpoint |
 | `PROXMOX_VE_USERNAME` | Proxmox API username |
 | `PROXMOX_VE_PASSWORD` | Proxmox API password |
+| `PROXMOX_VE_SSH_USERNAME` | Optional snippet-upload SSH user (default `root`); uses the SSH agent |
 
 Each stack's `.envrc` loads its node-specific SOPS secrets through `direnv`.
 Edit the relevant `secrets.<node>.sops.env`, for example:

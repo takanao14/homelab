@@ -1,0 +1,48 @@
+{
+  "gateway": {
+    "mode": "local",
+    "bind": "lan",
+    "port": {{ openclaw_listen_port }},
+    "publicOrigin": "{{ openclaw_public_origin }}",
+    "trustedProxies": ["{{ openclaw_caddy_address }}"],
+    "auth": {
+      "mode": "token",
+      "rateLimit": {
+        "maxAttempts": 10,
+        "windowMs": 60000,
+        "lockoutMs": 300000
+      }
+    },
+    "controlUi": {
+      "allowedOrigins": [
+        "http://127.0.0.1:{{ openclaw_listen_port }}",
+        "http://localhost:{{ openclaw_listen_port }}",
+        "{{ openclaw_public_origin }}"
+      ]
+    }
+  },
+  "tools": { "profile": "minimal" },
+  "agents": {
+    "defaults": {
+      "model": { "primary": "lemonade/{{ openclaw_model_id }}" }
+    }
+  },
+  "models": {
+    "providers": {
+      "lemonade": {
+        "baseUrl": "{{ openclaw_model_url }}",
+        "apiKey": "sk-local",
+        "api": "openai-completions",
+        "timeoutSeconds": 300,
+        "models": [
+          {
+            "id": "{{ openclaw_model_id }}",
+            "name": "Gemma 4 12B MTP (Lemonade)",
+            "contextWindow": 32768,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  }
+}

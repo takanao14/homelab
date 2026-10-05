@@ -1,0 +1,28 @@
+[Unit]
+Description=OpenClaw Gateway
+Wants=network-online.target
+After=network-online.target
+Requires=openclaw-firewall.service
+After=openclaw-firewall.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+ExecStartPre=-/usr/bin/podman rm --force {{ openclaw_container_name }}
+ExecStart=/usr/bin/podman run --rm --name {{ openclaw_container_name }} \
+  --publish=127.0.0.1:{{ openclaw_listen_port }}:{{ openclaw_listen_port }} \
+  --publish={{ ansible_host }}:{{ openclaw_listen_port }}:{{ openclaw_listen_port }} \
+  --env-file={{ openclaw_config_dir }}/openclaw.env \
+  --env=HOME=/home/node \
+  --env=OPENCLAW_HOME=/home/node \
+  --env=OPENCLAW_STATE_DIR=/home/node/.openclaw \
+  --env=OPENCLAW_CONFIG_PATH=/home/node/.openclaw/openclaw.json \
+  --volume={{ openclaw_state_dir }}:/home/node/.openclaw:Z \
+  --security-opt=no-new-privileges \
+  --cap-drop=all \
+  {{ openclaw_image }} node dist/index.js gateway --bind lan
+ExecStop=/usr/bin/podman stop --time 30 {{ openclaw_container_name }}
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,8 @@
+---
+- name: Setup OpenClaw
+  hosts: openclaw
+  roles:
+    - role: timezone
+      tags: timezone
+    - role: openclaw
+      tags: openclaw

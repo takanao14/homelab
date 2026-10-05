@@ -1,0 +1,19 @@
+---
+- name: Reload systemd
+  become: true
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart openclaw firewall
+  become: true
+  ansible.builtin.systemd:
+    name: openclaw-firewall
+    state: restarted
+    daemon_reload: true
+  when: not ansible_check_mode
+- name: Restart openclaw
+  become: true
+  ansible.builtin.systemd:
+    name: openclaw
+    state: restarted
+  when: not ansible_check_mode

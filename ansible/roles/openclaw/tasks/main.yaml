@@ -1,0 +1,126 @@
+---
+- name: Require a Gateway token
+  ansible.builtin.assert:
+    that:
+      - openclaw_gateway_token | length >= 32
+  no_log: true
+
+- name: Install Podman
+  become: true
+  ansible.builtin.apt:
+    name:
+      - podman
+      - nftables
+    state: present
+    update_cache: true
+
+- name: Check whether Podman is installed
+  ansible.builtin.stat:
+    path: /usr/bin/podman
+  register: openclaw_podman_binary
+
+- name: Create OpenClaw directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ openclaw_state_dir }}", owner: '1000', group: '1000', mode: '0700' }
+    - { path: "{{ openclaw_config_dir }}", owner: root, group: root, mode: '0700' }
+
+- name: Deploy OpenClaw configuration
+  become: true
+  ansible.builtin.template:
+    src: openclaw.json.j2
+    dest: "{{ openclaw_state_dir }}/openclaw.json"
+    owner: '1000'
+    group: '1000'
+    mode: '0600'
+  notify: Restart openclaw
+
+- name: Deploy OpenClaw Gateway token
+  become: true
+  ansible.builtin.template:
+    src: openclaw.env.j2
+    dest: "{{ openclaw_config_dir }}/openclaw.env"
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+  notify: Restart openclaw
+
+- name: Check whether the OpenClaw image is present
+  become: true
+  ansible.builtin.command:
+    argv: [podman, image, exists, "{{ openclaw_image }}"]
+  register: openclaw_image_present
+  changed_when: false
+  failed_when: openclaw_image_present.rc not in [0, 1]
+  check_mode: false
+  when: openclaw_podman_binary.stat.exists
+
+- name: Pull the OpenClaw image
+  become: true
+  ansible.builtin.command:
+    argv: [podman, pull, "{{ openclaw_image }}"]
+  when:
+    - openclaw_podman_binary.stat.exists
+    - openclaw_image_present.rc == 1
+    - not ansible_check_mode
+  changed_when: true
+  notify: Restart openclaw
+
+- name: Deploy OpenClaw systemd unit
+  become: true
+  ansible.builtin.template:
+    src: openclaw.service.j2
+    dest: /etc/systemd/system/openclaw.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart openclaw
+
+- name: Deploy OpenClaw firewall rules
+  become: true
+  ansible.builtin.template:
+    src: firewall.nft.j2
+    dest: "{{ openclaw_config_dir }}/firewall.nft"
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Restart openclaw firewall
+
+- name: Deploy OpenClaw firewall unit
+  become: true
+  ansible.builtin.template:
+    src: openclaw-firewall.service.j2
+    dest: /etc/systemd/system/openclaw-firewall.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart openclaw firewall
+
+- name: Ensure OpenClaw firewall is started and enabled
+  become: true
+  ansible.builtin.systemd:
+    name: openclaw-firewall
+    state: started
+    enabled: true
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: Ensure OpenClaw is started and enabled
+  become: true
+  ansible.builtin.systemd:
+    name: openclaw
+    state: started
+    enabled: true
+    daemon_reload: true
+  when: not ansible_check_mode

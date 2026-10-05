@@ -13,3 +13,17 @@ terraform {
 
 provider "proxmox" {
 }
+
+variable "proxmox_ssh_username" {
+  type    = string
+  default = "root"
+}
+
+provider "proxmox" {
+  alias = "snippets"
+
+  ssh {
+    agent    = true
+    username = var.proxmox_ssh_username
+  }
+}
