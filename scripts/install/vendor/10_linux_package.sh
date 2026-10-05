@@ -11,7 +11,7 @@ readonly OS_ID="${ID}"
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 readonly KUBECTL_VERSION="${KUBECTL_VERSION:-1.37}"
 # renovate: datasource=github-releases depName=openbao/openbao
-readonly OPENBAO_VERSION="${OPENBAO_VERSION:-2.7.0}"
+readonly OPENBAO_VERSION="${OPENBAO_VERSION:-2.7.1}"
 # renovate: datasource=github-releases depName=freelensapp/freelens
 readonly FREELENS_VERSION="${FREELENS_VERSION:-1.10.3}"
 

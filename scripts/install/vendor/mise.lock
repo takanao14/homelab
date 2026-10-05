@@ -18,20 +18,20 @@ url = "https://github.com/BurntSushi/ripgrep/releases/download/15.2.0/ripgrep-15
 url_api = "https://api.github.com/repos/BurntSushi/ripgrep/releases/assets/478120097"
 
 [[tools."aqua:Byron/dua-cli"]]
-version = "2.45.0"
+version = "2.45.1"
 backend = "aqua:Byron/dua-cli"
-specifiers = ["2.45.0"]
+specifiers = ["2.45.1"]
 
 [tools."aqua:Byron/dua-cli"."platforms.linux-arm64"]
-checksum = "sha256:3ac90e746b52c6da2ecccac2d3e245eb3fe10386be4754575a43c374b6ad785a"
-url = "https://github.com/Byron/dua-cli/releases/download/v2.45.0/dua-v2.45.0-aarch64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/Byron/dua-cli/releases/assets/559563115"
+checksum = "sha256:8549719a92187491c1a6956aefddbd815ee5b3217491f2a3d98f2cc388bcb5ef"
+url = "https://github.com/Byron/dua-cli/releases/download/v2.45.1/dua-v2.45.1-aarch64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/Byron/dua-cli/releases/assets/600780401"
 provenance = "github-attestations"
 
 [tools."aqua:Byron/dua-cli"."platforms.linux-x64"]
-checksum = "sha256:d0b972f5bbcab2260db791bae3796f61f22d6df7f1b3707aeb2eed9aa281e4cd"
-url = "https://github.com/Byron/dua-cli/releases/download/v2.45.0/dua-v2.45.0-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/Byron/dua-cli/releases/assets/559562844"
+checksum = "sha256:e9279f02bbbf22611c1602c4d5b526c9b99962d3d828016d48a0ee5b27252805"
+url = "https://github.com/Byron/dua-cli/releases/download/v2.45.1/dua-v2.45.1-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/Byron/dua-cli/releases/assets/600780353"
 provenance = "github-attestations"
 
 [[tools."aqua:FiloSottile/age"]]
@@ -88,32 +88,32 @@ url_api = "https://api.github.com/repos/argoproj/argo-cd/releases/assets/5628968
 url = "https://github.com/argoproj/argo-cd/releases/download/v3.5.3/argocd-cli.intoto.jsonl"
 
 [[tools."aqua:astral-sh/uv"]]
-version = "0.12.19"
+version = "0.12.22"
 backend = "aqua:astral-sh/uv"
-specifiers = ["0.12.19"]
+specifiers = ["0.12.22"]
 
 [tools."aqua:astral-sh/uv"."platforms.linux-arm64"]
-checksum = "sha256:0804e9b164c64b6914182d5920c08551958a095986f10a3731056df701126436"
-url = "https://github.com/astral-sh/uv/releases/download/0.12.19/uv-aarch64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/587158851"
+checksum = "sha256:6f66a14e8239871fb477f9746c941fedfa77e8fe28a8bc7c07e1dc7f53a66712"
+url = "https://github.com/astral-sh/uv/releases/download/0.12.22/uv-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/604418317"
 provenance = "github-attestations"
 
 [tools."aqua:astral-sh/uv"."platforms.linux-x64"]
-checksum = "sha256:23bf5552d220e0842b65c862097b2ebaeba0064b74eda5e565e77fd25969d8c8"
-url = "https://github.com/astral-sh/uv/releases/download/0.12.19/uv-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/587159011"
+checksum = "sha256:b9980552309f09c15172b8be828555e375097f16deb459795ce7bfd200380f0b"
+url = "https://github.com/astral-sh/uv/releases/download/0.12.22/uv-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/604418465"
 provenance = "github-attestations"
 
 [[tools."aqua:aws/aws-cli"]]
-version = "2.37.4"
+version = "2.37.9"
 backend = "aqua:aws/aws-cli"
-specifiers = ["2.37.4"]
+specifiers = ["2.37.9"]
 
 [tools."aqua:aws/aws-cli"."platforms.linux-arm64"]
-url = "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-2.37.4.zip"
+url = "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-2.37.9.zip"
 
 [tools."aqua:aws/aws-cli"."platforms.linux-x64"]
-url = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.37.4.zip"
+url = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.37.9.zip"
 
 [[tools."aqua:bootandy/dust"]]
 version = "1.2.6"
@@ -146,20 +146,20 @@ url = "https://github.com/cilium/cilium-cli/releases/download/v0.20.1/cilium-lin
 url_api = "https://api.github.com/repos/cilium/cilium-cli/releases/assets/585358772"
 
 [[tools."aqua:cli/cli"]]
-version = "2.101.0"
+version = "2.102.0"
 backend = "aqua:cli/cli"
-specifiers = ["2.101.0"]
+specifiers = ["2.102.0"]
 
 [tools."aqua:cli/cli"."platforms.linux-arm64"]
-checksum = "sha256:b57e8063f18862647c9d22727c32e9da1b963f8bf9db648fe123a6975695640f"
-url = "https://github.com/cli/cli/releases/download/v2.101.0/gh_2.101.0_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/cli/cli/releases/assets/565857147"
+checksum = "sha256:7862c86c72f43df3a2d93ddde6f473285b4e2af61b494849846827e513ef6484"
+url = "https://github.com/cli/cli/releases/download/v2.102.0/gh_2.102.0_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/599854680"
 provenance = "github-attestations"
 
 [tools."aqua:cli/cli"."platforms.linux-x64"]
-checksum = "sha256:9bca2d1c16825f109907a23307628a2f0698fbf99662b73a5cf0b020293072b8"
-url = "https://github.com/cli/cli/releases/download/v2.101.0/gh_2.101.0_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/cli/cli/releases/assets/565857134"
+checksum = "sha256:bb766f710eef8ede859c18578c72c327597cd4c8a85b06001b1f3843c6019386"
+url = "https://github.com/cli/cli/releases/download/v2.102.0/gh_2.102.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/599854672"
 provenance = "github-attestations"
 
 [[tools."aqua:dalance/procs"]]
@@ -282,19 +282,19 @@ checksum = "sha256:86584a54def73570558f66f5111cc53dfed56689637ae32c1201205d494f5
 url = "https://get.helm.sh/helm-v4.3.0-linux-amd64.tar.gz"
 
 [[tools."aqua:helmfile/helmfile"]]
-version = "1.8.0"
+version = "1.8.1"
 backend = "aqua:helmfile/helmfile"
-specifiers = ["1.8.0"]
+specifiers = ["1.8.1"]
 
 [tools."aqua:helmfile/helmfile"."platforms.linux-arm64"]
-checksum = "sha256:01037dc187840a778ec65eae66b549b63d619a853540c8983f90d73ccbce5033"
-url = "https://github.com/helmfile/helmfile/releases/download/v1.8.0/helmfile_1.8.0_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/helmfile/helmfile/releases/assets/560342817"
+checksum = "sha256:2217788de9fb42cd0b3d84f1ee99c63617e19dea7af4995a59e45e4952c86ec4"
+url = "https://github.com/helmfile/helmfile/releases/download/v1.8.1/helmfile_1.8.1_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/helmfile/helmfile/releases/assets/599703527"
 
 [tools."aqua:helmfile/helmfile"."platforms.linux-x64"]
-checksum = "sha256:35d5d39fc608342b23fc7ce1dd0c3bf0c96cc07ec3796507ab6894a5d172bf20"
-url = "https://github.com/helmfile/helmfile/releases/download/v1.8.0/helmfile_1.8.0_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/helmfile/helmfile/releases/assets/560342815"
+checksum = "sha256:ccabbe75dddbc25008d055fe92a44f95a184342211e7244d32b870409239c7a3"
+url = "https://github.com/helmfile/helmfile/releases/download/v1.8.1/helmfile_1.8.1_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/helmfile/helmfile/releases/assets/599703520"
 
 [[tools."aqua:jesseduffield/lazygit"]]
 version = "0.65.1"
@@ -367,36 +367,36 @@ url = "https://github.com/kubernetes-sigs/krew/releases/download/v0.5.0/krew-lin
 url_api = "https://api.github.com/repos/kubernetes-sigs/krew/releases/assets/362537140"
 
 [[tools."aqua:mikefarah/yq"]]
-version = "4.53.6"
+version = "4.54.1"
 backend = "aqua:mikefarah/yq"
-specifiers = ["4.53.6"]
+specifiers = ["4.54.1"]
 
 [tools."aqua:mikefarah/yq"."platforms.linux-arm64"]
-checksum = "sha256:88a1016bc1d657375a35864e4f44b6f333df8ff97b559f51bba0adcb2169df09"
-url = "https://github.com/mikefarah/yq/releases/download/v4.53.6/yq_linux_arm64"
-url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/522028007"
+checksum = "sha256:189088da0c6429ec5178dfaab1a114805f6cab0b61b165ab236efedf1d57a71b"
+url = "https://github.com/mikefarah/yq/releases/download/v4.54.1/yq_linux_arm64"
+url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/597222603"
 provenance = "cosign"
 
 [tools."aqua:mikefarah/yq"."platforms.linux-x64"]
-checksum = "sha256:c5f056448f973ae7d39b5401949648a78f2dc1947d6a8eb65be60d5c504b9385"
-url = "https://github.com/mikefarah/yq/releases/download/v4.53.6/yq_linux_amd64"
-url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/522028022"
+checksum = "sha256:8e34fc298390875de416e6a4afcb8cabeceb25d9aa8506c1a2f9353cf702ea5f"
+url = "https://github.com/mikefarah/yq/releases/download/v4.54.1/yq_linux_amd64"
+url_api = "https://api.github.com/repos/mikefarah/yq/releases/assets/597222595"
 provenance = "cosign"
 
 [[tools."aqua:opentofu/opentofu"]]
-version = "1.12.6"
+version = "1.13.1"
 backend = "aqua:opentofu/opentofu"
-specifiers = ["1.12.6"]
+specifiers = ["1.13.1"]
 
 [tools."aqua:opentofu/opentofu"."platforms.linux-arm64"]
-checksum = "sha256:9bd0228a81bcd0c88f7045c74378f45a815779f19897191dff7d9efba9976b9e"
-url = "https://github.com/opentofu/opentofu/releases/download/v1.12.6/tofu_1.12.6_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/520762688"
+checksum = "sha256:9c1ef375aa1852db0b2888aa921b640c71f8140d4682aa4fec99378a64fa7dc3"
+url = "https://github.com/opentofu/opentofu/releases/download/v1.13.1/tofu_1.13.1_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/603708055"
 
 [tools."aqua:opentofu/opentofu"."platforms.linux-x64"]
-checksum = "sha256:50a6106fa4de523d09c87af85f3db1dd47535fc005727fdca6852146476b88ec"
-url = "https://github.com/opentofu/opentofu/releases/download/v1.12.6/tofu_1.12.6_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/520762723"
+checksum = "sha256:378ada19d4bc70c43732004e8159be771b23b9a5afdf059e5f8a2b3fa2c70a69"
+url = "https://github.com/opentofu/opentofu/releases/download/v1.13.1/tofu_1.13.1_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/603708017"
 
 [[tools."aqua:prometheus/prometheus"]]
 version = "3.15.0"
@@ -521,20 +521,20 @@ url = "https://github.com/zellij-org/zellij/releases/download/v0.45.1/zellij-x86
 url_api = "https://api.github.com/repos/zellij-org/zellij/releases/assets/533538763"
 
 [[tools."github:DNSControl/dnscontrol"]]
-version = "5.2.0"
+version = "5.3.0"
 backend = "github:DNSControl/dnscontrol"
-specifiers = ["v5.2.0"]
+specifiers = ["v5.3.0"]
 
 [tools."github:DNSControl/dnscontrol"."platforms.linux-arm64"]
-checksum = "sha256:63123eb877015af9e43139674ee109c2e97012bafb0b3de3a28836905875a8bb"
-url = "https://github.com/DNSControl/dnscontrol/releases/download/v5.2.0/dnscontrol_5.2.0_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/DNSControl/dnscontrol/releases/assets/581809149"
+checksum = "sha256:bf2490f5dee91c8fd52745cd9792989f0aa969a1c8621505a809dd59607fa8af"
+url = "https://github.com/DNSControl/dnscontrol/releases/download/v5.3.0/dnscontrol_5.3.0_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/DNSControl/dnscontrol/releases/assets/601685558"
 provenance = "github-attestations"
 
 [tools."github:DNSControl/dnscontrol"."platforms.linux-x64"]
-checksum = "sha256:9b82d5734af489013a733de991ccd557dcaeebe1631dcc842e4123bb93acc612"
-url = "https://github.com/DNSControl/dnscontrol/releases/download/v5.2.0/dnscontrol_5.2.0_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/DNSControl/dnscontrol/releases/assets/581809152"
+checksum = "sha256:40048d163f39434fe2611fd6907539b1373972832f8fe886f100c6be8f5c1cd6"
+url = "https://github.com/DNSControl/dnscontrol/releases/download/v5.3.0/dnscontrol_5.3.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/DNSControl/dnscontrol/releases/assets/601685614"
 provenance = "github-attestations"
 
 [[tools."pipx:ansible-core"]]
