@@ -4,5 +4,10 @@
   roles:
     - role: timezone
       tags: timezone
+    - role: mcp_client
+      tags: [openclaw, mcp_client]
+      vars:
+        mcp_client_env_file: /etc/openclaw/mcp.env
+        mcp_client_notify: [Restart openclaw]
     - role: openclaw
       tags: openclaw

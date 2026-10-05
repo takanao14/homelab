@@ -1,0 +1,18 @@
+---
+mcp_client_servers:
+  grafana:
+    url: https://mcp-grafana.prd.butaco.net/mcp
+    tools:
+      - list_datasources
+      - search_dashboards
+      - get_dashboard_summary
+      - query_prometheus
+      - list_loki_label_names
+      - list_loki_label_values
+      - query_loki_logs
+  netbox:
+    url: https://mcp-netbox.prd.butaco.net/mcp
+    tools:
+      - netbox_get_objects
+      - netbox_get_object_by_id
+      - netbox_search_objects

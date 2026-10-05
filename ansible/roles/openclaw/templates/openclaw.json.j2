@@ -21,7 +21,43 @@
       ]
     }
   },
-  "tools": { "profile": "minimal" },
+  "mcp": {
+    "servers": {
+{% for name, server in mcp_client_servers.items() %}
+      "{{ name }}": {
+        "transport": "streamable-http",
+        "url": {{ server.url | to_json }},
+        "headers": {
+          "Authorization": "Bearer ${MCP_{{ name | upper }}_SERVER_TOKEN}"
+        },
+        "connectionTimeoutMs": 30000,
+        "requestTimeoutMs": 60000,
+        "sslVerify": true,
+        "toolFilter": { "include": {{ server.tools | to_json }} }
+      }{{ ',' if not loop.last else '' }}
+{% endfor %}
+    }
+  },
+  "plugins": {
+    "load": { "paths": ["/opt/openclaw-plugins/parallel-{{ openclaw_web_plugin_version }}"] },
+    "entries": { "parallel": { "enabled": true } }
+  },
+  "tools": {
+    "web": {
+      "search": { "enabled": true, "provider": "parallel-free", "maxResults": 5 },
+      "fetch": { "enabled": true, "maxChars": 12000, "timeoutSeconds": 30 }
+    },
+    "profile": "minimal",
+    "alsoAllow": [
+      "web_search",
+      "web_fetch",
+{% for name, server in mcp_client_servers.items() %}
+{% for tool in server.tools %}
+      "{{ name }}__{{ tool }}"{{ ',' if not (loop.last and name == (mcp_client_servers.keys() | list | last)) else '' }}
+{% endfor %}
+{% endfor %}
+    ]
+  },
   "agents": {
     "defaults": {
       "model": { "primary": "lemonade/{{ openclaw_model_id }}" }
@@ -38,7 +74,7 @@
           {
             "id": "{{ openclaw_model_id }}",
             "name": "Gemma 4 12B MTP (Lemonade)",
-            "contextWindow": 32768,
+            "contextWindow": {{ openclaw_model_context_window }},
             "maxTokens": 8192
           }
         ]

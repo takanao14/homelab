@@ -14,11 +14,13 @@ ExecStart=/usr/bin/podman run --rm --name {{ openclaw_container_name }} \
   --publish=127.0.0.1:{{ openclaw_listen_port }}:{{ openclaw_listen_port }} \
   --publish={{ ansible_host }}:{{ openclaw_listen_port }}:{{ openclaw_listen_port }} \
   --env-file={{ openclaw_config_dir }}/openclaw.env \
+  --env-file=/etc/openclaw/mcp.env \
   --env=HOME=/home/node \
   --env=OPENCLAW_HOME=/home/node \
   --env=OPENCLAW_STATE_DIR=/home/node/.openclaw \
   --env=OPENCLAW_CONFIG_PATH=/home/node/.openclaw/openclaw.json \
   --volume={{ openclaw_state_dir }}:/home/node/.openclaw:Z \
+  --volume={{ openclaw_plugin_dir }}:/opt/openclaw-plugins:ro \
   --security-opt=no-new-privileges \
   --cap-drop=all \
   {{ openclaw_image }} node dist/index.js gateway --bind lan

@@ -18,8 +18,9 @@ logs or copy it to another repository. The token authenticates the UI; the
 Approve a new browser's device pairing on the VM after entering the token.
 
 OpenClaw uses Lemonade's OpenAI-compatible endpoint and
-`Gemma-4-12B-it-MTP-GGUF`. The initial `minimal` tool profile permits chat
-without filesystem or shell tools. The Gateway state, including sessions, is
+`Gemma-4-12B-it-MTP-GGUF`, with a 262,144-token context matching the
+Lemonade runtime. The `minimal` tool profile adds Web search, URL fetching, and the Grafana and NetBox MCP tools selected
+in `group_vars/mcp_client.yaml`; filesystem and shell tools remain disabled. The Gateway state, including sessions, is
 stored under `/var/lib/openclaw`; back it up before replacing the VM.
 
 Lemonade must be selected in gpu-switch before a model request can succeed.
@@ -29,3 +30,17 @@ leaves OpenClaw unable to answer until Lemonade is selected again.
 Deploy with `ansible-playbook playbooks/services/openclaw.yaml` from `ansible/`.
 Afterward, check the systemd unit, `openclaw security audit`, a direct model
 response, and a Web UI conversation.
+
+The shared `mcp_client` role reads caller tokens from `.env/secrets.sops.env`
+and writes `/etc/openclaw/mcp.env` as root with mode `0600`. Podman passes them
+as environment variables; the JSON config contains references only. Token
+changes restart the Gateway. VM backups contain this plaintext file. Rotate
+server and client tokens together using the procedure in `k8s/mcp/README.md`.
+
+After a container restart, an unreleased Gateway owner lease can delay startup
+for up to five minutes. Preserve the state database and let the lease expire.
+
+Web search uses Parallel's anonymous free tier through the pinned external
+plugin; queries are sent to Parallel. `web_fetch` reads public URLs directly.
+Both tools retain their private-address protection. The plugin directory is
+root-owned and mounted read-only into the container.

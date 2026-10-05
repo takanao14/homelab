@@ -10,3 +10,7 @@ openclaw_caddy_address: "{{ hostvars[groups['caddy'][0]]['ansible_host'] }}"
 openclaw_public_origin: https://openclaw.home.butaco.net
 openclaw_model_id: Gemma-4-12B-it-MTP-GGUF
 openclaw_model_url: https://lemonade.prd.butaco.net/v1
+openclaw_model_context_window: 262144
+openclaw_web_plugin_version: 2026.9.6
+openclaw_web_plugin_sha256: f7e4981fea7838b662548ab7c9bdb39157f41f8ee688b10ffa0702355f008a4c
+openclaw_plugin_dir: /opt/openclaw/plugins

@@ -1,0 +1,40 @@
+---
+- name: Load MCP caller credentials from SOPS
+  ansible.builtin.set_fact:
+    mcp_client_tokens:
+      grafana: "{{ mcp_client_source.MCP_GRAFANA_SERVER_TOKEN }}"
+      netbox: "{{ mcp_client_source.MCP_NETBOX_SERVER_TOKEN }}"
+    cacheable: false
+  vars:
+    mcp_client_source: "{{ lookup('community.sops.sops', mcp_client_secret_file, input_type='dotenv', output_type='json') | from_json }}"
+  no_log: true
+
+- name: Validate MCP caller credentials
+  ansible.builtin.assert:
+    that:
+      - item.value is string
+      - item.value | length >= 32
+      - item.value is match('^[A-Za-z0-9._~-]+$')
+  loop: "{{ mcp_client_tokens | dict2items }}"
+  no_log: true
+
+- name: Create MCP credential directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ mcp_client_env_file | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Deploy MCP caller credentials
+  become: true
+  ansible.builtin.template:
+    src: mcp.env.j2
+    dest: "{{ mcp_client_env_file }}"
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+  diff: false
+  notify: "{{ mcp_client_notify }}"

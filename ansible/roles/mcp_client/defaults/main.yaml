@@ -1,0 +1,3 @@
+---
+mcp_client_secret_file: "{{ inventory_dir }}/../../../.env/secrets.sops.env"
+mcp_client_notify: []

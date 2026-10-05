@@ -16,7 +16,10 @@ ESO refreshes hourly and Reloader restarts the affected Pod.
 Codex and Claude Code use the HTTP entries in `.codex/config.toml` and
 `.mcp.json`. Restart each client after changing these files. The header helper
 reads the encrypted file directly, so no terminal environment inheritance is
-needed.
+needed. OpenClaw and Hermes receive caller tokens through the shared Ansible
+`mcp_client` role; redeploy both service playbooks after rotation, restart
+OpenClaw, and relaunch Hermes. Pause evaluations while server and client tokens
+differ.
 
 Check `ExternalSecret` readiness, then confirm each HTTPS endpoint returns `401`
 without a bearer token and with the other server's token. Initialize both MCP
