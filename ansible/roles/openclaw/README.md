@@ -37,8 +37,13 @@ as environment variables; the JSON config contains references only. Token
 changes restart the Gateway. VM backups contain this plaintext file. Rotate
 server and client tokens together using the procedure in `k8s/mcp/README.md`.
 
-After a container restart, an unreleased Gateway owner lease can delay startup
-for up to five minutes. Preserve the state database and let the lease expire.
+The container runs Node directly with a stable hostname so Gateway signals and
+dead-owner lease detection survive container replacement. Bypassing the image's
+init avoids its signal-forwarding permission error with all capabilities dropped.
+Podman allows the Gateway's 330-second shutdown budget before forcing
+termination. A restart may
+wait for active requests to drain; after an abrupt stop, an unverifiable owner
+lease can still take up to five minutes to expire. Preserve the state database.
 
 Web search uses Parallel's anonymous free tier through the pinned external
 plugin; queries are sent to Parallel. `web_fetch` reads public URLs directly.

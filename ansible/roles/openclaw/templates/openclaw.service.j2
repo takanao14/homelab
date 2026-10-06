@@ -9,8 +9,12 @@ After=openclaw-firewall.service
 Type=simple
 Restart=always
 RestartSec=5s
+TimeoutStopSec=345s
 ExecStartPre=-/usr/bin/podman rm --force {{ openclaw_container_name }}
 ExecStart=/usr/bin/podman run --rm --name {{ openclaw_container_name }} \
+  --entrypoint=node \
+  --hostname={{ openclaw_container_name }} \
+  --pull=never \
   --publish=127.0.0.1:{{ openclaw_listen_port }}:{{ openclaw_listen_port }} \
   --publish={{ ansible_host }}:{{ openclaw_listen_port }}:{{ openclaw_listen_port }} \
   --env-file={{ openclaw_config_dir }}/openclaw.env \
@@ -23,8 +27,8 @@ ExecStart=/usr/bin/podman run --rm --name {{ openclaw_container_name }} \
   --volume={{ openclaw_plugin_dir }}:/opt/openclaw-plugins:ro \
   --security-opt=no-new-privileges \
   --cap-drop=all \
-  {{ openclaw_image }} node dist/index.js gateway --bind lan
-ExecStop=/usr/bin/podman stop --time 30 {{ openclaw_container_name }}
+  {{ openclaw_image }} dist/index.js gateway --bind lan
+ExecStop=/usr/bin/podman stop --time 330 {{ openclaw_container_name }}
 
 [Install]
 WantedBy=multi-user.target
