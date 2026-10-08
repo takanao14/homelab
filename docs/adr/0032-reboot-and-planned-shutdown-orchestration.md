@@ -6,9 +6,9 @@
   [ADR-0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md),
   [ADR-0021](0021-relocate-prd-control-plane-to-node4.md),
   [ADR-0024](0024-shared-proxmox-node-inventory-for-monitoring.md),
-  [`ansible/playbooks/ops-package_upgrade.yaml`](../../ansible/playbooks/ops-package_upgrade.yaml),
-  [`ansible/playbooks/ops-shutdown.yaml`](../../ansible/playbooks/ops-shutdown.yaml),
-  [`ansible/playbooks/ops-startup.yaml`](../../ansible/playbooks/ops-startup.yaml),
+  [`ansible/playbooks/ops/package_upgrade.yaml`](../../ansible/playbooks/ops/package_upgrade.yaml),
+  [`ansible/playbooks/ops/shutdown.yaml`](../../ansible/playbooks/ops/shutdown.yaml),
+  [`ansible/playbooks/ops/startup.yaml`](../../ansible/playbooks/ops/startup.yaml),
   [`k0s/template_lib.sh`](../../k0s/template_lib.sh)
 
 ## Context
