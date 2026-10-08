@@ -106,12 +106,13 @@ deleting it:
 | [0055](0055-voice-ui-observes-gpu-switch-without-controlling-it.md) | Voice UI observes GPU availability without switching workloads | Accepted |
 | [0056](0056-butaco-reads-football-data-from-espn.md) | Butaco reads football data from ESPN's unofficial API | Accepted |
 | [0057](0057-cluster-hosted-authenticated-mcp.md) | Host authenticated MCP servers in the prd cluster | Accepted |
-| [0058](0058-select-authentik-features-and-update-them-individually.md) | Select Authentik features and update them individually | Accepted |
+| [0058](0058-select-authentik-features-and-update-them-individually.md) | Select Authentik features at build time | Accepted |
 | [0059](0059-group-ansible-playbooks-by-purpose.md) | Group Ansible playbooks by purpose | Accepted |
 | [0060](0060-mcp-relies-on-bearer-authentication.md) | Rely on bearer authentication for MCP access | Accepted |
 | [0061](0061-long-term-metrics-in-victoriametrics-single.md) | Keep long-term metrics in VictoriaMetrics single-node | Accepted |
 | [0062](0062-compose-vm-cloud-init-snippets.md) | Compose VM initialization with optional cloud-init snippets | Accepted |
 | [0063](0063-openclaw-on-dedicated-vm-with-lemonade.md) | Run OpenClaw on a dedicated VM with Lemonade inference | Accepted |
-| [0064](0064-hermes-evaluation-on-dedicated-vm.md) | Evaluate Hermes Agent on a dedicated VM | Amended by ADR-0066 |
+| [0064](0064-hermes-evaluation-on-dedicated-vm.md) | Evaluate Hermes Agent on a dedicated VM | Accepted |
 | [0065](0065-agent-mcp-caller-credentials.md) | Connect VM agents to shared read-only MCP servers | Accepted |
 | [0066](0066-hermes-dashboard-through-caddy.md) | Expose Hermes Dashboard through Caddy | Accepted |
+| [0067](0067-replace-authentik-with-lldap-and-authelia.md) | Replace Authentik with LLDAP and Authelia | Proposed |
