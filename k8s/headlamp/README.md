@@ -1,6 +1,6 @@
 # Headlamp
 
-In-cluster Kubernetes UI for each environment, authenticated by ServiceAccount
+Read-only in-cluster Kubernetes UI for each environment, using ServiceAccount
 RBAC without cross-cluster kubeconfig Secrets.
 
 ## Directory Structure
@@ -9,9 +9,9 @@ RBAC without cross-cluster kubeconfig Secrets.
 headlamp/
 ├── chart/
 │   ├── Chart.yaml        # Wrapper chart with headlamp as dependency
-│   ├── values.yaml       # Common values (in-cluster mode, HTTPRoute, forward auth)
+│   ├── values.yaml       # Common values (in-cluster mode, HTTPRoute, read-only RBAC)
 │   └── templates/
-│       └── forward-auth.yaml  # Backend + outpost HTTPRoute + SecurityPolicy
+│       └── read-only-rbac.yaml  # ServiceAccount bindings to view + extra read groups
 ├── prd/values.yaml       # hostname: headlamp.prd.butaco.net, https listener
 └── sandbox/values.yaml   # hostname: headlamp.sandbox.butaco.net, http listener (ADR-0010)
 ```
@@ -23,69 +23,24 @@ App of Apps enables Headlamp per environment.
 - prd: https://headlamp.prd.butaco.net
 - sandbox: http://headlamp.sandbox.butaco.net
 
-## Authentication (forward auth)
+## Read-only access
 
-Both environments sit behind Authentik. Envoy Gateway calls the Authentik proxy
-outpost on `authentik1` over ext_authz, so every request on the Headlamp
-hostname is authenticated before it reaches the Service, and there is no second
-entry point to guard. Admission is by Authentik group
-(`templates/blueprints/proxy.yaml.j2` in the `authentik` role).
+Headlamp has no authentication. `-unsafe-use-service-account-token` removes the
+token prompt, so every visitor uses the `headlamp` ServiceAccount, which is
+read-only: the built-in `view` ClusterRole plus `headlamp-read-extra` for
+cluster-scoped resources and the CRD groups in `readOnly.extraApiGroups`.
 
-```text
-browser -> Envoy Gateway -> /outpost.goauthentik.io/*  -> authentik1:9100 (login/callback)
-                         -> /  --ext_authz--> authentik1:9100
-                                200 + X-authentik-* -> Headlamp Service
-                                302                 -> auth.home.butaco.net
-```
+Anyone on the LAN can therefore read what that role allows, including pod logs,
+ConfigMaps, and pod specs, but not Secrets. Keep it that way:
 
-Two separate settings are involved, and it is easy to assume the first does the
-second's job:
+- Never grant the core group wildcard or any group whose resources embed secret
+  values (for example `helm.k0sproject.io` chart values).
+- Never bind the ServiceAccount to a role with write verbs; that would give
+  every LAN client those rights.
+- Do not create a long-lived `headlamp-token` Secret.
 
-- `-unsafe-use-service-account-token` is what removes the token prompt. Headlamp
-  reaches the API server as its own ServiceAccount for every visitor. Upstream
-  calls it unsafe because by itself it gives cluster-admin to anyone who can
-  reach the Service, so it is only sound behind the forward auth above — enable
-  and disable the two together.
-- `-proxy-auth=true` with authentik's header names does **not** bypass the login
-  screen. In v0.44.0 it only feeds `/clusters/{name}/me`, so the top bar shows
-  who Authentik authenticated, and it gates `-proxy-auth-token-header`, which is
-  unused here because forwarding a token to the API server needs the OIDC work
-  deferred by decision 19.
-
-Client-supplied identity headers cannot be trusted on their own: the defence is
-that `headersToBackend` overwrites coexisting headers, so a forged
-`X-authentik-username` is replaced by the outpost's value. Do not add an
-HTTPRoute `RequestHeaderModifier` to remove those headers — route-level header
-mutation runs after ext_authz and would strip the injected values too.
-
-A NetworkPolicy closes the path around all of this. ext_authz only guards
-traffic arriving through the Gateway, so any pod that could reach the Headlamp
-Service directly would get a cluster-admin session without authenticating.
-Ingress is therefore limited to the proxy pods of the Gateway named in the
-HTTPRoute. kubelet probes still work: Cilium exempts host-to-pod traffic while
-the host firewall is off, which is the default here.
-
-Requirements and limits:
-
-- Envoy Gateway **1.7.1 or newer**. Envoy 1.37.0 stripped the `Location` header
-  from ext_authz 302 responses, which breaks the login redirect
-  (envoyproxy/gateway#8202, fixed in EG v1.7.1 / Envoy 1.37.1).
-- `extensionApis.enableBackend: true` on the controller, since the outpost lives
-  outside the cluster (`k8s/envoy-gateway/controller/values.yaml`).
-- `failOpen: false` — an Authentik outage takes Headlamp down rather than opening
-  it. The break-glass path is the X.509 admin kubeconfig, which does not depend
-  on Authentik.
-- Headlamp still reaches the API server as its own `cluster-admin`
-  ServiceAccount, so admission is all-or-nothing and the API server audit log
-  sees one identity. Per-user RBAC needs OIDC, deferred by decision 19.
-
-See `docs/plans/identity-authentication-architecture.md` decision 20.
-
-## ServiceAccount token
-
-Do not recreate the long-lived `headlamp-token` Secret: it would grant direct
-cluster-admin API access outside forward auth. Headlamp uses its projected,
-pod-bound ServiceAccount token. Keep forward auth and the NetworkPolicy enabled.
+Changes go through `kubectl` with the X.509 admin kubeconfig. Read-only access
+does not depend on any identity service.
 
 ## Design Note
 
