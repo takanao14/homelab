@@ -66,3 +66,10 @@ the sandbox HTTP-only pattern from ADR-0010: the HTTPRoute binds to
 `sectionName: http` instead of `https`, at `headlamp.sandbox.butaco.net`. No
 OpenBao secret is needed (per the in-cluster ServiceAccount model above), so
 this required no policy changes.
+
+## Addendum (2026-10-09): read-only without authentication
+
+ADR-0067 removes forward auth from Headlamp. Each instance now binds its
+ServiceAccount to `view` plus a Secret-free read role instead of
+`cluster-admin`, and skips the token prompt. See
+[`k8s/headlamp/README.md`](../../k8s/headlamp/README.md).
