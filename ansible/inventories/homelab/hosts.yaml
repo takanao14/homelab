@@ -58,7 +58,7 @@ all:
       ansible_host: 192.168.10.246
     netbox1:
       ansible_host: 192.168.10.247
-    authentik1:
+    idp1:
       ansible_host: 192.168.10.248
     openbao1:
       ansible_host: 192.168.40.30
@@ -117,10 +117,6 @@ all:
     # =================================================================
     # Service groups — one per managed service.
     # =================================================================
-    authentik:
-      hosts:
-        authentik1: null
-
     caddy:
       hosts:
         caddy1: null
@@ -174,6 +170,11 @@ all:
     hermes:
       hosts:
         hermes1: null
+
+    # Directory for SSSD and web authentication (ADR-0067).
+    lldap:
+      hosts:
+        idp1: null
 
     log_collector:
       hosts:
@@ -307,8 +308,8 @@ all:
         # Guests with virtio hardware only; ZFS lives on the hypervisor.
         node_exporter_vm:
           hosts:
-            authentik1: null
             hermes1: null
+            idp1: null
             # No kubelet on k0s controllers; scrape the host and kine DB disk directly.
             k0s-cp1: null
             netbox1: null
@@ -345,10 +346,10 @@ all:
     # VM guests read by Vector; journald keeps its stock syslog forwarding.
     vector_vm:
       children:
-        authentik: {}
         code_server: {}
         forgejo_runner: {}
         hermes: {}
+        lldap: {}
         netbox: {}
         openclaw: {}
         openbao: {}
@@ -378,7 +379,6 @@ all:
     # Timezone-managed hosts; explicit scope avoids k0s nodes and toolboxes.
     timezone:
       children:
-        authentik: {}
         caddy: {}
         dhcp: {}
         dhcp_lease_observer: {}
@@ -389,6 +389,7 @@ all:
         forgejo_runner: {}
         gpuvm: {}
         hermes: {}
+        lldap: {}
         log_collector: {}
         netbox: {}
         openclaw: {}
@@ -425,7 +426,7 @@ all:
         sssdtest1: null
         sssdtest2: null
         toolbox1: null
-        authentik1: null
+        idp1: null
         forgejo1: null
         netbox1: null
         seaweedfs1: null

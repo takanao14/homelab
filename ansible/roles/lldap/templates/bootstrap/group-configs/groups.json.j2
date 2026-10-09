@@ -1,0 +1,8 @@
+{# One JSON object per line; bootstrap.sh reads the file as a stream. #}
+{% for group in lldap_groups.values() %}
+{{ {'name': group.name, 'gidnumber': group.gid | int} | to_json }}
+{% endfor %}
+{# Personal primary groups: same name as the user, GID equal to the UID. #}
+{% for user in lldap_users %}
+{{ {'name': user.username, 'gidnumber': user.uid | int} | to_json }}
+{% endfor %}

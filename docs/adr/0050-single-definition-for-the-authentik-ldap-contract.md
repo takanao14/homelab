@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-18
+- **Amended by:** [ADR-0067](0067-replace-authentik-with-lldap-and-authelia.md)
 
 ## Context
 

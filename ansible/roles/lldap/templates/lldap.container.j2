@@ -1,0 +1,27 @@
+[Unit]
+Description=LLDAP directory
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+ContainerName={{ lldap_container }}
+Image={{ lldap_image }}:{{ lldap_version }}
+EnvironmentFile={{ lldap_env_file }}
+Environment=LLDAP_LDAP_BASE_DN={{ lldap_base_dn }}
+Environment=LLDAP_LDAP_USER_DN={{ lldap_admin_username }}
+Environment=LLDAP_HTTP_URL={{ lldap_http_url }}
+Environment=LLDAP_LDAPS_OPTIONS__ENABLED=true
+Environment=LLDAP_LDAPS_OPTIONS__PORT=6360
+Environment=LLDAP_LDAPS_OPTIONS__CERT_FILE=/certs/ldap.crt
+Environment=LLDAP_LDAPS_OPTIONS__KEY_FILE=/certs/ldap.key
+Volume={{ lldap_data_dir }}:/data
+Volume={{ lldap_certs_dir }}:/certs:ro
+Volume={{ lldap_bootstrap_dir }}:/bootstrap:ro
+PublishPort={{ lldap_ldaps_port }}:6360
+PublishPort={{ lldap_http_port }}:17170
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

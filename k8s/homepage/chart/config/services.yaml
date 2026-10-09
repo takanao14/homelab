@@ -122,10 +122,10 @@
         href: https://netbox.home.butaco.net
         description: IP Management
 
-    - Authentik:
-        icon: authentik.png
-        href: https://auth.home.butaco.net
-        description: Identity Provider
+    - LLDAP:
+        icon: mdi-account-group
+        href: https://lldap.home.butaco.net
+        description: User Directory
 
     - DNS Record View:
         icon: powerdns.png

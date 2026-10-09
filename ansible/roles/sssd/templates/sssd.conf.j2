@@ -14,11 +14,6 @@ offline_credentials_expiration = {{ sssd_offline_credentials_expiration }}
 id_provider = ldap
 auth_provider = ldap
 chpass_provider = none
-# `ldap` rather than `simple`: disabling a user in Authentik does NOT remove
-# them from the LDAP tree or from their groups — it only flips the Authentik-
-# specific `ak-active` attribute to FALSE. access_provider = simple only
-# looks at group membership, so a disabled user would keep logging in. The
-# filter below checks both group membership and ak-active.
 access_provider = ldap
 
 ldap_uri = {{ sssd_ldap_uri }}
@@ -30,25 +25,30 @@ ldap_default_bind_dn = {{ sssd_ldap_bind_dn }}
 ldap_default_authtok_type = password
 ldap_default_authtok = {{ sssd_ldap_bind_password }}
 
-# Authentik puts the login name in `cn`; `uid` is an opaque hash and must not
-# be used as the username. See roles/authentik/templates/blueprints/ldap.yaml.j2.
+# LLDAP schema; POSIX attributes are custom attributes populated by
+# roles/lldap. The (uidNumber=*) and (gidNumber=*) filters hide the bind
+# account and any group without a GID.
 ldap_schema = rfc2307bis
-ldap_user_object_class = {{ sssd_ldap_user_object_class }}
-ldap_user_name = {{ sssd_ldap_user_name_attr }}
+ldap_user_search_base = ou=people,{{ sssd_ldap_search_base }}?subtree?(uidNumber=*)
+ldap_user_object_class = posixAccount
+ldap_user_name = uid
+ldap_user_gecos = cn
 ldap_user_uid_number = uidNumber
 ldap_user_gid_number = gidNumber
 ldap_user_home_directory = homeDirectory
+ldap_user_shell = unixShell
 ldap_user_ssh_public_key = sshPublicKey
 ldap_user_member_of = memberOf
 
-ldap_group_object_class = {{ sssd_ldap_group_object_class }}
-ldap_group_name = {{ sssd_ldap_group_name_attr }}
+ldap_group_search_base = ou=groups,{{ sssd_ldap_search_base }}?subtree?(gidNumber=*)
+ldap_group_object_class = groupOfUniqueNames
+ldap_group_name = cn
 ldap_group_gid_number = gidNumber
-ldap_group_member = member
+ldap_group_member = uniqueMember
 
-# Only members of this Authentik group who are also active.
+# LLDAP has no disabled state; removing the group membership revokes login.
 ldap_access_order = filter
-ldap_access_filter = (&(memberOf=cn={{ sssd_allowed_login_group }},ou=groups,{{ sssd_ldap_search_base }})(ak-active=TRUE))
+ldap_access_filter = (memberOf=cn={{ sssd_allowed_login_group }},ou=groups,{{ sssd_ldap_search_base }})
 
 fallback_homedir = {{ sssd_home_dir_template }}
 default_shell = {{ sssd_default_shell }}

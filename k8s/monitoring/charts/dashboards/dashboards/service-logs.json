@@ -86,7 +86,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "((sum(count_over_time({host=\"authentik1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"netbox1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"openbao1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"runner1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"toolbox1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0)",
+          "expr": "((sum(count_over_time({host=\"idp1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"netbox1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"openbao1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"runner1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"toolbox1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0)",
           "legendFormat": "reporting",
           "instant": true
         }
@@ -273,8 +273,8 @@
       "type": "bargauge",
       "targets": [
         {
-          "expr": "sum(count_over_time({host=\"authentik1\", unit=~\".+\"}[24h])) or vector(0)",
-          "legendFormat": "authentik1",
+          "expr": "sum(count_over_time({host=\"idp1\", unit=~\".+\"}[24h])) or vector(0)",
+          "legendFormat": "idp1",
           "instant": true
         },
         {
@@ -358,8 +358,8 @@
       "type": "state-timeline",
       "targets": [
         {
-          "expr": "((sum(count_over_time({host=\"authentik1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
-          "legendFormat": "authentik1"
+          "expr": "((sum(count_over_time({host=\"idp1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
+          "legendFormat": "idp1"
         },
         {
           "expr": "((sum(count_over_time({host=\"netbox1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",

@@ -1,0 +1,27 @@
+{# One JSON object per line; bootstrap.sh reads the file as a stream. #}
+{{ {
+  'id': lldap_bind_user,
+  'email': lldap_bind_user ~ '@' ~ lldap_email_domain,
+  'displayName': 'SSSD lookup account',
+  'groups': ['lldap_strict_readonly'],
+  'password': lldap_bind_password,
+} | to_json }}
+{% for user in lldap_users %}
+{%   set config = {
+       'id': user.username,
+       'email': user.email | default(user.username ~ '@' ~ lldap_email_domain),
+       'displayName': user.name | default(user.username),
+       'groups': user.groups | default([]),
+       'uidnumber': user.uid | int,
+       'gidnumber': user.uid | int,
+       'homedirectory': '/home/' ~ user.username,
+       'unixshell': user.shell | default(lldap_default_shell),
+     } %}
+{%   if user.ssh_public_keys | default([]) | length > 0 %}
+{%     set _ = config.update({'sshpublickey': user.ssh_public_keys}) %}
+{%   endif %}
+{%   if user.username not in lldap_existing_user_ids %}
+{%     set _ = config.update({'password': user.password}) %}
+{%   endif %}
+{{ config | to_json }}
+{% endfor %}

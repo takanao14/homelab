@@ -1,0 +1,13 @@
+lldap_jwt_secret: 4sttaKmTs1AYa4PSwMsTxAhghN4s9p9gZhbnQ8ZZOOz5cRYWUnD9TUeUPX3avjvK
+lldap_key_seed: 1LpFkIvz0Fl8JRCJva7CTEyjT0xN9AkVZrphaSU5Dkiu9fZ1MPrOQVfBoheJ6oAa
+lldap_admin_password: lfG8pApGOEZ3ufSywVctFrxKYHpKSi80
+lldap_bind_password: xDJ39yRepOkDUaYbRKc5yiUw6Nd5_HFY
+lldap_users:
+    - username: testuser
+      uid: 10001
+      password: testuser!23
+      groups:
+        - lldap_admin
+        - lab-platform-admins
+        - lab-linux-users
+        - lab-linux-admins

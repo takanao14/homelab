@@ -106,7 +106,7 @@ deleting it:
 | [0055](0055-voice-ui-observes-gpu-switch-without-controlling-it.md) | Voice UI observes GPU availability without switching workloads | Accepted |
 | [0056](0056-butaco-reads-football-data-from-espn.md) | Butaco reads football data from ESPN's unofficial API | Accepted |
 | [0057](0057-cluster-hosted-authenticated-mcp.md) | Host authenticated MCP servers in the prd cluster | Accepted |
-| [0058](0058-select-authentik-features-and-update-them-individually.md) | Select Authentik features at build time | Accepted |
+| [0058](0058-select-authentik-features-and-update-them-individually.md) | Select Authentik features at build time | Superseded by ADR-0067 |
 | [0059](0059-group-ansible-playbooks-by-purpose.md) | Group Ansible playbooks by purpose | Accepted |
 | [0060](0060-mcp-relies-on-bearer-authentication.md) | Rely on bearer authentication for MCP access | Accepted |
 | [0061](0061-long-term-metrics-in-victoriametrics-single.md) | Keep long-term metrics in VictoriaMetrics single-node | Accepted |

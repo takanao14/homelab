@@ -1,0 +1,4 @@
+---
+vector_journald_units:
+  - lldap
+  - ssh

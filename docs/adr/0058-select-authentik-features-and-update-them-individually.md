@@ -1,6 +1,6 @@
 # ADR-0058: Select Authentik features at build time
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0067](0067-replace-authentik-with-lldap-and-authelia.md)
 - **Date:** 2026-10-02
 - **Related:** [ADR-0050](0050-single-definition-for-the-authentik-ldap-contract.md)
 

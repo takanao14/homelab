@@ -1,0 +1,10 @@
+---
+- name: Validate the declared users
+  ansible.builtin.include_tasks: validate.yaml
+
+- name: Deploy the LLDAP runtime
+  ansible.builtin.include_tasks: runtime.yaml
+
+- name: Reconcile users and groups
+  ansible.builtin.include_tasks: bootstrap.yaml
+  when: not ansible_check_mode
