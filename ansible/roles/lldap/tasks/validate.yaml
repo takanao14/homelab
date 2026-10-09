@@ -1,0 +1,27 @@
+---
+- name: Require unique user names and UIDs within the user range
+  ansible.builtin.assert:
+    that:
+      - lldap_usernames | unique | length == lldap_usernames | length
+      - lldap_uids | unique | length == lldap_uids | length
+      - lldap_uids | select('lt', lldap_uid_min) | list | length == 0
+      - lldap_uids | select('gt', lldap_uid_max) | list | length == 0
+      - lldap_bind_user not in lldap_usernames
+    fail_msg: >-
+      lldap_users needs unique usernames and unique uid values between
+      {{ lldap_uid_min }} and {{ lldap_uid_max }}, and must not declare
+      {{ lldap_bind_user }}.
+    quiet: true
+  vars:
+    lldap_usernames: "{{ lldap_users | map(attribute='username') | list }}"
+    lldap_uids: "{{ lldap_users | map(attribute='uid') | map('int') | list }}"
+
+- name: Require every user group to be defined
+  ansible.builtin.assert:
+    that: lldap_undefined_groups | length == 0
+    fail_msg: "Undefined groups in lldap_users: {{ lldap_undefined_groups | join(', ') }}"
+    quiet: true
+  vars:
+    lldap_undefined_groups: >-
+      {{ lldap_users | map(attribute='groups', default=[]) | flatten | unique
+         | difference(lldap_groups.values() | map(attribute='name') | list + lldap_builtin_groups) }}

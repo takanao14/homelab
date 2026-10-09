@@ -1,0 +1,48 @@
+---
+# renovate: datasource=docker depName=lldap/lldap
+lldap_version: "v0.6.3"
+lldap_image: docker.io/lldap/lldap
+lldap_container: lldap
+
+lldap_base_dir: /opt/lldap
+lldap_data_dir: "{{ lldap_base_dir }}/data"
+lldap_certs_dir: "{{ lldap_base_dir }}/certs"
+# Root-only: user configs carry initial and service-account passwords.
+lldap_bootstrap_dir: "{{ lldap_base_dir }}/bootstrap"
+lldap_env_file: /etc/lldap/lldap.env
+
+# The image entrypoint drops to this UID and chowns /data to it.
+lldap_container_uid: 1000
+
+# Published for Caddy and the bootstrap API calls; plaintext LDAP (3890) is not published.
+lldap_http_port: 17170
+lldap_ldaps_port: "{{ identity_ldaps_port }}"
+lldap_http_url: https://lldap.home.butaco.net
+lldap_base_dn: "{{ identity_ldap_base_dn }}"
+lldap_admin_username: admin
+lldap_bind_user: "{{ identity_ldap_bind_user }}"
+lldap_email_domain: home.butaco.net
+
+lldap_cert_cn: "{{ identity_ldap_host }}"
+lldap_cert_validity_days: 365
+lldap_cert_rotate: false
+lldap_cert_sssd_path: "{{ role_path }}/../sssd/files/lldap-server.pem"
+
+# The only definition of the lab group names. Users reference groups by name
+# and the role rejects a name that is neither here nor an LLDAP built-in.
+lldap_groups:
+  platform_admins: {name: lab-platform-admins, gid: 20001}
+  linux_users: {name: "{{ identity_linux_login_group }}", gid: 20002}
+  linux_admins: {name: "{{ identity_linux_sudo_group }}", gid: 20003}
+  k8s_prd_viewers: {name: lab-k8s-prd-viewers, gid: 20004}
+  k8s_prd_operators: {name: lab-k8s-prd-operators, gid: 20005}
+  k8s_prd_admins: {name: lab-k8s-prd-admins, gid: 20006}
+  k8s_sandbox_users: {name: lab-k8s-sandbox-users, gid: 20007}
+  gpu_users: {name: lab-gpu-users, gid: 20008}
+lldap_builtin_groups: [lldap_admin, lldap_password_manager, lldap_strict_readonly]
+
+# User UIDs, which are also their personal group GIDs, stay below the shared groups.
+lldap_uid_min: 10000
+lldap_uid_max: 19999
+
+lldap_default_shell: /bin/bash

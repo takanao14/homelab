@@ -1,6 +1,0 @@
----
-- name: Apply GPU Switch blueprint
-  ansible.builtin.include_tasks: apply_blueprints.yaml
-  vars:
-    authentik_apply_paths:
-      - local/gpu-switch.yaml

@@ -10,7 +10,7 @@
       The sssd role supports Ubuntu 24.04/26.04 and Rocky Linux 9 only; found
       {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}.
 
-# Establish local recovery before introducing the Authentik dependency.
+# Establish local recovery before introducing the LDAP dependency.
 - name: Create the break-glass local account
   become: true
   ansible.builtin.user:
@@ -25,7 +25,7 @@
   ansible.builtin.copy:
     content: |
       # Managed by Ansible (sssd role). Do not edit manually.
-      # SSH-key recovery when Authentik/LDAP and password paths are unavailable.
+      # SSH-key recovery when LDAP and password paths are unavailable.
       {{ sssd_breakglass_user }} ALL=(ALL) NOPASSWD: ALL
     dest: "{{ sssd_breakglass_sudoers_file }}"
     owner: root
@@ -58,7 +58,7 @@
     state: present
   register: sssd_package_install
 
-- name: Deploy the Authentik LDAP certificate SSSD must trust
+- name: Deploy the LLDAP certificate SSSD must trust
   become: true
   ansible.builtin.copy:
     src: "{{ sssd_ldap_ca_cert_src }}"
@@ -174,7 +174,7 @@
     - not (ansible_check_mode and sssd_package_install is changed)
 
 # Manage sudo by SSSD group locally; validate with visudo before install.
-- name: Grant sudo to the Authentik admin group
+- name: Grant sudo to the LDAP admin group
   become: true
   ansible.builtin.template:
     src: sudoers-admins.j2
@@ -184,7 +184,7 @@
     mode: '0440'
     validate: /usr/sbin/visudo -cf %s
 
-- name: Configure sshd to fetch SSH public keys from Authentik via SSSD
+- name: Configure sshd to fetch SSH public keys from LDAP via SSSD
   become: true
   ansible.builtin.template:
     src: sshd-sss.conf.j2

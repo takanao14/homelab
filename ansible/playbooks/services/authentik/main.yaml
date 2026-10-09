@@ -1,8 +1,0 @@
----
-- name: Setup Authentik
-  hosts: authentik
-  roles:
-    - role: timezone
-      tags: timezone
-    - role: authentik
-      tags: authentik

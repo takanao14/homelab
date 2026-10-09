@@ -3,6 +3,3 @@ exclude_paths:
   - collections/
   - inventories/homelab/group_vars/*.sops.yaml
   - inventories/homelab/host_vars/*.sops.yaml
-  # Authentik blueprint YAML (own schema, custom !Find/!KeyOf tags) rendered
-  # as opaque files by roles/authentik, not interpreted by Ansible.
-  - roles/authentik/templates/blueprints/

@@ -1,13 +1,13 @@
 ---
 # Read-only comparison of desired/candidate and installed component versions.
 
-- name: Audit Authentik versions
-  hosts: authentik
+- name: Audit LLDAP version
+  hosts: lldap
   gather_facts: false
   vars_files:
-    - ../../roles/authentik/defaults/main.yaml
+    - ../../roles/lldap/defaults/main.yaml
   tasks:
-    - name: Read deployed Authentik component images
+    - name: Read the deployed LLDAP image
       become: true
       ansible.builtin.command:
         argv:
@@ -15,38 +15,26 @@
           - inspect
           - --format
           - "{{ '{{.ImageName}}' }}"
-          - "{{ item.container }}"
-      loop: >-
-        {{ [{'name': 'authentik-server', 'container': 'authentik-server'},
-            {'name': 'authentik-worker', 'container': authentik_worker_container}]
-           + ([{'name': 'authentik-ldap', 'container': authentik_ldap_container}]
-              if 'ldap' in authentik_enabled_features else [])
-           + ([{'name': 'authentik-proxy', 'container': authentik_proxy_container}]
-              if authentik_enabled_features | intersect(['headlamp', 'gpu_switch']) | length > 0 else []) }}
-      register: authentik_audit_images
+          - "{{ lldap_container }}"
+      register: lldap_audit_image
       changed_when: false
       failed_when: false
       check_mode: false
-      loop_control:
-        label: "{{ item.name }}"
 
-    - name: Report Authentik component versions
+    - name: Report LLDAP version
       ansible.builtin.debug:
         msg: >-
           {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
-            item.item.name,
+            'lldap',
             inventory_hostname,
-            authentik_version,
-            authentik_audit_installed,
-            'OK' if authentik_audit_installed == authentik_version else 'DIFF'
+            lldap_version,
+            lldap_audit_installed,
+            'OK' if lldap_audit_installed == lldap_version else 'DIFF'
           ) }}
       vars:
-        authentik_audit_installed: >-
-          {{ (item.stdout | regex_replace('^.*:', ''))
-             if item.rc == 0 else 'unknown' }}
-      loop: "{{ authentik_audit_images.results }}"
-      loop_control:
-        label: "{{ item.item.name }}"
+        lldap_audit_installed: >-
+          {{ (lldap_audit_image.stdout | regex_replace('^.*:', ''))
+             if lldap_audit_image.rc == 0 else 'unknown' }}
 
 - name: Audit Forgejo version
   hosts: forgejo

@@ -1,0 +1,121 @@
+---
+- name: Create Ansible-owned LLDAP directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - {path: "{{ lldap_base_dir }}", mode: '0755'}
+    - {path: "{{ lldap_certs_dir }}", mode: '0755'}
+    - {path: "{{ lldap_bootstrap_dir }}", mode: '0700'}
+    - {path: "{{ lldap_env_file | dirname }}", mode: '0755'}
+
+# The image entrypoint chowns /data on every start; managing owner here would
+# fight it.
+- name: Ensure the container-owned LLDAP data directory exists  # noqa: risky-file-permissions
+  become: true
+  ansible.builtin.file:
+    path: "{{ lldap_data_dir }}"
+    state: directory
+
+- name: Check for the LDAPS private key
+  become: true
+  ansible.builtin.stat:
+    path: "{{ lldap_certs_dir }}/ldap.key"
+  register: lldap_key_stat
+
+- name: Generate the LDAPS certificate
+  when:
+    - lldap_cert_rotate | bool or not lldap_key_stat.stat.exists
+    - not ansible_check_mode
+  block:
+    - name: Generate a self-signed LDAPS certificate and private key
+      become: true
+      ansible.builtin.command:
+        argv:
+          - openssl
+          - req
+          - -x509
+          - -newkey
+          - rsa:4096
+          - -sha256
+          - -nodes
+          - -days
+          - "{{ lldap_cert_validity_days | string }}"
+          - -keyout
+          - "{{ lldap_certs_dir }}/ldap.key"
+          - -out
+          - "{{ lldap_certs_dir }}/ldap.crt"
+          - -subj
+          - "/CN={{ lldap_cert_cn }}"
+          - -addext
+          - "subjectAltName=DNS:{{ lldap_cert_cn }}"
+          - -addext
+          - "basicConstraints=critical,CA:FALSE"
+          - -addext
+          - "keyUsage=critical,digitalSignature,keyEncipherment"
+          - -addext
+          - "extendedKeyUsage=serverAuth"
+      changed_when: true
+      notify: Restart lldap
+
+    - name: Export the public LDAPS certificate for the SSSD role
+      become: true
+      ansible.builtin.fetch:
+        src: "{{ lldap_certs_dir }}/ldap.crt"
+        dest: "{{ lldap_cert_sssd_path }}"
+        flat: true
+
+- name: Restrict the LDAPS private key to the container user
+  become: true
+  ansible.builtin.file:
+    path: "{{ lldap_certs_dir }}/ldap.key"
+    owner: "{{ lldap_container_uid }}"
+    group: root
+    mode: '0400'
+  when: not ansible_check_mode
+
+- name: Deploy the LLDAP secrets env file
+  become: true
+  no_log: true
+  ansible.builtin.template:
+    src: lldap.env.j2
+    dest: "{{ lldap_env_file }}"
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Restart lldap
+
+- name: Deploy the LLDAP Quadlet unit
+  become: true
+  ansible.builtin.template:
+    src: lldap.container.j2
+    dest: "{{ podman_quadlet_dir }}/lldap.container"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart lldap
+
+- name: Ensure LLDAP is enabled and started
+  become: true
+  ansible.builtin.systemd:
+    name: lldap.service
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Apply pending LLDAP restarts
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for the LLDAP web server
+  when: not ansible_check_mode
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ lldap_http_port }}/"
+    status_code: 200
+  register: lldap_ready
+  until: lldap_ready.status == 200
+  retries: 30
+  delay: 2

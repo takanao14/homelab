@@ -23,8 +23,8 @@ ansible/
 
 ## Naming convention
 
-Playbooks are grouped by class. Authentik deployment and Authentik/OpenBao
-operations use service subdirectories for their multiple entry points:
+Playbooks are grouped by class. OpenBao operations use a service subdirectory
+for their multiple entry points:
 
 | Class | Directory | Meaning | Example |
 |-------|--------|---------|---------|
@@ -174,9 +174,6 @@ ansible-playbook playbooks/ops/startup.yaml --tags prd
 # Version audit for Renovate-managed Ansible components (read-only)
 ansible-playbook playbooks/ops/version_audit.yaml
 
-# Authentik explicit upgrade (dry-run first; the user runs without --check)
-ansible-playbook playbooks/ops/authentik/upgrade.yaml --limit authentik --check --diff
-
 # OpenBao explicit upgrade (dry-run first; the user runs without --check)
 ansible-playbook playbooks/ops/openbao/upgrade.yaml --limit openbao --check --diff
 
@@ -211,8 +208,7 @@ Use the OpenBao role README for:
 | `playbooks/services/forgejo.yaml` | `forgejo` | system |
 | `playbooks/services/forgejo_runner.yaml` | `forgejo_runner` | system |
 | `playbooks/services/netbox.yaml` | `netbox` | system |
-| `playbooks/services/authentik/main.yaml` | `authentik` | system |
-| `authentik-{ldap,headlamp,gpu-switch}.yaml` | `authentik` | selected feature update |
+| `playbooks/services/lldap.yaml` | `lldap` | system |
 | `playbooks/services/seaweedfs.yaml` | `seaweedfs` | system |
 | `playbooks/services/openbao.yaml` | `openbao` | system |
 | `playbooks/services/proxmox.yaml` | `proxmox` | system (platform) |
@@ -232,10 +228,9 @@ Use the OpenBao role README for:
 | `playbooks/ops/nfs_storage_check.yaml` | `prd_k8s:sandbox_k8s` (only clusters with NFS enabled) | ops |
 | `playbooks/ops/shutdown.yaml` | `k8s_controller`, `k8s_worker`, `guest_shutdown_order`, `proxmox_shutdown_order` | ops (planned outage) |
 | `playbooks/ops/startup.yaml` | `proxmox`, `prd_k8s_hypervisor`, `sandbox_k8s_hypervisor`, `guest_shutdown_order` (reversed), `k8s_controller` | ops (planned outage / per-cluster recovery) |
-| `playbooks/ops/version_audit.yaml` | `authentik`, `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `dns_resolver`, `dns_auth`, `seaweedfs`, `openbao`, `gpuvm`, `code_server` | ops |
+| `playbooks/ops/version_audit.yaml` | `lldap`, `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `dns_resolver`, `dns_auth`, `seaweedfs`, `openbao`, `gpuvm`, `code_server` | ops |
 | `playbooks/ops/dns_failover_test.yaml` | delegated DNS hosts; orchestration on localhost | ops (state-changing failure test) |
 | `playbooks/ops/pdns_sync.yaml` | `dns_primary`, `dns_secondary` | ops |
-| `playbooks/ops/authentik/upgrade.yaml` | `authentik` | ops |
 | `playbooks/ops/openbao/bootstrap.yaml` | `openbao` | ops |
 | `playbooks/ops/openbao/configure.yaml` | `openbao` | ops |
 | `playbooks/ops/openbao/configure_userpass.yaml` | `openbao` | ops |

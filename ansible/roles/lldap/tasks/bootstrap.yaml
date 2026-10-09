@@ -1,0 +1,125 @@
+---
+- name: Log in to the LLDAP API
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ lldap_http_port }}/auth/simple/login"
+    method: POST
+    body_format: json
+    body:
+      username: "{{ lldap_admin_username }}"
+      password: "{{ lldap_admin_password }}"
+  register: lldap_login
+  no_log: true
+
+- name: Read the existing LLDAP users
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ lldap_http_port }}/api/graphql"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ lldap_login.json.token }}"
+    body_format: json
+    body:
+      query: "{ users { id } }"
+  register: lldap_existing_users
+  no_log: true
+
+- name: Deploy the bootstrap admin password
+  become: true
+  no_log: true
+  ansible.builtin.copy:
+    content: "{{ lldap_admin_password }}"
+    dest: "{{ lldap_bootstrap_dir }}/admin-password"
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Create bootstrap config directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ lldap_bootstrap_dir }}/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  loop: [user-schemas, group-schemas, group-configs, user-configs]
+
+# Passwords are rendered only for users that do not exist yet, so a password
+# changed in the LLDAP UI is never reset. The bind account is the exception:
+# SSSD holds the same value, so SOPS stays authoritative for it.
+- name: Render bootstrap configs
+  become: true
+  no_log: true
+  ansible.builtin.template:
+    src: "bootstrap/{{ item }}.j2"
+    dest: "{{ lldap_bootstrap_dir }}/{{ item }}"
+    owner: root
+    group: root
+    mode: '0600'
+  loop:
+    - user-schemas/posix.json
+    - group-schemas/posix.json
+    - group-configs/groups.json
+    - user-configs/users.json
+  vars:
+    lldap_existing_user_ids: "{{ lldap_existing_users.json.data.users | map(attribute='id') | list }}"
+
+# DO_CLEANUP makes the declaration authoritative: undeclared users, groups, and
+# memberships are deleted.
+- name: Apply the declared users and groups
+  become: true
+  ansible.builtin.command:
+    argv:
+      - podman
+      - exec
+      - --env=LLDAP_URL=http://localhost:17170
+      - "--env=LLDAP_ADMIN_USERNAME={{ lldap_admin_username }}"
+      - --env=LLDAP_ADMIN_PASSWORD_FILE=/bootstrap/admin-password
+      - --env=USER_SCHEMAS_DIR=/bootstrap/user-schemas
+      - --env=GROUP_SCHEMAS_DIR=/bootstrap/group-schemas
+      - --env=GROUP_CONFIGS_DIR=/bootstrap/group-configs
+      - --env=USER_CONFIGS_DIR=/bootstrap/user-configs
+      - --env=DO_CLEANUP=true
+      - "{{ lldap_container }}"
+      - /app/bootstrap.sh
+  register: lldap_bootstrap
+  changed_when: lldap_bootstrap.stdout is search('successfully (created|deleted|added|removed)')
+
+- name: Read the reconciled LLDAP users
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ lldap_http_port }}/api/graphql"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ lldap_login.json.token }}"
+    body_format: json
+    body:
+      query: "{ users { id groups { displayName } attributes { name value } } }"
+  register: lldap_reconciled
+  no_log: true
+
+# bootstrap.sh prints GraphQL errors without failing, so check the result.
+- name: Check that every declared user matches LLDAP
+  ansible.builtin.assert:
+    that: lldap_mismatched_users | length == 0
+    fail_msg: >-
+      LLDAP differs from lldap_users for {{ lldap_mismatched_users | join(', ') }};
+      see the bootstrap output above.
+    quiet: true
+  vars:
+    lldap_mismatched_users: >-
+      {%- set bad = [] -%}
+      {%- set actual = {} -%}
+      {%- for u in lldap_reconciled.json.data.users -%}
+      {%-   set attrs = u.attributes | items2dict(key_name='name', value_name='value') -%}
+      {%-   set _ = actual.update({u.id: {
+              'groups': u.groups | map(attribute='displayName') | sort,
+              'uid': attrs.uidnumber | default(['']) | first | string}}) -%}
+      {%- endfor -%}
+      {%- for u in lldap_users -%}
+      {%-   set a = actual[u.username] | default(none) -%}
+      {%-   if a is none or a.groups != (u.groups | default([]) | sort) or a.uid != (u.uid | string) -%}
+      {%-     set _ = bad.append(u.username) -%}
+      {%-   endif -%}
+      {%- endfor -%}
+      {%- if lldap_bind_user not in actual -%}
+      {%-   set _ = bad.append(lldap_bind_user) -%}
+      {%- endif -%}
+      {{ bad }}
