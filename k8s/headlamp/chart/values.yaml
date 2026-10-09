@@ -1,37 +1,24 @@
 # In-cluster defaults; environment files set hostnames.
 
-# Headlamp forward auth via an external Authentik outpost (stage 8b-1).
-forwardAuth:
-  enabled: true
-  # Upstream HTTPRoute targeted by SecurityPolicy; the outpost route is excluded.
-  targetRouteName: headlamp
-  outpost:
-    # Keep aligned with authentik_proxy_http_port on authentik1.
-    address: 192.168.10.248
-    port: 9001
-  # Hardcoded in authentik for Envoy support; not configurable upstream.
-  authPath: /outpost.goauthentik.io/auth/envoy
-  # Login/callback route excluded from SecurityPolicy to avoid redirect loops.
-  callbackPathPrefix: /outpost.goauthentik.io
-  headersToExtAuth:
-    - cookie
-    - accept
-    - authorization
-    - proxy-authorization
-    - x-forwarded-for
-    - x-forwarded-proto
-    - x-real-ip
-  # Overwrite client identity; RequestHeaderModifier would remove trusted values.
-  headersToBackend:
-    - x-authentik-username
-    - x-authentik-groups
-    - x-authentik-email
-
-# Restrict direct Service access when using the cluster-admin token.
-networkPolicy:
-  enabled: true
-  # Envoy proxy-pod namespace, not the Gateway resource namespace.
-  gatewayNamespace: envoy-gateway-system
+# Unauthenticated, read-only access: anyone who reaches the hostname gets these.
+readOnly:
+  # Wildcard reads per group; exclude groups that embed secret material
+  # (core, helm.k0sproject.io values, vault.banzaicloud.com).
+  extraApiGroups:
+    - apiextensions.k8s.io
+    - argoproj.io
+    - cert-manager.io
+    - cilium.io
+    - gateway.envoyproxy.io
+    - gateway.networking.k8s.io
+    - monitoring.coreos.com
+    - monitoring.grafana.com
+    - networking.k8s.io
+    - node.k8s.io
+    - rbac.authorization.k8s.io
+    - scheduling.k8s.io
+    - snapshot.storage.k8s.io
+    - storage.k8s.io
 
 headlamp:
   namespaceOverride: headlamp
@@ -40,15 +27,15 @@ headlamp:
     requests:
       cpu: 10m
       memory: 72Mi
+  # Pinned so templates/read-only-rbac.yaml can bind it.
+  serviceAccount:
+    name: headlamp
+  # Upstream binds cluster-admin; roleRef is immutable, so read-only uses new names.
+  clusterRoleBinding:
+    create: false
   config:
-    # Requires forward auth and NetworkPolicy; all users share cluster-admin.
+    # Skips the token prompt; safe only because the ServiceAccount is read-only.
     unsafeUseServiceAccountToken: true
-    # Shows Authentik identity in /me; API token forwarding awaits OIDC.
-    extraArgs:
-      - -proxy-auth=true
-      - -proxy-auth-username-header=X-authentik-username
-      - -proxy-auth-group-header=X-authentik-groups
-      - -proxy-auth-email-header=X-authentik-email
   httpRoute:
     enabled: true
     parentRefs:

@@ -5,6 +5,6 @@ gateway-helm:
         enabled: false
   config:
     envoyGateway:
-      # Enables Headlamp to reference the external Authentik outpost as a Backend.
+      # Enables GPU Switch to reference the external Authentik outpost as a Backend.
       extensionApis:
         enableBackend: true

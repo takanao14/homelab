@@ -48,6 +48,9 @@ as Authentik runs now, and remove Authentik after cutover.
   HTTP-only. Sandbox UIs therefore leave single sign-on and use Envoy Gateway
   source CIDR policies.
 - **MFA:** Authelia policies use `one_factor`. MFA remains deferred.
+- **Headlamp:** In both environments it leaves forward auth and runs without
+  authentication on a read-only ServiceAccount (`view` plus Secret-free read
+  groups). Writes use the X.509 admin kubeconfig.
 - **Unchanged:** Machine APIs keep bearer tokens (ADR-0060). Kubernetes API
   server OIDC remains deferred. LLDAP, Authelia, network appliances, and TrueNAS
   keep local authentication only.
@@ -85,11 +88,10 @@ Activity figures are for the 12 months before 2026-10-08.
 - Revocation is bounded by SSSD's `entry_cache_timeout` alone. LLDAP has no
   disabled state; offboarding is group removal or deletion.
 - Forward-auth identity headers change from `X-authentik-*` to Authelia's
-  `Remote-*` headers, and groups are comma-separated as Headlamp expects.
-- The sandbox Headlamp uses a cluster-admin ServiceAccount token for every
-  request. Its CIDR policy must be shown to deny a disallowed client; the shared
-  Gateway SNAT described in ADR-0060 can make it ineffective. If it cannot be
-  enforced, sandbox Headlamp returns to token login.
+  `Remote-*` headers.
+- Headlamp no longer depends on Authelia, but anyone on the LAN can read pod
+  logs, ConfigMaps, and pod specs. Its role must never gain write verbs or
+  Secret access.
 - ADR-0058 no longer applies once Authentik is removed.
 - LLDAP and Authelia are each a single instance. Their failure blocks new Linux
   lookups beyond the SSSD cache and new web logins; break-glass accounts remain
