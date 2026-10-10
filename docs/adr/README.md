@@ -116,3 +116,4 @@ deleting it:
 | [0065](0065-agent-mcp-caller-credentials.md) | Connect VM agents to shared read-only MCP servers | Accepted |
 | [0066](0066-hermes-dashboard-through-caddy.md) | Expose Hermes Dashboard through Caddy | Accepted |
 | [0067](0067-replace-authentik-with-lldap-and-authelia.md) | Replace Authentik with LLDAP and Authelia | Proposed |
+| [0068](0068-build-caddy-on-the-ansible-controller.md) | Build Caddy on the Ansible controller | Accepted |

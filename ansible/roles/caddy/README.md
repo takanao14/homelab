@@ -10,7 +10,7 @@ other ingress paths, see [`docs/service-routing.md`](../../../docs/service-routi
 ## Functionality
 
 - Creates a dedicated system user/group (`caddy`).
-- Downloads Caddy binary with Cloudflare DNS plugin from the official Caddy download API.
+- Builds Caddy with the Cloudflare DNS plugin on the controller with xcaddy ([ADR-0068](../../../docs/adr/0068-build-caddy-on-the-ansible-controller.md)) and installs it only when the host binary differs from `caddy_sha256`. The controller needs `go`; it downloads the pinned toolchain itself.
 - Sets `CAP_NET_BIND_SERVICE` to allow binding to ports 80/443 without root.
 - Deploys `/etc/caddy/Caddyfile` from a Jinja2 template.
 - Deploys `/etc/caddy/caddy.env` with the Cloudflare API token, and removes it again when ACME is disabled.
@@ -48,6 +48,9 @@ Only required when `caddy_acme_enabled` is `true`.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `caddy_binary` | `/usr/local/bin/caddy` | Binary path |
+| `caddy_version`, `caddy_cloudflare_version`, `caddy_xcaddy_version`, `caddy_go_version` | see defaults | Build pins tracked by Renovate |
+| `caddy_sha256` | see defaults | Expected SHA-256 of the build; update it whenever a build pin changes |
+| `caddy_build_dir` | `~/.cache/homelab/caddy` | Controller-side xcaddy and build cache |
 | `caddy_config` | `/etc/caddy/Caddyfile` | Caddyfile path |
 | `caddy_env_file` | `/etc/caddy/caddy.env` | Environment file path |
 | `caddy_acme_enabled` | `true` | Issue certificates via ACME. `false` serves every site over plain HTTP |

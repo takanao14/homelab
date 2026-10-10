@@ -1,0 +1,90 @@
+---
+- name: Create Caddy build directory on the controller
+  delegate_to: localhost
+  ansible.builtin.file:
+    path: "{{ caddy_build_dir }}"
+    state: directory
+    mode: "0755"
+  check_mode: false
+
+- name: Check cached Caddy build
+  delegate_to: localhost
+  ansible.builtin.stat:
+    path: "{{ caddy_build_artifact }}"
+    checksum_algorithm: sha256
+  register: caddy_build_cached
+
+- name: Install xcaddy on the controller
+  delegate_to: localhost
+  ansible.builtin.command:
+    argv:
+      - go
+      - install
+      - "github.com/caddyserver/xcaddy/cmd/xcaddy@v{{ caddy_xcaddy_version }}"
+    creates: "{{ caddy_build_dir }}/xcaddy-{{ caddy_xcaddy_version }}/xcaddy"
+  environment:
+    GOBIN: "{{ caddy_build_dir }}/xcaddy-{{ caddy_xcaddy_version }}"
+    GOTOOLCHAIN: "go{{ caddy_go_version }}"
+    GOFLAGS: ""
+  check_mode: false
+
+# The build is byte-reproducible for fixed pins; caddy_sha256 gates the result.
+- name: Build Caddy with the Cloudflare DNS plugin
+  delegate_to: localhost
+  throttle: 1
+  ansible.builtin.command:
+    argv:
+      - "{{ caddy_build_dir }}/xcaddy-{{ caddy_xcaddy_version }}/xcaddy"
+      - build
+      - "v{{ caddy_version }}"
+      - --with
+      - "github.com/caddy-dns/cloudflare@v{{ caddy_cloudflare_version }}"
+      - --output
+      - "{{ caddy_build_artifact }}"
+    chdir: "{{ caddy_build_dir }}"
+  # xcaddy builds under the working directory; VCS stamping would embed the
+  # surrounding repository state.
+  environment:
+    GOTOOLCHAIN: "go{{ caddy_go_version }}"
+    GOOS: linux
+    GOARCH: amd64
+    CGO_ENABLED: "0"
+    GOFLAGS: "-buildvcs=false"
+  when: caddy_build_cached.stat.checksum | default('') != caddy_sha256
+  changed_when: true
+  check_mode: false
+
+- name: Read built Caddy checksum
+  delegate_to: localhost
+  ansible.builtin.stat:
+    path: "{{ caddy_build_artifact }}"
+    checksum_algorithm: sha256
+  register: caddy_build_result
+
+- name: Assert built Caddy matches caddy_sha256
+  ansible.builtin.assert:
+    that: caddy_build_result.stat.checksum | default('') == caddy_sha256
+    fail_msg: >-
+      Built {{ caddy_build_artifact }} has sha256
+      {{ caddy_build_result.stat.checksum | default('missing') }}, expected
+      {{ caddy_sha256 }}. Update caddy_sha256 only after reviewing the pin change.
+    quiet: true
+
+- name: Install Caddy binary
+  become: true
+  ansible.builtin.copy:
+    src: "{{ caddy_build_artifact }}"
+    dest: "{{ caddy_binary }}"
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart caddy
+
+- name: Verify installed Caddy version
+  become: true
+  ansible.builtin.command:
+    argv: ["{{ caddy_binary }}", version]
+  register: caddy_installed_version
+  changed_when: false
+  failed_when: not caddy_installed_version.stdout.startswith('v' ~ caddy_version ~ ' ')
+  when: not ansible_check_mode
