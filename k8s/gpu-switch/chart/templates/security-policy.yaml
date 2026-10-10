@@ -17,8 +17,8 @@ spec:
       backendRefs:
         - group: gateway.envoyproxy.io
           kind: Backend
-          name: authentik-outpost
-          port: {{ .Values.forwardAuth.outpost.port }}
+          name: authelia
+          port: {{ .Values.forwardAuth.port }}
           # Explicit API default prevents Argo CD drift.
           weight: 1
       path: {{ .Values.forwardAuth.authPath }}

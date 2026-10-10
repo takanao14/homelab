@@ -26,20 +26,13 @@ securityPolicy:
   # one route during sync.
   name: gpu-switch-basic-auth
 
-# Shared Authentik forward auth; the only gate since the Basic Auth fallback
-# was removed.
+# Authelia forward auth on idp1 (ADR-0067); the only gate for this app.
 forwardAuth:
-  enabled: true
-  # Upstream HTTPRoute targeted by SecurityPolicy; the outpost route is excluded.
-  targetRouteName: gpu-switch
-  outpost:
-    # Keep aligned with authentik_proxy_http_port on authentik1.
-    address: 192.168.10.248
-    port: 9001
-  # Hardcoded in authentik for Envoy support; not configurable upstream.
-  authPath: /outpost.goauthentik.io/auth/envoy
-  # Login/callback route excluded from SecurityPolicy to avoid redirect loops.
-  callbackPathPrefix: /outpost.goauthentik.io
+  # Keep aligned with authelia_http_port on idp1.
+  address: 192.168.10.248
+  port: 9091
+  # Envoy appends the original path, which Authelia reads after this prefix.
+  authPath: /api/authz/ext-authz/
   headersToExtAuth:
     - cookie
     - accept
@@ -47,12 +40,12 @@ forwardAuth:
     - proxy-authorization
     - x-forwarded-for
     - x-forwarded-proto
-    - x-real-ip
   # The app ignores these; forwarded so a future access log can name the user.
   headersToBackend:
-    - x-authentik-username
-    - x-authentik-groups
-    - x-authentik-email
+    - remote-user
+    - remote-groups
+    - remote-email
+    - remote-name
 
 # Prevent direct Service access from bypassing SecurityPolicy (ADR-0027).
 networkPolicy:
