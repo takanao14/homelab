@@ -1,12 +1,23 @@
 {% set site_prefix = '' if caddy_acme_enabled | bool else 'http://' %}
-{% if caddy_acme_enabled | bool %}
 {
+{% if caddy_acme_enabled | bool %}
 	email {{ caddy_acme_email }}
 	acme_dns cloudflare {env.CF_API_TOKEN}
 	acme_ca {{ caddy_acme_ca }}
+{% endif %}
+	# http.log.error entries carry request headers; Caddy redacts only
+	# Authorization/Cookie by itself.
+	log default {
+		output stderr
+		format filter {
+			wrap json
+{% for header in caddy_log_redacted_headers %}
+			request>headers>{{ header }} delete
+{% endfor %}
+		}
+	}
 }
 
-{% endif %}
 {% for upstream in caddy_upstreams %}
 {{ site_prefix }}{{ upstream.hostname }} {
 	reverse_proxy {{ upstream.scheme | default('http') }}://{{ upstream.backend }}{% if upstream.tls_insecure | default(false) %} {
