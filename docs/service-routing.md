@@ -61,10 +61,11 @@ here.
 | `openbao.home.butaco.net` | `openbao1:8200` | Secrets |
 | `lldap.home.butaco.net` | `idp1:17170` | User directory (ADR-0067) |
 | `s3.home.butaco.net` | `seaweedfs1:8333` | S3 API — no UI, deliberately absent from the dashboard |
-| `seaweedfs-ui.home.butaco.net` | `seaweedfs1:23646` | SeaweedFS console |
+| `seaweedfs.home.butaco.net` | `seaweedfs1:23646` | SeaweedFS console |
 | `meshcentral.home.butaco.net` | `rpi4:8443` | Out-of-band management (ADR-0025) |
 | `vscode.home.butaco.net` | `192.168.20.21:8080` | code-server on `toolbox1` (ADR-0031) |
 | `openclaw.home.butaco.net` | `192.168.20.23:18789` | OpenClaw on `openclaw1` (ADR-0063) |
+| `hermes.home.butaco.net` | `hermes1:9119` | Hermes dashboard |
 
 ## Not behind Caddy
 
