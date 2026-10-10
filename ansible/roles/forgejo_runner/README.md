@@ -32,7 +32,7 @@ Installs and configures a [Forgejo Actions Runner](https://code.forgejo.org/forg
 | `forgejo_runner_binary` | `/usr/local/bin/forgejo-runner` | Binary path |
 | `forgejo_runner_config` | `/etc/forgejo-runner/config.yml` | Config file path |
 | `forgejo_runner_build_cache_keep_storage` | `20GB` | BuildKit cache storage target |
-| `forgejo_runner_url` | `http://forgejo.home.butaco.net` | Forgejo instance URL |
+| `forgejo_runner_url` | `https://forgejo.home.butaco.net` | Forgejo instance URL |
 | `forgejo_runner_name` | `{{ inventory_hostname }}` | Runner display name |
 | `forgejo_runner_labels` | `self-hosted`, `ubuntu-24.04` | Runner labels (docker image mappings) |
 
@@ -48,6 +48,8 @@ Run [playbooks/services/forgejo_runner.yaml](../../playbooks/services/forgejo_ru
 ## Notes
 
 - Runner registration is skipped if `{{ forgejo_runner_home }}/.runner` already exists.
+  The file holds the runner token and is kept at mode `0600`; `forgejo_runner_url`
+  only takes effect on a new registration.
 - Rebuilding the VM without preserving `.runner` creates a new registration;
   remove the old offline runner from Forgejo after the new one is online.
 - Applying a Docker daemon configuration change restarts Docker. Run the

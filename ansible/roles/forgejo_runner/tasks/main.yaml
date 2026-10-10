@@ -117,6 +117,16 @@
   when: not forgejo_runner_registration_file.stat.exists
   no_log: true
 
+# forgejo-runner register writes the runner token world-readable.
+- name: Restrict runner registration file
+  become: true
+  ansible.builtin.file:
+    path: "{{ forgejo_runner_home }}/.runner"
+    owner: "{{ forgejo_runner_user }}"
+    group: "{{ forgejo_runner_group }}"
+    mode: '0600'
+  when: forgejo_runner_registration_file.stat.exists or not ansible_check_mode
+
 - name: Deploy forgejo-runner systemd unit
   become: true
   ansible.builtin.template:
