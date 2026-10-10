@@ -36,3 +36,7 @@ caddy_upstreams: []
 
 # Redirect-only sites; override in group_vars/caddy.yaml.
 caddy_redirects: []
+
+# Request headers deleted from Caddy logs (canonical Go header casing).
+caddy_log_redacted_headers:
+  - X-Runner-Token

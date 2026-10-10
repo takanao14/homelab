@@ -57,6 +57,7 @@ Only required when `caddy_acme_enabled` is `true`.
 | `caddy_acme_ca` | Let's Encrypt production | ACME CA directory endpoint |
 | `caddy_upstreams` | `[]` | List of reverse proxy upstreams (set in `group_vars/caddy.yaml`) |
 | `caddy_redirects` | `[]` | List of redirect-only sites (set in `group_vars/caddy.yaml`) |
+| `caddy_log_redacted_headers` | `[X-Runner-Token]` | Request headers deleted from logs; Caddy already redacts `Authorization` and `Cookie` |
 
 `caddy_upstreams` structure:
 
