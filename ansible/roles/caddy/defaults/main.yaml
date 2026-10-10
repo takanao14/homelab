@@ -5,6 +5,21 @@ caddy_env_file: /etc/caddy/caddy.env
 caddy_user: caddy
 caddy_group: caddy
 
+# Built on the controller with xcaddy; changing any pin changes caddy_sha256.
+# renovate: datasource=github-releases depName=caddyserver/caddy
+caddy_version: "2.11.7"
+# renovate: datasource=github-tags depName=caddy-dns/cloudflare
+caddy_cloudflare_version: "0.2.4"
+# renovate: datasource=github-releases depName=caddyserver/xcaddy
+caddy_xcaddy_version: "0.4.7"
+# renovate: datasource=golang-version depName=go
+caddy_go_version: "1.26.4"
+caddy_sha256: "b3974c5a785bef16e97193e4211b94597b3acaf62aa7cda1e4663f0cacc4334c"
+caddy_build_dir: "{{ lookup('env', 'HOME') }}/.cache/homelab/caddy"
+caddy_build_artifact: >-
+  {{ caddy_build_dir }}/caddy-{{ caddy_version }}-cloudflare-{{ caddy_cloudflare_version
+  }}-go{{ caddy_go_version }}-linux-amd64
+
 # Enable ACME DNS-01; false serves HTTP only and needs no Cloudflare token.
 caddy_acme_enabled: true
 

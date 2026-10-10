@@ -97,6 +97,16 @@
       ]
     },
     {
+      "description": "Caddy is built with xcaddy on the Ansible controller; any pin change requires a reviewed caddy_sha256 update.",
+      "matchFileNames": ["ansible/roles/caddy/defaults/main.yaml"],
+      "groupName": "caddy build",
+      "automerge": false,
+      "labels": ["dependencies", "renovate", "manual-review"],
+      "prBodyNotes": [
+        "Run `ansible-playbook playbooks/services/caddy.yaml --tags caddy --check -l caddy1`; the build assertion reports the new SHA-256 to set in `caddy_sha256`."
+      ]
+    },
+    {
       "description": "Never auto-merge major updates.",
       "matchUpdateTypes": ["major"],
       "automerge": false,
