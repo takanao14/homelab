@@ -1,0 +1,31 @@
+---
+# renovate: datasource=docker depName=authelia/authelia
+authelia_version: "4.39.28"
+authelia_image: docker.io/authelia/authelia
+authelia_container: authelia
+
+authelia_base_dir: /opt/authelia
+authelia_config_dir: "{{ authelia_base_dir }}/config"
+# Root-only: one file per secret, read through AUTHELIA_*_FILE.
+authelia_secrets_dir: "{{ authelia_base_dir }}/secrets"
+
+# Reached by Caddy (portal) and by prd Envoy Gateway (ext_authz).
+authelia_http_port: 9091
+authelia_url: https://auth.home.butaco.net
+authelia_cookie_domain: butaco.net
+# Absolute lifetime. Envoy Gateway cannot return ext_authz success cookies
+# (envoyproxy/gateway#3787), so an inactivity refresh would not reach browsers.
+authelia_session_expiration: 8h
+
+# LLDAP runs on the same host; LDAPS keeps the path identical to SSSD's.
+authelia_ldap_address: "ldaps://{{ identity_ldap_host }}:{{ identity_ldaps_port }}"
+authelia_ldap_base_dn: "{{ identity_ldap_base_dn }}"
+authelia_ldap_user: "uid={{ lldap_authelia_user }},ou=people,{{ identity_ldap_base_dn }}"
+authelia_ldap_password: "{{ lldap_authelia_password }}"
+# The certificate SSSD trusts; rotation updates both (see the lldap README).
+authelia_ldap_ca_cert_src: "{{ role_path }}/../sssd/files/lldap-server.pem"
+
+# Hosts protected by Authelia, each admitting any of the listed groups.
+authelia_access_rules:
+  - domain: gpu-switch.prd.butaco.net
+    groups: [lab-platform-admins, lab-gpu-users]

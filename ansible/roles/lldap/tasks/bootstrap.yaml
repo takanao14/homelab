@@ -43,8 +43,8 @@
   loop: [user-schemas, group-schemas, group-configs, user-configs]
 
 # Passwords are rendered only for users that do not exist yet, so a password
-# changed in the LLDAP UI is never reset. The bind account is the exception:
-# SSSD holds the same value, so SOPS stays authoritative for it.
+# changed in the LLDAP UI is never reset. The service accounts are the
+# exception: SSSD and Authelia hold the same values, so SOPS stays authoritative.
 - name: Render bootstrap configs
   become: true
   no_log: true
@@ -119,7 +119,7 @@
       {%-     set _ = bad.append(u.username) -%}
       {%-   endif -%}
       {%- endfor -%}
-      {%- if lldap_bind_user not in actual -%}
-      {%-   set _ = bad.append(lldap_bind_user) -%}
-      {%- endif -%}
+      {%- for svc in [lldap_bind_user, lldap_authelia_user] if svc not in actual -%}
+      {%-   set _ = bad.append(svc) -%}
+      {%- endfor -%}
       {{ bad }}

@@ -1,0 +1,6 @@
+---
+# Host-level because idp1 is in both the lldap and authelia groups.
+vector_journald_units:
+  - lldap
+  - authelia
+  - ssh

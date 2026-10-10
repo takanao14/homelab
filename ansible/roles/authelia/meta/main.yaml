@@ -1,0 +1,4 @@
+---
+# Ensure Podman and the Quadlet directory exist before container units.
+dependencies:
+  - role: podman

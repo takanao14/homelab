@@ -6,6 +6,13 @@
   'groups': ['lldap_strict_readonly'],
   'password': lldap_bind_password,
 } | to_json }}
+{{ {
+  'id': lldap_authelia_user,
+  'email': lldap_authelia_user ~ '@' ~ lldap_email_domain,
+  'displayName': 'Authelia lookup account',
+  'groups': ['lldap_strict_readonly'],
+  'password': lldap_authelia_password,
+} | to_json }}
 {% for user in lldap_users %}
 {%   set config = {
        'id': user.username,

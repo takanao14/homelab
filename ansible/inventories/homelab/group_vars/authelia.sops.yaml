@@ -1,0 +1,18 @@
+authelia_session_secret: ENC[AES256_GCM,data:BHdJlKFtfF6Km5mUvoxJNWC21Z0Q3Ggdewtfzq9IoooTZG8HQuYsDRuVXkWAJK3QG8dJCEQ6yNhzRIWMpNU7XA==,iv:x2dOhqR2wNFmcc/4hJlEQI81Z0iRc2uoJLa7JPnJlsA=,tag:gTQpYwJHiWxc/S9obg/TLA==,type:str]
+authelia_storage_encryption_key: ENC[AES256_GCM,data:snGKVkzjle+zCgZIorqCW2EmYcHjx52OFvrw/pzLJOYvpIhcEM8VFIbY54uusO+RQnB9q9JAG9hgbrrziwuN7w==,iv:Waa3rm32jFewqmmrDaMddkIUaj38c3yumCwOOHBXLSY=,tag:QyBDBd7F8hXijH6YyDQptQ==,type:str]
+authelia_reset_password_jwt_secret: ENC[AES256_GCM,data:AmQ2IFDn9RtQbpwbugiGQ+EF0gd29M1t9vwZG/9/3mCQQlW4NKzMbN+bvDWICYwzbiYqTznYaVgRRxpx6Dq7oQ==,iv:HC9Vje7pYnGuxSkqi2ECXir6L0ev4b+ArAhcCsXJoB8=,tag:N/+nxdEmYc3PNyiqNHHIdg==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBjZDZQblI1dFQ2NEY1SUU4
+            Vmc0a3FSeEEyUWtmaElCaEVYT1RvWmZXK0NBClJuSWF6dW9sRlUrLy9aamswdjhS
+            UDgyenZnNUtUZTdIeFVoOXFDcjRLd2MKLS0tIE1NWUtLeDF2eEd4MmtRVG1wQ0Ur
+            UGRIeDRieDE4NkpyQXFZTEY2a05FWkUKVDczu7TcGMRdfOCZZVo3bWwnw+adfXep
+            OTwVc0sUB6XEr7shCvyZVgAxdkfBkqr3ifRcNhO5ajF1ZCi/Ytadqw==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
+    lastmodified: "2026-10-10T06:47:57Z"
+    mac: ENC[AES256_GCM,data:kDe2JVJOrYrsihqNjDupRx2C8vsYZQq13GeGJEjySe9OXJumCIieedeKsQAu3TyOWFwLjcYRvwiisfeZe6okrME81g6iAtwxToP3fwhDBS5IfkXJPgNE+jviKjieyU4yc3b4jhfZ+KTBGnzQyoTZX6N3N5KB2PL5yRIORQdv1DU=,iv:XK1CSdLiGjxe1I7akCTr4Q5ohCoIuTb5wHs6s0LqUi8=,tag:FECavu/DbhhAvQvhk4i4rQ==,type:str]
+    unencrypted_suffix: _unencrypted
+    version: 3.13.3

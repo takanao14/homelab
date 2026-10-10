@@ -117,6 +117,11 @@ all:
     # =================================================================
     # Service groups — one per managed service.
     # =================================================================
+    # Web authentication backed by lldap on the same host (ADR-0067).
+    authelia:
+      hosts:
+        idp1: null
+
     caddy:
       hosts:
         caddy1: null

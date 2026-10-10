@@ -24,6 +24,8 @@ caddy_upstreams:
     backend: "{{ hostvars['openbao1']['ansible_host'] }}:8200"
   - hostname: lldap.home.butaco.net
     backend: "{{ hostvars['idp1']['ansible_host'] }}:17170"
+  - hostname: auth.home.butaco.net
+    backend: "{{ hostvars['idp1']['ansible_host'] }}:9091"
   - hostname: s3.home.butaco.net
     backend: "{{ hostvars['seaweedfs1']['ansible_host'] }}:8333"
   - hostname: seaweedfs.home.butaco.net

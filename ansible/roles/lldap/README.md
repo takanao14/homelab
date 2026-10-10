@@ -15,7 +15,8 @@ published through Caddy at `https://lldap.home.butaco.net`.
   `unixshell`, `sshpublickey`; `gidnumber` on groups).
 - Creates every `lldap_groups` entry, a personal primary group per user whose
   GID equals the UID, every `lldap_users` entry, and the read-only
-  `identity_ldap_bind_user` account for SSSD.
+  `identity_ldap_bind_user` account for SSSD, and the read-only
+  `lldap_authelia_user` account for Authelia.
 - Runs the bootstrap with cleanup enabled: users, groups, and memberships not
   declared here are deleted. It then fails if any declared user is missing or
   differs in groups or UID.
@@ -32,6 +33,7 @@ Store these in `inventories/homelab/group_vars/lldap.sops.yaml`.
 | `lldap_key_seed` | Seed for the server key that protects stored passwords; changing it invalidates every password |
 | `lldap_admin_password` | Built-in `admin` password; LLDAP applies it only when it creates the database |
 | `lldap_bind_password` | SSSD lookup account password; must equal `sssd_ldap_bind_password` |
+| `lldap_authelia_password` | Authelia lookup account password; read by the `authelia` role |
 | `lldap_users` | Managed account list |
 
 Each `lldap_users` entry accepts:

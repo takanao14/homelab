@@ -209,6 +209,7 @@ Use the OpenBao role README for:
 | `playbooks/services/forgejo_runner.yaml` | `forgejo_runner` | system |
 | `playbooks/services/netbox.yaml` | `netbox` | system |
 | `playbooks/services/lldap.yaml` | `lldap` | system |
+| `playbooks/services/authelia.yaml` | `authelia` | system |
 | `playbooks/services/seaweedfs.yaml` | `seaweedfs` | system |
 | `playbooks/services/openbao.yaml` | `openbao` | system |
 | `playbooks/services/proxmox.yaml` | `proxmox` | system (platform) |
@@ -228,7 +229,7 @@ Use the OpenBao role README for:
 | `playbooks/ops/nfs_storage_check.yaml` | `prd_k8s:sandbox_k8s` (only clusters with NFS enabled) | ops |
 | `playbooks/ops/shutdown.yaml` | `k8s_controller`, `k8s_worker`, `guest_shutdown_order`, `proxmox_shutdown_order` | ops (planned outage) |
 | `playbooks/ops/startup.yaml` | `proxmox`, `prd_k8s_hypervisor`, `sandbox_k8s_hypervisor`, `guest_shutdown_order` (reversed), `k8s_controller` | ops (planned outage / per-cluster recovery) |
-| `playbooks/ops/version_audit.yaml` | `lldap`, `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `dns_resolver`, `dns_auth`, `seaweedfs`, `openbao`, `gpuvm`, `code_server` | ops |
+| `playbooks/ops/version_audit.yaml` | `lldap`, `authelia`, `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `dns_resolver`, `dns_auth`, `seaweedfs`, `openbao`, `gpuvm`, `code_server` | ops |
 | `playbooks/ops/dns_failover_test.yaml` | delegated DNS hosts; orchestration on localhost | ops (state-changing failure test) |
 | `playbooks/ops/pdns_sync.yaml` | `dns_primary`, `dns_secondary` | ops |
 | `playbooks/ops/openbao/bootstrap.yaml` | `openbao` | ops |
