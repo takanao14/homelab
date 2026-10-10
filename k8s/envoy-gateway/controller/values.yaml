@@ -5,6 +5,6 @@ gateway-helm:
         enabled: false
   config:
     envoyGateway:
-      # Enables GPU Switch to reference the external Authentik outpost as a Backend.
+      # Enables GPU Switch to reference Authelia on idp1 as a Backend.
       extensionApis:
         enableBackend: true

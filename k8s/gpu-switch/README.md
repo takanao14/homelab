@@ -49,10 +49,10 @@ The current write targets are:
 
 ## Authentication
 
-Envoy Gateway gates the HTTPRoute with a `SecurityPolicy`. The policy runs `extAuth` against the shared Authentik proxy
-outpost on `authentik1`. Admission is granted to `lab-platform-admins` and `lab-gpu-users`;
-the bindings live in
-`ansible/roles/authentik/templates/blueprints/proxy.yaml.j2`.
+Envoy Gateway gates the HTTPRoute with a `SecurityPolicy`. The policy runs `extAuth` against
+Authelia on `idp1` (`/api/authz/ext-authz/`), which redirects unauthenticated browsers to
+`https://auth.home.butaco.net`. Admission is granted to `lab-platform-admins` and `lab-gpu-users`
+through `authelia_access_rules` in the `authelia` role.
 
 The Gateway enforces authentication; the app does not consume identity headers.
 A NetworkPolicy limits ingress to the Gateway's proxy pods, since reaching the
