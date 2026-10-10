@@ -1,0 +1,57 @@
+# Secrets come from AUTHELIA_*_FILE variables in the Quadlet unit.
+server:
+  address: tcp://:9091/
+  endpoints:
+    authz:
+      # Called by Envoy Gateway SecurityPolicy extAuth.
+      ext-authz:
+        implementation: ExtAuthz
+
+log:
+  level: info
+
+# Trust the self-signed LLDAP certificate.
+certificates_directory: /certs
+
+authentication_backend:
+  # Users change passwords in the LLDAP UI; the lookup account is read-only.
+  password_reset:
+    disable: true
+  password_change:
+    disable: true
+  ldap:
+    implementation: lldap
+    address: {{ authelia_ldap_address }}
+    tls:
+      server_name: {{ identity_ldap_host }}
+    base_dn: {{ authelia_ldap_base_dn }}
+    user: {{ authelia_ldap_user }}
+
+access_control:
+  default_policy: deny
+  rules:
+{% for rule in authelia_access_rules %}
+    - domain: {{ rule.domain }}
+      policy: one_factor
+      subject:
+{%   for group in rule.groups %}
+        - group:{{ group }}
+{%   endfor %}
+{% endfor %}
+
+session:
+  cookies:
+    - domain: {{ authelia_cookie_domain }}
+      authelia_url: {{ authelia_url }}
+      expiration: {{ authelia_session_expiration }}
+      inactivity: {{ authelia_session_expiration }}
+      remember_me: -1
+
+storage:
+  local:
+    path: /config/db.sqlite3
+
+# Required even though password reset is disabled.
+notifier:
+  filesystem:
+    filename: /config/notification.txt

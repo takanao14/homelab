@@ -36,6 +36,41 @@
           {{ (lldap_audit_image.stdout | regex_replace('^.*:', ''))
              if lldap_audit_image.rc == 0 else 'unknown' }}
 
+- name: Audit Authelia version
+  hosts: authelia
+  gather_facts: false
+  vars_files:
+    - ../../roles/authelia/defaults/main.yaml
+  tasks:
+    - name: Read the deployed Authelia image
+      become: true
+      ansible.builtin.command:
+        argv:
+          - podman
+          - inspect
+          - --format
+          - "{{ '{{.ImageName}}' }}"
+          - "{{ authelia_container }}"
+      register: authelia_audit_image
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Report Authelia version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            'authelia',
+            inventory_hostname,
+            authelia_version,
+            authelia_audit_installed,
+            'OK' if authelia_audit_installed == authelia_version else 'DIFF'
+          ) }}
+      vars:
+        authelia_audit_installed: >-
+          {{ (authelia_audit_image.stdout | regex_replace('^.*:', ''))
+             if authelia_audit_image.rc == 0 else 'unknown' }}
+
 - name: Audit Forgejo version
   hosts: forgejo
   gather_facts: false

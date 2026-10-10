@@ -60,6 +60,7 @@ here.
 | `netbox.home.butaco.net` | `netbox1:8080` | IPAM |
 | `openbao.home.butaco.net` | `openbao1:8200` | Secrets |
 | `lldap.home.butaco.net` | `idp1:17170` | User directory (ADR-0067) |
+| `auth.home.butaco.net` | `idp1:9091` | Authelia portal (ADR-0067); prd Envoy Gateway calls `idp1:9091` directly for ext_authz |
 | `s3.home.butaco.net` | `seaweedfs1:8333` | S3 API — no UI, deliberately absent from the dashboard |
 | `seaweedfs.home.butaco.net` | `seaweedfs1:23646` | SeaweedFS console |
 | `meshcentral.home.butaco.net` | `rpi4:8443` | Out-of-band management (ADR-0025) |

@@ -7,10 +7,11 @@
       - lldap_uids | select('lt', lldap_uid_min) | list | length == 0
       - lldap_uids | select('gt', lldap_uid_max) | list | length == 0
       - lldap_bind_user not in lldap_usernames
+      - lldap_authelia_user not in lldap_usernames
     fail_msg: >-
       lldap_users needs unique usernames and unique uid values between
       {{ lldap_uid_min }} and {{ lldap_uid_max }}, and must not declare
-      {{ lldap_bind_user }}.
+      {{ lldap_bind_user }} or {{ lldap_authelia_user }}.
     quiet: true
   vars:
     lldap_usernames: "{{ lldap_users | map(attribute='username') | list }}"

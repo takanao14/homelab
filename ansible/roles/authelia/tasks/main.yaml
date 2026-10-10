@@ -1,0 +1,80 @@
+---
+- name: Create Authelia directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - {path: "{{ authelia_base_dir }}", mode: '0755'}
+    - {path: "{{ authelia_config_dir }}", mode: '0700'}
+    - {path: "{{ authelia_secrets_dir }}", mode: '0700'}
+
+- name: Deploy Authelia secrets
+  become: true
+  no_log: true
+  ansible.builtin.copy:
+    content: "{{ item.value }}"
+    dest: "{{ authelia_secrets_dir }}/{{ item.name }}"
+    owner: root
+    group: root
+    mode: '0600'
+  loop:
+    - {name: session_secret, value: "{{ authelia_session_secret }}"}
+    - {name: storage_encryption_key, value: "{{ authelia_storage_encryption_key }}"}
+    - {name: reset_password_jwt_secret, value: "{{ authelia_reset_password_jwt_secret }}"}
+    - {name: ldap_password, value: "{{ authelia_ldap_password }}"}
+  notify: Restart authelia
+
+- name: Deploy the LDAPS certificate to trust
+  become: true
+  ansible.builtin.copy:
+    src: "{{ authelia_ldap_ca_cert_src }}"
+    dest: "{{ authelia_base_dir }}/ldap.crt"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart authelia
+
+- name: Deploy the Authelia configuration
+  become: true
+  ansible.builtin.template:
+    src: configuration.yml.j2
+    dest: "{{ authelia_config_dir }}/configuration.yml"
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Restart authelia
+
+- name: Deploy the Authelia Quadlet unit
+  become: true
+  ansible.builtin.template:
+    src: authelia.container.j2
+    dest: "{{ podman_quadlet_dir }}/authelia.container"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart authelia
+
+- name: Ensure Authelia is enabled and started
+  become: true
+  ansible.builtin.systemd:
+    name: authelia.service
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Apply pending Authelia restarts
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for Authelia to report healthy
+  when: not ansible_check_mode
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ authelia_http_port }}/api/health"
+    status_code: 200
+  register: authelia_ready
+  until: authelia_ready.status == 200
+  retries: 30
+  delay: 2
