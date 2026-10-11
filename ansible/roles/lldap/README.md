@@ -54,7 +54,7 @@ Each `lldap_users` entry accepts:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `lldap_version` | `v0.6.3` | Renovate-managed image tag |
-| `lldap_groups` | 8 `lab-*` groups, GIDs 20001–20008 | The only definition of lab group names and GIDs |
+| `lldap_groups` | 4 `lab-*` groups, GIDs 20001–20003 and 20008 | The only definition of lab group names and GIDs |
 | `lldap_uid_min` / `lldap_uid_max` | `10000` / `19999` | User UID range |
 | `lldap_http_url` | `https://lldap.home.butaco.net` | Browser-facing URL |
 | `lldap_cert_validity_days` | `365` | LDAPS certificate validity |

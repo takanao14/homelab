@@ -34,10 +34,6 @@ lldap_groups:
   platform_admins: {name: lab-platform-admins, gid: 20001}
   linux_users: {name: "{{ identity_linux_login_group }}", gid: 20002}
   linux_admins: {name: "{{ identity_linux_sudo_group }}", gid: 20003}
-  k8s_prd_viewers: {name: lab-k8s-prd-viewers, gid: 20004}
-  k8s_prd_operators: {name: lab-k8s-prd-operators, gid: 20005}
-  k8s_prd_admins: {name: lab-k8s-prd-admins, gid: 20006}
-  k8s_sandbox_users: {name: lab-k8s-sandbox-users, gid: 20007}
   gpu_users: {name: lab-gpu-users, gid: 20008}
 lldap_builtin_groups: [lldap_admin, lldap_password_manager, lldap_strict_readonly]
 
