@@ -1,8 +1,7 @@
 # ADR-0067: Replace Authentik with LLDAP and Authelia
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-08
-- **Review trigger:** SSSD and forward-auth acceptance checks pass against LLDAP and Authelia
 - **Related:** [ADR-0010](0010-sandbox-argocd-uses-http-only-gitops-bootstrap.md), [ADR-0050](0050-single-definition-for-the-authentik-ldap-contract.md), [ADR-0058](0058-select-authentik-features-and-update-them-individually.md), [ADR-0060](0060-mcp-relies-on-bearer-authentication.md)
 
 ## Context
@@ -40,13 +39,17 @@ as Authentik runs now, and remove Authentik after cutover.
   another RFC2307bis directory can replace LLDAP without changing clients.
 - **Web, `*.home` and `*.prd`:** Authelia authenticates against LLDAP with one
   session cookie domain, `butaco.net`, and its portal at
-  `https://auth.home.butaco.net`. Applications without suitable native login
+  `https://auth.home.butaco.net`. It binds with its own read-only LLDAP
+  account, separate from SSSD's, so neither credential's exposure forces the
+  other's rotation. Applications without suitable native login
   use forward auth: Envoy Gateway `SecurityPolicy` extAuth in prd and Caddy
   `forward_auth` in the home zone. Applications with native OIDC use Authelia as
   their OIDC provider and keep a local administrator for break-glass access.
 - **Web, `*.sandbox`:** Authelia requires HTTPS, and ADR-0010 keeps sandbox
-  HTTP-only. Sandbox UIs therefore leave single sign-on and use Envoy Gateway
-  source CIDR policies.
+  HTTP-only. Sandbox UIs therefore leave single sign-on. Gateway source CIDR
+  policies are not a substitute because the shared Gateway SNAT (ADR-0060)
+  hides client addresses; a sandbox UI that needs access control uses its own
+  login.
 - **MFA:** Authelia policies use `one_factor`. MFA remains deferred.
 - **Headlamp:** In both environments it leaves forward auth and runs without
   authentication on a read-only ServiceAccount (`view` plus Secret-free read
@@ -89,6 +92,9 @@ Activity figures are for the 12 months before 2026-10-08.
   disabled state; offboarding is group removal or deletion.
 - Forward-auth identity headers change from `X-authentik-*` to Authelia's
   `Remote-*` headers.
+- Authelia sessions have an absolute 8-hour lifetime. Envoy Gateway cannot
+  return ext_authz success cookies (envoyproxy/gateway#3787), so an inactivity
+  refresh would not reach browsers.
 - Headlamp no longer depends on Authelia, but anyone on the LAN can read pod
   logs, ConfigMaps, and pod specs. Its role must never gain write verbs or
   Secret access.
