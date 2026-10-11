@@ -47,7 +47,7 @@ Each `lldap_users` entry accepts:
 | `name` | no | Display name; defaults to `username` |
 | `email` | no | Defaults to `<username>@home.butaco.net` |
 | `shell` | no | Defaults to `lldap_default_shell` |
-| `ssh_public_keys` | no | List published as `sshPublicKey` |
+| `ssh_public_keys` | no | Authoritative list published as `sshPublicKey`; omitting it or leaving it empty removes every key |
 
 ### Defaults
 
@@ -72,6 +72,9 @@ Each `lldap_users` entry accepts:
 - **Offboarding:** remove the entry and run the playbook; the account and its
   personal group are deleted. Then run `sss_cache -u <user>` on SSSD hosts for
   immediate effect and end open SSH sessions.
+- **Key revocation:** remove the key from `ssh_public_keys` and run the
+  playbook, then `sss_cache -u <user>` on SSSD hosts. Users cannot edit their
+  own keys in the web UI.
 
 ### Certificate rotation
 

@@ -18,9 +18,40 @@
       Authorization: "Bearer {{ lldap_login.json.token }}"
     body_format: json
     body:
-      query: "{ users { id } }"
+      query: "{ users { id attributes { name } } }"
   register: lldap_existing_users
   no_log: true
+
+# bootstrap.sh only inserts attributes, so emptying ssh_public_keys would leave
+# the old keys in LLDAP and SSH login working.
+- name: Remove SSH keys that are no longer declared
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ lldap_http_port }}/api/graphql"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ lldap_login.json.token }}"
+    body_format: json
+    body:
+      query: >-
+        mutation RemoveKeys($id: String!) {
+        updateUser(user: {id: $id, removeAttributes: ["sshpublickey"]}) { ok } }
+      variables:
+        id: "{{ item }}"
+  register: lldap_key_removal
+  no_log: true
+  changed_when: true
+  failed_when: lldap_key_removal.json.errors is defined
+  loop: "{{ lldap_stale_key_users }}"
+  vars:
+    lldap_keyless_users: >-
+      {{ ((lldap_users | rejectattr('ssh_public_keys', 'defined') | list)
+          + (lldap_users | selectattr('ssh_public_keys', 'defined') | rejectattr('ssh_public_keys') | list))
+         | map(attribute='username') | list }}
+    lldap_stale_key_users: >-
+      {{ lldap_existing_users.json.data.users
+         | selectattr('id', 'in', lldap_keyless_users)
+         | selectattr('attributes', 'contains', {'name': 'sshpublickey'})
+         | map(attribute='id') | list }}
 
 - name: Deploy the bootstrap admin password
   become: true
@@ -111,11 +142,13 @@
       {%-   set attrs = u.attributes | items2dict(key_name='name', value_name='value') -%}
       {%-   set _ = actual.update({u.id: {
               'groups': u.groups | map(attribute='displayName') | sort,
-              'uid': attrs.uidnumber | default(['']) | first | string}}) -%}
+              'uid': attrs.uidnumber | default(['']) | first | string,
+              'ssh_keys': attrs.sshpublickey | default([]) | sort}}) -%}
       {%- endfor -%}
       {%- for u in lldap_users -%}
       {%-   set a = actual[u.username] | default(none) -%}
-      {%-   if a is none or a.groups != (u.groups | default([]) | sort) or a.uid != (u.uid | string) -%}
+      {%-   if a is none or a.groups != (u.groups | default([]) | sort) or a.uid != (u.uid | string)
+              or a.ssh_keys != (u.ssh_public_keys | default([]) | sort) -%}
       {%-     set _ = bad.append(u.username) -%}
       {%-   endif -%}
       {%- endfor -%}
