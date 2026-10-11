@@ -34,7 +34,7 @@ targets:
     kind: "lxc"
   - ip: "192.168.10.248"
     name: "idp1"
-    service: "lldap"
+    service: "idp"
     kind: "vm"
     logShipping: true
   # Validate 16 GiB sizing (ADR-0031).

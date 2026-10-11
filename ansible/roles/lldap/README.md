@@ -79,8 +79,11 @@ Each `lldap_users` entry accepts:
 ### Certificate rotation
 
 Run the playbook with `-e lldap_cert_rotate=true`, commit the exported
-`roles/sssd/files/lldap-server.pem`, and run `playbooks/services/sssd.yaml`.
-Clients reject LDAPS until they receive the new certificate.
+`roles/sssd/files/lldap-server.pem`, and run `playbooks/services/sssd.yaml`,
+`playbooks/services/authelia.yaml`, and
+`playbooks/services/blackbox_exporter.yaml`. Clients and the `ldaps` probe
+reject LDAPS until they receive the new certificate. `TlsCertificateExpiringSoon`
+fires 30 days before expiry.
 
 ### Recovery
 

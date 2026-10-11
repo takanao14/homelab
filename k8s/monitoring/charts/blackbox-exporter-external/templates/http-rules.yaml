@@ -1,0 +1,23 @@
+{{- if .Values.httpProbeAlerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: http-probe-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: http-probe-external
+      rules:
+        - alert: HttpServiceUnhealthy
+          expr: probe_success{job="scrapeConfig/monitoring/http-services"} == 0
+          for: {{ .Values.httpProbeAlerts.downFor }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ "{{ $labels.instance }}" }} health endpoint is failing"
+            description: >-
+              The health URL for {{ "{{ $labels.instance }}" }} does not return
+              200.
+{{- end }}

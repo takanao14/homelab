@@ -23,4 +23,17 @@ spec:
               The service port for {{ "{{ $labels.instance }}" }} refuses TCP
               connections. Check the host's ICMP alert first: if it is silent,
               the host is up and only the service is down.
+        # Self-signed certificates (LDAPS) have no renewal automation.
+        - alert: TlsCertificateExpiringSoon
+          expr: >-
+            probe_ssl_earliest_cert_expiry{job="scrapeConfig/monitoring/tcp-services"}
+            - time() < {{ .Values.tcpProbeAlerts.certExpiryDays }} * 86400
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ "{{ $labels.instance }}" }} certificate expires within {{ .Values.tcpProbeAlerts.certExpiryDays }} days"
+            description: >-
+              Rotate the certificate before it expires; clients that verify it
+              stop connecting at expiry.
 {{- end }}

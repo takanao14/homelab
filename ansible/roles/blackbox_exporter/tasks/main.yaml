@@ -8,6 +8,16 @@
     state: present
     update_cache: true
 
+- name: Deploy the LDAPS certificate for the ldaps module
+  become: true
+  ansible.builtin.copy:
+    src: "{{ blackbox_exporter_ldaps_ca_src }}"
+    dest: "{{ blackbox_exporter_ldaps_ca_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart blackbox_exporter
+
 - name: Deploy blackbox_exporter config
   become: true
   ansible.builtin.template:

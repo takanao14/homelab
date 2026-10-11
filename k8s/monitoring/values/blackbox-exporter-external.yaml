@@ -21,6 +21,15 @@ tcp:
   targets:
     - address: "192.168.10.240:50051"
       name: "led-rpi3"
+    - address: "192.168.10.248:636"
+      name: "idp1-ldaps"
+      module: ldaps
+
+http:
+  targets:
+    # Direct, the same path Envoy Gateway ext_authz uses.
+    - url: "http://192.168.10.248:9091/api/health"
+      name: "idp1-authelia"
 
 # DNS modules probe the shared frontend inventory.
 
@@ -45,6 +54,9 @@ authoritativeDnsProbeAlerts:
   enabled: true
 
 tcpProbeAlerts:
+  enabled: true
+
+httpProbeAlerts:
   enabled: true
 
 icmpProbeAlerts:
