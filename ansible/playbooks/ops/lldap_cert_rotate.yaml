@@ -1,0 +1,17 @@
+---
+# Rotate the self-signed LDAPS certificate and redeploy it to every client that
+# pins it. Each client rejects LDAPS from the lldap restart until its own play
+# runs, so keep these in one run. Commit roles/sssd/files/lldap-server.pem after.
+- name: Rotate the LLDAP certificate
+  import_playbook: ../services/lldap.yaml
+  vars:
+    lldap_cert_rotate: true
+
+- name: Redeploy the certificate to SSSD clients
+  import_playbook: ../services/sssd.yaml
+
+- name: Redeploy the certificate to Authelia
+  import_playbook: ../services/authelia.yaml
+
+- name: Redeploy the certificate to the blackbox probes
+  import_playbook: ../services/blackbox_exporter.yaml

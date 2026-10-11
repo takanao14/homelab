@@ -231,6 +231,7 @@ Use the OpenBao role README for:
 | `playbooks/ops/startup.yaml` | `proxmox`, `prd_k8s_hypervisor`, `sandbox_k8s_hypervisor`, `guest_shutdown_order` (reversed), `k8s_controller` | ops (planned outage / per-cluster recovery) |
 | `playbooks/ops/version_audit.yaml` | `lldap`, `authelia`, `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `dns_resolver`, `dns_auth`, `seaweedfs`, `openbao`, `gpuvm`, `code_server` | ops |
 | `playbooks/ops/dns_failover_test.yaml` | delegated DNS hosts; orchestration on localhost | ops (state-changing failure test) |
+| `playbooks/ops/lldap_cert_rotate.yaml` | `lldap`, then `sssd`, `authelia`, `blackbox_exporter` | ops (certificate rotation) |
 | `playbooks/ops/pdns_sync.yaml` | `dns_primary`, `dns_secondary` | ops |
 | `playbooks/ops/openbao/bootstrap.yaml` | `openbao` | ops |
 | `playbooks/ops/openbao/configure.yaml` | `openbao` | ops |

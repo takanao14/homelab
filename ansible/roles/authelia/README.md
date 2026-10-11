@@ -46,8 +46,9 @@ a random string of at least 64 characters.
 - **New protected host:** add an `authelia_access_rules` entry, run
   `ansible-playbook playbooks/services/authelia.yaml`, then point the host's
   forward auth at Authelia.
-- **LDAPS certificate rotation:** after the lldap rotation steps, run this
-  playbook too; Authelia rejects LDAPS until it has the new certificate.
+- **LDAPS certificate rotation:** `playbooks/ops/lldap_cert_rotate.yaml`
+  includes this playbook; Authelia rejects LDAPS until it has the new
+  certificate.
 - **Recovery:** rebuild the VM and run the lldap and authelia playbooks. Losing
   SQLite drops only regulation state.
 
