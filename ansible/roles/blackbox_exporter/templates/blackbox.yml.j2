@@ -13,6 +13,23 @@ modules:
     tcp:
       preferred_ip_protocol: ip4
 
+  ldaps:
+    prober: tcp
+    timeout: 5s
+    tcp:
+      preferred_ip_protocol: ip4
+      tls: true
+      tls_config:
+        ca_file: {{ blackbox_exporter_ldaps_ca_path }}
+        server_name: {{ identity_ldap_host }}
+
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      preferred_ip_protocol: ip4
+      valid_status_codes: [200]
+
   dns_external:
     prober: dns
     timeout: 5s

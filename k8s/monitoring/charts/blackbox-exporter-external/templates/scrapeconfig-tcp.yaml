@@ -10,14 +10,13 @@ spec:
   # External probe targets: opt out of the default cluster-prd scrape class.
   scrapeClass: external
   metricsPath: /probe
-  params:
-    module: [tcp_connect]
   staticConfigs:
     # Service ports on hosts the icmp module already covers.
     {{- range .Values.tcp.targets }}
     - targets: [{{ .address | quote }}]
       labels:
         __tmp_name: {{ .name | quote }}
+        __param_module: {{ .module | default "tcp_connect" | quote }}
     {{- end }}
   relabelings:
     - action: replace

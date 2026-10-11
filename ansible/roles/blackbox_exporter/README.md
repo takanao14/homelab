@@ -16,6 +16,8 @@ The deployed config defines these modules:
 |--------|--------|-------------|
 | `icmp` | icmp | ICMP ping (IPv4) |
 | `tcp_connect` | tcp | TCP connect to a `host:port` target (IPv4) |
+| `ldaps` | tcp | TLS handshake verified against `roles/sssd/files/lldap-server.pem` for `identity_ldap_host` |
+| `http_2xx` | http | HTTP GET that expects status 200 |
 | `dns_external` | dns | DNS query for `google.com` against the target resolver |
 | `dns_internal` | dns | DNS query for `blackbox_exporter_dns_internal_query` against the target resolver |
 | `dns_authoritative_udp` | dns | Non-recursive root NS query over UDP |

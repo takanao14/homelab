@@ -17,6 +17,10 @@ icmp:
 
 # Service ports probed with the tcp_connect module.
 tcp:
+  # Each target may set `module` (default tcp_connect).
+  targets: []
+
+http:
   targets: []
 
 dnsProbeAlerts:
@@ -32,6 +36,11 @@ authoritativeDnsProbeAlerts:
 tcpProbeAlerts:
   enabled: false
   # A closed port is unambiguous; wait only long enough to skip a restart.
+  downFor: 10m
+  certExpiryDays: 30
+
+httpProbeAlerts:
+  enabled: false
   downFor: 10m
 
 icmpProbeAlerts:
