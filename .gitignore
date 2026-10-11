@@ -22,3 +22,5 @@ docs/plans
 docs/md
 .ansible
 **/__pycache__/
+# Plaintext temp files left by interrupted `sops` edits.
+.decrypted~*
