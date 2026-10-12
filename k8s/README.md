@@ -26,7 +26,8 @@ changes only and never reads prd credentials
 - **DNS**: external-dns with PowerDNS provider (`gateway-httproute` source) for
   prd; sandbox uses a dnscontrol wildcard to its pinned Gateway address
 
-HTTPRoutes use `gateway-system/shared-gateway-envoy`. See
+HTTPRoutes use `gateway-system/shared-gateway-envoy` without `sectionName`; each
+environment's Gateway has a single listener (ADR-0072). See
 [`ADR-0011`](../docs/adr/0011-cilium-gateway-to-envoy-gateway-migration.md) for
 the Cilium Gateway to Envoy Gateway migration decision.
 

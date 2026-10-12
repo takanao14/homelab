@@ -12,7 +12,7 @@ spec:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   listeners:
-    {{- if .listeners.https.enabled }}
+    {{- if eq .listener "https" }}
     - name: https
       protocol: HTTPS
       port: 443
@@ -26,13 +26,14 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-    {{- end }}
-    {{- if .listeners.http.enabled }}
+    {{- else if eq .listener "http" }}
     - name: http
       protocol: HTTP
       port: 80
       allowedRoutes:
         namespaces:
           from: All
+    {{- else }}
+    {{- fail "gateway.listener must be https or http" }}
     {{- end }}
 {{- end }}

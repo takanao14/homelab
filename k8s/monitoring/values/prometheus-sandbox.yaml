@@ -81,10 +81,6 @@ kube-prometheus-stack:
 prometheus:
   hostname: prometheus.sandbox.butaco.net
 
-gateway:
-  name: shared-gateway-envoy
-  namespace: gateway-system
-  sectionName: http
 
 alertmanagerConfig:
   enabled: false

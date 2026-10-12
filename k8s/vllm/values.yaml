@@ -1,9 +1,6 @@
 hostname: vllm.prd.butaco.net
 
 gateway:
-  name: shared-gateway-envoy
-  namespace: gateway-system
-  sectionName: https
   # Allow model loading and long generations past Envoy's default.
   timeouts:
     request: 10m

@@ -50,9 +50,6 @@ otlp:
 hostname: alloy.prd.butaco.net
 
 gateway:
-  name: shared-gateway-envoy
-  namespace: gateway-system
-  sectionName: https
   # The live graph stream requires no request timeout.
   graphTimeouts:
     request: 0s

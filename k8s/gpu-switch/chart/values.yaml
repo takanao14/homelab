@@ -8,7 +8,6 @@ hostname: ""
 gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
-  sectionName: https
 
 # RBAC cannot label-scope scale writes; keep this allowlist aligned (ADR-0027).
 gpuWorkloads:

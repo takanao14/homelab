@@ -3,7 +3,6 @@ hostname: ""
 gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
-  sectionName: https
   timeout: 120s
   allowedClientCIDRs:
     - 192.168.10.0/24

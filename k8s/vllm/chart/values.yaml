@@ -5,7 +5,6 @@ hostname: ""
 gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
-  sectionName: https
   timeouts:
     request: ""
     backendRequest: ""

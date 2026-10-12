@@ -15,7 +15,6 @@ spec:
       kind: Gateway
       name: {{ .Values.gateway.name }}
       namespace: {{ .Values.gateway.namespace }}
-      sectionName: {{ .Values.gateway.sectionName }}
   hostnames:
     - {{ $hostname }}
   rules:
