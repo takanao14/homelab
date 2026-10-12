@@ -1,13 +1,12 @@
 # Homepage
 
-[Homepage](https://gethomepage.dev/) dashboard for prd and sandbox, managed by Argo CD.
+[Homepage](https://gethomepage.dev/) dashboard for prd, managed by Argo CD.
 
 ## Directory Structure
 
 ```
 homepage/
 ├── prd/values.yaml        # prd overrides (Gateway https listener)
-├── sandbox/values.yaml    # sandbox overrides (hostname, http listener)
 └── chart/                 # Custom Helm chart
     ├── Chart.yaml
     ├── values.yaml        # Kubernetes deployment values (hostname, image, Gateway)
@@ -29,7 +28,7 @@ homepage/
 
 ## Access
 
-An HTTPRoute uses the environment hostname and listener; sandbox is HTTP-only.
+An HTTPRoute uses the environment hostname and listener.
 
 ## Configuration
 
@@ -41,9 +40,6 @@ differences in values files, not these configs.
 ## Secrets
 
 ESO injects OpenBao values as `HOMEPAGE_VAR_*` variables used by Homepage.
-
-Sandbox intentionally reuses prd dashboard paths; its OpenBao role therefore
-requires the `k8s-homepage` policy.
 
 OpenBao KV paths:
 

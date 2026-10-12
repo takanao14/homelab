@@ -29,6 +29,7 @@ grafana:
   defaultDashboardsEnabled: false
 
 hostname: grafana.sandbox.butaco.net
+adminSecretKey: k8s-sandbox/grafana
 
 gateway:
   name: shared-gateway-envoy

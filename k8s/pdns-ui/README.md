@@ -1,6 +1,6 @@
 # pdns-ui
 
-Read-only PowerDNS authoritative-zone browser for prd and sandbox.
+Read-only PowerDNS authoritative-zone browser for prd.
 
 dnscontrol owns records; nginx permits read-only access.
 
@@ -9,7 +9,6 @@ dnscontrol owns records; nginx permits read-only access.
 ```
 pdns-ui/
 ├── prd/values.yaml         # prd overrides (hostname, Gateway https listener)
-├── sandbox/values.yaml     # sandbox overrides (hostname, Gateway http listener, ADR-0010)
 └── chart/
     ├── Chart.yaml
     ├── values.yaml         # hostname, image, PowerDNS backend, OpenBao path
@@ -30,7 +29,7 @@ pdns-ui/
 ## Architecture
 
 ```
-browser ──https (prd) / http (sandbox)──► Envoy Gateway ──► pdns-ui pod (nginx)
+browser ──https──► Envoy Gateway ──► pdns-ui pod (nginx)
                                                               ├─ /        → vendored index.html
                                                               └─ /api/*   → ns1:8081, X-API-Key injected
 ```

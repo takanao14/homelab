@@ -1,5 +1,8 @@
 hostname: ""
 
+# OpenBao KV path holding adminPassword; sandbox uses its own (ADR-0070).
+adminSecretKey: k8s/monitoring/grafana
+
 gateway:
   name: shared-gateway-envoy
   namespace: gateway-system

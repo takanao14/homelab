@@ -1,6 +1,0 @@
-hostname: pdns-ui.sandbox.butaco.net
-
-gateway:
-  name: shared-gateway-envoy
-  namespace: gateway-system
-  sectionName: http

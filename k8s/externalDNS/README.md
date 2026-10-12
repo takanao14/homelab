@@ -1,7 +1,8 @@
 # ExternalDNS
 
-Registers PowerDNS records from HTTPRoutes and annotated LoadBalancer Services;
-ESO supplies the API key.
+Registers PowerDNS records for prd from HTTPRoutes and annotated LoadBalancer
+Services; ESO supplies the API key. Sandbox has no external-dns: the API key is
+not zone-scoped (ADR-0070).
 
 ## Directory Structure
 
@@ -10,8 +11,6 @@ externalDNS/
 ├── values-common.yaml         # PowerDNS API endpoint (shared)
 ├── prd/
 │   └── values.yaml            # domainFilter: prd.butaco.net.
-├── sandbox/
-│   └── values.yaml            # domainFilter: sandbox.butaco.net.
 └── chart/                     # Local Helm chart
     ├── Chart.yaml
     ├── values.yaml
