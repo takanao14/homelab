@@ -554,7 +554,8 @@ target names of their sources and are synced from `takanao14/dotfiles` by
 `vendor/sync.sh`:
 
 ```bash
-./install/vendor/sync.sh           # refresh to the latest dotfiles main
+./install/vendor/sync.sh              # re-sync from the SHA in vendor/REVISION
+./install/vendor/sync.sh --upstream   # advance the pin to the latest dotfiles main
 REF=<sha|tag> ./install/vendor/sync.sh   # pin to a specific ref
-./install/vendor/sync.sh --check   # CI: compare with vendor/REVISION
+./install/vendor/sync.sh --check      # CI: compare with vendor/REVISION
 ```
