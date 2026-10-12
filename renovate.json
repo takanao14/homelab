@@ -11,7 +11,7 @@
   "ignorePaths": [
     "**/node_modules/**",
     "**/bower_components/**",
-    "**/vendor/**",
+    "**/vendor/**/!(REVISION)",
     "**/examples/**",
     "**/__tests__/**",
     "**/test/**",
@@ -27,6 +27,17 @@
     "minimumReleaseAge": null
   },
   "packageRules": [
+    {
+      "description": "Track dotfiles main as a commit digest; GitHub Actions refreshes vendor files on the same PR branch.",
+      "matchDepNames": [
+        "takanao14/dotfiles"
+      ],
+      "minimumReleaseAge": null,
+      "automerge": false,
+      "prBodyNotes": [
+        "The Refresh dotfiles vendor workflow synchronizes the recorded commit and rendered files on this branch. Review both before merging."
+      ]
+    },
     {
       "description": "Project-owned images are released intentionally and should be deployable immediately without the global release-age delay.",
       "matchDatasources": ["docker"],
@@ -172,6 +183,19 @@
     ]
   },
   "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^scripts/install/vendor/REVISION$/"
+      ],
+      "matchStrings": [
+        "sha: +(?<currentDigest>[a-f0-9]{40})\\n"
+      ],
+      "currentValueTemplate": "main",
+      "depNameTemplate": "takanao14/dotfiles",
+      "packageNameTemplate": "https://github.com/takanao14/dotfiles",
+      "datasourceTemplate": "git-refs"
+    },
     {
       "customType": "regex",
       "managerFilePatterns": [

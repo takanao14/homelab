@@ -74,8 +74,8 @@ The expected dependency update sequence is:
 1. Renovate updates one or more versions in the dotfiles config.
 2. GitHub Actions updates and validates the lockfile on the same pull request.
 3. Merge the dotfiles pull request.
-4. Run the homelab vendor sync against the merged dotfiles commit and open a
-   homelab pull request.
+4. Homelab Renovate updates the dotfiles commit digest; GitHub Actions syncs
+   vendor files on the same pull request (see [ADR-0069](0069-track-dotfiles-vendor-with-renovate.md)).
 5. Build at least one representative tool image before merging homelab.
 
 ## Rollout status

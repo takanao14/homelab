@@ -117,3 +117,4 @@ deleting it:
 | [0066](0066-hermes-dashboard-through-caddy.md) | Expose Hermes Dashboard through Caddy | Accepted |
 | [0067](0067-replace-authentik-with-lldap-and-authelia.md) | Replace Authentik with LLDAP and Authelia | Accepted |
 | [0068](0068-build-caddy-on-the-ansible-controller.md) | Build Caddy on the Ansible controller | Accepted |
+| [0069](0069-track-dotfiles-vendor-with-renovate.md) | Track dotfiles vendor with Renovate | Accepted |

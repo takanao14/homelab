@@ -25,6 +25,11 @@ scripts/
     └── admin/set-env.sh / set-kubeconfig.sh / set-sops-key.sh  # store (privileged)
 ```
 
+`install/vendor/REVISION` pins dotfiles `main`. Renovate advances its SHA and
+GitHub Actions commits synchronized files to the same PR branch.
+`install/vendor/sync.sh` syncs the recorded SHA; `--check` verifies it without
+writing, and `--upstream` explicitly advances it to current `main`.
+
 ## VM lifecycle
 
 ### `create-vm.sh`
