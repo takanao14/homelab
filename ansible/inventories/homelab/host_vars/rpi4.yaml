@@ -43,6 +43,9 @@ vector_config:
         host: !unsafe "{{ host }}"
         unit: !unsafe "{{ unit }}"
 
+# The exporter that probes idp1 (k8s/monitoring blackboxExporterURL).
+blackbox_exporter_ldaps_enabled: true
+
 # Public resolvers keep the recovery path off the cluster it recovers
 # (ADR-0053). Do not point rpi4 at dist1/dist2.
 netplan_ethernets:

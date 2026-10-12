@@ -16,7 +16,7 @@ The deployed config defines these modules:
 |--------|--------|-------------|
 | `icmp` | icmp | ICMP ping (IPv4) |
 | `tcp_connect` | tcp | TCP connect to a `host:port` target (IPv4) |
-| `ldaps` | tcp | TLS handshake verified against `roles/sssd/files/lldap-server.pem` for `identity_ldap_host` |
+| `ldaps` | tcp | TLS handshake verified against `roles/sssd/files/lldap-server.pem` for `identity_ldap_host`; only with `blackbox_exporter_ldaps_enabled` |
 | `http_2xx` | http | HTTP GET that expects status 200 |
 | `dns_external` | dns | DNS query for `google.com` against the target resolver |
 | `dns_internal` | dns | DNS query for `blackbox_exporter_dns_internal_query` against the target resolver |
@@ -31,6 +31,7 @@ The deployed config defines these modules:
 | `blackbox_exporter_listen_address` | `ansible_host` | Address the exporter listens on |
 | `blackbox_exporter_config_path` | `/etc/prometheus/blackbox.yml` | Path to the deployed config file |
 | `blackbox_exporter_dns_internal_query` | `ns1.home.butaco.net` | Hostname used for the `dns_internal` probe |
+| `blackbox_exporter_ldaps_enabled` | `false` | Deploy the `ldaps` module and certificate; `true` only on rpi4 |
 
 ## Usage
 

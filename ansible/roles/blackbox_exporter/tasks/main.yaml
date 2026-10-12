@@ -16,7 +16,15 @@
     owner: root
     group: root
     mode: '0644'
+  when: blackbox_exporter_ldaps_enabled | bool
   notify: Restart blackbox_exporter
+
+- name: Remove the LDAPS certificate where the ldaps module is disabled
+  become: true
+  ansible.builtin.file:
+    path: "{{ blackbox_exporter_ldaps_ca_path }}"
+    state: absent
+  when: not blackbox_exporter_ldaps_enabled | bool
 
 - name: Deploy blackbox_exporter config
   become: true

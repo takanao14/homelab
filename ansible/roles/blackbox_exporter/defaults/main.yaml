@@ -6,6 +6,9 @@ blackbox_exporter_config_path: /etc/prometheus/blackbox.yml
 # Internal domain to resolve for the DNS internal probe
 blackbox_exporter_dns_internal_query: "ns1.home.butaco.net"
 
-# The LDAPS certificate SSSD trusts, so a rotation that misses SSSD fails the probe too.
+# Enabled only on the exporter that probes idp1, so certificate rotation does
+# not touch the others. The certificate is the one SSSD trusts, so a rotation
+# that misses SSSD fails the probe too.
+blackbox_exporter_ldaps_enabled: false
 blackbox_exporter_ldaps_ca_src: "{{ role_path }}/../sssd/files/lldap-server.pem"
 blackbox_exporter_ldaps_ca_path: /etc/prometheus/lldap-server.pem
