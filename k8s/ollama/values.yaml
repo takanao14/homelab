@@ -1,8 +1,5 @@
 hostname: ollama.prd.butaco.net
 gateway:
-  name: shared-gateway-envoy
-  namespace: gateway-system
-  sectionName: https
   # Override Envoy's 15s default for long agent responses.
   timeouts:
     request: 10m

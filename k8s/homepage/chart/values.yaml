@@ -4,7 +4,6 @@ namespace: homepage
 gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
-  sectionName: https
 
 image:
   repository: ghcr.io/gethomepage/homepage

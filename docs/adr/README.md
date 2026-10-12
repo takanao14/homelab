@@ -119,3 +119,4 @@ deleting it:
 | [0068](0068-build-caddy-on-the-ansible-controller.md) | Build Caddy on the Ansible controller | Accepted |
 | [0069](0069-track-dotfiles-vendor-with-renovate.md) | Track dotfiles vendor with Renovate | Accepted |
 | [0070](0070-no-staging-sandbox-validates-the-cluster-platform.md) | No staging environment; sandbox validates the cluster platform | Accepted |
+| [0072](0072-one-gateway-listener-per-environment.md) | One Gateway listener per environment | Accepted |

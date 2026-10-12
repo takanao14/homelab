@@ -62,8 +62,3 @@ grafana:
   service:
     type: ClusterIP
   defaultDashboardsEnabled: false
-
-gateway:
-  name: shared-gateway-envoy
-  namespace: gateway-system
-  sectionName: https

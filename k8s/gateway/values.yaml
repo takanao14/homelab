@@ -25,8 +25,5 @@ gateway:
       group: gateway.envoyproxy.io
       kind: EnvoyProxy
       name: shared-gateway-envoy
-  listeners:
-    http:
-      enabled: true
-    https:
-      enabled: true
+  # One listener per environment, so HTTPRoutes omit sectionName.
+  listener: https

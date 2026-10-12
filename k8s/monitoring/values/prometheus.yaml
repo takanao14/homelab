@@ -194,8 +194,3 @@ kube-prometheus-stack:
   # Cilium replaces kube-proxy cluster-wide.
   kubeProxy:
     enabled: false
-
-gateway:
-  name: shared-gateway-envoy
-  namespace: gateway-system
-  sectionName: https

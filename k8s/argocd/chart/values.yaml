@@ -15,4 +15,3 @@ server:
   route:
     gatewayName: shared-gateway-envoy
     gatewayNamespace: gateway-system
-    sectionName: https

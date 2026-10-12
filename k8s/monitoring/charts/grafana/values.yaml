@@ -6,4 +6,3 @@ adminSecretKey: k8s/monitoring/grafana
 gateway:
   name: shared-gateway-envoy
   namespace: gateway-system
-  sectionName: https

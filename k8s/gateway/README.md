@@ -10,7 +10,7 @@ gateway/
 ├── Chart.yaml
 ├── values.yaml          # Shared GatewayClass / EnvoyProxy / Gateway definitions
 ├── prd/values.yaml      # domain: prd.butaco.net
-├── sandbox/values.yaml  # domain: sandbox.butaco.net, HTTPS listener disabled, pinned address
+├── sandbox/values.yaml  # domain: sandbox.butaco.net, HTTP listener, pinned address
 └── templates/
     ├── gatewayclasses.yaml
     ├── envoyproxies.yaml
@@ -33,12 +33,15 @@ namespace: gateway-system
 gatewayClassName: envoy-gateway
 ```
 
-| Listener | Port | Protocol | TLS Secret |
-|----------|------|----------|------------|
-| https | 443 | HTTPS | `wildcard-{domain-dashes}-tls` in `cert-manager` |
-| http | 80 | HTTP | — |
+`gateway.listener` selects the environment's only listener, so HTTPRoutes omit
+`sectionName` (ADR-0072). prd has no port 80 and no HTTP redirect.
 
-cert-manager grants cross-namespace Secret access. Sandbox disables HTTPS.
+| `gateway.listener` | Environment | Port | Protocol | TLS Secret |
+|--------------------|-------------|------|----------|------------|
+| `https` | prd | 443 | HTTPS | `wildcard-{domain-dashes}-tls` in `cert-manager` |
+| `http` | sandbox | 80 | HTTP | — |
+
+cert-manager grants cross-namespace Secret access.
 
 ### EnvoyProxy
 
@@ -53,7 +56,7 @@ policy avoids Cilium L2 advertisement blackholes. Sandbox pins the Service to
 | `domain` | Base domain for the environment (e.g. `prd.butaco.net`) |
 | `gatewayClass` | GatewayClass definition (name, controllerName). |
 | `envoyProxy` | EnvoyProxy definition for Envoy Gateway infrastructure settings. |
-| `gateway` | Gateway definition: name, namespace, class, infrastructure, and listener toggles. |
+| `gateway` | Gateway definition: name, namespace, class, infrastructure, and `listener` (`https` or `http`). |
 
 `domain` is required and determines the TLS Secret name.
 

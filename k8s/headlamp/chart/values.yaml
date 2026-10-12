@@ -43,7 +43,6 @@ headlamp:
         kind: Gateway
         name: shared-gateway-envoy
         namespace: gateway-system
-        sectionName: https
     rules:
       - matches:
           - path:
