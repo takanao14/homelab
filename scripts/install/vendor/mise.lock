@@ -182,19 +182,19 @@ url = "https://github.com/derailed/k9s/releases/download/v0.51.0/k9s_Linux_amd64
 url_api = "https://api.github.com/repos/derailed/k9s/releases/assets/440224321"
 
 [[tools."aqua:direnv/direnv"]]
-version = "2.38.1"
+version = "2.38.2"
 backend = "aqua:direnv/direnv"
-specifiers = ["2.38.1"]
+specifiers = ["2.38.2"]
 
 [tools."aqua:direnv/direnv"."platforms.linux-arm64"]
-checksum = "sha256:a5deedd4165c94e629a4f3faf74fc0425d3c34a2fcee438a95d628a5f41f5bd8"
-url = "https://github.com/direnv/direnv/releases/download/v2.38.1/direnv.linux-arm64"
-url_api = "https://api.github.com/repos/direnv/direnv/releases/assets/616472958"
+checksum = "sha256:ec2a32dbe2f19dd085bd9315a1b4ea88b55ec288aa7eabe8723490baf466cb23"
+url = "https://github.com/direnv/direnv/releases/download/v2.38.2/direnv.linux-arm64"
+url_api = "https://api.github.com/repos/direnv/direnv/releases/assets/627455481"
 
 [tools."aqua:direnv/direnv"."platforms.linux-x64"]
-checksum = "sha256:a19470b6d93afeb226b89b1dabf95a5e559533905122be235ed35408e9983b3c"
-url = "https://github.com/direnv/direnv/releases/download/v2.38.1/direnv.linux-amd64"
-url_api = "https://api.github.com/repos/direnv/direnv/releases/assets/616472953"
+checksum = "sha256:148820a187930d36ca6a204504e5cdb30d8396cd1a97e64c3b3f10d793c11247"
+url = "https://github.com/direnv/direnv/releases/download/v2.38.2/direnv.linux-amd64"
+url_api = "https://api.github.com/repos/direnv/direnv/releases/assets/627455476"
 
 [[tools."aqua:eza-community/eza"]]
 version = "0.23.5"
