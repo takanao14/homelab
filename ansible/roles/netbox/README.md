@@ -102,10 +102,10 @@ is replaced.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `netbox_version` | `4.7.0` | NetBox release half of the image tag |
-| `netbox_docker_version` | `5.1.1` | netbox-docker release half of the image tag |
+| `netbox_version` | [defaults/main.yaml](defaults/main.yaml) | NetBox release half of the image tag |
+| `netbox_docker_version` | [defaults/main.yaml](defaults/main.yaml) | netbox-docker release half of the image tag |
 | `netbox_pg_image` | `docker.io/postgres:18-alpine` | PostgreSQL image; track the upstream compose file |
-| `netbox_redis_image` | `docker.io/valkey/valkey:9.1-alpine` | Valkey image; track the upstream compose file |
+| `netbox_redis_image` | [defaults/main.yaml](defaults/main.yaml) | Valkey image; track the upstream compose file |
 | `netbox_domain` | `netbox.home.butaco.net` | `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` entry |
 | `netbox_port` | `8080` | Published port Caddy proxies to |
 | `netbox_base_dir` | `/opt/netbox` | Parent of the media, reports and scripts bind mounts |

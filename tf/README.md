@@ -116,14 +116,14 @@ To apply all components in an environment at once:
 
 ```bash
 cd tf/lxc/node2
-terragrunt run-all apply
+terragrunt run --all -- apply
 ```
 
 ### Distributing images to all nodes
 
 `cloudimage/` downloads stock images; `customimage/` downloads Packer images
 from SeaweedFS. Because nodes use separate credentials, use `run-all.sh` instead
-of cross-node `terragrunt run-all`:
+of cross-node `terragrunt run --all`:
 
 ```bash
 cd tf/cloudimage     # or tf/customimage (symlinked to the same script)

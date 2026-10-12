@@ -28,7 +28,7 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `openbao_version` | `2.6.1` | Reviewed OpenBao version used by Renovate, audit, and the explicit upgrade workflow |
+| `openbao_version` | [defaults/main.yaml](defaults/main.yaml) | Reviewed OpenBao version used by Renovate, audit, and the explicit upgrade workflow |
 | `openbao_user` | `openbao` | System user (created by package) |
 | `openbao_group` | `openbao` | System group (created by package) |
 | `openbao_package_hold` | `true` | Hold the `openbao` apt package during normal service-role runs; the explicit upgrade workflow manages this hold |
@@ -98,8 +98,8 @@ regenerated.
 ## Rebuilding the host
 
 OpenBao is recovered by rebuilding it, not by restoring a snapshot (ADR-0042).
-Ten of the fourteen KV entries come from `openbao_secrets`; the other four are
-re-injected from a workstation. Run the steps in order:
+KV entries come from SOPS inventory and the workstation admin scripts below.
+Run the steps in order:
 
 1. Re-create the VM, then `ansible-playbook playbooks/services/openbao.yaml`. The role
    deploys `openbao.hcl` and the static seal key from SOPS, so the rebuilt host
@@ -192,12 +192,15 @@ cluster CA rotation does not require editing SOPS secrets.
 
 ### 3. Install ESO via ArgoCD
 
-Push the changes to git. ArgoCD will sync the ESO apps and install ESO on each cluster.
-Verify the `ClusterSecretStore` becomes `Ready` on each cluster:
+Push the changes to git. Argo CD installs ESO on each cluster. Wait for the
+controller before registration:
 
 ```bash
-kubectl get clustersecretstore openbao
+kubectl -n external-secrets rollout status deploy/external-secrets
 ```
+
+`ClusterSecretStore/openbao` can remain unready until the next step configures
+Kubernetes authentication.
 
 ### 4. Register each cluster with OpenBao
 
@@ -224,16 +227,20 @@ ansible-playbook playbooks/ops/openbao/register_cluster.yaml \
   -e kube_context=sandbox-homelab
 ```
 
-Run the same command after rebuilding a k0s cluster. OpenBao KV secret values
-remain intact because OpenBao is external to the Kubernetes cluster.
+After registration, verify `kubectl get clustersecretstore openbao` reports
+`Ready`. Run the same registration command after rebuilding a k0s cluster.
+OpenBao KV secret values remain intact because OpenBao is external to the Kubernetes cluster.
 
 ## KV Path Conventions
 
-All secrets are stored under the `secret/` KV v2 mount. Two top-level namespaces are used:
+All secrets are stored under the `secret/` KV v2 mount. Application and
+kubeconfig paths follow the conventions below; workstation `.env` and AGE key
+paths are documented in [scripts/README.md](../../../scripts/README.md#secrets--environment).
 
 ### `secret/k8s/{app}/{secret}`
 
-Secrets consumed by Kubernetes applications via ESO. Scoped per application; not shared across consumers.
+Secrets consumed by Kubernetes applications via ESO. Policies scope access by
+application; pdns-ui also reads the external-dns PowerDNS key.
 
 ```
 secret/k8s/cert-manager/cloudflare   # Cloudflare API token
@@ -262,15 +269,9 @@ secret/kubeconfig/sandbox # sandbox cluster kubeconfig
 
 The distinction: `k8s/` is for secrets **used by** apps running in Kubernetes; `kubeconfig/` is for credentials **to access** Kubernetes clusters.
 
-Secrets are seeded from the SOPS-encrypted `openbao_secrets` list.
-
-For the Alertmanager Discord receiver, add:
-
-```yaml
-- path: secret/k8s/monitoring/alertmanager
-  data:
-    discord-webhook-url: "<Discord webhook URL>"
-```
+Application secrets are seeded from the SOPS-encrypted `openbao_secrets`
+list, except the Argo CD entries below and MCP tokens seeded by
+`scripts/secrets/admin/seed-mcp.sh`.
 
 ### ArgoCD admin password
 

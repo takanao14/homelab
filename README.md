@@ -23,7 +23,8 @@ repositories; their changes belong in those repositories.
 Secrets are managed with [SOPS](https://github.com/getsops/sops) + [AGE](https://github.com/FiloSottile/age) encryption and exposed to tooling via [direnv](https://direnv.net/).
 
 - Encrypted secrets are committed as `*.sops.env` or `*.sops.yaml` files.
-- Each component directory contains a `.envrc` that decrypts secrets at shell entry using `sops --decrypt`.
+- Component `.envrc` files load shell secrets with `sops --decrypt`; Ansible
+  loads encrypted inventory through its SOPS vars plugin.
 - The `.sops.yaml` at the repository root defines encryption rules by file path pattern.
 
 ### Workflow

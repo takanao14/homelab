@@ -17,6 +17,7 @@ Argo CD-managed monitoring for prd, with a sandbox subset and OpenBao secrets.
 | `snmp-exporter` | `prometheus-snmp-exporter` | SNMP metrics polling |
 | `node-exporter-external` | local chart | Scrape external node-exporter instances |
 | `vector-external` | local chart | Scrape Vector internal metrics from service VMs |
+| `smartctl-exporter-external` | local chart | Scrape TrueNAS disk SMART metrics |
 | `amd-gpu-external` | local chart | AMD GPU metrics (amd-metrics-exporter on GPU VM) |
 | `dnsdist` | local chart | dnsdist external scrape configuration |
 | `pdns-auth` | local chart | PowerDNS Authoritative metrics |
@@ -44,6 +45,7 @@ monitoring/
 │   ├── snmp-exporter.yaml
 │   ├── node-exporter-external.yaml
 │   ├── vector-external.yaml
+│   ├── smartctl-exporter-external.yaml
 │   ├── proxmox-nodes.yaml        # shared Proxmox hypervisor inventory (ADR-0024)
 │   ├── dns-frontends.yaml        # shared DNS frontend inventory (ADR-0024/0030)
 │   ├── control-plane-metrics.yaml # k0s controller host targets
@@ -63,6 +65,7 @@ monitoring/
     ├── blackbox-exporter-external/
     ├── node-exporter-external/
     ├── vector-external/          # ScrapeConfig for service VM Vector metrics
+    ├── smartctl-exporter-external/ # ScrapeConfig for TrueNAS SMART metrics
     ├── control-plane-metrics/    # ScrapeConfig for k0s controller hosts
     ├── amd-gpu-external/         # ScrapeConfig for AMD GPU metrics exporter
     ├── dnsdist/
@@ -180,6 +183,6 @@ ansible-playbook playbooks/ops/openbao/seed_secrets.yaml
 
 Do not use manual `bao kv put`; Ansible is the source of truth.
 
-LED availability uses the `led_service2_monitor` timer from the led-service2 repository and the shared node-exporter textfile directory. `led_service:check_fresh` is 0 for missing, stale, future-dated snapshots or a failed host scrape; `led_service:available` additionally requires systemd and gRPC success. `LedServiceUnavailable` notifies on that composite after ten minutes, long enough for the more specific ICMP and scrape alerts to fire first when the whole host is gone. `LedServiceRestarting` covers what availability cannot see: a crash loop leaves the unit active between restarts. Display-worker progress is still not verified by any probe; the Loki rules below carry that signal instead.
+LED availability uses the `led_service2_monitor` timer from the led-service2 repository and the shared node-exporter textfile directory. `led_service:check_fresh` is 0 for missing, stale, future-dated snapshots or a failed host scrape; `led_service:available` additionally requires systemd and gRPC success. `LedServiceUnavailable` notifies on that composite after ten minutes, long enough for the more specific ICMP and scrape alerts to fire first when the whole host is gone. `LedServiceRestarting` covers what availability cannot see: a crash loop leaves the unit active between restarts. Display-worker progress is still not verified by any probe; the Loki rules above carry that signal instead.
 
 After rendering the external node-exporter chart with its Argo CD values, run `python3 tests/test_led_service_rules.py <rendered.yaml>` from this directory (requires PyYAML and promtool). It checks healthy, failed, stale, missing and future-dated snapshots, host scrape failure, and both alerts' firing thresholds.

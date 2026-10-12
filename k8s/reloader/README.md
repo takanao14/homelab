@@ -12,14 +12,21 @@ reloader/
 
 ## Configuration
 
-`watchGlobally` is set to `false`, so Reloader only watches resources annotated with:
+`reloader.reloader.watchGlobally: false` restricts the controller to its release
+namespace, `reloader` ([upstream namespace scoping](https://docs.stakater.com/reloader/1.4/how-to-guides/namespace-scoping.html)).
+It does not cover annotated workloads in other namespaces, including MCP,
+slack-bot, and external-dns. Restart those Deployments explicitly after Secret
+rotation until the controller scope is expanded.
+
+Within the watched namespace, workloads opt in with:
 
 ```yaml
 annotations:
   reloader.stakater.com/auto: "true"
 ```
 
-or resource-specific annotations, preventing cluster-wide unintended restarts.
+or resource-specific annotations. Namespace scope and annotation opt-in are
+separate controls.
 
 ## Environments
 

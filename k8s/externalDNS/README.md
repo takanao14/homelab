@@ -16,7 +16,7 @@ externalDNS/
     ├── Chart.yaml
     ├── values.yaml
     └── templates/
-        ├── deployment.yaml      # Checksum annotation for auto-restart on Secret change
+        ├── deployment.yaml      # Reloader annotation for Secret-driven restarts
         ├── rbac.yaml            # Includes gateway.networking.k8s.io + namespaces permissions
         └── external-secret.yaml # ESO ExternalSecret for PowerDNS API key
 ```
@@ -47,5 +47,10 @@ never committed.
 Seed it through the encrypted Ansible `openbao_secrets` list:
 
 ```bash
-ansible-playbook ansible/playbooks/ops/openbao/seed_secrets.yaml
+cd ansible
+ansible-playbook playbooks/ops/openbao/seed_secrets.yaml
 ```
+
+After rotating the key and waiting for ESO synchronization, restart external-dns
+explicitly; the current [Reloader scope](../reloader/README.md#configuration)
+does not cover its namespace.

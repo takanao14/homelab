@@ -63,12 +63,9 @@ cleanly and still route differently; changes need behavioural verification.
 `dnsdist -c -e "showRules()"` is the most direct check — it prints every rule
 with its match count, so two hosts can be compared rule by rule.
 
-**Trust the parser over the YAML reference.** During the migration from Lua the
-published reference was wrong twice: it documents a default for the backend
-`protocol` field that the binary actually requires, and it shows selector types
-hyphen-lowercased (`qname-suffix`) when only the PascalCase enum variant
-(`QNameSuffix`) is accepted. When a type or field name is wrong, the parse error
-enumerates every valid alternative — that list is authoritative.
+Set backend `protocol` explicitly and use PascalCase selector types such as
+`QNameSuffix`. For accepted fields and types, follow the installed parser
+rather than examples for a different version.
 
 #### Reverting to Lua
 
@@ -136,7 +133,7 @@ check built from `dnsdist_internal_check_name`; resolver backends share
 | `dnsdist_default_check_name` | `dnssec.works.` | Health check FQDN for resolver backends |
 | `dnsdist_repo_channel` | `dnsdist-21` | PowerDNS APT repository channel (release train, not a version pin) |
 | `dnsdist_repo_release` | `{{ ansible_facts['distribution_release'] }}` | Ubuntu release codename |
-| `dnsdist_repo_key_sha256` | `efeb5b14…decae8` | Checksum of the repository signing key. Verifies the APT trust anchor, and is what lets `get_url` skip the network once the key is in place — `force: false` alone does not, because the skip is gated on a checksum being set. Shared with the `pdns_auth` role, which fetches the same file |
+| `dnsdist_repo_key_sha256` | [defaults/main.yaml](defaults/main.yaml) | Pinned signing-key checksum; enables verified local reuse. Keep it aligned with the other PowerDNS role |
 
 ## Moving the release train
 

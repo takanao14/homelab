@@ -24,7 +24,7 @@ Installs and configures a [Forgejo Actions Runner](https://code.forgejo.org/forg
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `forgejo_runner_version` | `13.2.0` | Runner version to install |
+| `forgejo_runner_version` | [defaults/main.yaml](defaults/main.yaml) | Runner version to install |
 | `forgejo_runner_sha256` | Pinned SHA-256 | Checksum of that release's amd64 binary |
 | `forgejo_runner_user` | `runner` | System user |
 | `forgejo_runner_group` | `runner` | System group |

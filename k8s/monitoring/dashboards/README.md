@@ -209,18 +209,14 @@ adds merged table queries, field overrides, and value mappings. `go test ./...`
 compares the v2 resources against the committed Classic JSON and checks invalid
 v2 references, IDs, and missing thresholds.
 
-Compare both dashboards using the same datasource and absolute time range.
-Check values, colors, legends, row collapse, datasource switching, and reload
-after regeneration. The user reported no apparent issues during local Grafana
-verification. Sandbox sidecar compatibility remains unverified.
-On prd Grafana 13.2.2, Argo CD and the sidecar delivered all three resources.
-Visual comparison against the Classic dashboards matched the uptime, DHCP, and
-cert-manager panels, including Loki, query variables, table transformations,
-merged queries, field overrides, and value mappings.
+Compare v2 and Classic dashboards using the same datasource and absolute time
+range. Check values, colors, legends, row collapse, datasource switching, and
+reload after regeneration. All three v2 resources were delivered and visually
+verified on prd Grafana 13.2.2; sandbox sidecar compatibility remains unverified.
 Provisioning logged the upstream [managedFields schema error](https://github.com/grafana/grafana/issues/128991);
 registration and rendering still succeeded.
-ADR-0007 continues to defer replacement of the Classic dashboards; this
-additional dashboard tests v2 delivery without replacing them.
+ADR-0007 continues to defer replacement of the Classic dashboards; these
+additional dashboards test v2 delivery without replacing them.
 
 ## Production
 

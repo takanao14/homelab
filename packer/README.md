@@ -21,7 +21,7 @@ on a KVM/libguestfs builder.
 ### Build Requirements
 - Packer >= 1.15.0
 - QEMU tools (`qemu-img`)
-- Proxmox VE API access
+- Linux amd64 builder with KVM and libguestfs (see `setup.sh`)
 - Internet access for downloading base images and packages
 - For upstream imports: `curl`, `xz`, and `sha256sum`
 
@@ -68,12 +68,6 @@ export PKR_VAR_ssh_pubkey='ssh-ed25519 AAAA...'
 export SEAWEEDFS_S3_ENDPOINT='https://s3.home.butaco.net'
 export SEAWEEDFS_S3_ACCESS_KEY='...'
 export SEAWEEDFS_S3_SECRET_KEY='...'
-
-# Optional: Proxmox credentials for Terragrunt deployment
-export PROXMOX_API_TOKEN=apiuser@pve!provider=...
-export PROXMOX_ENDPOINT=https://...
-export PROXMOX_VE_SSH_USERNAME='proxmox_user'
-export PROXMOX_VE_SSH_AGENT=true
 ```
 
 ### 2. Build Images
@@ -97,6 +91,7 @@ For FreeBSD, use [Upstream Image Imports](#upstream-image-imports).
 
 ### 4. Deploy Images to Proxmox
 
+Load node credentials through [tf/](../tf/README.md#environment-variables).
 `terragrunt apply` makes each Proxmox node download the pushed images. The
 checksum is read from the bucket at plan time, so an image must be pushed
 (step 3) before it can be deployed.
@@ -130,6 +125,9 @@ users, cloud-init paths, the machine profile and the provisioner list live in
 | `ubuntu24-base` | server | [vars/ubuntu24-base.pkrvars.hcl](vars/ubuntu24-base.pkrvars.hcl) | `images/ubuntu-24.04-base.img` |
 | `ubuntu24-tool` | server | [vars/ubuntu24-tool.pkrvars.hcl](vars/ubuntu24-tool.pkrvars.hcl) | `images/ubuntu-24.04-tool.img` |
 | `ubuntu24-desktop` | desktop | [vars/ubuntu24-desktop.pkrvars.hcl](vars/ubuntu24-desktop.pkrvars.hcl) | `images/ubuntu-24.04-desktop.img` |
+| `ubuntu26-base` | server | [vars/ubuntu26-base.pkrvars.hcl](vars/ubuntu26-base.pkrvars.hcl) | `images/ubuntu-26.04-base.img` |
+| `ubuntu26-tool` | server | [vars/ubuntu26-tool.pkrvars.hcl](vars/ubuntu26-tool.pkrvars.hcl) | `images/ubuntu-26.04-tool.img` |
+| `ubuntu26-desktop` | desktop | [vars/ubuntu26-desktop.pkrvars.hcl](vars/ubuntu26-desktop.pkrvars.hcl) | `images/ubuntu-26.04-desktop.img` |
 | `rocky10-base` | server | [vars/rocky10-base.pkrvars.hcl](vars/rocky10-base.pkrvars.hcl) | `images/rocky-10-base.img` |
 | `rocky10-tool` | server | [vars/rocky10-tool.pkrvars.hcl](vars/rocky10-tool.pkrvars.hcl) | `images/rocky-10-tool.img` |
 | `rocky9-base` | server | [vars/rocky9-base.pkrvars.hcl](vars/rocky9-base.pkrvars.hcl) | `images/rocky-9-base.img` |

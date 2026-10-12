@@ -23,7 +23,7 @@ Installs and configures [Forgejo](https://forgejo.org/) self-hosted Git service 
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `forgejo_version` | `15.0.1` | Forgejo version to install |
+| `forgejo_version` | [defaults/main.yaml](defaults/main.yaml) | Forgejo version to install |
 | `forgejo_user` | `git` | System user |
 | `forgejo_group` | `git` | System group |
 | `forgejo_home` | `/var/lib/forgejo` | Home and data directory |
@@ -31,7 +31,7 @@ Installs and configures [Forgejo](https://forgejo.org/) self-hosted Git service 
 | `forgejo_binary` | `/usr/local/bin/forgejo` | Binary path |
 | `forgejo_domain` | `forgejo.home.butaco.net` | Public domain name |
 | `forgejo_ssh_domain` | (None) | SSH domain name (optional, defaults to `forgejo_domain`) |
-| `forgejo_http_port` | `80` | HTTP listen port |
+| `forgejo_http_port` | `3000` | HTTP listen port |
 | `forgejo_ssh_port` | `2222` | SSH listen port |
 | `forgejo_db_type` | `sqlite3` | Database backend |
 | `forgejo_db_path` | `{{ forgejo_home }}/data/forgejo.db` | SQLite database path |

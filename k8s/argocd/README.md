@@ -131,15 +131,16 @@ block waves; failed ExternalSecrets retry.
 2. Seed them and grant read access:
 
    ```bash
-   ansible-playbook ansible/playbooks/ops/openbao/seed_secrets.yaml
-   ansible-playbook ansible/playbooks/ops/openbao/configure.yaml
+   cd ansible
+   ansible-playbook playbooks/ops/openbao/seed_secrets.yaml
+   ansible-playbook playbooks/ops/openbao/configure.yaml
    ```
 
    Re-register each cluster so the ESO role receives the new policy:
 
    ```bash
-   ansible-playbook ansible/playbooks/ops/openbao/register_cluster.yaml -e cluster=prd
-   ansible-playbook ansible/playbooks/ops/openbao/register_cluster.yaml -e cluster=sandbox
+   ansible-playbook playbooks/ops/openbao/register_cluster.yaml -e cluster=prd
+   ansible-playbook playbooks/ops/openbao/register_cluster.yaml -e cluster=sandbox
    ```
 
 3. Commit and push; the `argocd` Application syncs automatically.

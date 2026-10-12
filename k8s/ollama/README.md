@@ -34,7 +34,7 @@ does not load host `/opt/rocm`:
 | Layer | Managed in | Current |
 |-------|-----------|---------|
 | Kernel driver (KMD) | `ansible/roles/rocm` (`rocm_amdgpu_version`, `rocm_version`) | amdgpu 31.50 / ROCm 10.0 |
-| Container userspace (UMD) | `chart/values.yaml` (`image.tag`) | ROCm 7.2.1, bundled in ollama 0.33.x |
+| Container userspace (UMD) | `chart/values.yaml` (`image.tag`) | ROCm 7.2.1 (see the image compatibility note in `chart/values.yaml`) |
 | GPU target | host GPU / image build | `gfx1200` (RX 9060 XT) |
 
 AMD's supported skew window covers bundled ROCm 7.2.1 with the 10.0 host
@@ -71,7 +71,7 @@ incompatible pairing. Check upstream `ROCMVERSION` and `AMDGPU_TARGETS` on bumps
 | `hostname` | `ollama.prd.butaco.net` | HTTPRoute hostname |
 | `replicaCount` | `0` | Set to `1` to start (default off to save GPU) |
 | `image.repository` | `ollama/ollama` | Ollama image |
-| `image.tag` | `0.33.2-rocm` | ROCm-enabled image tag (bundles ROCm 7.2.1 userspace) |
+| `image.tag` | [chart/values.yaml](chart/values.yaml) | ROCm-enabled image tag (bundles ROCm 7.2.1 userspace) |
 | `numCtx` | `4096` (chart) / `131072` (`values.yaml`) | Context window size (tokens); 131072 is gemma4:12b's native max |
 | `gateway.timeouts.request` | unset (chart) / `10m` (`values.yaml`) | End-to-end HTTPRoute timeout for long LLM responses |
 | `gateway.timeouts.backendRequest` | unset (chart) / `10m` (`values.yaml`) | Gateway-to-Ollama request timeout |

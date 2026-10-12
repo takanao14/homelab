@@ -42,11 +42,8 @@ pragmatic exception (cheap, idempotent, keeps log timestamps correct on a
 single-playbook run). OpenClaw and Hermes also embed `mcp_client` to distribute
 their service-owned caller credentials from SOPS.
 
-It deliberately does **not** embed fleet-uniform **host hygiene** (`apt_mirror`,
-`chrony`, `unattended_upgrades`, `node_exporter`): that config is identical on
-every host, so duplicating it into each service playbook would violate DRY. The
-test: *does this role's config vary per service?* If no, it belongs to the host
-baseline, not the service playbook.
+Fleet-wide host hygiene (`apt_mirror`, `chrony`, `unattended_upgrades`,
+`node_exporter`) belongs to the host baseline rather than service playbooks.
 
 Every cross-cutting role additionally owns a `common/<role>.yaml` playbook so it
 can be rolled out fleet-wide in one run.
@@ -56,8 +53,8 @@ can be rolled out fleet-wide in one run.
 `get_url` defaults to a 10s socket timeout, which aborts mid-transfer on the
 multi-MB release archives once egress leaves a SimpleZone. Every `get_url` task
 therefore carries `retries: 3` / `delay: 5`, and artifact downloads (archives,
-binaries, `.deb`) also raise `timeout` to 60s — 120s for the Caddy download API,
-which builds the binary per request. Repository signing keys are a few KB and
+binaries, `.deb`) also raise `timeout` to 60s. Caddy is built on the controller
+with pinned xcaddy inputs (ADR-0068). Repository signing keys are a few KB and
 keep the default timeout. `until` is omitted on purpose: with `retries` set and
 no `until`, Ansible retries until the task stops failing.
 
@@ -214,6 +211,11 @@ Use the OpenBao role README for:
 | `playbooks/services/openbao.yaml` | `openbao` | system |
 | `playbooks/services/proxmox.yaml` | `proxmox` | system (platform) |
 | `playbooks/services/gpuvm.yaml` | `gpuvm` | system |
+| `playbooks/services/code_server.yaml` | `code_server` | system |
+| `playbooks/services/meshcentral.yaml` | `meshcentral` | system |
+| `playbooks/services/sssd.yaml` | `sssd` | system |
+| `playbooks/services/openclaw.yaml` | `openclaw` | system |
+| `playbooks/services/hermes.yaml` | `hermes` | system |
 | `playbooks/common/vector.yaml` | `vector` | cross-cutting |
 | `playbooks/common/journald.yaml` | `vector_lxc` | cross-cutting |
 | `playbooks/common/timezone.yaml` | `timezone` | cross-cutting |
@@ -225,6 +227,8 @@ Use the OpenBao role README for:
 | `playbooks/common/k8s-storage-client.yaml` | `prd_k8s:sandbox_k8s` | cross-cutting |
 | `playbooks/common/maintenance_user.yaml` | `lxc` | cross-cutting |
 | `playbooks/common/users.yaml` | `shared_vms` | cross-cutting |
+| `playbooks/common/netplan.yaml` | `netplan` | cross-cutting |
+| `playbooks/common/networkmanager.yaml` | `networkmanager` | cross-cutting |
 | `playbooks/ops/package_upgrade.yaml` | `dns` (serial), k0s workers (serial, drained), k0s controllers (serial), then `all:!proxmox:!dns:!power_only:!prd_k8s:!sandbox_k8s` | ops |
 | `playbooks/ops/nfs_storage_check.yaml` | `prd_k8s:sandbox_k8s` (only clusters with NFS enabled) | ops |
 | `playbooks/ops/shutdown.yaml` | `k8s_controller`, `k8s_worker`, `guest_shutdown_order`, `proxmox_shutdown_order` | ops (planned outage) |

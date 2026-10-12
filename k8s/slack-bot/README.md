@@ -44,7 +44,9 @@ from the encrypted `openbao_secrets` inventory with
 `playbooks/ops/openbao/seed_secrets.yaml`; do not use manual `bao kv put`. Reading them
 requires the `k8s-slack-bot` policy on the prd Kubernetes auth role.
 
-Reloader restarts the Deployment when the Secret changes.
+The Deployment opts into Reloader, but the current
+[controller scope](../reloader/README.md#configuration) excludes this namespace.
+Restart it explicitly after Secret rotation.
 
 ## Monitoring
 

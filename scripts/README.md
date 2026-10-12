@@ -15,14 +15,15 @@ scripts/
 ├── grafana-mcp-token.sh                      # issue Grafana MCP service-account token
 ├── netbox-mcp.sh                             # NetBox MCP server launcher (stdio)
 ├── netbox-mcp-token.sh                       # generate the managed NetBox MCP v2 token
+├── mcp-http-headers.py                       # HTTP MCP bearer headers from SOPS
 ├── lib/openbao-auth.sh                       # shared OpenBao auth helper
 ├── lib/mcp-launcher.sh                       # shared MCP launcher plumbing (SOPS env, container runtime)
 ├── install/                                  # CLI toolchain installers (shared with packer/)
-│   ├── tools.sh / terminal.sh / fonts.sh
+│   ├── packages.sh / tools.sh / terminal.sh / fonts.sh
 │   └── vendor/                               # vendored dotfiles installers
 └── secrets/                                  # OpenBao secret sync
     ├── get-env.sh / get-kubeconfig.sh / get-sops-key.sh   # retrieve
-    └── admin/set-env.sh / set-kubeconfig.sh / set-sops-key.sh  # store (privileged)
+    └── admin/                                # store workstation secrets and seed MCP tokens
 ```
 
 `install/vendor/REVISION` pins dotfiles `main`. Renovate advances its SHA and
@@ -43,7 +44,7 @@ operation can be inspected and resumed directly with Terragrunt.
 
 # Examples
 ./create-vm.sh myvm 192.168.20.50
-./create-vm.sh myvm 192.168.20.50 pve 4 4096 80 rocky10
+./create-vm.sh myvm 192.168.20.50 pve 4 4096 80 rocky10-base
 ```
 
 | Arg    | Default      | Notes                                                      |
@@ -283,12 +284,10 @@ CD health (ADR-0027). An unknown name lists available targets.
 
 ## Grafana MCP
 
-Scripts backing the Grafana MCP server registered in the repo-root `.mcp.json`
-and `opencode.json`. The server lets an MCP client (Claude Code, Codex,
-OpenCode, Cursor, …) query Grafana (PromQL/LogQL and dashboards) against
-`https://grafana.prd.butaco.net`.
-For cluster-hosted Codex and Claude Code, see [`k8s/mcp/README.md`](../k8s/mcp/README.md);
-this stdio launcher remains the cluster-outage fallback.
+OpenCode uses the Grafana stdio launcher through `opencode.json` to query
+PromQL, LogQL, and dashboards at `https://grafana.prd.butaco.net`. Codex and
+Claude Code use [cluster-hosted HTTP MCP](../k8s/mcp/README.md) through
+`.codex/config.toml` and `.mcp.json`; stdio remains the cluster-outage fallback.
 
 ### `grafana-mcp.sh`
 
@@ -318,8 +317,8 @@ command = "/absolute/path/to/homelab/scripts/grafana-mcp.sh"
 startup_timeout_ms = 60000   # first run pulls the grafana/mcp-grafana image
 ```
 
-The repository-local `.codex/config.toml` instead pairs a relative `command`
-with `cwd = "."`, mirroring `.mcp.json`, so no absolute path is baked in.
+For the repository-local HTTP configuration and token rotation, see
+[k8s/mcp/README.md](../k8s/mcp/README.md).
 
 ### OpenCode setup
 
@@ -355,7 +354,7 @@ The validated baseline is:
 | Provider | Ollama |
 | Endpoint | `https://ollama.prd.butaco.net` |
 | Model | `qwen3:14b` |
-| Context | `32768` (configured by the Ollama deployment) |
+| Context | `32768` (Goose baseline; Ollama deployment defaults to `131072`) |
 | Mode | `approve` |
 | Maximum turns | `10` |
 | Telemetry | disabled |
@@ -395,7 +394,7 @@ and backend-request timeouts before changing Goose's extension timeout.
 | Env var | Default | Notes |
 |---------|---------|-------|
 | `GRAFANA_MCP_RUNTIME` | `docker` on macOS with OrbStack, otherwise `podman` | Force a runtime |
-| `GRAFANA_MCP_VERSION` | `1.3.0` | Pinned image tag; Renovate bumps this in place |
+| `GRAFANA_MCP_VERSION` | [grafana-mcp.sh](grafana-mcp.sh) | Pinned image tag; Renovate bumps this in place |
 | `GRAFANA_MCP_IMAGE`   | `docker.io/grafana/mcp-grafana:$GRAFANA_MCP_VERSION` | Full reference override for testing |
 | `GRAFANA_MCP_ENABLED_TOOLS` | `search,datasource,prometheus,loki,dashboard,navigation,alerting` | Comma-separated tool categories |
 | `GRAFANA_MCP_DISABLE_WRITE` | `true` | Set to `false` only for an explicitly approved write workflow |

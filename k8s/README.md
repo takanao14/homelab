@@ -15,8 +15,8 @@ Kubernetes manifests and Helm charts for homelab clusters managed via ArgoCD Git
 
 ### Networking
 
-- **CNI**: Cilium 1.19.x
-- **Ingress**: Envoy Gateway via Gateway API (Gateway API v1.5.1 experimental)
+- **CNI**: Cilium, pinned in `k0s/helmfile.yaml.gotmpl`
+- **Ingress**: Envoy Gateway via Gateway API; `envoy-gateway/crds/` pins the CRDs
 - **TLS**: cert-manager wildcard certificate via Cloudflare DNS-01 challenge
   for prd; sandbox intentionally uses HTTP without cert-manager
 - **DNS**: external-dns with PowerDNS provider (`gateway-httproute` source)
@@ -67,10 +67,11 @@ drive scheduling, eviction priority, and OOM scoring; sampled metrics can miss
 short spikes and page cache, making them unsafe limit inputs. Add limits only
 for demonstrated leaks. CPU limits are omitted to avoid CFS throttling.
 
-Two exceptions:
+Exceptions:
 
 - GPU workloads set `limits: amd.com/gpu` for device allocation.
-- `homepage`, `pdns-ui`, and `external-dns` retain established CPU/memory limits.
+- `homepage` retains a memory limit; `pdns-ui` and `external-dns` retain
+  CPU and memory limits.
 
 ## Initial Cluster Bootstrap
 

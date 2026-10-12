@@ -11,7 +11,7 @@ Installs and configures [DNS-collector](https://github.com/dmachard/DNS-collecto
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `dnscollector_version` | `2.2.1` | Binary version to install |
+| `dnscollector_version` | [defaults/main.yaml](defaults/main.yaml) | Binary version to install |
 | `dnscollector_loki_url` | `{{ loki_endpoint }}` | Loki push endpoint |
 | `dnscollector_dnsdist_socket` | `/run/dnstap-dnsdist.sock` | dnstap Unix socket path (shared with dnsdist) |
 | `dnscollector_debug` | `false` | Enable debug logging |

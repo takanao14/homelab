@@ -43,8 +43,8 @@ Deployment therefore sets it to `https://{{ hostname }}`.
 
 ## Runtime Shape
 
-The chart runs `ghcr.io/lemonade-sdk/lemonade-server:v11.8.1` as uid 10001 and
-gid 999. It starts `/opt/lemonade/lemond --host 0.0.0.0` and requests one
+The chart runs the upstream image pinned in [chart/values.yaml](chart/values.yaml)
+as uid 10001 and gid 999. It starts `/opt/lemonade/lemond --host 0.0.0.0` and requests one
 `amd.com/gpu`.
 
 The sparse `config.json` and per-model `recipe_options.json` are generated from
@@ -136,10 +136,8 @@ Confirm all three signals:
 | `lemonade-huggingface` | 90Gi | `/opt/lemonade/.cache/huggingface` |
 | `lemonade-recipe` | 5Gi | `/opt/lemonade/.cache/lemonade` |
 
-The Pod uses `fsGroup: 999` with `fsGroupChangePolicy: OnRootMismatch`. The
-existing caches were migrated to gid 999 before the v11 rollout. The old empty
-`lemonade-llama` PVC was removed because mounting it at `/opt/lemonade/llama`
-would hide files shipped in the v11 image.
+The Pod uses `fsGroup: 999` with `fsGroupChangePolicy: OnRootMismatch`. Do not
+mount a PVC at `/opt/lemonade/llama`; it would hide files shipped in the image.
 
 ## Configuration Precedence
 

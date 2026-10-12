@@ -28,17 +28,9 @@ and applied live (`reload: true`), so no reboot is required.
       tags: sysctl
 ```
 
-Override per group/host (e.g. to also bound the ZFS ARC). Note the whole dict is
-replaced, so re-state `vm.swappiness`:
-
-```yaml
-# group_vars/proxmox.yaml
-sysctl_settings:
-  vm.swappiness: 10
-  # Cap the ZFS ARC at 8 GiB so it does not contend with running VMs and force
-  # swapping. Set this only on ZFS-backed hosts.
-  # zfs_arc tuning is a module param, not a sysctl; see /etc/modprobe.d instead.
-```
+Overrides replace the whole `sysctl_settings` map, so retain
+`vm.swappiness` when adding parameters. ZFS ARC sizing is a module parameter
+under `/etc/modprobe.d`, not a sysctl.
 
 ## Dependencies
 

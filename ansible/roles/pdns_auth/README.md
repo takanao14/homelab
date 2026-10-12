@@ -113,7 +113,7 @@ tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 32 && echo
 |----------|---------|-------------|
 | `pdns_webserver_port` | `8081` | API/webserver listen port |
 | `pdns_repo_channel` | `auth-51` | PowerDNS APT repository channel. A release train, not a version pin — see below |
-| `pdns_repo_key_sha256` | `efeb5b14…decae8` | Checksum of the repository signing key. Verifies the APT trust anchor, and is what lets `get_url` skip the network once the key is in place — `force: false` alone does not, because the skip is gated on a checksum being set. Same file as the `dnsdist` role fetches; keep the two in step |
+| `pdns_repo_key_sha256` | [defaults/main.yaml](defaults/main.yaml) | Pinned signing-key checksum; enables verified local reuse. Keep it aligned with the other PowerDNS role |
 | `pdns_repo_release` | `{{ ansible_facts['distribution_release'] }}` | Ubuntu release codename |
 
 ### Moving the release train

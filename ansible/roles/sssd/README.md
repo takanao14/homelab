@@ -101,7 +101,6 @@ local account and its SSH keys remain the recovery path.
 
 ### Certificate rotation
 
-The committed LDAP certificate is public data. Rotate it with
-`playbooks/services/lldap.yaml -e lldap_cert_rotate=true`, which replaces the
-key pair and exports the new certificate here, then run this role's playbook
-so clients trust it.
+The committed LDAP certificate is public data. Rotate it with `playbooks/ops/lldap_cert_rotate.yaml`, which replaces the key
+pair, exports the certificate, and updates SSSD, Authelia, and the LDAPS probe.
+Commit the exported certificate after rotation.

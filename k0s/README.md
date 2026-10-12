@@ -150,11 +150,12 @@ bootstrap. It removes all environment node keys, including hashed entries. Use
 ## Cluster Architecture
 
 - **Datastore**: kine (single controller) or etcd (multiple controllers — count must be odd for quorum); selected automatically based on `K0S_CONTROLLER_ADDRESSES`
-- **CNI**: Cilium v1.19.x with kube-proxy replacement and L2 LoadBalancer.
+- **CNI**: Cilium (version pinned in `helmfile.yaml.gotmpl`) with kube-proxy
+  replacement and L2 LoadBalancer.
   Envoy Gateway owns ingress (ADR-0011). Worker segment labels restrict L2
   announcements to the LoadBalancer pool's network.
-- **Storage CSI**: any configured combination of OpenEBS v4.5.1 LocalPV and
-  NFS CSI v4.13.4. OpenEBS uses the SSD mounted at
+- **Storage CSI**: any configured combination of OpenEBS LocalPV and NFS CSI,
+  with versions pinned in `helmfile.yaml.gotmpl`. OpenEBS uses the SSD mounted at
   `/srv/storage/volume`; NFS uses the environment-specific external export.
 - **GPU**: AMD device plugin when GPU workers exist; nodes use label `gpu=amd`
   and taint `gpu=amd:NoSchedule`.
