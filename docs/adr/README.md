@@ -118,3 +118,4 @@ deleting it:
 | [0067](0067-replace-authentik-with-lldap-and-authelia.md) | Replace Authentik with LLDAP and Authelia | Accepted |
 | [0068](0068-build-caddy-on-the-ansible-controller.md) | Build Caddy on the Ansible controller | Accepted |
 | [0069](0069-track-dotfiles-vendor-with-renovate.md) | Track dotfiles vendor with Renovate | Accepted |
+| [0070](0070-no-staging-sandbox-validates-the-cluster-platform.md) | No staging environment; sandbox validates the cluster platform | Accepted |
