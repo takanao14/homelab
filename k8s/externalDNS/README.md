@@ -8,9 +8,8 @@ not zone-scoped (ADR-0070).
 
 ```
 externalDNS/
-├── values-common.yaml         # PowerDNS API endpoint (shared)
 ├── prd/
-│   └── values.yaml            # domainFilter: prd.butaco.net.
+│   └── values.yaml            # PowerDNS endpoint, domainFilter: prd.butaco.net.
 └── chart/                     # Local Helm chart
     ├── Chart.yaml
     ├── values.yaml
@@ -24,8 +23,8 @@ externalDNS/
 
 | Value | Source | Description |
 |-------|--------|-------------|
-| `pdns.apiUrl` | `values-common.yaml` | PowerDNS API endpoint |
-| `pdns.serverId` | `values-common.yaml` | PowerDNS server ID (`localhost`) |
+| `pdns.apiUrl` | `prd/values.yaml` | PowerDNS API endpoint |
+| `pdns.serverId` | `prd/values.yaml` | PowerDNS server ID (`localhost`) |
 | `pdns.apiKey` | OpenBao via ESO | PowerDNS API key materialized as a Kubernetes Secret |
 | `domainFilter` | `{env}/values.yaml` | Target domain filter |
 | `policy` | `{env}/values.yaml` | DNS record lifecycle policy |

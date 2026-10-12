@@ -8,7 +8,7 @@ dnscontrol owns records; nginx permits read-only access.
 
 ```
 pdns-ui/
-├── prd/values.yaml         # prd overrides (hostname, Gateway https listener)
+├── prd/values.yaml         # hostname
 └── chart/
     ├── Chart.yaml
     ├── values.yaml         # hostname, image, PowerDNS backend, OpenBao path

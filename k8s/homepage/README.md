@@ -6,7 +6,7 @@
 
 ```
 homepage/
-├── prd/values.yaml        # prd overrides (Gateway https listener)
+├── prd/values.yaml        # hostname
 └── chart/                 # Custom Helm chart
     ├── Chart.yaml
     ├── values.yaml        # Kubernetes deployment values (hostname, image, Gateway)

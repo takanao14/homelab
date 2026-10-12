@@ -1,4 +1,4 @@
-hostname: www.prd.butaco.net
+hostname: ""
 namespace: homepage
 
 gateway:

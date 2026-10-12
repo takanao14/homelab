@@ -66,3 +66,9 @@ Sandbox is a disposable cluster for validating the cluster platform:
 - external-dns upgrades are validated against prd with diffs only.
 - Changes involving TLS, single sign-on, or GPU workloads have no rehearsal
   environment and rely on pre-merge checks and Git revert.
+
+## Addendum (2026-10-12): Headlamp removed from sandbox
+
+Headlamp is not part of the cluster platform, and sandbox is inspected with the
+admin kubeconfig, so it leaves sandbox as well. The external-dns ServiceMonitor
+is disabled in sandbox.

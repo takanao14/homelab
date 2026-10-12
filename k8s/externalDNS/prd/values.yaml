@@ -1,3 +1,7 @@
+pdns:
+  apiUrl: http://192.168.10.233:8081
+  serverId: localhost
+
 ownerId: prd-cluster
 domainFilter: prd.butaco.net.
 policy: sync
