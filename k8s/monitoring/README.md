@@ -102,8 +102,9 @@ Grafana, and dashboards:
 
 - Prometheus runs locally with `cluster=sandbox`, short retention, no
   Alertmanager deployment, and no external alert delivery.
-- Grafana uses the shared Grafana wrapper chart with sandbox HTTPRoute values
-  and an ephemeral data directory.
+- Grafana uses the shared Grafana wrapper chart with sandbox HTTPRoute values,
+  an ephemeral data directory, and its own admin password at
+  `secret/k8s-sandbox/grafana` (ADR-0070).
 - Dashboards are the same ConfigMaps as prd, discovered by the sandbox
   Grafana sidecar.
 - Loki, Alloy, external LAN scrapes, SNMP, DNS, GPU, OpenBao, and

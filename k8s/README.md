@@ -9,6 +9,10 @@ Kubernetes manifests and Helm charts for homelab clusters managed via ArgoCD Git
 | prd | `*.prd.butaco.net` | prd-homelab |
 | sandbox | `*.sandbox.butaco.net` (HTTP only) | sandbox-homelab |
 
+There is no staging environment. sandbox is a disposable cluster for platform
+changes only and never reads prd credentials
+([ADR-0070](../docs/adr/0070-no-staging-sandbox-validates-the-cluster-platform.md)).
+
 > Replace the personal `butaco.net` domain throughout `k8s/` before reuse.
 
 ## Architecture
@@ -19,7 +23,8 @@ Kubernetes manifests and Helm charts for homelab clusters managed via ArgoCD Git
 - **Ingress**: Envoy Gateway via Gateway API; `envoy-gateway/crds/` pins the CRDs
 - **TLS**: cert-manager wildcard certificate via Cloudflare DNS-01 challenge
   for prd; sandbox intentionally uses HTTP without cert-manager
-- **DNS**: external-dns with PowerDNS provider (`gateway-httproute` source)
+- **DNS**: external-dns with PowerDNS provider (`gateway-httproute` source) for
+  prd; sandbox uses a dnscontrol wildcard to its pinned Gateway address
 
 HTTPRoutes use `gateway-system/shared-gateway-envoy`. See
 [`ADR-0011`](../docs/adr/0011-cilium-gateway-to-envoy-gateway-migration.md) for

@@ -10,7 +10,7 @@ gateway/
 ├── Chart.yaml
 ├── values.yaml          # Shared GatewayClass / EnvoyProxy / Gateway definitions
 ├── prd/values.yaml      # domain: prd.butaco.net
-├── sandbox/values.yaml  # domain: sandbox.butaco.net, HTTPS listener disabled
+├── sandbox/values.yaml  # domain: sandbox.butaco.net, HTTPS listener disabled, pinned address
 └── templates/
     ├── gatewayclasses.yaml
     ├── envoyproxies.yaml
@@ -43,7 +43,8 @@ cert-manager grants cross-namespace Secret access. Sandbox disables HTTPS.
 ### EnvoyProxy
 
 `gateway.infrastructure.parametersRef` attaches `envoyProxy`. Cluster traffic
-policy avoids Cilium L2 advertisement blackholes.
+policy avoids Cilium L2 advertisement blackholes. Sandbox pins the Service to
+`192.168.20.128` with `io.cilium/lb-ipam-ips` for its wildcard DNS record.
 
 ## Values
 

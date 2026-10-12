@@ -1,5 +1,15 @@
 domain: sandbox.butaco.net
 
+envoyProxy:
+  spec:
+    provider:
+      kubernetes:
+        envoyService:
+          annotations:
+            # Pinned for the *.sandbox.butaco.net wildcard record; no
+            # external-dns in sandbox (ADR-0070). Inside K0S_LB_POOL.
+            io.cilium/lb-ipam-ips: 192.168.20.128
+
 # Sandbox is HTTP-only (no cert-manager). See ADR-0010.
 gateway:
   listeners:

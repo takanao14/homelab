@@ -9,13 +9,9 @@ apps:
     enabled: true
   eso:
     enabled: true
-  external-dns:
-    enabled: true
   gateway:
     enabled: true
   headlamp:
-    enabled: true
-  homepage:
     enabled: true
   monitoring:
     enabled: true
@@ -28,7 +24,5 @@ apps:
         - ../values/apps-sandbox.yaml
     syncOptions:
       - ServerSideApply=true
-  pdns-ui:
-    enabled: true
   reloader:
     enabled: true

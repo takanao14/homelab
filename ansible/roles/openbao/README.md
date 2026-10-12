@@ -144,9 +144,10 @@ The ESO ArgoCD Application itself is rendered by the app-of-apps chart
 (`k8s/argocd/apps`) and enabled per environment in
 `k8s/argocd/<env>/apps-values.yaml`.
 
-Application policies grant read-only access to their own KV prefix. The prd ESO
-role includes `k8s-cert-manager`, while sandbox deliberately does not because
-its Argo CD bootstrap runs HTTP-only without cert-manager (ADR-0010).
+Application policies grant read-only access to their own KV prefix. The sandbox
+ESO role has only `k8s-sandbox` (`secret/k8s-sandbox/*`) and
+`k8s-argocd-sandbox`: sandbox never reads prd application credentials
+(ADR-0070).
 The prd role also includes `k8s-mcp`; `scripts/secrets/admin/seed-mcp.sh`
 idempotently seeds its two paths from `.env/secrets.sops.env` after policy
 configuration. Re-run it after rotating either upstream or caller token.
@@ -245,6 +246,7 @@ application; pdns-ui also reads the external-dns PowerDNS key.
 ```
 secret/k8s/cert-manager/cloudflare   # Cloudflare API token
 secret/k8s/monitoring/grafana        # Grafana credentials
+secret/k8s-sandbox/grafana           # sandbox Grafana credentials
 secret/k8s/monitoring/alertmanager   # Alertmanager Discord webhook
 secret/k8s/argocd/{env}/admin        # ArgoCD admin password (per environment)
 ```

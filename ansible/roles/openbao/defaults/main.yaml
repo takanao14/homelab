@@ -63,8 +63,8 @@ openbao_k8s_clusters:
     host: "{{ openbao_k8s_sandbox_host }}"
     ca_cert_file: "{{ openbao_config_dir }}/k8s-sandbox-ca.pem"
     role: k8s-eso
-    # Argo CD policy is restricted to sandbox; monitoring includes Grafana.
-    policies: "k8s-external-dns,k8s-homepage,k8s-monitoring,k8s-argocd-sandbox"
+    # Sandbox-only paths; no prd application policy (ADR-0070).
+    policies: "k8s-sandbox,k8s-argocd-sandbox"
 
 # Retired policies removed idempotently from the server.
 openbao_absent_policies:

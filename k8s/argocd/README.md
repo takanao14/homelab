@@ -246,5 +246,6 @@ Enabled applications, namespaces, and environment differences are declared in
 [apps/values.yaml](apps/values.yaml), [prd/apps-values.yaml](prd/apps-values.yaml),
 and [sandbox/apps-values.yaml](sandbox/apps-values.yaml).
 
-Sandbox is HTTP-only without cert-manager. It uses the `kubernetes-sandbox`
-OpenBao mount and manages `sandbox.butaco.net.` through PowerDNS.
+Sandbox runs only the platform set (ADR-0070). It is HTTP-only without
+cert-manager and external-dns, and its `kubernetes-sandbox` OpenBao mount reads
+only `secret/k8s-sandbox/*` and its Argo CD admin hash.
