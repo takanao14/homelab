@@ -13,6 +13,7 @@ modules:
     tcp:
       preferred_ip_protocol: ip4
 
+{% if blackbox_exporter_ldaps_enabled | bool %}
   ldaps:
     prober: tcp
     timeout: 5s
@@ -23,6 +24,7 @@ modules:
         ca_file: {{ blackbox_exporter_ldaps_ca_path }}
         server_name: {{ identity_ldap_host }}
 
+{% endif %}
   http_2xx:
     prober: http
     timeout: 5s
