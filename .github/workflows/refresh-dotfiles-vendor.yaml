@@ -1,0 +1,76 @@
+name: Refresh dotfiles vendor
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "scripts/install/vendor/REVISION"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dotfiles-vendor-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    if: >-
+      github.event.pull_request.user.login == 'renovate[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      # Execute only the base revision's sync code with the bot branch's SHA.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+      - name: Preserve trusted sync script
+        run: cp scripts/install/vendor/sync.sh "$RUNNER_TEMP/dotfiles-sync.sh"
+      - name: Fetch and validate bot branch
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$HEAD_SHA"
+          git diff --name-only "$BASE_SHA...$HEAD_SHA" > "$RUNNER_TEMP/changed-paths"
+          while IFS= read -r path; do
+            case "$path" in
+              scripts/install/vendor/REVISION|scripts/install/vendor/10_linux_package.sh|scripts/install/vendor/20_linux_terminal.sh|scripts/install/vendor/30_linux_fonts.sh|scripts/install/vendor/40_linux_mise.sh|scripts/install/vendor/mise-config.toml|scripts/install/vendor/mise.lock|packer/files/kitty.conf) ;;
+              *) echo "Unexpected path in dotfiles update: $path" >&2; exit 1 ;;
+            esac
+            mode=$(git ls-tree "$HEAD_SHA" -- "$path" | awk '{print $1}')
+            [[ "$mode" == 100644 || "$mode" == 100755 ]] || exit 1
+          done < "$RUNNER_TEMP/changed-paths"
+          git checkout --detach "$HEAD_SHA"
+          grep -qx 'repo: takanao14/dotfiles' scripts/install/vendor/REVISION
+          grep -Eq '^ref: +main$' scripts/install/vendor/REVISION
+      - name: Synchronize recorded SHA and commit vendor changes
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          REPO: takanao14/dotfiles
+        run: |
+          set -euo pipefail
+          export VENDOR_DIR="$PWD/scripts/install/vendor"
+          bash "$RUNNER_TEMP/dotfiles-sync.sh"
+          bash "$RUNNER_TEMP/dotfiles-sync.sh" --check
+          git add scripts/install/vendor packer/files/kitty.conf
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'chore(deps): sync dotfiles vendor from recorded SHA'
+            git push origin "HEAD:refs/heads/$HEAD_REF"
+          fi
+      # GITHUB_TOKEN pushes do not emit pull_request events; dispatch checks explicitly.
+      - name: Validate updated branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          gh workflow run vendor-sync.yaml --ref "$HEAD_REF"
+          gh workflow run shell-lint.yaml --ref "$HEAD_REF"
+          gh workflow run packer-lint.yaml --ref "$HEAD_REF"

@@ -1,6 +1,7 @@
 name: Shell Lint
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - "**.sh"

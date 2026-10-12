@@ -4,11 +4,13 @@ set -euo pipefail
 # Sync dotfiles installers, the mise config and lockfile, and kitty defaults.
 #
 # Usage:
-#   sync.sh                     Fetch the latest main and overwrite the vendored copies.
+#   sync.sh                     Sync vendored copies from their recorded SHA.
 #   sync.sh --check             Check vendored copies against their recorded revision.
 #   sync.sh --check --upstream  Check vendored copies against the latest main.
-#   REF=<sha|tag> sync.sh       Pin to a specific ref instead of main.
+#   sync.sh --upstream          Advance the pin to the latest main.
+#   REF=<sha|tag> sync.sh        Pin to a specific ref.
 
+REPO_PROVIDED="${REPO+x}"
 REPO="${REPO:-takanao14/dotfiles}"
 REF_PROVIDED="${REF+x}"
 REF="${REF:-main}"
@@ -27,7 +29,7 @@ MISE_LOCK_SOURCE="dot_config/mise/mise.lock"
 MISE_LOCK_DEST="mise.lock"
 KITTY_CONFIG_SOURCE="dot_config/kitty/kitty.conf"
 
-VENDOR_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENDOR_DIR="${VENDOR_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 REVISION_FILE="${VENDOR_DIR}/REVISION"
 KITTY_CONFIG_DEST="${VENDOR_DIR}/../../../packer/files/kitty.conf"
 
@@ -41,20 +43,21 @@ for arg in "$@"; do
   esac
 done
 
-# A bare --check validates the vendored copies against their own pin, so it
-# never reports that the pin itself fell behind. --upstream drops that override
-# and compares against REF (main by default) instead.
-if [[ "$CHECK" -eq 1 && "$UPSTREAM" -eq 0 && -z "$REF_PROVIDED" && -f "$REVISION_FILE" ]]; then
-  REPO="$(awk '$1 == "repo:" { print $2 }' "$REVISION_FILE")"
+if [[ "$UPSTREAM" -eq 0 && -z "$REF_PROVIDED" ]]; then
+  [[ -f "$REVISION_FILE" ]] || { echo "Missing REVISION" >&2; exit 1; }
+  if [[ -z "$REPO_PROVIDED" ]]; then
+    REPO="$(awk '$1 == "repo:" { print $2 }' "$REVISION_FILE")"
+  fi
   REF="$(awk '$1 == "sha:" { print $2 }' "$REVISION_FILE")"
+  [[ "$REF" =~ ^[a-f0-9]{40}$ ]] || { echo "Invalid recorded SHA" >&2; exit 1; }
 fi
 
-# Resolve the ref to a concrete commit SHA so the result is reproducible.
-commits_json=$(curl -fsSL "https://api.github.com/repos/${REPO}/commits/${REF}")
-SHA=$(grep -m1 '"sha"' <<<"$commits_json" | grep -o '[a-f0-9]\{40\}')
-if [[ -z "$SHA" ]]; then
-  echo "Error: could not resolve ${REPO}@${REF} to a commit SHA" >&2
-  exit 1
+if [[ "$REF" =~ ^[a-f0-9]{40}$ ]]; then
+  SHA="$REF"
+else
+  commits_json=$(curl -fsSL "https://api.github.com/repos/${REPO}/commits/${REF}")
+  SHA=$(grep -m1 '"sha"' <<<"$commits_json" | grep -o '[a-f0-9]\{40\}')
+  [[ "$SHA" =~ ^[a-f0-9]{40}$ ]] || { echo "Could not resolve ${REPO}@${REF}" >&2; exit 1; }
 fi
 
 tmp_dir="$(mktemp -d)"
@@ -85,6 +88,11 @@ sed \
   -e "s#{{ include \"dot_config/mise/config.toml\" | sha256sum }}#${mise_config_sha}#" \
   -e "s#{{ include \"dot_config/mise/mise.lock\" | sha256sum }}#${mise_lock_sha}#" \
   "${tmp_dir}/${MISE_INSTALLER_DEST}.tmpl" > "${tmp_dir}/${MISE_INSTALLER_DEST}"
+
+if grep -q '{{\|}}' "${tmp_dir}/${MISE_INSTALLER_DEST}"; then
+  echo "Unresolved mise template expressions" >&2
+  exit 1
+fi
 
 if [[ "$CHECK" -eq 1 ]]; then
   drift=0
@@ -120,13 +128,14 @@ install -m 0644 "${tmp_dir}/${MISE_CONFIG_DEST}" "${VENDOR_DIR}/${MISE_CONFIG_DE
 install -m 0644 "${tmp_dir}/${MISE_LOCK_DEST}" "${VENDOR_DIR}/${MISE_LOCK_DEST}"
 install -m 0644 "${tmp_dir}/kitty.conf" "$KITTY_CONFIG_DEST"
 
-cat > "$REVISION_FILE" <<EOF
+if [[ -n "$REF_PROVIDED" || "$UPSTREAM" -eq 1 ]]; then
+  cat > "$REVISION_FILE" <<EOF
 # Vendored from ${REPO}, synced by sync.sh. Do not edit the installers,
 # mise-config.toml, mise.lock, or packer/files/kitty.conf; re-run sync.sh to update them.
 repo: ${REPO}
-ref:  ${REF}
+ref:  main
 sha:  ${SHA}
-date: $(date -u +%Y-%m-%dT%H:%M:%SZ)
 EOF
+fi
 
 echo "Synced vendored installers from ${REPO}@${SHA}."
