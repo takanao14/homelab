@@ -12,16 +12,15 @@ headlamp/
 │   ├── values.yaml       # Common values (in-cluster mode, HTTPRoute, read-only RBAC)
 │   └── templates/
 │       └── read-only-rbac.yaml  # ServiceAccount bindings to view + extra read groups
-├── prd/values.yaml       # hostname: headlamp.prd.butaco.net, https listener
-└── sandbox/values.yaml   # hostname: headlamp.sandbox.butaco.net, http listener (ADR-0010)
+└── prd/values.yaml       # hostname: headlamp.prd.butaco.net
 ```
 
-App of Apps enables Headlamp per environment.
+App of Apps enables Headlamp in prd only; sandbox has no inspection UI
+(ADR-0070).
 
 ## Access
 
 - prd: https://headlamp.prd.butaco.net
-- sandbox: http://headlamp.sandbox.butaco.net
 
 ## Read-only access
 

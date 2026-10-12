@@ -1,5 +1,0 @@
-# Disabled without a GPU worker; retain the future environment contract.
-hostname: gpu-switch.sandbox.butaco.net
-
-gateway:
-  sectionName: http

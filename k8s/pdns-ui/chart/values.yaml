@@ -1,4 +1,4 @@
-hostname: pdns-ui.prd.butaco.net
+hostname: ""
 namespace: pdns-ui
 
 gateway:

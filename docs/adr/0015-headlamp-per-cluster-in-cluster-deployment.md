@@ -73,3 +73,7 @@ ADR-0067 removes forward auth from Headlamp. Each instance now binds its
 ServiceAccount to `view` plus a Secret-free read role instead of
 `cluster-admin`, and skips the token prompt. See
 [`k8s/headlamp/README.md`](../../k8s/headlamp/README.md).
+
+## Addendum (2026-10-12): removed from sandbox
+
+ADR-0070 limits sandbox to the cluster platform, so Headlamp runs in prd only.

@@ -1,4 +1,1 @@
-gateway:
-  name: shared-gateway-envoy
-  namespace: gateway-system
-  sectionName: https
+hostname: www.prd.butaco.net

@@ -12,6 +12,9 @@ alertmanagerConfig:
 externalSecretAlertmanager:
   enabled: true
 
+externalDnsMonitor:
+  enabled: true
+
 prometheusRules:
   argocd:
     enabled: true

@@ -4,7 +4,7 @@ Authenticated UI for assigning the single prd AMD GPU. It discovers labelled
 Deployments, scales all down, then starts the selected target. See
 [ADR-0027](../../docs/adr/0027-gpu-workload-switching-web-ui.md).
 
-App of Apps deploys it to prd at wave 1; sandbox has no GPU worker and remains disabled.
+App of Apps deploys it to prd at wave 1.
 
 ## Layout
 
@@ -17,7 +17,6 @@ gpu-switch/
 │   └── templates/
 ├── values.yaml             # Common resource reservations
 ├── prd/values.yaml         # prd hostname
-└── sandbox/values.yaml     # Disabled environment contract
 ```
 
 ## Critical label invariant

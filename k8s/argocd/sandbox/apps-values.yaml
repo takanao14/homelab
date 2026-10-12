@@ -11,8 +11,6 @@ apps:
     enabled: true
   gateway:
     enabled: true
-  headlamp:
-    enabled: true
   monitoring:
     enabled: true
     # Shared monitoring subset without external alerts or scrapes.
