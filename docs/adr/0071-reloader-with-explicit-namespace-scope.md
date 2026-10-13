@@ -21,7 +21,9 @@ the consumers without cluster-wide Secret access or multiple installations.
 
 Keep one Reloader per cluster with `watchGlobally: false` and explicit
 `namespaces`. Set prd to `external-dns`, `mcp`, `monitoring`, and `slack-bot`;
-set sandbox to `monitoring`. The chart also includes the release namespace.
+set sandbox to `reloader-check`, a namespace holding only a disposable consumer
+and a sandbox-only Secret, so sandbox exercises the cross-namespace RBAC. The
+chart also includes the release namespace.
 Put shared behavior in `k8s/reloader/values.yaml` and the lists in environment
 value files referenced by the Reloader Application. Target namespaces remain
 owned by their workload Applications; account for their existence before
@@ -32,11 +34,12 @@ Keep `autoReloadAll: false`. Opt consumers into Secret changes using
 external-dns, and SNMP exporter need this behavior. Add ConfigMap-triggered
 restarts only where an application cannot reload its configuration itself.
 
-Do not opt Grafana into restarts solely for `grafana-admin` rotation. Its
-persistent database retains the existing admin password; the initial password
-setting is applied only on first run. Password rotation must update the stored
-account separately. Sandbox Grafana uses no prd credentials (ADR-0070);
-validate Reloader there with a disposable consumer and a sandbox-only Secret.
+Do not opt Grafana into restarts solely for `grafana-admin` rotation. The prd
+Grafana's persistent database retains the existing admin password; the initial
+password setting is applied only on first run. Password rotation must update
+the stored account separately. Sandbox Grafana is ephemeral and reads only a
+sandbox Secret (ADR-0070), but has nothing else that needs a restart. Remove
+the ineffective Pod-template annotations from both Grafana value files.
 
 Use `reloadStrategy: annotations`. Target Applications ignore only
 `/spec/template/metadata/annotations/reloader.stakater.com~1last-reloaded-from`
