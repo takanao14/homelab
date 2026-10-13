@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-12
-- **Related:** [ADR-0010](0010-sandbox-argocd-uses-http-only-gitops-bootstrap.md), [ADR-0012](0012-openbao-eso-cluster-rebuild-registration.md), [ADR-0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md), [ADR-0033](0033-sandbox-storage-openebs-localpv-and-truenas-nfs.md), [ADR-0067](0067-replace-authentik-with-lldap-and-authelia.md)
+- **Related:** [ADR-0010](0010-sandbox-argocd-uses-http-only-gitops-bootstrap.md), [ADR-0012](0012-openbao-eso-cluster-rebuild-registration.md), [ADR-0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md), [ADR-0033](0033-sandbox-storage-openebs-localpv-and-truenas-nfs.md), [ADR-0067](0067-replace-authentik-with-lldap-and-authelia.md), [ADR-0072](0072-one-gateway-listener-per-environment.md)
 
 ## Context
 
@@ -72,3 +72,7 @@ Sandbox is a disposable cluster for validating the cluster platform:
 Headlamp is not part of the cluster platform, and sandbox is inspected with the
 admin kubeconfig, so it leaves sandbox as well. The external-dns ServiceMonitor
 is disabled in sandbox.
+
+The OpenBao to ESO path is exercised by the sandbox Grafana admin password at
+`secret/k8s-sandbox/grafana` rather than a separate test secret. Sandbox
+routes attach to its single HTTP listener (ADR-0072).
