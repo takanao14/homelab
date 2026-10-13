@@ -8,7 +8,7 @@ minimum_release_age = "2d"
 
 [tools]
 "aqua:cli/cli" = "2.102.0"
-"aqua:jesseduffield/lazygit" = "0.66.0"
+"aqua:jesseduffield/lazygit" = "0.66.1"
 "aqua:gitui-org/gitui" = "0.28.1"
 "aqua:sharkdp/bat" = "0.26.1"
 "aqua:BurntSushi/ripgrep" = "15.2.0"
