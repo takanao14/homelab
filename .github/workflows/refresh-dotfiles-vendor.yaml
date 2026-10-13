@@ -65,7 +65,7 @@ jobs:
             git commit -m 'chore(deps): sync dotfiles vendor from recorded SHA'
             git push origin "HEAD:refs/heads/$HEAD_REF"
           fi
-      # GITHUB_TOKEN pushes do not emit pull_request events; dispatch checks explicitly.
+      # GITHUB_TOKEN PR updates require workflow approval; dispatch checks to validate automatically.
       - name: Validate updated branch
         env:
           GH_TOKEN: ${{ github.token }}
