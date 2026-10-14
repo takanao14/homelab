@@ -11,9 +11,6 @@ mcp_warn() {
   echo "${MCP_LOG_PREFIX}: $*" >&2
 }
 
-# mcp_load_sops_env <guard_var_name>
-#
-# Load the SOPS environment unless the guard variable is already set.
 mcp_load_sops_env() {
   local guard_var="$1"
 
@@ -32,9 +29,6 @@ mcp_load_sops_env() {
   fi
 }
 
-# mcp_resolve_container_runtime [override]
-#
-# Select OrbStack/Docker or Podman and verify availability.
 mcp_resolve_container_runtime() {
   local runtime="${1:-}"
 

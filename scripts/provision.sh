@@ -38,7 +38,6 @@ EOF
   exit 1
 }
 
-# --- Argument parsing -------------------------------------------------------
 LOCAL_MODE=false
 REQUESTED_MACHINE_PROFILE="${TOOL_MACHINE_PROFILE:-auto}"
 POSITIONAL=()
@@ -82,7 +81,7 @@ validate_local_target() {
 
   local os_id
   os_id="$(
-    # Read only ID instead of sourcing the system-owned file into this shell.
+    # Source OS metadata in a subshell to keep its variables isolated.
     # shellcheck disable=SC1091
     . /etc/os-release
     printf '%s' "$ID"
@@ -365,11 +364,9 @@ if [[ -z "${BAO_TOKEN:-}" ]]; then
   read -rsp "OpenBao password for ${BAO_USERNAME}: " OPENBAO_PASSWORD; echo
 fi
 
-# Populate ~/.env from OpenBao.
 echo "Fetching env secrets from OpenBao..."
 run_openbao_target "secrets/get-env.sh"
 
-# Populate ~/.kube from OpenBao.
 echo "Retrieving kubeconfig from OpenBao..."
 run_openbao_target "secrets/get-kubeconfig.sh"
 

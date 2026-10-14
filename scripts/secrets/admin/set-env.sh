@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/../../lib/openbao-auth.sh"
 
-# Store ~/.env in OpenBao as an admin, locally or over SSH.
+# Store ~/.env in OpenBao as an admin, on the executing host.
 
 ENV_FILE="${HOME}/.env"
 

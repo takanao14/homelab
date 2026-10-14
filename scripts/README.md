@@ -8,6 +8,7 @@ Homelab VM lifecycle, provisioning, secret sync, checks, and integrations.
 scripts/
 ├── create-vm.sh / remove-vm.sh / provision.sh  # VM lifecycle (run directly)
 ├── gpu-switch.sh                             # k8s GPU workload switch
+├── adr-lint.py                               # ADR metadata, index, and link validation
 ├── check-image-refs.sh                       # CI: image filename map consistency check
 ├── check-proxy-routes.sh                     # CI: Caddy sites <-> Homepage dashboard drift check
 ├── check-openbao-secrets.sh                  # declared secret paths <-> OpenBao KV drift check (local only)
@@ -26,10 +27,8 @@ scripts/
     └── admin/                                # store workstation secrets and seed MCP tokens
 ```
 
-`install/vendor/REVISION` pins dotfiles `main`. Renovate advances its SHA and
-GitHub Actions commits synchronized files to the same PR branch.
-`install/vendor/sync.sh` syncs the recorded SHA; `--check` verifies it without
-writing, and `--upstream` explicitly advances it to current `main`.
+`install/vendor/REVISION` pins the dotfiles source SHA. Edit synchronized files
+in dotfiles, then update them through [vendor sync](#vendor).
 
 ## VM lifecycle
 
@@ -97,16 +96,12 @@ Destroys a VM created by `create-vm.sh` and removes its Terragrunt directory.
 
 ### `provision.sh`
 
-Provisions a VM in order (over SSH by default, or in place with `--local`):
-
-1. Waits for SSH and cloud-init to finish
-2. Installs system-package prerequisites (`install/packages.sh`), or verifies
-   them without sudo in `--local` mode
-3. Installs the CLI toolchain (`install/tools.sh`)
-4. Adds `~/.local/bin` to `PATH` and arranges for `~/.env` to be sourced in `~/.bashrc`
-5. Installs terminal and fonts (`install/terminal.sh`, `install/fonts.sh`)
-6. Fetches env secrets from OpenBao into `~/.env` (`secrets/get-env.sh`)
-7. Retrieves kubeconfigs from OpenBao into `~/.kube/` (`secrets/get-kubeconfig.sh`)
+Provisions over SSH by default, or on the current host with `--local`. It waits
+for SSH and cloud-init, installs package prerequisites and the CLI toolchain,
+configures mise shims, `~/.local/bin`, `~/.env`, and direnv in `~/.bashrc`, and
+makes `~/.bash_profile` source it. It then installs profile-selected terminal
+and fonts and retrieves OpenBao env secrets and kubeconfigs. Local mode verifies
+system prerequisites without sudo and installs tools per-user.
 
 Remote mode stages scripts once under `/tmp/homelab-provision/`, preserving
 relative paths and vendored installers. It copies only `secrets/get-*`, never
@@ -124,9 +119,8 @@ waits up to 600 seconds for cloud-init; override with `CLOUD_INIT_WAIT_TIMEOUT`.
 CLOUD_INIT_WAIT_TIMEOUT=900 ./provision.sh 192.168.20.50 myuser
 ```
 
-`--local` runs directly on the target Ubuntu, Debian, or Rocky host as `$USER`.
-It skips SSH/staging, performs a no-sudo package preflight, and installs remaining
-tools per-user under `$HOME/.local`.
+`--local` requires Ubuntu, Debian, or Rocky and runs as `$USER` without
+SSH or staging; it cannot provision another user.
 
 The machine profile defaults to `auto`: `provision.sh` first reads the
 root-owned `/etc/provisioning/machine-profile.local` marker baked by Packer and
@@ -149,12 +143,8 @@ CI runs it on relevant changes; run it after adding or renaming a target.
 
 ### `check-proxy-routes.sh`
 
-Checks Caddy sites against Homepage tiles in both directions:
-
-- a `caddy_upstreams` / `caddy_redirects` hostname with no dashboard entry —
-  the service is published but invisible on the portal
-- a dashboard `https://<host>.home.butaco.net` link (no port, plain `https`)
-  that Caddy does not serve — a dead tile
+Checks Caddy sites and Homepage links in both directions: every UI site needs a
+tile, and every HTTPS `home.butaco.net` tile without a port needs a Caddy site.
 
 Explicit-port and plain-HTTP links bypass Caddy and are skipped. `NO_UI_HOSTS`
 lists machine-only routes. Only `home.butaco.net` is in scope; cluster domains
@@ -166,13 +156,9 @@ use the Gateway. CI runs the check on either source file changing.
 
 ### `check-openbao-secrets.sh`
 
-Checks declared secret paths against the OpenBao KV store in both directions:
-
-- a path declared in SOPS but absent from the server — the next
-  `playbooks/ops/openbao/seed_secrets.yaml` run recreates it, so a retired secret must be
-  removed from `openbao_secrets`, not only from the server
-- a path on the server that nothing declares — an orphan left by an out-of-band
-  write
+Reports declared paths missing from OpenBao and stored paths without a
+declaration. Remove retired secrets from `openbao_secrets`; deleting them only
+from the server lets the next seed run recreate them.
 
 Paths written by `secrets/admin/` are declared in the script's
 `UNMANAGED_PATHS`; extend it when a new `set-*.sh` writes to a new path. Argo CD
@@ -190,13 +176,17 @@ BAO_TOKEN=xxx ./check-openbao-secrets.sh
 
 ## Secrets / environment
 
-OpenBao scripts run locally or over SSH. Authentication order is `BAO_TOKEN`,
-`BAO_PASSWORD`, TTY prompt, then non-interactive stdin. A token bypasses userpass;
-unset it to retry with password authentication.
+Secret scripts run on the host where they are invoked; they do not implement
+SSH. `provision.sh` stages and invokes the env and kubeconfig retrieval scripts
+over SSH in remote mode.
+
+Authentication order is `BAO_TOKEN`, token stdin when `BAO_TOKEN_STDIN=1`,
+`BAO_PASSWORD`, then a TTY prompt or password stdin. Tokens bypass userpass;
+unset `BAO_TOKEN` and `BAO_TOKEN_STDIN` to retry with password authentication.
 
 Common env vars: `OPENBAO_ADDR` (default `https://openbao.home.butaco.net`),
-`BAO_USERNAME`, `BAO_TOKEN`, `BAO_PASSWORD`. Export credentials once for
-non-interactive use; the same authentication applies to all `secrets/` scripts.
+`BAO_USERNAME`, `BAO_TOKEN`, `BAO_TOKEN_STDIN`, `BAO_PASSWORD`. Export credentials
+once for non-interactive use; the same authentication applies to all `secrets/` scripts.
 
 ### `get-env.sh`
 
@@ -255,6 +245,13 @@ the file before writing.
 ./secrets/admin/set-sops-key.sh
 ```
 
+### `seed-mcp.sh`
+
+`secrets/admin/seed-mcp.sh` reads `.env/secrets.sops.env` and writes changed
+upstream and caller tokens to `secret/k8s/mcp/{grafana,netbox}`. It defaults to
+the `admin` user and reports paths and status only. Follow
+[k8s/mcp/README.md](../k8s/mcp/README.md) for policy setup and coordinated rotation.
+
 ## Kubernetes
 
 ### `gpu-switch.sh`
@@ -291,21 +288,16 @@ Claude Code use [cluster-hosted HTTP MCP](../k8s/mcp/README.md) through
 
 ### `grafana-mcp.sh`
 
-Launcher invoked by the MCP client over stdio. It selects a container runtime
-per OS — `docker` on macOS when OrbStack is installed, `podman` otherwise — and
-runs the `grafana/mcp-grafana` image with `-i` (no TTY). You normally don't run
-this by hand; the client starts it.
+The client starts the stdio launcher with `-i` and no TTY. Both MCP launchers
+use `lib/mcp-launcher.sh` to select OrbStack's `docker` on macOS or `podman`
+otherwise, and load exported credentials or `.env/secrets.sops.env` relative
+to the repository. Containers receive environment variable names rather than
+credential values on command lines. A running container runtime is required.
 
-The vendor image is release-pinned and Renovate-managed; Docker's curated mirror
-offers only `latest`. The binary reports `(devel)`, so trust the image tag.
-
-Default tools cover read-only search, data sources, Prometheus, Loki, dashboards,
-navigation, and alerting. Alerting tools expose rule state plus Alertmanager
-notification policies, contact points, and time intervals. Writes are disabled
-and Loki responses capped at 20 lines.
-
-The launcher uses exported credentials or decrypts `.env/secrets.sops.env`
-relative to itself. It works from any cwd without embedding tokens in clients.
+The Grafana image tag is pinned in [grafana-mcp.sh](grafana-mcp.sh) and tracked
+by Renovate. Default tools cover search, datasources, Prometheus, Loki,
+dashboards, navigation, and alerting; writes are disabled and Loki responses
+are capped at 20 lines.
 
 A global client config is read from any working directory, so it needs the
 absolute path; the launcher is not resolved through a shell, so `~` is not
@@ -342,9 +334,6 @@ In an interactive session, invoke the read-only tool loop explicitly with
 ```
 
 ### Goose workstation setup
-
-Run Goose on the workstation and keep Ollama in-cluster for repository access
-and interactive approval without another in-cluster agent.
 
 The validated baseline is:
 
@@ -383,8 +372,7 @@ Use only the Grafana MCP. List each Grafana data source name and type.
 Do not modify Grafana or any files.
 ```
 
-Success means `list_datasources` returns Prometheus and Loki. Broader checks may
-search a dashboard and inspect its summary and queries.
+`list_datasources` should return Prometheus and Loki.
 
 If the MCP server does not start, run `bash -n scripts/grafana-mcp.sh`, confirm
 that Docker or Podman is running, and check that `sops` can access the AGE key.
@@ -419,8 +407,8 @@ sops edit ../.env/secrets.sops.env
 direnv allow
 ```
 
-The file is already encrypted; append-then-encrypt fails on existing SOPS
-metadata. Rotate through `sops edit`.
+Use `sops edit` to replace the assignment; do not append plaintext or re-encrypt
+the existing SOPS file.
 
 | Env var | Default | Notes |
 |---------|---------|-------|
@@ -437,28 +425,19 @@ revoke unused tokens in the Grafana UI or via the API.
 
 `netbox-mcp.sh` runs the official
 [`netboxlabs/netbox-mcp-server`](https://github.com/netboxlabs/netbox-mcp-server)
-container over stdio. The image is pinned to `1.2.1`, and the server exposes
-read-only NetBox query tools.
-It remains the fallback for the cluster-hosted service in
-[`k8s/mcp/README.md`](../k8s/mcp/README.md).
+image over stdio with read-only query tools. It is the fallback for
+[cluster-hosted MCP](../k8s/mcp/README.md) and uses the shared credential and
+runtime setup described under [Grafana MCP](#grafana-mcpsh).
 
-The image includes upstream `uv.lock`, pinning transitive dependencies; a tagged
-`uvx` install would re-resolve them. Upstream signs its multi-arch images.
-
-Shared launcher logic uses exported NetBox credentials or SOPS and passes only
-environment variable names to the container, keeping values off command lines.
-
-Despite upstream's detached-container warning, `docker run -i` without a TTY
-preserves stdio framing.
-
-A container runtime must already be running; a cold runtime prevents startup.
+The image tag is pinned in [netbox-mcp.sh](netbox-mcp.sh). Its upstream `uv.lock`
+pins transitive dependencies that a tagged `uvx` install would re-resolve.
 
 Generate the desired v2 token, then store it by editing the existing encrypted
 environment file:
 
 ```bash
-./scripts/netbox-mcp-token.sh
-sops edit .env/secrets.sops.env
+./netbox-mcp-token.sh
+sops edit ../.env/secrets.sops.env
 direnv allow
 ```
 
@@ -472,7 +451,7 @@ The NetBox role creates the read-only identity and matching v2 token. NetBox
 stores only an HMAC, so generate the plaintext locally, then preview and apply:
 
 ```bash
-cd ansible
+cd ../ansible
 ansible-playbook playbooks/services/netbox.yaml --check --diff --tags netbox
 
 # The operator performs the live change after reviewing the check output.
@@ -493,7 +472,7 @@ the local image.
 | `NETBOX_TOKEN` | none | Required read-only API token |
 | `VERIFY_SSL` | `true` | Keep TLS verification enabled |
 | `ENABLE_PLUGIN_DISCOVERY` | `false` | Enable only when NetBox plugin models are needed |
-| `NETBOX_MCP_VERSION` | `1.2.1` | Pinned image tag; Renovate bumps this in place |
+| `NETBOX_MCP_VERSION` | [netbox-mcp.sh](netbox-mcp.sh) | Pinned image tag; Renovate bumps this in place |
 | `NETBOX_MCP_IMAGE` | `docker.io/netboxlabs/netbox-mcp-server:$NETBOX_MCP_VERSION` | Full reference override for testing |
 | `NETBOX_MCP_RUNTIME` | auto (OrbStack `docker`, else `podman`) | Force a container runtime |
 
@@ -529,10 +508,13 @@ system shims, and project-specific mise configs can override the baseline.
 `terminal.sh` installs kitty and `fonts.sh` installs UDEV Gothic NF; both skip
 installation unless `TOOL_MACHINE_PROFILE=desktop`.
 
-All three accept `local` (default, no sudo) or `global` (system-wide, needs sudo):
+Tools, terminal, and fonts accept `local` (default, no sudo) or `global`
+(system-wide, needs sudo). For packages, the mode selects the version-cache path;
+package installation requires sudo unless the no-sudo preflight is selected:
 
 | Script | Local path | Global path |
 |--------|------------|-------------|
+| `packages.sh` (version cache) | `$HOME/.local/share/tool-versions` | `/usr/local/share/tool-versions` |
 | `tools.sh` | `$HOME/.local/share/mise` | `/usr/local/share/mise` |
 | `terminal.sh` | `$HOME/.local/kitty.app` | `/usr/local/kitty.app` |
 | `fonts.sh` | `$HOME/.local/share/fonts` | `/usr/local/share/fonts` |
@@ -544,9 +526,12 @@ All three accept `local` (default, no sudo) or `global` (system-wide, needs sudo
 
 ### `vendor/`
 
-Vendored dotfiles installers, mise config, and mise lockfile remove the runtime
-dependency on the dotfiles repository. Their source commit is recorded in
-`vendor/REVISION`.
+Renovate advances the recorded dotfiles `main` SHA; GitHub Actions synchronizes
+files into the same PR. `sync.sh` uses the recorded SHA, `--check` verifies
+without writing, and `--upstream` advances the pin explicitly.
+
+Vendored installers, mise config, and lockfile remove the runtime dependency on
+the dotfiles repository.
 
 Do not edit the numbered installer scripts by hand — they keep the chezmoi
 target names of their sources and are synced from `takanao14/dotfiles` by

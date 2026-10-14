@@ -29,7 +29,7 @@ Environment:
 
 Example:
   $(basename "$0") myvm 192.168.20.50
-  $(basename "$0") myvm 192.168.20.50 pve 4 4096 80 rocky10
+  $(basename "$0") myvm 192.168.20.50 pve 4 4096 80 rocky10-base
 EOF
   exit 1
 }

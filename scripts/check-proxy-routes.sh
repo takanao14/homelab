@@ -43,7 +43,6 @@ homepage_proxied="$(
 
 status=0
 
-# Verify every item exists in the defined set.
 check_subset() {
     local label="$1" defined="$2" items="$3" message="$4" item
     while IFS= read -r item; do

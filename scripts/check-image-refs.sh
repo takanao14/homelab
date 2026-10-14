@@ -20,7 +20,6 @@ CREATE_VM="${REPO_ROOT}/scripts/create-vm.sh"
 BUILD_SH="${REPO_ROOT}/packer/build.sh"
 PUSH_SH="${REPO_ROOT}/packer/push.sh"
 
-# Extract file_name values from an images.hcl.
 hcl_file_names() {
     grep -o 'file_name[[:space:]]*=[[:space:]]*"[^"]*"' "$1" | sed 's/.*"\(.*\)"/\1/' | sort -u
 }
@@ -30,7 +29,6 @@ defined_all="$(printf '%s\n%s\n' "$defined_custom" "$(hcl_file_names "$CLOUDIMAG
 
 status=0
 
-# Verify every item exists in the defined set.
 check_subset() {
     local label="$1" defined="$2" items="$3" message="$4" item
     while IFS= read -r item; do

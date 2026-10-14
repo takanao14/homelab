@@ -46,7 +46,6 @@ api() {
     curl -fsSk --config - -H 'Content-Type: application/json' "$@"
 }
 
-# Find or create the service account.
 sa_id="$(api "${GRAFANA_URL}/api/serviceaccounts/search?query=${SA_NAME}" \
   | jq -r --arg n "${SA_NAME}" '.serviceAccounts[]? | select(.name==$n) | .id' | head -n1)"
 
