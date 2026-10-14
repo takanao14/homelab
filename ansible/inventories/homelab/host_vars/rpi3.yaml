@@ -6,9 +6,8 @@ package_upgrade_reboot_timeout: 1800
 rsyslog_forward_protocol: tcp
 rsyslog_journal_input: true
 
-# NetworkManager's DHCP client wedged after a failed renewal on 2026-08-29 and
-# 2026-09-19, dropping 192.168.10.240 and never retrying; each outage ended only
-# with a power cycle (ADR-0052). The IX2106 static binding stays as a reservation.
+# Use a static IP because NetworkManager did not recover from DHCP renewal
+# failures (ADR-0052). Keep the IX2106 reservation.
 networkmanager_connections:
   - conn_name: netplan-eth0
     type: ethernet
