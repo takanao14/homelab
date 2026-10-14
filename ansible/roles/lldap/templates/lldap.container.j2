@@ -9,6 +9,8 @@ Image={{ lldap_image }}:{{ lldap_version }}
 EnvironmentFile={{ lldap_env_file }}
 Environment=LLDAP_LDAP_BASE_DN={{ lldap_base_dn }}
 Environment=LLDAP_LDAP_USER_DN={{ lldap_admin_username }}
+# Keep the admin password aligned with SOPS even after the database exists.
+Environment=LLDAP_FORCE_LDAP_USER_PASS_RESET=always
 Environment=LLDAP_HTTP_URL={{ lldap_http_url }}
 Environment=LLDAP_LDAPS_OPTIONS__ENABLED=true
 Environment=LLDAP_LDAPS_OPTIONS__PORT=6360
