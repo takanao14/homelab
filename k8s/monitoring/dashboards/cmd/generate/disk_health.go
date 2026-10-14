@@ -529,11 +529,8 @@ func buildDiskHealth() (*dashboard.Dashboard, error) {
 		).
 		// TrueNAS smartctl_exporter covers passed-through SATA disks outside $node.
 		// Overall health is shared above; this row shows precursors and read status.
-		// Nonzero exit status means failure or standby skip.
 		WithRow(dashboard.NewRowBuilder("TrueNAS Disks")).
-		// Nonzero exit status means smartctl could not read a disk: either a
-		// real failure or the disk was skipped in standby (powermode-check),
-		// in which case the other panels in this row go stale until it wakes.
+		// Nonzero status means failure or standby skip; skipped disks stay stale until wake-up.
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("smartctl Exit Status").
