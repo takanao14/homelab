@@ -31,15 +31,12 @@ spec:
         __tmp_name: {{ .name | quote }}
     {{- end }}
   relabelings:
-    # Forward the target IP to blackbox_exporter.
     - action: replace
       sourceLabels: [__address__]
       targetLabel: __param_target
-    # Use inventory names as instances.
     - action: replace
       sourceLabels: [__tmp_name]
       targetLabel: instance
-    # Scrape the external blackbox_exporter.
     - action: replace
       targetLabel: __address__
       replacement: {{ .Values.blackboxExporterURL | quote }}
