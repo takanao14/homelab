@@ -20,11 +20,13 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: mcp
+  {{- include "argocd-apps.reloaderIgnoreDifferences" (dict "namespace" "mcp") | nindent 2 }}
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - RespectIgnoreDifferences=true
       - ServerSideApply=true
 {{- end }}

@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: external-dns
+  annotations:
+    secret.reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   strategy:
@@ -13,8 +15,6 @@ spec:
     metadata:
       labels:
         app: external-dns
-      annotations:
-        reloader.stakater.com/auto: "true"
     spec:
       serviceAccountName: external-dns
       containers:

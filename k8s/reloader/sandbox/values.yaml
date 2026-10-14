@@ -1,0 +1,4 @@
+reloader:
+  reloader:
+    namespaces:
+      - reloader-check

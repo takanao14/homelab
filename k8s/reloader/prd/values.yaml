@@ -1,0 +1,6 @@
+reloader:
+  reloader:
+    namespaces:
+      - external-dns
+      - mcp
+      - slack-bot

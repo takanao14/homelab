@@ -47,10 +47,8 @@ deleting it:
 
 ## Index
 
-Pending proposals: [ADR-0034](0034-hubble-ui-for-service-traffic-visibility.md)
-(review by 2026-11-14) and
-[ADR-0071](0071-reloader-with-explicit-namespace-scope.md)
-(review before implementing automatic Secret-driven restarts).
+Pending proposal: [ADR-0034](0034-hubble-ui-for-service-traffic-visibility.md)
+(review by 2026-11-14).
 
 `Accepted` entries with amendment links retain decisions that still apply;
 follow those links for the changed parts.
@@ -127,5 +125,5 @@ follow those links for the changed parts.
 | [0068](0068-build-caddy-on-the-ansible-controller.md) | Build Caddy on the Ansible controller | Accepted |
 | [0069](0069-track-dotfiles-vendor-with-renovate.md) | Track dotfiles vendor with Renovate | Accepted |
 | [0070](0070-no-staging-sandbox-validates-the-cluster-platform.md) | No staging environment; sandbox validates the cluster platform | Accepted |
-| [0071](0071-reloader-with-explicit-namespace-scope.md) | Scope one Reloader per cluster to explicit namespaces | Proposed |
+| [0071](0071-reloader-with-explicit-namespace-scope.md) | Scope one Reloader per cluster to explicit namespaces | Accepted |
 | [0072](0072-one-gateway-listener-per-environment.md) | One Gateway listener per environment | Accepted |

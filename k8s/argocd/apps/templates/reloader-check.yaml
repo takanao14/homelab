@@ -1,0 +1,32 @@
+{{- $app := index .Values.apps "reloader-check" }}
+{{- if $app.enabled }}
+{{- if ne (include "argocd-apps.env" .) "sandbox" }}
+{{- fail "reloader-check must only be enabled in sandbox" }}
+{{- end }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: reloader-check
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $app.wave | quote }}
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.repo.url }}
+    targetRevision: {{ .Values.repo.targetRevision }}
+    path: k8s/reloader-check
+    helm:
+      releaseName: reloader-check
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: reloader-check
+  {{- include "argocd-apps.reloaderIgnoreDifferences" (dict "namespace" "reloader-check") | nindent 2 }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - RespectIgnoreDifferences=true
+{{- end }}

@@ -84,6 +84,9 @@ apps:
     wave: "1"
   reloader:
     enabled: false
+    wave: "2"
+  reloader-check:
+    enabled: false
     wave: "1"
   slack-bot:
     enabled: false

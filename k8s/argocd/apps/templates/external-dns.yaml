@@ -19,11 +19,13 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: external-dns
+  {{- include "argocd-apps.reloaderIgnoreDifferences" (dict "namespace" "external-dns" "name" "external-dns") | nindent 2 }}
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - RespectIgnoreDifferences=true
       - ServerSideApply=true
 {{- end }}

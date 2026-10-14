@@ -1,6 +1,7 @@
 # ADR-0071: Scope one Reloader per cluster to explicit namespaces
 
-- **Status:** Proposed
+- **Status:** Accepted
+- **Accepted:** 2026-10-15
 - **Date:** 2026-10-12
 - **Review trigger:** Before implementing automatic Secret-driven restarts
 - **Related:** [ADR-0026](0026-eso-over-helm-secrets-for-in-cluster-secrets.md), [ADR-0070](0070-no-staging-sandbox-validates-the-cluster-platform.md)
@@ -17,7 +18,7 @@ The pinned Reloader chart 2.2.18 supports an explicit namespace list with
 namespace-scoped Roles and RoleBindings. One controller can therefore serve
 the consumers without cluster-wide Secret access or multiple installations.
 
-## Proposed decision
+## Decision
 
 Keep one Reloader per cluster with `watchGlobally: false` and explicit
 `namespaces`. Set prd to `external-dns`, `mcp`, and `slack-bot`;

@@ -1,6 +1,8 @@
 reloader:
   reloader:
     watchGlobally: false
+    autoReloadAll: false
+    reloadStrategy: annotations
     deployment:
       # Requests only: 7-day mean/peak 51/55 Mi, p95 CPU 0.4m.
       resources:

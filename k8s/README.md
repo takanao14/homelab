@@ -49,7 +49,8 @@ k8s/
 ├── gateway/          # Shared Gateway API resources
 ├── monitoring/       # Metrics, logs, exporters, and dashboard generator
 ├── mcp/              # Authenticated Grafana and NetBox MCP servers (prd)
-├── reloader/         # Secret/ConfigMap-triggered restarts
+├── reloader/         # Scoped Secret/ConfigMap-triggered restarts
+├── reloader-check/   # Disposable sandbox restart consumers
 ├── gpu-switch/       # Exclusive GPU workload controller
 ├── comfyui/          # GPU image generation
 ├── lemonade-server/  # GPU LLM inference
