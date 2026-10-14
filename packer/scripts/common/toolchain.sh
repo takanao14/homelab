@@ -28,9 +28,7 @@ export VENDOR_DIR="${INSTALL_DIR}/vendor"
 
 echo "Installing the ${TOOL_MACHINE_PROFILE} toolchain system-wide..."
 
-# global mode installs mise into /usr/local/bin and its managed tools under
-# /usr/local/share/mise, which outlive the build user that cleanup deletes.
-# packages.sh runs first because mise backends use the OS-level prerequisites.
+# Install system-wide to survive build-user removal; packages precede mise prerequisites.
 bash "${INSTALL_DIR}/packages.sh" global
 bash "${INSTALL_DIR}/tools.sh" global
 bash "${INSTALL_DIR}/terminal.sh" global
