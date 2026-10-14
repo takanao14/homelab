@@ -315,7 +315,6 @@
     - rocm_previous_version | length > 0
     - rocm_previous_packages | length > 0
 
-# Discover component library directories instead of hardcoding them.
 - name: Discover ROCm component library directories
   ansible.builtin.command:
     cmd: find /opt/rocm -mindepth 2 -maxdepth 2 -type d -name lib
