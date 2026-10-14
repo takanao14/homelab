@@ -53,31 +53,18 @@ every Pod start. This keeps the release configuration declarative while
 allowing `lemond` to update the files during the Pod lifetime. Runtime config
 changes made through the API do not survive a Pod restart.
 
-The release pins:
+Backend tags and per-model context sizes are defined in
+[chart/values.yaml](chart/values.yaml).
 
-```yaml
-config:
-  rocm_channel: nightly
-  llamacpp:
-    rocm_bin: b1319
-
-recipeOptions:
-  builtin.gpt-oss-20b-mxfp4-GGUF:
-    ctx_size: 131072
-  builtin.Gemma-4-12B-it-MTP-GGUF:
-    ctx_size: 262144
-```
-
-`b1319` is a release tag from `lemonade-sdk/llamacpp-rocm`. Do not use
-`latest`; update the tag deliberately and re-run the offload verification.
+`config.llamacpp.rocm_bin` pins a release tag from `lemonade-sdk/llamacpp-rocm`.
+Do not use `latest`; update the tag deliberately and re-run offload verification.
 Backend choice is per model in v11, for example `--llamacpp rocm` or
 `recipe_options.llamacpp_backend=rocm`.
 
-See [ADR-0039](../../docs/adr/0039-builtin-rocm-backend-replaces-custom-lemonade-image.md)
-for the migration from the v10 custom image and dual-Deployment layout.
-[ADR-0040](../../docs/adr/0040-select-lemonade-backend-by-model-and-concurrency.md)
-records the v11 backend comparison and requires choosing Vulkan or ROCm per
-model and expected concurrency rather than setting a universal default.
+Choose Vulkan or ROCm per model and expected concurrency
+([ADR-0040](../../docs/adr/0040-select-lemonade-backend-by-model-and-concurrency.md)).
+The upstream-image decision is recorded in
+[ADR-0039](../../docs/adr/0039-builtin-rocm-backend-replaces-custom-lemonade-image.md).
 
 ## GPU Switching
 
