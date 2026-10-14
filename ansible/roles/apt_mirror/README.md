@@ -2,13 +2,8 @@
 
 Replaces the default Ubuntu apt mirror URL with a local mirror on Ubuntu hosts.
 
-## Functionality
-
-- Skips non-Ubuntu systems automatically.
-- Detects DEB822 format (`/etc/apt/sources.list.d/ubuntu.sources`) and legacy format (`/etc/apt/sources.list`).
-- Replaces `http://archive.ubuntu.com/ubuntu` with `apt_mirror_url` in the detected sources file.
-- Leaves security entries (`-security`) untouched.
-- Triggers `apt-get update` after replacement.
+Supports DEB822 and legacy sources on Ubuntu, leaves security sources unchanged,
+and updates the APT cache after replacement.
 
 ## Variables
 

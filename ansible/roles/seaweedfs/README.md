@@ -97,8 +97,8 @@ journalctl -u seaweedfs-backup.service          # logs
 
 Buckets listed in `seaweedfs_public_buckets` are created by the role and get an
 `anonymous` S3 identity with `Read:<bucket>` only (no `List`), so any client can
-fetch an object by key but cannot enumerate the bucket. This replaces Garage's
-public web serving. The buckets are fronted over HTTPS by the central Caddy:
+fetch an object by key but cannot enumerate the bucket. Caddy serves them over
+HTTPS:
 
 ```
 https://s3.home.butaco.net/firmware/<file>      # -> SeaweedFS :8333, path-style
@@ -147,8 +147,8 @@ not disk loss. Preserve any download objects that cannot be rebuilt elsewhere.
   (`:8333`) — the MinIO client `mc`, the AWS CLI, `rclone`, etc.
 - **Admin GUI:** deployed as a separate `seaweedfs-admin` systemd service
   (`weed admin`) on `:{{ seaweedfs_admin_port | default(23646) }}`, providing
-  cluster health, node status, and S3 bucket management. Unlike MinIO, this
-  console is part of the open project. Disable with `seaweedfs_admin_enabled: false`.
+  cluster health, node status, and S3 bucket management.
+  Disable with `seaweedfs_admin_enabled: false`.
   Authentication is set via `seaweedfs_admin_user` / `seaweedfs_admin_password`,
   passed through `WEED_ADMIN_PASSWORD` in the environment file so the password is
   not visible in the process arguments. **If `seaweedfs_admin_password` is empty,

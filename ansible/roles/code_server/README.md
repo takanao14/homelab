@@ -6,27 +6,13 @@ Code) on Debian-based systems and runs it as a systemd service for one account.
 Access is over HTTPS through Caddy (`vscode.home.butaco.net`); code-server
 itself serves plain HTTP and is never published to the internet.
 
-## Functionality
+The role records the installed version for `playbooks/ops/version_audit.yaml`,
+seeds editor preferences only once, and pins the initial workspace folder.
 
-- Downloads the release `.deb` from GitHub and installs it with `apt`.
-- Records the installed version under `/usr/local/share/homelab-versions`
-  for `playbooks/ops/version_audit.yaml`.
-- Deploys `~/.config/code-server/config.yaml` (bind address, argon2 password).
-- Seeds `settings.json` once, then leaves editor preferences to the user.
-- Deploys a systemd drop-in pinning the workspace folder.
-- Enables and starts `code-server@<user>`.
-
-## Why it runs as a real login account
-
-The integrated terminal is the point of this service: the coding agents
-(`claude`, `codex`) run in it. Running under the account that already owns
-`~/.claude`, `~/.codex`, the SSH keys, the git config and the SOPS AGE key
-avoids duplicating all of that. The role therefore expects the account to
-exist and never creates it.
-
-The consequence is that anyone who can log in to the web UI has that account's
-shell, including its `sudo` rights. The password is the only barrier, so keep
-the service off the internet and use a long random password.
+It requires an existing login account to reuse its agent configuration, SSH
+keys, Git settings, and SOPS AGE key. Web UI access grants that account's shell
+and `sudo` rights; keep the service off the internet and use a long random
+password.
 
 ## Variables
 

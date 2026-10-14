@@ -2,11 +2,7 @@
 
 Installs and configures [Prometheus Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) on Debian-based systems.
 
-## Functionality
-
-- Installs `prometheus-blackbox-exporter` and `libcap2-bin` from APT.
-- Deploys the Blackbox Exporter config from a Jinja2 template to `blackbox_exporter_config_path`.
-- Grants `CAP_NET_RAW` to the binary via `setcap` (required for ICMP probes).
+ICMP probes require `CAP_NET_RAW`, which the role grants to the binary.
 
 ## Probe Modules
 

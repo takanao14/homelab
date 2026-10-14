@@ -35,33 +35,21 @@ so only use names from `prometheus-node-exporter --help-long` **on a target
 host**. The Debian package trails the k0s node-exporter DaemonSet — `bcachefs`
 exists in the latter and not in the former.
 
-### What earns a `--no-collector.*`
+### Collector exclusions
 
-Only two things. A collector that merely has nothing to report *yet* stays
-enabled, because it starts reporting on its own once the corresponding mount,
-array, or module appears; silencing it would hide the very change worth seeing.
-`nfs` is the case in point: it is empty until a host mounts an NFS share, and
-`k8s_storage_providers` already carries `nfs` in sandbox.
+Disable collectors only for:
 
-**Hardware that will never exist on this fleet**, in `node_exporter_base_args`:
-`fibrechannel`, `infiniband`, `tapestats`. These fail every scrape rather than
-returning empty, so each one also costs a log line per scrape. `rapl` belongs
-here for a different reason — it fails on exactly the bare-metal hosts where it
-could produce data, because the kernel restricts `energy_uj` to root.
+- Unavailable hardware or persistent errors: `fibrechannel`, `infiniband`, and
+  `tapestats` fail on this fleet; `rapl` cannot read root-only `energy_uj` files.
+- Duplicate guest metrics: LXC shares the host kernel, so `thermal_zone`,
+  `hwmon`, `diskstats`, `cpufreq`, `powersupplyclass`, `nvme`, and `zfs` report
+  host data under the guest's name. Keep namespaced collectors (`netdev`,
+  `netclass`, `filesystem`, `pressure`, `cpu`) enabled. VMs disable only `zfs`;
+  their sensor collectors return empty rather than duplicate host data.
 
-**Host metrics duplicated into a guest.** LXC guests share the host kernel, and
-collectors reading paths lxcfs does not virtualize re-report the hypervisor
-under the guest's own instance name: `thermal_zone` and `hwmon` (sensors),
-`diskstats` (the host's whole block device list), `cpufreq` (the host's physical
-core count), `powersupplyclass`, `nvme`, and `zfs`. Collectors that *are*
-namespaced — `netdev`, `netclass`, `filesystem`, `pressure`, `cpu` — must stay
-enabled. `node_exporter_vm_args` disables `zfs` alone: VMs get virtio hardware,
-so the sensor collectors return empty rather than wrong, but the zpools live on
-the hypervisor.
-
-Verify with data before adding a flag: `node_scrape_collector_success == 0`
-identifies the failing ones, and comparing a guest's series against its Proxmox
-host proves duplication.
+Keep collectors enabled when hardware or mounts may appear later, including
+`nfs`. Before adding an exclusion, check `node_scrape_collector_success == 0`
+or compare the guest's series with its Proxmox host to establish duplication.
 
 ### Textfile collector
 
@@ -80,15 +68,10 @@ not change the shared directory itself.
 |----------|---------|---------|
 | `node_exporter_install_lm_sensors` | `true` | Install `lm-sensors` on x86_64 hosts |
 
-Set to `false` where the `hwmon` collector is disabled anyway, which leaves
-`lm-sensors` without a consumer. LXC guests are the case in point: they have no
-hardware sensors of their own, and the collector reading the host's sensors is
-already turned off.
-
-When the flag is `false` the role also removes `lm-sensors` with `autoremove`,
-so hosts provisioned before the flag existed converge on the next run. The
-`autoremove` in `playbooks/tasks/package_upgrade.yaml` does not reclaim it on
-its own — the role installs the package by name, which marks it manual.
+Set `node_exporter_install_lm_sensors: false` where `hwmon` is disabled,
+including LXC guests. The role explicitly removes `lm-sensors` with
+`autoremove`: package-upgrade autoremove alone cannot remove a manually
+installed package.
 
 ### openipmi
 
@@ -96,27 +79,10 @@ its own — the role installs the package by name, which marks it manual.
 |----------|---------|---------|
 | `node_exporter_mask_openipmi` | `true` | Mask `openipmi.service` |
 
-Installing `prometheus-node-exporter` drags in an IPMI stack nobody asked for:
-
-```
-prometheus-node-exporter
-  Recommends: prometheus-node-exporter-collectors
-    Recommends: ipmitool
-      openipmi
-```
-
-No host in this fleet has a BMC — DMI reports no IPMI device and `/dev/ipmi*`
-does not exist — so the LSB init script fails to load the IPMI drivers and the
-unit stays `failed` forever. It is masked rather than removed for two reasons:
-`prometheus-node-exporter-collectors` also produces the `apt`, `nvme` and
-`smartmon` textfile metrics, which *are* scraped; and its Recommends would pull
-`ipmitool` and `openipmi` straight back in on the next dist-upgrade, whereas a
-mask survives a reinstall.
-
-Masking alone is not enough on a host where the unit has already failed:
-systemd keeps the recorded failure, so the unit stays in `ActiveState=failed`
-and still shows up in `systemctl list-units --state=failed`. The role runs
-`reset-failed` after masking to clear it.
+APT recommendations pull in `openipmi`, whose service fails on this fleet's
+hosts without BMCs. Masking survives package reinstalls; removing the collector
+package would also remove useful `apt`, `nvme`, and `smartmon` textfile metrics.
+The role runs `reset-failed` after masking to clear any recorded failure.
 
 Set to `false` on a host that actually has a BMC.
 

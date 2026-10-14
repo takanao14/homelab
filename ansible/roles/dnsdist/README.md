@@ -23,40 +23,17 @@ pool is built from `dns_resolver_servers`; each dnsdist frontend assigns order
 authoritative for that whole `/16` as one aggregated zone, so undeclared
 addresses inside it answer an authoritative NXDOMAIN rather than REFUSED.
 
-## Functionality
-
-- Adds the official PowerDNS APT repository for `dnsdist`.
-- Installs the `dnsdist` package.
-- Deploys `/etc/dnsdist/dnsdist.yml`, removing any superseded `dnsdist.conf`.
-- Enables and starts the `dnsdist` service.
-
 ### Configuration format
 
-The configuration is YAML (`/etc/dnsdist/dnsdist.yml`), which dnsdist has
-preferred over `dnsdist.conf` since 2.1.
+Edit `dnsdist_config` in `defaults/main.yaml`; `templates/dnsdist.yml.j2`
+renders it as `/etc/dnsdist/dnsdist.yml`.
 
-`templates/dnsdist.yml.j2` contains no hand-written YAML. The whole
-configuration is the `dnsdist_config` structure in `defaults/main.yaml`, and the
-template only renders it through `to_nice_yaml`, so indentation cannot drift and
-the rules are reviewable as data. Edit `dnsdist_config`, never the template.
+The file contains console and webserver credentials and is deployed as `0640`,
+owned by root and the package service account's primary group. The role resolves
+that group before writing the file and fails if the account is missing.
 
-The config holds the console key and the webserver password, so it is deployed
-`0640` rather than world readable. dnsdist reads it as its own service account,
-not as root, so the owning group has to be that account's primary group. The
-role resolves it at run time with two `getent` lookups (user, then group by GID)
-instead of hard-coding a name — if the package renames or drops the account the
-lookup fails before the config is rewritten, leaving the running service alone.
-
-Two non-obvious details in that template and task:
-
-- The render goes through `to_json | from_json` first. `map('combine')` merges
-  one literal dict object into every backend, so PyYAML would otherwise emit
-  anchors and aliases (`&id001` / `*id001`). The round-trip rebuilds fresh
-  objects and keeps the on-host file plain.
-- `validate` copies to a `.yml` temp name before calling
-  `dnsdist --check-config`. dnsdist picks the config format from the file
-  extension, and Ansible hands `validate` an extension-less temp file, which
-  would be parsed as Lua and fail.
+Validation uses a `.yml` temporary filename because dnsdist selects YAML or Lua
+by extension, while Ansible's validation file has none.
 
 Note that `--check-config` validates syntax only. A YAML config can load
 cleanly and still route differently; changes need behavioural verification.

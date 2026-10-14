@@ -5,31 +5,14 @@ time against the on-prem router (the single internal NTP server) instead of
 public pools. Clients point only at the router; external-source redundancy is
 handled on the router (multiple upstreams on the IX), not per-client.
 
-## Functionality
+The role disables unmanaged main-config sources and writes managed sources to
+`/etc/chrony/sources.d/homelab.sources`. DHCP-provided sources remain enabled;
+use `chrony_disabled_source_dirs` to exclude untrusted dynamic sources.
 
-- Optionally installs the `chrony` package (`chrony_install`).
-- On Debian/Ubuntu, stops and disables `systemd-timesyncd` (the default time
-  sync) so it does not compete with chrony. It is intentionally **not masked**
-  (installing chrony already deactivates it). Tolerated as a no-op where the unit
-  is absent (minimal images); skipped on RedHat/Rocky (no timesyncd) and where
-  `chrony_manage_timesyncd` is false.
-- Comments out unmanaged active `server`, `pool`, and `peer` directives in the
-  chrony config so only the Ansible-managed sources remain active.
-- Leaves dynamic source directories (for example `/run/chrony-dhcp`) enabled by
-  default. DHCP-provided NTP servers are accepted as site policy when DHCP is
-  controlled; `chrony_disabled_source_dirs` is available as an opt-in escape
-  hatch for untrusted or noisy dynamic sources.
-- Writes the Ansible-managed `server` directives (the router, plus any optional
-  `chrony_fallback_servers`) into the chrony source directory
-  (`/etc/chrony/sources.d/homelab.sources`).
-- Ensures the source directory is included from the main chrony config with
-  `sourcedir /etc/chrony/sources.d`.
-- Removes the legacy Ansible-managed block from the main chrony config if it
-  exists from older role runs.
-- Enables and starts the chrony service, restarting it on config change.
-
-The role is OS-aware (Debian/Ubuntu and RedHat/Rocky) via `vars/<os_family>.yaml`
-for the config path and service name.
+On Debian/Ubuntu, it stops and disables `systemd-timesyncd` without masking it,
+unless `chrony_manage_timesyncd` is false. Absent units are tolerated. Config
+paths and service names for Debian/Ubuntu and RedHat/Rocky come from
+`vars/<os_family>.yaml`.
 
 ## Variables
 

@@ -2,12 +2,6 @@
 
 Installs and configures [Forgejo](https://forgejo.org/) self-hosted Git service on Debian-based systems.
 
-## Functionality
-
-- Creates a dedicated system user/group (`git`).
-- Downloads the Forgejo binary from Codeberg releases.
-- Deploys `/etc/forgejo/app.ini` from a Jinja2 template.
-
 ## Variables
 
 ### Secrets (must be set in inventory vars or SOPS-encrypted files)

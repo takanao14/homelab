@@ -2,12 +2,6 @@
 
 Installs and configures [Kea DHCPv4](https://www.isc.org/kea/) server on Debian-based systems.
 
-## Functionality
-
-- Installs `kea-dhcp4-server` and `socat` from APT.
-- Ensures `/var/lib/kea` and `/run/kea` directories exist with correct permissions.
-- Deploys `/etc/kea/kea-dhcp4.conf` from a Jinja2 template.
-
 ## Variables
 
 | Variable | Default | Description |

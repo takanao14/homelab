@@ -35,29 +35,16 @@ connect to them.
 `tasks/mcp.yaml` provisions the account behind
 [`scripts/netbox-mcp.sh`](../../../scripts/netbox-mcp.sh):
 
-- a `mcp-readers` group holding one view-only `ObjectPermission`, covering every
-  model in `netbox_mcp_permission_app_labels`,
-- a `mcp-netbox` service user with no usable password, whose only grant comes
-  from that group,
-- the matching v2 API token with `write_enabled = False`.
+- `mcp-readers` grants only `view` on models in
+  `netbox_mcp_permission_app_labels`.
+- `mcp-netbox` receives only that group's grants and has no usable password,
+  preventing password-based token provisioning at `/api/users/tokens/provision/`.
+- Its v2 API token has `write_enabled = False`, rejecting unsafe methods before
+  model permissions are checked.
 
-Both steps run through `podman exec -i netbox … manage.py shell` reading a
-rendered script on stdin; NetBox has no Ansible module, and stdin keeps the
-token plaintext out of the process arguments. They are idempotent, correct
-drift (a re-enabled write flag, extra actions, a directly attached permission),
-and prune superseded tokens on the account.
-
-### What makes it read-only
-
-Three independent things, worth knowing before adjusting any of them:
-
-- `write_enabled = False` on the token. `TokenPermissions` checks this ahead of
-  any model permission, so every unsafe method is rejected regardless of what
-  the account is otherwise granted. This is the load-bearing control.
-- The `ObjectPermission` grants only `view`, and only on the listed apps.
-- The account has no usable password, which closes
-  `/api/users/tokens/provision/` — an unauthenticated endpoint that mints a
-  token from a username and password.
+The scripts run through `podman exec -i netbox … manage.py shell` on stdin to
+keep token plaintext out of process arguments. Each run corrects permission and
+token drift and removes superseded tokens.
 
 Leaving `users` out of `netbox_mcp_permission_app_labels` does **not** hide the
 account's own token: NetBox's built-in `DEFAULT_PERMISSIONS` grants every user

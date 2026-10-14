@@ -34,19 +34,14 @@ for their multiple entry points:
 
 ### What a system playbook embeds
 
-A system playbook embeds only **service-coupled** concerns: the service role
-plus the roles whose configuration the service *owns* — i.e. the log-shipping
-stack (`vector` + `journald`, via the `lxc_logging` meta-role), since each
-service supplies its own `vector_journald_units`. `timezone` is also embedded as a
-pragmatic exception (cheap, idempotent, keeps log timestamps correct on a
-single-playbook run). OpenClaw and Hermes also embed `mcp_client` to distribute
-their service-owned caller credentials from SOPS.
+Service playbooks include the service role, its log-shipping roles (`vector`
+and `journald` through `lxc_logging`), and `timezone` for consistent timestamps.
+Each service defines its own `vector_journald_units`. OpenClaw and Hermes also
+include `mcp_client` for their SOPS-managed caller credentials.
 
-Fleet-wide host hygiene (`apt_mirror`, `chrony`, `unattended_upgrades`,
-`node_exporter`) belongs to the host baseline rather than service playbooks.
-
-Every cross-cutting role additionally owns a `common/<role>.yaml` playbook so it
-can be rolled out fleet-wide in one run.
+Fleet-wide settings (`apt_mirror`, `chrony`, `unattended_upgrades`,
+`node_exporter`) belong to the host baseline. Cross-cutting roles have
+`common/<role>.yaml` entry points for fleet updates.
 
 ### Downloading release artifacts
 
@@ -64,9 +59,7 @@ Host hygiene is applied at host bring-up, before services, via `bootstrap.yaml`
 (a thin aggregate that imports the baseline `common/` playbooks):
 
 ```bash
-# 1. Baseline a freshly created host: package mirror, LXC maintenance access,
-#    time, security updates, monitoring, logging, and k0s storage clients.
-#    Per-play host patterns + --limit select the applicable subset automatically.
+# 1. Apply the host baseline.
 ansible-playbook playbooks/bootstrap.yaml --limit <newhost>
 
 # 2. Deploy the service onto the baselined host.
@@ -134,46 +127,41 @@ ansible-playbook playbooks/services/<system>.yaml --limit <host>
 Use the [Playbooks](#playbooks) index to choose an entry point. Service-specific
 prerequisites and procedures live in the corresponding role README.
 
-Operational examples:
+Package upgrades run serially on DNS hosts and k0s nodes. Workers are drained
+before reboot and uncordoned only after LocalPV is mounted and, where NFS is
+enabled, a probe Pod on that worker successfully mounts the export. The
+`dns`, `k8s`, and `others` phases can be resumed independently.
+
+Shutdown phase tags are `workloads`, `k8s`, `guests`, and `hypervisors`, in that
+order. Startup uses the same tags to wait for hypervisors, start guests, check
+cluster readiness, and restore workloads.
+Startup ensures cluster guests are running, waits for dependencies, and
+restores workloads through Argo CD. NFS-enabled clusters must pass a
+kubelet-backed mount probe before GitOps resumes. Environment tags cover all
+cluster phases and leave hypervisors running; no `--limit` is needed.
 
 ```bash
-# OS package upgrade (all hosts; apt on Debian/Ubuntu, dnf on Rocky/RHEL).
-# DNS hosts and k0s nodes are upgraded one at a time; k0s workers are drained
-# before the reboot and only uncordoned after the LocalPV mount is present. On
-# NFS-enabled clusters, a temporary probe Pod is bound to that same worker and
-# must mount the export successfully first. A full run therefore takes
-# considerably longer than the parallel phase suggests.
+# Upgrade OS packages, or resume one phase.
 ansible-playbook playbooks/ops/package_upgrade.yaml
-
-# Same, one phase at a time (dns / k8s / others). The phases are independent,
-# so a run that stopped partway can be resumed at the phase that failed.
 ansible-playbook playbooks/ops/package_upgrade.yaml --tags others
 
-# Planned outage: full shutdown, one phase at a time
-# (workloads -> k8s -> guests -> hypervisors; run without --tags for all four)
+# Stop workloads; omit --tags to run all shutdown phases.
 ansible-playbook playbooks/ops/shutdown.yaml --tags workloads
 
-# Planned outage: recovery after power is restored. This explicitly ensures all
-# cluster guests are running, waits for dependencies, and restores the scaled-
-# down workloads. Explicit starts are idempotent with tf's on_boot behavior.
-# NFS-enabled clusters must pass a kubelet-backed mount probe before GitOps
-# resumes and Argo CD restores workloads.
+# Recover after power is restored.
 ansible-playbook playbooks/ops/startup.yaml
 
-# Stop and restart one cluster while leaving its hypervisors running. The
-# environment tag covers its workload, node-power, guest-start, readiness, and
-# workload-restore phases; no --limit expression is needed.
+# Stop and restore one cluster.
 ansible-playbook playbooks/ops/shutdown.yaml --tags sandbox
 ansible-playbook playbooks/ops/startup.yaml --tags sandbox
 ansible-playbook playbooks/ops/shutdown.yaml --tags prd
 ansible-playbook playbooks/ops/startup.yaml --tags prd
 
-# Version audit for Renovate-managed Ansible components (read-only)
+# Audit Renovate-managed component versions (read-only).
 ansible-playbook playbooks/ops/version_audit.yaml
 
-# OpenBao explicit upgrade (dry-run first; the user runs without --check)
+# Preview an OpenBao upgrade before the operator applies it.
 ansible-playbook playbooks/ops/openbao/upgrade.yaml --limit openbao --check --diff
-
 ```
 
 ### Proxmox SimpleZone Static Routes

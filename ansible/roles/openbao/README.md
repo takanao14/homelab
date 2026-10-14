@@ -303,15 +303,10 @@ YAML so it is not mistaken for an alias or tag.
 the `k8s-argocd-<env>` read policy. The entry is written to
 `secret/k8s/argocd/<env>/admin`.
 
-`tasks/seed_argocd_admin.yaml` adds the second property, `mtime`, on its own:
-it reads the hash currently in OpenBao, and writes the entry — stamping `mtime`
-with the current UTC time — **only when the hash differs**. Rotating a password
-therefore invalidates every ArgoCD admin session for that environment, while
-re-running the playbook for any other reason changes nothing.
-
-That is why it is not part of `openbao_secrets`: the generic loop rewrites its
-whole list unconditionally, so a shared `mtime` would be re-stamped on every
-seed run and log all admins out each time.
+`tasks/seed_argocd_admin.yaml` writes the hash and a UTC `mtime` only when the
+hash changes, invalidating admin sessions only on rotation. Keep these entries
+outside `openbao_secrets`, whose unconditional writes would reset `mtime` and
+invalidate sessions on every seed run.
 
 See [`k8s/argocd/README.md`](../../../k8s/argocd/README.md) for the consuming
 `ExternalSecret`.

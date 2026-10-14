@@ -2,11 +2,6 @@
 
 Installs and configures [DNS-collector](https://github.com/dmachard/DNS-collector) as a DNS traffic logger. Receives dnstap events from dnsdist via a Unix socket and forwards them to Loki.
 
-## Functionality
-
-- Downloads the dnscollector binary from GitHub releases.
-- Deploys `/etc/dnscollector/config.yaml` from a Jinja2 template.
-
 ## Variables
 
 | Variable | Default | Description |
