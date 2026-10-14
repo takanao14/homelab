@@ -4,7 +4,7 @@ metadata:
   name: slack-bot
   namespace: {{ .Release.Namespace }}
   annotations:
-    reloader.stakater.com/auto: "true"
+    secret.reloader.stakater.com/auto: "true"
   labels:
     app.kubernetes.io/name: slack-bot
     app.kubernetes.io/instance: {{ .Release.Name }}

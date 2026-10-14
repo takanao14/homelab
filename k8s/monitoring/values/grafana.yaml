@@ -1,6 +1,4 @@
 grafana:
-  podAnnotations:
-    reloader.stakater.com/auto: "true"
   grafana.ini:
     server:
       root_url: https://grafana.prd.butaco.net/

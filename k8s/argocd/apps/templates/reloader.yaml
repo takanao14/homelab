@@ -15,6 +15,8 @@ spec:
     path: k8s/reloader
     helm:
       releaseName: reloader
+      valueFiles:
+        - {{ include "argocd-apps.env" . }}/values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: reloader

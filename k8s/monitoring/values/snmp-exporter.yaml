@@ -12,8 +12,6 @@ necIx:
     enabled: true
 
 prometheus-snmp-exporter:
-  podAnnotations:
-    reloader.stakater.com/auto: "true"
 
   # Requests only (README): 35/50 Mi, p95 CPU 0.6m.
   resources:

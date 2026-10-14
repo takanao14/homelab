@@ -11,9 +11,8 @@ Apply the OpenBao configuration and re-register prd ESO first.
 `.env/secrets.sops.env` and writes changed values to `k8s/mcp/grafana` and
 `k8s/mcp/netbox`. Run it after the OpenBao policy is applied and before syncing
 the Argo CD application. It does not print values. Re-run it after rotation;
-ESO refreshes hourly; explicitly restart the affected Deployment afterward
-because the current [Reloader scope](../reloader/README.md#configuration)
-excludes `mcp`.
+ESO refreshes hourly; [Reloader](../reloader/README.md#configuration)
+automatically restarts the affected Deployment after the Secret changes.
 
 Codex and Claude Code use the HTTP entries in `.codex/config.toml` and
 `.mcp.json`. Restart each client after changing these files. The header helper

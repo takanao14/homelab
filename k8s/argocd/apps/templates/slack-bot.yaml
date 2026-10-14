@@ -24,10 +24,12 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: slack-bot
+  {{- include "argocd-apps.reloaderIgnoreDifferences" (dict "namespace" "slack-bot" "name" "slack-bot") | nindent 2 }}
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - RespectIgnoreDifferences=true
 {{- end }}

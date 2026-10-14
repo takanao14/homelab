@@ -49,6 +49,5 @@ cd ansible
 ansible-playbook playbooks/ops/openbao/seed_secrets.yaml
 ```
 
-After rotating the key and waiting for ESO synchronization, restart external-dns
-explicitly; the current [Reloader scope](../reloader/README.md#configuration)
-does not cover its namespace.
+After key rotation, ESO synchronization triggers an automatic external-dns
+restart through [Reloader](../reloader/README.md#configuration).

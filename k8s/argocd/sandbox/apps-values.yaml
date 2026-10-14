@@ -24,3 +24,5 @@ apps:
       - ServerSideApply=true
   reloader:
     enabled: true
+  reloader-check:
+    enabled: true

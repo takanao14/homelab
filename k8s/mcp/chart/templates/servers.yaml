@@ -5,7 +5,7 @@ kind: Deployment
 metadata:
   name: {{ $name }}-mcp
   annotations:
-    reloader.stakater.com/auto: "true"
+    secret.reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   strategy:

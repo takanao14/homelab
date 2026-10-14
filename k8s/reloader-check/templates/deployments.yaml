@@ -1,0 +1,51 @@
+{{- range $consumer := list "opt-in" "opt-in-ssa" "control" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reloader-check-{{ $consumer }}
+  {{- if ne $consumer "control" }}
+  annotations:
+    secret.reloader.stakater.com/auto: "true"
+    {{- if eq $consumer "opt-in-ssa" }}
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+    {{- end }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reloader-check-{{ $consumer }}
+  template:
+    metadata:
+      labels:
+        app: reloader-check-{{ $consumer }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: consumer
+          image: registry.k8s.io/pause:3.10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 1m
+              memory: 4Mi
+          volumeMounts:
+            - name: test-secret
+              mountPath: /test-secret
+              readOnly: true
+      volumes:
+        - name: test-secret
+          secret:
+            secretName: reloader-check
+            optional: true
+{{- end }}

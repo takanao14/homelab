@@ -1,0 +1,5 @@
+apiVersion: v2
+name: reloader-check
+description: Disposable sandbox consumers for Secret-driven restart validation
+type: application
+version: 0.1.0
