@@ -4,7 +4,7 @@ metadata:
   name: homelab-l2-policy
 spec:
   interfaces:
-    - {{ .Values.l2Policy.interface }}
+    - {{ .Values.l2Policy.interface | quote }}
   {{- with .Values.l2Policy.nodeSelector }}
   nodeSelector:
     matchLabels:
