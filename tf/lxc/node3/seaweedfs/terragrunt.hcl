@@ -14,8 +14,7 @@ locals {
 inputs = {
   containers = {
     "seaweedfs1" = merge(local.env.locals.container_defaults, {
-      # 8 GB RAM accommodates the ~3.5 GB idle page cache; 4 GB swap protects
-      # the Go heap from OOM kills while serving multi-GB images.
+      # Allow for LXC page cache and the Go heap during multi-GB image transfers.
       cores       = 4
       memory      = 8192
       swap        = 4096

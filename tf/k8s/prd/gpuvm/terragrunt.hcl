@@ -17,7 +17,6 @@ locals {
   })
 }
 
-# prd GPU worker under the cluster-first tree (ADR-0019).
 inputs = {
   vms = {
     "gpuvm1" = merge(local.base_vars, {

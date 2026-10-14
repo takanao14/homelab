@@ -2,9 +2,7 @@ locals {
   # Packer images in SeaweedFS; sidecar checksums detect same-URL rebuilds.
   base_url = "https://s3.home.butaco.net/cloud-images"
 
-  # The role suffix says how much is baked in, and each role contains the one
-  # before it: base (agent + timezone) < tool (+ shared CLI toolchain) <
-  # desktop (+ XFCE/XRDP and the GUI applications). See packer/README.md.
+  # Image roles are defined in packer/README.md.
   image_definitions = {
     "ubuntu-24.04-base" = {
       file_name    = "ubuntu-24.04-base.img"

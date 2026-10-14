@@ -23,7 +23,7 @@ inputs = {
       url          = "${local.base_url}/${local.images_common.locals.image_definitions[name].file_name}"
       file_name    = local.images_common.locals.image_definitions[name].file_name
       content_type = local.images_common.locals.image_definitions[name].content_type
-      # Detect same-URL rebuilds; trim the checksum without a shell-specific pipeline.
+      # Sidecar checksums detect same-URL image rebuilds.
       checksum            = trimspace(run_cmd("--terragrunt-quiet", "curl", "-fsS", "${local.base_url}/${local.images_common.locals.image_definitions[name].file_name}.sha256"))
       node_name           = local.node.locals.node_name
       datastore_id        = local.datastore_id

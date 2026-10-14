@@ -1,5 +1,5 @@
 variable "containers" {
-  description = "Map of VMs to create"
+  description = "Map of LXC containers to create"
   type = map(object({
     node_name    = string
     unprivileged = bool
@@ -14,7 +14,7 @@ variable "containers" {
     os_type     = string
     cores       = number
     memory      = number
-    # Memory-cgroup swap in MB; default preserves the previous no-swap behavior.
+    # Memory-cgroup swap in MB; zero disables swap.
     swap    = optional(number, 0)
     on_boot = bool
     disks = map(object({
