@@ -19,19 +19,8 @@ gateway/
 
 ## Resources Created
 
-### GatewayClass
-
-`GatewayClass/envoy-gateway` is rendered from `gatewayClass`.
-
-### Gateway
-
-The shared Gateway is:
-
-```yaml
-name: shared-gateway-envoy
-namespace: gateway-system
-gatewayClassName: envoy-gateway
-```
+`gatewayClass` renders `GatewayClass/envoy-gateway`. The shared Gateway is
+`gateway-system/shared-gateway-envoy` and uses that class.
 
 `gateway.listener` selects the environment's only listener, so HTTPRoutes omit
 `sectionName` (ADR-0072). prd has no port 80 and no HTTP redirect.
@@ -42,8 +31,6 @@ gatewayClassName: envoy-gateway
 | `http` | sandbox | 80 | HTTP | — |
 
 cert-manager grants cross-namespace Secret access.
-
-### EnvoyProxy
 
 `gateway.infrastructure.parametersRef` attaches `envoyProxy`. Cluster traffic
 policy avoids Cilium L2 advertisement blackholes. Sandbox pins the Service to
