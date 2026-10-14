@@ -75,16 +75,9 @@ kubectl -n argocd patch secret argocd-secret --type=json -p '[{"op":"remove","pa
 
 ### Changing values
 
-After bootstrap, commit and push value changes; `selfHeal` applies them.
-`helmfile apply` fails because SSA-managed resources lack Helm ownership:
-
-```
-invalid ownership metadata; annotation validation error:
-missing key "meta.helm.sh/release-name"
-```
-
-The bootstrap Helm release may remain behind the Git-managed chart version;
-this is expected.
+After bootstrap, commit and push values changes for `selfHeal` to apply.
+SSA-managed resources lack Helm ownership metadata, so do not rerun
+`helmfile apply`. The bootstrap Helm release version may lag behind Git.
 
 ## Secrets Management
 
