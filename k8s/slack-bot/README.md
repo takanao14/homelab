@@ -25,12 +25,10 @@ slack-bot/
 
 ## No routed traffic
 
-The bot dials out to Slack and to the LED service; nothing routes requests to
-it. There is no HTTPRoute and no NetworkPolicy — the ClusterIP Service exists
-only so Prometheus can scrape `/metrics`, and it fronts no authentication
-boundary worth defending. `/healthz` is reached by the kubelet liveness probe.
-Add a NetworkPolicy if metrics gain channel or user labels, or when the cluster
-adopts default-deny.
+The bot connects outbound to Slack and the LED service. Its ClusterIP Service
+serves only Prometheus `/metrics`; the kubelet probes `/healthz`. There is no
+HTTPRoute or NetworkPolicy. Add a NetworkPolicy if metrics gain channel or user
+labels, or when the cluster adopts default-deny.
 
 `SLACK_BOT_LED_ADDR` is an IP because the LED service runs outside the cluster
 on rpi3 (`192.168.10.240:50051`) over plaintext gRPC, and cluster DNS cannot
