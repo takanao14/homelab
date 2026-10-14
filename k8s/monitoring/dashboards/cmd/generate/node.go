@@ -193,12 +193,8 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 
 		// Current per-node values pair with trends in later rows. Sort capacity
 		// gauges so visible bars show the most constrained resources.
-		// One day of node_uname_info history preserves names while targets are down.
 		WithRow(dashboard.NewRowBuilder("Current State by Node")).
-		// up{job=...} is always recorded by Prometheus for every configured scrape
-		// target, returning 0 when the target is unreachable. Joining with
-		// last_over_time(node_uname_info[1d]) resolves nodenames even while a node
-		// is down (as long as it was seen within the last day).
+		// One day of node_uname_info history resolves names while targets are down.
 		WithPanel(
 			stat.NewPanelBuilder().
 				Title("Node Exporter Status").
@@ -283,12 +279,7 @@ func buildNodeOverview() (*dashboard.Dashboard, error) {
 				Unit("percent").
 				Min(0).
 				Max(100).
-				// Horizontal in Grafana's naming, which draws each bar running left to
-				// right with the node name beside it and stacks them down the panel.
-				// Auto chose the other layout here: at span 8 the panel is wider than
-				// tall, so it stood nineteen bars up side by side and had nowhere to put
-				// the names. Matches Filesystem Usage next to it, so the three capacity
-				// gauges on this line are read the same way.
+				// Fix horizontal bars so node names remain readable in narrow panels.
 				Orientation(common.VizOrientationHorizontal).
 				Thresholds(capacityThresholds()).
 				WithTarget(prometheus.NewDataqueryBuilder().
