@@ -26,12 +26,12 @@ externalDNS/
 | `pdns.apiUrl` | `prd/values.yaml` | PowerDNS API endpoint |
 | `pdns.serverId` | `prd/values.yaml` | PowerDNS server ID (`localhost`) |
 | `pdns.apiKey` | OpenBao via ESO | PowerDNS API key materialized as a Kubernetes Secret |
-| `domainFilter` | `{env}/values.yaml` | Target domain filter |
-| `policy` | `{env}/values.yaml` | DNS record lifecycle policy |
+| `domainFilter` | `prd/values.yaml` | Target domain filter |
+| `policy` | `prd/values.yaml` | DNS record lifecycle policy |
 
-The `gateway-httproute` source creates records; environments use distinct TXT
-owner IDs. Both environments use `sync`; domain filters and TXT ownership limit
-deletion to records managed by their own external-dns instance.
+The prd instance uses `policy: sync` and TXT owner ID `prd-cluster`.
+Its domain filter and TXT ownership restrict deletion to its managed records.
+Sandbox uses a separately managed wildcard record instead.
 
 ## Secrets
 
