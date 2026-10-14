@@ -15,6 +15,7 @@ INDEX_PATH = ADR_DIR / "README.md"
 FILE_RE = re.compile(r"^(\d{4})-[a-z0-9][a-z0-9-]*\.md$")
 HEADING_RE = re.compile(r"^# ADR-(\d{4}): (.+)$", re.MULTILINE)
 STATUS_RE = re.compile(r"^- \*\*Status:\*\* (.+)$", re.MULTILINE)
+AMENDED_BY_RE = re.compile(r"^- \*\*Amended by:\*\* (.+)$", re.MULTILINE)
 SUPERSEDED_RE = re.compile(
     r"Superseded by \[ADR-(\d{4})\]\(([^)]+\.md)\)"
 )
@@ -84,6 +85,14 @@ def main() -> int:
         if display_status is None:
             errors.append(f"{relative}: invalid Status value: {status}")
             continue
+
+        amended_matches = AMENDED_BY_RE.findall(text)
+        if len(amended_matches) > 1:
+            errors.append(f"{relative}: expected at most one Amended by field")
+        elif amended_matches:
+            if status != "Accepted":
+                errors.append(f"{relative}: only Accepted ADRs can be amended")
+            display_status = f"{display_status}; amended by {amended_matches[0]}"
 
         if status == "Proposed" and not re.search(
             r"^- \*\*Review (?:by|trigger):\*\* ", text, re.MULTILINE
