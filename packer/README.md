@@ -13,8 +13,8 @@ The build and the Proxmox registration are **decoupled** through S3 (SeaweedFS):
    Proxmox node **download** the image from that URL (`proxmox_download_file`),
    pinned by the published sha256.
 
-The apply host needs bucket access, not local images. Packer can run separately
-on a KVM/libguestfs builder.
+Builds run on a KVM/libguestfs builder; the apply host needs bucket access,
+and Proxmox nodes download the published artifacts.
 
 ## Requirements
 
@@ -57,14 +57,14 @@ on a KVM/libguestfs builder.
 ### 1. Set Environment Variables
 
 ```bash
-# Required: Set the default user password for cloud-init
+# Required cloud-init password; inject through SOPS for normal builds.
 export PKR_VAR_user_password='your_secure_password'
 
 # Optional: SSH public key for the default user. When unset, templates read
 # the builder's ~/.ssh/id_ed25519.pub (CI passes a stub for validate).
 export PKR_VAR_ssh_pubkey='ssh-ed25519 AAAA...'
 
-# Required for push.sh: SeaweedFS S3 credentials (write to cloud-images)
+# Required for push.sh: SOPS-managed upload credentials.
 export SEAWEEDFS_S3_ENDPOINT='https://s3.home.butaco.net'
 export SEAWEEDFS_S3_ACCESS_KEY='...'
 export SEAWEEDFS_S3_SECRET_KEY='...'
@@ -136,19 +136,14 @@ users, cloud-init paths, the machine profile and the provisioner list live in
 | `debian13-base` | server | [vars/debian13-base.pkrvars.hcl](vars/debian13-base.pkrvars.hcl) | `images/debian-13-base.img` |
 
 Debian has no `tool` target: the toolchain's HashiCorp step resolves an apt
-suite from `VERSION_CODENAME` and `releases.hashicorp.com` publishes no `trixie`
+suite from `VERSION_CODENAME` and `apt.releases.hashicorp.com` publishes no `trixie`
 suite. Rocky 10 has no `desktop` target because nothing consumes one.
 
 ### Rocky base images need CRB before provisioning
 
-`base` means the guest agent and the timezone, with no repository setup, so the
-Rocky `base` targets do not run `scripts/rocky/epel.sh`. EPEL and CRB stay a
-`tool`/`desktop` concern.
-
-The consequence is that `scripts/provision.sh` cannot install the toolchain on a
-Rocky `base` host as-is. The vendored installer runs `dnf install epel-release`
-but never enables CRB, and EPEL packages — `mosh` among the toolchain baseline —
-resolve their dependencies out of CRB. Enable it on the host first:
+Rocky `base` targets omit `scripts/rocky/epel.sh`. Before running
+`scripts/provision.sh` on them, enable EPEL and CRB: the vendored package
+installer enables EPEL only, while packages such as `mosh` need CRB dependencies.
 
 ```bash
 # Rocky 10 ships dnf5, whose config-manager syntax differs from dnf4
@@ -167,9 +162,9 @@ To add a target, create a `vars/<target>.pkrvars.hcl` and register the target in
 ## Machine Profiles
 
 `machine_profile` is written to `/etc/provisioning/machine-profile.local` and
-passed to shared installers as `TOOL_MACHINE_PROFILE`. Both `base` and `tool`
-use `server`; a later `scripts/provision.sh` run installs any missing server
-tools on a `base` image.
+passed to shared installers as `TOOL_MACHINE_PROFILE`. A later
+`scripts/provision.sh` run uses this marker when installing missing tools;
+Rocky base hosts require the repository setup above.
 
 Only `desktop` installs Freelens, kitty, UDEV Gothic NF, and shared kitty
 settings under `/etc/xdg/kitty/kitty.conf`. Per-user preferences belong to
@@ -183,8 +178,8 @@ include.
 The CLI toolchain is installed system-wide under `/usr/local/share/mise` with
 its config and lockfile in `/etc/mise`. Per-user mise shims precede the system
 shims, allowing project-specific mise configs to override the image baseline.
-Tool declarations use concrete versions and `mise install --locked` consumes
-the committed Linux artifact URLs and checksums without live release resolution.
+`mise install --locked` consumes committed Linux artifact URLs and checksums
+without live release resolution.
 
 ## Upstream Image Imports
 
@@ -197,13 +192,9 @@ Import it into the standard image/checksum contract:
 ./import-upstream.sh freebsd151
 ```
 
-This command:
-
-1. downloads `FreeBSD-15.1-RELEASE-amd64-BASIC-CLOUDINIT-ufs.qcow2.xz`;
-2. verifies the official upstream archive sha256;
-3. decompresses it to `images/freebsd-15.1-cloudinit-ufs.img`;
-4. writes `images/freebsd-15.1-cloudinit-ufs.img.sha256` for the decompressed
-   object that Proxmox will download.
+The import verifies the pinned upstream archive checksum, decompresses it to
+`images/freebsd-15.1-cloudinit-ufs.img`, and writes a `.sha256` sidecar for the
+decompressed artifact that Proxmox downloads.
 
 Then publish it like any other custom image:
 
@@ -226,26 +217,20 @@ for unattended builds.
 Upstream imports are handled separately by `import-upstream.sh`; they are not
 included in `build.sh all`.
 
-The script confirms overwrite, clears the target's temporary output, runs
-Packer, converts to compressed qcow2, and writes the image plus `.sha256` under
-`images/`. The `output-*/` directory holding the raw qcow2 is removed as soon as
-the sparsified image is in place, so `all` keeps only one build's intermediate
-on disk at a time. Distribution and deployment are covered by Quick Start
-steps 3–4.
+The script confirms overwrite, clears temporary output, runs Packer and
+`virt-sparsify --compress`, and writes the image and `.sha256` under `images/`.
+It removes raw qcow2 output after each build to keep `all` from accumulating
+intermediates.
 
 ## Dependency Management
 
 Root `renovate.json` manages tracked dependency versions.
 
-Images install prerequisites and the CLI toolchain through the same
-`scripts/install` wrappers as `scripts/provision.sh`, driven by
-[scripts/common/toolchain.sh](scripts/common/toolchain.sh). Tool pins and their
-mise lockfile are maintained in `takanao14/dotfiles`; refresh the vendored copies with
-`../scripts/install/vendor/sync.sh`.
+Tool pins and the mise lockfile are maintained in `takanao14/dotfiles`.
+Refresh the shared installers through `../scripts/install/vendor/sync.sh`.
 
-**Not tracked (always installed as latest):**
-- Unpinned APT/DNF packages installed by the shared package installer or Packer
-  scripts (terraform, packer, vault, Firefox, VS Code, Wireshark, Podman, etc.)
+APT/DNF packages installed without version pins use repository candidates
+(terraform, packer, vault, Firefox, VS Code, Wireshark, Podman, etc.).
 
 ## Customization
 
