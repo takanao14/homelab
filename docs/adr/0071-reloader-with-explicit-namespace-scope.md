@@ -20,10 +20,11 @@ the consumers without cluster-wide Secret access or multiple installations.
 ## Proposed decision
 
 Keep one Reloader per cluster with `watchGlobally: false` and explicit
-`namespaces`. Set prd to `external-dns`, `mcp`, `monitoring`, and `slack-bot`;
-set sandbox to `reloader-check`, a namespace holding only a disposable consumer
-and a sandbox-only Secret, so sandbox exercises the cross-namespace RBAC. The
-chart also includes the release namespace.
+`namespaces`. Set prd to `external-dns`, `mcp`, and `slack-bot`;
+set sandbox to `reloader-check`, a namespace holding only disposable consumers,
+so every sandbox bootstrap exercises the cross-namespace RBAC. Supply its
+Secret only temporarily when testing rollouts. The chart also includes the
+release namespace.
 Put shared behavior in `k8s/reloader/values.yaml` and the lists in environment
 value files referenced by the Reloader Application. Target namespaces remain
 owned by their workload Applications; account for their existence before
@@ -31,8 +32,12 @@ Reloader creates cross-namespace RBAC during bootstrap.
 
 Keep `autoReloadAll: false`. Opt consumers into Secret changes using
 `secret.reloader.stakater.com/auto` on Deployment metadata. MCP, slack-bot,
-external-dns, and SNMP exporter need this behavior. Add ConfigMap-triggered
-restarts only where an application cannot reload its configuration itself.
+and external-dns need this behavior. Add ConfigMap-triggered restarts only
+where an application cannot reload its configuration itself.
+
+Exclude SNMP exporter. The upstream chart (9.18.1) cannot annotate Deployment
+metadata, and its community string rarely changes; restart it manually after
+rotation and remove its ineffective Pod-template annotation.
 
 Do not opt Grafana into restarts solely for `grafana-admin` rotation. The prd
 Grafana's persistent database retains the existing admin password; the initial

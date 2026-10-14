@@ -47,24 +47,32 @@ deleting it:
 
 ## Index
 
+Pending proposals: [ADR-0034](0034-hubble-ui-for-service-traffic-visibility.md)
+(review by 2026-11-14) and
+[ADR-0071](0071-reloader-with-explicit-namespace-scope.md)
+(review before implementing automatic Secret-driven restarts).
+
+`Accepted` entries with amendment links retain decisions that still apply;
+follow those links for the changed parts.
+
 | ADR | Title | Status |
 |-----|-------|--------|
-| [0001](0001-service-oriented-ansible-playbook-organization.md) | Service-oriented Ansible playbook organization | Accepted |
+| [0001](0001-service-oriented-ansible-playbook-organization.md) | Service-oriented Ansible playbook organization | Accepted; amended by [ADR-0059](0059-group-ansible-playbooks-by-purpose.md) |
 | [0002](0002-dhcp-outside-proxmox-cluster-nodes.md) | Run DHCP outside the Proxmox / cluster nodes (on rpi4) | Accepted |
 | [0003](0003-proxmox-host-log-collection-via-rsyslog-forwarding.md) | Proxmox host log collection via rsyslog forwarding to a central Vector | Accepted |
 | [0004](0004-alertmanager-single-notification-hub.md) | Alertmanager as the single notification hub (metrics + logs) | Accepted |
-| [0005](0005-renovate-native-automerge-over-branch-protection.md) | Renovate-native automerge instead of branch protection | Accepted |
+| [0005](0005-renovate-native-automerge-over-branch-protection.md) | Renovate-native automerge instead of branch protection | Accepted; amended by [ADR-0017](0017-renovate-automerge-golive-adjustments.md) |
 | [0006](0006-custom-image-pipeline-monorepo-and-seaweedfs-s3.md) | Custom image pipeline — monorepo build + SeaweedFS S3 distribution | Accepted |
 | [0007](0007-defer-grafana-dashboard-v2-migration.md) | Defer Grafana Dashboard v2 migration | Accepted |
 | [0008](0008-caddy-https-upstream-for-self-signed-backends.md) | Caddy re-encrypts to HTTPS upstreams that enforce TLS (TrueNAS) | Accepted |
 | [0009](0009-longhorn-ui-exposed-through-authenticated-gateway-route.md) | Longhorn UI is exposed through an authenticated Gateway route | Superseded by ADR-0033 |
-| [0010](0010-sandbox-argocd-uses-http-only-gitops-bootstrap.md) | Sandbox Argo CD uses HTTP-only GitOps bootstrap without cert-manager | Accepted |
-| [0011](0011-cilium-gateway-to-envoy-gateway-migration.md) | Use Envoy Gateway for shared Gateway API ingress | Accepted |
+| [0010](0010-sandbox-argocd-uses-http-only-gitops-bootstrap.md) | Sandbox Argo CD uses HTTP-only GitOps bootstrap without cert-manager | Accepted; amended by [ADR-0067](0067-replace-authentik-with-lldap-and-authelia.md), [ADR-0070](0070-no-staging-sandbox-validates-the-cluster-platform.md) |
+| [0011](0011-cilium-gateway-to-envoy-gateway-migration.md) | Use Envoy Gateway for shared Gateway API ingress | Accepted; amended by [ADR-0072](0072-one-gateway-listener-per-environment.md) |
 | [0012](0012-openbao-eso-cluster-rebuild-registration.md) | Re-register rebuilt clusters with OpenBao for ESO | Accepted |
 | [0013](0013-truenas-nfs-for-proxmox-shared-images.md) | TrueNAS NFS for Proxmox shared image storage | Accepted |
 | [0014](0014-argocd-app-of-apps-shared-helm-chart.md) | ArgoCD App of Apps rendered from a shared Helm chart | Accepted |
 | [0015](0015-headlamp-per-cluster-in-cluster-deployment.md) | Headlamp runs in-cluster per cluster instead of a central multi-cluster UI | Accepted |
-| [0016](0016-cluster-label-via-default-scrape-class.md) | Cluster label via default scrape class, asymmetric per environment | Accepted |
+| [0016](0016-cluster-label-via-default-scrape-class.md) | Cluster label via default scrape class, asymmetric per environment | Accepted; amended by [ADR-0061](0061-long-term-metrics-in-victoriametrics-single.md) |
 | [0017](0017-renovate-automerge-golive-adjustments.md) | Renovate automerge go-live adjustments | Accepted |
 | [0018](0018-seaweedfs-data-on-usb-ssd-directory-storage.md) | SeaweedFS data on a node3 USB SSD via Proxmox directory storage | Accepted |
 | [0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md) | Merge the GPU worker into prd and retire the dev cluster | Accepted |
@@ -78,14 +86,14 @@ deleting it:
 | [0027](0027-gpu-workload-switching-web-ui.md) | GPU workload switching through an authenticated in-cluster web UI | Accepted |
 | [0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md) | lemonade-server runs on the Vulkan backend, not ROCm, on RDNA4 | Superseded by ADR-0039 |
 | [0029](0029-rocm-serving-path-for-mxfp4-models.md) | ROCm serves concurrent MXFP4 workloads; Vulkan remains faster for one request | Superseded by ADR-0039 |
-| [0030](0030-in-house-full-service-resolver.md) | Run Knot Resolver 6 in dedicated resolver containers | Accepted |
+| [0030](0030-in-house-full-service-resolver.md) | Run Knot Resolver 6 in dedicated resolver containers | Accepted; amended by [ADR-0051](0051-forward-recursive-cache-misses-over-dot.md) |
 | [0031](0031-browser-editor-on-relocated-toolbox-vm.md) | Run a browser editor on toolbox1, relocated to pve | Accepted |
-| [0032](0032-reboot-and-planned-shutdown-orchestration.md) | Orchestrate reboots and planned shutdowns from Ansible | Accepted |
+| [0032](0032-reboot-and-planned-shutdown-orchestration.md) | Orchestrate reboots and planned shutdowns from Ansible | Accepted; amended by [ADR-0036](0036-planned-shutdown-restores-via-argocd-selfheal.md) |
 | [0033](0033-sandbox-storage-openebs-localpv-and-truenas-nfs.md) | Use OpenEBS LocalPV and TrueNAS NFS for sandbox storage | Accepted |
 | [0034](0034-hubble-ui-for-service-traffic-visibility.md) | Visualize service-to-service traffic with Hubble UI | Proposed |
 | [0035](0035-observe-ix2106-dhcp-leases-from-rpi4.md) | Observe IX2106 DHCP leases from rpi4 | Accepted |
 | [0036](0036-planned-shutdown-restores-via-argocd-selfheal.md) | Planned-shutdown restore relies on Argo CD self-heal, not a replica snapshot | Accepted |
-| [0037](0037-bake-shared-toolchain-into-server-images.md) | Bake the shared CLI toolchain into the server images from one Packer template | Accepted |
+| [0037](0037-bake-shared-toolchain-into-server-images.md) | Bake the shared CLI toolchain into the server images from one Packer template | Accepted; amended by [ADR-0049](0049-manage-shared-cli-tools-with-mise.md) |
 | [0038](0038-image-role-suffixes-base-tool-desktop.md) | Name custom images by role — base, tool, desktop | Accepted |
 | [0039](0039-builtin-rocm-backend-replaces-custom-lemonade-image.md) | Lemonade v11 serves gfx1200 through the built-in ROCm backend, retiring the custom image and the second Deployment | Accepted |
 | [0040](0040-select-lemonade-backend-by-model-and-concurrency.md) | Select the Lemonade backend by model and concurrency | Accepted |
@@ -97,22 +105,22 @@ deleting it:
 | [0046](0046-netbox-containers-on-a-node3-vm.md) | Run NetBox as Podman containers on a node3 VM | Accepted |
 | [0047](0047-service-vm-logs-via-vector-journald-agent.md) | Collect service VM logs with a Vector journald agent | Accepted |
 | [0048](0048-service-vm-vector-internal-metrics.md) | Expose Vector internal metrics on service VMs | Accepted |
-| [0049](0049-manage-shared-cli-tools-with-mise.md) | Manage shared Linux CLI tools with mise | Accepted |
-| [0050](0050-single-definition-for-the-authentik-ldap-contract.md) | Render every Authentik blueprint from one set of variables | Accepted |
+| [0049](0049-manage-shared-cli-tools-with-mise.md) | Manage shared Linux CLI tools with mise | Accepted; amended by [ADR-0069](0069-track-dotfiles-vendor-with-renovate.md) |
+| [0050](0050-single-definition-for-the-authentik-ldap-contract.md) | Render every Authentik blueprint from one set of variables | Accepted; amended by [ADR-0067](0067-replace-authentik-with-lldap-and-authelia.md) |
 | [0051](0051-forward-recursive-cache-misses-over-dot.md) | Forward recursive cache misses over authenticated DNS-over-TLS | Accepted |
 | [0052](0052-static-addressing-for-rpi3.md) | Configure rpi3 with static addressing instead of a DHCP lease | Accepted |
 | [0053](0053-rpi4-resolves-from-public-dns.md) | Resolve from public DNS on rpi4 | Accepted |
 | [0054](0054-comfyui-image-updates-via-ci-opened-pull-requests.md) | Update the ComfyUI image through pinned tags and CI-opened pull requests | Accepted |
 | [0055](0055-voice-ui-observes-gpu-switch-without-controlling-it.md) | Voice UI observes GPU availability without switching workloads | Accepted |
 | [0056](0056-butaco-reads-football-data-from-espn.md) | Butaco reads football data from ESPN's unofficial API | Accepted |
-| [0057](0057-cluster-hosted-authenticated-mcp.md) | Host authenticated MCP servers in the prd cluster | Accepted |
+| [0057](0057-cluster-hosted-authenticated-mcp.md) | Host authenticated MCP servers in the prd cluster | Accepted; amended by [ADR-0060](0060-mcp-relies-on-bearer-authentication.md) |
 | [0058](0058-select-authentik-features-and-update-them-individually.md) | Select Authentik features at build time | Superseded by ADR-0067 |
 | [0059](0059-group-ansible-playbooks-by-purpose.md) | Group Ansible playbooks by purpose | Accepted |
 | [0060](0060-mcp-relies-on-bearer-authentication.md) | Rely on bearer authentication for MCP access | Accepted |
 | [0061](0061-long-term-metrics-in-victoriametrics-single.md) | Keep long-term metrics in VictoriaMetrics single-node | Accepted |
 | [0062](0062-compose-vm-cloud-init-snippets.md) | Compose VM initialization with optional cloud-init snippets | Accepted |
 | [0063](0063-openclaw-on-dedicated-vm-with-lemonade.md) | Run OpenClaw on a dedicated VM with Lemonade inference | Accepted |
-| [0064](0064-hermes-evaluation-on-dedicated-vm.md) | Evaluate Hermes Agent on a dedicated VM | Accepted |
+| [0064](0064-hermes-evaluation-on-dedicated-vm.md) | Evaluate Hermes Agent on a dedicated VM | Accepted; amended by [ADR-0066](0066-hermes-dashboard-through-caddy.md) |
 | [0065](0065-agent-mcp-caller-credentials.md) | Connect VM agents to shared read-only MCP servers | Accepted |
 | [0066](0066-hermes-dashboard-through-caddy.md) | Expose Hermes Dashboard through Caddy | Accepted |
 | [0067](0067-replace-authentik-with-lldap-and-authelia.md) | Replace Authentik with LLDAP and Authelia | Accepted |

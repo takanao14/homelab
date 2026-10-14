@@ -1,6 +1,7 @@
 # ADR-0030: Run Knot Resolver 6 in dedicated resolver containers
 
 - **Status:** Accepted
+- **Amended by:** [ADR-0051](0051-forward-recursive-cache-misses-over-dot.md)
 - **Validated:** 2026-08-04
 - **Date:** 2026-07-31
 - **Related:** [ADR-0001](0001-service-oriented-ansible-playbook-organization.md),

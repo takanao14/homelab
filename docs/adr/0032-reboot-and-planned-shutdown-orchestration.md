@@ -1,6 +1,7 @@
 # ADR-0032: Orchestrate reboots and planned shutdowns from Ansible
 
 - **Status:** Accepted
+- **Amended by:** [ADR-0036](0036-planned-shutdown-restores-via-argocd-selfheal.md)
 - **Date:** 2026-08-09
 - **Related:** [ADR-0001](0001-service-oriented-ansible-playbook-organization.md),
   [ADR-0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md),

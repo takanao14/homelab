@@ -1,6 +1,7 @@
 # ADR-0049: Manage shared Linux CLI tools with mise
 
 - **Status:** Accepted
+- **Amended by:** [ADR-0069](0069-track-dotfiles-vendor-with-renovate.md)
 - **Date:** 2026-09-12
 - **Related:** [ADR-0037](0037-bake-shared-toolchain-into-server-images.md),
   [ADR-0038](0038-image-role-suffixes-base-tool-desktop.md)

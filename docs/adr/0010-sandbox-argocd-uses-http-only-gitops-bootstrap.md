@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-24
-- **Amended by:** [ADR-0070](0070-no-staging-sandbox-validates-the-cluster-platform.md)
+- **Amended by:** [ADR-0067](0067-replace-authentik-with-lldap-and-authelia.md), [ADR-0070](0070-no-staging-sandbox-validates-the-cluster-platform.md)
 - **Related:** [`k8s/argocd/README.md`](../../k8s/argocd/README.md), [`k8s/README.md`](../../k8s/README.md), [`k8s/gateway/README.md`](../../k8s/gateway/README.md), [`k8s/externalDNS/README.md`](../../k8s/externalDNS/README.md), [`k8s/eso/README.md`](../../k8s/eso/README.md)
 
 ## Context
