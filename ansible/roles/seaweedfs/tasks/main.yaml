@@ -32,8 +32,6 @@
   loop_control:
     label: "{{ item.path }}"
 
-# The archive is ~45 MB and egress leaves the SimpleZone via node3, so the 10s
-# get_url default aborts mid-transfer. Without `until`, retries stop on success.
 - name: Download SeaweedFS archive
   become: true
   ansible.builtin.get_url:
