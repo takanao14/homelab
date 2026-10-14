@@ -15,12 +15,9 @@ eso/
     └── cluster-secret-store.yaml  # ClusterSecretStore: openbao
 ```
 
-## How It Works
-
-1. The upstream chart installs ESO.
-2. `ClusterSecretStore/openbao` uses Kubernetes authentication.
-3. `system:auth-delegator` lets OpenBao validate ESO tokens.
-4. Workloads reference the store through `ExternalSecret` resources.
+`ExternalSecret` resources use `ClusterSecretStore/openbao` with Kubernetes
+authentication. The `system:auth-delegator` binding permits OpenBao to validate
+ESO tokens through TokenReview.
 
 ## Values
 
