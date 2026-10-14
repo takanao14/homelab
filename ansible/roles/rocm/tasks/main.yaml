@@ -292,12 +292,9 @@
   async: 3600
   poll: 30
 
-# Run after the install so a failed upgrade leaves the previous release serving
-# the GPU. update-alternatives repoints /opt/rocm/{core,bin,lib,...} to the higher
-# version on its own, but the discovery below globs the real core-* directories
-# and would otherwise write both releases' lib paths into ld.so.conf.
-# Select the installed names explicitly: an apt wildcard that matches nothing is
-# an error, which would break every run made after the previous release is gone.
+# Remove the old release only after installation succeeds to preserve it on failure.
+# Coexisting library directories would mix releases in ld.so.conf.
+# Use installed package names; unmatched APT wildcards fail.
 - name: Gather package facts before removing the previous ROCm release
   ansible.builtin.package_facts:
     manager: auto
