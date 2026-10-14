@@ -25,13 +25,11 @@
   ansible.builtin.user:
     name: "{{ item.name }}"
     password: "{{ item.password | password_hash(users_password_scheme) }}"
-    # Set password only at creation.
     update_password: on_create
     # Lock disabled accounts; re-enabling unlocks them.
     password_lock: "{{ _user_disabled }}"
     # Expiry blocks all login methods; -1 reversibly clears it when enabled.
     expires: "{{ 1 if _user_disabled else -1 }}"
-    # Disabled accounts use nologin.
     shell: >-
       {{ (('/usr/sbin/nologin' if ansible_facts['os_family'] == 'Debian'
            else '/sbin/nologin') if _user_disabled
