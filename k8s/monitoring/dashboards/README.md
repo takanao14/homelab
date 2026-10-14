@@ -100,24 +100,12 @@ Do not describe missing data from the other environment as a dashboard gap.
   const snmpMinInterval = "2m"
   ```
 
-- Aggregate the exporter's own identity away, and keep only the labels the
-  legend reads. `instance` is a pod IP and `pod` a generated name, so both
-  change whenever the pod is rescheduled: a 7- or 30-day range then draws one
-  truncated series per past pod, all sharing the same legend name. The label
-  survives joins too -- `node_memory_MemTotal_bytes * on(instance)
-  group_left(nodename) node_uname_info` carries the DaemonSet's `pod` onto a
-  per-node result.
-
-  ```go
-  Expr(`max by (cluster) (prometheus_tsdb_head_series{` + promJob + `})`)
-  Expr(byNode(`node_memory_MemTotal_bytes{`+clusterFilter+`} `+joinNode))
-  ```
-
-  Use `sum by` for rates and counters, `max by` for a gauge from a
-  single-replica workload, where `sum` would double the value while an old and
-  a new pod overlap inside the lookback window. Targets scraped by address
-  (`scrapeConfig/*-external`, SNMP, blackbox) keep a stable `instance` and
-  need no aggregation.
+- Aggregate restart-specific `instance` and `pod` labels away, including those
+  carried through joins, to avoid splitting historical series. Keep labels
+  needed by legends. Use `sum by` for rates and counters and `max by` for
+  single-replica gauges to avoid double-counting overlapping pods. Address-based
+  external, SNMP, and blackbox targets have stable `instance` labels and need
+  no identity aggregation.
 
 - Every label a `LegendFormat` interpolates must survive the query's `by`
   clause. A `{{cluster}}` prefix on top of `sum by (le, route)` renders as a
@@ -202,21 +190,16 @@ The Classic comparison is at <http://localhost:3300/d/uptime>.
 and sandbox receive the v2 PoCs alongside their Classic dashboards through the
 existing ConfigMap sidecar. Their separate UIDs are `uptime-v2-poc`,
 `dhcp-leases-v2-poc`, and `cert-manager-v2-poc`.
-The uptime v2 resource reproduces all 13 panels with rows and fixed grids. The
-DHCP leases v2 resource also covers Prometheus and Loki datasource variables,
-query variables, table transformations, and logs. The cert-manager v2 resource
-adds merged table queries, field overrides, and value mappings. `go test ./...`
-compares the v2 resources against the committed Classic JSON and checks invalid
-v2 references, IDs, and missing thresholds.
+`go test ./...` checks v2 resources against committed Classic JSON and validates
+references, IDs, and thresholds. Compare values, colors, legends, row collapse,
+datasource switching, and regeneration using the same datasource and absolute
+time range.
 
-Compare v2 and Classic dashboards using the same datasource and absolute time
-range. Check values, colors, legends, row collapse, datasource switching, and
-reload after regeneration. All three v2 resources were delivered and visually
-verified on prd Grafana 13.2.2; sandbox sidecar compatibility remains unverified.
-Provisioning logged the upstream [managedFields schema error](https://github.com/grafana/grafana/issues/128991);
-registration and rendering still succeeded.
-ADR-0007 continues to defer replacement of the Classic dashboards; these
-additional dashboards test v2 delivery without replacing them.
+All three v2 dashboards were visually verified on prd Grafana 13.2.2; sandbox
+sidecar compatibility remains unverified. The upstream
+[managedFields schema error](https://github.com/grafana/grafana/issues/128991)
+was logged without preventing registration or rendering. Classic dashboards
+remain authoritative under ADR-0007.
 
 ## Production
 
