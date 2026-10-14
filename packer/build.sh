@@ -152,7 +152,7 @@ build_target() {
         ubuntu26-tool)
             build_image \
                 "vars/ubuntu26-tool.pkrvars.hcl" \
-                "output-ubuntu-26.04-tool/ubuntu-24.06-tool.qcow2" \
+                "output-ubuntu-26.04-tool/ubuntu-26.04-tool.qcow2" \
                 "images/ubuntu-26.04-tool.img"
             ;;
         ubuntu26-desktop)
