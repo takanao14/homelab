@@ -71,7 +71,6 @@ EOF
     exit "$exit_status"
 }
 
-# Validate required credentials are present.
 require_env() {
     local missing=0
     for var in SEAWEEDFS_S3_ENDPOINT SEAWEEDFS_S3_ACCESS_KEY SEAWEEDFS_S3_SECRET_KEY; do
@@ -96,9 +95,9 @@ setup_rclone() {
     export RCLONE_CONFIG_SEAWEEDFS_SECRET_ACCESS_KEY="$SEAWEEDFS_S3_SECRET_KEY"
     export RCLONE_CONFIG_SEAWEEDFS_ENDPOINT="$SEAWEEDFS_S3_ENDPOINT"
     export RCLONE_CONFIG_SEAWEEDFS_REGION=us-east-1
-    # The scoped identity cannot create buckets; require the admin-created bucket.
+    # The upload identity has no Admin action; require a pre-created bucket.
     export RCLONE_CONFIG_SEAWEEDFS_NO_CHECK_BUCKET=true
-    # Force PutObject; the scoped identity cannot start multipart uploads.
+    # Use PutObject to keep upload permissions minimal; see the SeaweedFS role README.
     export RCLONE_CONFIG_SEAWEEDFS_USE_MULTIPART_UPLOADS=false
 }
 
@@ -117,7 +116,6 @@ EOF
     fi
 }
 
-# Upload one image and its sidecar checksum.
 push_image() {
     local image_name="$1"
     local image_file="${IMAGES_DIR}/${image_name}"

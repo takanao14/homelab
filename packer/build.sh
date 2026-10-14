@@ -6,7 +6,6 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
     exit 1
 fi
 
-# Print help and exit with the specified status.
 usage() {
     local exit_status="${1:-1}"
     cat << EOF
@@ -52,7 +51,6 @@ EOF
     exit "$exit_status"
 }
 
-# Confirm overwrite when output already exists.
 check_overwrite() {
     local image_file="$1"
     local output_dir="$2"
@@ -70,16 +68,12 @@ check_overwrite() {
                 exit 0
             fi
         fi
-        # Unconditional: rm -f/-rf tolerate a missing path, and a guarding
-        # test that fails here would be the function's exit status and trip
-        # set -e (only one of the two usually exists).
+        # Avoid existence guards: a false final test would trip set -e.
         rm -f "$image_file"
         rm -rf "$output_dir"
     fi
 }
 
-# Run a Packer build for the given target.
-# Arguments: var_file, packer_output, image_file
 build_image() {
     local var_file="$1"
     local packer_output="$2"
@@ -115,9 +109,7 @@ build_image() {
         exit 1
     fi
 
-    # The sparsified image is the only artifact worth keeping. Drop the raw
-    # qcow2 now rather than at the next build, so `all` does not carry every
-    # intermediate to the end of the run.
+    # Remove raw output immediately so all builds do not accumulate intermediates.
     echo "Removing intermediate build output '${packer_output_dir}'..."
     rm -rf "${packer_output_dir}"
 
