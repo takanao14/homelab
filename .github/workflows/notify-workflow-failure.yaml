@@ -13,6 +13,7 @@ on:
       - Shell Lint
       - Terraform Lint
       - Vendor Sync Check
+      - Refresh dotfiles vendor
     types: [completed]
 
 permissions: {}

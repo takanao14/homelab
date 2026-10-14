@@ -10,6 +10,11 @@ on:
   schedule:
     - cron: "0 21 * * 0" # Monday 06:00 JST
   workflow_dispatch:
+    inputs:
+      revision:
+        description: Commit SHA to validate (defaults to the event revision)
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -20,8 +25,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.revision || github.sha }}
+          fetch-depth: 0
+
+      - name: Detect pending automatic dotfiles sync
+        id: sync
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.user.login == 'renovate[bot]' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          changed_paths=$(git diff --name-only "$BASE_SHA...$HEAD_SHA")
+          if [[ "$changed_paths" == scripts/install/vendor/REVISION ]] &&
+             git show "$HEAD_SHA:scripts/install/vendor/REVISION" | grep -qx 'repo: takanao14/dotfiles' &&
+             git show "$HEAD_SHA:scripts/install/vendor/REVISION" | grep -Eq '^ref: +main$'; then
+            echo 'pending=true' >> "$GITHUB_OUTPUT"
+            echo 'Dotfiles validation is delegated to Refresh dotfiles vendor.' >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Check vendored installers against their recorded revision
+        if: steps.sync.outputs.pending != 'true'
         run: ./scripts/install/vendor/sync.sh --check
 
       - name: Check vendored powerdns-webui against upstream

@@ -71,6 +71,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
-          gh workflow run vendor-sync.yaml --ref "$HEAD_REF"
-          gh workflow run shell-lint.yaml --ref "$HEAD_REF"
-          gh workflow run packer-lint.yaml --ref "$HEAD_REF"
+          set -euo pipefail
+          revision=$(git rev-parse HEAD)
+          gh workflow run vendor-sync.yaml --ref "$HEAD_REF" -f revision="$revision"
+          gh workflow run shell-lint.yaml --ref "$HEAD_REF" -f revision="$revision"
+          gh workflow run packer-lint.yaml --ref "$HEAD_REF" -f revision="$revision"

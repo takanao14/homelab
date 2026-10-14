@@ -2,6 +2,11 @@ name: Shell Lint
 
 on:
   workflow_dispatch:
+    inputs:
+      revision:
+        description: Commit SHA to validate (defaults to the event revision)
+        type: string
+        required: false
   pull_request:
     paths:
       - "**.sh"
@@ -15,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.revision || github.sha }}
 
       # Fail on warnings or worse; keep style and info findings local.
       - name: Run shellcheck

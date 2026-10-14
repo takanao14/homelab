@@ -2,6 +2,11 @@ name: Packer Lint
 
 on:
   workflow_dispatch:
+    inputs:
+      revision:
+        description: Commit SHA to validate (defaults to the event revision)
+        type: string
+        required: false
   pull_request:
     paths:
       - "packer/**"
@@ -15,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.revision || github.sha }}
 
       - uses: hashicorp/setup-packer@v3
         with:
