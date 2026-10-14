@@ -76,24 +76,20 @@ monitoring/
 
 ## Ownership Policy
 
-This directory owns resources whose primary purpose is collecting, storing,
-querying, alerting on, or exposing telemetry. Add responsibility-focused charts
-instead of growing `charts/prometheus` indiscriminately.
+This directory owns telemetry collection, storage, queries, and alerting:
 
-Use these boundaries:
-
-- `apps/` generates Applications with environment-specific enablement.
+- `apps/` selects components per environment.
 - Backends, frontends, alert routing, and monitoring-only exporters belong here.
-- External processes get small scrape-contract charts with targets in `values/`.
-- Application metrics stay with the application when CRD ordering permits.
-- Bootstrap/cross-cluster scrapes may remain in the Prometheus wrapper when the
-  ordering or shared-policy reason is documented.
-- Generated dashboards ship through the dedicated ConfigMap-only chart.
+- External services use small scrape-contract charts with targets in `values/`.
+- Generated dashboards use the ConfigMap-only chart.
 
-The upstream kube-prometheus-stack retains Kubernetes discovery, node-exporter,
+Application metrics stay with their application when CRD ordering permits.
+Bootstrap or cross-cluster scrapes may remain in the Prometheus wrapper with
+the ordering or shared-policy reason documented. Keep product runtime
+configuration outside this directory.
+
+The upstream kube-prometheus-stack owns Kubernetes discovery, node-exporter,
 kube-state-metrics, default rules, and controller/scheduler endpoint wiring.
-Local charts cover fixed-IP hosts and external services. Do not move product
-runtime configuration here merely because it exposes metrics.
 
 ## Environment Subsets
 
@@ -184,6 +180,12 @@ ansible-playbook playbooks/ops/openbao/seed_secrets.yaml
 
 Do not use manual `bao kv put`; Ansible is the source of truth.
 
-LED availability uses the `led_service2_monitor` timer from the led-service2 repository and the shared node-exporter textfile directory. `led_service:check_fresh` is 0 for missing, stale, future-dated snapshots or a failed host scrape; `led_service:available` additionally requires systemd and gRPC success. `LedServiceUnavailable` notifies on that composite after ten minutes, long enough for the more specific ICMP and scrape alerts to fire first when the whole host is gone. `LedServiceRestarting` covers what availability cannot see: a crash loop leaves the unit active between restarts. Display-worker progress is still not verified by any probe; the Loki rules above carry that signal instead.
+LED availability uses the `led_service2_monitor` timer and shared node-exporter
+textfiles. `led_service:check_fresh` rejects missing, stale, or future-dated
+snapshots and failed host scrapes; `led_service:available` also requires systemd
+and gRPC success. `LedServiceUnavailable` waits ten minutes so host ICMP and
+scrape alerts fire first. `LedServiceRestarting` detects crash loops that leave
+the unit active between restarts. Display-worker failures require the Loki
+rules above because probes do not verify display progress.
 
 After rendering the external node-exporter chart with its Argo CD values, run `python3 tests/test_led_service_rules.py <rendered.yaml>` from this directory (requires PyYAML and promtool). It checks healthy, failed, stale, missing and future-dated snapshots, host scrape failure, and both alerts' firing thresholds.
