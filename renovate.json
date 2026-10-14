@@ -99,6 +99,12 @@
       "labels": ["dependencies", "renovate", "manual-review", "infra-core"]
     },
     {
+      "description": "ansible-core fails to import on Python 3.15 (dataclasses._is_type removed); hold the ansible-lint runner on 3.14 until ansible-core supports it.",
+      "matchFileNames": [".github/workflows/ansible-lint.yaml"],
+      "matchDepNames": ["python"],
+      "allowedVersions": "<3.15"
+    },
+    {
       "description": "powerdns-webui is vendored into the pdns-ui chart. Renovate only bumps the ref in REVISION; the vendored bytes must be refreshed by sync.sh, and vendor-sync CI fails until they are.",
       "matchPackageNames": ["james-stevens/powerdns-webui"],
       "automerge": false,
