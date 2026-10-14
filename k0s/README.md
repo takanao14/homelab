@@ -91,10 +91,8 @@ K0S_SSH_USER=ubuntu ./create_cluster.sh prd config
 ### Examples
 
 ```bash
-# Build a new cluster
 ./create_cluster.sh prd bootstrap
 
-# Inspect and run an existing cluster upgrade
 ./create_cluster.sh sandbox upgrade-config
 ./create_cluster.sh sandbox upgrade
 
@@ -113,15 +111,13 @@ K0S_SKIP_REBOOT=1 ./create_cluster.sh sandbox reset
 Helmfile installs the custom CNI after k0s starts. `bootstrap` therefore sets
 `spec.options.wait.enabled: false`; waiting for Ready before Cilium would deadlock.
 
-`upgrade` is intentionally separate and requires an existing kubeconfig. It
-uses the following safety controls:
+Before bootstrap, confirm that `/dev/sdb` on every worker is a dedicated storage
+disk: `hook/ssdsetup.sh` force-formats it if it is not ext4, destroying existing data.
 
-- verifies that all nodes, Cilium, and every enabled storage provider are healthy
-  before changing any host;
-- enables k0sctl's per-worker Ready wait;
-- limits worker disruption to 10 percent and sets the drain timeout to 20
-  minutes so workloads can terminate and reschedule cleanly;
-- repeats node and storage health checks after k0sctl and Helmfile complete.
+`upgrade` requires an existing kubeconfig and checks nodes, Cilium, and enabled
+storage providers before and after the update. It waits for each worker to
+become Ready, limits worker disruption to 10 percent, and allows 20 minutes for
+drain so workloads can terminate and reschedule.
 
 OpenEBS requires all namespace pods Ready; NFS requires controller and node
 rollouts. The workflow rejects multiple default StorageClasses and verifies the
