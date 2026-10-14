@@ -32,7 +32,6 @@ wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > mi
 install -D -o root -g root -m 644 microsoft.gpg /usr/share/keyrings/microsoft.gpg
 rm -f microsoft.gpg
 
-# Configure VS Code with DEB822.
 cat > /etc/apt/sources.list.d/vscode.sources << 'EOF'
 Types: deb
 URIs: https://packages.microsoft.com/repos/code
@@ -50,7 +49,6 @@ apt-get install -y code
 apt-get install -y gnupg software-properties-common
 wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
 
-# Read the distribution codename.
 . /etc/os-release
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com ${UBUNTU_CODENAME:-$(lsb_release -cs)} main" | tee /etc/apt/sources.list.d/hashicorp.list > /dev/null
 
