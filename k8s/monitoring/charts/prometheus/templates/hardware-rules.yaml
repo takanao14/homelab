@@ -10,7 +10,6 @@ spec:
   groups:
     - name: hardware-temp.rules
       rules:
-        # Critical CPU temperature.
         - alert: NodeCPUTempCrit
           expr: |
             ((node_thermal_zone_temp{type=~"x86_pkg_temp|cpu-thermal"}) or (node_hwmon_temp_celsius{chip=~".*18_3", sensor="temp3"})) > 85
@@ -32,7 +31,6 @@ spec:
             summary: 'High disk temperature on {{ "{{" }} $labels.instance {{ "}}" }}'
             description: 'Disk {{ "{{" }} $labels.device {{ "}}" }} temperature is above 60°C (current value: {{ "{{" }} $value {{ "}}" }}°C)'
 
-        # Raspberry Pi undervoltage.
         - alert: RPiUnderVoltage
           expr: rpi_throttled_under_voltage == 1
           for: 1m
@@ -42,7 +40,6 @@ spec:
             summary: 'Raspberry Pi Under Voltage on {{ "{{" }} $labels.instance {{ "}}" }}'
             description: "Voltage dropped below 4.63V. Power supply or cable may be insufficient."
 
-        # Raspberry Pi thermal throttling.
         - alert: RPiThermalThrottling
           expr: rpi_throttled_thermal_throttling == 1
           for: 5m
@@ -52,7 +49,6 @@ spec:
             summary: 'Raspberry Pi Thermal Throttling on {{ "{{" }} $labels.instance {{ "}}" }}'
             description: "CPU is throttling due to high temperature."
 
-        # x86 CPU throttling.
         - alert: NodeCPUThrottlingActive
           expr: rate(node_cpu_package_throttles_total[5m]) > 0
           for: 5m
