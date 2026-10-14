@@ -74,8 +74,8 @@ After any update, re-verify the read-only behaviour described above before mergi
 |--------------|----------|-------------|
 | `k8s/external-dns/pdns` | `api-key` | ns1's PowerDNS API key |
 
-This reuses external-dns's unscoped key; both environment roles already have
-the required policy.
+This reuses external-dns's unscoped key through the prd ESO role's
+`k8s-external-dns` policy. Sandbox has no access to this key.
 
 Rotation must update both OpenBao and `ns1.sops.yaml`; SOPS is not mirrored.
 

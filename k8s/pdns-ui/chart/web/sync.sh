@@ -1,13 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Sync the reviewable, vendored powerdns-webui app.
-#
-# Usage:
-#   sync.sh            Fetch the ref recorded in REVISION and overwrite index.html and LICENSE.
-#   sync.sh --check    Check the vendored copy for drift.
-#   REF=<tag> sync.sh  Fetch a different ref and record it.
-#
 # Renovate ref bumps fail CI until the vendored bytes are refreshed.
 
 REPO="${REPO:-james-stevens/powerdns-webui}"
