@@ -42,8 +42,9 @@ defaults. Image stacks use `node.hcl` for host binding and image selection.
 | `PROXMOX_VE_PASSWORD` | Proxmox API password |
 | `PROXMOX_VE_SSH_USERNAME` | Optional snippet-upload SSH user (default `root`); uses the SSH agent |
 
-Each stack's `.envrc` loads its node-specific SOPS secrets through `direnv`.
-Edit the relevant `secrets.<node>.sops.env`, for example:
+Stacks inherit shared R2 and node-specific SOPS credentials through parent
+`.envrc` files. Cross-host k8s stacks override the node credentials in their own
+`.envrc`. Edit the relevant `secrets.<node>.sops.env`, for example:
 
 ```bash
 sops edit tf/.env/secrets.node1.sops.env
@@ -52,8 +53,6 @@ sops edit tf/.env/secrets.node1.sops.env
 ## Usage
 
 ```bash
-# First level per tree: host name (vm/, lxc/, cloudimage/, customimage/)
-# or cluster name (k8s/) — see ADR-0020.
 cd tf/<type>/<host-or-cluster>/<component>
 terragrunt init
 terragrunt plan
@@ -66,29 +65,26 @@ that VM in both the plan and apply commands.
 
 ### DNS LXC rebuilds
 
-`lxc/dns-images.hcl` selects the OS template for each DNS host. Change one
-`releases` entry at a time. `node2/dnsserver` and `node3/dnsserver` each
-manage multiple containers. In those stacks, use Terraform's `-target` with
-the selected container key for both plan and apply, and verify that exactly
-one container is replaced. Never apply a plan replacing a peer. A changed
-`TF_VM_SSH_PUBLIC_KEY` also forces replacement, even for hosts whose OS
-template has not changed.
+`lxc/dns-images.hcl` selects each DNS host's OS template. Change one `releases`
+entry at a time. The node2/node3 `dnsserver` stacks manage multiple containers:
+use `-target` for the selected container in both plan and apply, and verify that
+exactly one container is replaced. Never replace a peer in the same apply.
+Changing `TF_VM_SSH_PUBLIC_KEY` also replaces containers with unchanged templates.
 
-Download `ubuntu-26.04-standard_26.04-1_amd64.tar.zst` to the target node's
-`local` template storage before planning. Rebuild `resolver2`, `resolver1`,
-`ns3`, `ns2`, `ns1`, `dist2`, then `dist1`, checking DNS service and failover
-after each host. Run the corresponding Ansible playbook with `--limit` after
-each replacement. After rebuilding a secondary, run `playbooks/ops/pdns_sync.yaml` with
-the primary and that secondary in `--limit`, then compare zone SOA serials.
+Download the selected template to the node's `local` template storage first.
+Rebuild `resolver2`, `resolver1`, `ns3`, `ns2`, `ns1`, `dist2`, then `dist1`;
+after each replacement, run the service's Ansible playbook with `--limit` and
+check DNS service and failover. After a secondary rebuild, run
+`playbooks/ops/pdns_sync.yaml` limited to the primary and that secondary and
+compare SOA serials.
 
 After rebuilding `ns1`, run `make check`, `make preview-all`, and `make push-all`
-from `homelab-private/dns-record`. DNSControl restores the home and reverse
-zones and the prd/sandbox authority records. The prd and sandbox ExternalDNS
-instances (`policy: sync`, 30-second interval) recreate their application
-records when their clusters are running. Run `playbooks/ops/pdns_sync.yaml` for
-`ns1:ns2:ns3` and compare forward and reverse answers on all three servers.
-If a cluster is stopped, its application records will be absent until it
-restarts; verify their return and run the sync playbook again then.
+from `homelab-private/dns-record`. DNSControl restores home/reverse zones,
+prd/sandbox authority records, and the sandbox wildcard. prd ExternalDNS
+recreates application records when its cluster runs. Run
+`playbooks/ops/pdns_sync.yaml` for `ns1:ns2:ns3` and compare forward/reverse answers
+and SOA serials. If prd is stopped, verify the application records return after
+startup and repeat the sync.
 
 ### Provider lock files
 
@@ -102,8 +98,8 @@ root:
 ./tf/update-locks.sh
 ```
 
-The helper discovers stacks, loads each direnv environment, upgrades providers,
-and records both platform hashes. Review the lock diff and representative plans.
+The helper refreshes every stack lock with both platform hashes. Review the
+lock diff and representative plans.
 
 ### Log collector
 
@@ -112,7 +108,7 @@ determines the backend state key; migrate the state before planning if the
 directory moves. An intentional OS rebuild must replace only `log1` after its
 disk buffer has drained.
 
-To apply all components in an environment at once:
+To apply all stacks under one node:
 
 ```bash
 cd tf/lxc/node2
@@ -121,9 +117,9 @@ terragrunt run --all -- apply
 
 ### Distributing images to all nodes
 
-`cloudimage/` downloads stock images; `customimage/` downloads Packer images
-from SeaweedFS. Because nodes use separate credentials, use `run-all.sh` instead
-of cross-node `terragrunt run --all`:
+`cloudimage/` downloads stock images and `customimage/` downloads Packer images
+from SeaweedFS directly to each node. Use `run-all.sh` to load each node's
+credentials; cross-node `terragrunt run --all` shares one environment.
 
 ```bash
 cd tf/cloudimage     # or tf/customimage (symlinked to the same script)
@@ -131,9 +127,9 @@ cd tf/cloudimage     # or tf/customimage (symlinked to the same script)
 ./run-all.sh apply   # auto-approved
 ```
 
-Images download directly to each node. To protect the SeaweedFS source,
-`run-all.sh` defaults to serial nodes and Terraform parallelism `1`;
-`customimage/base.hcl` also serializes direct applies. Override when safe:
+To protect the SeaweedFS source, `run-all.sh` defaults to serial nodes and
+Terraform parallelism `1`; `customimage/base.hcl` also serializes direct applies.
+Override when safe:
 
 ```bash
 PARALLELISM=4 ./run-all.sh apply   # relax terraform parallelism per node
@@ -157,28 +153,24 @@ directly to `tf/cloudimage/images.hcl`.
 Use `packer/import-upstream.sh` to verify, decompress, and checksum it; publish
 with `packer/push.sh freebsd151`, then consume it through `tf/customimage`.
 
-`proxmox-vm` accepts optional per-VM `cloud_init.user_data` and
-`cloud_init.network_data` YAML strings. Each supplied payload replaces its
-corresponding generated `user_account` or `ip_config`/`dns` configuration.
-`cloud_init.type` selects the datasource; omitted values preserve the provider
-default. `cloud_init.snippet_datastore` defaults to `local`, which must allow
-snippets. Its child module uploads files using the `proxmox.snippets` provider
-and returns their IDs. Do not put decrypted secrets in snippet content.
+`proxmox-vm` accepts `cloud_init.user_data` and `cloud_init.network_data` YAML
+strings, replacing generated `user_account` and `ip_config`/`dns` settings
+respectively. `cloud_init.type` selects the datasource; omission preserves the
+provider default. The `cloudinit-snippets` child module uploads payloads through
+`proxmox.snippets` using SSH. `cloud_init.snippet_datastore` defaults to `local`,
+which must support snippets. Never include decrypted secrets in the payloads.
 
-`vm/pve/freebsd` supplies NoCloud user-data and version 2 network-data using
-`cloudinit.hcl`. The migrated verification VM in `freebsd/snippet-test` uses
-the same module and is intentionally stopped (`started = false`). Both use
-`192.168.10.183`; run only one at a time. Snippet edits apply to a guest only
-after explicit VM replacement, as with generated initialization.
+`vm/pve/freebsd` supplies NoCloud user-data and version 2 network-data through
+`cloudinit.hcl`. Snippet changes require explicit VM replacement to reach the
+guest, as with generated initialization.
 
 ## Architecture
 
 - **Backend**: Cloudflare R2 (S3-compatible) remote state with native lockfile
   locking (`use_lockfile`); one state object per component directory
 - **Providers**: constraints live in `provider.tf`.
-- **Tree axes (ADR-0020)**: hosts for `vm/`, `lxc/`, and image trees; clusters
-  for `k8s/`. Each stack binds one Proxmox endpoint through `.envrc`; cross-host
-  k8s stacks carry their own `env.hcl` and `.envrc`
+- **Stack binding (ADR-0020)**: each stack uses one Proxmox endpoint from
+  `.envrc`; cross-host k8s stacks override inherited host defaults and credentials.
 - **Networking**: Configured via `common.hcl` per host (e.g. `vmbr0`, `vnets001`)
-- **Storage**: pve=local-zfs, node1=data-nvme, node2/node3/node4=local-lvm;
+- **Storage**: pve=local-zfs, node1/node5=data-nvme, node2/node3/node4=local-lvm;
   SeaweedFS data on node3 uses usb-ssd

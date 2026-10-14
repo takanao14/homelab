@@ -34,7 +34,6 @@ if [[ $# -eq 0 ]]; then
   exit 1
 fi
 
-# Build <command> <user args> <injected flags>.
 tf_cmd="$1"
 shift
 tofu_args=("${tf_cmd}" "$@")
