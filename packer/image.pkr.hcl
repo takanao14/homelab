@@ -1,7 +1,4 @@
-# Shared image template; build.sh combines target vars and output settings.
-# var.machine_profile selects the server (headless) or desktop (XRDP) role and
-# is the only switch the shared toolchain needs: the install wrappers skip the
-# desktop-only components on the server profile.
+# Shared template; build.sh supplies target vars and output settings.
 packer {
   required_plugins {
     qemu = {
@@ -88,7 +85,7 @@ variable "machine_profile" {
 variable "install_toolchain" {
   type        = bool
   default     = true
-  description = "Install the shared CLI toolchain (false for unsupported distros)"
+  description = "Install the shared CLI toolchain (false for base images or unsupported distros)"
 }
 
 variable "disk_size" {
@@ -110,14 +107,12 @@ source "qemu" "custom" {
   memory    = 2048
   cpu_model = "host"
 
-  # Output settings
   output_directory = var.output_directory
   vm_name          = var.vm_name
   format           = "qcow2"
   disk_size        = var.disk_size
   accelerator      = "kvm"
 
-  # SSH connection settings
   ssh_username   = var.ssh_username
   ssh_agent_auth = true
   ssh_timeout    = "15m"
@@ -132,7 +127,6 @@ source "qemu" "custom" {
   }
   cd_label = "cidata"
 
-  # Run headless (no display)
   headless = true
 }
 
@@ -149,7 +143,6 @@ build {
     ]
   }
 
-  # Distro-specific setup: guest agent, timezone, EPEL, desktop/XRDP, GUI apps.
   provisioner "shell" {
     scripts         = var.provision_scripts
     execute_command = "chmod +x {{ .Path }}; sudo -S bash -c '{{ .Vars }} {{ .Path }}'"
