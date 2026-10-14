@@ -19,9 +19,13 @@ revision and generated paths may differ from the base; upstream files are fetche
 as data and never executed. Preserve the mise template checksum substitution.
 
 Use `GITHUB_TOKEN` for the commit and explicitly dispatch vendor, shell and Packer
-checks on the updated branch, because token pushes do not trigger PR workflows.
-Vendor checks always compare against the recorded SHA. Disable automerge for
-this dependency.
+checks with the synchronized commit SHA as an explicit checkout input. Token
+updates can leave PR workflows awaiting approval, so dispatched checks provide
+validation without approval. For same-repository Renovate PRs changing only the
+dotfiles REVISION, defer the installer check to synchronization; keep the
+powerdns-webui check active. Notify on synchronization or subsequent validation
+failure. Vendor checks always compare against the recorded SHA. Disable
+automerge for this dependency.
 
 ## Consequences
 
