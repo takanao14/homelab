@@ -1,6 +1,6 @@
 # Headlamp
 
-Read-only in-cluster Kubernetes UI for each environment, using ServiceAccount
+Read-only in-cluster Kubernetes UI for prd, using ServiceAccount
 RBAC without cross-cluster kubeconfig Secrets.
 
 ## Directory Structure
@@ -41,9 +41,6 @@ ConfigMaps, and pod specs, but not Secrets. Keep it that way:
 Changes go through `kubectl` with the X.509 admin kubeconfig. Read-only access
 does not depend on any identity service.
 
-## Design Note
-
-Headlamp moved from a prd multi-cluster kubeconfig design to per-cluster
-instances, allowing App of Apps alone to restore it. See
-[ADR-0015](../../docs/adr/0015-headlamp-per-cluster-in-cluster-deployment.md)
-for the rationale. OpenBao kubeconfigs remain workstation-only.
+App of Apps restores Headlamp without kubeconfig Secrets
+([ADR-0015](../../docs/adr/0015-headlamp-per-cluster-in-cluster-deployment.md)).
+OpenBao kubeconfigs remain workstation-only.
