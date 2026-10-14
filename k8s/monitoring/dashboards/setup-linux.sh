@@ -89,7 +89,6 @@ ensure_pipx() {
   "${PKG_INSTALL[@]}" python3 python3-pip pipx
 }
 
-# version_ge <a> <b> -> true when a >= b
 version_ge() { [[ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1)" == "$2" ]]; }
 
 detect_go() {
@@ -120,7 +119,6 @@ ensure_go() {
     log "Go not found, installing the current release (go.mod needs >= ${required})"
   fi
 
-  # Use the toolchain's stable-version endpoint.
   latest="$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -n1)"
   [[ "$latest" == go* ]] || die "unexpected reply from go.dev/VERSION: ${latest}"
   version_ge "${latest#go}" "$required" ||
@@ -139,12 +137,10 @@ ensure_go() {
   [[ "$expected" == "$actual" ]] ||
     die "checksum mismatch for ${tarball}: expected ${expected}, got ${actual}"
 
-  # Per the official instructions: remove any previous install, then extract.
   log "Installing Go to ${GO_INSTALL_DIR}"
   sudo rm -rf "$GO_INSTALL_DIR"
   sudo tar -C /usr/local -xzf "${WORKDIR}/${tarball}"
 
-  # System-wide PATH entry, as documented for a /usr/local/go install.
   # shellcheck disable=SC2016  # $PATH must stay literal in the profile snippet
   printf 'export PATH=$PATH:%s/bin\n' "$GO_INSTALL_DIR" |
     sudo tee "$GO_PROFILE" >/dev/null
