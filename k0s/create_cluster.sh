@@ -9,8 +9,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/template_lib.sh"
 
-# ── argument parsing ──────────────────────────────────────────────────────────
-
 if [[ $# -lt 2 ]]; then
     usage
     exit 2
@@ -18,8 +16,6 @@ fi
 
 ENV_TARGET="$1"
 COMMAND="$2"
-
-# ── paths ─────────────────────────────────────────────────────────────────────
 
 ENV_FILE="$SCRIPT_DIR/env/$ENV_TARGET.sh"
 
@@ -34,11 +30,7 @@ if [[ ! -f "$ENV_FILE" ]]; then
     exit 2
 fi
 
-# ── derive cluster name ───────────────────────────────────────────────────────
-
 export K0S_CLUSTER_NAME="${ENV_TARGET}-homelab"
-
-# ── load environment ──────────────────────────────────────────────────────────
 
 # Clear inherited topology before loading env/<target>.sh; preserve SSH user override.
 unset K0S_VERSION \
@@ -56,7 +48,5 @@ set -a
 source "$ENV_FILE"
 K0S_SSH_USER="${K0S_SSH_USER:-$(id -un)}"
 set +a
-
-# ── dispatch ──────────────────────────────────────────────────────────────────
 
 run_main "$COMMAND" "$SCRIPT_DIR" "$KUBECONFIG_OUT" "$HELMFILE_FILE"

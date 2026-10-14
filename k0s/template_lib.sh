@@ -1,9 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# template_lib.sh — Common logic for k0s cluster management
-
-# Prevent double sourcing.
 if [[ "${TEMPLATE_LIB_LOADED:-0}" -eq 1 ]]; then
     return 0
 fi
@@ -17,14 +14,14 @@ export NC='\033[0m'
 # Shared SSH identity for k0sctl and direct reboot calls; caller-overridable.
 export K0S_SSH_KEY_PATH="${K0S_SSH_KEY_PATH:-$HOME/.ssh/id_ed25519}"
 
-# ── logging ───────────────────────────────────────────────────────────────────
+# Logging
 
 # Keep stdout machine-readable by logging to stderr.
 log_error()   { echo -e "${RED}✗${NC} Error: $*" >&2; }
 log_info()    { echo -e "${YELLOW}→${NC} $*" >&2; }
 log_success() { echo -e "${GREEN}✓${NC} $*" >&2; }
 
-# ── validation ────────────────────────────────────────────────────────────────
+# Validation
 
 validate_file_exists() {
     local file="$1" name="${2:-File}"
@@ -44,13 +41,12 @@ validate_vars() {
     done
 }
 
-# ── usage ─────────────────────────────────────────────────────────────────────
+# Usage
 
 usage() {
     local script_name env_dir available_envs env_hint
     script_name=$(basename "$0")
 
-    # Discover environments from env/*.sh.
     env_dir="${SCRIPT_DIR:-$(cd "$(dirname "$0")" && pwd)}/env"
     local available_envs="" f
     for f in "$env_dir"/*.sh; do
@@ -79,7 +75,7 @@ Commands:
 EOF
 }
 
-# ── preflight ─────────────────────────────────────────────────────────────────
+# Preflight
 
 preflight() {
     local cmd
@@ -143,9 +139,8 @@ validate_storage_config() {
     fi
 }
 
-# ── node addresses ────────────────────────────────────────────────────────────
+# Node addresses
 
-# Print standard and optional GPU workers as a comma-separated list.
 _worker_addresses() {
     validate_vars K0S_WORKER_ADDRESSES
 
@@ -163,7 +158,7 @@ _all_node_addresses() {
     printf '%s,%s' "$(_worker_addresses)" "${K0S_CONTROLLER_ADDRESSES// /}"
 }
 
-# ── k0sctl configuration ──────────────────────────────────────────────────────
+# K0sctl configuration
 
 _l2_segment_from_ip() {
     local addr="$1"
@@ -178,8 +173,6 @@ _l2_segment_from_ip() {
     printf '%s-%s-%s' "$octet1" "$octet2" "$octet3"
 }
 
-# Render a standard or GPU worker host.
-# Usage: _render_worker_host <address> [gpu]
 _render_worker_host() {
     local addr="$1"
     local kind="${2:-}"
@@ -273,17 +266,7 @@ sync_worker_l2_labels() {
     done
 }
 
-# Build k0sctl config from comma-separated environment topology.
-#   K0S_CONTROLLER_ADDRESSES — required, comma-separated controller IPs
-#   K0S_WORKER_ADDRESSES     — required, comma-separated worker IPs
-#   K0S_GPU_WORKER_ADDRESSES — optional, comma-separated GPU worker IPs
-#
-# Datastore selection:
-#   1 controller  → kine  (embedded SQLite, suitable for homelab single-node control plane)
-#   2+ controllers → etcd (required for HA; controllers must be an odd number for quorum)
-# Operation safety:
-#   bootstrap → do not wait for Ready because the custom CNI is not installed yet
-#   upgrade   → wait for each worker and allow storage recovery during drain
+# Bootstrap must not wait for Ready before Helmfile installs Cilium.
 generate_k0sctl_config() {
     local k0sctl_file="$1"
     local operation_mode="${2:-bootstrap}"
@@ -300,14 +283,12 @@ generate_k0sctl_config() {
 
     log_info "Generating k0sctl configuration for ${operation_mode}..."
 
-    # Split address lists and trim surrounding spaces.
     IFS=',' read -ra ctrl_list   <<< "${K0S_CONTROLLER_ADDRESSES// /}"
     IFS=',' read -ra worker_list <<< "${K0S_WORKER_ADDRESSES// /}"
 
     local ctrl_count="${#ctrl_list[@]}"
     local worker_count="${#worker_list[@]}"
 
-    # Select datastore.
     local storage_type storage_comment
     if [[ "$ctrl_count" -gt 1 ]]; then
         storage_type="etcd"
@@ -323,7 +304,6 @@ generate_k0sctl_config() {
     fi
 
     {
-        # ── header ──
         cat <<EOF
 apiVersion: k0sctl.k0sproject.io/v1beta1
 kind: Cluster
@@ -333,7 +313,6 @@ spec:
   hosts:
 EOF
 
-        # ── controller hosts ──
         for addr in "${ctrl_list[@]}"; do
             cat <<EOF
   - role: controller
@@ -345,12 +324,10 @@ EOF
 EOF
         done
 
-        # ── standard worker hosts ──
         for addr in "${worker_list[@]}"; do
             _render_worker_host "$addr"
         done
 
-        # ── GPU worker hosts (optional) ──
         if [[ -n "${K0S_GPU_WORKER_ADDRESSES:-}" ]]; then
             IFS=',' read -ra gpu_list <<< "${K0S_GPU_WORKER_ADDRESSES// /}"
             for addr in "${gpu_list[@]}"; do
@@ -358,7 +335,6 @@ EOF
             done
         fi
 
-        # ── k0s config ──
         cat <<EOF
   k0s:
 ${K0S_VERSION:+    version: ${K0S_VERSION}
@@ -379,7 +355,6 @@ ${K0S_VERSION:+    version: ${K0S_VERSION}
             disabled: true
 EOF
 
-        # CoreDNS must explicitly tolerate the dedicated GPU worker taint.
         _render_coredns_config
 
         if [[ "$operation_mode" == "upgrade" ]]; then
@@ -414,13 +389,12 @@ EOF
     log_success "Configuration generated for ${operation_mode} — controllers: ${ctrl_count}, workers: ${worker_count}, gpu-workers: ${gpu_count}"
 }
 
-# ── kubeconfig ────────────────────────────────────────────────────────────────
+# Kubeconfig
 
 generate_kubeconfig() {
     local k0sctl_file="$1"
     local kubeconfig_out="$2"
 
-    # Reuse config generated earlier in this run.
     if [[ ! -s "$k0sctl_file" ]]; then
         generate_k0sctl_config "$k0sctl_file"
     fi
@@ -431,7 +405,7 @@ generate_kubeconfig() {
     log_success "kubeconfig written to: $kubeconfig_out"
 }
 
-# ── wait for cluster ──────────────────────────────────────────────────────────
+# Wait for cluster
 
 wait_for_cluster() {
     local timeout=300
@@ -461,7 +435,7 @@ wait_for_cluster() {
     log_success "Worker node registered (CNI not yet required)"
 }
 
-# ── existing-cluster health checks ───────────────────────────────────────────
+# Existing-cluster health checks
 
 wait_for_nodes_ready() {
     local timeout="${1:-5m}"
@@ -539,7 +513,7 @@ check_existing_cluster_health() {
     log_success "Existing cluster health checks passed"
 }
 
-# ── node reboot ───────────────────────────────────────────────────────────────
+# Node reboot
 
 _ssh_node() {
     local addr="$1"
@@ -631,7 +605,7 @@ reboot_nodes() {
     log_success "All nodes rebooted"
 }
 
-# ── helmfile ──────────────────────────────────────────────────────────────────
+# Helmfile
 
 helmfile_apply() {
     local helmfile_file="$1"
@@ -644,22 +618,18 @@ helmfile_apply() {
 
     sync_worker_l2_labels
 
-    # Phase 1: install Cilium before live validation of CRD-dependent releases.
+    # Install Cilium and establish its CRDs before helm-diff validates dependent releases.
     log_info "Running: helmfile apply (phase 1: cilium)"
     helmfile -f "$helmfile_file" -l name=cilium apply
 
-    # Wait until Cilium CRDs are established for helm-diff.
     "$base_dir/scripts/wait-cilium-crds.sh"
 
-    # Phase 2: apply all releases after CRD readiness.
     log_info "Running: helmfile apply (phase 2: all releases)"
     helmfile -f "$helmfile_file" apply
     check_default_storage_classes "$K0S_DEFAULT_STORAGE_CLASS"
 }
 
-# ── gateway API CRDs ──────────────────────────────────────────────────────────
-
-# ── command dispatcher ────────────────────────────────────────────────────────
+# Command dispatcher
 
 run_main() {
     local command="$1"

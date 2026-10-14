@@ -27,8 +27,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# ── helpers ───────────────────────────────────────────────────────────────────
-
 wait_for_external_ip() {
     local svc="$1" ns="$2" timeout="$3"
     local elapsed=0 interval=5 ip=""
@@ -61,16 +59,12 @@ get_job_log() {
     kubectl logs -n "$ns" "$pod"
 }
 
-# ── setup ─────────────────────────────────────────────────────────────────────
-
 info "=== Smoke Test ==="
 
 # Apply jobs only after their base resources are ready.
 kubectl apply -f "$SCRIPT_DIR/l2lb.yaml"
 kubectl apply -f "$SCRIPT_DIR/pvc.yaml"
 kubectl apply -f "$SCRIPT_DIR/netpol.yaml"
-
-# ── test: L2 LoadBalancer ─────────────────────────────────────────────────────
 
 info "--- Test: L2 LoadBalancer ---"
 
@@ -81,7 +75,7 @@ else
     info "EXTERNAL-IP assigned: ${EXTERNAL_IP}"
     kubectl rollout status deployment/smoke-nginx -n smoke-test --timeout=60s
 
-    # Allow ~30s for L2 announcement propagation.
+    # Retry while L2 announcements propagate.
     HTTP_CODE="000"
     for i in $(seq 1 6); do
         HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 --max-time 10 \
@@ -97,8 +91,6 @@ else
     fi
 fi
 
-# ── test: ClusterIP (kube-proxy replacement) ──────────────────────────────────
-
 info "--- Test: ClusterIP (kube-proxy replacement) ---"
 
 kubectl apply -f "$SCRIPT_DIR/clusterip.yaml"
@@ -108,8 +100,6 @@ if wait_job_complete "smoke-clusterip-check" "smoke-test" 60; then
 else
     fail "ClusterIP: pod could not reach smoke-nginx via ClusterIP service"
 fi
-
-# ── test: NetworkPolicy ───────────────────────────────────────────────────────
 
 info "--- Test: NetworkPolicy ---"
 
@@ -129,8 +119,6 @@ if wait_job_failed "smoke-netpol-denied" "smoke-test" 30; then
 else
     fail "NetworkPolicy: denied client was NOT blocked (or timed out unexpectedly)"
 fi
-
-# ── test: PVC ─────────────────────────────────────────────────────────────────
 
 info "--- Test: PVC ---"
 
@@ -156,11 +144,8 @@ else
     fail "PVC: write job did not complete"
 fi
 
-# ── test: PVC Persistence ─────────────────────────────────────────────────────
-
 info "--- Test: PVC Persistence (data survives pod lifecycle) ---"
 
-# Verify persisted data from a new pod after the writer exits.
 kubectl apply -f "$SCRIPT_DIR/pvc-persist-job.yaml"
 if wait_job_complete "smoke-pvc-persist" "smoke-test" 60; then
     ACTUAL=$(get_job_log "smoke-pvc-persist" "smoke-test" | tr -d '[:space:]')
@@ -172,8 +157,6 @@ if wait_job_complete "smoke-pvc-persist" "smoke-test" 60; then
 else
     fail "PVC Persistence: verification job did not complete"
 fi
-
-# ── test: explicit NFS StorageClass ──────────────────────────────────────────
 
 if [[ ",${K0S_STORAGE_PROVIDERS:-openebs}," == *",nfs,"* ]]; then
     info "--- Test: NFS PVC (explicit non-default StorageClass) ---"
@@ -199,8 +182,6 @@ if [[ ",${K0S_STORAGE_PROVIDERS:-openebs}," == *",nfs,"* ]]; then
         fail "NFS PVC: write job did not complete"
     fi
 fi
-
-# ── summary ───────────────────────────────────────────────────────────────────
 
 echo ""
 if [[ "$FAILURES" -eq 0 ]]; then
