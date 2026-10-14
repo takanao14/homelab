@@ -39,12 +39,8 @@ The ServiceAccount is intentionally not cluster-admin:
 RBAC cannot label-scope `deployments/scale`, so `gpuWorkloads` explicitly
 allowlists writes. Keep it aligned with labels; templates create namespace Roles.
 
-The current write targets are:
-
-- `comfyui/comfyui`
-- `lemonade-server/lemonade-server`
-- `ollama/ollama`
-- `vllm/vllm`
+The write targets are declared in `gpuWorkloads` in
+[chart/values.yaml](chart/values.yaml).
 
 ## Authentication
 
