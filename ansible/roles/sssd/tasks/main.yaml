@@ -173,7 +173,6 @@
     - ansible_facts['distribution'] == 'Rocky'
     - not (ansible_check_mode and sssd_package_install is changed)
 
-# Manage sudo by SSSD group locally; validate with visudo before install.
 - name: Grant sudo to the LDAP admin group
   become: true
   ansible.builtin.template:
@@ -194,7 +193,6 @@
     mode: '0644'
   notify: Restart sshd
 
-# Validate assembled sshd config before restart.
 - name: Verify the assembled sshd configuration is valid
   become: true
   ansible.builtin.command:
