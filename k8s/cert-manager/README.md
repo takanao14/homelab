@@ -26,11 +26,8 @@ cert-manager/
     └── reference-grant.yaml             # Allows gateway-system to reference TLS secret
 ```
 
-## How It Works
-
-1. `ClusterIssuer` completes Cloudflare DNS-01 validation.
-2. `Certificate` stores `*.{domain}` in the `cert-manager` namespace.
-3. `ReferenceGrant` permits the shared Gateway to use the TLS Secret.
+`ClusterIssuer` validates Cloudflare DNS-01 challenges; `ReferenceGrant`
+allows the shared Gateway to use the certificate Secret across namespaces.
 
 ## Certificate
 
