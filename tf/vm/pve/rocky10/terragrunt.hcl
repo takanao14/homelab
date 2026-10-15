@@ -19,7 +19,7 @@ locals {
 inputs = {
   vms = {
     "rocky10" = merge(local.base_vars, {
-      cores   = 8
+      cores   = 4
       memory  = 8192
       on_boot = true
       bridge  = local.common.locals.pve.net10.bridge
