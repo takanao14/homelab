@@ -145,6 +145,9 @@ bootstrap. It removes all environment node keys, including hashed entries. Use
 
 ## Cluster Architecture
 
+Sandbox uses one controller and two 4 GiB workers (ADR-0073). Rebuild rather
+than migrate its disposable workload data when changing this topology.
+
 - **Datastore**: kine (single controller) or etcd (multiple controllers — count must be odd for quorum); selected automatically based on `K0S_CONTROLLER_ADDRESSES`
 - **CNI**: Cilium (version pinned in `helmfile.yaml.gotmpl`) with kube-proxy
   replacement and L2 LoadBalancer.

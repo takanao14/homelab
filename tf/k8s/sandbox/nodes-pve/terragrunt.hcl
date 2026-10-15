@@ -136,42 +136,5 @@ inputs = {
         })
       }
     })
-    "sandbox-k0s-worker3" = merge(local.base_vars, {
-      cores  = 4
-      memory = 4096
-      bridge = local.common.locals.pve.net20.bridge
-      cloud_init = {
-        network_data = yamlencode({
-          version  = 2
-          renderer = "networkd"
-          ethernets = {
-            primary = {
-              # The VM has one VirtIO NIC; its PCI-derived name can change.
-              match     = { driver = "virtio_net" }
-              addresses = ["192.168.20.34/24"]
-              routes = [{
-                to  = "default"
-                via = local.common.locals.pve.net20.ipv4gw
-              }]
-              nameservers = {
-                addresses = local.common.locals.dns_internal
-                search    = [local.common.locals.dns_domain]
-              }
-            }
-          }
-        })
-      }
-      #       ipv4gw = local.common.locals.pve.net20.ipv4gw
-      #       ipv4   = "192.168.20.34/24"
-      disks = {
-        scsi0 = merge(local.env.locals.disk_defaults, {
-          size    = 64
-          file_id = local.env.locals.os_image
-        })
-        scsi1 = merge(local.env.locals.disk_defaults, {
-          size = 100
-        })
-      }
-    })
   }
 }

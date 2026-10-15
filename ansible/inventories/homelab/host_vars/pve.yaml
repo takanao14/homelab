@@ -8,7 +8,6 @@ startup_sandbox_guests:
   - sandbox-k0s-cp1
   - sandbox-k0s-worker1
   - sandbox-k0s-worker2
-  - sandbox-k0s-worker3
 
 # TrueNAS is unmanaged; stop it via ACPI after managed guests.
 shutdown_unmanaged_guests:

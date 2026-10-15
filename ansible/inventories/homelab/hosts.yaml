@@ -106,8 +106,6 @@ all:
       ansible_host: 192.168.20.32
     sandbox-k0s-worker2:
       ansible_host: 192.168.20.33
-    sandbox-k0s-worker3:
-      ansible_host: 192.168.20.34
 
     # Managed outside this repo; power sequencing only.
     vpngw:
@@ -259,7 +257,6 @@ all:
           hosts:
             sandbox-k0s-worker1: null
             sandbox-k0s-worker2: null
-            sandbox-k0s-worker3: null
 
     # Cross-cluster node roles; cluster-specific values stay in environment groups.
     k8s_controller:
