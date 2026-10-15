@@ -80,8 +80,8 @@ in `.sops.yaml` before encrypting them.
 [ADR-0043](docs/adr/0043-opencode-connects-to-lemonade-mtp.md).
 
 ```bash
-curl -fsSL https://opencode.ai/install | bash
-# or: npm install -g opencode-ai
+curl -fsSL https://opencode.ai/v2/install | bash
+# or: npm install -g @opencode/cli
 
 opencode --version
 ```

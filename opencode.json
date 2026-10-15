@@ -1,44 +1,54 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "provider": {
+  "providers": {
     "lemonade": {
-      "npm": "@ai-sdk/openai-compatible",
-      "options": {
+      "name": "Lemonade",
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": {
         "baseURL": "https://lemonade.prd.butaco.net/v1"
       },
       "models": {
         "Gemma-4-12B-it-MTP-GGUF": {
-          "name": "Gemma 4 12B MTP (Lemonade)"
+          "modelID": "Gemma-4-12B-it-MTP-GGUF",
+          "name": "Gemma 4 12B MTP (Lemonade)",
+          "capabilities": {
+            "tools": true,
+            "input": ["text"],
+            "output": ["text"]
+          },
+          "limit": {
+            "context": 262144,
+            "output": 32768
+          }
         }
       }
     }
   },
   "model": "lemonade/Gemma-4-12B-it-MTP-GGUF",
   "mcp": {
-    "grafana": {
-      "type": "local",
-      "command": [
-        "./scripts/grafana-mcp.sh"
-      ],
-      "cwd": ".",
-      "enabled": true,
-      "timeout": 60000
+    "servers": {
+      "grafana": {
+        "type": "local",
+        "command": ["./scripts/grafana-mcp.sh"],
+        "cwd": ".",
+        "timeout": {
+          "startup": 60000
+        }
+      }
     }
   },
-  "tools": {
-    "grafana_*": false
-  },
-  "agent": {
+  "permissions": [
+    { "action": "grafana_*", "resource": "*", "effect": "deny" }
+  ],
+  "agents": {
     "grafana": {
       "description": "Read-only Grafana observability queries",
       "mode": "subagent",
-      "tools": {
-        "grafana_*": true
-      },
-      "permission": {
-        "edit": "deny",
-        "bash": "deny"
-      }
+      "permissions": [
+        { "action": "grafana_*", "resource": "*", "effect": "allow" },
+        { "action": "edit", "resource": "*", "effect": "deny" },
+        { "action": "shell", "resource": "*", "effect": "deny" }
+      ]
     }
   }
 }

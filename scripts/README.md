@@ -314,16 +314,17 @@ For the repository-local HTTP configuration and token rotation, see
 
 ### OpenCode setup
 
-The repo-root `opencode.json` registers `grafana` as a local MCP server with a
-60-second startup timeout. OpenCode does not read the `mcpServers` shape in
-`.mcp.json`; it starts the same launcher through its own `mcp.grafana` entry.
-Grafana tools are disabled for normal agents and enabled only in the read-only
-`grafana` subagent, keeping their schemas out of ordinary model requests.
+The repo-root `opencode.json` uses the native OpenCode v2 config shape and
+registers `grafana` as a local MCP server with a 60-second startup timeout.
+OpenCode does not read the `mcpServers` shape in `.mcp.json`; it starts the same
+launcher through its own `mcp.servers.grafana` entry. A top-level `grafana_*`
+permission denies the tools to normal agents; only the read-only `grafana`
+subagent allows them.
 
 Verify the connection from the repository root:
 
 ```bash
-opencode mcp list --pure
+opencode mcp list
 ```
 
 In an interactive session, invoke the read-only tool loop explicitly with
