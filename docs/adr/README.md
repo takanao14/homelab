@@ -128,3 +128,4 @@ follow those links for the changed parts.
 | [0071](0071-reloader-with-explicit-namespace-scope.md) | Scope one Reloader per cluster to explicit namespaces | Accepted |
 | [0072](0072-one-gateway-listener-per-environment.md) | One Gateway listener per environment | Accepted |
 | [0073](0073-two-worker-disposable-sandbox.md) | Use two workers for the disposable sandbox | Accepted |
+| [0074](0074-authenticate-headlamp-with-authelia.md) | Authenticate Headlamp with Authelia | Accepted |

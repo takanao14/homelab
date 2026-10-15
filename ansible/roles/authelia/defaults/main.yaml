@@ -29,3 +29,5 @@ authelia_ldap_ca_cert_src: "{{ role_path }}/../sssd/files/lldap-server.pem"
 authelia_access_rules:
   - domain: gpu-switch.prd.butaco.net
     groups: [lab-platform-admins, lab-gpu-users]
+  - domain: headlamp.prd.butaco.net
+    groups: [lab-platform-admins]

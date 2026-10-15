@@ -1,6 +1,6 @@
 # In-cluster defaults; environment files set hostnames.
 
-# Unauthenticated, read-only access: anyone who reaches the hostname gets these.
+# Shared read-only permissions for users admitted by Authelia.
 readOnly:
   # Wildcard reads per group; exclude groups that embed secret material
   # (core, helm.k0sproject.io values, vault.banzaicloud.com).
@@ -34,7 +34,7 @@ headlamp:
   clusterRoleBinding:
     create: false
   config:
-    # Skips the token prompt; safe only because the ServiceAccount is read-only.
+    # Authelia gates access; Kubernetes requests share this read-only identity.
     unsafeUseServiceAccountToken: true
   httpRoute:
     enabled: true
@@ -54,3 +54,26 @@ headlamp:
             name: headlamp
             port: 80
             weight: 1
+
+# Authelia on idp1; keep the port aligned with authelia_http_port.
+forwardAuth:
+  address: 192.168.10.248
+  port: 9091
+  authPath: /api/authz/ext-authz/
+  headersToExtAuth:
+    - cookie
+    - accept
+    - authorization
+    - proxy-authorization
+    - x-forwarded-for
+    - x-forwarded-proto
+  headersToBackend:
+    - remote-user
+    - remote-groups
+    - remote-email
+    - remote-name
+
+networkPolicy:
+  enabled: true
+  # Envoy proxy-pod namespace, not the Gateway resource namespace.
+  gatewayNamespace: envoy-gateway-system

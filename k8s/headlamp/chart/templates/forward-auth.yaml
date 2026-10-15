@@ -1,0 +1,12 @@
+# Authelia on idp1, outside the cluster; the portal is its own host, so no
+# callback route is needed here.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: authelia
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpoints:
+    - ip:
+        address: {{ .Values.forwardAuth.address | quote }}
+        port: {{ .Values.forwardAuth.port }}

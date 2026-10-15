@@ -1,0 +1,33 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- $np := .Values.networkPolicy }}
+# Prevent direct access from bypassing SecurityPolicy; allow only Gateway pods.
+# Cilium exempts kubelet probes while host firewall is disabled.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: headlamp
+  namespace: {{ .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: headlamp
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  # Ingress only: the app still needs egress to the API server and DNS.
+  policyTypes:
+    - Ingress
+  ingress:
+    # Namespace and pod selectors are ANDed.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $np.gatewayNamespace }}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: envoy
+              gateway.envoyproxy.io/owning-gateway-name: {{ (index .Values.headlamp.httpRoute.parentRefs 0).name }}
+              gateway.envoyproxy.io/owning-gateway-namespace: {{ (index .Values.headlamp.httpRoute.parentRefs 0).namespace }}
+      ports:
+        # Named port follows upstream changes.
+        - protocol: TCP
+          port: http
+{{- end }}

@@ -1,0 +1,26 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: headlamp-auth
+  namespace: {{ .Release.Namespace }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: headlamp
+  extAuth:
+    # Fail closed: no auth service means no Headlamp access.
+    failOpen: false
+    headersToExtAuth:
+      {{- toYaml .Values.forwardAuth.headersToExtAuth | nindent 6 }}
+    http:
+      backendRefs:
+        - group: gateway.envoyproxy.io
+          kind: Backend
+          name: authelia
+          port: {{ .Values.forwardAuth.port }}
+          # Explicit API default prevents Argo CD drift.
+          weight: 1
+      path: {{ .Values.forwardAuth.authPath }}
+      headersToBackend:
+        {{- toYaml .Values.forwardAuth.headersToBackend | nindent 8 }}

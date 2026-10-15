@@ -38,7 +38,7 @@ a random string of at least 64 characters.
 |----------|---------|-------------|
 | `authelia_version` | [defaults/main.yaml](defaults/main.yaml) | Renovate-managed image tag |
 | `authelia_http_port` | `9091` | Portal and authz endpoint |
-| `authelia_access_rules` | GPU Switch | Protected domains and admitted groups |
+| `authelia_access_rules` | GPU Switch and Headlamp | Protected domains and admitted groups |
 | `authelia_session_expiration` | `8h` | Absolute session lifetime |
 
 ## Operations
