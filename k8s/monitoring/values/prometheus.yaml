@@ -143,6 +143,11 @@ kube-prometheus-stack:
       requests:
         cpu: 25m
         memory: 64Mi
+    prometheusConfigReloader:
+      resources:
+        requests:
+          cpu: 5m
+          memory: 32Mi
 
   # kube-state-metrics: 55/77 Mi, p95 CPU 1.8m.
   kube-state-metrics:
