@@ -226,8 +226,10 @@ Waves are defined once in `apps/values.yaml` and shared by all environments:
 | 0 | cert-manager, eso, gateway | Foundation: CRDs, ClusterSecretStore, shared Gateway |
 | 1 | everything else | Consumers of wave 0 (ExternalSecrets, HTTPRoutes, issuers) |
 
-The custom Application health check gates waves. Explicit retries cover
-bootstrap degradation and CRD registration races.
+The custom Application health check gates waves. Explicit retries handle failed
+sync operations; an operation waiting for resource health may still require
+[manual Prometheus resync](../monitoring/README.md#ownership-policy) during a
+fresh bootstrap.
 
 Caveat: the wave-0 HTTPS listener references wave-1 certificate resources. If a
 fresh prd Gateway stalls on `ResolvedRefs=False`, sync cert-manager-config, then

@@ -88,8 +88,29 @@ Bootstrap or cross-cluster scrapes may remain in the Prometheus wrapper with
 the ordering or shared-policy reason documented. Keep product runtime
 configuration outside this directory.
 
-The upstream kube-prometheus-stack owns Kubernetes discovery, node-exporter,
-kube-state-metrics, default rules, and controller/scheduler endpoint wiring.
+The upstream kube-prometheus-stack owns its CRDs, Kubernetes discovery,
+node-exporter, kube-state-metrics, default rules, and controller/scheduler
+endpoint wiring. Keep CRD management in this Application.
+
+On a fresh cluster, the first Prometheus CR apply can fail with `no matches for
+kind "Prometheus"` before CRD registration is visible. The sync can then remain
+Running while its HTTPRoute waits for a backend. If both symptoms occur, confirm
+that the CRD is Established and the API exposes the resource:
+
+```bash
+kubectl --kubeconfig ~/.kube/sandbox.yaml --context sandbox-homelab \
+  wait --for=condition=Established crd/prometheuses.monitoring.coreos.com --timeout=120s
+kubectl --kubeconfig ~/.kube/sandbox.yaml --context sandbox-homelab \
+  get --raw /apis/monitoring.coreos.com/v1 | jq -e '.resources[] | select(.name == "prometheuses")'
+```
+
+In the sandbox Argo CD UI, terminate the running `prometheus` operation and sync
+that Application again. Confirm Prometheus and its HTTPRoute become Healthy,
+then monitoring and root-apps converge to Healthy/Synced. Inspect a failed or
+unestablished CRD before retrying; this procedure does not repair CRD errors.
+Manual resync is the accepted recovery for this initial-install race. Reconsider
+automation if it recurs frequently, unattended bootstrap becomes required, or
+resync no longer restores service.
 
 ## Environment Subsets
 
