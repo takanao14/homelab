@@ -99,15 +99,15 @@ url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/626003332"
 provenance = "github-attestations"
 
 [[tools."aqua:aws/aws-cli"]]
-version = "2.37.13"
+version = "2.38.0"
 backend = "aqua:aws/aws-cli"
-specifiers = ["2.37.13"]
+specifiers = ["2.38.0"]
 
 [tools."aqua:aws/aws-cli"."platforms.linux-arm64"]
-url = "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-2.37.13.zip"
+url = "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-2.38.0.zip"
 
 [tools."aqua:aws/aws-cli"."platforms.linux-x64"]
-url = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.37.13.zip"
+url = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.38.0.zip"
 
 [[tools."aqua:bootandy/dust"]]
 version = "1.2.6"
@@ -537,9 +537,9 @@ backend = "pipx:ansible-core"
 specifiers = ["2.21.5"]
 
 [[tools."pipx:ansible-lint"]]
-version = "26.10.0"
+version = "26.10.1"
 backend = "pipx:ansible-lint"
-specifiers = ["26.10.0"]
+specifiers = ["26.10.1"]
 
 [[tools."pipx:argcomplete"]]
 version = "3.7.2"
