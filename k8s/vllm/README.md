@@ -46,6 +46,12 @@ kubectl -n vllm describe pod -l app=vllm
 The unquantized `Qwen/Qwen3-4B` baseline validates the stack within 16 GiB VRAM;
 test larger models only after it succeeds.
 
+The chart caps context at 32,768 tokens and the VRAM budget at 90% to bound
+memory use for this baseline. It mounts a memory-backed `emptyDir` at `/dev/shm`
+with an 8 GiB ceiling, not a preallocated reservation. The repository records
+no sizing measurements for these values; recheck startup, target context and
+concurrency, GPU memory, and host memory before increasing them or changing models.
+
 ## Key values
 
 | Key | Default | Description |

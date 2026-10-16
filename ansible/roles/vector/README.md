@@ -40,8 +40,8 @@ vector_journald_units:
   - ssh
 ```
 
-`vector_config` is passed directly into the template, so a host that needs a
-different pipeline replaces it entirely in inventory. `log_collector` (syslog
+The template renders `vector_config` directly. To give a host a different
+pipeline, replace the entire value in inventory. `log_collector` (syslog
 reception plus led-server parsing) and `rpi4` (DHCP lease JSON merged into the
 event) do this; inventory outranks these defaults, so such a host must carry
 `since_now` in its own journald source.

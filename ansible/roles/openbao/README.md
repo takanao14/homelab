@@ -97,7 +97,8 @@ regenerated.
 
 ## Rebuilding the host
 
-OpenBao is recovered by rebuilding it, not by restoring a snapshot (ADR-0042).
+Recover OpenBao by rebuilding it from its declarations rather than restoring
+a snapshot (ADR-0042).
 KV entries come from SOPS inventory and the workstation admin scripts below.
 Run the steps in order:
 
@@ -140,9 +141,8 @@ OpenBao manages two Kubernetes clusters:
 | `kubernetes/` | prd (`192.168.60.11`) | `k8s/eso/prd/values.yaml` |
 | `kubernetes-sandbox/` | sandbox (`192.168.20.31`) | `k8s/eso/sandbox/values.yaml` |
 
-The ESO ArgoCD Application itself is rendered by the app-of-apps chart
-(`k8s/argocd/apps`) and enabled per environment in
-`k8s/argocd/<env>/apps-values.yaml`.
+The app-of-apps chart (`k8s/argocd/apps`) renders the ESO ArgoCD Application.
+Enable it per environment in `k8s/argocd/<env>/apps-values.yaml`.
 
 Application policies grant read-only access to their own KV prefix. The sandbox
 ESO role has only `k8s-sandbox` (`secret/k8s-sandbox/*`) and
@@ -155,7 +155,8 @@ Apply `playbooks/ops/openbao/configure.yaml`, then
 `playbooks/ops/openbao/register_cluster.yaml -e cluster=prd` to attach the new policy to
 the live ESO role before seeding or syncing MCP.
 
-Policies removed from the repository are listed in `openbao_absent_policies`.
+List retired policies in `openbao_absent_policies` to remove their server-side
+objects as well.
 `playbooks/ops/openbao/configure.yaml` deletes those server-side policy objects before it
 writes the active policies and Kubernetes roles.
 
@@ -187,9 +188,10 @@ not require a stored admin token. Re-run bootstrap after changing
 ansible-playbook playbooks/ops/openbao/configure.yaml
 ```
 
-This enables KV v2 and configures policies. Kubernetes auth mounts, auth config,
-and roles are refreshed per cluster by `playbooks/ops/openbao/register_cluster.yaml` so
-cluster CA rotation does not require editing SOPS secrets.
+This enables KV v2 and configures policies.
+`playbooks/ops/openbao/register_cluster.yaml` refreshes each cluster's Kubernetes
+auth mount, auth config, and role so cluster CA rotation does not require
+editing SOPS secrets.
 
 ### 3. Install ESO via ArgoCD
 
@@ -205,7 +207,7 @@ Kubernetes authentication.
 
 ### 4. Register each cluster with OpenBao
 
-Run the registration playbook after ESO has been reconciled by ArgoCD. It reads
+Run the registration playbook after Argo CD reconciles ESO. It reads
 the target cluster CA from the local kubeconfig, writes the OpenBao Kubernetes
 auth config with `disable_local_ca_jwt=true`, restarts ESO, and validates
 `ExternalSecret` readiness.
@@ -234,9 +236,9 @@ OpenBao KV secret values remain intact because OpenBao is external to the Kubern
 
 ## KV Path Conventions
 
-All secrets are stored under the `secret/` KV v2 mount. Application and
-kubeconfig paths follow the conventions below; workstation `.env` and AGE key
-paths are documented in [scripts/README.md](../../../scripts/README.md#secrets--environment).
+Store all KV secrets under the `secret/` KV v2 mount. Application and
+kubeconfig paths follow the conventions below; for workstation `.env` and AGE key
+paths, see [scripts/README.md](../../../scripts/README.md#secrets--environment).
 
 ### `secret/k8s/{app}/{secret}`
 
@@ -252,10 +254,9 @@ secret/k8s/argocd/{env}/admin        # ArgoCD admin password (per environment)
 ```
 
 `k8s/argocd/` is the one app that splits by environment, because prd and
-sandbox have independent ArgoCD admin passwords. The matching
-`k8s-argocd-{env}` policies are generated per cluster in
-`tasks/configure_policies.yaml`, so neither cluster's ESO can read the other's
-hash.
+sandbox have independent ArgoCD admin passwords.
+`tasks/configure_policies.yaml` generates matching `k8s-argocd-{env}` policies
+per cluster so neither cluster's ESO can read the other's hash.
 
 ### `secret/kubeconfig/{cluster}`
 
@@ -271,15 +272,14 @@ secret/kubeconfig/sandbox # sandbox cluster kubeconfig
 
 The distinction: `k8s/` is for secrets **used by** apps running in Kubernetes; `kubeconfig/` is for credentials **to access** Kubernetes clusters.
 
-Application secrets are seeded from the SOPS-encrypted `openbao_secrets`
-list, except the Argo CD entries below and MCP tokens seeded by
-`scripts/secrets/admin/seed-mcp.sh`.
+Seed application secrets from the SOPS-encrypted `openbao_secrets` list,
+except the Argo CD entries below and MCP tokens, which
+`scripts/secrets/admin/seed-mcp.sh` seeds.
 
 ### ArgoCD admin password
 
 This one lives in its own variable, `openbao_argocd_admin`, not in
-`openbao_secrets`. Only the bcrypt hash is stored by hand — **never the
-plaintext**:
+`openbao_secrets`. Store only the bcrypt hash — **never the plaintext**:
 
 ```yaml
 openbao_argocd_admin:
@@ -300,7 +300,7 @@ The `$` characters need no escaping — the seeding tasks use
 YAML so it is not mistaken for an alias or tag.
 
 `env` must match an `openbao_k8s_clusters[].name`, since that is what generates
-the `k8s-argocd-<env>` read policy. The entry is written to
+the `k8s-argocd-<env>` read policy. The seeding task writes the entry to
 `secret/k8s/argocd/<env>/admin`.
 
 `tasks/seed_argocd_admin.yaml` writes the hash and a UTC `mtime` only when the

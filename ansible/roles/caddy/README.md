@@ -21,13 +21,14 @@ With `caddy_acme_enabled: true` (the default) the Caddyfile carries a global
 options block with the ACME issuer, and every site address is a bare hostname,
 which triggers Caddy's Automatic HTTPS.
 
-With `caddy_acme_enabled: false`:
+For hosts that must serve plain HTTP without ACME credentials, set
+`caddy_acme_enabled: false`. The role:
 
-- the global options block is omitted entirely;
-- every site address is prefixed with `http://`, which serves the site on port
+- omits the global options block;
+- prefixes every site address with `http://`, which serves the site on port
   80 and suppresses Automatic HTTPS, so Caddy never contacts an ACME CA;
-- `cloudflare_api_token` is not required, `/etc/caddy/caddy.env` is not
-  deployed, and any existing copy is removed so the credential does not linger.
+- skips the `cloudflare_api_token` requirement and removes any existing
+  `/etc/caddy/caddy.env` so the credential does not linger.
 
 The systemd unit references the environment file as `EnvironmentFile=-...`, so
 Caddy still starts when the file is absent.
@@ -94,7 +95,7 @@ caddy_redirects:
 | Redirect field | Default | Description |
 |----------------|---------|-------------|
 | `hostname` | – | Public hostname Caddy serves |
-| `target` | – | Redirect target origin. The request URI is appended, so paths and query strings are preserved |
+| `target` | – | Redirect target origin. Caddy appends the request URI to preserve paths and query strings |
 | `code` | `temporary` | `temporary` (302), `permanent` (301), or an explicit 3xx status code |
 
 `code` defaults to `temporary` on purpose: browsers cache a 301 indefinitely, so
@@ -119,6 +120,6 @@ ansible-playbook playbooks/services/caddy.yaml
 
 The playbook's `sync_dns` play also writes one `home.butaco.net` A record per
 site into `dns-record/home-zone.js` in the `homelab-private` repository, and
-commits it. Both `caddy_upstreams` and `caddy_redirects` are included, so a new
+commits it. The play includes both `caddy_upstreams` and `caddy_redirects`, so a new
 site needs no manual DNS work. Run only that part with `--tags sync_dns`, or
 skip it with `--tags caddy`.

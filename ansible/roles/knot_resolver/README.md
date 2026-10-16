@@ -14,8 +14,8 @@ The role:
   cache (`knot_resolver_cache_size`, 256 MB);
 - exports Prometheus metrics through the node_exporter textfile collector.
 
-The repository signing key is downloaded with a pinned SHA-256 checksum. The
-expected upstream fingerprint is:
+The role verifies the repository signing key against a pinned SHA-256 checksum.
+The expected upstream fingerprint is:
 
 ```text
 9C71 D59C D4CE 8BD2 966A 7A3E AB6A 3031 2401 9B64
@@ -26,13 +26,14 @@ checking both the replacement key and fingerprint through an independent
 official CZ.NIC source.
 
 The role follows the current Knot Resolver 6 package from the repository with
-APT `state: present`; it does not pin a minor or patch version. Package
-candidate drift is reported by `playbooks/ops/version_audit.yaml`.
+APT `state: present`; it does not pin a minor or patch version.
+`playbooks/ops/version_audit.yaml` reports package candidate drift.
 
-Configuration is stored at `/etc/knot-resolver/config.yaml`. Candidate and
-installed files are validated with `kresctl validate`, and valid changes are
-applied with the package-supported systemd reload. The package-created account
-and primary group are resolved at runtime before the configuration is written.
+The role writes `/etc/knot-resolver/config.yaml` and validates both candidate
+and installed files with `kresctl validate` so invalid configuration fails
+before reload. It applies valid changes through the package-supported systemd
+reload and resolves the package-created account and primary group at runtime
+before writing the configuration.
 
 `knot-resolver-metrics.timer` runs every 15 seconds. It reads
 `/metrics/prometheus` from the management Unix socket and atomically replaces
@@ -82,8 +83,8 @@ Run the homelab playbook in check mode before provisioning:
 ansible-playbook -i inventories/homelab playbooks/services/knot-resolver.yaml --check --diff
 ```
 
-On a pristine host, package-dependent checks are intentionally deferred because
-the package is not installed during Ansible check mode.
+On a pristine host, the role defers package-dependent checks because Ansible
+check mode does not install the package.
 
 Provision or update one resolver at a time:
 

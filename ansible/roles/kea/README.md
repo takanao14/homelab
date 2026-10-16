@@ -8,7 +8,8 @@ Installs and configures [Kea DHCPv4](https://www.isc.org/kea/) server on Debian-
 |----------|---------|-------------|
 | `kea_subnet4` | `[]` | List of DHCPv4 subnet configurations |
 
-`kea_subnet4` is passed directly into the Kea config template. Define it in `group_vars/dhcp.yaml`.
+Define `kea_subnet4` in `group_vars/dhcp.yaml`; the role renders the list
+directly into the Kea config template.
 
 Example:
 

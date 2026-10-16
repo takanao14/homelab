@@ -1,6 +1,9 @@
 # dnscollector Role
 
-Installs and configures [DNS-collector](https://github.com/dmachard/DNS-collector) as a DNS traffic logger. Receives dnstap events from dnsdist via a Unix socket and forwards them to Loki.
+DNS-collector collects dnsdist query and response events for DNS traffic
+investigation in Loki. The role installs [DNS-collector](https://github.com/dmachard/DNS-collector)
+to receive dnstap events over a Unix socket and forward them to Loki; debug mode
+sends them to stdout instead.
 
 ## Variables
 

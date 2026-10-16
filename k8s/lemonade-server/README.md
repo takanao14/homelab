@@ -47,13 +47,13 @@ The chart runs the upstream image pinned in [chart/values.yaml](chart/values.yam
 as uid 10001 and gid 999. It starts `/opt/lemonade/lemond --host 0.0.0.0` and requests one
 `amd.com/gpu`.
 
-The sparse `config.json` and per-model `recipe_options.json` are generated from
-the chart values and copied from a ConfigMap into a writable `emptyDir` on
-every Pod start. This keeps the release configuration declarative while
+The chart generates sparse `config.json` and per-model `recipe_options.json`
+from values. On every Pod start, the init container copies them from a
+ConfigMap into a writable `emptyDir`. This keeps the release configuration declarative while
 allowing `lemond` to update the files during the Pod lifetime. Runtime config
 changes made through the API do not survive a Pod restart.
 
-Backend tags and per-model context sizes are defined in
+Define backend tags and per-model context sizes in
 [chart/values.yaml](chart/values.yaml).
 
 `config.llamacpp.rocm_bin` pins a release tag from `lemonade-sdk/llamacpp-rocm`.
@@ -68,7 +68,8 @@ The upstream-image decision is recorded in
 
 ## GPU Switching
 
-The Deployment defaults to zero replicas and is managed through gpu-switch:
+Keep the Deployment at zero replicas in Git and use gpu-switch to activate it
+so it shares the GPU with the other workloads:
 
 ```bash
 scripts/gpu-switch.sh lemonade-server

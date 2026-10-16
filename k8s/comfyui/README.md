@@ -25,8 +25,11 @@ Exposed via Gateway API HTTPRoute at `comfyui.prd.butaco.net`.
 
 Requests one `amd.com/gpu` on a `gpu=amd` labelled and tainted node.
 
-The container uses unconfined seccomp. The device plugin injects permitted
-`/dev/kfd` and `/dev/dri` nodes; never shadow them with hostPath mounts.
+The container currently uses unconfined seccomp; the repository does not record
+which operation requires this exception. Verify GPU initialization and image
+generation with `RuntimeDefault` before narrowing the profile. The device
+plugin injects permitted `/dev/kfd` and `/dev/dri` nodes; hostPath
+mounts would shadow those devices, so do not add them.
 
 ### ROCm
 

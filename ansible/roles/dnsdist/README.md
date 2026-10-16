@@ -2,9 +2,9 @@
 
 Installs and configures dnsdist from the official PowerDNS repository on Debian-based systems.
 
-Sets up dnsdist as a DNS load balancer and forwarder: internal domain queries
-are routed to the PowerDNS Authoritative secondary backends, and external
-queries go to dedicated Knot Resolver backends.
+Configures dnsdist to route internal domain queries to PowerDNS Authoritative
+secondaries and external queries to dedicated Knot Resolver backends, keeping
+authoritative serving and recursion separate.
 
 ## Architecture
 
@@ -13,9 +13,9 @@ dnsdist sits in front of the authoritative DNS servers:
 - **Internal forward and reverse zones** (`home.butaco.net.`, `prd.butaco.net.`, `sandbox.butaco.net.`, `168.192.in-addr.arpa.`) → routed to the `internal` pool (PowerDNS secondaries only — the hidden primary is excluded). The single reverse suffix covers every `192.168.x.0/24` segment: the management LAN and each per-node Proxmox SimpleZone.
 - **Other domains, including RFC 6303 reverse zones** → routed to the default pool (resolver1/resolver2); Knot Resolver owns recursive and special-use-zone policy
 
-The `internal` pool is built dynamically from `secondary_auth_servers`, so
+The role builds the `internal` pool from `secondary_auth_servers`, so
 adding or removing a secondary only requires updating that list. The default
-pool is built from `dns_resolver_servers`; each dnsdist frontend assigns order
+pool comes from `dns_resolver_servers`; each dnsdist frontend assigns order
 1 to its node-local resolver and order 2 to the peer, then uses
 `firstAvailable`.
 
@@ -28,9 +28,10 @@ addresses inside it answer an authoritative NXDOMAIN rather than REFUSED.
 Edit `dnsdist_config` in `defaults/main.yaml`; `templates/dnsdist.yml.j2`
 renders it as `/etc/dnsdist/dnsdist.yml`.
 
-The file contains console and webserver credentials and is deployed as `0640`,
-owned by root and the package service account's primary group. The role resolves
-that group before writing the file and fails if the account is missing.
+Keep console and webserver credentials readable only by root and the service
+group. The role writes the file with mode `0640`, owner root, and the package
+service account's primary group. It resolves that group before writing the file
+and fails if the account is missing.
 
 Validation uses a `.yml` temporary filename because dnsdist selects YAML or Lua
 by extension, while Ansible's validation file has none.

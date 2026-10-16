@@ -59,8 +59,9 @@ pdns_role: primary   # or secondary
 
 ### Secrets (from SOPS-encrypted files)
 
-Primary and secondary secrets are loaded from per-host
-`host_vars/<hostname>.sops.yaml` files.
+Define primary and secondary secrets in per-host
+`host_vars/<hostname>.sops.yaml` files; Ansible loads them through its SOPS vars
+plugin.
 
 | Variable | Where | Description |
 |----------|-------|-------------|
@@ -139,7 +140,7 @@ Upgrade `ns1` first: the hidden primary is outside the dnsdist query pool.
 
 ## DNS Record Notes
 
-With a hidden primary setup, the SOA and NS records are configured as follows:
+Keep SOA and NS records aligned with the hidden primary topology:
 
 | Record | Value | Reason |
 |--------|-------|--------|

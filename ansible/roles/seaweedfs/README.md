@@ -62,11 +62,11 @@ for a single-node homelab backend.
 
 ## State backup (R2 -> SeaweedFS)
 
-The decided topology is **Cloudflare R2 as the primary** Terraform state backend
-with **SeaweedFS holding a DR copy**. R2 has no object versioning, so SeaweedFS
+Keep **Cloudflare R2 as the primary** Terraform state backend and
+**SeaweedFS as a DR copy**. R2 has no object versioning, so SeaweedFS
 also provides the version history: a one-way `rclone sync` (R2 -> SeaweedFS)
 runs on the `seaweedfs-backup.timer` systemd timer (default every 15 minutes),
-and the destination bucket is versioned so overwrites keep history.
+and destination bucket versioning preserves history across overwrites.
 
 The role installs `rclone`, writes `/etc/seaweedfs/rclone.conf` (an `r2` and a
 `seaweedfs` remote), and enables the timer. It does **not** create the backup
@@ -95,8 +95,8 @@ journalctl -u seaweedfs-backup.service          # logs
 
 ## Public download buckets
 
-Buckets listed in `seaweedfs_public_buckets` are created by the role and get an
-`anonymous` S3 identity with `Read:<bucket>` only (no `List`), so any client can
+The role creates buckets listed in `seaweedfs_public_buckets` and grants an
+`anonymous` S3 identity `Read:<bucket>` only (no `List`), so any client can
 fetch an object by key but cannot enumerate the bucket. Caddy serves them over
 HTTPS:
 
@@ -121,7 +121,7 @@ Terragrunt stack in `tf/customimage` makes Proxmox download them from
 > this reason; size new deployments accordingly if they serve large objects.
 The build host only needs object-level S3 access; rather than reusing the Admin
 `terraform` identity, use a dedicated upload key via `seaweedfs_s3_extra_identities`.
-`packer/push.sh` disables S3 multipart upload so large image files are sent with
+`packer/push.sh` disables S3 multipart upload and sends large image files with
 plain `PutObject`. SeaweedFS 4.37 rejects `PutObject` when the `Write` action is
 bucket-scoped, so the upload identity uses unscoped `Read` / `Write` / `List`
 but still has no `Admin` privileges.
@@ -149,9 +149,9 @@ not disk loss. Preserve any download objects that cannot be rebuilt elsewhere.
   (`weed admin`) on `:{{ seaweedfs_admin_port | default(23646) }}`, providing
   cluster health, node status, and S3 bucket management.
   Disable with `seaweedfs_admin_enabled: false`.
-  Authentication is set via `seaweedfs_admin_user` / `seaweedfs_admin_password`,
-  passed through `WEED_ADMIN_PASSWORD` in the environment file so the password is
-  not visible in the process arguments. **If `seaweedfs_admin_password` is empty,
+  Set `seaweedfs_admin_user` / `seaweedfs_admin_password` for authentication.
+  The role passes the password through `WEED_ADMIN_PASSWORD` in the environment
+  file to keep it out of process arguments. **If `seaweedfs_admin_password` is empty,
   the admin UI runs without authentication** — always set it.
 - **Status pages:** master UI on `:9333` (topology/volumes), filer file browser on
   `:8888`.

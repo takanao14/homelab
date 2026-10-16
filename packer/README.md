@@ -116,7 +116,7 @@ is baked into the image, and each role contains the one before it:
 
 ## Available Build Targets
 
-Every target is built from [image.pkr.hcl](image.pkr.hcl). URLs, checksums,
+Build every target from [image.pkr.hcl](image.pkr.hcl). URLs, checksums,
 users, cloud-init paths, the machine profile and the provisioner list live in
 `vars/<target>.pkrvars.hcl`.
 
@@ -161,10 +161,10 @@ To add a target, create a `vars/<target>.pkrvars.hcl` and register the target in
 
 ## Machine Profiles
 
-`machine_profile` is written to `/etc/provisioning/machine-profile.local` and
-passed to shared installers as `TOOL_MACHINE_PROFILE`. A later
-`scripts/provision.sh` run uses this marker when installing missing tools;
-Rocky base hosts require the repository setup above.
+Packer writes `machine_profile` to `/etc/provisioning/machine-profile.local`
+and passes it to shared installers as `TOOL_MACHINE_PROFILE` so later
+`scripts/provision.sh` runs retain the image's server or desktop profile when
+installing missing tools. Rocky base hosts require the repository setup above.
 
 Only `desktop` installs Freelens, kitty, UDEV Gothic NF, and shared kitty
 settings under `/etc/xdg/kitty/kitty.conf`. Per-user preferences belong to

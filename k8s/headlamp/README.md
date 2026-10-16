@@ -48,7 +48,7 @@ Changes and inspection during Authelia outages use `kubectl` with the X.509
 admin kubeconfig. Kubernetes authorization and audit records use the shared
 ServiceAccount, not each user.
 
-Authelia access rules are managed by `ansible/roles/authelia`. Apply its
+Manage Authelia access rules through `ansible/roles/authelia`. Apply its
 playbook before syncing the Headlamp chart to avoid denying all users.
 
 App of Apps restores Headlamp without kubeconfig Secrets

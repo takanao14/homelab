@@ -52,5 +52,9 @@ Seed it through the encrypted Ansible `openbao_secrets` list and
 
 ## Notes
 
-- Public recursive resolvers bypass internal DNS during ACME validation.
-- Both issuers are created; the Certificate uses production.
+- The controller uses public recursive resolvers with `--dns01-recursive-nameservers-only`
+  so DNS-01 self-checks observe public challenge records rather than the
+  internal DNS view.
+- Use the production issuer for the wildcard certificate. The chart also
+  provides a staging issuer for issuance tests; it does not reference that
+  issuer from the deployed Certificate.

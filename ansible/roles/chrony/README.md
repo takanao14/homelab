@@ -28,7 +28,8 @@ paths and service names for Debian/Ubuntu and RedHat/Rocky come from
 
 ## Scope
 
-Applied to `all:!lxc:!power_only` (see `playbooks/common/chrony.yaml`). LXC containers are excluded:
+`playbooks/common/chrony.yaml` targets `all:!lxc:!power_only`. Exclude LXC
+containers:
 unprivileged containers lack `CAP_SYS_TIME` and inherit the host clock, so they
 must not run their own NTP daemon.
 

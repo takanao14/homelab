@@ -1,9 +1,9 @@
 # proxmox_simplezone_routes Role
 
 Installs persistent static routes between per-node Proxmox SDN SimpleZone
-segments. Routes are written as an ifupdown2 drop-in under
-`/etc/network/interfaces.d/`; applying the live network reload remains an
-operator action.
+segments. The role writes an ifupdown2 drop-in under
+`/etc/network/interfaces.d/`. Review the route diff before manually reloading
+the live network to keep connectivity changes under operator control.
 
 ## Functionality
 

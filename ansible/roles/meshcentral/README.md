@@ -1,8 +1,7 @@
 # meshcentral Role
 
-Runs MeshCentral as a rootful Podman container managed by systemd. The service
-is placed on `rpi4`, outside the Proxmox and Kubernetes failure domains that it
-is intended to recover.
+MeshCentral runs on `rpi4` so it remains available to recover Proxmox and
+Kubernetes during their outages. systemd manages its rootful Podman container.
 
 ## Persistent data
 
@@ -15,8 +14,8 @@ Persistent container mounts:
 | `/opt/meshcentral/meshcentral-backups` | `/opt/meshcentral/meshcentral-backups` |
 | `/opt/meshcentral/meshcentral-web` | `/opt/meshcentral/meshcentral-web` |
 
-The container is limited to 1 GiB RAM and one CPU so that a failure cannot
-starve Kea DHCP on the same recovery host.
+The container has a 1 GiB RAM limit and a one-CPU limit to protect Kea DHCP on
+the same recovery host from MeshCentral resource exhaustion.
 
 The MeshCentral container alone runs with `apparmor=unconfined`. Ubuntu's
 generated `containers-default-0.57.4` profile denies the crun TERM/KILL signal
@@ -55,7 +54,7 @@ Port 8443 is intentionally plain HTTP because MeshCentral runs with
 outside the trusted LAN.
 
 The canonical hostname is `meshcentral.home.butaco.net`. It is outside the
-Kubernetes environment namespace and is managed by the existing Caddy and
+Kubernetes environment namespace; manage it through the existing Caddy and
 DNSControl home-zone workflow.
 
 The container receives an `/etc/hosts` entry for the canonical hostname using

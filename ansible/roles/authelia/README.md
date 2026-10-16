@@ -1,7 +1,7 @@
 # authelia Role
 
 Deploys [Authelia](https://www.authelia.com/) as a root system Podman Quadlet
-unit on the LLDAP host (ADR-0067). The portal is published through Caddy at
+unit on the LLDAP host (ADR-0067). Caddy publishes the portal at
 `https://auth.home.butaco.net`; prd Envoy Gateway calls
 `/api/authz/ext-authz/` on `authelia_http_port` directly.
 
@@ -10,11 +10,14 @@ unit on the LLDAP host (ADR-0067). The portal is published through Caddy at
 - Authenticates against LLDAP over LDAPS with the read-only
   `lldap_authelia_user` account, trusting `roles/sssd/files/lldap-server.pem`.
 - Admits each `authelia_access_rules` domain to any of its groups with
-  `one_factor`; every other request is denied.
+  `one_factor` and denies every other request.
 - Issues one session cookie for `authelia_cookie_domain` with an absolute
-  `authelia_session_expiration` lifetime and no remember-me.
+  `authelia_session_expiration` lifetime and no remember-me. An absolute lifetime
+  avoids relying on inactivity-based refresh: Envoy Gateway cannot return the
+  required ext_authz success cookies to browsers (ADR-0067).
 - Disables password reset and change; users change passwords in LLDAP.
-- Keeps sessions in memory, so a restart signs everyone out. SQLite under
+- Keeps sessions in memory without an external session store; expect a restart
+  to sign everyone out. SQLite under
   `authelia_config_dir` holds only regulation and second-factor state.
 
 ## Variables

@@ -1,6 +1,8 @@
 # timezone Role
 
-Sets the system timezone using the `community.general.timezone` module.
+The role sets managed hosts to `Asia/Tokyo` by default so local timestamps use
+the same timezone during operations and log inspection. It applies `timezone`
+through `community.general.timezone`.
 
 ## Variables
 

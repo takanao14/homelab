@@ -1,8 +1,8 @@
 # sysctl Role
 
 Manages persistent kernel parameters via a `sysctl.d` drop-in using the
-`ansible.posix.sysctl` module. Each parameter is written to `sysctl_conf_file`
-and applied live (`reload: true`), so no reboot is required.
+`ansible.posix.sysctl` module. The role writes each parameter to
+`sysctl_conf_file` and applies it live (`reload: true`) to avoid a reboot.
 
 ## Variables
 

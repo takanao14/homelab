@@ -20,9 +20,11 @@ repositories; their changes belong in those repositories.
 
 ## Secret Management
 
-Secrets are managed with [SOPS](https://github.com/getsops/sops) + [AGE](https://github.com/FiloSottile/age) encryption and exposed to tooling via [direnv](https://direnv.net/).
+Keep secret values encrypted in Git with [SOPS](https://github.com/getsops/sops)
+and [AGE](https://github.com/FiloSottile/age). Component
+[direnv](https://direnv.net/) configurations load shell credentials for tooling.
 
-- Encrypted secrets are committed as `*.sops.env` or `*.sops.yaml` files.
+- Commit encrypted secrets as `*.sops.env` or `*.sops.yaml` files.
 - Component `.envrc` files load shell secrets with `sops --decrypt`; Ansible
   loads encrypted inventory through its SOPS vars plugin.
 - The `.sops.yaml` at the repository root defines encryption rules by file path pattern.
@@ -38,10 +40,10 @@ cd tf
 direnv allow   # first time only
 ```
 
-Application secrets are declared in SOPS-encrypted Ansible inventory, seeded
-into OpenBao, and synced by External Secrets Operator (see `k8s/eso/`).
-Workstation kubeconfigs, `.env` files, and the AGE key are stored separately
-through `scripts/secrets/admin/`; OpenBao does not mirror encrypted files.
+Declare application secrets in SOPS-encrypted Ansible inventory. Ansible seeds
+them into OpenBao, and External Secrets Operator syncs them into Kubernetes
+(see `k8s/eso/`). Store workstation kubeconfigs, `.env` files, and the AGE key
+separately through `scripts/secrets/admin/`; OpenBao does not mirror encrypted files.
 
 ### Reusing this repository
 

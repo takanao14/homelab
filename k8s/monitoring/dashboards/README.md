@@ -1,8 +1,9 @@
 # Grafana Dashboards
 
-Grafana dashboards are defined in Go with
+Define Grafana dashboards in Go with
 [grafana-foundation-sdk](https://github.com/grafana/grafana-foundation-sdk) and
-generated as JSON.
+generate JSON from those definitions to keep source and deployment artifacts
+in sync.
 
 ## Dashboards
 

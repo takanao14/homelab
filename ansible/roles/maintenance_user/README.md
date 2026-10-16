@@ -1,8 +1,11 @@
 # maintenance_user
 
-Creates a maintenance account with SSH access and passwordless sudo, installing
-`sudo` on Debian-based systems when needed. It runs on LXC hosts by default;
-set `maintenance_user_force: true` for other hosts.
+The role provisions a local SSH maintenance account on LXC guests so administrators
+can perform privileged maintenance with their SSH key without an interactive
+sudo password prompt. The role grants passwordless sudo and installs `sudo`
+on Debian-based systems when needed. It defaults to LXC guests to keep this
+privileged account scoped to those hosts; set `maintenance_user_force: true`
+to opt in other hosts.
 
 ## Role Variables
 

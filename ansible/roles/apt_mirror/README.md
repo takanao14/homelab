@@ -1,6 +1,8 @@
 # apt_mirror Role
 
-Replaces the default Ubuntu apt mirror URL with a local mirror on Ubuntu hosts.
+The role directs regular Ubuntu package downloads to a Japanese archive mirror
+by replacing the default archive URL with `apt_mirror_url`, while keeping
+security updates on their existing sources.
 
 Supports DEB822 and legacy sources on Ubuntu, leaves security sources unchanged,
 and updates the APT cache after replacement.

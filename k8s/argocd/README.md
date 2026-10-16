@@ -217,7 +217,8 @@ helm template k8s/argocd/apps -f k8s/argocd/<env>/apps-values.yaml
 
 ### Sync waves
 
-Waves are defined once in `apps/values.yaml` and shared by all environments:
+Keep sync waves in `apps/values.yaml` so every environment uses the same
+dependency order:
 
 | Wave | Applications | Rationale |
 |------|--------------|-----------|

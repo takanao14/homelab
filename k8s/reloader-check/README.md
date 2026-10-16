@@ -3,7 +3,8 @@
 Permanent sandbox-only consumers for ADR-0071 acceptance checks. The opt-in
 Deployments exercise client-side and server-side Argo CD apply; the control
 Deployment has no Reloader opt-in. All mount the same optional Secret and stay
-Healthy without it. No Secret or ExternalSecret is managed by this chart.
+Healthy without it. Supply test Secrets through ESO rather than this chart
+so the checks exercise the external Secret update path.
 
 Supply `Secret/reloader-check` temporarily through ESO using dummy values in
 OpenBao `secret/k8s-sandbox/reloader-check`. After ESO is ready, record Deployment

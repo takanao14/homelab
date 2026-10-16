@@ -35,8 +35,8 @@ in dotfiles, then update them through [vendor sync](#vendor).
 ### `create-vm.sh`
 
 Generates a Terragrunt config under `tf/vm/<node>/<name>/`. It does not run
-`plan`, `apply`, or wait for SSH; those steps remain separate so a failed
-operation can be inspected and resumed directly with Terragrunt.
+`plan`, `apply`, or wait for SSH; those steps remain separate so the
+operator can inspect and resume a failed operation directly with Terragrunt.
 
 ```bash
 ./create-vm.sh <name> <ip> [node] [cores] [memory_mb] [disk_gb] [image]
@@ -58,14 +58,14 @@ operation can be inspected and resumed directly with Terragrunt.
 
 Image roles and build targets are described in [packer/README.md](../packer/README.md#image-roles).
 
-The `tool` and `desktop` images are downloaded only on `pve`, so VMs using them
-must be created there.
+The image stacks download `tool` and `desktop` images only on `pve`; create
+VMs using those images there.
 
 VM credentials use `TF_VM_USERNAME`, `TF_VM_PASSWORD`, and
 `TF_VM_SSH_PUBLIC_KEY`. Defaults are the current user, a hidden password prompt,
-and `~/.ssh/id_ed25519.pub`; non-interactive runs must set the password. Resolved
-values are reused from a mode-600, gitignored `.envrc` containing plaintext
-credentials. Keep it local and run `direnv allow` once.
+and `~/.ssh/id_ed25519.pub`; non-interactive runs must set the password. The
+script saves resolved credentials in a mode-600, gitignored `.envrc` for reuse.
+This file contains plaintext credentials. Keep it local and run `direnv allow` once.
 
 Re-running the command with the same arguments succeeds without changing the
 file. If the existing file differs, the script prints a diff and leaves it
@@ -108,8 +108,9 @@ relative paths and vendored installers. It copies only `secrets/get-*`, never
 privileged `admin/set-*`, and removes the staging directory on exit.
 
 Each step uses one SSH invocation so piped OpenBao credentials remain intact.
-Tokens are forwarded; otherwise one prompted password is reused. Provisioning
-waits up to 600 seconds for cloud-init; override with `CLOUD_INIT_WAIT_TIMEOUT`.
+The script forwards tokens when available; otherwise it prompts once and
+reuses the password. Provisioning waits up to 600 seconds for cloud-init;
+override with `CLOUD_INIT_WAIT_TIMEOUT`.
 
 ```bash
 ./provision.sh <ip> [username]      # remote: push to the VM at <ip> over SSH
@@ -129,7 +130,7 @@ otherwise uses the safe `server` default. `--profile desktop|server` or the
 Gothic and Freelens are desktop-only components. Older desktop images without
 the marker must be provisioned with `--profile desktop`.
 
-Per-user kitty preferences are managed by the dotfiles repository. This script
+Manage per-user kitty preferences in the dotfiles repository. This script
 installs kitty and its font but does not edit `~/.config/kitty/kitty.conf`.
 
 ### `check-image-refs.sh`
@@ -191,7 +192,7 @@ once for non-interactive use; the same authentication applies to all `secrets/` 
 ### `get-env.sh`
 
 Fetches `secret/provision/env` atomically into `~/.env`. Variable references
-expand when sourced; command substitutions are rejected.
+expand when sourced; the script rejects command substitutions.
 
 ```bash
 ./secrets/get-env.sh
@@ -209,7 +210,7 @@ execute the file, so variables remain literal.
 ### `get-kubeconfig.sh`
 
 Retrieves the `prd`/`sandbox` kubeconfigs from OpenBao into `~/.kube/`. Existing
-files are replaced only after both kubeconfigs are fetched successfully.
+files remain intact until the script successfully fetches both kubeconfigs.
 
 ```bash
 ./secrets/get-kubeconfig.sh                       # local, interactive
@@ -228,8 +229,8 @@ OpenBao user and validates both files before writing either secret.
 ### `get-sops-key.sh`
 
 Fetches and validates `secret/sops/age` atomically into `SOPS_AGE_KEY_FILE` or
-the default age key path. It is intentionally excluded from normal provisioning;
-run it only on hosts that need repository decryption.
+the default age key path. Normal provisioning does not invoke this script;
+run it only on hosts that need repository decryption to limit AGE key distribution.
 
 ```bash
 ./secrets/get-sops-key.sh                       # local, interactive
@@ -294,14 +295,15 @@ otherwise, and load exported credentials or `.env/secrets.sops.env` relative
 to the repository. Containers receive environment variable names rather than
 credential values on command lines. A running container runtime is required.
 
-The Grafana image tag is pinned in [grafana-mcp.sh](grafana-mcp.sh) and tracked
-by Renovate. Default tools cover search, datasources, Prometheus, Loki,
-dashboards, navigation, and alerting; writes are disabled and Loki responses
-are capped at 20 lines.
+The launcher pins the Grafana image tag in [grafana-mcp.sh](grafana-mcp.sh),
+and Renovate tracks it. Default tools cover search, datasources, Prometheus,
+Loki, dashboards, navigation, and alerting. The launcher disables writes to keep MCP
+inspection read-only and caps Loki responses at 20 lines to bound log output
+per query.
 
-A global client config is read from any working directory, so it needs the
-absolute path; the launcher is not resolved through a shell, so `~` is not
-expanded. Example for Codex (`~/.codex/config.toml`):
+Use an absolute launcher path in global client configuration so it works
+from any working directory. The client invokes the launcher without a shell
+and does not expand `~`. Example for Codex (`~/.codex/config.toml`):
 
 ```toml
 [mcp_servers.grafana]
@@ -430,7 +432,7 @@ image over stdio with read-only query tools. It is the fallback for
 [cluster-hosted MCP](../k8s/mcp/README.md) and uses the shared credential and
 runtime setup described under [Grafana MCP](#grafana-mcpsh).
 
-The image tag is pinned in [netbox-mcp.sh](netbox-mcp.sh). Its upstream `uv.lock`
+The launcher pins the image tag in [netbox-mcp.sh](netbox-mcp.sh). Its upstream `uv.lock`
 pins transitive dependencies that a tagged `uvx` install would re-resolve.
 
 Generate the desired v2 token, then store it by editing the existing encrypted

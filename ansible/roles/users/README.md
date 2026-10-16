@@ -14,8 +14,9 @@ shells, and optional sudo access.
 
 Store `users_accounts` in a SOPS-encrypted
 `inventories/homelab/group_vars/shared_vms.sops.yaml` file when the
-`shared_vms` inventory group is enabled. Passwords are accepted as plaintext
-inside the encrypted file and are hashed before being passed to the user module.
+`shared_vms` inventory group is enabled. Supply plaintext passwords only inside
+the encrypted file; the role hashes them on the control node before passing
+them to the user module.
 
 Setting an account's `state` to `disabled` expires and locks the account,
 assigns a nologin shell, and removes supplementary groups while preserving its

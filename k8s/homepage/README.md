@@ -32,14 +32,15 @@ An HTTPRoute uses the environment hostname and listener.
 
 ## Configuration
 
-`chart/config/` is mounted as native Homepage YAML. Keep Helm and environment
-differences in values files, not these configs.
-
-`secret-config.yaml` packages the config files as `homepage-config`.
+Keep application configuration in native Homepage YAML to allow edits
+without Helm template syntax. `secret-config.yaml` packages `chart/config/`
+verbatim as `homepage-config` for mounting. Helm and environment differences
+belong in values files.
 
 ## Secrets
 
-ESO injects OpenBao values as `HOMEPAGE_VAR_*` variables used by Homepage.
+Use `HOMEPAGE_VAR_*` references to keep API credentials out of committed
+Homepage YAML; ESO supplies their values from OpenBao.
 
 OpenBao KV paths:
 

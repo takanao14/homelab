@@ -48,14 +48,14 @@ Fleet-wide settings (`apt_mirror`, `chrony`, `unattended_upgrades`,
 `get_url` defaults to a 10s socket timeout, which aborts mid-transfer on the
 multi-MB release archives once egress leaves a SimpleZone. Every `get_url` task
 therefore carries `retries: 3` / `delay: 5`, and artifact downloads (archives,
-binaries, `.deb`) also raise `timeout` to 60s. Caddy is built on the controller
+binaries, `.deb`) also raise `timeout` to 60s. The role builds Caddy on the controller
 with pinned xcaddy inputs (ADR-0068). Repository signing keys are a few KB and
-keep the default timeout. `until` is omitted on purpose: with `retries` set and
+keep the default timeout. Tasks deliberately omit `until`: with `retries` set and
 no `until`, Ansible retries until the task stops failing.
 
 ### Provisioning a new host
 
-Host hygiene is applied at host bring-up, before services, via `bootstrap.yaml`
+Apply the host baseline before deploying services with `bootstrap.yaml`
 (a thin aggregate that imports the baseline `common/` playbooks):
 
 ```bash
@@ -88,7 +88,7 @@ cd ansible
 ansible-galaxy collection install -r requirements.yaml -p collections --force
 ```
 
-Collections are installed under `ansible/collections/` so both Ansible and
+Install collections under `ansible/collections/` so both Ansible and
 `ansible-lint` resolve the same pinned dependencies regardless of how the tools
 were installed.
 
@@ -98,12 +98,13 @@ Run the project lint checks from this directory:
 ansible-lint
 ```
 
-The local Collection installation directory and SOPS-generated encrypted YAML
-files are excluded by `.ansible-lint`.
+`.ansible-lint` excludes the local collection installation directory and
+SOPS-generated encrypted YAML files.
 
 ### 2. Set Up Secrets
 
-Secrets are managed with SOPS and loaded natively by Ansible via the `community.sops.sops` vars plugin.
+Keep inventory secrets encrypted with SOPS. Ansible loads them through the
+`community.sops.sops` vars plugin.
 
 Edit the encrypted files directly:
 

@@ -4,17 +4,21 @@ Installs and enables automatic security upgrades on Debian/Ubuntu hosts via `una
 
 ## Upgrade Policy
 
-The deployed config (`50unattended-upgrades`) restricts automatic upgrades to security-related origins only:
+The `50unattended-upgrades` config allows only security-related origins to
+apply security fixes automatically while keeping other package upgrades under
+operator control:
 
 - `${distro_id}:${distro_codename}-security`
 - `${distro_id}ESMApps:${distro_codename}-apps-security`
 - `${distro_id}ESM:${distro_codename}-infra-security`
 
-Automatic reboots are **disabled** (`Automatic-Reboot "false"`). Unused dependencies are removed automatically.
+`Automatic-Reboot "false"` disables automatic reboots to keep service
+disruption within operator-controlled maintenance. Unused dependencies are
+removed automatically.
 
 ## Variables
 
-None. The upgrade policy is fully defined in the template.
+None. Edit the template to change the shared upgrade policy.
 
 ## Usage
 

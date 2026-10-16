@@ -175,10 +175,12 @@ Alertmanager routes metric and Loki alerts:
   which reaches Loki through Vector with its JSON fields parsed. They report the
   failures the gRPC probe cannot: a display loop that fails after accepting a
   request, and a saturated ten-slot display queue.
-- Only `warning` and `critical` alerts are routed to Discord.
+- Keep Discord notifications focused on `warning` and `critical` alerts;
+  Alertmanager routes only those severities to Discord.
 - `Watchdog`, `InfoInhibitor`, informational alerts, and alerts without a
   supported severity remain on the null receiver.
-- Proxmox alerts group by alert name and host; resolved notifications are sent.
+- Proxmox alerts group by alert name and host; Alertmanager also sends resolved
+  notifications so operators can see when an incident ends.
 
 ESO projects the OpenBao webhook into `alertmanager-discord`; AlertmanagerConfig
 references it without storing the URL in Git.

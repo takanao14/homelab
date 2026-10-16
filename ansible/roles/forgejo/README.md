@@ -2,6 +2,9 @@
 
 Installs and configures [Forgejo](https://forgejo.org/) self-hosted Git service on Debian-based systems.
 
+SQLite keeps the Git service self-contained without a separate
+database service. The database and repositories live under `forgejo_home`.
+
 ## Variables
 
 ### Secrets (must be set in inventory vars or SOPS-encrypted files)

@@ -6,7 +6,10 @@ ICMP probes require `CAP_NET_RAW`, which the role grants to the binary.
 
 ## Probe Modules
 
-The deployed config defines these modules:
+Separate probes for internal resolution, external resolution, and authoritative
+DNS over UDP and TCP distinguish failures in those paths. ICMP and TCP
+probes distinguish host reachability from service-port availability; HTTP and
+LDAPS probes check application responses and certificate validation.
 
 | Module | Prober | Description |
 |--------|--------|-------------|
