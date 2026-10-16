@@ -1,6 +1,7 @@
 # ADR-0042: Recover OpenBao by rebuilding from Ansible, not from snapshots
 
 - **Status:** Accepted
+- **Category:** Identity & secrets
 - **Date:** 2026-09-04
 - **Related:** [ADR-0012](0012-openbao-eso-cluster-rebuild-registration.md),
   [ADR-0023](0023-openbao-ansible-userpass-login.md),

@@ -1,6 +1,7 @@
 # ADR-0052: Configure rpi3 with static addressing instead of a DHCP lease
 
 - **Status:** Accepted
+- **Category:** Network & DNS
 - **Date:** 2026-09-21
 - **Related:** [ADR-0002](0002-dhcp-outside-proxmox-cluster-nodes.md),
   [ADR-0025](0025-run-meshcentral-outside-managed-cluster.md),

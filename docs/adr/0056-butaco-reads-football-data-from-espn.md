@@ -1,6 +1,7 @@
 # ADR-0056: Butaco reads football data from ESPN's unofficial API
 
 - **Status:** Accepted
+- **Category:** Services
 - **Date:** 2026-09-25
 - **Related:** [ADR-0045](0045-deploy-slack-bot-from-its-own-repository.md),
   [ADR-0055](0055-voice-ui-observes-gpu-switch-without-controlling-it.md)

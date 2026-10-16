@@ -1,6 +1,7 @@
 # ADR-0046: Run NetBox as Podman containers on a node3 VM
 
 - **Status:** Accepted
+- **Category:** Services
 - **Date:** 2026-09-10
 - **Related:** [ADR-0020](0020-tf-tree-axes-host-vs-cluster.md),
   [ADR-0024](0024-shared-proxmox-node-inventory-for-monitoring.md),

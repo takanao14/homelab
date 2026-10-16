@@ -1,6 +1,7 @@
 # ADR-0065: Connect VM agents to shared read-only MCP servers
 
 - **Status:** Accepted
+- **Category:** AI agents & MCP
 - **Date:** 2026-10-05
 - **Related:** [ADR-0057](0057-cluster-hosted-authenticated-mcp.md), [ADR-0060](0060-mcp-relies-on-bearer-authentication.md), [ADR-0063](0063-openclaw-on-dedicated-vm-with-lemonade.md), [ADR-0064](0064-hermes-evaluation-on-dedicated-vm.md)
 

@@ -3,6 +3,7 @@
 - **Status:** Accepted
 - **Validated:** 2026-09-01; the Terraform stack, Ansible role, routing records,
   and authenticated code-server endpoint are present.
+- **Category:** Services
 - **Date:** 2026-07-31
 - **Related:** [ADR-0020](0020-tf-tree-axes-host-vs-cluster.md),
   [ADR-0021](0021-relocate-prd-control-plane-to-node4.md),

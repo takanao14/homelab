@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Amended by:** [ADR-0060](0060-mcp-relies-on-bearer-authentication.md)
+- **Category:** AI agents & MCP
 - **Date:** 2026-09-27
 - **Related:** [ADR-0014](0014-argocd-app-of-apps-shared-helm-chart.md), [ADR-0026](0026-eso-over-helm-secrets-for-in-cluster-secrets.md), [ADR-0044](0044-external-dns-syncs-owned-record-lifecycle.md)
 

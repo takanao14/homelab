@@ -1,6 +1,7 @@
 # ADR-0054: Update the ComfyUI image through pinned tags and CI-opened pull requests
 
 - **Status:** Accepted
+- **Category:** GPU inference
 - **Date:** 2026-09-23
 - **Related:** [ADR-0014](0014-argocd-app-of-apps-shared-helm-chart.md),
   [ADR-0027](0027-gpu-workload-switching-web-ui.md),

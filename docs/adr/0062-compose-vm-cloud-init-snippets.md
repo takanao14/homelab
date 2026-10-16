@@ -1,6 +1,7 @@
 # ADR-0062: Compose VM initialization with optional cloud-init snippets
 
 - **Status:** Accepted
+- **Category:** Provisioning
 - **Date:** 2026-10-03
 - **Related:** [Terraform README](../../tf/README.md)
 

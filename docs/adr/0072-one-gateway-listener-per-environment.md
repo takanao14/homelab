@@ -1,6 +1,7 @@
 # ADR-0072: One Gateway listener per environment
 
 - **Status:** Accepted
+- **Category:** Kubernetes platform
 - **Date:** 2026-10-13
 - **Related:** [ADR-0010](0010-sandbox-argocd-uses-http-only-gitops-bootstrap.md), [ADR-0011](0011-cilium-gateway-to-envoy-gateway-migration.md), [ADR-0070](0070-no-staging-sandbox-validates-the-cluster-platform.md)
 

@@ -1,6 +1,7 @@
 # ADR-0003: Proxmox host log collection via rsyslog forwarding to a central Vector
 
 - **Status:** Accepted
+- **Category:** Observability
 - **Date:** 2026-06-21
 - **Related:** [`ansible/roles/rsyslog/README.md`](../../ansible/roles/rsyslog/README.md), [ADR-0004](0004-alertmanager-single-notification-hub.md). The implementation plan (`docs/plans/proxmox-loki-log-collection.md`) has been removed now that every phase, including Phase 6 file-log collection, is complete on all four nodes.
 

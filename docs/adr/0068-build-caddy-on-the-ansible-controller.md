@@ -1,6 +1,7 @@
 # ADR-0068: Build Caddy on the Ansible controller
 
 - **Status:** Accepted
+- **Category:** Configuration & operations
 - **Date:** 2026-10-10
 
 ## Context

@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Amended by:** [ADR-0066](0066-hermes-dashboard-through-caddy.md)
+- **Category:** AI agents & MCP
 - **Date:** 2026-10-05
 - **Related:** [ADR-0063](0063-openclaw-on-dedicated-vm-with-lemonade.md)
 

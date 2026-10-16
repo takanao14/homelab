@@ -1,6 +1,7 @@
 # ADR-0070: No staging environment; sandbox validates the cluster platform
 
 - **Status:** Accepted
+- **Category:** Kubernetes platform
 - **Date:** 2026-10-12
 - **Related:** [ADR-0010](0010-sandbox-argocd-uses-http-only-gitops-bootstrap.md), [ADR-0012](0012-openbao-eso-cluster-rebuild-registration.md), [ADR-0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md), [ADR-0033](0033-sandbox-storage-openebs-localpv-and-truenas-nfs.md), [ADR-0067](0067-replace-authentik-with-lldap-and-authelia.md), [ADR-0072](0072-one-gateway-listener-per-environment.md)
 

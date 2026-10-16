@@ -1,6 +1,7 @@
 # ADR-0022: Commit Terraform provider lock files
 
 - **Status:** Accepted
+- **Category:** Repository & delivery
 - **Date:** 2026-07-11
 - **Related:** [ADR-0020](0020-tf-tree-axes-host-vs-cluster.md),
   [ADR-0017](0017-renovate-automerge-golive-adjustments.md)

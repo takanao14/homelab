@@ -1,6 +1,7 @@
 # ADR-0045: Deploy slack-bot from its own repository into prd only
 
 - **Status:** Accepted
+- **Category:** Services
 - **Date:** 2026-09-08
 - **Amended:** 2026-09-08 — a ClusterIP Service was added for metrics
   scraping; the property below concerns routed traffic, not scrapes.

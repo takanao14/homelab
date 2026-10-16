@@ -1,6 +1,7 @@
 # ADR-0063: Run OpenClaw on a dedicated VM with Lemonade inference
 
 - **Status:** Accepted
+- **Category:** AI agents & MCP
 - **Date:** 2026-10-04
 - **Related:** [ADR-0027](0027-gpu-workload-switching-web-ui.md), [ADR-0043](0043-opencode-connects-to-lemonade-mtp.md), [ADR-0060](0060-mcp-relies-on-bearer-authentication.md)
 

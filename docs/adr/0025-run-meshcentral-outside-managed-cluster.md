@@ -1,6 +1,7 @@
 # ADR-0025: Run MeshCentral outside the managed Proxmox and Kubernetes fleet
 
 - **Status:** Accepted
+- **Category:** Services
 - **Date:** 2026-07-13
 - **Related:** [ADR-0002](0002-dhcp-outside-proxmox-cluster-nodes.md),
   [ADR-0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md),

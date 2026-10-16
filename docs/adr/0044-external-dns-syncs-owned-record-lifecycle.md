@@ -1,6 +1,7 @@
 # ADR-0044: ExternalDNS synchronizes its owned DNS record lifecycle
 
 - **Status:** Accepted
+- **Category:** Kubernetes platform
 - **Date:** 2026-09-05
 - **Related:** [ADR-0014](0014-argocd-app-of-apps-shared-helm-chart.md),
   [`k8s/externalDNS/README.md`](../../k8s/externalDNS/README.md)

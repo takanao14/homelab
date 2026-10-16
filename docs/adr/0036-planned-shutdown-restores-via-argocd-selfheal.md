@@ -1,6 +1,7 @@
 # ADR-0036: Planned-shutdown restore relies on Argo CD self-heal, not a replica snapshot
 
 - **Status:** Accepted
+- **Category:** Configuration & operations
 - **Date:** 2026-08-25
 - **Related:** [ADR-0027](0027-gpu-workload-switching-web-ui.md),
   [ADR-0032](0032-reboot-and-planned-shutdown-orchestration.md),

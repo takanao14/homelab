@@ -1,6 +1,7 @@
 # ADR-0013: TrueNAS NFS for Proxmox shared image storage
 
 - **Status:** Accepted
+- **Category:** Provisioning
 - **Date:** 2026-07-06
 - **Related:** [ADR-0006](0006-custom-image-pipeline-monorepo-and-seaweedfs-s3.md),
   [`tf/README.md`](../../tf/README.md).

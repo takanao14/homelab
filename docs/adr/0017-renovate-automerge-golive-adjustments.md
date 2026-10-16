@@ -1,6 +1,7 @@
 # ADR-0017: Renovate automerge go-live adjustments
 
 - **Status:** Accepted
+- **Category:** Repository & delivery
 - **Date:** 2026-07-09
 - **Related:** amends [ADR-0005](0005-renovate-native-automerge-over-branch-protection.md),
   `renovate.json` (rule rationale lives in its `description` fields). The

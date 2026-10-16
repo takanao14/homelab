@@ -1,6 +1,7 @@
 # ADR-0034: Visualize service-to-service traffic with Hubble UI
 
 - **Status:** Proposed
+- **Category:** Kubernetes platform
 - **Date:** 2026-08-14
 - **Review by:** 2026-11-14
 - **Related:** [ADR-0009](0009-longhorn-ui-exposed-through-authenticated-gateway-route.md),

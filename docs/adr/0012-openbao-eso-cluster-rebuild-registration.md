@@ -1,6 +1,7 @@
 # ADR-0012: Re-register rebuilt clusters with OpenBao for ESO
 
 - **Status:** Accepted
+- **Category:** Identity & secrets
 - **Date:** 2026-06-27
 - **Related:** [`ansible/README.md`](../../ansible/README.md), [`ansible/roles/openbao/README.md`](../../ansible/roles/openbao/README.md), [`k8s/eso/README.md`](../../k8s/eso/README.md), [ADR-0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md)
 

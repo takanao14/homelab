@@ -1,6 +1,7 @@
 # ADR-0074: Authenticate Headlamp with Authelia
 
 - **Status:** Accepted
+- **Category:** Identity & secrets
 - **Date:** 2026-10-15
 - **Related:** [ADR-0067](0067-replace-authentik-with-lldap-and-authelia.md), [ADR-0015](0015-headlamp-per-cluster-in-cluster-deployment.md)
 

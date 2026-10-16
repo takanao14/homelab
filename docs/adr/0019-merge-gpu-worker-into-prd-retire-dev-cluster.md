@@ -3,6 +3,7 @@
 - **Status:** Accepted
 - **Implemented:** 2026-07-10; the completed runbook was removed from the
   private plans working tree and remains in its Git history.
+- **Category:** Kubernetes platform
 - **Date:** 2026-07-09
 - **Related:** [ADR-0011](0011-cilium-gateway-to-envoy-gateway-migration.md),
   [ADR-0014](0014-argocd-app-of-apps-shared-helm-chart.md),

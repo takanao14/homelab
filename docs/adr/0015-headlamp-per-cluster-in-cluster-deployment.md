@@ -1,6 +1,7 @@
 # ADR-0015: Headlamp runs in-cluster per cluster instead of a central multi-cluster UI
 
 - **Status:** Accepted
+- **Category:** Kubernetes platform
 - **Date:** 2026-07-08
 - **Related:** [`k8s/headlamp/README.md`](../../k8s/headlamp/README.md), [ADR-0012](0012-openbao-eso-cluster-rebuild-registration.md), [ADR-0014](0014-argocd-app-of-apps-shared-helm-chart.md)
 

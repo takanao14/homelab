@@ -1,6 +1,7 @@
 # ADR-0061: Keep long-term metrics in VictoriaMetrics single-node
 
 - **Status:** Accepted
+- **Category:** Observability
 - **Date:** 2026-10-03
 - **Related:** [ADR-0016](0016-cluster-label-via-default-scrape-class.md),
   [ADR-0018](0018-seaweedfs-data-on-usb-ssd-directory-storage.md)

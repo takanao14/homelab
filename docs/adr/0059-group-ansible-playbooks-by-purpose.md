@@ -1,6 +1,7 @@
 # ADR-0059: Group Ansible playbooks by purpose
 
 - **Status:** Accepted
+- **Category:** Configuration & operations
 - **Date:** 2026-10-02
 - **Related:** [ADR-0001](0001-service-oriented-ansible-playbook-organization.md)
 

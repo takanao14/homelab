@@ -1,6 +1,7 @@
 # ADR-0024: Shared Proxmox node inventory for monitoring
 
 - **Status:** Accepted
+- **Category:** Observability
 - **Date:** 2026-07-13
 - **Related:** [ADR-0014](0014-argocd-app-of-apps-shared-helm-chart.md),
   [ADR-0016](0016-cluster-label-via-default-scrape-class.md)

@@ -1,6 +1,7 @@
 # ADR-0033: Use OpenEBS LocalPV and TrueNAS NFS for sandbox storage
 
 - **Status:** Accepted
+- **Category:** Kubernetes platform
 - **Date:** 2026-08-11
 - **Reviewed:** 2026-09-05 — prd stays OpenEBS-only: its PVCs are RWO with no
   multi-node sharing, most are pinned to the GPU node, and TrueNAS `tank1` is
