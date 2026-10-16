@@ -60,7 +60,7 @@ Three things decided it:
    RDNA4 (e.g. [ggml-org/llama.cpp#20934](https://github.com/ggml-org/llama.cpp/issues/20934)),
    so it is a property of ROCm on this architecture today, not an artifact of
    the `system`-backend workaround.
-2. **Vulkan carries no artifact of ours.** The ROCm route means a Forgejo
+2. **Vulkan requires no homelab-maintained artifact.** The ROCm route means a Forgejo
    repository, a pinned `llamacpp-rocm` build number, and a bundled ROCm 7
    userspace whose skew against the host amdgpu KMD has to be tracked. Vulkan's
    only dependency is the RADV driver already installed on the host — and

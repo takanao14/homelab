@@ -14,8 +14,8 @@ Terraform a checksum-pinned URL.
 
 However, every Proxmox node currently keeps its own local copy under `local:iso`.
 Large images make registration slow and put serving pressure on the single
-SeaweedFS LXC. We want a shared Proxmox image datastore so nodes do not each need
-their own copy.
+SeaweedFS LXC. A shared Proxmox image datastore should avoid keeping a separate
+copy on each node.
 
 ## Decision
 
@@ -28,9 +28,9 @@ The initial Proxmox storage should be limited to non-running-disk content:
 - `vztmpl`
 
 Do not use this NFS storage for VM live disks (`images`) at first. VM disks stay
-on the existing node-local datastores (`local-zfs`, `local-lvm`, `data-nvme`) until
-we explicitly evaluate performance, failure behavior, backup, and snapshot needs
-for NFS-backed VM disks.
+on the existing node-local datastores (`local-zfs`, `local-lvm`, `data-nvme`).
+Moving them to NFS requires an explicit evaluation of performance, failure
+behavior, backup, and snapshot needs.
 
 SeaweedFS remains the image distribution source. TrueNAS NFS becomes the shared
 Proxmox registration target.

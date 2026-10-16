@@ -7,9 +7,9 @@
 ## Context
 
 Proxmox VE 9 logs its management services (`pvedaemon`, `pveproxy`, `pvestatd`,
-…) to `systemd-journald`. We want those host logs in Loki, but the repository
-already runs a central Vector/syslog pipeline (`log1`, `192.168.10.243`) and processing should
-stay off the hypervisors.
+…) to `systemd-journald`. Host logs need to reach Loki while processing stays
+off the hypervisors. The repository already runs a central Vector/syslog
+pipeline (`log1`, `192.168.10.243`).
 
 A virtualization platform also imposes a strict priority order:
 

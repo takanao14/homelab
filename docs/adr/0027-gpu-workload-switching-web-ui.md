@@ -224,7 +224,7 @@ Two Renovate details follow from this and constrain the implementation:
 - The image tag must live in `k8s/gpu-switch/chart/values.yaml`, **not** in a
   chart template: `renovate.json` lists `**/templates/**` under `ignorePaths`, so
   a reference written into `templates/deployment.yaml` would never be bumped.
-- `minimumReleaseAge: 1 day` applies to our own published image too, so a fresh
+- `minimumReleaseAge: 1 day` also applies to the gpu-switch image, so a fresh
   release waits a day before Renovate offers it. Either accept the delay, exempt
   this package with a `packageRule`, or bump the tag by hand at release time.
 

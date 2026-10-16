@@ -12,8 +12,9 @@
 Argo CD originally used **helm-secrets** to decrypt SOPS values during chart
 rendering, extending the Ansible and Terragrunt SOPS + AGE workflow to Kubernetes.
 
-Argo CD does not ship helm-secrets. We tried both startup injection and a custom
-CMP sidecar image, then abandoned both (see *What was actually tried*).
+Argo CD does not ship helm-secrets. Implementation and testing covered both
+startup injection and a custom CMP sidecar image before their rejection
+(see *What was actually tried*).
 
 Both approaches had the same problems:
 

@@ -14,8 +14,8 @@
 
 dnsdist routes internal zones to the pdns secondaries, answers selected RFC 6303
 reverse zones locally with NXDOMAIN, and sends everything else to a pool
-containing the router, Google Public DNS and Cloudflare DNS. We do not operate
-the recursive resolver in that path.
+containing the router, Google Public DNS and Cloudflare DNS. That path depends
+on recursive resolvers outside the repository's operational control.
 
 Measurements made while evaluating this decision found:
 
@@ -231,7 +231,7 @@ record the installed dnsdist version before restart.
   Revisit if textfile staleness matters.
 - **Build current Unbound locally.** This produces an unpackaged binary whose
   version detection, rebuild trigger, dependency patching and provenance become
-  our responsibility.
+  the homelab operator's responsibility.
 - **Use the Ubuntu Knot Resolver 5 package.** It is a superseded major release
   with Lua configuration and fails the current-upstream criterion.
 - **Keep the status quo.** It retains third-party query disclosure,

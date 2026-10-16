@@ -1,6 +1,7 @@
 # ADR-0067: Replace Authentik with LLDAP and Authelia
 
-- **Status:** Accepted (Headlamp access superseded by [ADR-0074](0074-authenticate-headlamp-with-authelia.md))
+- **Status:** Accepted
+- **Amended by:** [ADR-0074](0074-authenticate-headlamp-with-authelia.md) (Headlamp access)
 - **Date:** 2026-10-08
 - **Related:** [ADR-0010](0010-sandbox-argocd-uses-http-only-gitops-bootstrap.md), [ADR-0050](0050-single-definition-for-the-authentik-ldap-contract.md), [ADR-0058](0058-select-authentik-features-and-update-them-individually.md), [ADR-0060](0060-mcp-relies-on-bearer-authentication.md)
 

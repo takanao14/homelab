@@ -1,7 +1,7 @@
 # Architecture Decision Records (ADR)
 
-This directory records **why** we made significant, long-lived design decisions —
-the context, the option we chose, the options we rejected, and the trade-offs.
+This directory records significant, long-lived architecture decisions and their
+rationale: context, chosen and rejected alternatives, and trade-offs.
 
 ## How it differs from the other docs
 
@@ -9,7 +9,7 @@ the context, the option we chose, the options we rejected, and the trade-offs.
 |----------|----------|-----------|
 | `README.md` (per directory) | **What** the system currently is / how to use it | Kept up to date |
 | `docs/adr/` | **Why** a decision was made | Rationale immutable; metadata maintained |
-| Plans repo (private) | **What we are about to do** (steps, rollout) | Disposable once executed |
+| Plans repo (private) | **Planned changes** (steps, rollout) | Disposable once executed |
 
 In-progress plans live in a **separate private repository**, not in this public
 repo: planning and design exploration should not be published here. Only the
@@ -121,7 +121,7 @@ follow those links for the changed parts.
 | [0064](0064-hermes-evaluation-on-dedicated-vm.md) | Evaluate Hermes Agent on a dedicated VM | Accepted; amended by [ADR-0066](0066-hermes-dashboard-through-caddy.md) |
 | [0065](0065-agent-mcp-caller-credentials.md) | Connect VM agents to shared read-only MCP servers | Accepted |
 | [0066](0066-hermes-dashboard-through-caddy.md) | Expose Hermes Dashboard through Caddy | Accepted |
-| [0067](0067-replace-authentik-with-lldap-and-authelia.md) | Replace Authentik with LLDAP and Authelia | Accepted |
+| [0067](0067-replace-authentik-with-lldap-and-authelia.md) | Replace Authentik with LLDAP and Authelia | Accepted; amended by [ADR-0074](0074-authenticate-headlamp-with-authelia.md) (Headlamp access) |
 | [0068](0068-build-caddy-on-the-ansible-controller.md) | Build Caddy on the Ansible controller | Accepted |
 | [0069](0069-track-dotfiles-vendor-with-renovate.md) | Track dotfiles vendor with Renovate | Accepted |
 | [0070](0070-no-staging-sandbox-validates-the-cluster-platform.md) | No staging environment; sandbox validates the cluster platform | Accepted |
