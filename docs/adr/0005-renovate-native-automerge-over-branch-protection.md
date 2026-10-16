@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Amended by:** [ADR-0017](0017-renovate-automerge-golive-adjustments.md)
+- **Category:** Repository & delivery
 - **Date:** 2026-06-21
 - **Related:** `renovate.json`. The strategy plan
   (`renovate-automerge-strategy.md` in the private plans repo) has been

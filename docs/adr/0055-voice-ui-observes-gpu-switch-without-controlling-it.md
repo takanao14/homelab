@@ -1,6 +1,7 @@
 # ADR-0055: Voice UI observes GPU availability without switching workloads
 
 - **Status:** Accepted
+- **Category:** GPU inference
 - **Date:** 2026-09-24
 - **Related:** [ADR-0027](0027-gpu-workload-switching-web-ui.md),
   [ADR-0043](0043-opencode-connects-to-lemonade-mtp.md)

@@ -1,6 +1,7 @@
 # ADR-0040: Select the Lemonade backend by model and concurrency
 
 - **Status:** Accepted
+- **Category:** GPU inference
 - **Date:** 2026-09-01
 - **Related:** [ADR-0029](0029-rocm-serving-path-for-mxfp4-models.md),
   [ADR-0039](0039-builtin-rocm-backend-replaces-custom-lemonade-image.md),

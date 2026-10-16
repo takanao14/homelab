@@ -1,6 +1,7 @@
 # ADR-0066: Expose Hermes Dashboard through Caddy
 
 - **Status:** Accepted
+- **Category:** AI agents & MCP
 - **Date:** 2026-10-05
 - **Related:** [ADR-0064](0064-hermes-evaluation-on-dedicated-vm.md), [ADR-0065](0065-agent-mcp-caller-credentials.md)
 

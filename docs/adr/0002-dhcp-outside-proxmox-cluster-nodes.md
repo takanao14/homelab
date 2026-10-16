@@ -1,6 +1,7 @@
 # ADR-0002: Run DHCP outside the Proxmox / cluster nodes (on rpi4)
 
 - **Status:** Accepted
+- **Category:** Network & DNS
 - **Date:** 2026-06-21
 - **Related:** [ADR-0001](0001-service-oriented-ansible-playbook-organization.md) (dhcp.yaml as a relocatable service), [`ansible/roles/kea/README.md`](../../ansible/roles/kea/README.md)
 

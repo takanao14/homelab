@@ -1,6 +1,7 @@
 # ADR-0004: Alertmanager as the single notification hub (metrics + logs)
 
 - **Status:** Accepted
+- **Category:** Observability
 - **Date:** 2026-06-21
 - **Related:** [`k8s/monitoring/README.md`](../../k8s/monitoring/README.md), [ADR-0003](0003-proxmox-host-log-collection-via-rsyslog-forwarding.md). The implementation plan (`docs/plans/proxmox-loki-log-collection.md`, Phase 5) has been removed now that the rollout is complete.
 

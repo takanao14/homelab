@@ -1,6 +1,7 @@
 # ADR-0006: Custom image pipeline — monorepo build + SeaweedFS S3 distribution
 
 - **Status:** Accepted
+- **Category:** Provisioning
 - **Date:** 2026-06-21
 - **Related:** [`packer/README.md`](../../packer/README.md),
   [`ansible/roles/seaweedfs/README.md`](../../ansible/roles/seaweedfs/README.md).

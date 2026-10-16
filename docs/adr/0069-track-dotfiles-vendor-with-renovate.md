@@ -1,6 +1,7 @@
 # ADR-0069: Track dotfiles vendor with Renovate
 
 - **Status:** Accepted
+- **Category:** Repository & delivery
 - **Date:** 2026-10-12
 - **Related:** [ADR-0049](0049-manage-shared-cli-tools-with-mise.md)
 

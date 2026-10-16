@@ -1,6 +1,7 @@
 # ADR-0038: Name custom images by role — base, tool, desktop
 
 - **Status:** Accepted
+- **Category:** Provisioning
 - **Date:** 2026-08-27
 - **Related:** [ADR-0037](0037-bake-shared-toolchain-into-server-images.md),
   [ADR-0006](0006-custom-image-pipeline-monorepo-and-seaweedfs-s3.md),

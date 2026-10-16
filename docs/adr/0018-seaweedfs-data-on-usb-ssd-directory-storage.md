@@ -1,6 +1,7 @@
 # ADR-0018: SeaweedFS data on a node3 USB SSD via Proxmox directory storage
 
 - **Status:** Accepted
+- **Category:** Provisioning
 - **Date:** 2026-07-09
 - **Related:** [ADR-0006](0006-custom-image-pipeline-monorepo-and-seaweedfs-s3.md),
   `tf/lxc/node3/seaweedfs/terragrunt.hcl`,

@@ -1,6 +1,7 @@
 # ADR-0007: Defer Grafana Dashboard v2 migration
 
 - **Status:** Accepted
+- **Category:** Observability
 - **Date:** 2026-06-21
 - **Last reviewed:** 2026-09-17
 - **Review trigger:** Grafana fixes the Dashboard v2 managed-fields schema,

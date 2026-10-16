@@ -1,6 +1,7 @@
 # ADR-0043: OpenCode connects to Lemonade Server with Gemma 4 MTP
 
 - **Status:** Accepted
+- **Category:** GPU inference
 - **Date:** 2026-09-04
 - **Supersedes:** [ADR-0041](0041-opencode-connects-to-ollama.md)
 - **Related:** [ADR-0040](0040-select-lemonade-backend-by-model-and-concurrency.md),

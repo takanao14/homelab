@@ -1,6 +1,7 @@
 # ADR-0014: ArgoCD App of Apps rendered from a shared Helm chart
 
 - **Status:** Accepted
+- **Category:** Kubernetes platform
 - **Date:** 2026-07-08
 - **Related:** [`k8s/argocd/README.md`](../../k8s/argocd/README.md), [ADR-0010](0010-sandbox-argocd-uses-http-only-gitops-bootstrap.md)
 

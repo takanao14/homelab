@@ -1,6 +1,7 @@
 # ADR-0047: Collect service VM logs with a Vector journald agent
 
 - **Status:** Accepted
+- **Category:** Observability
 - **Date:** 2026-09-11
 - **Related:** [ADR-0003](0003-proxmox-host-log-collection-via-rsyslog-forwarding.md),
   [ADR-0046](0046-netbox-containers-on-a-node3-vm.md),

@@ -1,6 +1,7 @@
 # ADR-0051: Forward recursive cache misses over authenticated DNS-over-TLS
 
 - **Status:** Accepted
+- **Category:** Network & DNS
 - **Date:** 2026-09-19
 - **Accepted:** 2026-09-20
 - **Related:** [ADR-0030](0030-in-house-full-service-resolver.md)

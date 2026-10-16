@@ -1,6 +1,7 @@
 # ADR-0023: Authenticate Ansible OpenBao operations via userpass login
 
 - **Status:** Accepted
+- **Category:** Identity & secrets
 - **Date:** 2026-07-12
 - **Related:** [ADR-0012](0012-openbao-eso-cluster-rebuild-registration.md)
 

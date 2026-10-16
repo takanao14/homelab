@@ -1,6 +1,7 @@
 # ADR-0037: Bake the shared CLI toolchain into the server images from one Packer template
 
 - **Status:** Accepted
+- **Category:** Provisioning
 - **Date:** 2026-08-26
 - **Amended by:** [ADR-0049](0049-manage-shared-cli-tools-with-mise.md)
 - **Related:** [ADR-0001](0001-service-oriented-ansible-playbook-organization.md),

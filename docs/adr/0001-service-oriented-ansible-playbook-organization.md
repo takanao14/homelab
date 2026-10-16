@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Amended by:** [ADR-0059](0059-group-ansible-playbooks-by-purpose.md)
+- **Category:** Configuration & operations
 - **Date:** 2026-06-21
 - **Related:** [`ansible/README.md`](../../ansible/README.md) (resulting convention). The original implementation plan (`docs/plans/ansible-playbook-organization.md`) has been removed now that it is executed; see git history.
 

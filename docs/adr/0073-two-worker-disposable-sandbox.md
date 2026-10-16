@@ -1,6 +1,7 @@
 # ADR-0073: Use two workers for the disposable sandbox
 
 - **Status:** Accepted
+- **Category:** Kubernetes platform
 - **Date:** 2026-10-15
 - **Related:** [ADR-0033](0033-sandbox-storage-openebs-localpv-and-truenas-nfs.md), [ADR-0070](0070-no-staging-sandbox-validates-the-cluster-platform.md)
 

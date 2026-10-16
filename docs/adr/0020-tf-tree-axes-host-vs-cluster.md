@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Implemented:** 2026-07-11
+- **Category:** Provisioning
 - **Date:** 2026-07-10
 - **Related:** [ADR-0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md),
   [ADR-0006](0006-custom-image-pipeline-monorepo-and-seaweedfs-s3.md)

@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Amended by:** [ADR-0061](0061-long-term-metrics-in-victoriametrics-single.md)
+- **Category:** Observability
 - **Date:** 2026-07-09 (implemented and verified 2026-07-04)
 - **Related:** [`k8s/monitoring/README.md`](../../k8s/monitoring/README.md),
   [ADR-0004](0004-alertmanager-single-notification-hub.md). The implementation

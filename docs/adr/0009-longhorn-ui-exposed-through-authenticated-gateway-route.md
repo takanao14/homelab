@@ -1,6 +1,7 @@
 # ADR-0009: Longhorn UI is exposed through an authenticated Gateway route
 
 - **Status:** Superseded by [ADR-0033](0033-sandbox-storage-openebs-localpv-and-truenas-nfs.md)
+- **Category:** Kubernetes platform
 - **Date:** 2026-06-24
 - **Related:** [`k8s/argocd/README.md`](../../k8s/argocd/README.md), [`k0s/README.md`](../../k0s/README.md)
 

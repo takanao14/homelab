@@ -1,6 +1,7 @@
 # ADR-0050: Render every Authentik blueprint from one set of variables
 
 - **Status:** Accepted
+- **Category:** Identity & secrets
 - **Date:** 2026-09-18
 - **Amended by:** [ADR-0067](0067-replace-authentik-with-lldap-and-authelia.md)
 

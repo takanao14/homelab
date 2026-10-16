@@ -1,6 +1,7 @@
 # ADR-0035: Observe IX2106 DHCP leases from rpi4
 
 - **Status:** Accepted
+- **Category:** Network & DNS
 - **Date:** 2026-08-16
 - **Related:** [ADR-0001](0001-service-oriented-ansible-playbook-organization.md),
   [ADR-0002](0002-dhcp-outside-proxmox-cluster-nodes.md),

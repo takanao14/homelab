@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Accepted:** 2026-10-15
+- **Category:** Kubernetes platform
 - **Date:** 2026-10-12
 - **Review trigger:** Before implementing automatic Secret-driven restarts
 - **Related:** [ADR-0026](0026-eso-over-helm-secrets-for-in-cluster-secrets.md), [ADR-0070](0070-no-staging-sandbox-validates-the-cluster-platform.md)

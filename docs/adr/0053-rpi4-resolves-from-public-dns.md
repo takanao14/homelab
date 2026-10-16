@@ -1,6 +1,7 @@
 # ADR-0053: Resolve from public DNS on rpi4
 
 - **Status:** Accepted
+- **Category:** Network & DNS
 - **Date:** 2026-09-22
 - **Related:** [ADR-0002](0002-dhcp-outside-proxmox-cluster-nodes.md),
   [ADR-0025](0025-run-meshcentral-outside-managed-cluster.md),

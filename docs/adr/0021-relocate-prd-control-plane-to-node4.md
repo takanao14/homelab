@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Implemented:** 2026-07-11
+- **Category:** Kubernetes platform
 - **Date:** 2026-07-11
 - **Related:** [ADR-0019](0019-merge-gpu-worker-into-prd-retire-dev-cluster.md),
   [ADR-0020](0020-tf-tree-axes-host-vs-cluster.md),

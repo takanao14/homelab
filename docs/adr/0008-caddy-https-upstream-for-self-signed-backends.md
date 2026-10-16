@@ -1,6 +1,7 @@
 # ADR-0008: Caddy re-encrypts to HTTPS upstreams that enforce TLS (TrueNAS)
 
 - **Status:** Accepted
+- **Category:** Network & DNS
 - **Date:** 2026-06-24
 - **Related:** [`ansible/roles/caddy/README.md`](../../ansible/roles/caddy/README.md), [`k8s/homepage/README.md`](../../k8s/homepage/README.md)
 

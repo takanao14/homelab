@@ -1,6 +1,7 @@
 # ADR-0060: Rely on bearer authentication for MCP access
 
 - **Status:** Accepted
+- **Category:** AI agents & MCP
 - **Date:** 2026-10-02
 - **Related:** [ADR-0057](0057-cluster-hosted-authenticated-mcp.md), [ADR-0011](0011-cilium-gateway-to-envoy-gateway-migration.md)
 

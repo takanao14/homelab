@@ -1,6 +1,7 @@
 # ADR-0048: Expose Vector internal metrics on service VMs
 
 - **Status:** Accepted
+- **Category:** Observability
 - **Date:** 2026-09-11
 - **Related:** [ADR-0047](0047-service-vm-logs-via-vector-journald-agent.md),
   [ADR-0016](0016-cluster-label-via-default-scrape-class.md)

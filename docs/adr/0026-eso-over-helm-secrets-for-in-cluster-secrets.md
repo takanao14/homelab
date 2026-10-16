@@ -1,6 +1,7 @@
 # ADR-0026: Inject in-cluster secrets with External Secrets Operator instead of the helm-secrets plugin
 
 - **Status:** Accepted
+- **Category:** Identity & secrets
 - **Date:** 2026-07-25
 - **Related:** [ADR-0012](0012-openbao-eso-cluster-rebuild-registration.md),
   [`k8s/eso/README.md`](../../k8s/eso/README.md),

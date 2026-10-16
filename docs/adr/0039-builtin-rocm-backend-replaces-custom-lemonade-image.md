@@ -1,6 +1,7 @@
 # ADR-0039: Lemonade v11 serves gfx1200 through the built-in ROCm backend, retiring the custom image and the second Deployment
 
 - **Status:** Accepted
+- **Category:** GPU inference
 - **Date:** 2026-09-01
 - **Related:** [ADR-0028](0028-lemonade-vulkan-backend-over-rocm-on-rdna4.md) and
   [ADR-0029](0029-rocm-serving-path-for-mxfp4-models.md) (both superseded by
