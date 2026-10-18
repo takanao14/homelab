@@ -4,6 +4,12 @@ resource "proxmox_virtual_environment_container" "container" {
   node_name = each.value.node_name
 
   unprivileged = each.value.unprivileged
+
+  lifecycle {
+    # PVE accepts this password only at creation; rotate existing accounts in-guest.
+    ignore_changes = [initialization[0].user_account[0].password]
+  }
+
   features {
     nesting = each.value.nesting
   }

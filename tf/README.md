@@ -42,6 +42,13 @@ defaults. Image stacks use `node.hcl` for host binding and image selection.
 | `PROXMOX_VE_PASSWORD` | Proxmox API password |
 | `PROXMOX_VE_SSH_USERNAME` | Optional snippet-upload SSH user (default `root`); uses the SSH agent |
 
+`TF_VM_PASSWORD` initializes LXC `root` and the VM account selected by
+`TF_VM_USERNAME`. Changing it does not rotate existing guest accounts: LXC
+password changes are ignored to prevent replacement, and VM cloud-init runs
+at first boot. Rotate existing accounts inside each guest and verify them
+before retiring the previous credential. Custom cloud-init may define its own
+account policy.
+
 Stacks inherit shared R2 and node-specific SOPS credentials through parent
 `.envrc` files. Cross-host k8s stacks override the node credentials in their own
 `.envrc`. Edit the relevant `secrets.<node>.sops.env`, for example:
