@@ -40,13 +40,39 @@
   the source of truth. OpenBao holds only kubeconfigs, `.env` files, and the AGE
   key managed through `scripts/secrets/admin`; it does not mirror the encrypted
   files. Never hardcode, print, or commit decrypted secret values.
+- Treat plan/state files, decrypted data, environment dumps, and command output
+  as potentially secret-bearing. Never dump entire objects, arrays, or parent
+  blocks such as `initialization`, even when only some fields are needed.
+- Before inspecting secret-bearing data, define an explicit allowlist of safe
+  scalar fields. Use an extractor that captures and validates the data within
+  the process and emits only those fields. Do not use whole-object `print`,
+  `pprint`, or `jq .`, or rely on secret-name denylists.
+- Sanitize before stdout or stderr reaches a tool result, log, or artifact.
+  Capture raw command output and errors in memory; on unexpected structure or
+  failure, stop with a value-free error instead of dumping input or exception
+  details.
+  Never place literal credentials in tool arguments or shell command text.
+- Terraform/OpenTofu `sensitive` metadata is not a redaction boundary for JSON
+  or raw output. Treat `show -json`, state inspection, and `output -raw` as
+  secret-bearing and apply the same allowlist-only extraction rules.
+- If a secret is accidentally emitted, do not repeat it. Report where it was
+  emitted, what exposure is confirmed, and what remains unknown. Do not infer
+  public disclosure or access history. Assess affected systems and operational
+  impact before proposing remediation; do not unilaterally rotate shared
+  credentials or make a blanket migration halt mandatory.
 
 ## Infrastructure rules
 
 - After changing infrastructure code, run the relevant non-destructive
   validation and summarize its impact. This includes `terragrunt plan` for
   affected Terraform environments, `ansible-playbook --check`, and
-  `helmfile template` as applicable.
+  `helmfile template` as applicable, subject to the production execution
+  boundary below.
+- The user executes Terragrunt operations against production infrastructure or
+  state, including `init`, `plan`, `apply`, and `destroy`. Do not execute these
+  operations yourself. Provide commands for the user and review only safely
+  scoped results they supply. Keep checks pending until their results are
+  confirmed; local formatting and static validation remain agent-owned.
 - Run `terraform fmt` and `terragrunt hclfmt` after HCL changes. Lint and render
   Helmfile and Helm values changes before handoff.
 - Before rendering a wrapper chart, run `helm dependency update`, never
