@@ -18,20 +18,20 @@ url = "https://github.com/BurntSushi/ripgrep/releases/download/15.2.0/ripgrep-15
 url_api = "https://api.github.com/repos/BurntSushi/ripgrep/releases/assets/478120097"
 
 [[tools."aqua:Byron/dua-cli"]]
-version = "2.45.1"
+version = "2.46.0"
 backend = "aqua:Byron/dua-cli"
-specifiers = ["2.45.1"]
+specifiers = ["2.46.0"]
 
 [tools."aqua:Byron/dua-cli"."platforms.linux-arm64"]
-checksum = "sha256:8549719a92187491c1a6956aefddbd815ee5b3217491f2a3d98f2cc388bcb5ef"
-url = "https://github.com/Byron/dua-cli/releases/download/v2.45.1/dua-v2.45.1-aarch64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/Byron/dua-cli/releases/assets/600780401"
+checksum = "sha256:a7ba6bce1f1d16392b4c9f385e7439deda71627ed3c55eb09d5dfcbe6b481a58"
+url = "https://github.com/Byron/dua-cli/releases/download/v2.46.0/dua-v2.46.0-aarch64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/Byron/dua-cli/releases/assets/644782913"
 provenance = "github-attestations"
 
 [tools."aqua:Byron/dua-cli"."platforms.linux-x64"]
-checksum = "sha256:e9279f02bbbf22611c1602c4d5b526c9b99962d3d828016d48a0ee5b27252805"
-url = "https://github.com/Byron/dua-cli/releases/download/v2.45.1/dua-v2.45.1-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/Byron/dua-cli/releases/assets/600780353"
+checksum = "sha256:4f284a388a063a99f938c6e0f5ea8d932868e1f9a4224622d97488f4ec671b41"
+url = "https://github.com/Byron/dua-cli/releases/download/v2.46.0/dua-v2.46.0-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/Byron/dua-cli/releases/assets/644781322"
 provenance = "github-attestations"
 
 [[tools."aqua:FiloSottile/age"]]
@@ -515,20 +515,20 @@ url = "https://github.com/zellij-org/zellij/releases/download/v0.45.1/zellij-x86
 url_api = "https://api.github.com/repos/zellij-org/zellij/releases/assets/533538763"
 
 [[tools."github:DNSControl/dnscontrol"]]
-version = "5.4.0"
+version = "5.5.0"
 backend = "github:DNSControl/dnscontrol"
-specifiers = ["v5.4.0"]
+specifiers = ["v5.5.0"]
 
 [tools."github:DNSControl/dnscontrol"."platforms.linux-arm64"]
-checksum = "sha256:a624f6b5c37332fcef560214d13e946abd63c115e77928e06413bd5a1361ae38"
-url = "https://github.com/DNSControl/dnscontrol/releases/download/v5.4.0/dnscontrol_5.4.0_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/DNSControl/dnscontrol/releases/assets/625244529"
+checksum = "sha256:d53620754b956947786f068596faa048c98b8d5295acdd5e0994408879ad29f2"
+url = "https://github.com/DNSControl/dnscontrol/releases/download/v5.5.0/dnscontrol_5.5.0_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/DNSControl/dnscontrol/releases/assets/643723927"
 provenance = "github-attestations"
 
 [tools."github:DNSControl/dnscontrol"."platforms.linux-x64"]
-checksum = "sha256:e0eb56cfc8c37b30460c5ef8ffbe635e983a7ddaebe0680824d76f92874e7916"
-url = "https://github.com/DNSControl/dnscontrol/releases/download/v5.4.0/dnscontrol_5.4.0_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/DNSControl/dnscontrol/releases/assets/625244626"
+checksum = "sha256:68051adf0cef867a1579872e01c221ca8f1c2fdeedede781e893b0fdf768f348"
+url = "https://github.com/DNSControl/dnscontrol/releases/download/v5.5.0/dnscontrol_5.5.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/DNSControl/dnscontrol/releases/assets/643723807"
 provenance = "github-attestations"
 
 [[tools."pipx:ansible-core"]]
