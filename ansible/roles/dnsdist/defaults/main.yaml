@@ -2,8 +2,8 @@
 # Frontend/web bind address; override per host if needed.
 dnsdist_server_addr: "{{ ansible_facts['default_ipv4'].address | default(ansible_host) }}"
 
-dnsdist_repo_base_url: "http://repo.powerdns.com/ubuntu"
-dnsdist_repo_release: "{{ ansible_facts['distribution_release'] | default('noble') }}"
+dnsdist_repo_base_url: "http://repo.powerdns.com/{{ ansible_facts['distribution'] | lower }}"
+dnsdist_repo_release: "{{ ansible_facts['distribution_release'] }}"
 # Release train; advance deliberately when support status changes.
 dnsdist_repo_channel: "dnsdist-21"
 dnsdist_repo_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc"

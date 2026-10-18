@@ -110,7 +110,7 @@ check built from `dnsdist_internal_check_name`; resolver backends share
 | `dnsdist_internal_check_name` | `ns1.home.butaco.net.` | Health check FQDN for internal backends |
 | `dnsdist_default_check_name` | `dnssec.works.` | Health check FQDN for resolver backends |
 | `dnsdist_repo_channel` | `dnsdist-21` | PowerDNS APT repository channel (release train, not a version pin) |
-| `dnsdist_repo_release` | `{{ ansible_facts['distribution_release'] }}` | Ubuntu release codename |
+| `dnsdist_repo_release` | `{{ ansible_facts['distribution_release'] }}` | Ubuntu or Debian release codename |
 | `dnsdist_repo_key_sha256` | [defaults/main.yaml](defaults/main.yaml) | Pinned signing-key checksum; enables verified local reuse. Keep it aligned with the other PowerDNS role |
 
 ## Moving the release train

@@ -117,6 +117,7 @@ follow those links for the changed parts.
 | [0051](0051-forward-recursive-cache-misses-over-dot.md) | Forward recursive cache misses over authenticated DNS-over-TLS | Accepted |
 | [0052](0052-static-addressing-for-rpi3.md) | Configure rpi3 with static addressing instead of a DHCP lease | Accepted |
 | [0053](0053-rpi4-resolves-from-public-dns.md) | Resolve from public DNS on rpi4 | Accepted |
+| [0075](0075-debian-for-dns-lxc-guests.md) | Use Debian for DNS LXC guests | Accepted |
 
 ### Observability
 

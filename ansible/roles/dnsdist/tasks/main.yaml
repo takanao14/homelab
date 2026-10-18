@@ -3,8 +3,8 @@
   ansible.builtin.assert:
     that:
       - ansible_facts['os_family'] == 'Debian'
-      - ansible_facts['distribution'] == 'Ubuntu'
-    fail_msg: "dnsdist role currently supports Ubuntu only."
+      - ansible_facts['distribution'] in ['Ubuntu', 'Debian']
+    fail_msg: "dnsdist requires Ubuntu or Debian."
 
 - name: Validate required environment variables
   ansible.builtin.assert:

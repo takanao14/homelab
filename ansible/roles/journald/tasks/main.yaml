@@ -53,18 +53,33 @@
 - name: Apply journald configuration before managing rsyslog
   ansible.builtin.meta: flush_handlers
 
-- name: Disable rsyslog service
+- name: Check syslog unit availability
   become: true
-  ansible.builtin.systemd_service:
-    name: rsyslog.service
-    state: stopped
-    enabled: false
+  ansible.builtin.command:
+    argv:
+      - systemctl
+      - show
+      - --property=LoadState
+      - --value
+      - "{{ item }}"
+  loop:
+    - rsyslog.service
+    - syslog.socket
+  register: journald_syslog_units
+  check_mode: false
+  changed_when: false
   when: journald_disable_rsyslog
 
-- name: Disable syslog socket
+- name: Disable installed syslog units
   become: true
   ansible.builtin.systemd_service:
-    name: syslog.socket
+    name: "{{ item.item }}"
     state: stopped
-    masked: true
-  when: journald_disable_rsyslog
+    enabled: "{{ false if item.item == 'rsyslog.service' else omit }}"
+    masked: "{{ true if item.item == 'syslog.socket' else omit }}"
+  loop: "{{ journald_syslog_units.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when:
+    - journald_disable_rsyslog
+    - item.stdout | default('not-found') | trim != 'not-found'

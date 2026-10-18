@@ -1,8 +1,14 @@
+{% if ansible_facts['distribution'] == 'Debian' %}
+Unattended-Upgrade::Origins-Pattern {
+    "origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
+};
+{% else %}
 Unattended-Upgrade::Allowed-Origins {
     "${distro_id}:${distro_codename}-security";
     "${distro_id}ESMApps:${distro_codename}-apps-security";
     "${distro_id}ESM:${distro_codename}-infra-security";
 };
+{% endif %}
 
 Unattended-Upgrade::AutoFixInterruptedDpkg "true";
 Unattended-Upgrade::MinimalSteps "true";

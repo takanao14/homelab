@@ -16,6 +16,7 @@ inputs = {
   containers = {
     "ns1" = merge(local.env.locals.container_defaults, {
       os_template = local.dns_images.locals.templates[local.dns_images.locals.releases.ns1]
+      os_type     = local.dns_images.locals.os_types[local.dns_images.locals.releases.ns1]
       cores       = 1
       memory      = 1024
       bridge      = local.common.locals.node2.net10.bridge
@@ -30,6 +31,7 @@ inputs = {
     })
     "dist1" = merge(local.env.locals.container_defaults, {
       os_template = local.dns_images.locals.templates[local.dns_images.locals.releases.dist1]
+      os_type     = local.dns_images.locals.os_types[local.dns_images.locals.releases.dist1]
       cores       = 2
       memory      = 1024
       bridge      = local.common.locals.node2.net10.bridge
@@ -44,6 +46,7 @@ inputs = {
     })
     "ns3" = merge(local.env.locals.container_defaults, {
       os_template = local.dns_images.locals.templates[local.dns_images.locals.releases.ns3]
+      os_type     = local.dns_images.locals.os_types[local.dns_images.locals.releases.ns3]
       cores       = 1
       memory      = 1024
       bridge      = local.common.locals.node2.net10.bridge

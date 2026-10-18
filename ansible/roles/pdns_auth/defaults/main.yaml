@@ -1,6 +1,6 @@
 ---
-pdns_repo_base_url: "http://repo.powerdns.com/ubuntu" # noqa var-naming[no-role-prefix]
-pdns_repo_release: "{{ ansible_facts['distribution_release'] | default('noble') }}" # noqa var-naming[no-role-prefix]
+pdns_repo_base_url: "http://repo.powerdns.com/{{ ansible_facts['distribution'] | lower }}" # noqa var-naming[no-role-prefix]
+pdns_repo_release: "{{ ansible_facts['distribution_release'] }}" # noqa var-naming[no-role-prefix]
 # Release train; advance deliberately with support status. 5.0 -> 5.1 needs no schema change.
 pdns_repo_channel: "auth-51" # noqa var-naming[no-role-prefix]
 pdns_repo_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc" # noqa var-naming[no-role-prefix]
