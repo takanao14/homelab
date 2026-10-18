@@ -15,7 +15,7 @@ locals {
     ns1       = "resolute"
     ns2       = "resolute"
     ns3       = "resolute"
-    dist1     = "resolute"
+    dist1     = "trixie"
     dist2     = "trixie"
     resolver1 = "resolute"
     resolver2 = "resolute"
