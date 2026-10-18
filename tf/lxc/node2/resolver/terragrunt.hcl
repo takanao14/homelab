@@ -16,6 +16,7 @@ inputs = {
   containers = {
     "resolver1" = merge(local.env.locals.container_defaults, {
       os_template = local.dns_images.locals.templates[local.dns_images.locals.releases.resolver1]
+      os_type     = local.dns_images.locals.os_types[local.dns_images.locals.releases.resolver1]
       cores       = 2
       memory      = 1024
       bridge      = local.common.locals.node2.net10.bridge

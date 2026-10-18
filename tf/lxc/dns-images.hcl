@@ -1,7 +1,14 @@
 locals {
   templates = {
+    trixie   = "local:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst"
     noble    = "local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
     resolute = "local:vztmpl/ubuntu-26.04-standard_26.04-1_amd64.tar.zst"
+  }
+
+  os_types = {
+    noble    = "ubuntu"
+    resolute = "ubuntu"
+    trixie   = "debian"
   }
 
   releases = {

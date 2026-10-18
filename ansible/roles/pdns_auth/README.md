@@ -115,7 +115,7 @@ tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 32 && echo
 | `pdns_webserver_port` | `8081` | API/webserver listen port |
 | `pdns_repo_channel` | `auth-51` | PowerDNS APT repository channel. A release train, not a version pin — see below |
 | `pdns_repo_key_sha256` | [defaults/main.yaml](defaults/main.yaml) | Pinned signing-key checksum; enables verified local reuse. Keep it aligned with the other PowerDNS role |
-| `pdns_repo_release` | `{{ ansible_facts['distribution_release'] }}` | Ubuntu release codename |
+| `pdns_repo_release` | `{{ ansible_facts['distribution_release'] }}` | Ubuntu or Debian release codename |
 
 ### Moving the release train
 
