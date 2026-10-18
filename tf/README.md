@@ -72,7 +72,8 @@ exactly one container is replaced. Never replace a peer in the same apply.
 Changing `TF_VM_SSH_PUBLIC_KEY` also replaces containers with unchanged templates.
 
 Download the selected template to the node's `local` template storage first.
-Rebuild `resolver2`, `resolver1`, `ns3`, `ns2`, `ns1`, `dist2`, then `dist1`;
+For the Debian rollout, rebuild `dist2`, `dist1`, `ns2`, `ns3`, `ns1`,
+`resolver2`, then `resolver1`;
 after each replacement, run the service's Ansible playbook with `--limit` and
 check DNS service and failover. After a secondary rebuild, run
 `playbooks/ops/pdns_sync.yaml` limited to the primary and that secondary and
