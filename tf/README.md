@@ -23,7 +23,7 @@ tf/
 ├── cloudimage/       # Stock images: images.hcl, base.hcl, <node>/
 ├── customimage/      # Packer images: images.hcl, base.hcl, <node>/
 ├── vm/<host>/<service>/
-├── lxc/<host>/<service>/
+├── lxc/            # images.hcl (per-guest LXC release), <host>/<service>/
 └── k8s/<prd|sandbox>/<stack>/
 ```
 
@@ -65,8 +65,8 @@ that VM in both the plan and apply commands.
 
 ### DNS LXC rebuilds
 
-`lxc/dns-images.hcl` selects each DNS host's OS template. Change one `releases`
-entry at a time. Each host has `dnsdist`, `pdns` and `resolver` stacks;
+`lxc/images.hcl` selects every LXC guest's OS template. Change one DNS
+`releases` entry at a time. Each host has `dnsdist`, `pdns` and `resolver` stacks;
 `node2/pdns` manages ns1 and ns3, so use `-target` for the selected container in
 both plan and apply there, and verify that exactly one container is replaced.
 Never replace a peer in the same apply.

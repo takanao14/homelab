@@ -12,13 +12,17 @@ locals {
   }
 
   releases = {
-    ns1       = "trixie"
-    ns2       = "trixie"
-    ns3       = "trixie"
-    dist1     = "trixie"
-    dist2     = "trixie"
-    resolver1 = "trixie"
-    resolver2 = "trixie"
+    ns1        = "trixie"
+    ns2        = "trixie"
+    ns3        = "trixie"
+    dist1      = "trixie"
+    dist2      = "trixie"
+    resolver1  = "trixie"
+    resolver2  = "trixie"
+    caddy1     = "noble"
+    forgejo1   = "noble"
+    seaweedfs1 = "noble"
+    log1       = "resolute"
   }
 
   images = {

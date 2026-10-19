@@ -27,7 +27,7 @@ inputs = {
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 10
-          file_id = "local:iso/debian-13.img"
+          file_id = "local:iso/debian-13-base.img"
         })
       }
     })

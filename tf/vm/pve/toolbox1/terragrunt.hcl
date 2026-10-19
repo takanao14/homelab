@@ -28,7 +28,7 @@ inputs = {
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 200
-          file_id = "local:iso/ubuntu-24.04-tool.img"
+          file_id = "local:iso/ubuntu-26.04-tool.img"
         })
       }
     })

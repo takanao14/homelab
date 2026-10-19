@@ -9,12 +9,12 @@ terraform {
 locals {
   env    = read_terragrunt_config(find_in_parent_folders("env.hcl"))
   common = read_terragrunt_config(find_in_parent_folders("common.hcl"))
+  images = read_terragrunt_config("${get_parent_terragrunt_dir()}/lxc/images.hcl")
 }
 
 inputs = {
   containers = {
-    "log1" = merge(local.env.locals.container_defaults, {
-      os_template = "local:vztmpl/ubuntu-26.04-standard_26.04-1_amd64.tar.zst"
+    "log1" = merge(local.env.locals.container_defaults, local.images.locals.images.log1, {
       cores       = 2
       memory      = 1024
       bridge      = local.common.locals.node2.net10.bridge
