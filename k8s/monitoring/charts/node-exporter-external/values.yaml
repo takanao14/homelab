@@ -67,3 +67,15 @@ ledServiceMonitor:
   maxAgeSeconds: 180
   unavailableFor: 10m
   restartsThreshold: 3
+
+guestOsAlerts:
+  enabled: false
+  for: 1h
+  exemptIds: rocky|freebsd
+  allowed:
+    - id: debian
+      versionId: "13"
+    - id: ubuntu
+      versionId: "24.04"
+    - id: ubuntu
+      versionId: "26.04"

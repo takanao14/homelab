@@ -122,3 +122,6 @@ ledServiceMonitor:
   unavailableFor: 10m
   # One restart follows every deployment; a loop restarts every five seconds.
   restartsThreshold: 3
+
+guestOsAlerts:
+  enabled: true
