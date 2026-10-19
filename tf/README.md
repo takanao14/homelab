@@ -72,10 +72,10 @@ exactly one container is replaced. Never replace a peer in the same apply.
 Changing `TF_VM_SSH_PUBLIC_KEY` also replaces containers with unchanged templates.
 
 Download the selected template to the node's `local` template storage first.
-For the Debian rollout, rebuild `dist2`, `dist1`, `ns2`, `ns3`, `ns1`,
-`resolver2`, then `resolver1`;
-after each replacement, run the service's Ansible playbook with `--limit` and
-check DNS service and failover. After a secondary rebuild, run
+All seven DNS guests use Debian 13. After each replacement, run bootstrap and
+the service's Ansible playbook with `--limit` and check DNS service and failover.
+For a resolver, also run `playbooks/services/blackbox_exporter.yaml` with the same
+limit to restore root-server reachability probes. After a secondary rebuild, run
 `playbooks/ops/pdns_sync.yaml` limited to the primary and that secondary and
 compare SOA serials.
 
