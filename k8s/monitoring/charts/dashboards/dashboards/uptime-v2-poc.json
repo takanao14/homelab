@@ -14,7 +14,6 @@
         "spec": {
           "id": 11,
           "title": "ICMP Availability by Device",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -106,7 +105,6 @@
         "spec": {
           "id": 12,
           "title": "DNS Availability by Device",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -219,7 +217,6 @@
         "spec": {
           "id": 14,
           "title": "ICMP Status History",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -381,7 +378,6 @@
         "spec": {
           "id": 17,
           "title": "DNS Status History",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -581,7 +577,6 @@
         "spec": {
           "id": 2,
           "title": "ICMP Devices Down",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -658,7 +653,6 @@
         "spec": {
           "id": 3,
           "title": "DNS Devices Down",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -899,7 +893,6 @@
         "spec": {
           "id": 7,
           "title": "ICMP Status",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -989,7 +982,6 @@
         "spec": {
           "id": 8,
           "title": "DNS External Status",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1079,7 +1071,6 @@
         "spec": {
           "id": 9,
           "title": "DNS Internal Status",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",

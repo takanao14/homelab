@@ -96,7 +96,11 @@ func TestClassicParity(t *testing.T) {
 				t.Errorf("%s: %s changed", title, key)
 			}
 		}
-		if description, _ := p["description"].(string); description != n.Description {
+		actualDescription := ""
+		if n.Description != nil {
+			actualDescription = *n.Description
+		}
+		if description, _ := p["description"].(string); description != actualDescription {
 			t.Errorf("%s: description changed", title)
 		}
 		targets := p["targets"].([]any)
