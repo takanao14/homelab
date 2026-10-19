@@ -48,6 +48,11 @@ resource "proxmox_virtual_environment_container" "container" {
     }
   }
 
+  lifecycle {
+    # Credentials are creation inputs; changing them would force replacement.
+    ignore_changes = [initialization[0].user_account]
+  }
+
   network_interface {
     name   = each.value.ifname
     bridge = each.value.bridge

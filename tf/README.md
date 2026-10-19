@@ -70,7 +70,6 @@ that VM in both the plan and apply commands.
 `node2/pdns` manages ns1 and ns3, so use `-target` for the selected container in
 both plan and apply there, and verify that exactly one container is replaced.
 Never replace a peer in the same apply.
-Changing `TF_VM_SSH_PUBLIC_KEY` also replaces containers with unchanged templates.
 
 Download the selected template to the node's `local` template storage first.
 All seven DNS guests use Debian 13. After each replacement, run bootstrap and
