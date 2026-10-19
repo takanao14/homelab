@@ -118,6 +118,7 @@ follow those links for the changed parts.
 | [0052](0052-static-addressing-for-rpi3.md) | Configure rpi3 with static addressing instead of a DHCP lease | Accepted |
 | [0053](0053-rpi4-resolves-from-public-dns.md) | Resolve from public DNS on rpi4 | Accepted |
 | [0075](0075-debian-for-dns-lxc-guests.md) | Use Debian for DNS LXC guests | Accepted |
+| [0076](0076-one-terragrunt-stack-per-dns-role.md) | One Terragrunt stack per DNS role on each host | Accepted |
 
 ### Observability
 

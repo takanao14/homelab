@@ -66,9 +66,10 @@ that VM in both the plan and apply commands.
 ### DNS LXC rebuilds
 
 `lxc/dns-images.hcl` selects each DNS host's OS template. Change one `releases`
-entry at a time. The node2/node3 `dnsserver` stacks manage multiple containers:
-use `-target` for the selected container in both plan and apply, and verify that
-exactly one container is replaced. Never replace a peer in the same apply.
+entry at a time. Each host has `dnsdist`, `pdns` and `resolver` stacks;
+`node2/pdns` manages ns1 and ns3, so use `-target` for the selected container in
+both plan and apply there, and verify that exactly one container is replaced.
+Never replace a peer in the same apply.
 Changing `TF_VM_SSH_PUBLIC_KEY` also replaces containers with unchanged templates.
 
 Download the selected template to the node's `local` template storage first.

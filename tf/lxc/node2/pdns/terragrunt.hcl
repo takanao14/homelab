@@ -14,14 +14,12 @@ locals {
 
 inputs = {
   containers = {
-    "ns2" = merge(local.env.locals.container_defaults, {
-      os_template = local.dns_images.locals.templates[local.dns_images.locals.releases.ns2]
-      os_type     = local.dns_images.locals.os_types[local.dns_images.locals.releases.ns2]
+    "ns1" = merge(local.env.locals.container_defaults, local.dns_images.locals.images.ns1, {
       cores       = 1
       memory      = 1024
-      bridge      = local.common.locals.node3.net10.bridge
-      ipv4        = "192.168.10.234/24"
-      ipv4gw      = local.common.locals.node3.net10.ipv4gw
+      bridge      = local.common.locals.node2.net10.bridge
+      ipv4        = "192.168.10.233/24"
+      ipv4gw      = local.common.locals.node2.net10.ipv4gw
       dns_servers = local.common.locals.dns_external
       disks = {
         disk0 = merge(local.env.locals.disk_defaults, {
@@ -29,14 +27,12 @@ inputs = {
         })
       }
     })
-    "dist2" = merge(local.env.locals.container_defaults, {
-      os_template = local.dns_images.locals.templates[local.dns_images.locals.releases.dist2]
-      os_type     = local.dns_images.locals.os_types[local.dns_images.locals.releases.dist2]
-      cores       = 2
+    "ns3" = merge(local.env.locals.container_defaults, local.dns_images.locals.images.ns3, {
+      cores       = 1
       memory      = 1024
-      bridge      = local.common.locals.node3.net10.bridge
-      ipv4        = "192.168.10.232/24"
-      ipv4gw      = local.common.locals.node3.net10.ipv4gw
+      bridge      = local.common.locals.node2.net10.bridge
+      ipv4        = "192.168.10.235/24"
+      ipv4gw      = local.common.locals.node2.net10.ipv4gw
       dns_servers = local.common.locals.dns_external
       disks = {
         disk0 = merge(local.env.locals.disk_defaults, {
