@@ -169,7 +169,6 @@
         "spec": {
           "id": 13,
           "title": "Lease Events",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -306,7 +305,6 @@
         "spec": {
           "id": 3,
           "title": "Bound Leases",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -460,7 +458,6 @@
         "spec": {
           "id": 5,
           "title": "Poll Duration",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -644,7 +641,6 @@
         "spec": {
           "id": 8,
           "title": "Bound Lease Count",
-          "description": "",
           "links": [],
           "data": {
             "kind": "QueryGroup",
