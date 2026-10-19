@@ -18,6 +18,6 @@ locals {
     dist1     = "trixie"
     dist2     = "trixie"
     resolver1 = "resolute"
-    resolver2 = "resolute"
+    resolver2 = "trixie"
   }
 }
