@@ -236,6 +236,8 @@
       changed_when: false
       register: dns_failover_rfc6303
       failed_when: "'status: NXDOMAIN' not in dns_failover_rfc6303.stdout"
+      # RFC 6303 reverse zones are served by the resolver pool.
+      when: dns_failover_current.external_available
 
     - name: Probe external DNS through blackbox_exporter
       ansible.builtin.uri:
