@@ -20,4 +20,11 @@ locals {
     resolver1 = "trixie"
     resolver2 = "trixie"
   }
+
+  images = {
+    for host, release in local.releases : host => {
+      os_template = local.templates[release]
+      os_type     = local.os_types[release]
+    }
+  }
 }
