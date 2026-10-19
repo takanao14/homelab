@@ -14,7 +14,7 @@ locals {
   releases = {
     ns1       = "resolute"
     ns2       = "trixie"
-    ns3       = "resolute"
+    ns3       = "trixie"
     dist1     = "trixie"
     dist2     = "trixie"
     resolver1 = "resolute"
