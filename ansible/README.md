@@ -246,6 +246,10 @@ ansible-playbook playbooks/ops/dns_failover_test.yaml \
   -e confirm_dns_disruption=true
 ```
 
+AD is required when local DNSSEC validation is enabled. ADR-0051 trusted
+forwarding allows responses without AD; bogus-name rejection remains required.
+Both resolvers must use the same validation policy.
+
 Supported scenarios are `resolver1`, `resolver2`, `node2`, `node3`,
 `both_resolvers`, and `all`. If the controller is interrupted before the
 `always` block completes, run the recovery action immediately:

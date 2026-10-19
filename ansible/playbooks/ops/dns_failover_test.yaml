@@ -20,6 +20,10 @@
     dns_failover_scenario: ""
     confirm_dns_disruption: false
     dns_failover_health_wait_seconds: 10
+    # ADR-0051 trusts upstream validation without asserting local AD status.
+    dns_failover_require_ad: >-
+      {{ (hostvars['resolver1'].knot_resolver_mode | default('recursive')) != 'emergency_forward'
+         or (hostvars['resolver1'].knot_resolver_forward_dnssec | default(true) | bool) }}
     dns_failover_blackbox_url: "http://192.168.10.241:9115/probe"
 
     dns_failover_frontends:
@@ -221,6 +225,17 @@
           Select resolver1, resolver2, node2, node3, both_resolvers, or all and
           pass -e confirm_dns_disruption=true. This playbook stops live DNS
           services and restores them after each scenario.
+
+    - name: Require matching resolver validation policies
+      ansible.builtin.assert:
+        that:
+          - >-
+            (hostvars['resolver1'].knot_resolver_mode | default('recursive'))
+            == (hostvars['resolver2'].knot_resolver_mode | default('recursive'))
+          - >-
+            (hostvars['resolver1'].knot_resolver_forward_dnssec | default(true) | bool)
+            == (hostvars['resolver2'].knot_resolver_forward_dnssec | default(true) | bool)
+        fail_msg: "Failover tests require both resolvers to use the same validation policy."
 
     - name: Check preflight service state
       ansible.builtin.command:

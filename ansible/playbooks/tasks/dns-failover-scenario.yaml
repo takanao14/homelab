@@ -114,7 +114,7 @@
       until:
         - dns_failover_external_valid.rc == 0
         - "'status: NOERROR' in dns_failover_external_valid.stdout"
-        - "' ad;' in dns_failover_external_valid.stdout"
+        - "not (dns_failover_require_ad | bool) or ' ad;' in dns_failover_external_valid.stdout"
       when: dns_failover_current.external_available
 
     - name: Query bogus DNSSEC name through surviving frontends
@@ -339,4 +339,4 @@
       until:
         - dns_failover_recovery_query.rc == 0
         - "'status: NOERROR' in dns_failover_recovery_query.stdout"
-        - "' ad;' in dns_failover_recovery_query.stdout"
+        - "not (dns_failover_require_ad | bool) or ' ad;' in dns_failover_recovery_query.stdout"
