@@ -18,6 +18,7 @@ This role is designed for a hidden primary setup:
 - Validates required variables before proceeding.
 - Initializes the SQLite database if it doesn't exist.
 - Deploys `/etc/powerdns/pdns.conf` based on the role (`primary` or `secondary`).
+- Orders `pdns` after `networking.service` when ifupdown is installed, so static addresses exist before binding.
 - Enables and starts the `pdns` service.
 - Registers the primary as an autoprimary on each secondary node via the PowerDNS API.
 - Exports each zone's SOA serial through the node_exporter textfile collector
