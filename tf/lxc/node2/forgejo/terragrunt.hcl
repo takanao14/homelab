@@ -9,11 +9,12 @@ terraform {
 locals {
   env    = read_terragrunt_config(find_in_parent_folders("env.hcl"))
   common = read_terragrunt_config(find_in_parent_folders("common.hcl"))
+  images = read_terragrunt_config("${get_parent_terragrunt_dir()}/lxc/images.hcl")
 }
 
 inputs = {
   containers = {
-    "forgejo1" = merge(local.env.locals.container_defaults, {
+    "forgejo1" = merge(local.env.locals.container_defaults, local.images.locals.images.forgejo1, {
       cores       = 2
       memory      = 2048
       bridge      = local.common.locals.node2.net10.bridge

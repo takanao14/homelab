@@ -1,0 +1,32 @@
+{{- if .Values.guestOsAlerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: guest-os-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  groups:
+    - name: guest-os-external
+      rules:
+        # ADR-0077: Proxmox hosts follow Proxmox VE and test distributions are exempt.
+        - alert: GuestOSReleaseNotAllowed
+          expr: >-
+            node_os_info{
+              id!~"{{ .Values.guestOsAlerts.exemptIds }}",
+              instance!~"{{ range $i, $n := .Values.proxmoxNodes }}{{ if $i }}|{{ end }}{{ $n.name }}{{ end }}"
+            }
+            {{- range .Values.guestOsAlerts.allowed }}
+            unless node_os_info{id="{{ .id }}", version_id="{{ .versionId }}"}
+            {{- end }}
+          for: {{ .Values.guestOsAlerts.for }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ "{{ $labels.instance }}" }} runs a guest OS release outside ADR-0077"
+            description: >-
+              {{ "{{ $labels.instance }}" }} reports {{ "{{ $labels.id }}" }}
+              {{ "{{ $labels.version_id }}" }}. Rebuild it on an allowed release
+              and update its declared image or LXC template.
+{{- end }}

@@ -9,11 +9,12 @@ terraform {
 locals {
   env    = read_terragrunt_config(find_in_parent_folders("env.hcl"))
   common = read_terragrunt_config(find_in_parent_folders("common.hcl"))
+  images = read_terragrunt_config("${get_parent_terragrunt_dir()}/lxc/images.hcl")
 }
 
 inputs = {
   containers = {
-    "seaweedfs1" = merge(local.env.locals.container_defaults, {
+    "seaweedfs1" = merge(local.env.locals.container_defaults, local.images.locals.images.seaweedfs1, {
       # Allow for LXC page cache and the Go heap during multi-GB image transfers.
       cores       = 4
       memory      = 8192

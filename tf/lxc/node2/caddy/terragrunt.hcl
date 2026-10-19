@@ -9,11 +9,12 @@ terraform {
 locals {
   env    = read_terragrunt_config(find_in_parent_folders("env.hcl"))
   common = read_terragrunt_config(find_in_parent_folders("common.hcl"))
+  images = read_terragrunt_config("${get_parent_terragrunt_dir()}/lxc/images.hcl")
 }
 
 inputs = {
   containers = {
-    "caddy1" = merge(local.env.locals.container_defaults, {
+    "caddy1" = merge(local.env.locals.container_defaults, local.images.locals.images.caddy1, {
       cores       = 1
       memory      = 512
       bridge      = local.common.locals.node2.net10.bridge
