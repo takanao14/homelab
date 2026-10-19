@@ -76,6 +76,7 @@ follow those links for the changed parts.
 | [0038](0038-image-role-suffixes-base-tool-desktop.md) | Name custom images by role — base, tool, desktop | Accepted |
 | [0049](0049-manage-shared-cli-tools-with-mise.md) | Manage shared Linux CLI tools with mise | Accepted; amended by [ADR-0069](0069-track-dotfiles-vendor-with-renovate.md) |
 | [0062](0062-compose-vm-cloud-init-snippets.md) | Compose VM initialization with optional cloud-init snippets | Accepted |
+| [0077](0077-select-guest-os-by-role.md) | Select the guest OS by role | Accepted |
 
 ### Configuration & operations
 
