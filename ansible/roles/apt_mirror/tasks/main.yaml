@@ -19,7 +19,7 @@
   become: true
   ansible.builtin.replace:
     path: /etc/apt/sources.list.d/ubuntu.sources
-    regexp: 'http://archive\.ubuntu\.com/ubuntu'
+    regexp: 'http://(?:archive\.ubuntu\.com/ubuntu|ftp\.udx\.icscoe\.jp/Linux/ubuntu)/?(?=[ \t\r\n]|$)'
     replace: "{{ apt_mirror_url }}"
   when: apt_mirror_deb822_sources.stat.exists
   notify: Update apt cache
@@ -29,7 +29,7 @@
   become: true
   ansible.builtin.replace:
     path: /etc/apt/sources.list
-    regexp: 'http://archive\.ubuntu\.com/ubuntu(?=[ \t]+(?![\w.-]*security))'
+    regexp: 'http://(?:archive\.ubuntu\.com/ubuntu|ftp\.udx\.icscoe\.jp/Linux/ubuntu)/?(?=[ \t]+(?![\w.-]*security))'
     replace: "{{ apt_mirror_url }}"
   when: apt_mirror_legacy_sources.stat.exists
   notify: Update apt cache
