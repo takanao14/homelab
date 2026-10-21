@@ -33,3 +33,29 @@ jobs:
         env:
           ANSIBLE_ROLES_PATH: ansible/roles
           ANSIBLE_COLLECTIONS_PATH: ansible/collections
+
+      - name: Verify dnscollector release checksum
+        run: |
+          python - <<'PY'
+          import hashlib
+          import re
+          import urllib.request
+          from pathlib import Path
+
+          import yaml
+
+          pins = yaml.safe_load(Path('ansible/roles/dnscollector/defaults/main.yaml').read_text())
+          version = pins['dnscollector_version']
+          expected = pins['dnscollector_sha256']
+          if not re.fullmatch(r'v\d+\.\d+\.\d+', version) or not re.fullmatch(r'[a-f0-9]{64}', expected):
+              raise SystemExit('Invalid dnscollector release pins')
+          url = f'https://github.com/dmachard/DNS-collector/releases/download/{version}/DNS-collector_{version[1:]}_linux_amd64.tar.gz'
+          try:
+              with urllib.request.urlopen(url, timeout=60) as archive:
+                  actual = hashlib.file_digest(archive, 'sha256').hexdigest()
+          except Exception:
+              raise SystemExit('Could not fetch dnscollector release archive') from None
+          if actual != expected:
+              raise SystemExit('dnscollector release checksum mismatch')
+          print('dnscollector release checksum verified')
+          PY

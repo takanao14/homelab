@@ -14,7 +14,8 @@ sends them to stdout instead.
 | `dnscollector_dnsdist_socket` | `/run/dnstap-dnsdist.sock` | dnstap Unix socket path (shared with dnsdist) |
 | `dnscollector_debug` | `false` | Enable debug logging |
 
-Architecture is auto-detected from `ansible_facts['architecture']` (supports `x86_64` and `aarch64`).
+Only amd64 (`x86_64`) hosts are supported. Renovate updates `dnscollector_version`
+and `dnscollector_sha256` together; CI verifies the pinned archive checksum.
 
 ## Dependencies
 
