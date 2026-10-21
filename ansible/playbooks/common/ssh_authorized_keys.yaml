@@ -1,0 +1,18 @@
+---
+- name: Converge admin SSH authorized keys
+  hosts: lxc:vm
+  any_errors_fatal: false
+  vars:
+    admin_authorized_keys: >-
+      {{ lookup('ansible.builtin.file', admin_authorized_keys_file | expanduser).splitlines()
+         | map('trim') | reject('match', '^(#|$)') | list }}
+    # Declared per host so a missing file fails instead of revoking its keys.
+    admin_authorized_keys_extra: >-
+      {{ (lookup('ansible.builtin.file', admin_authorized_keys_extra_file | expanduser).splitlines()
+          if admin_authorized_keys_extra_file is defined else [])
+         | map('trim') | reject('match', '^(#|$)') | list }}
+  roles:
+    - role: ssh_authorized_keys
+      vars:
+        ssh_authorized_keys_list: "{{ admin_authorized_keys + admin_authorized_keys_extra }}"
+      tags: ssh_authorized_keys

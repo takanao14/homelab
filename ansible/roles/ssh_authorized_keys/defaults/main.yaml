@@ -1,0 +1,4 @@
+---
+# Empty selects ansible_user, then the user the connection logs in as.
+ssh_authorized_keys_user: ""
+ssh_authorized_keys_list: []

@@ -215,6 +215,7 @@ Use the OpenBao role README for:
 | `playbooks/common/unattended_upgrades.yaml` | `all:!proxmox:!power_only` | cross-cutting |
 | `playbooks/common/k8s-storage-client.yaml` | `prd_k8s:sandbox_k8s` | cross-cutting |
 | `playbooks/common/maintenance_user.yaml` | `lxc` | cross-cutting |
+| `playbooks/common/ssh_authorized_keys.yaml` | `lxc:vm` | cross-cutting |
 | `playbooks/common/users.yaml` | `shared_vms` | cross-cutting |
 | `playbooks/common/netplan.yaml` | `netplan` | cross-cutting |
 | `playbooks/common/networkmanager.yaml` | `networkmanager` | cross-cutting |

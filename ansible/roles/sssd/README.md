@@ -45,7 +45,8 @@ The search filters skip entries without them, which hides the bind account.
 
 Set `sssd_breakglass_authorized_keys` in
 `inventories/homelab/group_vars/sssd.yaml`. Public keys remain unencrypted so
-recovery does not depend on SOPS. An empty list leaves existing keys unchanged.
+recovery does not depend on SOPS. The `ssh_authorized_keys` role applies them
+exclusively; an empty list leaves existing keys unchanged.
 
 ### Defaults
 

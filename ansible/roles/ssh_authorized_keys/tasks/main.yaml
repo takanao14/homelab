@@ -1,0 +1,35 @@
+---
+# Ask the host instead of reading facts: under --become, facts report root and
+# exclusive would overwrite root's keys.
+- name: Resolve the connection user
+  ansible.builtin.command: id -un
+  become: false
+  changed_when: false
+  check_mode: false
+  register: ssh_authorized_keys_connection_user
+  when:
+    - not ssh_authorized_keys_user
+    - ansible_user is not defined
+
+- name: Select the target user
+  ansible.builtin.set_fact:
+    ssh_authorized_keys_target: >-
+      {{ ssh_authorized_keys_user
+         or ansible_user | default('')
+         or ssh_authorized_keys_connection_user.stdout | default('') }}
+
+# exclusive replaces the whole file; refuse empty input to prevent lockout.
+- name: Require a target user and at least one key
+  ansible.builtin.assert:
+    that:
+      - ssh_authorized_keys_target | length > 0
+      - ssh_authorized_keys_list | select | list | length > 0
+    fail_msg: The target user and at least one SSH key must be set.
+
+- name: Authorise SSH keys
+  become: true
+  ansible.posix.authorized_key:
+    user: "{{ ssh_authorized_keys_target }}"
+    key: "{{ ssh_authorized_keys_list | select | join('\n') }}"
+    exclusive: true
+    state: present
