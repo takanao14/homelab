@@ -1,13 +1,19 @@
 ---
+- name: Require amd64 architecture
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['architecture'] == 'x86_64'
+    fail_msg: "dnscollector requires an amd64 host."
+
 - name: Download dnscollector binary
   become: true
   ansible.builtin.get_url:
     url: >-
-      https://github.com/dmachard/DNS-collector/releases/download/v{{ dnscollector_version
-      }}/DNS-collector_{{ dnscollector_version }}_linux_{{ dnscollector_arch }}.tar.gz
-    dest: "/tmp/dnscollector-{{ dnscollector_version }}-{{ dnscollector_arch }}.tar.gz"
+      https://github.com/dmachard/DNS-collector/releases/download/{{ dnscollector_version
+      }}/DNS-collector_{{ dnscollector_version[1:] }}_linux_amd64.tar.gz
+    dest: "/tmp/dnscollector-{{ dnscollector_version }}-amd64.tar.gz"
     mode: "0644"
-    checksum: "sha256:{{ dnscollector_checksums[dnscollector_arch] }}"
+    checksum: "sha256:{{ dnscollector_sha256 }}"
     timeout: 60
   retries: 3
   delay: 5
@@ -15,14 +21,14 @@
 - name: Check dnscollector archive availability in check mode
   become: true
   ansible.builtin.stat:
-    path: "/tmp/dnscollector-{{ dnscollector_version }}-{{ dnscollector_arch }}.tar.gz"
+    path: "/tmp/dnscollector-{{ dnscollector_version }}-amd64.tar.gz"
   register: dnscollector_archive
   when: ansible_check_mode
 
 - name: Extract dnscollector binary
   become: true
   ansible.builtin.unarchive:
-    src: "/tmp/dnscollector-{{ dnscollector_version }}-{{ dnscollector_arch }}.tar.gz"
+    src: "/tmp/dnscollector-{{ dnscollector_version }}-amd64.tar.gz"
     dest: /usr/local/bin/
     remote_src: true
     include:

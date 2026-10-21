@@ -63,6 +63,12 @@
       "labels": ["dependencies", "renovate", "auto-merge-candidate"]
     },
     {
+      "description": "Review binary updates until version and checksum updates have been verified in real Renovate PRs.",
+      "matchPackageNames": ["dmachard/DNS-collector", "forgejo/runner"],
+      "automerge": false,
+      "labels": ["dependencies", "renovate", "manual-review"]
+    },
+    {
       "description": "Terraform provider updates must refresh committed .terraform.lock.hcl files across all Terragrunt stacks.",
       "matchManagers": ["terraform"],
       "automerge": false,
@@ -189,6 +195,17 @@
     ]
   },
   "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^ansible/roles/dnscollector/defaults/main\\.yaml$/"
+      ],
+      "matchStrings": [
+        "dnscollector_version: \"(?<currentValue>[^\"]+)\"\\ndnscollector_sha256: \"(?<currentDigest>[a-f0-9]{64})\""
+      ],
+      "depNameTemplate": "dmachard/DNS-collector",
+      "datasourceTemplate": "github-release-attachments"
+    },
     {
       "customType": "regex",
       "managerFilePatterns": [
