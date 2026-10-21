@@ -43,6 +43,6 @@ variable "password" {
 }
 
 variable "ssh_public_key" {
-  description = "Path to the SSH public key file"
+  description = "Path to an authorized_keys file; one public key per line"
   type        = string
 }

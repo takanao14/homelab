@@ -106,7 +106,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
       content {
         username = user_account.value.username
         password = var.password
-        keys     = [trimspace(data.local_file.ssh_public_key.content)]
+        keys     = local.ssh_authorized_keys
       }
     }
   }
