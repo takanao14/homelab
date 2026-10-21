@@ -23,7 +23,7 @@ Usage: $(basename "$0") <name> <ip> [node] [cores] [memory_mb] [disk_gb] [image]
             < tool (+ shared CLI toolchain) < desktop (+ XFCE/XRDP and GUI apps)
 
 Environment:
-  TF_VM_USERNAME        VM username     (default: current username)
+  TF_VM_USERNAME        VM username     (required)
   TF_VM_PASSWORD        VM password     (prompted when unset)
   TF_VM_SSH_PUBLIC_KEY  SSH public key  (default: ~/.ssh/id_ed25519.pub)
 
@@ -136,7 +136,10 @@ if [[ -f "$OUT_ENVRC" ]]; then
   [[ -z "$explicit_ssh_public_key" ]] || TF_VM_SSH_PUBLIC_KEY="$explicit_ssh_public_key"
 fi
 
-TF_VM_USERNAME="${TF_VM_USERNAME:-$(id -un)}"
+if [[ -z "${TF_VM_USERNAME:-}" ]]; then
+  echo "Error: TF_VM_USERNAME must be set" >&2
+  exit 1
+fi
 TF_VM_SSH_PUBLIC_KEY="${TF_VM_SSH_PUBLIC_KEY:-${HOME}/.ssh/id_ed25519.pub}"
 
 if [[ -z "${TF_VM_PASSWORD:-}" ]]; then
