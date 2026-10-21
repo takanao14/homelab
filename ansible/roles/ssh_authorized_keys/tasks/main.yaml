@@ -19,12 +19,14 @@
          or ssh_authorized_keys_connection_user.stdout | default('') }}
 
 # exclusive replaces the whole file; refuse empty input to prevent lockout.
+# The argument spec accepts a string as a list without converting it.
 - name: Require a target user and at least one key
   ansible.builtin.assert:
     that:
       - ssh_authorized_keys_target | length > 0
+      - ssh_authorized_keys_list is not string
       - ssh_authorized_keys_list | select | list | length > 0
-    fail_msg: The target user and at least one SSH key must be set.
+    fail_msg: The target user and a list with at least one SSH key must be set.
 
 - name: Authorise SSH keys
   become: true

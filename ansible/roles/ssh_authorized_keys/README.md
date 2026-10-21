@@ -9,7 +9,7 @@ user out.
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `ssh_authorized_keys_user` | User whose keys are managed | `ansible_user`, then the user the connection logs in as |
-| `ssh_authorized_keys_list` | Public keys to keep | `[]` |
+| `ssh_authorized_keys_list` | Public keys to keep | required |
 
 ## Usage
 
