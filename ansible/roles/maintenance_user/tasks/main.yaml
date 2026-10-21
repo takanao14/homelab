@@ -10,8 +10,7 @@
       ansible.builtin.assert:
         that:
           - maintenance_user | length > 0
-          - (maintenance_ssh_key | length > 0) or (maintenance_ssh_key_path | length > 0)
-        fail_msg: "Required variables (maintenance_user, etc.) are missing. Check your group_vars or environment."
+        fail_msg: "maintenance_user is missing. Check your group_vars or environment."
 
     - name: Ensure sudo is installed
       become: true
@@ -35,6 +34,7 @@
         append: true
         create_home: true
         state: present
+      register: maintenance_user_account
 
     - name: Configure passwordless sudo for the user
       become: true
@@ -45,16 +45,11 @@
         mode: '0440'
         validate: /usr/sbin/visudo -cf %s
 
-    - name: Resolve SSH key from path
-      ansible.builtin.set_fact:
-        maintenance_user_ssh_key_resolved: >-
-          {{ maintenance_ssh_key if (maintenance_ssh_key | length > 0)
-             else (lookup('file', maintenance_ssh_key_path | expanduser, errors='ignore') | default('')) }}
-
-    - name: Add maintenance SSH authorized key
-      become: true
-      ansible.posix.authorized_key:
-        user: "{{ maintenance_user }}"
-        state: present
-        key: "{{ maintenance_user_ssh_key_resolved }}"
-      when: maintenance_user_ssh_key_resolved | length > 0
+    # In check mode a not-yet-created user has no home to write keys into.
+    - name: Authorise SSH keys for the maintenance user
+      ansible.builtin.include_role:
+        name: ssh_authorized_keys
+      vars:
+        ssh_authorized_keys_user: "{{ maintenance_user }}"
+        ssh_authorized_keys_list: "{{ maintenance_user_authorized_keys }}"
+      when: not (ansible_check_mode and maintenance_user_account is changed)
