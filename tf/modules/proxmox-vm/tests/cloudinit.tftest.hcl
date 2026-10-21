@@ -44,6 +44,20 @@ run "native" {
   }
 }
 
+run "ssh_keys_per_line" {
+  command = plan
+  override_data {
+    target = data.local_file.ssh_public_key
+    values = {
+      content = "ssh-ed25519 a\n# comment\n\n  ssh-ed25519 b  \n"
+    }
+  }
+  assert {
+    condition     = proxmox_virtual_environment_vm.vm["test"].initialization[0].user_account[0].keys == tolist(["ssh-ed25519 a", "ssh-ed25519 b"])
+    error_message = "Each non-blank, non-comment line must become one key."
+  }
+}
+
 run "user_only" {
   command = plan
   variables {

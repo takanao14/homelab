@@ -7,7 +7,7 @@ locals {
       name                = local.env.locals.vm_defaults.username
       groups              = "wheel"
       shell               = "/bin/sh"
-      ssh_authorized_keys = [trimspace(file(get_env("TF_VM_SSH_PUBLIC_KEY")))]
+      ssh_authorized_keys = [for line in split("\n", file(get_env("TF_VM_SSH_PUBLIC_KEY"))) : trimspace(line) if trimspace(line) != "" && !startswith(trimspace(line), "#")]
     }]
   }
   ethernet_config = {

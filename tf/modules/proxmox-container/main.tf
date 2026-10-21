@@ -75,7 +75,7 @@ resource "proxmox_virtual_environment_container" "container" {
 
     user_account {
       password = var.password
-      keys     = [trimspace(data.local_file.ssh_public_key.content)]
+      keys     = local.ssh_authorized_keys
     }
   }
 }
