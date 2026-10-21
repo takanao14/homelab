@@ -1,0 +1,14 @@
+---
+argument_specs:
+  main:
+    short_description: Replace a user's authorized_keys with the given keys
+    options:
+      ssh_authorized_keys_user:
+        type: str
+        default: ""
+        description: User whose keys are managed; empty selects ansible_user, then the connection user.
+      ssh_authorized_keys_list:
+        type: list
+        elements: str
+        required: true
+        description: Public keys to keep; must contain at least one key.

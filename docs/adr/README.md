@@ -49,8 +49,9 @@ deleting it:
 
 ## Index
 
-Pending proposal: [ADR-0034](0034-hubble-ui-for-service-traffic-visibility.md)
-(review by 2026-11-14).
+Pending proposals: [ADR-0034](0034-hubble-ui-for-service-traffic-visibility.md)
+(review by 2026-11-14), [ADR-0078](0078-validate-ansible-role-inputs-by-layer.md)
+(review by 2026-11-21).
 
 `Accepted` entries with amendment links retain decisions that still apply;
 follow those links for the changed parts.
@@ -87,6 +88,7 @@ follow those links for the changed parts.
 | [0036](0036-planned-shutdown-restores-via-argocd-selfheal.md) | Planned-shutdown restore relies on Argo CD self-heal, not a replica snapshot | Accepted |
 | [0059](0059-group-ansible-playbooks-by-purpose.md) | Group Ansible playbooks by purpose | Accepted |
 | [0068](0068-build-caddy-on-the-ansible-controller.md) | Build Caddy on the Ansible controller | Accepted |
+| [0078](0078-validate-ansible-role-inputs-by-layer.md) | Validate Ansible role inputs by layer | Proposed |
 
 ### Kubernetes platform
 
