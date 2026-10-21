@@ -137,7 +137,7 @@ if [[ -f "$OUT_ENVRC" ]]; then
 fi
 
 if [[ -z "${TF_VM_USERNAME:-}" ]]; then
-  echo "Error: TF_VM_USERNAME is unset" >&2
+  echo "Error: TF_VM_USERNAME must be set" >&2
   exit 1
 fi
 TF_VM_SSH_PUBLIC_KEY="${TF_VM_SSH_PUBLIC_KEY:-${HOME}/.ssh/id_ed25519.pub}"

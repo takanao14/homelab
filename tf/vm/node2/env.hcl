@@ -2,7 +2,7 @@ locals {
   vm_defaults = {
     node_name        = "node2"
     config_datastore = "local-lvm"
-    username         = get_env("TF_VM_USERNAME")
+    username         = regex("^\\S+$", get_env("TF_VM_USERNAME"))
     scsi_hardware    = "virtio-scsi-single"
     qemu_guest_agent = true
     on_boot          = true

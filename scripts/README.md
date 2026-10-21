@@ -64,8 +64,8 @@ VMs using those images there.
 VM credentials use `TF_VM_USERNAME`, `TF_VM_PASSWORD`, and
 `TF_VM_SSH_PUBLIC_KEY`. The username is required; the password falls back to a
 hidden prompt and the key to `~/.ssh/id_ed25519.pub`; non-interactive runs must
-set the password. The
-script saves resolved credentials in a mode-600, gitignored `.envrc` for reuse.
+set the password. The script saves resolved credentials in a mode-600,
+gitignored `.envrc` for reuse.
 This file contains plaintext credentials. Keep it local and run `direnv allow` once.
 
 Re-running the command with the same arguments succeeds without changing the
