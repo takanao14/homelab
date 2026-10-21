@@ -54,12 +54,13 @@ operator can inspect and resume a failed operation directly with Terragrunt.
 | cores  | `4`          | vCPUs                                                      |
 | memory | `8192`       | MB                                                         |
 | disk   | `80`         | GB                                                         |
-| image  | `ubuntu24-base` | `ubuntu24-{base,tool,desktop}`, `rocky10-base`, `rocky9-{base,desktop}`, `debian13-base` |
+| image  | `ubuntu26-base` | `ubuntu26-{base,tool,desktop}`, `rocky10-base`, `rocky9-desktop`, `debian13-base` |
 
 Image roles and build targets are described in [packer/README.md](../packer/README.md#image-roles).
 
 The image stacks download `tool` and `desktop` images only on `pve`; create
-VMs using those images there.
+VMs using those images there. Ubuntu 26 images use version 2 cloud-init network
+data matching the VirtIO driver to tolerate interface name changes.
 
 VM credentials use `TF_VM_USERNAME`, `TF_VM_PASSWORD`, and
 `TF_VM_SSH_PUBLIC_KEY`. The username is required; the password falls back to a
