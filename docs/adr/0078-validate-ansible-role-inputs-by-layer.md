@@ -1,9 +1,8 @@
 # ADR-0078: Validate Ansible role inputs by layer
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Category:** Configuration & operations
 - **Date:** 2026-10-21
-- **Review by:** 2026-11-21
 
 ## Context
 
