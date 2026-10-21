@@ -1,6 +1,9 @@
 ---
 ansible_python_interpreter: /usr/bin/python3
 
+# Admin keys on the controller; Terraform seeds the same file at creation (TF_VM_SSH_PUBLIC_KEY).
+admin_authorized_keys_file: "~/.config/homelab/authorized_keys"
+
 # Cilium LB-IPAM addresses; keep aligned with k8s/monitoring/values. Avoid DNS dependency.
 loki_endpoint: "http://192.168.30.250:3100"
 alloy_otlp_server: "192.168.30.251"

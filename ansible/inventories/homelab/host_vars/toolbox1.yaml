@@ -1,0 +1,3 @@
+---
+# Work-terminal keys (iPhone) that must not reach other guests.
+admin_authorized_keys_extra_file: "~/.config/homelab/authorized_keys.toolbox1"

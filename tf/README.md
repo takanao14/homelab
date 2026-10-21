@@ -35,7 +35,7 @@ defaults. Image stacks use `node.hcl` for host binding and image selection.
 | Variable | Description |
 |----------|-------------|
 | `TF_VM_PASSWORD` | Initial password for VMs / containers |
-| `TF_VM_USERNAME` | Initial username for VMs / containers |
+| `TF_VM_USERNAME` | Initial username for VMs (default: `$USER`) |
 | `TF_VM_SSH_PUBLIC_KEY` | SSH public key to inject |
 | `PROXMOX_VE_ENDPOINT` | Proxmox API endpoint |
 | `PROXMOX_VE_USERNAME` | Proxmox API username |

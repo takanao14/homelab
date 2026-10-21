@@ -2,7 +2,7 @@ locals {
   vm_defaults = {
     node_name        = "pve"
     config_datastore = "local-zfs"
-    username         = get_env("TF_VM_USERNAME")
+    username         = get_env("TF_VM_USERNAME", get_env("USER"))
     scsi_hardware    = "virtio-scsi-single"
     qemu_guest_agent = true
     on_boot          = false

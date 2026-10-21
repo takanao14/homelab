@@ -5,6 +5,8 @@
   import_playbook: common/apt_mirror.yaml
 - name: Baseline - LXC maintenance access
   import_playbook: common/maintenance_user.yaml
+- name: Baseline - admin SSH keys
+  import_playbook: common/ssh_authorized_keys.yaml
 - name: Baseline - timezone
   import_playbook: common/timezone.yaml
 - name: Baseline - chrony time sync

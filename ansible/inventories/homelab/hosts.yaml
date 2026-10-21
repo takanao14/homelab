@@ -236,6 +236,20 @@ all:
         resolver2: null
         seaweedfs1: null
 
+    # Terraform-built VMs; PoC guests and vpngw stay out.
+    vm:
+      hosts:
+        hermes1: null
+        idp1: null
+        netbox1: null
+        openbao1: null
+        openclaw1: null
+        runner1: null
+        toolbox1: null
+      children:
+        prd_k8s: {}
+        sandbox_k8s: {}
+
     # Split k0s by role so workers drain before controllers; names match Kubernetes nodes.
     prd_k8s:
       children:
