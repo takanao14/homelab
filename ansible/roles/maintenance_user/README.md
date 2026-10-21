@@ -13,8 +13,7 @@ to opt in other hosts.
 |----------|-------------|---------|
 | `maintenance_user` | Name of the maintenance user | OS env `MAINTENANCE_USER` → Ansible var `MAINTENANCE_USER` → `admin` |
 | `maintenance_password_hash` | Password hash for the user | OS env `MAINTENANCE_PASSWORD_HASH` → Ansible var `MAINTENANCE_PASSWORD_HASH` → `""` |
-| `maintenance_ssh_key_path` | Path to the SSH public key file | OS env `SSH_KEY_PATH` → Ansible var `SSH_KEY_PATH` → `""` |
-| `maintenance_ssh_key` | SSH public key content (optional) | `""` |
+| `maintenance_user_authorized_keys` | Keys applied exclusively through the `ssh_authorized_keys` role | `admin_authorized_keys` |
 | `maintenance_user_force` | Run outside LXC | `false` |
 
 ## Usage

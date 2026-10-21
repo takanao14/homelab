@@ -5,11 +5,7 @@ maintenance_user: >- # noqa var-naming[no-role-prefix]
 maintenance_password_hash: >- # noqa var-naming[no-role-prefix]
   {{ lookup('env', 'MAINTENANCE_PASSWORD_HASH')
      | default(lookup('vars', 'MAINTENANCE_PASSWORD_HASH', default=''), true) }}
-maintenance_ssh_key_path: >- # noqa var-naming[no-role-prefix]
-  {{ lookup('env', 'SSH_KEY_PATH')
-     | default(lookup('vars', 'SSH_KEY_PATH', default=''), true) }}
-maintenance_ssh_key: "" # noqa var-naming[no-role-prefix]
-# Fall back to expanded maintenance_ssh_key_path when no key is provided.
+maintenance_user_authorized_keys: "{{ admin_authorized_keys | default([]) }}"
 
 # Allow creation outside LXC.
 maintenance_user_force: false

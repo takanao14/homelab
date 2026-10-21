@@ -3,9 +3,6 @@
   hosts: lxc:vm
   any_errors_fatal: false
   vars:
-    admin_authorized_keys: >-
-      {{ lookup('ansible.builtin.file', admin_authorized_keys_file | expanduser).splitlines()
-         | map('trim') | reject('match', '^(#|$)') | list }}
     # Declared per host so a missing file fails instead of revoking its keys.
     admin_authorized_keys_extra: >-
       {{ (lookup('ansible.builtin.file', admin_authorized_keys_extra_file | expanduser).splitlines()
