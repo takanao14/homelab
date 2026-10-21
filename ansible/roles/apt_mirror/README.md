@@ -11,7 +11,7 @@ and updates the APT cache after replacement.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `apt_mirror_url` | `http://ftp.udx.icscoe.jp/Linux/ubuntu` | Mirror URL to substitute for the default Ubuntu archive |
+| `apt_mirror_url` | `https://ftp.tsukuba.wide.ad.jp/Linux/ubuntu/` | Mirror URL to substitute for the default Ubuntu archive |
 
 ## Usage
 
