@@ -11,8 +11,8 @@ to opt in other hosts.
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `maintenance_user` | Name of the maintenance user | OS env `MAINTENANCE_USER` → Ansible var `MAINTENANCE_USER` → `admin` |
-| `maintenance_password_hash` | Password hash for the user | OS env `MAINTENANCE_PASSWORD_HASH` → Ansible var `MAINTENANCE_PASSWORD_HASH` → `""` |
+| `maintenance_user` | Name of the maintenance user; required | `""` (set in `group_vars/all.sops.yaml`) |
+| `maintenance_password_hash` | Password hash for the user; empty sets no password | `""` (set in `group_vars/all.sops.yaml`) |
 | `maintenance_user_authorized_keys` | Keys applied exclusively through the `ssh_authorized_keys` role | `admin_authorized_keys` |
 | `maintenance_user_force` | Run outside LXC | `false` |
 

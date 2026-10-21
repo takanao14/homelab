@@ -1,11 +1,7 @@
 ansible_user: ENC[AES256_GCM,data:VkSeYg==,iv:hq8XUuSqgsDFu6X/4ldcb3op9Rmr01R96oT7VMxYxJQ=,tag:LPF5xPh4v2vBdGdhiORvBw==,type:str]
-MAINTENANCE_USER: ENC[AES256_GCM,data:fUUSpJST3g==,iv:FLXzE5EK1tb3wcdvfKyPFO+jJ0xl3jmk38hTEPoCvCc=,tag:PV+K5PDrBOd0IfV/uFrcUQ==,type:str]
-MAINTENANCE_PASSWORD_HASH: ENC[AES256_GCM,data:XqF5c6K+Pj2DX+kt30yWNkcJTkGo9LOf3LvV+A1Pa6wYV/ln1ye3S+F7wv+YRckvIyUQzL7AvTMSd1B6ImDov+tUTokBXfGmIpe3oGRIwTKCxBIvOjDfN9SUVWzdAnl5zh6n2jxGkpS06g==,iv:bdarJCMJLwuaeRT5QdIj+Ve5Wee7lMIJTQ/5wbGO0vs=,tag:ujCWWHfDUWV+XVCCFTv4Pw==,type:str]
-SSH_KEY_PATH: ENC[AES256_GCM,data:z0hFqeArRu5YV8zYJoT1+2U3pdKK,iv:carE3uz7TT293yFffy507zk8Pp4PIzdCi2yqFFUnvH0=,tag:qm3uwLeS6Dbq9g6gcjaSKA==,type:str]
 sops:
     age:
-        - recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
-          enc: |
+        - enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
             YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBTMWNtZGdaRGs2Z1A1bmxD
             SVE1K3BiMlZ4andBOSs2ekJaQWxHeXRja3ljCkUrekhKa1lRYTNBWGc5OEFzUHZH
@@ -13,7 +9,8 @@ sops:
             NmIvbEJhV29nVjNNMThSMXg3WnZaMk0KcPlymuGPZJmvzJZrua1ipGeiIMVLZN9V
             g4tJuaAPHNX/0cQ2UDUzvGCAT4fpI7CfPSu3Esdh88xtOk1X+3JeMA==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-04-29T10:51:17Z"
-    mac: ENC[AES256_GCM,data:FAEON5ksZJ0c/sCau66+5UJorrBWgA7lX29xgSg+fxxVwxFF5d8YvTlOI3ZqV8BNav9OBSm9ABfL0VeuSTruElRFWLpWUe6HrI/FKSjypGUuLLLvGc1HhV2MG3sLXfcN9MCaYgqCWWt1TvRyGxNC2c+GwpZWwVaLWllORFbYc28=,iv:7Qj0fDVasHNapqjJpLLWfP7Ctex8nsFjT/ISf4RL280=,tag:q47hBPu54VK88kAQSv49rw==,type:str]
+          recipient: age1decj2rmd02e04jyuytn32wh6vay0v0hptm5m9qwqpcaw6fcwxyqscc403v
+    lastmodified: "2026-10-21T05:39:52Z"
+    mac: ENC[AES256_GCM,data:HkY/4lRidtGfOxC/URRzlYIn+V4Nwfb8BDHrmGHd3cz5+Y7CI6SToQr/BcokT4/mvQD3OCyzxihubagPWOMhzR0OMNjxm8AbAZyUbL6gT0NTrqOf5V5szPbDBEjRbJf00YWLFEAPSI95Bq+XsnknTQaohiZ7ArT9jUNy/c5Z8dU=,iv:8wZ9qRrp5zRtzTDjZNjQvPImRjrEs/QaAU8+OAwTzz4=,tag:0x4SqePTvr38PX4V1wySFQ==,type:str]
     unencrypted_suffix: _unencrypted
-    version: 3.12.2
+    version: 3.13.3
