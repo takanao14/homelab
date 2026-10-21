@@ -17,8 +17,8 @@ Usage: $(basename "$0") <name> <ip> [node] [cores] [memory_mb] [disk_gb] [image]
   cores     vCPUs                      (default: 4)
   memory    Memory in MB               (default: 8192)
   disk      Disk size in GB            (default: 80)
-  image     OS image: ubuntu24-base | ubuntu24-tool | ubuntu24-desktop | rocky10-base |
-            rocky9-base | rocky9-desktop | debian13-base  (default: ubuntu24-base)
+  image     OS image: ubuntu26-base | ubuntu26-tool | ubuntu26-desktop | rocky10-base |
+            rocky9-desktop | debian13-base  (default: ubuntu26-base)
             The role suffix says how much is baked in: base (agent + timezone)
             < tool (+ shared CLI toolchain) < desktop (+ XFCE/XRDP and GUI apps)
 
@@ -48,7 +48,7 @@ NODE="${3:-pve}"
 CORES="${4:-4}"
 MEMORY="${5:-8192}"
 DISK="${6:-80}"
-IMAGE="${7:-ubuntu24-base}"
+IMAGE="${7:-ubuntu26-base}"
 
 case "$NODE" in
   pve|node2|node3|node4) ;;
@@ -78,19 +78,18 @@ done
 
 # CI verifies these filenames against the Terraform image definitions.
 case "$IMAGE" in
-  ubuntu24-base) FILE_ID="local:iso/ubuntu-24.04-base.img" ;;
-  ubuntu24-tool) FILE_ID="local:iso/ubuntu-24.04-tool.img" ;;
-  ubuntu24-desktop) FILE_ID="local:iso/ubuntu-24.04-desktop.img" ;;
+  ubuntu26-base) FILE_ID="local:iso/ubuntu-26.04-base.img" ;;
+  ubuntu26-tool) FILE_ID="local:iso/ubuntu-26.04-tool.img" ;;
+  ubuntu26-desktop) FILE_ID="local:iso/ubuntu-26.04-desktop.img" ;;
   rocky10-base)  FILE_ID="local:iso/rocky-10-base.img" ;;
-  rocky9-base)  FILE_ID="local:iso/rocky-9-base.img" ;;
   rocky9-desktop)  FILE_ID="local:iso/rocky-9-desktop.img" ;;
   debian13-base)  FILE_ID="local:iso/debian-13-base.img" ;;
-  *) echo "Error: image must be one of: ubuntu24-base, ubuntu24-tool, ubuntu24-desktop, rocky10-base, rocky9-base, rocky9-desktop, debian13-base" >&2; exit 1 ;;
+  *) echo "Error: image must be one of: ubuntu26-base, ubuntu26-tool, ubuntu26-desktop, rocky10-base, rocky9-desktop, debian13-base" >&2; exit 1 ;;
 esac
 
 # Only pve downloads the tool and desktop images; see tf/customimage/*/node.hcl.
 case "$IMAGE" in
-  ubuntu24-tool|ubuntu24-desktop|rocky9-desktop)
+  ubuntu26-tool|ubuntu26-desktop|rocky9-desktop)
     if [[ "$NODE" != "pve" ]]; then
       echo "Error: image '${IMAGE}' is only available on node 'pve'" >&2
       exit 1
@@ -111,6 +110,42 @@ esac
 case "${NODE}:${SUBNET}" in
   pve:192.168.10|pve:192.168.20|node2:192.168.10|node2:192.168.40|node3:192.168.10|node3:192.168.50|node4:192.168.10|node4:192.168.60) ;;
   *) echo "Error: subnet ${SUBNET}.0/24 is not available on node '${NODE}'" >&2; exit 1 ;;
+esac
+
+case "$IMAGE" in
+  ubuntu26-*)
+    NETWORK_CONFIG=$(cat <<HCL
+      cloud_init = {
+        network_data = yamlencode({
+          version  = 2
+          renderer = "networkd"
+          ethernets = {
+            primary = {
+              # The VM has one VirtIO NIC; its PCI-derived name can change.
+              match     = { driver = "virtio_net" }
+              addresses = ["${IP}/24"]
+              routes = [{
+                to  = "default"
+                via = ${NET_REF}.ipv4gw
+              }]
+              nameservers = {
+                addresses = local.common.locals.dns_internal
+                search    = [local.common.locals.dns_domain]
+              }
+            }
+          }
+        })
+      }
+HCL
+)
+    ;;
+  *)
+    NETWORK_CONFIG=$(cat <<HCL
+      ipv4   = "${IP}/24"
+      ipv4gw = ${NET_REF}.ipv4gw
+HCL
+)
+    ;;
 esac
 
 OUT_DIR="${TF_DIR}/vm/${NODE}/${VM_NAME}"
@@ -196,8 +231,7 @@ inputs = {
       cores  = ${CORES}
       memory = ${MEMORY}
       bridge = ${NET_REF}.bridge
-      ipv4   = "${IP}/24"
-      ipv4gw = ${NET_REF}.ipv4gw
+${NETWORK_CONFIG}
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = ${DISK}
