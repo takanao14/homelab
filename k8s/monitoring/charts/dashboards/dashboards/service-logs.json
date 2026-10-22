@@ -86,7 +86,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "((sum(count_over_time({host=\"idp1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"netbox1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"openbao1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"runner1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"toolbox1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0)",
+          "expr": "((sum(count_over_time({host=\"hermes1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"idp1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"netbox1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"openbao1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"openclaw1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"runner1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"toolbox1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0)",
           "legendFormat": "reporting",
           "instant": true
         }
@@ -122,7 +122,7 @@
         "defaults": {
           "unit": "short",
           "min": 0,
-          "max": 5,
+          "max": 7,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -131,11 +131,11 @@
                 "color": "red"
               },
               {
-                "value": 4,
+                "value": 6,
                 "color": "yellow"
               },
               {
-                "value": 5,
+                "value": 7,
                 "color": "green"
               }
             ]
@@ -273,6 +273,11 @@
       "type": "bargauge",
       "targets": [
         {
+          "expr": "sum(count_over_time({host=\"hermes1\", unit=~\".+\"}[24h])) or vector(0)",
+          "legendFormat": "hermes1",
+          "instant": true
+        },
+        {
           "expr": "sum(count_over_time({host=\"idp1\", unit=~\".+\"}[24h])) or vector(0)",
           "legendFormat": "idp1",
           "instant": true
@@ -285,6 +290,11 @@
         {
           "expr": "sum(count_over_time({host=\"openbao1\", unit=~\".+\"}[24h])) or vector(0)",
           "legendFormat": "openbao1",
+          "instant": true
+        },
+        {
+          "expr": "sum(count_over_time({host=\"openclaw1\", unit=~\".+\"}[24h])) or vector(0)",
+          "legendFormat": "openclaw1",
           "instant": true
         },
         {
@@ -358,6 +368,10 @@
       "type": "state-timeline",
       "targets": [
         {
+          "expr": "((sum(count_over_time({host=\"hermes1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
+          "legendFormat": "hermes1"
+        },
+        {
           "expr": "((sum(count_over_time({host=\"idp1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
           "legendFormat": "idp1"
         },
@@ -368,6 +382,10 @@
         {
           "expr": "((sum(count_over_time({host=\"openbao1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
           "legendFormat": "openbao1"
+        },
+        {
+          "expr": "((sum(count_over_time({host=\"openclaw1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
+          "legendFormat": "openclaw1"
         },
         {
           "expr": "((sum(count_over_time({host=\"runner1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
@@ -500,7 +518,7 @@
         "defaults": {
           "unit": "short",
           "min": 0,
-          "max": 5,
+          "max": 7,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -509,11 +527,11 @@
                 "color": "red"
               },
               {
-                "value": 4,
+                "value": 6,
                 "color": "yellow"
               },
               {
-                "value": 5,
+                "value": 7,
                 "color": "green"
               }
             ]
