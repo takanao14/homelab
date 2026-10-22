@@ -82,7 +82,8 @@ dashboard regeneration (`make generate` in `dashboards/`, enforced by
   Loki template fails fast with a clear error if the inventory is missing
   while `proxmoxAlerts` is enabled.
 - node4 and node5 are now covered by all scrapes, probes, and log alerts;
-  node5's AMT probe is pending its `amtIp` entry.
+  node5 has no AMT, as recorded in
+  [ADR-0032](0032-reboot-and-planned-shutdown-orchestration.md).
 
 ## Addendum (2026-07-13): shared DNS recursor inventory
 
@@ -93,7 +94,9 @@ consumers:
 - **DNS recursors (dist1/dist2)** were listed three times: `dnsdist` metrics
   targets, and the blackbox `dns_external` and `dns_internal` probes (same
   set, different probe module). Extracted to
-  `values/dns-recursors.yaml` (`dnsRecursors`), appended to the `dnsdist` and
+  `values/dns-recursors.yaml` (`dnsRecursors`; now
+  [`values/dns-frontends.yaml`](../../k8s/monitoring/values/dns-frontends.yaml),
+  `dnsFrontends`), appended to the `dnsdist` and
   `blackbox-exporter-external` valueFiles; both DNS probe templates and the
   dnsdist scrape template derive from it.
 - **Network devices (bgw1/c1200)** also appear three times (blackbox ICMP,
