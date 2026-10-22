@@ -15,7 +15,9 @@ victoria-metrics-single:
       size: 100Gi
     resources:
       requests:
-        cpu: 100m
+        # 7d (2026-10-15..22): CPU p95 0.024 core, memory p95 339Mi / max 386Mi.
+        # Memory stays above p95x1.2 while 180d of history and the index grow.
+        cpu: 30m
         memory: 512Mi
     # Keep the long-term copy off the Prometheus node so recent data survives
     # the loss of either worker.
