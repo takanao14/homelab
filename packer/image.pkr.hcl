@@ -175,9 +175,11 @@ build {
     execute_command = "chmod +x {{ .Path }}; sudo -S bash -c '{{ .Vars }} {{ .Path }}'"
   }
 
+  # The overlay needs up to the virtual disk size; /tmp is often too small, and
+  # build.sh deletes output_directory after each build.
   post-processor "shell-local" {
     inline = [
-      "virt-sparsify --compress ${var.output_directory}/${var.vm_name} ${var.image_name}",
+      "TMPDIR=${abspath(var.output_directory)} virt-sparsify --compress ${var.output_directory}/${var.vm_name} ${var.image_name}",
     ]
   }
 }
