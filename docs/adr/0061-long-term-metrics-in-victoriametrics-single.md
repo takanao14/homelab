@@ -52,3 +52,7 @@ the Prometheus pod so the most recent 30 days exist on two workers.
   in range queries. With identical samples, short-range `rate` panels differ
   by about 13% per point (median), while 30-day views match within 0.3%.
   Alerts are unaffected.
+- VictoriaMetrics runs with `-dedup.minScrapeInterval=1ms`. Prometheus
+  forwards repeated samples with the same explicit timestamp (cAdvisor) that
+  its own TSDB drops; 1ms removes only those duplicates. A scrape-interval
+  window such as 30s would also merge distinct samples.
