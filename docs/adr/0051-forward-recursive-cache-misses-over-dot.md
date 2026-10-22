@@ -41,12 +41,14 @@ over authenticated TLS. Local revalidation is disabled because it produced
 cache when entering `emergency_forward`, and validate cache misses explicitly so
 cached answers do not conceal an upstream failure.
 
-Return production to `recursive` once the root-server probes from both
-resolvers have raised neither `AuthoritativeDnsUdpPathDegraded` nor
-`AuthoritativeDnsPathUnavailable` for 14 days. Mode changes are made in shared
-resolver group variables. The playbook's `serial: 1` only orders hosts, so
-apply to resolver1 with `--limit` and complete the canary observation before
-running it for resolver2.
+Return production to `recursive` only after 14 consecutive days in which the
+UDP and TCP root-server probes from both resolvers succeed at least 90% of the
+time in every 5-minute window. The `AuthoritativeDns*` alerts are not a
+sufficient signal; short path losses stay below their `for` durations. Mode
+changes are made in shared resolver group variables. The playbook's `serial: 1`
+only orders hosts, so apply to resolver1 with `--limit` and observe it for 24
+hours before running it for resolver2. Restore `emergency_forward` on a host
+whose dnsdist client SERVFAIL ratio exceeds 2% in any 5-minute window.
 
 ## Consequences
 
@@ -91,3 +93,16 @@ show an improvement, yet resolver2 was enabled although criterion 6's rollback
 condition was met. From 16:00 UTC, local revalidation failed Cloudflare CNAME
 chains for OpenAI names and raised hourly client SERVFAIL to 18-57% until it
 was disabled at 23:02 UTC.
+
+## Addendum (2026-10-22): failed return to recursive
+
+The original exit condition (no firing probe alert for 14 days) was met, and
+both resolvers returned to `recursive` at 11:02 and 11:42 UTC. In the preceding
+14 days the probes averaged 99.76% (UDP) and 99.86% (TCP), but their worst
+5-minute windows fell to 13% and 30%. After the change the same path losses
+reached clients three times: 12:00-13:30, around 15:30, and 20:55-21:50 UTC.
+The last episode raised resolver SERVFAIL to 48-50% and client SERVFAIL to 7%
+in 5-minute windows, with 2,100-2,600 downstream timeouts per dnsdist host in
+30 minutes. No probe or dnsdist alert fired. Both resolvers returned to
+`emergency_forward` at 22:19 UTC, and the exit condition above replaced the
+alert-based one.
