@@ -15,6 +15,5 @@ proxmoxNodes:
   - name: "node4"
     ip: "192.168.10.14"
     amtIp: "192.168.110.14"
-  # amtIp: add once AMT is provisioned for node5.
   - name: "node5"
     ip: "192.168.10.15"

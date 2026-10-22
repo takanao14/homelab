@@ -7,6 +7,7 @@ on:
       - "k8s/monitoring/dashboards/**"
       - "k8s/monitoring/charts/dashboards/**"
       - "k8s/monitoring/values/node-exporter-external.yaml"
+      - "k8s/monitoring/values/proxmox-nodes.yaml"
   push:
     branches:
       - main
@@ -15,6 +16,7 @@ on:
       - "k8s/monitoring/dashboards/**"
       - "k8s/monitoring/charts/dashboards/**"
       - "k8s/monitoring/values/node-exporter-external.yaml"
+      - "k8s/monitoring/values/proxmox-nodes.yaml"
   workflow_dispatch:
 
 permissions:
