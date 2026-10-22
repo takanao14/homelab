@@ -43,6 +43,17 @@ targets:
     service: "toolbox"
     kind: "vm"
     logShipping: true
+  # PoC evaluation VMs (ADR-0063/ADR-0064).
+  - ip: "192.168.20.23"
+    name: "openclaw1"
+    service: "openclaw"
+    kind: "vm"
+    logShipping: true
+  - ip: "192.168.20.24"
+    name: "hermes1"
+    service: "hermes"
+    kind: "vm"
+    logShipping: true
   # Authoritative DNS filesystems and textfile-exported zone serials.
   - ip: "192.168.10.233"
     name: "ns1"
