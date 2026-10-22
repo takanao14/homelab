@@ -84,47 +84,47 @@ url = "https://github.com/ajeetdsouza/zoxide/releases/download/v0.10.0/zoxide-0.
 url_api = "https://api.github.com/repos/ajeetdsouza/zoxide/releases/assets/466316293"
 
 [[tools."aqua:argoproj/argo-cd"]]
-version = "3.5.5"
+version = "3.5.6"
 backend = "aqua:argoproj/argo-cd"
-specifiers = ["3.5.5"]
+specifiers = ["3.5.6"]
 
 [tools."aqua:argoproj/argo-cd"."platforms.linux-arm64"]
-checksum = "sha256:13f423b9014e212a3e0052b7826e1d6b95ee5ac156f2436fc856f2eb8c827537"
-url = "https://github.com/argoproj/argo-cd/releases/download/v3.5.5/argocd-linux-arm64"
-url_api = "https://api.github.com/repos/argoproj/argo-cd/releases/assets/633520284"
+checksum = "sha256:281aea75a1eaea15e2839f12626e78684f76099f09ffb0b05d35f64344ed1256"
+url = "https://github.com/argoproj/argo-cd/releases/download/v3.5.6/argocd-linux-arm64"
+url_api = "https://api.github.com/repos/argoproj/argo-cd/releases/assets/660262203"
 
 [tools."aqua:argoproj/argo-cd"."platforms.linux-x64"]
-checksum = "sha256:c3ddfa606fc3e89ab14f55bda6600b207c355b028f8eaabe69b817a4c4621aba"
-url = "https://github.com/argoproj/argo-cd/releases/download/v3.5.5/argocd-linux-amd64"
-url_api = "https://api.github.com/repos/argoproj/argo-cd/releases/assets/633519800"
+checksum = "sha256:db9d17b70593d3f86a4dcf08d9ebbb85a42e995426ac5f928b737260656102d3"
+url = "https://github.com/argoproj/argo-cd/releases/download/v3.5.6/argocd-linux-amd64"
+url_api = "https://api.github.com/repos/argoproj/argo-cd/releases/assets/660261478"
 
 [[tools."aqua:astral-sh/uv"]]
-version = "0.13.3"
+version = "0.13.4"
 backend = "aqua:astral-sh/uv"
-specifiers = ["0.13.3"]
+specifiers = ["0.13.4"]
 
 [tools."aqua:astral-sh/uv"."platforms.linux-arm64"]
-checksum = "sha256:611ff684f193a84d2fdad29c5f12505d02ece94984c7c982cdde950eba5c95b9"
-url = "https://github.com/astral-sh/uv/releases/download/0.13.3/uv-aarch64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/657907667"
+checksum = "sha256:1ae72b4718729e2ccc4f1ae2c6d1e531ca8467800e0546e9130b3886023a60ab"
+url = "https://github.com/astral-sh/uv/releases/download/0.13.4/uv-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/659693320"
 provenance = "github-attestations"
 
 [tools."aqua:astral-sh/uv"."platforms.linux-x64"]
-checksum = "sha256:e4f169ec380f1793b898a6f1fcbacd22db25cf7ca0349a6e96ffb85b69998d04"
-url = "https://github.com/astral-sh/uv/releases/download/0.13.3/uv-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/657907872"
+checksum = "sha256:2b428396f12572d4429cf210ca234dd599a33b3af0958a4d5ed569d63e3f344f"
+url = "https://github.com/astral-sh/uv/releases/download/0.13.4/uv-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/659693663"
 provenance = "github-attestations"
 
 [[tools."aqua:aws/aws-cli"]]
-version = "2.38.2"
+version = "2.38.3"
 backend = "aqua:aws/aws-cli"
-specifiers = ["2.38.2"]
+specifiers = ["2.38.3"]
 
 [tools."aqua:aws/aws-cli"."platforms.linux-arm64"]
-url = "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-2.38.2.zip"
+url = "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-2.38.3.zip"
 
 [tools."aqua:aws/aws-cli"."platforms.linux-x64"]
-url = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.38.2.zip"
+url = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.38.3.zip"
 
 [[tools."aqua:bootandy/dust"]]
 version = "1.2.6"
@@ -157,20 +157,20 @@ url = "https://github.com/cilium/cilium-cli/releases/download/v0.20.1/cilium-lin
 url_api = "https://api.github.com/repos/cilium/cilium-cli/releases/assets/585358772"
 
 [[tools."aqua:cli/cli"]]
-version = "2.102.0"
+version = "2.102.1"
 backend = "aqua:cli/cli"
-specifiers = ["2.102.0"]
+specifiers = ["2.102.1"]
 
 [tools."aqua:cli/cli"."platforms.linux-arm64"]
-checksum = "sha256:7862c86c72f43df3a2d93ddde6f473285b4e2af61b494849846827e513ef6484"
-url = "https://github.com/cli/cli/releases/download/v2.102.0/gh_2.102.0_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/cli/cli/releases/assets/599854680"
+checksum = "sha256:5019b3cc6e8a03bb4d88600f8dbda2add8e6407705c159b0c63151036e77a1af"
+url = "https://github.com/cli/cli/releases/download/v2.102.1/gh_2.102.1_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/660284837"
 provenance = "github-attestations"
 
 [tools."aqua:cli/cli"."platforms.linux-x64"]
-checksum = "sha256:bb766f710eef8ede859c18578c72c327597cd4c8a85b06001b1f3843c6019386"
-url = "https://github.com/cli/cli/releases/download/v2.102.0/gh_2.102.0_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/cli/cli/releases/assets/599854672"
+checksum = "sha256:77b9e297e94c50336823d0f84de7ef1be60cba704601fa0d98f129f47a94987b"
+url = "https://github.com/cli/cli/releases/download/v2.102.1/gh_2.102.1_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/660284822"
 provenance = "github-attestations"
 
 [[tools."aqua:dandavison/delta"]]
