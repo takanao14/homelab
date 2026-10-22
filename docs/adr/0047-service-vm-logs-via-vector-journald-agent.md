@@ -71,3 +71,10 @@ pipeline moves into the role's defaults.**
 - `toolbox1` is deferred: its image-baked HashiCorp apt key predates a
   HashiCorp key rotation, so `apt-get update` fails before Vector installs.
   Its units are configured and it joins the group as soon as the key is fixed.
+
+## Addendum (2026-10-22): group membership
+
+After ADR-0067, `lldap` replaces `authentik` in `vector_vm`, and `hermes` and
+`openclaw` joined later. The `toolbox1` deferral is resolved; it ships logs as
+part of `code_server`. Every member must declare `vector_journald_units`,
+because an empty list makes Vector read the entire journal.
