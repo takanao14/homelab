@@ -212,7 +212,8 @@ Then publish it like any other custom image:
 - `-y` - Force overwrite existing images without prompting
 
 `IMAGE_TYPE` is any target in the table above or `all`. Pair `all` with `-y`
-for unattended builds.
+for unattended builds. `all` excludes `ubuntu24-tool`, `ubuntu24-desktop`, and
+`rocky9-tool`; these remain available as individual targets.
 
 Upstream imports are handled separately by `import-upstream.sh`; they are not
 included in `build.sh all`.

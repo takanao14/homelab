@@ -36,7 +36,8 @@ TARGETS:
     rocky9-tool       Rocky 9 with the shared CLI toolchain
     rocky9-desktop    Rocky 9 with XFCE/XRDP on top of the toolchain
     debian13-base     Debian 13, agent and timezone only
-    all               Build every target listed above, in order
+    all               Build default targets (excluding ubuntu24-tool,
+                      ubuntu24-desktop and rocky9-tool)
     help              Display this help message
 
 Debian has no tool target: the toolchain's HashiCorp step resolves an apt suite
@@ -204,12 +205,12 @@ build_target() {
     esac
 }
 
-# All targets, in build order: the cheap base images first, so an interrupted
+# Default targets, in build order: the cheap base images first, so an interrupted
 # `all` still leaves the quickest-to-rebuild targets done.
 ALL_TARGETS=(
     ubuntu24-base rocky10-base rocky9-base debian13-base ubuntu26-base
-    ubuntu24-tool rocky10-tool rocky9-tool ubuntu26-tool
-    ubuntu24-desktop rocky9-desktop ubuntu26-desktop
+    rocky10-tool ubuntu26-tool
+    rocky9-desktop ubuntu26-desktop
 )
 
 FORCE_OVERWRITE=false
