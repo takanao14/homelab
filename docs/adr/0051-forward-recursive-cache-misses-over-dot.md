@@ -37,13 +37,16 @@ certificate name `dns.google`.
 Keep the existing 256 MB persistent cache, client views, metrics, and dnsdist
 routing unchanged. Google performs DNSSEC validation and its answers are trusted
 over authenticated TLS. Local revalidation is disabled because it produced
-`NSEC Missing` for valid CNAME chains such as `ios.chat.openai.com`. Do not clear
-the cache when switching modes. Validate cache misses explicitly during rollout
-so cached answers do not conceal an upstream failure.
+`NSEC Missing` for valid CNAME chains such as `ios.chat.openai.com`. Keep the
+cache when entering `emergency_forward`, and validate cache misses explicitly so
+cached answers do not conceal an upstream failure.
 
-Keep production in `emergency_forward` while observing whether direct external
-DNS reachability remains stable. Mode changes are made in shared resolver group
-variables and applied serially, with resolver1 as the canary.
+Return production to `recursive` once the root-server probes from both
+resolvers have raised neither `AuthoritativeDnsUdpPathDegraded` nor
+`AuthoritativeDnsPathUnavailable` for 14 days. Mode changes are made in shared
+resolver group variables. The playbook's `serial: 1` only orders hosts, so
+apply to resolver1 with `--limit` and complete the canary observation before
+running it for resolver2.
 
 ## Consequences
 
@@ -55,8 +58,8 @@ variables and applied serially, with resolver1 as the canary.
   repair or identify the underlying network fault.
 - DNSSEC enforcement depends on Google Public DNS while forwarding is enabled.
 - Google can observe cache-miss query names. This reverses ADR-0030's preference
-  to avoid third-party query disclosure and is accepted only after the canary
-  is reviewed.
+  to avoid third-party query disclosure and is accepted only while
+  `emergency_forward` is active.
 - Setting the mode to `recursive` restores full-service recursion. Because the
   emergency mode trusts upstream DNSSEC validation, the serial resolver
   playbook clears each cache automatically after loading the recursive
@@ -77,3 +80,14 @@ variables and applied serially, with resolver1 as the canary.
 6. Restore `recursive` mode if the canary increases failures or does not
    materially improve the incident. Confirm that the role cleared cache data
    accepted while local validation was disabled.
+
+## Addendum (2026-10-22): rollout retrospective
+
+resolver1 reloaded into forwarding at 2026-09-19 14:57 UTC and resolver2 at
+15:58 UTC. Both reloads replaced the kresd workers without restarting the unit;
+textfile metrics stayed under 46 seconds old, and per-worker counters reset
+once. The direct UDP failure had subsided by 14:10 UTC, so the canary could not
+show an improvement, yet resolver2 was enabled although criterion 6's rollback
+condition was met. From 16:00 UTC, local revalidation failed Cloudflare CNAME
+chains for OpenAI names and raised hourly client SERVFAIL to 18-57% until it
+was disabled at 23:02 UTC.
