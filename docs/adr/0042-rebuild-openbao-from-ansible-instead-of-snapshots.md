@@ -65,3 +65,11 @@ Recover OpenBao by rebuilding it from Ansible. Do not build a snapshot pipeline.
   not the OpenBao host, are what must not be lost.
 - Reconciliation stays manual until it is scripted. Without it, out-of-band
   writes accumulate unnoticed, which is how the three orphans arose.
+
+## Addendum (2026-10-22): MCP entries and scripted reconciliation
+
+The MCP tokens (`secret/k8s/mcp/*`) are also written outside the role, by
+`scripts/secrets/admin/seed-mcp.sh` from SOPS, so a rebuild re-injects six
+hand-managed entries. Reconciliation is scripted as
+`scripts/check-openbao-secrets.sh` but still runs manually. The role README
+holds the current rebuild sequence.
