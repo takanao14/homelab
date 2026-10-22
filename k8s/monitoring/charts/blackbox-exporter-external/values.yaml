@@ -32,7 +32,7 @@ authoritativeDnsProbeAlerts:
   enabled: false
   failedFor: 5m
   successWindow: 10m
-  successRatioMin: 0.7
+  successRatioMin: 0.8
 
 tcpProbeAlerts:
   enabled: false
