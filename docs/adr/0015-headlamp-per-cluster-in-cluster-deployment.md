@@ -78,3 +78,9 @@ ServiceAccount to `view` plus a Secret-free read role instead of
 ## Addendum (2026-10-12): removed from sandbox
 
 ADR-0070 limits sandbox to the cluster platform, so Headlamp runs in prd only.
+
+## Addendum (2026-10-15): authenticated with Authelia
+
+[ADR-0074](0074-authenticate-headlamp-with-authelia.md) replaces the
+unauthenticated access from the 2026-10-09 addendum with Authelia forward auth
+that admits only `lab-platform-admins`. The read-only ServiceAccount stays.
