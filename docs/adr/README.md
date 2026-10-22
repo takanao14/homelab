@@ -69,7 +69,7 @@ follow those links for the changed parts.
 | ADR | Title | Status |
 |-----|-------|--------|
 | [0006](0006-custom-image-pipeline-monorepo-and-seaweedfs-s3.md) | Custom image pipeline — monorepo build + SeaweedFS S3 distribution | Accepted |
-| [0013](0013-truenas-nfs-for-proxmox-shared-images.md) | TrueNAS NFS for Proxmox shared image storage | Accepted |
+| [0013](0013-truenas-nfs-for-proxmox-shared-images.md) | TrueNAS NFS for Proxmox shared image storage | Rejected |
 | [0018](0018-seaweedfs-data-on-usb-ssd-directory-storage.md) | SeaweedFS data on a node3 USB SSD via Proxmox directory storage | Accepted |
 | [0020](0020-tf-tree-axes-host-vs-cluster.md) | tf tree axes — host-named trees, cluster tree with per-stack host binding | Accepted |
 | [0037](0037-bake-shared-toolchain-into-server-images.md) | Bake the shared CLI toolchain into the server images from one Packer template | Accepted; amended by [ADR-0049](0049-manage-shared-cli-tools-with-mise.md) |
