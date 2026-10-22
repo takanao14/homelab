@@ -59,10 +59,12 @@ The source of truth is `takanao14/dotfiles`:
 - `dot_config/mise/mise.lock` contains Linux x64 and arm64 artifact metadata.
 - `.chezmoiscripts/run_onchange_after_40_linux_mise.sh.tmpl` installs the pinned
   mise binary and runs `mise install --locked`.
-- Cloud Renovate updates versions in `config.toml`.
-- The `Refresh mise lockfile` GitHub Actions workflow runs on a same-repository
-  config update branch, regenerates the lockfile, verifies that no configured
-  tool disappeared, and commits the result to that branch.
+- Cloud Renovate updates versions in `config.toml` and the matching
+  `mise.lock` entries.
+- The reusable `Refresh mise lockfile` workflow (`mise-lock.yaml`), called by
+  pull request validation, regenerates the pinned mise checksums and Linux lock
+  entries on a same-repository update branch, verifies that every configured
+  tool name remains locked, and commits any difference to that branch.
 
 The homelab repository vendors the config, lockfile, and rendered installer
 with `scripts/install/vendor/sync.sh`. `vendor/REVISION` records the exact
@@ -73,8 +75,8 @@ Per-user installation uses `~/.config/mise/config.toml` and
 
 The expected dependency update sequence is:
 
-1. Renovate updates one or more versions in the dotfiles config.
-2. GitHub Actions updates and validates the lockfile on the same pull request.
+1. Renovate updates tool versions and lock entries in the dotfiles config.
+2. GitHub Actions regenerates and verifies the lockfile on the same pull request.
 3. Merge the dotfiles pull request.
 4. Homelab Renovate updates the dotfiles commit digest; GitHub Actions syncs
    vendor files on the same pull request (see [ADR-0069](0069-track-dotfiles-vendor-with-renovate.md)).
@@ -94,15 +96,17 @@ dotfiles scripts were then renumbered into a single execution-order sequence,
 which is why the vendored copies carry their chezmoi target names.
 Repository checks cover vendored-file drift, shell syntax and lint, Packer
 format and validation, and ADR formatting. Renovate's Dependency Dashboard
-detects all 36 mise tool declarations.
+detects all 43 mise tool declarations.
 
 ## Follow-up plan
 
-- Confirm the first real Renovate mise update pull request receives a matching
-  lockfile commit and can install with `--locked`.
-- Verify `chezmoi apply` from the current dotfiles `main` on a stock Linux cloud
-  image; this validates the per-user path after lockfile adoption.
-- Build representative Debian and Rocky Linux tool images. Linux arm64 lock
-  entries are generated but have not yet been exercised by Packer.
+- Confirm a vendored Renovate mise update installs with `--locked` in a
+  representative tool image build.
+- Build a representative Rocky Linux tool image. Debian has no tool target (see
+  [packer/README.md](../../packer/README.md)), so Debian coverage waits until
+  one exists.
+- The per-user chezmoi path, including Linux arm64, is outside this ADR's
+  acceptance scope; homelab consumes only the vendored copy through Packer on
+  Linux amd64.
 - Evaluate moving global APT and DNF package installation to Ansible as a
   separate decision; it is not part of the mise migration.
