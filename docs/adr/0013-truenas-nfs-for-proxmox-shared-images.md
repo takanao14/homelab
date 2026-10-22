@@ -1,6 +1,10 @@
 # ADR-0013: TrueNAS NFS for Proxmox shared image storage
 
-- **Status:** Accepted
+- **Status:** Rejected
+- **Rejected on:** 2026-10-22
+- **Rejection reason:** The required failure-domain separation cannot be provided:
+  TrueNAS runs as a VM on `pve`. The shared-storage migration was not implemented;
+  retain the existing Terraform-managed per-node image distribution.
 - **Category:** Provisioning
 - **Date:** 2026-07-06
 - **Related:** [ADR-0006](0006-custom-image-pipeline-monorepo-and-seaweedfs-s3.md),
