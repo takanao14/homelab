@@ -31,7 +31,8 @@ dnsProbeAlerts:
 authoritativeDnsProbeAlerts:
   enabled: false
   failedFor: 5m
-  minimumFailedTargets: 2
+  successWindow: 10m
+  successRatioMin: 0.7
 
 tcpProbeAlerts:
   enabled: false
