@@ -173,16 +173,6 @@ url = "https://github.com/cli/cli/releases/download/v2.102.0/gh_2.102.0_linux_am
 url_api = "https://api.github.com/repos/cli/cli/releases/assets/599854672"
 provenance = "github-attestations"
 
-[[tools."aqua:dalance/procs"]]
-version = "0.14.12"
-backend = "aqua:dalance/procs"
-specifiers = ["0.14.12"]
-
-[tools."aqua:dalance/procs"."platforms.linux-x64"]
-checksum = "sha256:81964faf9d5cd0e9f399d5d0954fb6fe4d4d9f7d3cbec4507633df5a45b11713"
-url = "https://github.com/dalance/procs/releases/download/v0.14.12/procs-v0.14.12-x86_64-linux.zip"
-url_api = "https://api.github.com/repos/dalance/procs/releases/assets/457525859"
-
 [[tools."aqua:dandavison/delta"]]
 version = "0.20.1"
 backend = "aqua:dandavison/delta"
@@ -263,21 +253,6 @@ url_api = "https://api.github.com/repos/getsops/sops/releases/assets/486808201"
 
 [tools."aqua:getsops/sops"."platforms.linux-x64".provenance.slsa]
 url = "https://github.com/getsops/sops/releases/download/v3.13.3/sops-v3.13.3.intoto.jsonl"
-
-[[tools."aqua:gitui-org/gitui"]]
-version = "0.28.1"
-backend = "aqua:gitui-org/gitui"
-specifiers = ["0.28.1"]
-
-[tools."aqua:gitui-org/gitui"."platforms.linux-arm64"]
-checksum = "sha256:2a640da05b73e9152a7bf92bfd7c23acd9d60438f4f2cabb62357014a5fd7c28"
-url = "https://github.com/gitui-org/gitui/releases/download/v0.28.1/gitui-linux-aarch64.tar.gz"
-url_api = "https://api.github.com/repos/gitui-org/gitui/releases/assets/380791456"
-
-[tools."aqua:gitui-org/gitui"."platforms.linux-x64"]
-checksum = "sha256:f6149b9ae203397158b0c89c13cfde718e7121d3d3cd2ebc597f93d6628d9b5b"
-url = "https://github.com/gitui-org/gitui/releases/download/v0.28.1/gitui-linux-x86_64.tar.gz"
-url_api = "https://api.github.com/repos/gitui-org/gitui/releases/assets/380787855"
 
 [[tools."aqua:gruntwork-io/terragrunt"]]
 version = "1.1.6"
@@ -366,16 +341,6 @@ url_api = "https://api.github.com/repos/k0sproject/k0sctl/releases/assets/578938
 checksum = "sha256:bd5cd9125c93d8d30c33f7b2f3693fed0d74140a248d433dad74f2b7015295b5"
 url = "https://github.com/k0sproject/k0sctl/releases/download/v0.33.1/k0sctl-linux-amd64"
 url_api = "https://api.github.com/repos/k0sproject/k0sctl/releases/assets/578938984"
-
-[[tools."aqua:kdash-rs/kdash"]]
-version = "2.1.1"
-backend = "aqua:kdash-rs/kdash"
-specifiers = ["2.1.1"]
-
-[tools."aqua:kdash-rs/kdash"."platforms.linux-x64"]
-checksum = "sha256:97507163287b0de2e246624a4f6dba2fc79290d2b003c9c711d2c73343a2f3d6"
-url = "https://github.com/kdash-rs/kdash/releases/download/v2.1.1/kdash-linux.tar.gz"
-url_api = "https://api.github.com/repos/kdash-rs/kdash/releases/assets/486297733"
 
 [[tools."aqua:kubernetes-sigs/krew"]]
 version = "0.5.0"
