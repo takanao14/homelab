@@ -1,6 +1,9 @@
 # ADR-0049: Manage shared Linux CLI tools with mise
 
 - **Status:** Accepted
+- **Validated:** 2026-10-22; `rocky10-tool` and `ubuntu26-tool` built from
+  homelab `main` (`026fda39`), whose vendored lock carried Renovate tool
+  updates, installed the toolchain with `--locked`.
 - **Amended by:** [ADR-0069](0069-track-dotfiles-vendor-with-renovate.md)
 - **Category:** Provisioning
 - **Date:** 2026-09-12
@@ -100,11 +103,8 @@ detects all 43 mise tool declarations.
 
 ## Follow-up plan
 
-- Confirm a vendored Renovate mise update installs with `--locked` in a
-  representative tool image build.
-- Build a representative Rocky Linux tool image. Debian has no tool target (see
-  [packer/README.md](../../packer/README.md)), so Debian coverage waits until
-  one exists.
+- Debian has no tool target (see [packer/README.md](../../packer/README.md)),
+  so Debian coverage waits until one exists.
 - The per-user chezmoi path, including Linux arm64, is outside this ADR's
   acceptance scope; homelab consumes only the vendored copy through Packer on
   Linux amd64.
