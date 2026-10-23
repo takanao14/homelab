@@ -1,13 +1,78 @@
 ---
 - name: Setup OpenClaw
   hosts: openclaw
+  pre_tasks:
+    - name: Validate rootless opt-in flag types
+      ansible.builtin.assert:
+        that:
+          - openclaw_rootless_enabled is boolean
+          - openclaw_rootless_state_prepared is boolean
+      tags: always
+    - name: Validate separate rootless migration paths
+      become: true
+      ansible.builtin.command:
+        argv:
+          - python3
+          - -c
+          - |
+            import pathlib, sys
+            try:
+                for current, previous in zip(sys.argv[1::2], sys.argv[2::2]):
+                    destination, original = pathlib.Path(current).resolve(), pathlib.Path(previous).resolve()
+                    if destination == original or original in destination.parents or destination in original.parents:
+                        sys.exit(1)
+            except Exception:
+                sys.exit(1)
+          - "{{ openclaw_state_dir }}"
+          - /var/lib/openclaw
+          - "{{ openclaw_config_dir }}"
+          - /etc/openclaw
+      changed_when: false
+      check_mode: false
+      when: openclaw_rootless_enabled
+      tags: always
+    - name: Verify rootless migration readiness before changing credentials
+      when:
+        - openclaw_rootless_enabled
+        - ansible_run_tags | difference(['rootless_prepare']) | length > 0
+      tags: always
+      block:
+        - name: Require explicit confirmation of prepared rootless state
+          ansible.builtin.assert:
+            that:
+              - openclaw_rootless_state_prepared
+            fail_msg: Stop the old service and prepare a state copy before enabling rootless.
+        - name: Check whether rootful Podman is available
+          ansible.builtin.stat:
+            path: /usr/bin/podman
+          register: openclaw_rootless_podman_binary
+        - name: Ensure the rootful container has been removed before rootless migration
+          become: true
+          ansible.builtin.command:
+            argv: [podman, container, exists, "{{ openclaw_container_name }}"]
+          register: openclaw_rootful_container
+          changed_when: false
+          failed_when: openclaw_rootful_container.rc != 1
+          check_mode: false
+          when: openclaw_rootless_podman_binary.stat.exists
+    - name: Prepare rootless Podman account
+      ansible.builtin.import_role:
+        name: podman
+        tasks_from: rootless
+      vars:
+        podman_rootless_user: "{{ openclaw_rootless_user }}"
+        podman_rootless_uid: "{{ openclaw_rootless_uid }}"
+        podman_rootless_subid_start: "{{ openclaw_rootless_subid_start }}"
+      when: openclaw_rootless_enabled
+      tags: [openclaw, mcp_client, rootless_prepare]
   roles:
     - role: timezone
       tags: timezone
     - role: mcp_client
       tags: [openclaw, mcp_client]
       vars:
-        mcp_client_env_file: /etc/openclaw/mcp.env
+        mcp_client_env_file: "{{ openclaw_config_dir }}/mcp.env"
+        mcp_client_owner: "{{ openclaw_runtime_owner }}"
         mcp_client_notify: [Restart openclaw]
     - role: openclaw
       tags: openclaw

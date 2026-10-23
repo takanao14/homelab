@@ -1,0 +1,126 @@
+---
+- name: Validate rootless account allocation
+  ansible.builtin.assert:
+    that:
+      - podman_rootless_user is match('^[a-z_][a-z0-9_-]*$')
+      - podman_rootless_uid | int >= 60000
+      - podman_rootless_uid | int < 1000000
+      - podman_rootless_subid_start | int >= 1000000
+      - podman_rootless_subid_count | int >= 65536
+      - podman_rootless_subid_start | int + podman_rootless_subid_count | int < 4294967295
+
+- name: Check rootless account and subordinate ID conflicts
+  become: true
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import grp, pathlib, pwd, sys
+        name, uid, start, count = sys.argv[1], *map(int, sys.argv[2:])
+        try:
+            entries = list(pwd.getpwall())
+            for lookup, key in ((pwd.getpwnam, name), (pwd.getpwuid, uid)):
+                try:
+                    entries.append(lookup(key))
+                except KeyError:
+                    pass
+            local = pathlib.Path('/etc/passwd').read_text().splitlines()
+            groups = list(grp.getgrall())
+            for lookup, key in ((grp.getgrnam, name), (grp.getgrgid, uid)):
+                try:
+                    groups.append(lookup(key))
+                except KeyError:
+                    pass
+            local_groups = pathlib.Path('/etc/group').read_text().splitlines()
+            if any(g.gr_name == name for g in groups) and not any(
+                    line.startswith(name + ':') for line in local_groups):
+                sys.exit(1)
+            if any((g.gr_gid == uid and g.gr_name != name) or
+                   (g.gr_name == name and g.gr_gid != uid) for g in groups):
+                sys.exit(1)
+            if any(start <= e.pw_uid < start + count for e in entries):
+                sys.exit(1)
+            if any(start <= g.gr_gid < start + count for g in groups):
+                sys.exit(1)
+            if any((e.pw_uid == uid and e.pw_name != name) or
+                   (e.pw_name == name and e.pw_uid != uid) for e in entries):
+                sys.exit(1)
+            if any(e.pw_name == name for e in entries) and not any(
+                    line.startswith(name + ':') for line in local):
+                sys.exit(1)
+            for filename in ('/etc/subuid', '/etc/subgid'):
+                path = pathlib.Path(filename)
+                for line in path.read_text().splitlines() if path.exists() else []:
+                    owner, first, size = line.split(':')
+                    if owner == name and (int(first) != start or int(size) != count):
+                        sys.exit(1)
+                    if owner != name and max(start, int(first)) < min(start + count, int(first) + int(size)):
+                        sys.exit(1)
+        except Exception:
+            sys.exit(1)
+      - "{{ podman_rootless_user }}"
+      - "{{ podman_rootless_uid | string }}"
+      - "{{ podman_rootless_subid_start | string }}"
+      - "{{ podman_rootless_subid_count | string }}"
+  changed_when: false
+  check_mode: false
+
+- name: Install rootless Podman dependencies
+  become: true
+  ansible.builtin.apt:
+    name: "{{ podman_packages + ['dbus-user-session'] }}"
+    state: present
+    update_cache: true
+
+- name: Create dedicated rootless group
+  become: true
+  ansible.builtin.group:
+    name: "{{ podman_rootless_user }}"
+    gid: "{{ podman_rootless_uid }}"
+
+- name: Create dedicated rootless account
+  become: true
+  ansible.builtin.user:
+    name: "{{ podman_rootless_user }}"
+    uid: "{{ podman_rootless_uid }}"
+    group: "{{ podman_rootless_user }}"
+    groups: ''
+    home: "/var/lib/{{ podman_rootless_user }}"
+    shell: /usr/sbin/nologin
+    create_home: true
+    password_lock: true
+
+- name: Protect rootless home directory
+  become: true
+  ansible.builtin.file:
+    path: "/var/lib/{{ podman_rootless_user }}"
+    state: directory
+    owner: "{{ podman_rootless_user }}"
+    group: "{{ podman_rootless_user }}"
+    mode: '0700'
+
+- name: Allocate stable subordinate IDs
+  become: true
+  ansible.builtin.lineinfile:
+    path: "/etc/{{ item }}"
+    regexp: "^{{ podman_rootless_user }}:"
+    line: "{{ podman_rootless_user }}:{{ podman_rootless_subid_start }}:{{ podman_rootless_subid_count }}"
+    create: true
+    owner: root
+    group: root
+    mode: '0644'
+  loop: [subuid, subgid]
+
+- name: Enable persistent rootless user manager
+  become: true
+  ansible.builtin.command:
+    argv: [loginctl, enable-linger, "{{ podman_rootless_user }}"]
+    creates: "/var/lib/systemd/linger/{{ podman_rootless_user }}"
+
+- name: Start rootless user manager
+  become: true
+  ansible.builtin.systemd:
+    name: "user@{{ podman_rootless_uid }}.service"
+    state: started
+  when: not ansible_check_mode

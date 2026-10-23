@@ -11,5 +11,7 @@ cache:
   enabled: false
 
 container:
-  network: host
-  docker_host: automount
+  network: {{ forgejo_runner_container_network | to_json }}
+  privileged: false
+  valid_volumes: []
+  docker_host: {{ ('automount' if forgejo_runner_mount_docker_socket else '-') | to_json }}

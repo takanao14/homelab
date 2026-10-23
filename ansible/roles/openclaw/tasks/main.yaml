@@ -5,6 +5,14 @@
       - openclaw_gateway_token | length >= 32
   no_log: true
 
+- name: Reject in-place rootless state conversion
+  ansible.builtin.assert:
+    that:
+      - openclaw_state_dir != '/var/lib/openclaw'
+      - openclaw_config_dir != '/etc/openclaw'
+    fail_msg: Use separate restored state and credential directories for rootless migration.
+  when: openclaw_rootless_enabled
+
 - name: Install Podman
   become: true
   ansible.builtin.apt:
@@ -28,8 +36,11 @@
     group: "{{ item.group }}"
     mode: "{{ item.mode }}"
   loop:
-    - { path: "{{ openclaw_state_dir }}", owner: '1000', group: '1000', mode: '0700' }
-    - { path: "{{ openclaw_config_dir }}", owner: root, group: root, mode: '0700' }
+    - path: "{{ openclaw_state_dir }}"
+      owner: "{{ openclaw_state_owner }}"
+      group: "{{ openclaw_rootless_user if openclaw_rootless_enabled else 1000 }}"
+      mode: '0700'
+    - { path: "{{ openclaw_config_dir }}", owner: root, group: "{{ openclaw_runtime_owner }}", mode: '0750' }
 
 - name: Create OpenClaw web plugin directory
   become: true
@@ -72,8 +83,8 @@
   ansible.builtin.template:
     src: openclaw.json.j2
     dest: "{{ openclaw_state_dir }}/openclaw.json"
-    owner: '1000'
-    group: '1000'
+    owner: "{{ openclaw_state_owner }}"
+    group: "{{ openclaw_rootless_user if openclaw_rootless_enabled else 1000 }}"
     mode: '0600'
   notify: Restart openclaw
 
@@ -82,14 +93,19 @@
   ansible.builtin.template:
     src: openclaw.env.j2
     dest: "{{ openclaw_config_dir }}/openclaw.env"
-    owner: root
-    group: root
+    owner: "{{ openclaw_runtime_owner }}"
+    group: "{{ openclaw_runtime_owner }}"
     mode: '0600'
   no_log: true
   notify: Restart openclaw
 
 - name: Check whether the OpenClaw image is present
   become: true
+  become_user: "{{ openclaw_runtime_owner }}"
+  environment: >-
+    {{ {'XDG_RUNTIME_DIR': '/run/user/' ~ openclaw_rootless_uid,
+         'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/' ~ openclaw_rootless_uid ~ '/bus'}
+        if openclaw_rootless_enabled else {} }}
   ansible.builtin.command:
     argv: [podman, image, exists, "{{ openclaw_image }}"]
   register: openclaw_image_present
@@ -100,6 +116,11 @@
 
 - name: Pull the OpenClaw image
   become: true
+  become_user: "{{ openclaw_runtime_owner }}"
+  environment: >-
+    {{ {'XDG_RUNTIME_DIR': '/run/user/' ~ openclaw_rootless_uid,
+         'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/' ~ openclaw_rootless_uid ~ '/bus'}
+        if openclaw_rootless_enabled else {} }}
   ansible.builtin.command:
     argv: [podman, pull, "{{ openclaw_image }}"]
   when:

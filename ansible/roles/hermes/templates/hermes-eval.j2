@@ -6,6 +6,12 @@ if [ -t 0 ] && [ -t 1 ]; then
   hermes_tty=--tty
 fi
 
-exec sudo /usr/bin/podman exec --interactive ${hermes_tty:+--tty} \
+{% if hermes_rootless_enabled %}
+exec sudo -u {{ hermes_rootless_user }} /usr/bin/env \
+  HOME=/var/lib/{{ hermes_rootless_user }} \
+  XDG_RUNTIME_DIR=/run/user/{{ hermes_rootless_uid }} \
+  DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/{{ hermes_rootless_uid }}/bus \
+  /usr/bin/podman{% else %}
+exec sudo /usr/bin/podman{% endif %} exec --interactive ${hermes_tty:+--tty} \
   --user=10000:10000 --workdir=/opt/data --env=HOME=/opt/data \
   {{ hermes_container_name }} /opt/hermes/.venv/bin/hermes "$@"

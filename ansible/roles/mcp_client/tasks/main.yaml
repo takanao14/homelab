@@ -24,16 +24,16 @@
     path: "{{ mcp_client_env_file | dirname }}"
     state: directory
     owner: root
-    group: root
-    mode: '0700'
+    group: "{{ mcp_client_group }}"
+    mode: '0750'
 
 - name: Deploy MCP caller credentials
   become: true
   ansible.builtin.template:
     src: mcp.env.j2
     dest: "{{ mcp_client_env_file }}"
-    owner: root
-    group: root
+    owner: "{{ mcp_client_owner }}"
+    group: "{{ mcp_client_group }}"
     mode: '0600'
   no_log: true
   diff: false

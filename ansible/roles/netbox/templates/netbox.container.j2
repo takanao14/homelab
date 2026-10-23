@@ -5,6 +5,8 @@ Wants=network-online.target
 Requires=netbox-postgres.service netbox-redis.service netbox-redis-cache.service
 
 [Container]
+NoNewPrivileges=true
+DropCapability=all
 ContainerName={{ netbox_container }}
 Image=docker.io/netboxcommunity/netbox:v{{ netbox_version }}-{{ netbox_docker_version }}
 Network={{ netbox_network }}.network

@@ -5,13 +5,30 @@ After=network-online.target
 Requires=hermes-firewall.service
 After=hermes-firewall.service
 
+{% if hermes_rootless_enabled %}
+Requires=user@{{ hermes_rootless_uid }}.service
+After=user@{{ hermes_rootless_uid }}.service
+{% endif %}
+
 [Service]
+{% if hermes_rootless_enabled %}
+Delegate=yes
+User={{ hermes_rootless_user }}
+Group={{ hermes_rootless_user }}
+Environment=HOME=/var/lib/{{ hermes_rootless_user }}
+Environment=XDG_RUNTIME_DIR=/run/user/{{ hermes_rootless_uid }}
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/{{ hermes_rootless_uid }}/bus
+{% endif %}
 Type=simple
 Restart=always
 RestartSec=5s
 TimeoutStopSec=45s
 ExecStartPre=-/usr/bin/podman rm --force {{ hermes_container_name }}
 ExecStart=/usr/bin/podman run --rm --init --name {{ hermes_container_name }} \
+{% if hermes_rootless_enabled %}
+  --userns=keep-id:uid=10000,gid=10000 \
+  --user=0:0 \
+{% endif %}
   --pull=never \
   --publish=127.0.0.1:{{ hermes_dashboard_port }}:{{ hermes_dashboard_port }} \
   --publish={{ ansible_host }}:{{ hermes_dashboard_port }}:{{ hermes_dashboard_port }} \

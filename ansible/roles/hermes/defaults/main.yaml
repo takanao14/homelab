@@ -1,10 +1,17 @@
 ---
 hermes_image: docker.io/nousresearch/hermes-agent:v2026.9.24@sha256:fca358f12efd65bfaaca05884166f15c0e2788375ca30d77061ac1ebc96452b7
-hermes_state_dir: /var/lib/hermes
+hermes_rootless_enabled: false
+hermes_rootless_state_prepared: false
+hermes_rootless_user: hermes-svc
+hermes_rootless_uid: 61002
+hermes_rootless_subid_start: 2065536
+hermes_state_owner: "{{ hermes_rootless_uid if hermes_rootless_enabled else 10000 }}"
+hermes_runtime_owner: "{{ hermes_rootless_user if hermes_rootless_enabled else 'root' }}"
+hermes_state_dir: "/var/lib/hermes{{ '-rootless' if hermes_rootless_enabled else '' }}"
 hermes_model_id: Gemma-4-12B-it-MTP-GGUF
 hermes_model_url: https://lemonade.prd.butaco.net/v1
 hermes_container_name: hermes-dashboard
-hermes_config_dir: /etc/hermes
+hermes_config_dir: "/etc/hermes{{ '-rootless' if hermes_rootless_enabled else '' }}"
 hermes_dashboard_port: 9119
 hermes_dashboard_username: takanao
 hermes_dashboard_public_url: https://hermes.home.butaco.net

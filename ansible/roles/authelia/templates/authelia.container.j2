@@ -4,6 +4,7 @@ After=network-online.target lldap.service
 Wants=network-online.target
 
 [Container]
+NoNewPrivileges=true
 ContainerName={{ authelia_container }}
 Image={{ authelia_image }}:{{ authelia_version }}
 Environment=AUTHELIA_SESSION_SECRET_FILE=/secrets/session_secret

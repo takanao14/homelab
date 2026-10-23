@@ -1,3 +1,5 @@
 ---
 mcp_client_secret_file: "{{ inventory_dir }}/../../../.env/secrets.sops.env"
 mcp_client_notify: []
+mcp_client_owner: root
+mcp_client_group: "{{ mcp_client_owner }}"

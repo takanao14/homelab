@@ -1,7 +1,8 @@
 # lldap Role
 
 Deploys [LLDAP](https://github.com/lldap/lldap) as a root system Podman Quadlet
-unit and reconciles its users and groups from SOPS with the image's
+unit with `NoNewPrivileges=true` and reconciles its users and groups from SOPS
+with the image's
 `bootstrap.sh` (ADR-0067). SSSD clients read it over LDAPS; the web UI is
 published through Caddy at `https://lldap.home.butaco.net`.
 

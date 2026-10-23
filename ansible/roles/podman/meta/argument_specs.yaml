@@ -1,0 +1,17 @@
+---
+argument_specs:
+  rootless:
+    short_description: Prepare a dedicated rootless Podman account
+    options:
+      podman_rootless_user:
+        type: str
+        required: true
+      podman_rootless_uid:
+        type: int
+        required: true
+      podman_rootless_subid_start:
+        type: int
+        required: true
+      podman_rootless_subid_count:
+        type: int
+        default: 65536

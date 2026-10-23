@@ -1,13 +1,78 @@
 ---
 - name: Setup Hermes Agent
   hosts: hermes
+  pre_tasks:
+    - name: Validate rootless opt-in flag types
+      ansible.builtin.assert:
+        that:
+          - hermes_rootless_enabled is boolean
+          - hermes_rootless_state_prepared is boolean
+      tags: always
+    - name: Validate separate rootless migration paths
+      become: true
+      ansible.builtin.command:
+        argv:
+          - python3
+          - -c
+          - |
+            import pathlib, sys
+            try:
+                for current, previous in zip(sys.argv[1::2], sys.argv[2::2]):
+                    destination, original = pathlib.Path(current).resolve(), pathlib.Path(previous).resolve()
+                    if destination == original or original in destination.parents or destination in original.parents:
+                        sys.exit(1)
+            except Exception:
+                sys.exit(1)
+          - "{{ hermes_state_dir }}"
+          - /var/lib/hermes
+          - "{{ hermes_config_dir }}"
+          - /etc/hermes
+      changed_when: false
+      check_mode: false
+      when: hermes_rootless_enabled
+      tags: always
+    - name: Verify rootless migration readiness before changing credentials
+      when:
+        - hermes_rootless_enabled
+        - ansible_run_tags | difference(['rootless_prepare']) | length > 0
+      tags: always
+      block:
+        - name: Require explicit confirmation of prepared rootless state
+          ansible.builtin.assert:
+            that:
+              - hermes_rootless_state_prepared
+            fail_msg: Stop the old service and prepare a state copy before enabling rootless.
+        - name: Check whether rootful Podman is available
+          ansible.builtin.stat:
+            path: /usr/bin/podman
+          register: hermes_rootless_podman_binary
+        - name: Ensure the rootful container has been removed before rootless migration
+          become: true
+          ansible.builtin.command:
+            argv: [podman, container, exists, "{{ hermes_container_name }}"]
+          register: hermes_rootful_container
+          changed_when: false
+          failed_when: hermes_rootful_container.rc != 1
+          check_mode: false
+          when: hermes_rootless_podman_binary.stat.exists
+    - name: Prepare rootless Podman account
+      ansible.builtin.import_role:
+        name: podman
+        tasks_from: rootless
+      vars:
+        podman_rootless_user: "{{ hermes_rootless_user }}"
+        podman_rootless_uid: "{{ hermes_rootless_uid }}"
+        podman_rootless_subid_start: "{{ hermes_rootless_subid_start }}"
+      when: hermes_rootless_enabled
+      tags: [hermes, mcp_client, rootless_prepare]
   roles:
     - role: timezone
       tags: timezone
     - role: mcp_client
       tags: [hermes, mcp_client]
       vars:
-        mcp_client_env_file: /etc/hermes/mcp.env
+        mcp_client_env_file: "{{ hermes_config_dir }}/mcp.env"
+        mcp_client_owner: "{{ hermes_runtime_owner }}"
         mcp_client_notify: [Restart hermes dashboard]
     - role: hermes
       tags: hermes

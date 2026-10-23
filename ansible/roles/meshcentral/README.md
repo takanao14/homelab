@@ -1,7 +1,8 @@
 # meshcentral Role
 
 MeshCentral runs on `rpi4` so it remains available to recover Proxmox and
-Kubernetes during their outages. systemd manages its rootful Podman container.
+Kubernetes during their outages. systemd manages its rootful Podman container
+with `no-new-privileges`.
 
 ## Persistent data
 

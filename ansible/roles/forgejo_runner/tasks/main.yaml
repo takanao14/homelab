@@ -1,4 +1,12 @@
 ---
+- name: Validate runner container policy
+  ansible.builtin.assert:
+    that:
+      - forgejo_runner_mount_docker_socket is boolean
+      - forgejo_runner_container_network is string
+      - forgejo_runner_container_network | length > 0
+    fail_msg: Use a boolean socket policy and a non-empty container network string.
+
 - name: Create forgejo-runner group
   become: true
   ansible.builtin.group:
@@ -16,17 +24,23 @@
     system: true
     state: present
 
-- name: Create required directories
+- name: Create runner home
   become: true
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ forgejo_runner_home }}"
     state: directory
     owner: "{{ forgejo_runner_user }}"
     group: "{{ forgejo_runner_group }}"
     mode: '0750'
-  loop:
-    - "{{ forgejo_runner_home }}"
-    - "{{ forgejo_runner_config | dirname }}"
+
+- name: Create root-managed runner configuration directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ forgejo_runner_config | dirname }}"
+    state: directory
+    owner: root
+    group: "{{ forgejo_runner_group }}"
+    mode: '0750'
 
 - name: Install git
   become: true
@@ -79,7 +93,7 @@
   ansible.builtin.template:
     src: config.yml.j2
     dest: "{{ forgejo_runner_config }}"
-    owner: "{{ forgejo_runner_user }}"
+    owner: root
     group: "{{ forgejo_runner_group }}"
     mode: '0640'
   notify: Restart forgejo-runner

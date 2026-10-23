@@ -1,7 +1,7 @@
 # authelia Role
 
 Deploys [Authelia](https://www.authelia.com/) as a root system Podman Quadlet
-unit on the LLDAP host (ADR-0067). Caddy publishes the portal at
+unit with `NoNewPrivileges=true` on the LLDAP host (ADR-0067). Caddy publishes the portal at
 `https://auth.home.butaco.net`; prd Envoy Gateway calls
 `/api/authz/ext-authz/` on `authelia_http_port` directly.
 

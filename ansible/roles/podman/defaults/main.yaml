@@ -1,9 +1,12 @@
 ---
 podman_packages:
   - podman
+  - passt
   - uidmap
   - slirp4netns
   - fuse-overlayfs
 
 # Root Quadlet directory; daemon-reload generates systemd services.
 podman_quadlet_dir: /etc/containers/systemd
+
+podman_rootless_subid_count: 65536

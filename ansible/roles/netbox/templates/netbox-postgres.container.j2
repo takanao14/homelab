@@ -4,6 +4,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Container]
+NoNewPrivileges=true
 ContainerName={{ netbox_pg_container }}
 Image={{ netbox_pg_image }}
 Network={{ netbox_network }}.network

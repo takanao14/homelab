@@ -2,8 +2,15 @@
 # renovate: datasource=docker depName=ghcr.io/openclaw/openclaw
 openclaw_image: ghcr.io/openclaw/openclaw:2026.9.6
 openclaw_container_name: openclaw
-openclaw_state_dir: /var/lib/openclaw
-openclaw_config_dir: /etc/openclaw
+openclaw_rootless_enabled: false
+openclaw_rootless_state_prepared: false
+openclaw_rootless_user: openclaw-svc
+openclaw_rootless_uid: 61001
+openclaw_rootless_subid_start: 2000000
+openclaw_state_owner: "{{ openclaw_rootless_uid if openclaw_rootless_enabled else 1000 }}"
+openclaw_runtime_owner: "{{ openclaw_rootless_user if openclaw_rootless_enabled else 'root' }}"
+openclaw_state_dir: "/var/lib/openclaw{{ '-rootless' if openclaw_rootless_enabled else '' }}"
+openclaw_config_dir: "/etc/openclaw{{ '-rootless' if openclaw_rootless_enabled else '' }}"
 openclaw_gateway_token: ""
 openclaw_listen_port: 18789
 openclaw_caddy_address: "{{ hostvars[groups['caddy'][0]]['ansible_host'] }}"

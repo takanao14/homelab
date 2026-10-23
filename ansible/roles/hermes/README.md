@@ -35,3 +35,10 @@ The `web` toolset uses Parallel's anonymous free tier for search and page
 extraction; queries and requested URLs are sent to Parallel. No extra API key
 is required. Free-tier requests may be rate-limited. Private-address protection
 remains enabled, and browser automation and terminal tools remain disabled.
+
+Rootless operation is opt-in; the default deployment remains rootful. Follow the
+[shared migration procedure](../podman/README.md#opt-in-rootless-services) before
+enabling it. Rootless state and credentials use separate `-rootless` paths, and
+credential files are owned by the dedicated service account under a root-owned
+parent directory. The system service name, root firewall ordering, and restart
+notifications remain unchanged.

@@ -13,6 +13,7 @@ ExecStartPre=-/usr/bin/podman rm --force --time 60 {{ meshcentral_container_name
 ExecStart=/usr/bin/podman run --rm --name {{ meshcentral_container_name }} \
   --memory={{ meshcentral_memory_limit }} \
   --cpus={{ meshcentral_cpu_limit }} \
+  --security-opt=no-new-privileges \
   --security-opt=apparmor={{ meshcentral_apparmor_profile }} \
   --add-host={{ meshcentral_hostname }}:{{ meshcentral_reverse_proxy_address }} \
   --publish={{ meshcentral_listen_address }}:{{ meshcentral_listen_port }}:{{ meshcentral_container_port }} \

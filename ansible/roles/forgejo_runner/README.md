@@ -32,6 +32,8 @@ Installs and configures a [Forgejo Actions Runner](https://code.forgejo.org/forg
 | `forgejo_runner_binary` | `/usr/local/bin/forgejo-runner` | Binary path |
 | `forgejo_runner_config` | `/etc/forgejo-runner/config.yml` | Config file path |
 | `forgejo_runner_build_cache_keep_storage` | `20GB` | BuildKit cache storage target |
+| `forgejo_runner_container_network` | `host` | Job network; retain until bridge networking is validated |
+| `forgejo_runner_mount_docker_socket` | `true` | Automatically mount Docker socket into jobs; set `false` for a runner dedicated to socket-free jobs |
 | `forgejo_runner_url` | `https://forgejo.home.butaco.net` | Forgejo instance URL |
 | `forgejo_runner_name` | `{{ inventory_hostname }}` | Runner display name |
 | `forgejo_runner_labels` | `self-hosted`, `ubuntu-24.04` | Runner labels (docker image mappings) |
@@ -54,5 +56,17 @@ Run [playbooks/services/forgejo_runner.yaml](../../playbooks/services/forgejo_ru
   remove the old offline runner from Forgejo after the new one is online.
 - Applying a Docker daemon configuration change restarts Docker. Run the
   playbook when no workflow is active.
+- The configuration file and its directory are root-owned. The runner process
+  has no Linux capabilities, cannot gain privileges through setuid executables,
+  and creates private files with umask `0077`. Job containers explicitly disable
+  privileged mode and workflow-requested volumes; Docker socket automount is
+  controlled separately.
+- The default rootful Docker socket still grants host root-equivalent control,
+  including the ability to bypass job container restrictions. Setting
+  `forgejo_runner_mount_docker_socket: false` prevents its automatic job mount,
+  but does not remove the host runner's Docker access. Use a separate runner
+  registration and labels when separating jobs by socket policy.
+- Docker remains rootful; rootless adoption requires validation of deployed
+  Forgejo workflows.
 - BuildKit garbage collection bounds future cache growth. It does not replace
   a one-time prune when an existing cache already fills the disk.

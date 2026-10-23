@@ -49,3 +49,10 @@ Web search uses Parallel's anonymous free tier through the pinned external
 plugin; queries are sent to Parallel. `web_fetch` reads public URLs directly.
 Both tools retain their private-address protection. The plugin directory is
 root-owned and mounted read-only into the container.
+
+Rootless operation is opt-in; the default deployment remains rootful. Follow the
+[shared migration procedure](../podman/README.md#opt-in-rootless-services) before
+enabling it. Rootless state and credentials use separate `-rootless` paths, and
+credential files are owned by the dedicated service account under a root-owned
+parent directory. The system service name, root firewall ordering, and restart
+notifications remain unchanged.

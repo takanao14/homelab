@@ -6,6 +6,14 @@
       - hermes_dashboard_session_secret | length >= 32
   no_log: true
 
+- name: Reject in-place rootless state conversion
+  ansible.builtin.assert:
+    that:
+      - hermes_state_dir != '/var/lib/hermes'
+      - hermes_config_dir != '/etc/hermes'
+    fail_msg: Use separate restored state and credential directories for rootless migration.
+  when: hermes_rootless_enabled
+
 - name: Install Podman
   become: true
   ansible.builtin.apt:
@@ -24,8 +32,8 @@
   ansible.builtin.file:
     path: "{{ hermes_state_dir }}"
     state: directory
-    owner: '10000'
-    group: '10000'
+    owner: "{{ hermes_state_owner }}"
+    group: "{{ hermes_rootless_user if hermes_rootless_enabled else 10000 }}"
     mode: '0700'
 
 - name: Create Hermes configuration directory
@@ -34,16 +42,16 @@
     path: "{{ hermes_config_dir }}"
     state: directory
     owner: root
-    group: root
-    mode: '0700'
+    group: "{{ hermes_runtime_owner }}"
+    mode: '0750'
 
 - name: Deploy dashboard credentials
   become: true
   ansible.builtin.template:
     src: dashboard.env.j2
     dest: "{{ hermes_config_dir }}/dashboard.env"
-    owner: root
-    group: root
+    owner: "{{ hermes_runtime_owner }}"
+    group: "{{ hermes_runtime_owner }}"
     mode: '0600'
   no_log: true
   diff: false
@@ -54,13 +62,18 @@
   ansible.builtin.template:
     src: config.yaml.j2
     dest: "{{ hermes_state_dir }}/config.yaml"
-    owner: '10000'
-    group: '10000'
+    owner: "{{ hermes_state_owner }}"
+    group: "{{ hermes_rootless_user if hermes_rootless_enabled else 10000 }}"
     mode: '0640'
   notify: Restart hermes dashboard
 
 - name: Check whether the Hermes image is present
   become: true
+  become_user: "{{ hermes_runtime_owner }}"
+  environment: >-
+    {{ {'XDG_RUNTIME_DIR': '/run/user/' ~ hermes_rootless_uid,
+         'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/' ~ hermes_rootless_uid ~ '/bus'}
+        if hermes_rootless_enabled else {} }}
   ansible.builtin.command:
     argv: [podman, image, exists, "{{ hermes_image }}"]
   register: hermes_image_present
@@ -71,6 +84,11 @@
 
 - name: Pull the Hermes image
   become: true
+  become_user: "{{ hermes_runtime_owner }}"
+  environment: >-
+    {{ {'XDG_RUNTIME_DIR': '/run/user/' ~ hermes_rootless_uid,
+         'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/' ~ hermes_rootless_uid ~ '/bus'}
+        if hermes_rootless_enabled else {} }}
   ansible.builtin.command:
     argv: [podman, pull, "{{ hermes_image }}"]
   when:
