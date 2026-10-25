@@ -28,7 +28,7 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `openbao_version` | [defaults/main.yaml](defaults/main.yaml) | Reviewed OpenBao version used by Renovate, audit, and the explicit upgrade workflow |
+| `openbao_version` | [defaults/main.yaml](defaults/main.yaml) | Reviewed OpenBao version used by Renovate, audit, fresh installs, and the explicit upgrade workflow |
 | `openbao_user` | `openbao` | System user (created by package) |
 | `openbao_group` | `openbao` | System group (created by package) |
 | `openbao_package_hold` | `true` | Hold the `openbao` apt package during normal service-role runs; the explicit upgrade workflow manages this hold |
@@ -55,8 +55,8 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 ## Upgrade
 
 `openbao_version` is the reviewed upstream release. Renovate updates it, but the
-normal service role deliberately keeps the apt package held. Upgrade OpenBao
-only through the operational playbook:
+normal service role installs it only on a fresh host and otherwise keeps the apt
+package held. Upgrade OpenBao only through the operational playbook:
 
 ```bash
 # Read-only desired-versus-installed check
@@ -82,14 +82,16 @@ policy.
 
 ## Post-install initialization
 
-The role starts the OpenBao service but does **not** initialize it. On first deploy, run the following on the server:
+The role starts the OpenBao service but does **not** initialize it. On first deploy, run
+from the workstation:
 
 ```bash
-BAO_ADDR=http://127.0.0.1:8200 bao operator init
+SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt" scripts/openbao-init.py <user>@192.168.40.30
 ```
 
-Store both the root token and the recovery keys in the SOPS-encrypted inventory
-(`openbao_root_token`, `openbao_recovery_keys`). Neither is used by routine
+It refuses an initialized server, runs `operator init` over SSH, and writes the root
+token and recovery keys into `openbao_root_token` and `openbao_recovery_keys` of the
+SOPS-encrypted inventory without printing them. Neither is used by routine
 operational playbooks. The recovery keys authorize `operator generate-root` and
 `operator rekey`; they do not unseal, because the static seal does that. Keep
 every share — rotating them requires the existing ones, so a lost set cannot be
@@ -103,14 +105,12 @@ KV entries come from SOPS inventory and the workstation admin scripts below.
 Run the steps in order:
 
 1. Re-create the VM, then `ansible-playbook playbooks/services/openbao.yaml`. The role
-   deploys `openbao.hcl` and the static seal key from SOPS, so the rebuilt host
-   unseals on its own once initialized.
-2. `BAO_ADDR=http://127.0.0.1:8200 bao operator init` on the server.
-3. **Update SOPS before continuing.** The new `operator init` issues a new root
-   token and new recovery keys, so the `openbao_root_token` and
-   `openbao_recovery_keys` already in `group_vars/openbao.sops.yaml` are dead.
-   Bootstrap authenticates with the stored root token and fails until they are
-   replaced.
+   installs the reviewed `openbao_version`, deploys `openbao.hcl` and the static seal
+   key from SOPS, so the rebuilt host unseals on its own once initialized.
+2. Run `scripts/openbao-init.py` as in [Post-install initialization](#post-install-initialization).
+3. **Commit the updated SOPS file before continuing.** The new `operator init` issues
+   a new root token and new recovery keys, so the previous values are dead. Bootstrap
+   authenticates with the stored root token and fails until they are replaced.
 4. `playbooks/ops/openbao/bootstrap.yaml`, then `playbooks/ops/openbao/configure.yaml` for the KV
    mount and policies, then `playbooks/ops/openbao/configure_userpass.yaml`, then
    `playbooks/ops/openbao/seed_secrets.yaml`.

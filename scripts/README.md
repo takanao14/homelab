@@ -12,6 +12,7 @@ scripts/
 ├── check-image-refs.sh                       # CI: image filename map consistency check
 ├── check-proxy-routes.sh                     # CI: Caddy sites <-> Homepage dashboard drift check
 ├── check-openbao-secrets.sh                  # declared secret paths <-> OpenBao KV drift check (local only)
+├── openbao-init.py                           # operator init on a rebuilt OpenBao host, stored in SOPS
 ├── grafana-mcp.sh                            # Grafana MCP server launcher (stdio)
 ├── grafana-mcp-token.sh                      # issue Grafana MCP service-account token
 ├── netbox-mcp.sh                             # NetBox MCP server launcher (stdio)

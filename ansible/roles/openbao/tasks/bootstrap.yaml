@@ -77,6 +77,8 @@
       {{ openbao_binary }} write auth/userpass/users/{{ openbao_ansible_user }}
       password=- policies=admin token_ttl=1h
     stdin: "{{ openbao_ansible_password }}"
+    # Must match login_admin.yaml; the default newline would become part of the password.
+    stdin_add_newline: false
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_root_token }}"
