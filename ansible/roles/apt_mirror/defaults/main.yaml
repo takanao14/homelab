@@ -1,2 +1,7 @@
 ---
-apt_mirror_url: "https://ftp.tsukuba.wide.ad.jp/Linux/ubuntu/"
+# Tried in order; apt falls back to the next entry when a download fails.
+apt_mirror_urls:
+  - https://linux.yz.yamagata-u.ac.jp/ubuntu/
+  - http://ftp.jaist.ac.jp/pub/Linux/ubuntu/
+  - https://jp.archive.ubuntu.com/ubuntu/
+apt_mirror_list_path: /etc/apt/ubuntu-mirrors.txt
