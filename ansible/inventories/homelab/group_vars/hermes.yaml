@@ -1,4 +1,7 @@
 ---
+hermes_rootless_enabled: true
+hermes_rootless_state_prepared: true
+
 vector_journald_units:
   - hermes-dashboard
   - hermes-firewall

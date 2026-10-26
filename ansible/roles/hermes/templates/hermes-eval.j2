@@ -7,7 +7,7 @@ if [ -t 0 ] && [ -t 1 ]; then
 fi
 
 {% if hermes_rootless_enabled %}
-exec sudo -u {{ hermes_rootless_user }} /usr/bin/env \
+exec sudo -u {{ hermes_rootless_user }} /usr/bin/env --chdir=/var/lib/{{ hermes_rootless_user }} \
   HOME=/var/lib/{{ hermes_rootless_user }} \
   XDG_RUNTIME_DIR=/run/user/{{ hermes_rootless_uid }} \
   DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/{{ hermes_rootless_uid }}/bus \

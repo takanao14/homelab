@@ -28,7 +28,7 @@ ExecStart=/usr/bin/podman run --rm --name {{ openclaw_container_name }} \
   --entrypoint=node \
   --hostname={{ openclaw_container_name }} \
 {% if openclaw_rootless_enabled %}
-  --userns=keep-id:uid=1000,gid=1000 \
+  --userns=host \
   --user=1000:1000 \
 {% endif %}
   --pull=never \

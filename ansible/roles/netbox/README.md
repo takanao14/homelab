@@ -3,9 +3,12 @@
 Deploys [NetBox](https://github.com/netbox-community/netbox) IPAM/DCIM from the
 upstream [netbox-docker](https://github.com/netbox-community/netbox-docker)
 images as rootful Podman containers managed by systemd Quadlet (ADR-0046).
-All five containers use `NoNewPrivileges=true`; NetBox and its worker run
-without Linux capabilities. Database and Valkey entrypoints retain their
-default capabilities to initialize ownership and drop privileges.
+The web, worker, and both Valkey containers use `NoNewPrivileges=true`;
+NetBox and its worker run without Linux capabilities. Database and Valkey
+entrypoints retain their default capabilities to initialize ownership and drop
+privileges.
+PostgreSQL also retains privilege escalation because the pinned `18-alpine`
+image stalls in `gosu` with `NoNewPrivileges` on netbox1 (ADR-0079).
 
 ## Functionality
 

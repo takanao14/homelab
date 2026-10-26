@@ -1,4 +1,7 @@
 ---
+openclaw_rootless_enabled: true
+openclaw_rootless_state_prepared: true
+
 vector_journald_units:
   - openclaw
   - openclaw-firewall

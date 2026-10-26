@@ -1,7 +1,7 @@
 # ADR-0064: Evaluate Hermes Agent on a dedicated VM
 
 - **Status:** Accepted
-- **Amended by:** [ADR-0066](0066-hermes-dashboard-through-caddy.md)
+- **Amended by:** [ADR-0066](0066-hermes-dashboard-through-caddy.md), [ADR-0079](0079-minimize-container-service-privileges.md)
 - **Category:** AI agents & MCP
 - **Date:** 2026-10-05
 - **Related:** [ADR-0063](0063-openclaw-on-dedicated-vm-with-lemonade.md)
@@ -22,7 +22,8 @@ for the text-only baseline; run the agents sequentially.
 
 ## Consequences
 
-- Hermes sessions and learned state stay on the dedicated VM and need backups.
+- Hermes sessions and learned state stay on the dedicated VM and are disposable
+  under ADR-0079's rebuild recovery policy.
 - The evaluation has no remote Web UI; an operator starts each session over SSH.
 - Expanding tool or network access requires a separate review of credentials and
   execution boundaries.

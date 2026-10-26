@@ -20,6 +20,7 @@
     name: [podman, nftables]
     state: present
     update_cache: true
+    cache_valid_time: 3600
     lock_timeout: 300
 
 - name: Check whether Podman is installed
@@ -33,7 +34,7 @@
     path: "{{ hermes_state_dir }}"
     state: directory
     owner: "{{ hermes_state_owner }}"
-    group: "{{ hermes_rootless_user if hermes_rootless_enabled else 10000 }}"
+    group: "{{ hermes_state_owner }}"
     mode: '0700'
 
 - name: Create Hermes configuration directory
@@ -63,7 +64,7 @@
     src: config.yaml.j2
     dest: "{{ hermes_state_dir }}/config.yaml"
     owner: "{{ hermes_state_owner }}"
-    group: "{{ hermes_rootless_user if hermes_rootless_enabled else 10000 }}"
+    group: "{{ hermes_state_owner }}"
     mode: '0640'
   notify: Restart hermes dashboard
 
@@ -130,6 +131,9 @@
     - Reload hermes systemd
     - Restart hermes firewall
     - Restart hermes dashboard
+
+- name: Apply Hermes configuration handlers before ensuring service state
+  ansible.builtin.meta: flush_handlers
 
 - name: Ensure Hermes firewall is enabled and started
   become: true

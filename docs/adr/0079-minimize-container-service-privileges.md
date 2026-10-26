@@ -26,15 +26,29 @@ intact. Provision subordinate IDs and a lingering user manager for Podman's
 systemd cgroup backend, and pass its runtime directory and D-Bus address.
 This uses plain systemd services, not system Quadlets with a substituted user.
 
-Keep rootless disabled by default until state migration and runtime validation
+Keep rootless disabled by default until state initialization and runtime validation
 are complete. Require separate state and credential paths; never recursively
 change the ownership of the live rootful state. Preserve container identities,
 shutdown budgets, proxy restrictions and the shared MCP credential source.
 Host systemd hardening must not prevent Podman's subordinate UID helpers from
 acquiring the privileges needed to create its user namespace.
+Use Podman's standard rootless UID/GID mapping and assign application
+state to its subordinate IDs. Avoid `keep-id`, whose first use with native
+overlay requires image-layer ownership conversion. Container application IDs
+remain unchanged; runtime credential files belong to the dedicated account.
+An explicitly requested fresh build starts with empty state created by Ansible
+and settings recreated from Ansible/SOPS; retain the old rootful state for rollback.
+Recover OpenClaw and Hermes by rebuilding from Ansible/SOPS with empty state,
+without requiring backups. Sessions, learned state and device pairings are
+disposable; this amends ADR-0064's requirement to back up Hermes state.
 
-Apply `no-new-privileges` to the other Podman services. Drop all capabilities
-from the already non-root NetBox web and worker containers; retain the startup
+Apply `no-new-privileges` to the other Podman services except LLDAP and NetBox's
+PostgreSQL container. The pinned LLDAP v0.6.3 and PostgreSQL `18-alpine` images
+stall in `gosu` with this restriction on their current hosts. Isolated same-image
+tests with empty data reproduced the stalls; controls without the restriction
+started successfully. Retain their existing startup permissions until compatible
+startup paths are validated. The pinned Valkey image passed with the restriction.
+Drop all capabilities from the already non-root NetBox web and worker containers; retain the startup
 capabilities of database and directory images that change ownership or users.
 Keep their current rootful deployment until service-specific migration and
 recovery validation is complete. ADR-0046's NetBox runtime decision still applies.
@@ -49,8 +63,8 @@ not a prerequisite for reducing privileges.
 ## Consequences
 
 - Rootless execution is available without silently switching existing services
-  or changing their data ownership. Enabling it still requires a stopped-state
-  copy, UID mapping validation, startup and functional checks, and rollback.
+  or changing their data ownership. Enabling it requires explicit fresh state or
+  a stopped-state copy, UID mapping validation, functional checks, and rollback.
 - App credentials remain accessible to the app and its dedicated host account;
   rootless execution does not reduce the permissions granted by those tokens.
 - System unit names remain stable for journald and service operations. Podman
