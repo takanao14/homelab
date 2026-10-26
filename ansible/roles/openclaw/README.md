@@ -17,6 +17,10 @@ logs or copy it to another repository. The token authenticates the UI; the
 `sk-local` provider marker is not a Lemonade credential.
 Approve a new browser's device pairing on the VM after entering the token.
 
+Start terminal chat with `ssh -t takanao@192.168.20.23 openclaw-tui`, or run
+`openclaw-tui` on the VM. The wrapper uses the existing Gateway container and
+credentials and forwards arguments to `openclaw tui`.
+
 OpenClaw uses Lemonade's OpenAI-compatible endpoint and
 `Gemma-4-12B-it-MTP-GGUF`, with a 262,144-token context matching the
 Lemonade runtime. The `minimal` tool profile adds Web search, URL fetching, and the Grafana and NetBox MCP tools selected

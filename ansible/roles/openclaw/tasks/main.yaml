@@ -131,6 +131,16 @@
   changed_when: true
   notify: Restart openclaw
 
+- name: Deploy OpenClaw TUI helper
+  become: true
+  ansible.builtin.template:
+    src: openclaw-tui.j2
+    dest: /usr/local/bin/openclaw-tui
+    owner: root
+    group: root
+    mode: '0755'
+  tags: openclaw_tui
+
 - name: Deploy OpenClaw systemd unit
   become: true
   ansible.builtin.template:
