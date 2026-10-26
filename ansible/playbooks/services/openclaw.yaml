@@ -37,11 +37,11 @@
         - ansible_run_tags | difference(['rootless_prepare']) | length > 0
       tags: always
       block:
-        - name: Require explicit confirmation of prepared rootless state
+        - name: Require explicit confirmation of fresh or restored rootless state
           ansible.builtin.assert:
             that:
               - openclaw_rootless_state_prepared
-            fail_msg: Stop the old service and prepare a state copy before enabling rootless.
+            fail_msg: Stop the old service and confirm fresh or restored state before enabling rootless.
         - name: Check whether rootful Podman is available
           ansible.builtin.stat:
             path: /usr/bin/podman

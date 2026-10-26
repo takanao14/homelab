@@ -72,6 +72,7 @@
     name: "{{ podman_packages + ['dbus-user-session'] }}"
     state: present
     update_cache: true
+    cache_valid_time: 3600
 
 - name: Create dedicated rootless group
   become: true

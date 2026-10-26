@@ -26,7 +26,7 @@ TimeoutStopSec=45s
 ExecStartPre=-/usr/bin/podman rm --force {{ hermes_container_name }}
 ExecStart=/usr/bin/podman run --rm --init --name {{ hermes_container_name }} \
 {% if hermes_rootless_enabled %}
-  --userns=keep-id:uid=10000,gid=10000 \
+  --userns=host \
   --user=0:0 \
 {% endif %}
   --pull=never \

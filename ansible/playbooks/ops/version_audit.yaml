@@ -479,3 +479,90 @@
                    | default('unknown', true)) }}
         code_server_audit_marker_version: >-
           {{ (code_server_audit_marker.content | default('') | b64decode | trim) }}
+
+- name: Audit agent container versions
+  hosts: openclaw:hermes
+  gather_facts: false
+  vars:
+    agent_audit_service: "{{ 'openclaw' if inventory_hostname in groups['openclaw'] else 'hermes' }}"
+    agent_audit_rootless: "{{ lookup('vars', agent_audit_service ~ '_rootless_enabled', default=false) }}"
+    agent_audit_user: >-
+      {{ lookup('vars', agent_audit_service ~ '_rootless_user',
+                default=agent_audit_defaults[agent_audit_service ~ '_rootless_user']) }}
+    agent_audit_uid: >-
+      {{ lookup('vars', agent_audit_service ~ '_rootless_uid',
+                default=agent_audit_defaults[agent_audit_service ~ '_rootless_uid']) }}
+    agent_audit_image: >-
+      {{ lookup('vars', agent_audit_service ~ '_image',
+                default=agent_audit_defaults[agent_audit_service ~ '_image']) }}
+    agent_audit_container: >-
+      {{ lookup('vars', agent_audit_service ~ '_container_name',
+                default=agent_audit_defaults[agent_audit_service ~ '_container_name']) }}
+  tasks:
+    - name: Load agent audit defaults without replacing inventory overrides
+      ansible.builtin.include_vars:
+        file: "../../roles/{{ agent_audit_service }}/defaults/main.yaml"
+        name: agent_audit_defaults
+
+    - name: Read the deployed agent image in its runtime namespace
+      become: true
+      become_user: "{{ agent_audit_user if agent_audit_rootless else 'root' }}"
+      environment: >-
+        {{ {'HOME': '/var/lib/' ~ agent_audit_user,
+             'XDG_RUNTIME_DIR': '/run/user/' ~ agent_audit_uid,
+             'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/' ~ agent_audit_uid ~ '/bus'}
+           if agent_audit_rootless else {} }}
+      ansible.builtin.command:
+        chdir: "{{ '/var/lib/' ~ agent_audit_user if agent_audit_rootless else '/' }}"
+        argv:
+          - python3
+          - -c
+          - |
+            import json, re, subprocess, sys
+            result = {'installed_version': 'unknown', 'image_matches': False}
+            try:
+                def inspect(args):
+                    process = subprocess.run(['podman', *args], capture_output=True, text=True, timeout=20)
+                    if process.returncode:
+                        raise RuntimeError()
+                    return json.loads(process.stdout)[0]
+                # Inspect only ImageName, Image and Id; never emit raw metadata.
+                container = inspect(['inspect', sys.argv[1]])
+                desired = inspect(['image', 'inspect', sys.argv[2]])
+                name, actual_id, desired_id = container['ImageName'], container['Image'], desired['Id']
+                prefix = {'openclaw': 'ghcr.io/openclaw/openclaw:',
+                          'hermes': 'docker.io/nousresearch/hermes-agent:'}[sys.argv[3]]
+                if not all(re.fullmatch(r'(sha256:)?[a-f0-9]{64}', item) for item in (actual_id, desired_id)):
+                    raise RuntimeError()
+                matches = actual_id.removeprefix('sha256:') == desired_id.removeprefix('sha256:')
+                if name.startswith(prefix):
+                    version = name[len(prefix):].split('@', 1)[0]
+                elif matches and name.startswith(prefix[:-1] + '@sha256:'):
+                    # Podman omits the release tag for digest-pinned containers.
+                    version = sys.argv[2].split('@', 1)[0].rsplit(':', 1)[1]
+                else:
+                    raise RuntimeError()
+                if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.+-]{0,127}', version):
+                    raise RuntimeError()
+                result = {'installed_version': version,
+                          'image_matches': matches}
+            except Exception:
+                pass
+            print(json.dumps(result))
+          - "{{ agent_audit_container }}"
+          - "{{ agent_audit_image }}"
+          - "{{ agent_audit_service }}"
+      register: agent_audit_probe
+      changed_when: false
+      check_mode: false
+
+    - name: Report agent container version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            agent_audit_service,
+            inventory_hostname,
+            agent_audit_image.split('@')[0].rsplit(':', 1)[1],
+            (agent_audit_probe.stdout | from_json).installed_version,
+            'OK' if (agent_audit_probe.stdout | from_json).image_matches else 'DIFF'
+          ) }}

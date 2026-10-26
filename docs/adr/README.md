@@ -170,7 +170,7 @@ follow those links for the changed parts.
 | [0057](0057-cluster-hosted-authenticated-mcp.md) | Host authenticated MCP servers in the prd cluster | Accepted; amended by [ADR-0060](0060-mcp-relies-on-bearer-authentication.md) |
 | [0060](0060-mcp-relies-on-bearer-authentication.md) | Rely on bearer authentication for MCP access | Accepted |
 | [0063](0063-openclaw-on-dedicated-vm-with-lemonade.md) | Run OpenClaw on a dedicated VM with Lemonade inference | Accepted |
-| [0064](0064-hermes-evaluation-on-dedicated-vm.md) | Evaluate Hermes Agent on a dedicated VM | Accepted; amended by [ADR-0066](0066-hermes-dashboard-through-caddy.md) |
+| [0064](0064-hermes-evaluation-on-dedicated-vm.md) | Evaluate Hermes Agent on a dedicated VM | Accepted; amended by [ADR-0066](0066-hermes-dashboard-through-caddy.md), [ADR-0079](0079-minimize-container-service-privileges.md) |
 | [0065](0065-agent-mcp-caller-credentials.md) | Connect VM agents to shared read-only MCP servers | Accepted |
 | [0066](0066-hermes-dashboard-through-caddy.md) | Expose Hermes Dashboard through Caddy | Accepted |
 

@@ -21,6 +21,7 @@
       - nftables
     state: present
     update_cache: true
+    cache_valid_time: 3600
 
 - name: Check whether Podman is installed
   ansible.builtin.stat:
@@ -38,7 +39,7 @@
   loop:
     - path: "{{ openclaw_state_dir }}"
       owner: "{{ openclaw_state_owner }}"
-      group: "{{ openclaw_rootless_user if openclaw_rootless_enabled else 1000 }}"
+      group: "{{ openclaw_state_owner }}"
       mode: '0700'
     - { path: "{{ openclaw_config_dir }}", owner: root, group: "{{ openclaw_runtime_owner }}", mode: '0750' }
 
@@ -84,7 +85,7 @@
     src: openclaw.json.j2
     dest: "{{ openclaw_state_dir }}/openclaw.json"
     owner: "{{ openclaw_state_owner }}"
-    group: "{{ openclaw_rootless_user if openclaw_rootless_enabled else 1000 }}"
+    group: "{{ openclaw_state_owner }}"
     mode: '0600'
   notify: Restart openclaw
 
@@ -163,6 +164,9 @@
   notify:
     - Reload systemd
     - Restart openclaw firewall
+
+- name: Apply OpenClaw configuration handlers before ensuring service state
+  ansible.builtin.meta: flush_handlers
 
 - name: Ensure OpenClaw firewall is started and enabled
   become: true

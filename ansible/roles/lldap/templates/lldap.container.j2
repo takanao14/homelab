@@ -4,7 +4,6 @@ After=network-online.target
 Wants=network-online.target
 
 [Container]
-NoNewPrivileges=true
 ContainerName={{ lldap_container }}
 Image={{ lldap_image }}:{{ lldap_version }}
 EnvironmentFile={{ lldap_env_file }}
