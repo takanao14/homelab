@@ -39,8 +39,7 @@ extraction; queries and requested URLs are sent to Parallel. No extra API key
 is required. Free-tier requests may be rate-limited. Private-address protection
 remains enabled, and browser automation and terminal tools remain disabled.
 
-The homelab inventory enables rootless operation with fresh state; old state
-under `/var/lib/hermes` is retained for rollback.
+The homelab inventory enables rootless operation with fresh state.
 Other inventories must explicitly opt in using the
 [shared procedure](../podman/README.md#opt-in-rootless-services). The system service
 name, root firewall ordering, and restart notifications stay unchanged.

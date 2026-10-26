@@ -51,9 +51,8 @@ plugin; queries are sent to Parallel. `web_fetch` reads public URLs directly.
 Both tools retain their private-address protection. The plugin directory is
 root-owned and mounted read-only into the container.
 
-The homelab inventory enables rootless operation with fresh state; old state
-under `/var/lib/openclaw` is retained for rollback. Browser devices require new
-pairing.
+The homelab inventory enables rootless operation with fresh state. Rebuilds
+require browser devices to pair again.
 Other inventories must explicitly opt in using the
 [shared procedure](../podman/README.md#opt-in-rootless-services). The system service
 name, root firewall ordering, and restart notifications stay unchanged.
