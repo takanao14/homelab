@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+
+openclaw_tty=""
+if [ -t 0 ] && [ -t 1 ]; then
+  openclaw_tty=--tty
+fi
+
+{% if openclaw_rootless_enabled %}
+exec sudo -u {{ openclaw_rootless_user }} /usr/bin/env --chdir=/var/lib/{{ openclaw_rootless_user }} \
+  HOME=/var/lib/{{ openclaw_rootless_user }} \
+  XDG_RUNTIME_DIR=/run/user/{{ openclaw_rootless_uid }} \
+  DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/{{ openclaw_rootless_uid }}/bus \
+  /usr/bin/podman{% else %}
+exec sudo /usr/bin/podman{% endif %} exec --interactive ${openclaw_tty:+--tty} \
+  --user=1000:1000 --workdir=/app \
+  {{ openclaw_container_name }} node dist/index.js tui "$@"
