@@ -9,13 +9,25 @@
     group: root
     mode: '0644'
 
-- name: Install openbao
-  become: true
-  ansible.builtin.apt:
-    update_cache: true
-    name: openbao
-    state: present
-  notify: Restart openbao
+- name: Read installed packages
+  ansible.builtin.package_facts:
+    manager: auto
+  check_mode: false
+
+# Only a fresh install picks the version here; upgrade.yaml owns every later change,
+# because it snapshots Raft first.
+- name: Install the reviewed OpenBao version on a fresh host
+  when: "'openbao' not in ansible_facts.packages"
+  block:
+    - name: Select the reviewed OpenBao package version
+      ansible.builtin.include_tasks: select_package_version.yaml
+
+    - name: Install openbao
+      become: true
+      ansible.builtin.apt:
+        name: "openbao={{ openbao_package_version }}"
+        state: present
+      notify: Restart openbao
 
 - name: Manage openbao apt hold
   become: true

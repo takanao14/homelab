@@ -10,6 +10,7 @@
           {{ openbao_binary }} login -token-only -method=userpass
           username={{ openbao_ansible_user }} password=-
         stdin: "{{ openbao_ansible_password }}"
+        stdin_add_newline: false
       environment:
         BAO_ADDR: "{{ openbao_local_addr }}"
       register: openbao_admin_login

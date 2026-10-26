@@ -1,0 +1,38 @@
+---
+# Resolve openbao_version to an apt package version for main.yaml and upgrade.yaml.
+- name: Refresh apt cache for OpenBao
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+  when: not ansible_check_mode
+
+- name: Read available OpenBao package versions
+  become: true
+  ansible.builtin.command:
+    argv:
+      - apt-cache
+      - madison
+      - openbao
+  register: openbao_available_packages
+  changed_when: false
+  check_mode: false
+
+- name: Select package version matching the reviewed release
+  ansible.builtin.set_fact:
+    openbao_package_version: >-
+      {{
+        openbao_available_packages.stdout
+        | regex_findall('(?m)^ *openbao *[|] *([^ |]+) *[|]')
+        | select('match', '^' ~ (openbao_version | regex_escape) ~ '([+~.-].*)?$')
+        | first
+        | default('')
+      }}
+
+- name: Require reviewed OpenBao package in apt repository
+  ansible.builtin.assert:
+    that:
+      - openbao_package_version | length > 0
+    fail_msg: >-
+      No apt package matching OpenBao {{ openbao_version }} is available.
+      `apt-cache madison openbao` returned:
+      {{ openbao_available_packages.stdout | default('(no output)', true) }}
