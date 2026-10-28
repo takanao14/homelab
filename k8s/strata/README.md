@@ -22,8 +22,9 @@ base URL; read model names from `GET /v1/models`.
 The API key comes from OpenBao `secret/k8s/strata/api` (`api-key`, at least 16
 characters) through ESO. Add it to the encrypted `openbao_secrets` inventory and
 seed it with `playbooks/ops/openbao/seed_secrets.yaml`. Reading it requires the
-`k8s-strata` policy on the prd Kubernetes auth role, applied by
-`playbooks/ops/openbao/configure.yaml`. Reloader restarts the Deployment after
+`k8s-strata` policy: `playbooks/ops/openbao/configure.yaml` writes it and
+`playbooks/ops/openbao/register_cluster.yaml -e cluster=prd` attaches it to the
+live ESO role. Reloader restarts the Deployment after
 the Secret changes.
 
 ## GPU Switching
@@ -35,8 +36,9 @@ scripts/gpu-switch.sh strata
 ```
 
 The first start downloads about 76 GB, then writes a 40 GB pack and a 6 GB draft
-layer to `strata-data`; the startup probe allows four hours. Later starts load
-from the PVC. Follow progress with:
+layer to `strata-data`; it took about two hours on the HDD-backed volume, and
+the startup probe allows four. Later starts load from the PVC in about
+12 minutes. Follow progress with:
 
 ```bash
 kubectl -n strata logs -f deploy/strata
@@ -49,5 +51,9 @@ kubectl -n strata exec deploy/strata -- strata monitor --once
 - `FAMILY`, `MODEL` and `VISION` are saved as a preset in `/data`. Changing the
   model downloads it again; delete the old files under `/data/Strata-data`
   to reclaim space.
-- The Pod inherits an 8 MiB `memlock` limit. If the logs report a pinning
-  failure, raise the limit for the k0s worker on gpuvm1 (ADR-0080).
+- The Pod inherits an 8 MiB `memlock` limit, so Strata keeps the experts as
+  pageable resident memory (about 34 GiB, none pinned). Raising the limit on
+  the gpuvm1 k0s worker is optional (ADR-0080).
+- `strata-data` sits on pve's HDD mirror. The first start saturates that pool,
+  and Strata warns that random reads of the n-gram table can stall a prompt for
+  minutes.

@@ -39,8 +39,10 @@ Expose the OpenAI- and Anthropic-compatible API through the shared Gateway.
 Upstream requires a bearer key outside loopback; source it from OpenBao
 `secret/k8s/strata/api` through ESO.
 
-First validate Strata under the default `memlock` limit. If it fails or pins
-too little memory, raise `LimitMEMLOCK` for the k0s worker on gpuvm1 only.
+Keep the default `memlock` limit. Under it Strata pins nothing and keeps about
+34 GiB of experts as pageable resident memory, and it serves normally. Raise
+`LimitMEMLOCK` for the k0s worker on gpuvm1 only if pinned transfers prove
+necessary.
 
 ## Consequences
 
@@ -48,6 +50,10 @@ too little memory, raise `LimitMEMLOCK` for the k0s worker on gpuvm1 only.
   released before Strata starts.
 - The first start downloads about 76 GB and writes a 40 GB pack plus a 6 GB
   draft layer. This uses most of the remaining hostpath space on gpuvm1.
+- gpuvm1's disks live on pve's HDD mirror. The first start took about two
+  hours, saturated the pool and stalled kubelet exec and probes. Later starts
+  load in about 12 minutes. Strata warns that random n-gram reads on the
+  rotational disk can stall a prompt for minutes.
 - A model change re-downloads and repacks into the same PVC. Remove the old
   model files manually to reclaim space.
 - Strata releases often. Update the image tag and digest deliberately.
