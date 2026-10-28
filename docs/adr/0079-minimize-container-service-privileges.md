@@ -71,6 +71,10 @@ host network and socket remain defaults until actual workflows are validated.
 Rootless Docker remains a separate compatibility evaluation; changing engines is
 not a prerequisite for reducing privileges.
 
+Confine MeshCentral with a dedicated AppArmor profile based on the container
+default. Permit crun's TERM/KILL and same-context signals/ptrace read for the
+stacked crun/container label; do not change Kea or the OS-wide default profile.
+
 ## Consequences
 
 - Rootless execution is available without silently switching existing services
