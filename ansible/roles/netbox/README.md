@@ -7,8 +7,10 @@ The web, worker, and both Valkey containers use `NoNewPrivileges=true`;
 NetBox and its worker run without Linux capabilities. Database and Valkey
 entrypoints retain their default capabilities to initialize ownership and drop
 privileges.
-PostgreSQL also retains privilege escalation because the pinned `18-alpine`
-image stalls in `gosu` with `NoNewPrivileges` on netbox1 (ADR-0079).
+PostgreSQL retains privilege escalation because the pinned `18-alpine` image
+fails startup with `NoNewPrivileges` on netbox1. Direct UID 70 startup bypasses
+`gosu` but still stalls during initialization; the cause remains unresolved
+(ADR-0079).
 
 ## Functionality
 

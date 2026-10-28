@@ -43,11 +43,17 @@ without requiring backups. Sessions, learned state and device pairings are
 disposable; this amends ADR-0064's requirement to back up Hermes state.
 
 Apply `no-new-privileges` to the other Podman services except LLDAP and NetBox's
-PostgreSQL container. The pinned LLDAP v0.6.3 and PostgreSQL `18-alpine` images
-stall in `gosu` with this restriction on their current hosts. Isolated same-image
-tests with empty data reproduced the stalls; controls without the restriction
-started successfully. Retain their existing startup permissions until compatible
-startup paths are validated. The pinned Valkey image passed with the restriction.
+PostgreSQL container. The pinned Valkey image passed with the restriction.
+
+The standard LLDAP v0.6.3 image stalls in `gosu` with this restriction on idp1.
+Isolated same-image tests with empty data reproduced the stall; the control
+without the restriction started successfully. Retain its startup permissions
+until a compatible startup path is validated.
+
+The PostgreSQL `18-alpine` image fails startup with this restriction on netbox1.
+Direct UID/GID 70 startup with no capabilities bypasses `gosu` but still stalls
+during initialization; the same-image control without the restriction starts and
+serves SQL. The cause is unresolved, so retain its existing startup permissions.
 Drop all capabilities from the already non-root NetBox web and worker containers; retain the startup
 capabilities of database and directory images that change ownership or users.
 Keep their current rootful deployment until service-specific migration and
