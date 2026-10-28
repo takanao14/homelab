@@ -18,10 +18,12 @@ Persistent container mounts:
 The container has a 1 GiB RAM limit and a one-CPU limit to protect Kea DHCP on
 the same recovery host from MeshCentral resource exhaustion.
 
-The MeshCentral container alone runs with `apparmor=unconfined`. Ubuntu's
-generated `containers-default-0.57.4` profile denies the crun TERM/KILL signal
-path on this host, leaving containers permanently in `stopping` state. Host
-services such as Kea keep their existing AppArmor confinement.
+The container uses the dedicated `homelab-meshcentral` AppArmor profile, based
+on containers/common v0.57.4. It permits TERM/KILL from crun and self-signals
+and ptrace read under this host's stacked crun/container label. The generated
+default profile otherwise prevents shutdown and entrypoint log access.
+The unit loads the dedicated profile before startup; Kea's confinement is unchanged.
+Revalidate startup, TERM/KILL and restart after AppArmor/crun updates.
 
 The role also keeps `settings.cert` in the generated `config.json` aligned with
 `meshcentral_hostname`. The container's dynamic configuration is first-start

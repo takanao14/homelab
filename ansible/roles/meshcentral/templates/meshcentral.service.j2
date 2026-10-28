@@ -9,6 +9,9 @@ Type=simple
 Restart=always
 RestartSec=5s
 TimeoutStopSec=70s
+{% if meshcentral_apparmor_profile != 'unconfined' %}
+ExecStartPre=/usr/sbin/apparmor_parser --replace /etc/apparmor.d/{{ meshcentral_apparmor_profile }}
+{% endif %}
 ExecStartPre=-/usr/bin/podman rm --force --time 60 {{ meshcentral_container_name }}
 ExecStart=/usr/bin/podman run --rm --name {{ meshcentral_container_name }} \
   --memory={{ meshcentral_memory_limit }} \

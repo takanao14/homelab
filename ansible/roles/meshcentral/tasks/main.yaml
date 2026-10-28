@@ -1,10 +1,30 @@
 ---
-- name: Install Podman
+- name: Install Podman and AppArmor
   become: true
   ansible.builtin.apt:
-    name: podman
+    name:
+      - podman
+      - apparmor
     state: present
     update_cache: true
+
+- name: Validate the MeshCentral AppArmor profile name
+  ansible.builtin.assert:
+    that:
+      - meshcentral_apparmor_profile is match('^[A-Za-z0-9][A-Za-z0-9_.-]*$')
+    quiet: true
+
+- name: Deploy the MeshCentral AppArmor profile
+  become: true
+  ansible.builtin.template:
+    src: meshcentral.apparmor.j2
+    dest: "/etc/apparmor.d/{{ meshcentral_apparmor_profile }}"
+    owner: root
+    group: root
+    mode: '0644'
+    validate: /usr/sbin/apparmor_parser --skip-kernel-load %s
+  when: meshcentral_apparmor_profile != 'unconfined'
+  notify: Restart meshcentral
 
 - name: Create MeshCentral data directories
   become: true
