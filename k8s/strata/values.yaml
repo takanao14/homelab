@@ -1,0 +1,14 @@
+hostname: strata.prd.butaco.net
+gateway:
+  # Override Envoy's 15s default for long streaming responses.
+  timeouts:
+    request: 10m
+    backendRequest: 10m
+
+# Requests only; merged with the chart's GPU request. Strata plans from the
+# node's whole RAM and must not get a memory limit. IQ3_XXS with a 16 GB card
+# keeps about 35 GB of experts in RAM (ADR-0080).
+resources:
+  requests:
+    cpu: 500m
+    memory: 36Gi

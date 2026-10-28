@@ -57,6 +57,7 @@ k8s/
 ├── butaco-voice/     # Voice chat and VOICEVOX CPU engine
 ├── ollama/           # GPU LLM inference
 ├── vllm/             # OpenAI-compatible GPU inference
+├── strata/           # GPU MoE inference with RAM-resident experts
 ├── open-webui/       # LLM frontend
 ├── pdns-ui/          # Read-only PowerDNS UI
 ├── headlamp/         # Kubernetes UI
