@@ -5,8 +5,12 @@ authelia_image: docker.io/authelia/authelia
 authelia_container: authelia
 
 authelia_base_dir: /opt/authelia
+authelia_data_dir: "{{ authelia_base_dir }}/data"
+authelia_container_uid: 61003
+authelia_container_gid: 61003
+authelia_migrate_legacy_state: false
 authelia_config_dir: "{{ authelia_base_dir }}/config"
-# Root-only: one file per secret, read through AUTHELIA_*_FILE.
+# Root-managed: one file per secret, readable only by the application group.
 authelia_secrets_dir: "{{ authelia_base_dir }}/secrets"
 
 # Reached by Caddy (portal) and by prd Envoy Gateway (ext_authz).

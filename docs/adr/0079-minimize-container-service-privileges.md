@@ -53,6 +53,12 @@ capabilities of database and directory images that change ownership or users.
 Keep their current rootful deployment until service-specific migration and
 recovery validation is complete. ADR-0046's NetBox runtime decision still applies.
 
+Run Authelia as a fixed non-root container UID/GID without capabilities. Bypass
+its root entrypoint initialization through the official direct execution path.
+Mount Ansible-managed configuration and secrets read-only, and keep SQLite and
+the notifier in a separate writable data directory. Require an explicit stopped
+migration for existing state; rollback must preserve writes made after cutover.
+
 Keep Forgejo Runner on Docker. Make its configuration root-managed and restrict
 the runner process's capabilities, privilege escalation and file creation modes.
 Expose job network and Docker socket automount policy explicitly. The existing
