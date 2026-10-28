@@ -7,6 +7,7 @@ forgejo_runner_group: runner
 forgejo_runner_home: /var/lib/forgejo-runner
 forgejo_runner_binary: /usr/local/bin/forgejo-runner
 forgejo_runner_config: /etc/forgejo-runner/config.yml
+forgejo_runner_service_name: forgejo-runner
 forgejo_runner_build_cache_keep_storage: 20GB
 forgejo_runner_container_network: host
 # Keep build jobs compatible until socket-free jobs use a separate runner.
