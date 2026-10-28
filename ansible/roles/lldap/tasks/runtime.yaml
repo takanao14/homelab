@@ -13,13 +13,14 @@
     - {path: "{{ lldap_bootstrap_dir }}", mode: '0700'}
     - {path: "{{ lldap_env_file | dirname }}", mode: '0755'}
 
-# The image entrypoint chowns /data on every start; managing owner here would
-# fight it.
-- name: Ensure the container-owned LLDAP data directory exists  # noqa: risky-file-permissions
+- name: Create the LLDAP data directory for non-root startup
   become: true
   ansible.builtin.file:
     path: "{{ lldap_data_dir }}"
     state: directory
+    owner: "{{ lldap_container_uid }}"
+    group: "{{ lldap_container_gid }}"
+    mode: '0700'
 
 - name: Check for the LDAPS private key
   become: true

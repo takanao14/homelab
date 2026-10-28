@@ -4,8 +4,9 @@ Deploys [LLDAP](https://github.com/lldap/lldap) as a root system Podman Quadlet
 unit and reconciles its users and groups from SOPS with the image's
 `bootstrap.sh` (ADR-0067). SSSD clients read it over LDAPS; the web UI is
 published through Caddy at `https://lldap.home.butaco.net`.
-`NoNewPrivileges` remains disabled because the v0.6.3 image stalls in `gosu`
-with that restriction on idp1 (ADR-0079).
+The official non-root image runs as UID/GID 1000 with `NoNewPrivileges=true`
+and no Linux capabilities. Ansible prepares `/data` ownership; bootstrap runs
+with explicit container UID 0 to read its root-only credentials (ADR-0079).
 
 ## Functionality
 
