@@ -162,7 +162,7 @@ follow those links for the changed parts.
 | [0043](0043-opencode-connects-to-lemonade-mtp.md) | OpenCode connects to Lemonade Server with Gemma 4 MTP | Accepted |
 | [0054](0054-comfyui-image-updates-via-ci-opened-pull-requests.md) | Update the ComfyUI image through pinned tags and CI-opened pull requests | Accepted |
 | [0055](0055-voice-ui-observes-gpu-switch-without-controlling-it.md) | Voice UI observes GPU availability without switching workloads | Accepted |
-| [0080](0080-strata-as-a-gpu-switch-workload.md) | Run Strata as a gpu-switch workload on a 48 GiB GPU worker | Accepted |
+| [0080](0080-strata-as-a-gpu-switch-workload.md) | Run Strata as a gpu-switch workload on a 48 GiB GPU worker | Rejected |
 
 ### AI agents & MCP
 

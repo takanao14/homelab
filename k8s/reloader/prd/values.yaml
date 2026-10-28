@@ -4,4 +4,3 @@ reloader:
       - external-dns
       - mcp
       - slack-bot
-      - strata

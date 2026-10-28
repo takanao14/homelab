@@ -1,5 +1,0 @@
-apiVersion: v2
-name: strata
-description: Strata MoE inference engine on the prd AMD GPU
-type: application
-version: 0.1.0

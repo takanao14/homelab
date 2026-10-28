@@ -46,7 +46,5 @@ apps:
     enabled: true
   slack-bot:
     enabled: true
-  strata:
-    enabled: true
   vllm:
     enabled: true
