@@ -6,6 +6,10 @@ Wants=network-online.target
 [Container]
 ContainerName={{ lldap_container }}
 Image={{ lldap_image }}:{{ lldap_version }}
+User={{ lldap_container_uid }}
+Group={{ lldap_container_gid }}
+NoNewPrivileges=true
+DropCapability=all
 EnvironmentFile={{ lldap_env_file }}
 Environment=LLDAP_LDAP_BASE_DN={{ lldap_base_dn }}
 Environment=LLDAP_LDAP_USER_DN={{ lldap_admin_username }}

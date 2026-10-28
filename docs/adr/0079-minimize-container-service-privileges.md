@@ -42,20 +42,19 @@ Recover OpenClaw and Hermes by rebuilding from Ansible/SOPS with empty state,
 without requiring backups. Sessions, learned state and device pairings are
 disposable; this amends ADR-0064's requirement to back up Hermes state.
 
-Apply `no-new-privileges` to the other Podman services except LLDAP and NetBox's
-PostgreSQL container. The pinned Valkey image passed with the restriction.
+Apply `no-new-privileges` to the other Podman services except NetBox's PostgreSQL
+container. The pinned Valkey image passed with the restriction.
 
-The standard LLDAP v0.6.3 image stalls in `gosu` with this restriction on idp1.
-Isolated same-image tests with empty data reproduced the stall; the control
-without the restriction started successfully. Retain its startup permissions
-until a compatible startup path is validated.
+Use LLDAP's official v0.6.3 non-root image with explicit UID/GID 1000,
+Ansible-managed data directory ownership, and no capabilities. Keep its bootstrap
+credentials root-only and run bootstrap with explicit container UID 0.
 
 The PostgreSQL `18-alpine` image fails startup with this restriction on netbox1.
 Direct UID/GID 70 startup with no capabilities bypasses `gosu` but still stalls
 during initialization; the same-image control without the restriction starts and
 serves SQL. The cause is unresolved, so retain its existing startup permissions.
 Drop all capabilities from the already non-root NetBox web and worker containers; retain the startup
-capabilities of database and directory images that change ownership or users.
+capabilities of database images that change ownership or users.
 Keep their current rootful deployment until service-specific migration and
 recovery validation is complete. ADR-0046's NetBox runtime decision still applies.
 

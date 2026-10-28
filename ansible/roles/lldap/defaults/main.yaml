@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=docker depName=lldap/lldap
-lldap_version: "v0.6.3"
+lldap_version: "v0.6.3-alpine-rootless"
 lldap_image: docker.io/lldap/lldap
 lldap_container: lldap
 
@@ -11,8 +11,9 @@ lldap_certs_dir: "{{ lldap_base_dir }}/certs"
 lldap_bootstrap_dir: "{{ lldap_base_dir }}/bootstrap"
 lldap_env_file: /etc/lldap/lldap.env
 
-# The image entrypoint drops to this UID and chowns /data to it.
+# Preserve the existing data and certificate ownership with the non-root image.
 lldap_container_uid: 1000
+lldap_container_gid: 1000
 
 # Published for Caddy and the bootstrap API calls; plaintext LDAP (3890) is not published.
 lldap_http_port: 17170
