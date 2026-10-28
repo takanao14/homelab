@@ -5,13 +5,19 @@ Wants=network-online.target
 
 [Container]
 NoNewPrivileges=true
+DropCapability=all
+User={{ authelia_container_uid }}
+Group={{ authelia_container_gid }}
 ContainerName={{ authelia_container }}
 Image={{ authelia_image }}:{{ authelia_version }}
+# Ansible owns /config; bypass root entrypoint chown and su-exec.
+Exec=authelia --config /config/configuration.yml
 Environment=AUTHELIA_SESSION_SECRET_FILE=/secrets/session_secret
 Environment=AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE=/secrets/storage_encryption_key
 Environment=AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE=/secrets/reset_password_jwt_secret
 Environment=AUTHELIA_AUTHENTICATION_BACKEND_LDAP_PASSWORD_FILE=/secrets/ldap_password
-Volume={{ authelia_config_dir }}:/config
+Volume={{ authelia_config_dir }}:/config:ro
+Volume={{ authelia_data_dir }}:/data
 Volume={{ authelia_secrets_dir }}:/secrets:ro
 Volume={{ authelia_base_dir }}/ldap.crt:/certs/ldap.crt:ro
 PublishPort={{ authelia_http_port }}:9091

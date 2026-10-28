@@ -1,80 +1,187 @@
 ---
-- name: Create Authelia directories
+- name: Validate Authelia runtime allocation
+  ansible.builtin.assert:
+    that:
+      - authelia_container_uid | int >= 60000
+      - authelia_container_gid | int >= 60000
+      - authelia_migrate_legacy_state is boolean
+    quiet: true
+
+- name: Validate disjoint Authelia mounts
   become: true
-  ansible.builtin.file:
-    path: "{{ item.path }}"
-    state: directory
-    owner: root
-    group: root
-    mode: "{{ item.mode }}"
-  loop:
-    - {path: "{{ authelia_base_dir }}", mode: '0755'}
-    - {path: "{{ authelia_config_dir }}", mode: '0700'}
-    - {path: "{{ authelia_secrets_dir }}", mode: '0700'}
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import pathlib, sys
+        try:
+            paths = [pathlib.Path(value) for value in sys.argv[1:]]
+            for path in paths:
+                if not path.is_absolute() or path == pathlib.Path('/'):
+                    sys.exit(1)
+                if any(part.is_symlink() for part in (path, *path.parents)):
+                    sys.exit(1)
+            paths = [path.resolve() for path in paths]
+            if any(a == b or a in b.parents or b in a.parents
+                   for index, a in enumerate(paths) for b in paths[index + 1:]):
+                sys.exit(1)
+        except Exception:
+            sys.exit(1)
+      - "{{ authelia_config_dir }}"
+      - "{{ authelia_data_dir }}"
+      - "{{ authelia_secrets_dir }}"
+  changed_when: false
+  check_mode: false
 
-- name: Deploy Authelia secrets
+- name: Check Authelia UID and GID conflicts
   become: true
-  no_log: true
-  ansible.builtin.copy:
-    content: "{{ item.value }}"
-    dest: "{{ authelia_secrets_dir }}/{{ item.name }}"
-    owner: root
-    group: root
-    mode: '0600'
-  loop:
-    - {name: session_secret, value: "{{ authelia_session_secret }}"}
-    - {name: storage_encryption_key, value: "{{ authelia_storage_encryption_key }}"}
-    - {name: reset_password_jwt_secret, value: "{{ authelia_reset_password_jwt_secret }}"}
-    - {name: ldap_password, value: "{{ authelia_ldap_password }}"}
-  notify: Restart authelia
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import grp, pathlib, pwd, sys
+        uid, gid = map(int, sys.argv[1:])
+        try:
+            users = pwd.getpwall()
+            groups = grp.getgrall()
+            for lookup, value, entries in ((pwd.getpwuid, uid, users), (grp.getgrgid, gid, groups)):
+                try:
+                    entries.append(lookup(value))
+                except KeyError:
+                    pass
+            if any(u.pw_uid == uid and u.pw_name != 'authelia' for u in users):
+                sys.exit(1)
+            if any(g.gr_gid == gid and g.gr_name != 'authelia' for g in groups):
+                sys.exit(1)
+            for filename, value in (('/etc/subuid', uid), ('/etc/subgid', gid)):
+                path = pathlib.Path(filename)
+                for line in path.read_text().splitlines() if path.exists() else []:
+                    _, start, count = line.split(':')
+                    if int(start) <= value < int(start) + int(count):
+                        sys.exit(1)
+        except Exception:
+            sys.exit(1)
+      - "{{ authelia_container_uid | string }}"
+      - "{{ authelia_container_gid | string }}"
+  changed_when: false
+  check_mode: false
 
-- name: Deploy the LDAPS certificate to trust
+- name: Check for the legacy Authelia database
   become: true
-  ansible.builtin.copy:
-    src: "{{ authelia_ldap_ca_cert_src }}"
-    dest: "{{ authelia_base_dir }}/ldap.crt"
-    owner: root
-    group: root
-    mode: '0644'
-  notify: Restart authelia
+  ansible.builtin.stat:
+    path: "{{ authelia_config_dir }}/db.sqlite3"
+  register: authelia_legacy_database
 
-- name: Deploy the Authelia configuration
+- name: Check for the separate Authelia database
   become: true
-  ansible.builtin.template:
-    src: configuration.yml.j2
-    dest: "{{ authelia_config_dir }}/configuration.yml"
-    owner: root
-    group: root
-    mode: '0600'
-  notify: Restart authelia
+  ansible.builtin.stat:
+    path: "{{ authelia_data_dir }}/db.sqlite3"
+  register: authelia_database
 
-- name: Deploy the Authelia Quadlet unit
+- name: Identify the configured Authelia storage location
   become: true
-  ansible.builtin.template:
-    src: authelia.container.j2
-    dest: "{{ podman_quadlet_dir }}/authelia.container"
-    owner: root
-    group: root
-    mode: '0644'
-  notify: Restart authelia
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import pathlib, re, stat, sys
+        try:
+            path = pathlib.Path(sys.argv[1])
+            if not path.exists() and not path.is_symlink():
+                print('absent')
+            else:
+                if not stat.S_ISREG(path.lstat().st_mode):
+                    sys.exit(1)
+                matches = re.findall(r'^    path: (/config/db\.sqlite3|/data/db\.sqlite3)\s*$', path.read_text(), re.M)
+                if len(matches) != 1:
+                    sys.exit(1)
+                print('legacy' if matches[0] == '/config/db.sqlite3' else 'separate')
+        except Exception:
+            sys.exit(1)
+      - "{{ authelia_config_dir }}/configuration.yml"
+  register: authelia_config_location
+  changed_when: false
+  check_mode: false
 
-- name: Ensure Authelia is enabled and started
-  become: true
-  ansible.builtin.systemd:
-    name: authelia.service
-    state: started
-    enabled: true
-    daemon_reload: true
+- name: Reject ambiguous Authelia database state
+  ansible.builtin.assert:
+    that:
+      - authelia_config_location.stdout in ['absent', 'legacy', 'separate']
+      - not authelia_database.stat.exists or authelia_config_location.stdout == 'separate'
+      - authelia_config_location.stdout != 'separate' or authelia_database.stat.exists
+      - authelia_config_location.stdout != 'legacy' or authelia_legacy_database.stat.exists
+    fail_msg: Configured Authelia state is missing or ambiguous; recover it before retrying.
+    quiet: true
 
-- name: Apply pending Authelia restarts
-  ansible.builtin.meta: flush_handlers
+- name: Determine whether Authelia needs a state migration
+  ansible.builtin.set_fact:
+    authelia_state_migration_needed: >-
+      {{ authelia_legacy_database.stat.exists and not authelia_database.stat.exists }}
 
-- name: Wait for Authelia to report healthy
-  when: not ansible_check_mode
-  ansible.builtin.uri:
-    url: "http://127.0.0.1:{{ authelia_http_port }}/api/health"
-    status_code: 200
-  register: authelia_ready
-  until: authelia_ready.status == 200
-  retries: 30
-  delay: 2
+- name: Require explicit migration of the existing Authelia database
+  ansible.builtin.assert:
+    that:
+      - not authelia_state_migration_needed or authelia_migrate_legacy_state
+    fail_msg: >-
+      Existing Authelia state needs a stopped migration; rerun with
+      authelia_migrate_legacy_state=true after validating recovery.
+    quiet: true
+
+- name: Migrate existing Authelia state before deploying its runtime
+  when:
+    - authelia_state_migration_needed
+    - not ansible_check_mode
+  vars:
+    authelia_state_migration_command:
+      - python3
+      - -c
+      - "{{ lookup('ansible.builtin.file', 'migrate-state.py') }}"
+    authelia_state_migration_arguments:
+      - "{{ authelia_config_dir }}"
+      - "{{ authelia_data_dir }}"
+      - "{{ authelia_secrets_dir }}"
+      - "{{ podman_quadlet_dir }}/authelia.container"
+      - "{{ authelia_migration_backup.path }}"
+      - "{{ authelia_container_uid | string }}"
+      - "{{ authelia_container_gid | string }}"
+  block:
+    - name: Allocate a protected Authelia migration backup
+      become: true
+      ansible.builtin.tempfile:
+        state: directory
+        path: /var/backups
+        prefix: homelab-authelia-nonroot-
+      register: authelia_migration_backup
+
+    - name: Report the protected Authelia migration backup location
+      ansible.builtin.debug:
+        msg: "authelia_migration_backup={{ authelia_migration_backup.path }}"
+
+    - name: Stop Authelia and copy its final state
+      become: true
+      ansible.builtin.command:
+        argv: "{{ authelia_state_migration_command + ['prepare'] + authelia_state_migration_arguments }}"
+      changed_when: true
+      no_log: true
+
+    - name: Deploy the migrated Authelia runtime
+      ansible.builtin.include_tasks: runtime.yaml
+  rescue:
+    - name: Restore the previous Authelia runtime with current state
+      become: true
+      ansible.builtin.command:
+        argv: "{{ authelia_state_migration_command + ['rollback'] + authelia_state_migration_arguments }}"
+      changed_when: true
+      no_log: true
+      when: authelia_migration_backup.path is defined
+
+    - name: Report the failed Authelia migration
+      ansible.builtin.fail:
+        msg: Authelia migration failed; inspect the protected backup and service health.
+
+- name: Deploy Authelia without a state migration
+  ansible.builtin.include_tasks: runtime.yaml
+  when: not authelia_state_migration_needed or ansible_check_mode
