@@ -91,6 +91,9 @@ apps:
   slack-bot:
     enabled: false
     wave: "1"
+  strata:
+    enabled: false
+    wave: "1"
   vllm:
     enabled: false
     wave: "1"
