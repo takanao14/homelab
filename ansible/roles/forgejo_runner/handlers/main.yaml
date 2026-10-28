@@ -4,8 +4,8 @@
   ansible.builtin.systemd:
     daemon_reload: true
 
-- name: Restart forgejo-runner
+- name: "Restart {{ forgejo_runner_service_name }}"
   become: true
   ansible.builtin.service:
-    name: forgejo-runner
+    name: "{{ forgejo_runner_service_name }}"
     state: restarted

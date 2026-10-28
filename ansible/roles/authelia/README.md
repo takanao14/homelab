@@ -1,7 +1,8 @@
 # authelia Role
 
 Deploys [Authelia](https://www.authelia.com/) as a root system Podman Quadlet
-unit with `NoNewPrivileges=true` on the LLDAP host (ADR-0067). Caddy publishes the portal at
+unit with `NoNewPrivileges=true`, no capabilities, and container UID/GID 61003
+on the LLDAP host (ADR-0067, ADR-0079). Caddy publishes the portal at
 `https://auth.home.butaco.net`; prd Envoy Gateway calls
 `/api/authz/ext-authz/` on `authelia_http_port` directly.
 
@@ -17,8 +18,9 @@ unit with `NoNewPrivileges=true` on the LLDAP host (ADR-0067). Caddy publishes t
   required ext_authz success cookies to browsers (ADR-0067).
 - Disables password reset and change; users change passwords in LLDAP.
 - Keeps sessions in memory without an external session store; expect a restart
-  to sign everyone out. SQLite under
-  `authelia_config_dir` holds only regulation and second-factor state.
+  to sign everyone out. SQLite under `authelia_data_dir` holds regulation and
+  second-factor state. Configuration and secrets are mounted read-only;
+  SQLite and the filesystem notifier share the separate writable `/data` mount.
 
 ## Variables
 
@@ -43,9 +45,16 @@ a random string of at least 64 characters.
 | `authelia_http_port` | `9091` | Portal and authz endpoint |
 | `authelia_access_rules` | GPU Switch and Headlamp | Protected domains and admitted groups |
 | `authelia_session_expiration` | `8h` | Absolute session lifetime |
+| `authelia_container_uid` / `authelia_container_gid` | `61003` / `61003` | Non-root runtime IDs; checked for host allocation conflicts |
+| `authelia_data_dir` | `/opt/authelia/data` | Writable SQLite and notifier directory |
+| `authelia_migrate_legacy_state` | `false` | Explicitly migrate an existing database from the config directory while stopped |
 
 ## Operations
 
+- **Existing root deployment:** run the service playbook with
+  `-e authelia_migrate_legacy_state=true` to move the legacy database and notifier
+  into the data directory. The role rejects an implicit empty-state replacement
+  and retains a protected migration backup under `/var/backups`.
 - **New protected host:** add an `authelia_access_rules` entry, run
   `ansible-playbook playbooks/services/authelia.yaml`, then point the host's
   forward auth at Authelia.
@@ -53,7 +62,7 @@ a random string of at least 64 characters.
   includes this playbook; Authelia rejects LDAPS until it has the new
   certificate.
 - **Recovery:** rebuild the VM and run the lldap and authelia playbooks. Losing
-  SQLite drops only regulation state.
+  SQLite drops regulation and second-factor state.
 
 ### Health checks
 

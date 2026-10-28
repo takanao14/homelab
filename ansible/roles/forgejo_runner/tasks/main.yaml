@@ -5,7 +5,8 @@
       - forgejo_runner_mount_docker_socket is boolean
       - forgejo_runner_container_network is string
       - forgejo_runner_container_network | length > 0
-    fail_msg: Use a boolean socket policy and a non-empty container network string.
+      - forgejo_runner_service_name is match('^[A-Za-z0-9][A-Za-z0-9_-]*$')
+    fail_msg: Use a boolean socket policy, a non-empty network, and a simple service name.
 
 - name: Create forgejo-runner group
   become: true
@@ -68,7 +69,7 @@
     timeout: 60
   retries: 3
   delay: 5
-  notify: Restart forgejo-runner
+  notify: "Restart {{ forgejo_runner_service_name }}"
 
 - name: Ensure homelab version marker directory exists
   become: true
@@ -96,7 +97,7 @@
     owner: root
     group: "{{ forgejo_runner_group }}"
     mode: '0640'
-  notify: Restart forgejo-runner
+  notify: "Restart {{ forgejo_runner_service_name }}"
 
 - name: Check runner registration
   become: true
@@ -145,17 +146,17 @@
   become: true
   ansible.builtin.template:
     src: forgejo-runner.service.j2
-    dest: /etc/systemd/system/forgejo-runner.service
+    dest: "/etc/systemd/system/{{ forgejo_runner_service_name }}.service"
     owner: root
     group: root
     mode: '0644'
   notify:
     - Reload systemd
-    - Restart forgejo-runner
+    - "Restart {{ forgejo_runner_service_name }}"
 
 - name: Ensure forgejo-runner is started and enabled
   become: true
   ansible.builtin.service:
-    name: forgejo-runner
+    name: "{{ forgejo_runner_service_name }}"
     state: started
     enabled: true

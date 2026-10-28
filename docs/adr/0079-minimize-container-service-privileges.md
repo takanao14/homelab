@@ -42,14 +42,25 @@ Recover OpenClaw and Hermes by rebuilding from Ansible/SOPS with empty state,
 without requiring backups. Sessions, learned state and device pairings are
 disposable; this amends ADR-0064's requirement to back up Hermes state.
 
-Apply `no-new-privileges` to the other Podman services except LLDAP and NetBox's
-PostgreSQL container. The pinned LLDAP v0.6.3 and PostgreSQL `18-alpine` images
-stall in `gosu` with this restriction on their current hosts. Isolated same-image
-tests with empty data reproduced the stalls; controls without the restriction
-started successfully. Retain their existing startup permissions until compatible
-startup paths are validated. The pinned Valkey image passed with the restriction.
+Apply `no-new-privileges` to the other Podman services except NetBox's PostgreSQL
+container. Use LLDAP's official v0.6.3 non-root image with explicit UID/GID 1000,
+Ansible-managed data directory ownership, and no capabilities. Keep its bootstrap
+credentials root-only and run bootstrap with explicit container UID 0.
+Run Authelia as a fixed non-root container UID/GID without capabilities. Bypass
+its root entrypoint initialization through the official direct execution path.
+Mount Ansible-managed configuration and secrets read-only, and keep SQLite and
+the notifier in a separate writable data directory. Require an explicit stopped
+migration for existing state; rollback must preserve writes made after cutover.
+Confine MeshCentral with a dedicated AppArmor profile based on the container
+default. Permit crun's TERM/KILL and same-context signals/ptrace read for the
+stacked crun/container label; do not change Kea or the OS-wide default profile.
+The PostgreSQL `18-alpine` image fails startup with this restriction on netbox1.
+Direct UID/GID 70 startup with no capabilities bypasses `gosu` but still stalls
+during initialization; the same-image control without the restriction starts and
+serves SQL. The cause is unresolved, so retain its existing startup permissions.
+The pinned Valkey image passed with the restriction.
 Drop all capabilities from the already non-root NetBox web and worker containers; retain the startup
-capabilities of database and directory images that change ownership or users.
+capabilities of database images that change ownership or users.
 Keep their current rootful deployment until service-specific migration and
 recovery validation is complete. ADR-0046's NetBox runtime decision still applies.
 

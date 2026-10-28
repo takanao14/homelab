@@ -101,6 +101,8 @@
     argv:
       - podman
       - exec
+      # Bootstrap credentials remain root-only; the directory server runs non-root.
+      - --user=0:0
       - --env=LLDAP_URL=http://localhost:17170
       - "--env=LLDAP_ADMIN_USERNAME={{ lldap_admin_username }}"
       - --env=LLDAP_ADMIN_PASSWORD_FILE=/bootstrap/admin-password

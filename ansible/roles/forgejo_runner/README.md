@@ -31,6 +31,7 @@ Installs and configures a [Forgejo Actions Runner](https://code.forgejo.org/forg
 | `forgejo_runner_home` | `/var/lib/forgejo-runner` | Home directory |
 | `forgejo_runner_binary` | `/usr/local/bin/forgejo-runner` | Binary path |
 | `forgejo_runner_config` | `/etc/forgejo-runner/config.yml` | Config file path |
+| `forgejo_runner_service_name` | `forgejo-runner` | systemd unit and restart handler identity |
 | `forgejo_runner_build_cache_keep_storage` | `20GB` | BuildKit cache storage target |
 | `forgejo_runner_container_network` | `host` | Job network; retain until bridge networking is validated |
 | `forgejo_runner_mount_docker_socket` | `true` | Automatically mount Docker socket into jobs; set `false` for a runner dedicated to socket-free jobs |
@@ -66,6 +67,8 @@ Run [playbooks/services/forgejo_runner.yaml](../../playbooks/services/forgejo_ru
   `forgejo_runner_mount_docker_socket: false` prevents its automatic job mount,
   but does not remove the host runner's Docker access. Use a separate runner
   registration and labels when separating jobs by socket policy.
+  Instances on one host also need distinct service names, users, homes, and
+  configuration paths; changing labels alone does not separate their credentials.
 - Docker remains rootful; rootless adoption requires validation of deployed
   Forgejo workflows.
 - BuildKit garbage collection bounds future cache growth. It does not replace
