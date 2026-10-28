@@ -1,11 +1,11 @@
 # ADR-0080: Run Strata as a gpu-switch workload on a 48 GiB GPU worker
 
-- **Status:** Accepted
+- **Status:** Rejected
+- **Rejected on:** 2026-10-28
 - **Category:** GPU inference
 - **Date:** 2026-10-28
 - **Related:** [ADR-0027](0027-gpu-workload-switching-web-ui.md),
-  [ADR-0060](0060-mcp-relies-on-bearer-authentication.md),
-  [`k8s/strata/README.md`](../../k8s/strata/README.md)
+  [ADR-0060](0060-mcp-relies-on-bearer-authentication.md)
 
 ## Context
 

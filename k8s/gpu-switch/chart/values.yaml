@@ -17,8 +17,6 @@ gpuWorkloads:
     name: lemonade-server
   - namespace: ollama
     name: ollama
-  - namespace: strata
-    name: strata
   - namespace: vllm
     name: vllm
 
