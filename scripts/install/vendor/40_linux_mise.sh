@@ -7,7 +7,7 @@ set -euo pipefail
 [[ "$(uname -s)" == "Linux" ]] || exit 0
 
 # renovate: datasource=github-releases depName=jdx/mise
-readonly MISE_VERSION="${MISE_VERSION:-2026.10.19}"
+readonly MISE_VERSION="${MISE_VERSION:-2026.10.20}"
 # renovate: datasource=github-releases depName=databus23/helm-diff
 readonly HELM_DIFF_VERSION="${HELM_DIFF_VERSION:-3.15.15}"
 readonly MISE_CONFIG_FILE="${MISE_CONFIG_FILE:-$HOME/.config/mise/config.toml}"
@@ -16,11 +16,11 @@ readonly MISE_INSTALL_SCOPE="${MISE_INSTALL_SCOPE:-user}"
 case "$(uname -m)" in
     x86_64)
         readonly MISE_ARCH="x64"
-        readonly MISE_SHA256="3162760f40b6b5f706c60641e4ef5ee7322bc6c54f72fc26a7111b337aa18d9d"
+        readonly MISE_SHA256="2eb27467b6f369915ee76f18d66a0696cdb5c20e7ecc8cb49c2bfaca60f0fc9c"
         ;;
     aarch64 | arm64)
         readonly MISE_ARCH="arm64"
-        readonly MISE_SHA256="4a4ca53b28e5433c527f4f73fac1f98f992a17cf32ca136a58e2e375f790f627"
+        readonly MISE_SHA256="81047ebf136016297f4515132265c3e5fc052f2c4090130a4e8d68fd64b96b57"
         ;;
     *)
         echo "Unsupported architecture: $(uname -m)" >&2
