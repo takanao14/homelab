@@ -135,6 +135,7 @@ follow those links for the changed parts.
 | [0047](0047-service-vm-logs-via-vector-journald-agent.md) | Collect service VM logs with a Vector journald agent | Accepted |
 | [0048](0048-service-vm-vector-internal-metrics.md) | Expose Vector internal metrics on service VMs | Accepted |
 | [0061](0061-long-term-metrics-in-victoriametrics-single.md) | Keep long-term metrics in VictoriaMetrics single-node | Accepted |
+| [0081](0081-containerize-gpu-metrics-on-ubuntu-26.md) | Run GPU metrics in a container on Ubuntu 26.04 | Accepted |
 
 ### Identity & secrets
 
