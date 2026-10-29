@@ -1,0 +1,24 @@
+[Unit]
+Description=AMD device metrics exporter
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+TimeoutStartSec=120s
+TimeoutStopSec=40s
+ExecStartPre=-/usr/bin/podman rm --force --time 30 amd-metrics-exporter
+ExecStart=/usr/bin/podman run --rm --pull=never --name amd-metrics-exporter \
+  --privileged --network=host \
+  --env=NODE_NAME={{ ansible_facts['hostname'] }} \
+  --device=/dev/dri --device=/dev/kfd \
+  --volume=/sys:/sys:ro \
+  --volume=/etc/metrics:/etc/metrics:ro \
+  --volume=/var/lib/amd-metrics-exporter:/var/lib/amd-metrics-exporter \
+  {{ rocm_device_metrics_exporter_image }}
+ExecStop=/usr/bin/podman stop --time 30 amd-metrics-exporter
+
+[Install]
+WantedBy=multi-user.target

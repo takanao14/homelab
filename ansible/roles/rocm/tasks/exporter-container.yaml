@@ -1,0 +1,132 @@
+---
+- name: Install the rootful exporter container runtime
+  become: true
+  ansible.builtin.apt:
+    name: podman
+    state: present
+    update_cache: true
+
+- name: Check whether Podman is installed
+  ansible.builtin.stat:
+    path: /usr/bin/podman
+  register: rocm_podman_binary
+
+- name: Check whether the AMD exporter image is present
+  become: true
+  ansible.builtin.command:
+    argv: [podman, image, exists, "{{ rocm_device_metrics_exporter_image }}"]
+  register: rocm_exporter_image_present
+  changed_when: false
+  failed_when: rocm_exporter_image_present.rc not in [0, 1]
+  check_mode: false
+  when: rocm_podman_binary.stat.exists
+
+- name: Pull the pinned AMD exporter image
+  become: true
+  ansible.builtin.command:
+    argv: [podman, pull, "{{ rocm_device_metrics_exporter_image }}"]
+  changed_when: true
+  when:
+    - rocm_podman_binary.stat.exists
+    - rocm_exporter_image_present.rc == 1
+    - not ansible_check_mode
+
+- name: Create AMD exporter configuration and health socket directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /etc/metrics
+    - /var/lib/amd-metrics-exporter
+
+- name: Download the pinned upstream exporter configuration
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ rocm_device_metrics_exporter_config_url }}"
+    checksum: "sha256:{{ rocm_device_metrics_exporter_config_sha256 }}"
+    dest: /etc/metrics/upstream.json
+    owner: root
+    group: root
+    mode: '0644'
+  retries: 3
+  delay: 5
+
+- name: Read the pinned upstream exporter configuration
+  become: true
+  ansible.builtin.slurp:
+    src: /etc/metrics/upstream.json
+  register: rocm_exporter_upstream_config
+  no_log: true
+  when: not ansible_check_mode
+
+- name: Validate the upstream exporter health service and metrics port
+  ansible.builtin.assert:
+    that:
+      - rocm_exporter_config.CommonConfig.HealthService.Enable | bool
+      - rocm_exporter_config.ServerPort | int == 5000
+    fail_msg: "The pinned exporter configuration must enable GPU health and port 5000."
+  vars:
+    rocm_exporter_config: "{{ rocm_exporter_upstream_config.content | b64decode | from_json }}"
+  no_log: true
+  when: not ansible_check_mode
+
+# Match AMD's standalone packaging: Kubernetes pod labels and non-GPU agents are unused.
+- name: Install the standalone GPU exporter configuration
+  become: true
+  ansible.builtin.copy:
+    content: "{{ rocm_exporter_standalone_config | to_nice_json }}\n"
+    dest: /etc/metrics/config.json
+    owner: root
+    group: root
+    mode: '0644'
+  vars:
+    rocm_exporter_config: "{{ rocm_exporter_upstream_config.content | b64decode | from_json }}"
+    rocm_exporter_standalone_config:
+      ServerPort: "{{ rocm_exporter_config.ServerPort }}"
+      CommonConfig: "{{ rocm_exporter_config.CommonConfig }}"
+      GPUConfig: >-
+        {{ rocm_exporter_config.GPUConfig | dict2items
+           | rejectattr('key', 'equalto', 'ExtraPodLabels') | items2dict }}
+  register: rocm_exporter_container_config
+  no_log: true
+  when: not ansible_check_mode
+
+# The official image starts gpuagent itself; its health socket is shared with k0s.
+- name: Deploy the AMD exporter container service
+  become: true
+  ansible.builtin.template:
+    src: amd-metrics-exporter.service.j2
+    dest: /etc/systemd/system/amd-metrics-exporter.service
+    owner: root
+    group: root
+    mode: '0644'
+  register: rocm_exporter_container_unit
+
+- name: Enable and start the AMD exporter container
+  become: true
+  ansible.builtin.systemd_service:
+    name: amd-metrics-exporter
+    enabled: true
+    daemon_reload: "{{ rocm_exporter_container_unit.changed }}"
+    state: >-
+      {{ (rocm_exporter_container_unit.changed or rocm_exporter_container_config.changed | default(false))
+         | ternary('restarted', 'started') }}
+  when: not ansible_check_mode
+
+- name: Wait for the GPU health socket
+  become: true
+  ansible.builtin.wait_for:
+    path: /var/lib/amd-metrics-exporter/amdgpu_device_metrics_exporter_grpc.socket
+    timeout: 120
+  when: not ansible_check_mode
+
+- name: Wait for the exporter metrics port
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: 5000
+    timeout: 120
+  when: not ansible_check_mode

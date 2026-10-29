@@ -11,20 +11,50 @@ rocm_previous_version: "7.14"
 rocm_gpu_target: gfx1200
 # ROCm apt package name for this host, e.g. amdrocm7.14-gfx1200.
 rocm_package_name: "amdrocm{{ rocm_version.split('.')[:2] | join('.') }}-{{ rocm_gpu_target }}"
-rocm_ubuntu_codename: noble
-# Pin an AMD-supported kernel; rolling HWE can outrun DKMS support.
-# Update with AMD's matrix; the role asserts the running kernel.
-rocm_hwe_kernel: 6.17.0-35-generic
+# Keep OS-specific packages together; Resolute uses the official exporter container.
+rocm_ubuntu_releases:
+  "24.04":
+    codename: noble
+    repository: ubuntu2404
+    kernel: 6.17.0-35-generic
+    kernel_modules_package: linux-modules-extra
+    kernel_metapackages:
+      - linux-generic-hwe-24.04
+      - linux-headers-generic-hwe-24.04
+      - linux-image-generic-hwe-24.04
+    udev_rules: amdgpu-insecure-instinct-udev-rules_31.50.0.0-2390945.24.04_all.deb
+    exporter_mode: native
+  "26.04":
+    codename: resolute
+    repository: ubuntu2604
+    kernel: 7.0.0-42-generic
+    kernel_modules_package: linux-modules
+    kernel_metapackages:
+      - linux-generic
+      - linux-headers-generic
+      - linux-image-generic
+    udev_rules: amdgpu-insecure-instinct-udev-rules_31.50.0.0-2390945.26.04_all.deb
+    exporter_mode: container
+rocm_ubuntu_release: "{{ rocm_ubuntu_releases[ansible_facts['distribution_version']] }}"
+rocm_ubuntu_codename: "{{ rocm_ubuntu_release.codename }}"
+# Pin a reviewed ABI within AMD's supported kernel series; reboot before DKMS.
+rocm_hwe_kernel: "{{ rocm_ubuntu_release.kernel }}"
 # AMD pairs 31.50 with ROCm 10.0; keep this in step with rocm_version.
 # renovate: datasource=custom.amdgpu depName=amdgpu
 rocm_amdgpu_version: "31.50"
 rocm_amdgpu_package_state: present
 rocm_amdgpu_minimum_boot_free_mb: 300
 # Updated manually with rocm_amdgpu_version.
-rocm_udev_rules: amdgpu-insecure-instinct-udev-rules_31.50.0.0-2390945.24.04_all.deb
+rocm_udev_rules: "{{ rocm_ubuntu_release.udev_rules }}"
 # renovate: datasource=custom.amd-device-metrics-exporter depName=device-metrics-exporter
 rocm_device_metrics_exporter_version: "1.5.1"
 # Userspace metrics agent, not a kernel driver: follow the repo like ROCm itself,
 # otherwise bumping the version above only swaps the apt source and the installed
 # package stays behind.
 rocm_device_metrics_exporter_package_state: latest
+# renovate: datasource=docker depName=rocm/device-metrics-exporter
+rocm_device_metrics_exporter_image: >-
+  docker.io/rocm/device-metrics-exporter:v1.5.3@sha256:bdfc644bb8d4d07d9a0c31dda3e0d463101f48170548c5a7e7f7066c253fa813
+rocm_device_metrics_exporter_config_url: >-
+  https://raw.githubusercontent.com/ROCm/device-metrics-exporter/3b3c7f0bd5c0ec0bf00b9960d1b736258b7190eb/example/config.json
+rocm_device_metrics_exporter_config_sha256: dfe9e1e8615f6732af4337327553791e466c230ed8984a6d41e0dcd77597edd0
