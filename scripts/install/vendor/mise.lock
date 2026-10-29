@@ -116,17 +116,17 @@ url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/664336023"
 provenance = "github-attestations"
 
 [[tools."aqua:aws/aws-cli"]]
-version = "2.38.5"
+version = "2.38.6"
 backend = "aqua:aws/aws-cli"
-specifiers = ["2.38.5"]
+specifiers = ["2.38.6"]
 
 [tools."aqua:aws/aws-cli"."platforms.linux-arm64"]
-checksum = "sha256:07711a936e9d271045ab937d2c2c5390c25f419e4ba9e25adb9e996031e3f6be"
-url = "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-2.38.5.zip"
+checksum = "sha256:a9f355189a5a25834c015fc07d65e1834f0dbbee1d9bd1c418176f43a463067f"
+url = "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-2.38.6.zip"
 
 [tools."aqua:aws/aws-cli"."platforms.linux-x64"]
-checksum = "sha256:5def7d1b7e55d892f9a381bb2cb2081a685712464be0d36d5d706af0ac48d0d3"
-url = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.38.5.zip"
+checksum = "sha256:66974301c11f8116a6cb96bf72acae57453734b61fa8dd3f56422de9eaab0e42"
+url = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.38.6.zip"
 
 [[tools."aqua:bootandy/dust"]]
 version = "1.2.6"
