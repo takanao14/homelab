@@ -8,7 +8,6 @@ vector_config:
         - kea-dhcp4-server
         - meshcentral
         - ssh
-        - tailscaled
       since_now: true
   transforms:
     parse_journald:
