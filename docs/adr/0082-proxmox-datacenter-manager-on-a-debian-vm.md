@@ -27,6 +27,12 @@ declared in Terraform, where a node change is a resource change.
 - Run PDM on `pdm1`, a Debian 13 service VM built from the Packer `base` image
   (ADR-0077), and install it from the `pdm-no-subscription` APT repository with
   `proxmox-datacenter-manager-container-meta`, which keeps the Debian kernel.
+  Install it without Recommends: `proxmox-datacenter-manager` recommends the
+  full meta package, `ifupdown2` and ZFS, which on the cloud image fail in
+  `grub-pc` and add a second network stack beside cloud-init. The PDM features
+  they enable manage the PDM host itself, which Terraform and Ansible own here.
+  Packages that a later PDM release newly recommends still arrive through the
+  fleet's `dist-upgrade`.
 - Place it on node4: running guests stay at 8 of 15.4 GiB, while node1, node2,
   node3 and node5 are already at 88% or more of physical memory. pve has room,
   but its available memory fell from 44 to 11 GiB within a week and it is one
