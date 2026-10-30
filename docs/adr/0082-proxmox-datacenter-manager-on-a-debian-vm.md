@@ -24,10 +24,13 @@ declared in Terraform, where a node change is a resource change.
 
 ## Decision
 
-- Run PDM on `pdm1`, a Debian 13 service VM on node3 built from the Packer
-  `base` image (ADR-0077), and install it from the `pdm-no-subscription` APT
-  repository with `proxmox-datacenter-manager-container-meta`, which keeps the
-  Debian kernel.
+- Run PDM on `pdm1`, a Debian 13 service VM built from the Packer `base` image
+  (ADR-0077), and install it from the `pdm-no-subscription` APT repository with
+  `proxmox-datacenter-manager-container-meta`, which keeps the Debian kernel.
+- Place it on node4: running guests stay at 8 of 15.4 GiB, while node1, node2,
+  node3 and node5 are already at 88% or more of physical memory. pve has room,
+  but its available memory fell from 44 to 11 GiB within a week and it is one
+  of the two dependency-heavy hosts (ADR-0032).
 - Size it to the documented recommended requirements (2 vCPU, 4 GiB, 40 GB).
   The documentation gives no per-remote sizing; the evaluation minimum is not
   for production use.
@@ -61,5 +64,5 @@ declared in Terraform, where a node change is a resource change.
   node-exporter targets and the shutdown order.
 - Each Proxmox host gains a PDM API token whose secret lives only in PDM, so
   the tokens are outside SOPS and are reissued on rebuild.
-- When node3 is down, PDM and the view of every other host are unavailable;
+- When node4 is down, PDM and the view of every other host are unavailable;
   each host's own UI remains the fallback.
