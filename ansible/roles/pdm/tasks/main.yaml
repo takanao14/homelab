@@ -40,11 +40,14 @@
     - ansible_check_mode
     - pdm_repo.changed
 
+# proxmox-datacenter-manager recommends the full meta package, ifupdown2 and
+# ZFS, which pull in the Proxmox kernel, grub-pc and a new network stack.
 - name: Install Proxmox Datacenter Manager
   become: true
   ansible.builtin.apt:
     name: "{{ pdm_meta_package }}"
     state: present
+    install_recommends: false
     update_cache: true
   when: not (ansible_check_mode and pdm_repo.changed)
 
