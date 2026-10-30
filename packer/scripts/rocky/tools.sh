@@ -24,8 +24,8 @@ dnf update -y
 dnf install -y code
 
 # https://developer.hashicorp.com/terraform/install
-yum install -y yum-utils
-sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+# Fetched directly because config-manager syntax differs between dnf4 and dnf5.
+curl -fsSL https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo -o /etc/yum.repos.d/hashicorp.repo
 
 dnf update -y
 dnf install -y terraform packer vault

@@ -18,7 +18,8 @@ is baked into the image, and each role contains the one before it:
 
     base     QEMU Guest Agent and the timezone (JST) only
     tool     base plus the shared CLI toolchain in /usr/local
-    desktop  tool plus XFCE, XRDP, the Japanese IME and the GUI applications
+    desktop  tool plus a desktop, RDP access, the Japanese IME and the GUI
+             applications
 
 OPTIONS:
     -y                Force overwrite existing images without prompting
@@ -29,9 +30,10 @@ TARGETS:
     ubuntu24-desktop  Ubuntu 24.04 with XFCE/XRDP on top of the toolchain
     ubuntu26-base     Ubuntu 26.04, agent and timezone only
     ubuntu26-tool     Ubuntu 26.04 with the shared CLI toolchain
-    ubuntu26-desktop  Ubuntu 26.04 with XFCE/XRDP on top of the toolchain
+    ubuntu26-desktop  Ubuntu 26.04 with GNOME Remote Desktop on top of the toolchain
     rocky10-base      Rocky 10, agent and timezone only
     rocky10-tool      Rocky 10 with the shared CLI toolchain
+    rocky10-desktop   Rocky 10 with GNOME Remote Desktop on top of the toolchain
     rocky9-base       Rocky 9, agent and timezone only
     rocky9-tool       Rocky 9 with the shared CLI toolchain
     rocky9-desktop    Rocky 9 with XFCE/XRDP on top of the toolchain
@@ -174,6 +176,12 @@ build_target() {
                 "output-rocky-10-tool/rocky-10-tool.qcow2" \
                 "images/rocky-10-tool.img"
             ;;
+        rocky10-desktop)
+            build_image \
+                "vars/rocky10-desktop.pkrvars.hcl" \
+                "output-rocky-10-desktop/rocky-10-desktop.qcow2" \
+                "images/rocky-10-desktop.img"
+            ;;
         rocky9-base)
             build_image \
                 "vars/rocky9-base.pkrvars.hcl" \
@@ -210,7 +218,7 @@ build_target() {
 ALL_TARGETS=(
     ubuntu24-base rocky10-base rocky9-base debian13-base ubuntu26-base
     rocky10-tool ubuntu26-tool
-    rocky9-desktop ubuntu26-desktop
+    rocky9-desktop ubuntu26-desktop rocky10-desktop
 )
 
 FORCE_OVERWRITE=false
