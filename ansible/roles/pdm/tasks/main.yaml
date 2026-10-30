@@ -28,6 +28,17 @@
     owner: root
     group: root
     mode: '0644'
+  register: pdm_repo
+
+# Check mode does not write the repository, so APT cannot see the package yet.
+- name: Report deferred PDM package checks
+  ansible.builtin.debug:
+    msg: >-
+      The PDM repository is pending in check mode. Package installation and
+      service checks are deferred until the first normal playbook run.
+  when:
+    - ansible_check_mode
+    - pdm_repo.changed
 
 - name: Install Proxmox Datacenter Manager
   become: true
@@ -35,6 +46,7 @@
     name: "{{ pdm_meta_package }}"
     state: present
     update_cache: true
+  when: not (ansible_check_mode and pdm_repo.changed)
 
 - name: Start PDM services
   become: true
@@ -43,3 +55,4 @@
     state: started
     enabled: true
   loop: "{{ pdm_services }}"
+  when: not (ansible_check_mode and pdm_repo.changed)
