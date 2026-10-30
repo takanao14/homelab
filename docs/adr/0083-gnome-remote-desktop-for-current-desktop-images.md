@@ -1,4 +1,4 @@
-# ADR-0082: Use GNOME Remote Desktop for the current desktop images
+# ADR-0083: Use GNOME Remote Desktop for the current desktop images
 
 - **Status:** Accepted
 - **Category:** Provisioning

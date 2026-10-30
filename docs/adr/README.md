@@ -73,11 +73,11 @@ follow those links for the changed parts.
 | [0018](0018-seaweedfs-data-on-usb-ssd-directory-storage.md) | SeaweedFS data on a node3 USB SSD via Proxmox directory storage | Accepted |
 | [0020](0020-tf-tree-axes-host-vs-cluster.md) | tf tree axes — host-named trees, cluster tree with per-stack host binding | Accepted |
 | [0037](0037-bake-shared-toolchain-into-server-images.md) | Bake the shared CLI toolchain into the server images from one Packer template | Accepted; amended by [ADR-0049](0049-manage-shared-cli-tools-with-mise.md) |
-| [0038](0038-image-role-suffixes-base-tool-desktop.md) | Name custom images by role — base, tool, desktop | Accepted; amended by [ADR-0082](0082-gnome-remote-desktop-for-current-desktop-images.md) |
+| [0038](0038-image-role-suffixes-base-tool-desktop.md) | Name custom images by role — base, tool, desktop | Accepted; amended by [ADR-0083](0083-gnome-remote-desktop-for-current-desktop-images.md) |
 | [0049](0049-manage-shared-cli-tools-with-mise.md) | Manage shared Linux CLI tools with mise | Accepted; amended by [ADR-0069](0069-track-dotfiles-vendor-with-renovate.md) |
 | [0062](0062-compose-vm-cloud-init-snippets.md) | Compose VM initialization with optional cloud-init snippets | Accepted |
 | [0077](0077-select-guest-os-by-role.md) | Select the guest OS by role | Accepted |
-| [0082](0082-gnome-remote-desktop-for-current-desktop-images.md) | Use GNOME Remote Desktop for the current desktop images | Accepted |
+| [0083](0083-gnome-remote-desktop-for-current-desktop-images.md) | Use GNOME Remote Desktop for the current desktop images | Accepted |
 
 ### Configuration & operations
 
