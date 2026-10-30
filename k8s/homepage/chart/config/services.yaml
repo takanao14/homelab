@@ -2,6 +2,11 @@
 # https://gethomepage.dev/latest/configs/services/
 
 - Hypervisor:
+    - Proxmox Datacenter Manager:
+        icon: proxmox.png
+        href: https://pdm.home.butaco.net
+        description: Multi-node Management
+
     - Proxmox VE PVE:
         icon: proxmox.png
         href: https://pve.home.butaco.net:8006

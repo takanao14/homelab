@@ -1,0 +1,45 @@
+---
+- name: Validate PDM inputs
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] == 'Debian'
+      - ansible_facts['distribution_release'] == 'trixie'
+      - pdm_keyring_sha256 is match('^[0-9a-f]{64}$')
+      - pdm_meta_package in ['proxmox-datacenter-manager-container-meta', 'proxmox-datacenter-manager-meta']
+    fail_msg: PDM needs Debian trixie, a SHA-256 keyring pin and a documented meta package.
+
+# The checksum only gates the first download; proxmox-archive-keyring owns the file afterwards.
+- name: Install the Proxmox archive keyring
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ pdm_keyring_url }}"
+    dest: "{{ pdm_keyring_path }}"
+    checksum: "sha256:{{ pdm_keyring_sha256 }}"
+    force: false
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Configure the PDM no-subscription repository
+  become: true
+  ansible.builtin.copy:
+    src: pdm.sources
+    dest: /etc/apt/sources.list.d/pdm.sources
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install Proxmox Datacenter Manager
+  become: true
+  ansible.builtin.apt:
+    name: "{{ pdm_meta_package }}"
+    state: present
+    update_cache: true
+
+- name: Start PDM services
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop: "{{ pdm_services }}"

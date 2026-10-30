@@ -58,6 +58,7 @@ here.
 | `forgejo.home.butaco.net` | `forgejo1:3000` | Git |
 | `truenas-ui.home.butaco.net` | `192.168.20.10:443` | HTTPS upstream, self-signed (ADR-0008); not Ansible-managed, so the address is a literal |
 | `netbox.home.butaco.net` | `netbox1:8080` | IPAM |
+| `pdm.home.butaco.net` | `pdm1:8443` | Proxmox Datacenter Manager (ADR-0082); HTTPS upstream, self-signed (ADR-0008) |
 | `openbao.home.butaco.net` | `openbao1:8200` | Secrets |
 | `lldap.home.butaco.net` | `idp1:17170` | User directory (ADR-0067) |
 | `auth.home.butaco.net` | `idp1:9091` | Authelia portal (ADR-0067); prd Envoy Gateway calls `idp1:9091` directly for ext_authz |
