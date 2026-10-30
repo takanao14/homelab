@@ -1,0 +1,8 @@
+---
+- name: Setup Proxmox Datacenter Manager
+  hosts: pdm
+  roles:
+    - role: timezone
+      tags: timezone
+    - role: pdm
+      tags: pdm

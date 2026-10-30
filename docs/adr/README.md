@@ -89,6 +89,7 @@ follow those links for the changed parts.
 | [0068](0068-build-caddy-on-the-ansible-controller.md) | Build Caddy on the Ansible controller | Accepted |
 | [0078](0078-validate-ansible-role-inputs-by-layer.md) | Validate Ansible role inputs by layer | Accepted |
 | [0079](0079-minimize-container-service-privileges.md) | Minimize container service privileges without changing engines | Accepted |
+| [0082](0082-proxmox-datacenter-manager-on-a-debian-vm.md) | Run Proxmox Datacenter Manager on a Debian service VM | Accepted |
 
 ### Kubernetes platform
 

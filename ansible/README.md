@@ -194,6 +194,7 @@ Use the OpenBao role README for:
 | `playbooks/services/forgejo.yaml` | `forgejo` | system |
 | `playbooks/services/forgejo_runner.yaml` | `forgejo_runner` | system |
 | `playbooks/services/netbox.yaml` | `netbox` | system |
+| `playbooks/services/pdm.yaml` | `pdm` | system |
 | `playbooks/services/lldap.yaml` | `lldap` | system |
 | `playbooks/services/authelia.yaml` | `authelia` | system |
 | `playbooks/services/seaweedfs.yaml` | `seaweedfs` | system |

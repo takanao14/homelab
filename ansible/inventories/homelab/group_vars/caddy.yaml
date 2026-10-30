@@ -20,6 +20,10 @@ caddy_upstreams:
     tls_insecure: true   # Self-signed cert on the internal Caddy-to-TrueNAS leg.
   - hostname: netbox.home.butaco.net
     backend: "{{ hostvars['netbox1']['ansible_host'] }}:8080"
+  - hostname: pdm.home.butaco.net
+    backend: "{{ hostvars['pdm1']['ansible_host'] }}:8443"
+    scheme: https
+    tls_insecure: true   # Self-signed cert on the internal Caddy-to-PDM leg.
   - hostname: openbao.home.butaco.net
     backend: "{{ hostvars['openbao1']['ansible_host'] }}:8200"
   - hostname: lldap.home.butaco.net
