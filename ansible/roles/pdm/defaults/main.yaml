@@ -1,0 +1,11 @@
+---
+# Debian kernel stays in place; the full meta package would add the Proxmox kernel and ZFS.
+pdm_meta_package: proxmox-datacenter-manager-container-meta
+
+pdm_keyring_url: https://enterprise.proxmox.com/debian/proxmox-archive-keyring-trixie.gpg
+pdm_keyring_sha256: 136673be77aba35dcce385b28737689ad64fd785a797e57897589aed08db6e45
+pdm_keyring_path: /usr/share/keyrings/proxmox-archive-keyring.gpg
+
+pdm_services:
+  - proxmox-datacenter-api
+  - proxmox-datacenter-privileged-api

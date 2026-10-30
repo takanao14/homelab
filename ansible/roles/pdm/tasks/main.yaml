@@ -1,0 +1,61 @@
+---
+- name: Validate PDM inputs
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] == 'Debian'
+      - ansible_facts['distribution_release'] == 'trixie'
+      - pdm_keyring_sha256 is match('^[0-9a-f]{64}$')
+      - pdm_meta_package in ['proxmox-datacenter-manager-container-meta', 'proxmox-datacenter-manager-meta']
+    fail_msg: PDM needs Debian trixie, a SHA-256 keyring pin and a documented meta package.
+
+# The checksum only gates the first download; proxmox-archive-keyring owns the file afterwards.
+- name: Install the Proxmox archive keyring
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ pdm_keyring_url }}"
+    dest: "{{ pdm_keyring_path }}"
+    checksum: "sha256:{{ pdm_keyring_sha256 }}"
+    force: false
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Configure the PDM no-subscription repository
+  become: true
+  ansible.builtin.copy:
+    src: pdm.sources
+    dest: /etc/apt/sources.list.d/pdm.sources
+    owner: root
+    group: root
+    mode: '0644'
+  register: pdm_repo
+
+# Check mode does not write the repository, so APT cannot see the package yet.
+- name: Report deferred PDM package checks
+  ansible.builtin.debug:
+    msg: >-
+      The PDM repository is pending in check mode. Package installation and
+      service checks are deferred until the first normal playbook run.
+  when:
+    - ansible_check_mode
+    - pdm_repo.changed
+
+# proxmox-datacenter-manager recommends the full meta package, ifupdown2 and
+# ZFS, which pull in the Proxmox kernel, grub-pc and a new network stack.
+- name: Install Proxmox Datacenter Manager
+  become: true
+  ansible.builtin.apt:
+    name: "{{ pdm_meta_package }}"
+    state: present
+    install_recommends: false
+    update_cache: true
+  when: not (ansible_check_mode and pdm_repo.changed)
+
+- name: Start PDM services
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop: "{{ pdm_services }}"
+  when: not (ansible_check_mode and pdm_repo.changed)

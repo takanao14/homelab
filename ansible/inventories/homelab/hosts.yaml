@@ -60,6 +60,8 @@ all:
       ansible_host: 192.168.10.247
     idp1:
       ansible_host: 192.168.10.248
+    pdm1:
+      ansible_host: 192.168.10.249
     openbao1:
       ansible_host: 192.168.40.30
     seaweedfs1:
@@ -199,6 +201,11 @@ all:
       hosts:
         openbao1: null
 
+    # Proxmox Datacenter Manager (ADR-0082).
+    pdm:
+      hosts:
+        pdm1: null
+
     # Object storage for Terraform state backups and Packer images.
     seaweedfs:
       hosts:
@@ -244,6 +251,7 @@ all:
         netbox1: null
         openbao1: null
         openclaw1: null
+        pdm1: null
         runner1: null
         toolbox1: null
       children:
@@ -331,6 +339,7 @@ all:
             netbox1: null
             openclaw1: null
             openbao1: null
+            pdm1: null
             runner1: null
             toolbox1: null
       # Hypervisors; the only hosts with real sensors, NVMe and zpools.
@@ -369,6 +378,7 @@ all:
         netbox: {}
         openclaw: {}
         openbao: {}
+        pdm: {}
 
     # All Vector agents; targeted by playbooks/common/vector.yaml.
     vector:
@@ -410,6 +420,7 @@ all:
         netbox: {}
         openclaw: {}
         openbao: {}
+        pdm: {}
         seaweedfs: {}
         sssd: {}
       hosts:
@@ -442,6 +453,7 @@ all:
         sssdtest1: null
         sssdtest2: null
         toolbox1: null
+        pdm1: null
         idp1: null
         forgejo1: null
         netbox1: null

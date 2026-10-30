@@ -1,0 +1,5 @@
+---
+vector_journald_units:
+  - proxmox-datacenter-api
+  - proxmox-datacenter-privileged-api
+  - ssh

@@ -86,7 +86,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "((sum(count_over_time({host=\"hermes1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"idp1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"netbox1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"openbao1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"openclaw1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"runner1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"toolbox1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0)",
+          "expr": "((sum(count_over_time({host=\"hermes1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"idp1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"netbox1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"openbao1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"openclaw1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"pdm1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"runner1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0) + ((sum(count_over_time({host=\"toolbox1\", unit=~\".+\"}[24h])) or vector(0)) \u003e bool 0)",
           "legendFormat": "reporting",
           "instant": true
         }
@@ -122,7 +122,7 @@
         "defaults": {
           "unit": "short",
           "min": 0,
-          "max": 7,
+          "max": 8,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -131,11 +131,11 @@
                 "color": "red"
               },
               {
-                "value": 6,
+                "value": 7,
                 "color": "yellow"
               },
               {
-                "value": 7,
+                "value": 8,
                 "color": "green"
               }
             ]
@@ -298,6 +298,11 @@
           "instant": true
         },
         {
+          "expr": "sum(count_over_time({host=\"pdm1\", unit=~\".+\"}[24h])) or vector(0)",
+          "legendFormat": "pdm1",
+          "instant": true
+        },
+        {
           "expr": "sum(count_over_time({host=\"runner1\", unit=~\".+\"}[24h])) or vector(0)",
           "legendFormat": "runner1",
           "instant": true
@@ -386,6 +391,10 @@
         {
           "expr": "((sum(count_over_time({host=\"openclaw1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
           "legendFormat": "openclaw1"
+        },
+        {
+          "expr": "((sum(count_over_time({host=\"pdm1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
+          "legendFormat": "pdm1"
         },
         {
           "expr": "((sum(count_over_time({host=\"runner1\", unit=~\".+\"}[15m])) or vector(0)) \u003e bool 0)",
@@ -518,7 +527,7 @@
         "defaults": {
           "unit": "short",
           "min": 0,
-          "max": 7,
+          "max": 8,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -527,11 +536,11 @@
                 "color": "red"
               },
               {
-                "value": 6,
+                "value": 7,
                 "color": "yellow"
               },
               {
-                "value": 7,
+                "value": 8,
                 "color": "green"
               }
             ]
