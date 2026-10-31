@@ -10,6 +10,7 @@ locals {
     "rocky-9-base",
     "rocky-9-desktop",
     "rocky-10-base",
+    "rocky-10-desktop",
     "debian-13-base",
     "freebsd-151-cloudinit",
   ]

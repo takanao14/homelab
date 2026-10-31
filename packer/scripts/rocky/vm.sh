@@ -11,7 +11,7 @@ dnf install -y \
     virt-install \
     virt-manager \
     xorriso \
-    libguestfs-tools
+    guestfs-tools
 
 # Enable per-subsystem libvirt sockets for on-demand activation
 for unit in qemu network storage nodedev nwfilter secret interface; do

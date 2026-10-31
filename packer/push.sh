@@ -23,6 +23,7 @@ target_image() {
         ubuntu26-desktop) echo "ubuntu-26.04-desktop.img" ;;
         rocky10-base) echo "rocky-10-base.img" ;;
         rocky10-tool) echo "rocky-10-tool.img" ;;
+        rocky10-desktop) echo "rocky-10-desktop.img" ;;
         rocky9-base) echo "rocky-9-base.img" ;;
         rocky9-tool) echo "rocky-9-tool.img" ;;
         rocky9-desktop) echo "rocky-9-desktop.img" ;;
@@ -37,6 +38,7 @@ list_targets() {
     debian13-base     debian-13-base.img
     freebsd151        freebsd-15.1-cloudinit-ufs.img
     rocky10-base      rocky-10-base.img
+    rocky10-desktop   rocky-10-desktop.img
     rocky10-tool      rocky-10-tool.img
     rocky9-base       rocky-9-base.img
     rocky9-desktop    rocky-9-desktop.img
