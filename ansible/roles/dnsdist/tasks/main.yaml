@@ -135,6 +135,50 @@
     state: absent
   notify: Restart dnsdist
 
+- name: Check ifupdown service availability
+  become: true
+  ansible.builtin.command:
+    argv:
+      - systemctl
+      - show
+      - networking.service
+      - --property=LoadState
+      - --value
+  register: dnsdist_networking_unit
+  changed_when: false
+  check_mode: false
+
+- name: Ensure dnsdist systemd drop-in directory exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/dnsdist.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+# The Debian LXC ifupdown unit can finish after network-online.target.
+- name: Order dnsdist after ifupdown address configuration
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/dnsdist.service.d/10-ifupdown.conf
+    content: |
+      [Unit]
+      After=networking.service
+    owner: root
+    group: root
+    mode: "0644"
+  when: dnsdist_networking_unit.stdout | trim == "loaded"
+  notify: Restart dnsdist
+
+- name: Remove ifupdown ordering when its service is unavailable
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/dnsdist.service.d/10-ifupdown.conf
+    state: absent
+  when: dnsdist_networking_unit.stdout | trim != "loaded"
+  notify: Restart dnsdist
+
 - name: Ensure dnsdist service is enabled and started
   become: true
   ansible.builtin.systemd:

@@ -6,6 +6,9 @@ Configures dnsdist to route internal domain queries to PowerDNS Authoritative
 secondaries and external queries to dedicated Knot Resolver backends, keeping
 authoritative serving and recursion separate.
 
+Orders dnsdist after `networking.service` when ifupdown is installed, so static
+addresses exist before the frontend and webserver bind.
+
 ## Architecture
 
 dnsdist sits in front of the authoritative DNS servers:
