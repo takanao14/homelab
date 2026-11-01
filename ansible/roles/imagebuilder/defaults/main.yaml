@@ -1,0 +1,32 @@
+---
+imagebuilder_user: imagebuilder
+imagebuilder_control_user: imagebuilder-control
+imagebuilder_authorized_keys: "{{ admin_authorized_keys }}"
+imagebuilder_work_dir: /var/lib/imagebuilder
+imagebuilder_work_device: /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1
+imagebuilder_format_work_disk: false
+imagebuilder_repo_url: https://github.com/takanao14/homelab.git
+imagebuilder_minimum_free_bytes: 42949672960
+imagebuilder_cache_max_bytes: 21474836480
+imagebuilder_idle_seconds: 600
+imagebuilder_timeout_seconds: 14400
+imagebuilder_retention_days: 7
+imagebuilder_smoke_timeout_seconds: 300
+imagebuilder_kernel_path: /var/lib/imagebuilder-kernel/vmlinuz
+# renovate: datasource=github-releases depName=hashicorp/packer
+imagebuilder_packer_version: 1.16.2
+imagebuilder_packer_sha256: abbfe0cf74985084112659b53e3565f264f70a20914c3b7c4f789f54f61c2414
+imagebuilder_packages:
+  - ca-certificates
+  - cloud-image-utils
+  - curl
+  - genisoimage
+  - git
+  - libguestfs-tools
+  - openssh-client
+  - python3
+  - qemu-system-x86
+  - qemu-utils
+  - rclone
+  - unzip
+  - xz-utils

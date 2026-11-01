@@ -1,0 +1,36 @@
+---
+- name: Upgrade an explicitly started image builder in maintenance mode
+  hosts: imagebuilder
+  any_errors_fatal: true
+  tasks:
+    - name: Require maintenance mode and no active build
+      become: true
+      ansible.builtin.command:
+        argv: [/usr/local/libexec/imagebuilder, control]
+        stdin: '{"op":"status"}'
+      register: imagebuilder_status
+      changed_when: false
+      check_mode: false
+      no_log: true
+
+    - name: Check that package changes cannot interrupt a build
+      ansible.builtin.assert:
+        that:
+          - (imagebuilder_status.stdout | from_json).ok
+          - (imagebuilder_status.stdout | from_json).maintenance
+          - >-
+            (imagebuilder_status.stdout | from_json).phase == 'idle' or
+            (imagebuilder_status.stdout | from_json).finished | default(false)
+        fail_msg: Enable maintenance mode and wait for the image build to finish first.
+
+    - name: Upgrade builder packages
+      ansible.builtin.import_tasks: ../tasks/package_upgrade.yaml
+
+    - name: Refresh the running kernel facts after a possible reboot
+      ansible.builtin.setup:
+        gather_subset:
+          - min
+
+    - name: Refresh the libguestfs kernel and builder configuration
+      ansible.builtin.include_role:
+        name: imagebuilder

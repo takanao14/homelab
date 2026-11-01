@@ -1,0 +1,16 @@
+{{ {
+  'repo_url': imagebuilder_repo_url,
+  'work_dir': imagebuilder_work_dir,
+  'runtime_dir': '/run/imagebuilder',
+  'minimum_free_bytes': imagebuilder_minimum_free_bytes | int,
+  'cache_max_bytes': imagebuilder_cache_max_bytes | int,
+  'idle_seconds': imagebuilder_idle_seconds | int,
+  'timeout_seconds': imagebuilder_timeout_seconds | int,
+  'retention_days': imagebuilder_retention_days | int,
+  'smoke_timeout_seconds': imagebuilder_smoke_timeout_seconds | int,
+  'user': imagebuilder_user,
+  'require_mount': true,
+  'kernel_path': imagebuilder_kernel_path,
+  'kernel_version': ansible_facts['kernel'],
+  'kernel_modules': '/lib/modules/' ~ ansible_facts['kernel']
+} | to_nice_json }}

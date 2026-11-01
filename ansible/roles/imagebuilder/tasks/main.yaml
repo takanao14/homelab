@@ -1,0 +1,280 @@
+---
+- name: Validate image builder inputs
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] == 'Ubuntu'
+      - ansible_facts['architecture'] == 'x86_64'
+      - imagebuilder_packer_version is match('^[0-9]+\.[0-9]+\.[0-9]+$')
+      - imagebuilder_packer_sha256 is match('^[a-f0-9]{64}$')
+      - imagebuilder_user is match('^[a-z][a-z0-9-]*$')
+      - imagebuilder_control_user is match('^[a-z][a-z0-9-]*$')
+      - imagebuilder_user != imagebuilder_control_user
+      - imagebuilder_authorized_keys | length > 0
+      - imagebuilder_work_dir == '/var/lib/imagebuilder'
+      - imagebuilder_work_device is match('^/dev/disk/by-id/[A-Za-z0-9_-]+$')
+      - imagebuilder_timeout_seconds | int > 0
+      - imagebuilder_idle_seconds | int >= 60
+
+- name: Check whether the image builder runtime is installed
+  become: true
+  ansible.builtin.stat:
+    path: /usr/local/libexec/imagebuilder
+  register: imagebuilder_existing_runtime
+
+- name: Read the existing image builder maintenance state
+  become: true
+  ansible.builtin.command:
+    argv: [/usr/local/libexec/imagebuilder, control]
+    stdin: '{"op":"status"}'
+  register: imagebuilder_existing_status
+  changed_when: false
+  check_mode: false
+  no_log: true
+  when: imagebuilder_existing_runtime.stat.exists
+
+- name: Require maintenance mode before reconfiguring the image builder
+  ansible.builtin.assert:
+    that:
+      - (imagebuilder_existing_status.stdout | from_json).maintenance | bool
+    fail_msg: Enable image builder maintenance mode before running this playbook.
+  no_log: true
+  when: imagebuilder_existing_runtime.stat.exists
+
+- name: Check for running image builder jobs
+  become: true
+  ansible.builtin.command:
+    argv: [systemctl, list-units, 'imagebuilder-job@*.service', '--state=activating,active,deactivating', --no-legend, --plain]
+  register: imagebuilder_active_units
+  changed_when: false
+  check_mode: false
+
+- name: Refuse configuration changes during an active job
+  ansible.builtin.assert:
+    that: imagebuilder_active_units.stdout | trim | length == 0
+    fail_msg: Stop job admission and wait for the image build to finish before configuring the builder.
+
+- name: Install image builder dependencies
+  become: true
+  ansible.builtin.apt:
+    name: "{{ imagebuilder_packages }}"
+    state: present
+    install_recommends: false
+    update_cache: true
+
+- name: Create the image builder group
+  become: true
+  ansible.builtin.group:
+    name: "{{ imagebuilder_user }}"
+    system: true
+
+- name: Ensure the KVM device group exists
+  become: true
+  ansible.builtin.group:
+    name: kvm
+    system: true
+
+- name: Create the unprivileged image build account
+  become: true
+  ansible.builtin.user:
+    name: "{{ imagebuilder_user }}"
+    group: "{{ imagebuilder_user }}"
+    groups: kvm
+    append: true
+    system: true
+    home: /var/lib/imagebuilder-user
+    create_home: true
+    shell: /usr/sbin/nologin
+
+- name: Create the image builder control account
+  become: true
+  ansible.builtin.user:
+    name: "{{ imagebuilder_control_user }}"
+    system: true
+    create_home: true
+    shell: /bin/sh
+
+- name: Authorize image builder controllers
+  become: true
+  ansible.posix.authorized_key:
+    user: "{{ imagebuilder_control_user }}"
+    key: "{{ imagebuilder_authorized_keys | join('\n') }}"
+    key_options: restrict
+    exclusive: true
+
+- name: Inspect existing work disk mounts
+  become: true
+  ansible.builtin.command:
+    argv: [findmnt, --raw, --noheadings, --source, "{{ imagebuilder_work_device }}", --output, TARGET]
+  register: imagebuilder_disk_mounts
+  changed_when: false
+  failed_when: imagebuilder_disk_mounts.rc not in [0, 1]
+  check_mode: false
+
+- name: Refuse disks mounted outside the image builder work directory
+  ansible.builtin.assert:
+    that:
+      - imagebuilder_disk_mounts.stdout_lines | difference([imagebuilder_work_dir]) | length == 0
+    fail_msg: The selected work disk is mounted elsewhere and must not be reused.
+
+- name: Inspect the work disk signatures
+  become: true
+  ansible.builtin.command:
+    argv: [wipefs, --no-act, --noheadings, --output, TYPE, "{{ imagebuilder_work_device }}"]
+  register: imagebuilder_disk_signatures
+  changed_when: false
+  check_mode: false
+
+- name: Require an existing ext4 filesystem or explicit initialization of a blank disk
+  ansible.builtin.assert:
+    that:
+      - >-
+        imagebuilder_disk_signatures.stdout | trim == 'ext4' or
+        (imagebuilder_disk_signatures.stdout | trim == '' and imagebuilder_format_work_disk | bool)
+    fail_msg: The work disk must contain only ext4 or be blank with imagebuilder_format_work_disk=true.
+
+- name: Initialize the explicitly approved blank work disk
+  become: true
+  community.general.filesystem:
+    dev: "{{ imagebuilder_work_device }}"
+    fstype: ext4
+    force: false
+  when:
+    - imagebuilder_format_work_disk | bool
+    - imagebuilder_disk_signatures.stdout | trim == ''
+
+- name: Create root-owned image builder directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - "{{ imagebuilder_work_dir }}"
+    - /var/lib/imagebuilder-kernel
+    - /etc/imagebuilder
+    - /usr/local/libexec
+    - /usr/local/share/homelab-versions
+
+- name: Mount the image builder work disk
+  become: true
+  ansible.posix.mount:
+    path: "{{ imagebuilder_work_dir }}"
+    src: "{{ imagebuilder_work_device }}"
+    fstype: ext4
+    opts: defaults,nodev,nosuid
+    state: mounted
+
+- name: Copy the running kernel for unprivileged libguestfs
+  become: true
+  ansible.builtin.copy:
+    src: "/boot/vmlinuz-{{ ansible_facts['kernel'] }}"
+    dest: "{{ imagebuilder_kernel_path }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Download the pinned Packer release
+  become: true
+  ansible.builtin.get_url:
+    url: "https://releases.hashicorp.com/packer/{{ imagebuilder_packer_version }}/packer_{{ imagebuilder_packer_version }}_linux_amd64.zip"
+    dest: "/var/cache/packer-{{ imagebuilder_packer_version }}.zip"
+    checksum: "sha256:{{ imagebuilder_packer_sha256 }}"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install the pinned Packer release
+  become: true
+  ansible.builtin.unarchive:
+    src: "/var/cache/packer-{{ imagebuilder_packer_version }}.zip"
+    dest: /usr/local/bin
+    remote_src: true
+    include: [packer]
+    owner: root
+    group: root
+    mode: '0755'
+  when: not ansible_check_mode
+
+- name: Record the installed Packer version
+  become: true
+  ansible.builtin.copy:
+    dest: /usr/local/share/homelab-versions/packer.version
+    content: "{{ imagebuilder_packer_version }}\n"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install the image builder runtime
+  become: true
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../scripts/imagebuilder/runtime.py"
+    dest: /usr/local/libexec/imagebuilder
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Configure the image builder runtime
+  become: true
+  ansible.builtin.template:
+    src: config.json.j2
+    dest: /etc/imagebuilder/config.json
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Grant only the image builder control entry point
+  become: true
+  ansible.builtin.template:
+    src: sudoers.j2
+    dest: /etc/sudoers.d/imagebuilder-control
+    owner: root
+    group: root
+    mode: '0440'
+    validate: /usr/sbin/visudo -cf %s
+
+- name: Install image builder service units
+  become: true
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - imagebuilder-job@.service
+    - imagebuilder-boot.service
+    - imagebuilder-idle.service
+  notify: Reload imagebuilder systemd
+
+- name: Install the image builder idle timer
+  become: true
+  ansible.builtin.copy:
+    src: imagebuilder-idle.timer
+    dest: /etc/systemd/system/imagebuilder-idle.timer
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload imagebuilder systemd
+
+- name: Apply unit definitions before enabling services
+  ansible.builtin.meta: flush_handlers
+
+# Starting an already active oneshot preserves the current job metadata.
+- name: Initialize the image builder once per boot
+  become: true
+  ansible.builtin.systemd_service:
+    name: imagebuilder-boot.service
+    enabled: true
+    state: started
+  when: not ansible_check_mode
+
+- name: Enable idle shutdown checks
+  become: true
+  ansible.builtin.systemd_service:
+    name: imagebuilder-idle.timer
+    enabled: true
+    state: started
+  when: not ansible_check_mode

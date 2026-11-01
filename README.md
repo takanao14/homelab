@@ -7,7 +7,7 @@ Infrastructure-as-code for a personal homelab environment.
 | Directory | Purpose |
 |-----------|---------|
 | [ansible/](ansible/README.md) | Server provisioning and configuration |
-| [packer/](packer/README.md) | Custom Proxmox cloud image builds |
+| [packer/](packer/README.md) | Custom Proxmox cloud image builds on an on-demand systemd builder |
 | [tf/](tf/README.md) | Terraform / Terragrunt for VMs, containers, and images |
 | [k0s/](k0s/README.md) | Cluster bootstrap and lifecycle |
 | [k8s/](k8s/README.md) | Argo CD-managed workloads |

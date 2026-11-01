@@ -63,6 +63,16 @@ VMs ignore `disk.file_id` after creation because Proxmox clears it. To rebuild
 a VM from a new image, import the image on its node, then use `-replace` for
 that VM in both the plan and apply commands.
 
+`vm/pve/imagebuilder1` creates a stopped, on-demand builder with host autostart
+disabled. Its Terragrunt-generated `runtime_power_override.tf` adds `started`
+to the shared VM module's lifecycle ignores, leaving other stacks unchanged.
+The override must retain the module's disk-image and cloud-init ignores because
+Terraform override files replace the `ignore_changes` list. No state migration
+is required. If removing the generator, also remove its old generated file from
+that stack's Terragrunt cache before planning. Runtime power belongs to
+`scripts/image-build.sh`; applying configuration changes still requires stopping
+new jobs and entering maintenance mode.
+
 ### DNS LXC rebuilds
 
 `lxc/images.hcl` selects every LXC guest's OS template. Change one DNS

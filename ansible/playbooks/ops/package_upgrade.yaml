@@ -40,7 +40,7 @@
 
 # Upgrade independent single-service hosts in parallel.
 - name: Upgrade OS packages on remaining hosts
-  hosts: all:!proxmox:!dns:!power_only:!prd_k8s:!sandbox_k8s
+  hosts: all:!proxmox:!dns:!power_only:!prd_k8s:!sandbox_k8s:!imagebuilder
   any_errors_fatal: false
   tags: others
   tasks:

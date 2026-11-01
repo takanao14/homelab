@@ -74,6 +74,8 @@ all:
       ansible_host: 192.168.20.23
     hermes1:
       ansible_host: 192.168.20.24
+    imagebuilder1:
+      ansible_host: 192.168.20.25
 
     # PoC guests.
     sssdtest1:
@@ -176,6 +178,10 @@ all:
       hosts:
         hermes1: null
 
+    imagebuilder:
+      hosts:
+        imagebuilder1: null
+
     # Directory for SSSD and web authentication (ADR-0067).
     lldap:
       hosts:
@@ -248,6 +254,7 @@ all:
       hosts:
         hermes1: null
         idp1: null
+        imagebuilder1: null
         netbox1: null
         openbao1: null
         openclaw1: null

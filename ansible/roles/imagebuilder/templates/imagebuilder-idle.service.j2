@@ -1,0 +1,12 @@
+[Unit]
+Description=Stop idle image builder
+Requires=imagebuilder-boot.service
+After=imagebuilder-boot.service
+RequiresMountsFor={{ imagebuilder_work_dir }}
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/imagebuilder idle
+StandardOutput=null
+StandardError=null
+UMask=0077

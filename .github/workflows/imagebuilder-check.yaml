@@ -1,0 +1,36 @@
+name: Image Builder Check
+
+on:
+  pull_request:
+    paths:
+      - "scripts/imagebuilder/**"
+      - "scripts/image-build.sh"
+      - "ansible/roles/imagebuilder/**"
+      - ".github/workflows/imagebuilder-check.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - name: Test job and power lifecycle without infrastructure access
+        run: python3 -m unittest discover -s scripts/imagebuilder -p 'test_*.py' -v
+      - name: Verify systemd unit dependencies and directives
+        run: |
+          set -euo pipefail
+          sudo install -Dm755 scripts/imagebuilder/runtime.py /usr/local/libexec/imagebuilder
+          for template in ansible/roles/imagebuilder/templates/*.service.j2; do
+            sed -e 's|{{ imagebuilder_work_dir }}|/var/lib/imagebuilder|g' \
+                -e 's|{{ imagebuilder_user }}|imagebuilder|g' \
+                -e 's|{{ imagebuilder_timeout_seconds }}|14400|g' \
+                "$template" > "${RUNNER_TEMP}/$(basename "$template" .j2)"
+          done
+          cp ansible/roles/imagebuilder/files/imagebuilder-idle.timer "${RUNNER_TEMP}/"
+          systemd-analyze verify "${RUNNER_TEMP}"/imagebuilder*.service \
+            "${RUNNER_TEMP}/imagebuilder-idle.timer"

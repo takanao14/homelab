@@ -1,0 +1,16 @@
+[Unit]
+Description=Initialize image builder and recover interrupted jobs
+After=local-fs.target
+Before=imagebuilder-idle.timer
+RequiresMountsFor={{ imagebuilder_work_dir }}
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/libexec/imagebuilder boot
+StandardOutput=null
+StandardError=null
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
