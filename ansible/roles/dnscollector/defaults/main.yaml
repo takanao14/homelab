@@ -1,6 +1,6 @@
 ---
-dnscollector_version: "v3.2.3"
-dnscollector_sha256: "2c989d7f35de3511175028d961f25dcaca85c841324a5d7dbe4aca30225a3c4d"
+dnscollector_version: "v3.3.1"
+dnscollector_sha256: "9f09b2e8dcc6c76388e2ea04ede540dd0c08b7bf6ea396fdd276a130a496fb78"
 dnscollector_loki_url: "{{ loki_endpoint }}"
 dnscollector_dnsdist_socket: "/run/dnstap-dnsdist.sock"
 dnscollector_debug: false
