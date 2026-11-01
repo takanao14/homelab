@@ -23,8 +23,27 @@ inputs = {
       memory  = 8192
       on_boot = true
       bridge  = local.common.locals.pve.net10.bridge
-      ipv4    = "192.168.10.178/24"
-      ipv4gw  = local.common.locals.pve.net10.ipv4gw
+      cloud_init = {
+        network_data = yamlencode({
+          version  = 2
+          renderer = "networkd"
+          ethernets = {
+            primary = {
+              # The VM has one VirtIO NIC; its PCI-derived name can change.
+              match     = { driver = "virtio_net" }
+              addresses = ["192.168.10.178/24"]
+              routes = [{
+                to  = "default"
+                via = local.common.locals.pve.net10.ipv4gw
+              }]
+              nameservers = {
+                addresses = local.common.locals.dns_internal
+                search    = [local.common.locals.dns_domain]
+              }
+            }
+          }
+        })
+      }
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 80
