@@ -48,6 +48,10 @@ locals {
       file_name    = "rocky-10-tool.img"
       content_type = "iso"
     }
+    "rocky-10-desktop" = {
+      file_name    = "rocky-10-desktop.img"
+      content_type = "iso"
+    }
     "debian-13-base" = {
       file_name    = "debian-13-base.img"
       content_type = "iso"

@@ -3,8 +3,9 @@ set -euo pipefail
 
 echo "Enabling the EPEL and CRB repositories..."
 
-# The shared toolchain pulls mosh from EPEL, and EPEL packages in turn resolve
-# dependencies out of CRB, which epel-release does not enable by itself.
+# The shared toolchain pulls mosh from EPEL, which on Rocky 9 resolves
+# dependencies out of CRB; epel-release does not enable CRB by itself. Rocky 10
+# also ships virt-manager (scripts/rocky/vm.sh) only in CRB.
 dnf install -y epel-release
 
 # Rocky 10 ships dnf5, whose config-manager plugin and syntax differ from dnf4.

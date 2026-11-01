@@ -110,9 +110,29 @@ is baked into the image, and each role contains the one before it:
 |------|----------|-------------------|---------------------|------|
 | `base` | QEMU Guest Agent and the timezone (JST) only | `server` | `false` | 10G |
 | `tool` | `base` plus the shared CLI toolchain in `/usr/local` | `server` | `true` | 16G |
-| `desktop` | `tool` plus XFCE, XRDP, the Japanese IME and the GUI applications | `desktop` | `true` | 20G |
+| `desktop` | `tool` plus a desktop, RDP access, the Japanese IME and the GUI applications | `desktop` | `true` | 20G–30G |
 
-`desktop` is reachable over RDP only through XRDP.
+`ubuntu26-desktop` and `rocky10-desktop` run GNOME with GNOME Remote Desktop in
+remote login mode (30G); `ubuntu24-desktop` and `rocky9-desktop` run XFCE with
+XRDP (20G).
+
+### GNOME desktop images need RDP credentials
+
+The first boot generates the host's RDP TLS key and enables remote login, but
+GDM refuses RDP connections until the shared remote-login credentials are set.
+Set them on the VM; the command prompts for the username and password so they
+stay out of shell history:
+
+```bash
+sudo grdctl --system rdp set-credentials
+sudo grdctl --system status
+```
+
+After the remote-login credentials, the GDM greeter asks for the user's own
+account password. Remote login hands the client over to the session with RDP
+server redirection; Microsoft clients (mstsc, and Windows App on macOS) follow
+it only when the `.rdp` file they open contains
+`use redirection server name:i:1`.
 
 ## Available Build Targets
 
@@ -130,6 +150,7 @@ users, cloud-init paths, the machine profile and the provisioner list live in
 | `ubuntu26-desktop` | desktop | [vars/ubuntu26-desktop.pkrvars.hcl](vars/ubuntu26-desktop.pkrvars.hcl) | `images/ubuntu-26.04-desktop.img` |
 | `rocky10-base` | server | [vars/rocky10-base.pkrvars.hcl](vars/rocky10-base.pkrvars.hcl) | `images/rocky-10-base.img` |
 | `rocky10-tool` | server | [vars/rocky10-tool.pkrvars.hcl](vars/rocky10-tool.pkrvars.hcl) | `images/rocky-10-tool.img` |
+| `rocky10-desktop` | desktop | [vars/rocky10-desktop.pkrvars.hcl](vars/rocky10-desktop.pkrvars.hcl) | `images/rocky-10-desktop.img` |
 | `rocky9-base` | server | [vars/rocky9-base.pkrvars.hcl](vars/rocky9-base.pkrvars.hcl) | `images/rocky-9-base.img` |
 | `rocky9-tool` | server | [vars/rocky9-tool.pkrvars.hcl](vars/rocky9-tool.pkrvars.hcl) | `images/rocky-9-tool.img` |
 | `rocky9-desktop` | desktop | [vars/rocky9-desktop.pkrvars.hcl](vars/rocky9-desktop.pkrvars.hcl) | `images/rocky-9-desktop.img` |
@@ -137,7 +158,7 @@ users, cloud-init paths, the machine profile and the provisioner list live in
 
 Debian has no `tool` target: the toolchain's HashiCorp step resolves an apt
 suite from `VERSION_CODENAME` and `apt.releases.hashicorp.com` publishes no `trixie`
-suite. Rocky 10 has no `desktop` target because nothing consumes one.
+suite.
 
 ### Rocky base images need CRB before provisioning
 

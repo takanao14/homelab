@@ -5,11 +5,12 @@ distro       = "ubuntu"
 provision_scripts = [
   "scripts/ubuntu/qemu-ga.sh",
   "scripts/common/timezone.sh",
-  "scripts/ubuntu/xrdp.sh",
+  "scripts/ubuntu/gnome.sh",
+  "scripts/common/gnome-rdp.sh",
   "scripts/ubuntu/container.sh",
   "scripts/ubuntu/vm.sh",
   "scripts/ubuntu/tools.sh",
 ]
 cleanup_script  = "scripts/ubuntu/cleanup.sh"
 machine_profile = "desktop"
-disk_size       = "20G"
+disk_size       = "30G"

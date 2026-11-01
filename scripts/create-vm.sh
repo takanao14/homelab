@@ -18,9 +18,9 @@ Usage: $(basename "$0") <name> <ip> [node] [cores] [memory_mb] [disk_gb] [image]
   memory    Memory in MB               (default: 8192)
   disk      Disk size in GB            (default: 80)
   image     OS image: ubuntu26-base | ubuntu26-tool | ubuntu26-desktop | rocky10-base |
-            rocky9-desktop | debian13-base  (default: ubuntu26-base)
+            rocky10-desktop | rocky9-desktop | debian13-base  (default: ubuntu26-base)
             The role suffix says how much is baked in: base (agent + timezone)
-            < tool (+ shared CLI toolchain) < desktop (+ XFCE/XRDP and GUI apps)
+            < tool (+ shared CLI toolchain) < desktop (+ desktop, RDP and GUI apps)
 
 Environment:
   TF_VM_USERNAME        VM username     (required)
@@ -82,14 +82,15 @@ case "$IMAGE" in
   ubuntu26-tool) FILE_ID="local:iso/ubuntu-26.04-tool.img" ;;
   ubuntu26-desktop) FILE_ID="local:iso/ubuntu-26.04-desktop.img" ;;
   rocky10-base)  FILE_ID="local:iso/rocky-10-base.img" ;;
+  rocky10-desktop)  FILE_ID="local:iso/rocky-10-desktop.img" ;;
   rocky9-desktop)  FILE_ID="local:iso/rocky-9-desktop.img" ;;
   debian13-base)  FILE_ID="local:iso/debian-13-base.img" ;;
-  *) echo "Error: image must be one of: ubuntu26-base, ubuntu26-tool, ubuntu26-desktop, rocky10-base, rocky9-desktop, debian13-base" >&2; exit 1 ;;
+  *) echo "Error: image must be one of: ubuntu26-base, ubuntu26-tool, ubuntu26-desktop, rocky10-base, rocky10-desktop, rocky9-desktop, debian13-base" >&2; exit 1 ;;
 esac
 
 # Only pve downloads the tool and desktop images; see tf/customimage/*/node.hcl.
 case "$IMAGE" in
-  ubuntu26-tool|ubuntu26-desktop|rocky9-desktop)
+  ubuntu26-tool|ubuntu26-desktop|rocky10-desktop|rocky9-desktop)
     if [[ "$NODE" != "pve" ]]; then
       echo "Error: image '${IMAGE}' is only available on node 'pve'" >&2
       exit 1
