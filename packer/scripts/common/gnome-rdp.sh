@@ -27,6 +27,8 @@ runuser -u gnome-remote-desktop -- openssl req -x509 -newkey rsa:4096 -nodes \
 grdctl --system rdp set-tls-key "${home}/rdp-tls.key"
 grdctl --system rdp set-tls-cert "${home}/rdp-tls.crt"
 grdctl --system rdp enable
+# The daemon starts before this unit and does not start the RDP server on enable.
+systemctl restart gnome-remote-desktop.service
 EOF
 chmod 0755 /usr/local/libexec/grd-system-init
 

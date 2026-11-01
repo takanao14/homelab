@@ -129,7 +129,9 @@ sudo grdctl --system status
 ```
 
 After the remote-login credentials, the GDM greeter asks for the user's own
-account password.
+account password. Remote login hands the client over to the session with RDP
+server redirection; Microsoft clients follow it only when the saved `.rdp`
+file contains `use redirection server name:i:1`.
 
 ## Available Build Targets
 
