@@ -11,7 +11,8 @@ import sys
 import time
 import urllib.request
 
-from runtime import CODES, CREDENTIALS, PHASES, TERMINAL
+from runtime import (CODES, CREDENTIALS, PHASES, TERMINAL, SafeError,
+                     validate_branch, validate_log_record)
 
 
 class ControlError(Exception):
@@ -30,10 +31,16 @@ def safe_response(data):
         require(data.get('error') in CODES, 'invalid_builder_response')
         raise ControlError(data['error'])
     result = {'ok': True}
-    for key in ('maintenance', 'publication_blocked', 'publish', 'finished'):
+    for key in ('maintenance', 'publication_blocked', 'publish', 'finished',
+                'truncated', 'has_more'):
         if key in data:
             require(type(data[key]) is bool, 'invalid_builder_response')
             result[key] = data[key]
+    if 'branch' in data:
+        try:
+            result['branch'] = validate_branch(data['branch'])
+        except SafeError:
+            raise ControlError('invalid_builder_response') from None
     for key, pattern in (('job_id', r'[0-9a-f]{32}'),
                          ('revision', r'[0-9a-f]{40}|[0-9a-f]{64}'),
                          ('target', r'[a-z][a-z0-9-]{0,63}'),
@@ -62,6 +69,17 @@ def safe_response(data):
                     and type(event.get('time')) is int, 'invalid_builder_response')
             events.append({key: event[key] for key in ('phase', 'code', 'time')})
         result['events'] = events
+    if 'cursor' in data:
+        require(type(data['cursor']) is int and 0 <= data['cursor'] < 2 ** 63,
+                'invalid_builder_response')
+        result['cursor'] = data['cursor']
+    if 'records' in data:
+        require(isinstance(data['records'], list) and len(data['records']) <= 256,
+                'invalid_builder_response')
+        try:
+            result['records'] = [validate_log_record(record) for record in data['records']]
+        except (SafeError, TypeError, KeyError):
+            raise ControlError('invalid_builder_response') from None
     return result
 
 
@@ -150,7 +168,7 @@ class Controller:
         except Exception:
             raise ControlError('builder_unreachable') from None
 
-    def wake(self):
+    def wake(self, *, build_ready=True):
         deadline = time.monotonic() + 900
         last_error = 'builder_start_timeout'
         while time.monotonic() < deadline:
@@ -162,7 +180,8 @@ class Controller:
                     if self.power() != 'running':
                         raise
             try:
-                return self.remote({'op': 'ready'})
+                return self.remote({'op': 'ready', **(
+                    {} if build_ready else {'build_ready': False})})
             except ControlError as error:
                 last_error = str(error)
                 if last_error not in ('builder_unreachable', 'internal_error',
@@ -186,20 +205,11 @@ class Controller:
         return values
 
     def wait_job(self, identifier):
-        deadline = time.monotonic() + 14700
-        previous = None
-        while time.monotonic() < deadline:
-            state = self.remote({'op': 'status', 'job_id': identifier})
-            require(state.get('job_id') == identifier, 'unexpected_job_identity')
-            if state.get('phase') != previous:
-                emit(state)
-                previous = state.get('phase')
-            if state.get('phase') in TERMINAL and state.get('finished'):
-                emit(state)
-                require(state['phase'] == 'succeeded', 'job_failed')
-                return state
-            time.sleep(5)
-        raise ControlError('job_wait_timeout')
+        state = self.follow_logs(identifier)
+        if state['phase'] != 'succeeded':
+            emit(state)
+            raise ControlError('job_failed')
+        return state
 
     def wait_stopped(self):
         deadline = time.monotonic() + 900
@@ -208,6 +218,33 @@ class Controller:
                 return {'ok': True, 'power': 'stopped'}
             time.sleep(5)
         raise ControlError('shutdown_timeout')
+
+    def follow_logs(self, identifier, after=0):
+        deadline = time.monotonic() + 14700
+        while time.monotonic() < deadline:
+            page = self.remote({'op': 'logs', 'job_id': identifier, 'after': after})
+            require(page.get('job_id') == identifier, 'unexpected_job_identity')
+            require(type(page.get('cursor')) is int and page['cursor'] >= after
+                    and type(page.get('has_more')) is bool,
+                    'invalid_builder_response')
+            if page.get('truncated'):
+                emit({'ok': True, 'job_id': identifier, 'truncated': True,
+                      'cursor': after})
+            for record in page.get('records', []):
+                require(record['sequence'] > after, 'invalid_builder_response')
+                emit({'job_id': identifier, **record})
+                after = record['sequence']
+            require(page['cursor'] == after, 'invalid_builder_response')
+            if page['has_more']:
+                require(bool(page.get('records')), 'invalid_builder_response')
+                continue
+            if page.get('finished'):
+                require(page.get('phase') in TERMINAL, 'invalid_builder_response')
+                return {key: page[key] for key in (
+                    'ok', 'job_id', 'phase', 'code', 'finished', 'cursor',
+                    'branch', 'revision', 'publication_blocked') if key in page}
+            time.sleep(2)
+        raise ControlError('log_wait_timeout')
 
     def execute(self, args):
         if args.command == 'status':
@@ -221,8 +258,14 @@ class Controller:
             self.remote({'op': 'shutdown'})
             return self.wait_stopped()
         if args.command == 'run':
-            require(re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', args.revision),
-                    'invalid_revision')
+            if args.branch is not None:
+                try:
+                    validate_branch(args.branch)
+                except SafeError:
+                    raise ControlError('invalid_branch') from None
+            else:
+                require(re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', args.revision),
+                        'invalid_revision')
             require(re.fullmatch(r'[a-z][a-z0-9-]{0,63}', args.target),
                     'invalid_target')
             # Import-only targets do not consume the cloud-init password.
@@ -236,21 +279,34 @@ class Controller:
                        'credentials': self.secret_values(True, build=False)}
         else:
             request = None
-        self.wake()
+        if args.command == 'logs':
+            require(re.fullmatch(r'[0-9a-f]{32}', args.job_id), 'invalid_job_id')
+            require(0 <= args.after < 2 ** 63, 'invalid_log_cursor')
+        self.wake(build_ready=args.command in ('run', 'publish-retry'))
         if args.command == 'start':
             if args.keep_running:
                 return self.remote({'op': 'maintenance', 'enabled': True})
-            return {'ok': True, 'phase': 'ready'}
+            return {'ok': True, 'power': 'running'}
         if args.command == 'maintenance':
             return self.remote({'op': 'maintenance', 'enabled': args.enabled == 'on'})
         if args.command == 'logs':
-            require(re.fullmatch(r'[0-9a-f]{32}', args.job_id), 'invalid_job_id')
-            return self.remote({'op': 'logs', 'job_id': args.job_id})
+            if args.follow:
+                return self.follow_logs(args.job_id, args.after)
+            return self.remote({'op': 'logs', 'job_id': args.job_id,
+                                'after': args.after})
+        if args.command == 'run' and args.branch is not None:
+            resolved = self.remote({'op': 'resolve', 'branch': args.branch})
+            require(resolved.get('branch') == args.branch and
+                    re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}',
+                                 resolved.get('revision', '')),
+                    'invalid_builder_response')
+            request.update(revision=resolved['revision'], branch=args.branch)
+            emit(resolved)
         result = self.remote(request)
         require('job_id' in result, 'invalid_builder_response')
-        emit(result)
         if args.detach:
             return result
+        emit(result)
         return self.wait_job(result['job_id'])
 
 
@@ -263,7 +319,9 @@ def parser():
     sub = cli.add_subparsers(dest='command', required=True)
     run = sub.add_parser('run')
     run.add_argument('target')
-    run.add_argument('--revision', required=True)
+    source = run.add_mutually_exclusive_group(required=True)
+    source.add_argument('--revision')
+    source.add_argument('--branch')
     run.add_argument('--publish', action='store_true')
     run.add_argument('--detach', action='store_true')
     retry = sub.add_parser('publish-retry')
@@ -273,6 +331,8 @@ def parser():
     status.add_argument('job_id', nargs='?')
     logs = sub.add_parser('logs')
     logs.add_argument('job_id')
+    logs.add_argument('--follow', action='store_true')
+    logs.add_argument('--after', type=int, default=0)
     start = sub.add_parser('start')
     start.add_argument('--keep-running', action='store_true')
     maintenance = sub.add_parser('maintenance')

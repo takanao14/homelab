@@ -75,6 +75,12 @@ check_overwrite() {
     fi
 }
 
+log_step() {
+    if [[ "${IMAGEBUILDER_LOG_EVENTS:-0}" == 1 ]]; then
+        printf 'IMAGEBUILDER_STEP=%s\n' "$1"
+    fi
+}
+
 build_image() {
     local var_file="$1"
     local packer_output="$2"
@@ -86,11 +92,18 @@ build_image() {
 
     check_overwrite "$image_file" "$packer_output_dir"
 
+    local -a packer_output_flags=()
+    if [[ "${IMAGEBUILDER_LOG_EVENTS:-0}" == 1 ]]; then
+        packer_output_flags=(-machine-readable)
+    fi
+
     echo "Initializing Packer..."
-    packer init "$PACKER_TEMPLATE"
+    log_step packer-init
+    packer "${packer_output_flags[@]}" init "$PACKER_TEMPLATE"
 
     echo "Building ${packer_vm_name}..."
-    packer build \
+    log_step packer-build
+    packer "${packer_output_flags[@]}" build \
         -var-file "$var_file" \
         -var "output_directory=${packer_output_dir}" \
         -var "vm_name=${packer_vm_name}" \

@@ -28,6 +28,10 @@ root, with credentials injected from SOPS into the controller environment:
 # Build and smoke-test a committed revision without publishing.
 ./scripts/image-build.sh run ubuntu26-base --revision "$(git rev-parse HEAD)"
 
+# Build a pushed branch while iterating on the Packer configuration.
+./scripts/image-build.sh run ubuntu26-base --branch fix/packer --detach
+./scripts/image-build.sh logs <job-id> --follow
+
 # Publish only after excluding concurrent customimage downloads, plans and applies.
 ./scripts/image-build.sh run ubuntu26-base --revision "$(git rev-parse HEAD)" --publish
 
@@ -37,11 +41,29 @@ root, with credentials injected from SOPS into the controller environment:
 ./scripts/image-build.sh shutdown
 ```
 
-`run` waits for job finalization; VM shutdown follows independently after the
-idle grace period. `--detach` returns the job ID immediately. `status` does not
-start a stopped VM; `logs` and `publish-retry` do. Diagnostics contain only
-approved lifecycle fields, never raw build output. `all` selects the existing
+`run` accepts either `--revision <full-sha>` or `--branch <name>`. Branch names
+refer to the configured remote repository: the builder resolves the branch once,
+reports its SHA and checks out that exact commit. Later pushes do not change a
+running job. The selected branch and commit remain in the job metadata;
+uncommitted changes must be committed and pushed before building.
+
+`run` follows structured logs and waits for job finalization; VM shutdown follows
+after the idle grace period. `--detach` returns the job ID immediately. `status`
+does not start a stopped VM; `logs` and `publish-retry` do. `all` selects the existing
 Packer build set; upstream-only targets such as `freebsd151` use the import path.
+Log retrieval and maintenance startup do not require successful KVM, kernel or
+free-space checks, so those failures can still be inspected and repaired.
+
+`logs` returns structured stage records with timestamps, command exit codes and
+durations. Packer diagnostics include recognized HCL error categories and source
+locations, provisioner exit codes and artifact counts. `--follow` streams new
+records until finalization; `--after <sequence>` resumes from a previous cursor.
+Each response includes up to 256 records; retention is capped at 1,000 records
+and 192 KiB per job. `has_more` indicates another page and `truncated` reports
+expired records.
+Records follow the job's seven-day retention. Raw provisioner messages and
+`PACKER_LOG` traces are not stored: only explicitly allowed fields are extracted
+in memory before persistence or display. Unknown messages are discarded.
 
 The CLI uses `IMAGEBUILDER_PROXMOX_TOKEN` in Proxmox's `user@realm!token=secret`
 format, and discovers the VM ID by name unless `IMAGEBUILDER_VMID` is set.

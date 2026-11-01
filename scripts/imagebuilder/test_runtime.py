@@ -140,6 +140,21 @@ class RuntimeTests(unittest.TestCase):
         self.command.assert_not_called()
         self.assertGreater(runtime.read_json(self.backend.control_path)['idle_since'], 0)
 
+    def test_diagnostics_reserve_idle_grace_without_requiring_build_readiness(self):
+        with self.backend.locked() as state:
+            state['idle_since'] = 0
+            self.backend.save_control(state)
+        self.backend.readiness.side_effect = runtime.SafeError('insufficient_space')
+        self.assertEqual(self.backend.control({'op': 'ready', 'build_ready': False}),
+                         {'ok': True, 'phase': 'ready'})
+        self.backend.readiness.assert_not_called()
+        self.assertGreater(runtime.read_json(self.backend.control_path)['idle_since'], 0)
+        with self.backend.locked() as state:
+            state['stopping'] = True
+            self.backend.save_control(state)
+        self.assert_code('stopping', lambda: self.backend.control(
+            {'op': 'ready', 'build_ready': False}))
+
     def test_explicit_maintenance_survives_reboot_until_disabled(self):
         self.backend.control({'op': 'maintenance', 'enabled': True})
         self.backend.control_path.unlink()
@@ -262,6 +277,151 @@ class RuntimeTests(unittest.TestCase):
         self.assert_code('invalid_request', lambda: self.submit(target='x;id'))
         self.assert_code('invalid_request', lambda: self.submit(revision='main'))
         self.command.assert_not_called()
+
+    def test_branch_resolver_uses_worker_and_exact_remote_reference_without_lock(self):
+        self.command.return_value = ('b' * 40 + '\trefs/heads/feature/packer\n').encode()
+        with patch.object(self.backend, 'locked', side_effect=AssertionError):
+            result = self.backend.control({'op': 'resolve', 'branch': 'feature/packer'})
+        self.assertEqual(result, {'ok': True, 'branch': 'feature/packer', 'revision': 'b' * 40})
+        self.command.assert_called_once_with(
+            ['runuser', '-u', self.backend.user.pw_name, '--', 'git', 'ls-remote',
+             '--exit-code', '--refs', self.backend.config['repo_url'],
+             'refs/heads/feature/packer'], capture=True)
+
+    def test_branch_resolver_rejects_ambiguous_or_mismatched_result(self):
+        for output in (b'SECRET_MARKER',
+                       ('b' * 40 + '\trefs/heads/other\n').encode(),
+                       (('b' * 40 + '\trefs/heads/topic\n') * 2).encode()):
+            self.command.return_value = output
+            self.assert_code('branch_resolution_failed', lambda: self.backend.control(
+                {'op': 'resolve', 'branch': 'topic'}))
+
+    def test_invalid_branch_cannot_start_resolver_process(self):
+        for branch in ('../main', 'a//b', 'a/.hidden', 'x.lock', 'x/y.lock',
+                       'x@{1}', 'x\nSECRET_MARKER', '-x', 'x/', 'x..y'):
+            self.assert_code('invalid_branch', lambda: self.backend.control(
+                {'op': 'resolve', 'branch': branch}))
+        self.command.assert_not_called()
+
+    def test_branch_provenance_does_not_change_pinned_revision(self):
+        identifier = self.submit(branch='feature/packer')
+        record = runtime.read_json(self.backend.record_path(identifier))
+        self.assertEqual(record['revision'], 'a' * 40)
+        self.assertEqual(self.backend.control({'op': 'status'})['branch'], 'feature/packer')
+
+    def test_log_paging_reports_count_rotation_gap_and_drains_tail(self):
+        identifier = self.submit()
+        records = [{'sequence': value, 'time': 1, 'step': 'build', 'event': 'started'}
+                   for value in range(1, 1001)]
+        runtime.write_json(self.backend.diagnostic_path(identifier),
+                           {'next_sequence': 1001, 'records': records})
+        self.backend.append_diagnostic(identifier, 'build', 'completed', exit_code=0)
+        page = self.backend.control({'op': 'logs', 'job_id': identifier, 'after': 0})
+        self.assertTrue(page['truncated'])
+        self.assertEqual(len(page['records']), 256)
+        self.assertEqual(page['records'][0]['sequence'], 2)
+        self.assertEqual(page['cursor'], 257)
+        self.assertTrue(page['has_more'])
+        tail = self.backend.diagnostic_page(identifier, 998)
+        self.assertEqual([record['sequence'] for record in tail['records']], [999, 1000, 1001])
+        self.assertFalse(tail['has_more'])
+        self.assertEqual(tail['cursor'], 1001)
+        empty = self.backend.diagnostic_page(identifier, 1001)
+        self.assertEqual(empty['records'], [])
+        self.assertEqual(empty['cursor'], 1001)
+
+    def test_log_byte_cap_prunes_only_sanitized_records_with_monotonic_sequence(self):
+        identifier = self.submit()
+        with patch.object(runtime, 'MAX_LOG_BYTES', 1024):
+            for _ in range(20):
+                self.backend.append_diagnostic(identifier, 'packer-build', 'failed',
+                                               exit_code=1, duration_ms=20,
+                                               category='command-exit', secret='SECRET_MARKER')
+        payload = self.backend.diagnostic_path(identifier).read_text()
+        self.assertLessEqual(len(payload.encode()), 1024)
+        self.assertNotIn('SECRET_MARKER', payload)
+        page = self.backend.diagnostic_page(identifier, 0)
+        self.assertTrue(page['truncated'])
+        self.assertEqual(page['records'][-1]['sequence'], 20)
+
+    def test_log_accessor_rejects_unknown_code_and_unknown_source(self):
+        identifier = self.submit()
+        for fields in ({'category': 'SECRET_MARKER'},
+                       {'source': 'packer/missing.pkr.hcl', 'line': 1}):
+            record = dict(sequence=1, time=1, step='build', event='failed', **fields)
+            runtime.write_json(self.backend.diagnostic_path(identifier),
+                               {'next_sequence': 2, 'records': [record]})
+            self.assert_code('invalid_state', lambda: self.backend.control(
+                {'op': 'logs', 'job_id': identifier}))
+
+    def test_shared_log_validator_rejects_malformed_types_with_safe_error(self):
+        valid = {'sequence': 1, 'time': 1, 'step': 'build', 'event': 'failed'}
+        for fields in ({'step': []}, {'event': {}}, {'category': []},
+                       {'exit_code': True}, {'source': '/SECRET_MARKER', 'line': 1},
+                       {'provisioner_exit_code': 256}):
+            self.assert_code('invalid_state', lambda: runtime.validate_log_record(
+                dict(valid, **fields)))
+
+    def test_packer_observer_persists_useful_fixed_diagnostics_without_messages(self):
+        identifier = self.submit()
+        packer = self.backend.jobs / identifier / 'repo' / 'packer'
+        packer.mkdir(parents=True)
+        (packer / 'image.pkr.hcl').write_text('')
+        self.commands.stop()
+        self.backend.current_job, self.backend.current_step = identifier, 'build'
+        lines = [
+            'SECRET_MARKER unstructured output',
+            '1700000000,qemu.custom,ui,say,SECRET_MARKER',
+            'IMAGEBUILDER_STEP=packer-init',
+            '1700000000,,ui,error,Error: Unsupported argument\\n\\n'
+            '  on image.pkr.hcl line 12%!(PACKER_COMMA) column 3:\\nSECRET_MARKER',
+            'IMAGEBUILDER_STEP=packer-build',
+            '1700000000,qemu.custom,ui,error,Script exited with non-zero exit status: 100. '
+            'Allowed exit codes are: [0]',
+            '1700000000,qemu.custom,ui,message,    qemu.custom (shell-local): '
+            'IMAGEBUILDER_STEP=compress',
+            '1700000000,qemu.custom,artifact-count,1',
+            '1700000000,qemu.custom,ui,error,SECRET_MARKER',
+        ]
+        program = 'import sys; print(' + repr('\n'.join(lines)) + ',flush=True); sys.exit(1)'
+        self.assert_code('command_failed', lambda: self.backend.invoke(
+            [sys.executable, '-c', program]))
+        data = self.backend.diagnostics(identifier)['records']
+        hcl = next(record for record in data if record.get('category') == 'hcl-unsupported-argument')
+        self.assertEqual((hcl['source'], hcl['line'], hcl['column']),
+                         ('packer/image.pkr.hcl', 12, 3))
+        provisioner = next(record for record in data
+                           if record.get('category') == 'provisioner-exit')
+        self.assertEqual(provisioner['provisioner_exit_code'], 100)
+        self.assertTrue(any(record['step'] == 'compress' and record['event'] == 'started'
+                            for record in data))
+        self.assertTrue(any(record['event'] == 'artifact-count' and record['count'] == 1
+                            for record in data))
+        self.assertEqual(data[-1]['exit_code'], 1)
+        self.assertNotIn('SECRET_MARKER', self.backend.diagnostic_path(identifier).read_text())
+        self.assertNotIn('SECRET_MARKER', json.dumps(self.backend.control(
+            {'op': 'logs', 'job_id': identifier})))
+
+    def test_nonpacker_command_output_cannot_forge_packer_diagnostics(self):
+        identifier = self.submit()
+        self.commands.stop()
+        self.backend.current_job, self.backend.current_step = identifier, 'ssh-setup'
+        program = 'print("IMAGEBUILDER_STEP=packer-build\\n1700000000,,ui,error,SECRET_MARKER")'
+        self.backend.invoke([sys.executable, '-c', program])
+        records = self.backend.diagnostics(identifier)['records']
+        self.assertEqual([record['event'] for record in records], ['started', 'completed'])
+        self.assertTrue(all(record['step'] == 'ssh-setup' for record in records))
+
+    def test_oversized_untrusted_output_is_discarded_before_safe_marker(self):
+        identifier = self.submit()
+        self.commands.stop()
+        self.backend.current_job, self.backend.current_step = identifier, 'build'
+        program = ('print("SECRET_MARKER" * 10000); '
+                   'print("IMAGEBUILDER_STEP=packer-build",flush=True)')
+        self.backend.invoke([sys.executable, '-c', program])
+        records = self.backend.diagnostics(identifier)['records']
+        self.assertTrue(any(record['step'] == 'packer-build' for record in records))
+        self.assertNotIn('SECRET_MARKER', self.backend.diagnostic_path(identifier).read_text())
 
     def test_target_list_is_derived_from_checkout(self):
         checkout = self.backend.work / 'checkout'
@@ -592,6 +752,41 @@ class RuntimeTests(unittest.TestCase):
 
 
 class ProcessTests(unittest.TestCase):
+    def test_short_progress_line_is_observed_before_child_exit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            release = Path(directory) / 'release'
+            events = []
+
+            def observer(event):
+                events.append(event['event'])
+                if event['event'] == 'output':
+                    self.assertEqual(event['line'], b'IMAGEBUILDER_STEP=packer-build')
+                    release.touch()
+
+            program = ('from pathlib import Path; import time; '
+                       'print("IMAGEBUILDER_STEP=packer-build",flush=True)\n'
+                       'while not Path(' + repr(str(release)) + ').exists(): time.sleep(0.01)')
+            runtime.command([sys.executable, '-c', program], observer=observer, timeout=3)
+        self.assertEqual(events, ['started', 'output', 'completed'])
+
+    def test_digest_payload_is_not_scanned_by_observer(self):
+        events = []
+        payload = b'1700000000,,ui,error,SECRET_MARKER\n'
+        result = runtime.command([sys.executable, '-c', 'print(' + repr(payload.decode().strip()) + ')'],
+                                 digest=True, observer=events.append)
+        self.assertEqual(result, hashlib.sha256(payload).hexdigest())
+        self.assertEqual([event['event'] for event in events], ['started', 'completed'])
+
+    def test_observer_does_not_mix_stderr_into_hashes_or_machine_capture(self):
+        program = 'import sys; sys.stdout.write("payload"); sys.stderr.write("SECRET_MARKER\\n")'
+        for option in ({'digest': True}, {'capture': True}):
+            events = []
+            result = runtime.command([sys.executable, '-c', program],
+                                     observer=events.append, **option)
+            self.assertEqual(result, hashlib.sha256(b'payload').hexdigest()
+                             if option.get('digest') else b'payload')
+            self.assertNotIn('SECRET_MARKER', repr(events))
+
     def test_child_output_is_discarded_and_failure_contains_no_secret(self):
         output = io.StringIO()
         with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):

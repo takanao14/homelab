@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import contextlib
+import csv
 import fcntl
 import hashlib
 import json
@@ -36,13 +37,84 @@ CODES = frozenset(('accepted', 'preparing', 'building', 'verifying', 'publishing
                    'smoke_boot_failed', 'smoke_timeout', 'remote_pair_incomplete',
                    'remote_checksum_mismatch', 'rollback_failed',
                    'publication_failed_restored', 'artifact_changed',
-                   'internal_error'))
+                   'internal_error', 'invalid_branch', 'branch_resolution_failed'))
 CREDENTIALS = frozenset(('PKR_VAR_user_password', 'SEAWEEDFS_S3_ENDPOINT',
                          'SEAWEEDFS_S3_ACCESS_KEY', 'SEAWEEDFS_S3_SECRET_KEY',
                          'SEAWEEDFS_CLOUD_IMAGES_BUCKET'))
 BASE_ENV = {'PATH': '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin',
             'LANG': 'C.UTF-8', 'LIBGUESTFS_BACKEND': 'direct',
             'GIT_TERMINAL_PROMPT': '0'}
+LOG_STEPS = frozenset(('checkout', 'ssh-setup', 'build', 'packer-init', 'packer-build',
+                       'import', 'compress', 'artifact-check', 'smoke-boot',
+                       'publish', 'rollback'))
+LOG_EVENTS = frozenset(('started', 'completed', 'failed', 'packer-error',
+                        'artifact-count'))
+LOG_CATEGORIES = frozenset(('command-exit', 'timeout', 'packer-error',
+                            'hcl-validation', 'ssh-timeout', 'provisioner-exit',
+                            'hcl-unsupported-argument', 'hcl-missing-required-argument',
+                            'hcl-unsupported-attribute', 'hcl-invalid-expression',
+                            'hcl-unknown-variable', 'hcl-invalid-reference',
+                            'hcl-invalid-function-argument'))
+HCL_HEADERS = {
+    'Error: Unsupported argument': 'hcl-unsupported-argument',
+    'Error: Missing required argument': 'hcl-missing-required-argument',
+    'Error: Unsupported attribute': 'hcl-unsupported-attribute',
+    'Error: Invalid expression': 'hcl-invalid-expression',
+    'Error: Unknown variable': 'hcl-unknown-variable',
+    'Error: Invalid reference': 'hcl-invalid-reference',
+    'Error: Invalid function argument': 'hcl-invalid-function-argument',
+}
+MAX_LOG_RECORDS = 1000
+MAX_LOG_BYTES = 196608
+
+
+def validate_branch(value):
+    require(isinstance(value, str) and
+            re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._/-]{0,199}', value),
+            'invalid_branch')
+    require(not any(token in value for token in ('..', '//', '@{')) and
+            not value.endswith(('/', '.')) and
+            all(not part.startswith('.') and not part.endswith('.lock')
+                for part in value.split('/')), 'invalid_branch')
+    return value
+
+
+def validate_log_record(record):
+    require(isinstance(record, dict) and
+            isinstance(record.get('step'), str) and record['step'] in LOG_STEPS and
+            isinstance(record.get('event'), str) and record['event'] in LOG_EVENTS,
+            'invalid_state')
+    result = {key: record[key] for key in ('step', 'event')}
+    for key in ('sequence', 'time'):
+        require(type(record.get(key)) is int and 0 <= record[key] < 2 ** 63,
+                'invalid_state')
+        result[key] = record[key]
+    require(result['sequence'] > 0, 'invalid_state')
+    for key in ('exit_code', 'duration_ms', 'count', 'provisioner_exit_code',
+                'line', 'column'):
+        if key in record:
+            require(type(record[key]) is int, 'invalid_state')
+            require((-255 <= record[key] <= 255) if key == 'exit_code'
+                    else (0 <= record[key] < 2 ** 63), 'invalid_state')
+            if key == 'provisioner_exit_code':
+                require(0 <= record[key] <= 255, 'invalid_state')
+            if key in ('line', 'column'):
+                require(record[key] > 0, 'invalid_state')
+            result[key] = record[key]
+    if 'category' in record:
+        require(isinstance(record['category'], str) and record['category'] in LOG_CATEGORIES,
+                'invalid_state')
+        result['category'] = record['category']
+    if 'source' in record:
+        require(isinstance(record['source'], str) and len(record['source']) <= 512 and
+                re.fullmatch(r'packer/(?:[A-Za-z0-9_-][A-Za-z0-9._-]*\.pkr\.hcl|'
+                             r'vars/[A-Za-z0-9_-][A-Za-z0-9._-]*\.pkrvars\.hcl)',
+                             record['source']), 'invalid_state')
+        require('line' in result, 'invalid_state')
+        result['source'] = record['source']
+    require('column' not in result or 'source' in result, 'invalid_state')
+    require('line' not in result or 'source' in result, 'invalid_state')
+    return result
 
 
 class SafeError(Exception):
@@ -99,38 +171,80 @@ def credentials(value, publish=False):
 
 
 def command(args, *, cwd=None, env=None, timeout=60, capture=False,
-            digest=False):
+            digest=False, observer=None):
     """Drain child output in memory; no raw output or exception reaches callers."""
-    process = subprocess.Popen(args, cwd=cwd, env=env or BASE_ENV,
-                               stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                               stderr=subprocess.DEVNULL, start_new_session=True)
+    started = time.monotonic()
+    if observer:
+        observer({'event': 'started'})
+    try:
+        process = subprocess.Popen(args, cwd=cwd, env=env or BASE_ENV,
+                                   stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                   stderr=(subprocess.STDOUT if observer and not capture and not digest
+                                           else subprocess.DEVNULL),
+                                   start_new_session=True)
+    except OSError:
+        if observer:
+            observer({'event': 'failed', 'duration_ms': int((time.monotonic() - started) * 1000),
+                      'category': 'command-exit'})
+        raise SafeError('command_failed') from None
     output = bytearray()
     checksum = hashlib.sha256()
     overflow = False
+    observer_failed = False
 
     def drain():
-        nonlocal overflow
-        while chunk := process.stdout.read(65536):
-            if digest:
-                checksum.update(chunk)
-            elif capture:
-                if len(output) + len(chunk) <= 2097152:
-                    output.extend(chunk)
-                else:
-                    overflow = True
+        nonlocal overflow, observer_failed
+        pending = bytearray()
+        dropping = False
+        try:
+            while chunk := process.stdout.read1(65536):
+                if digest:
+                    checksum.update(chunk)
+                elif capture:
+                    if len(output) + len(chunk) <= 2097152:
+                        output.extend(chunk)
+                    else:
+                        overflow = True
+                if observer and not digest and not observer_failed:
+                    for index, part in enumerate(chunk.split(b'\n')):
+                        if index:
+                            if not dropping:
+                                observer({'event': 'output', 'line': bytes(pending)})
+                            pending.clear()
+                            dropping = False
+                        if len(pending) + len(part) <= 16384 and not dropping:
+                            pending.extend(part)
+                        else:
+                            pending.clear()
+                            dropping = True
+            if observer and not digest and pending and not dropping and not observer_failed:
+                observer({'event': 'output', 'line': bytes(pending)})
+        except Exception:
+            observer_failed = True
+            with contextlib.suppress(OSError):
+                os.killpg(process.pid, signal.SIGKILL)
 
     reader = threading.Thread(target=drain, daemon=True)
     reader.start()
+    timed_out = False
     try:
         process.wait(timeout=timeout)
     except subprocess.TimeoutExpired:
         os.killpg(process.pid, signal.SIGKILL)
         process.wait()
-        raise SafeError('command_timeout') from None
+        timed_out = True
     finally:
         reader.join(timeout=5)
         process.stdout.close()
-    require(not reader.is_alive() and not overflow, 'invalid_command_output')
+    require(not reader.is_alive() and not overflow and not observer_failed,
+            'invalid_command_output')
+    if observer:
+        observer({'event': 'failed' if timed_out or process.returncode else 'completed',
+                  'exit_code': process.returncode,
+                  'duration_ms': int((time.monotonic() - started) * 1000),
+                  **({'category': 'timeout' if timed_out else 'command-exit'}
+                     if timed_out or process.returncode else {})})
+    require(not timed_out, 'command_timeout')
     require(process.returncode == 0, 'command_failed')
     return checksum.hexdigest() if digest else bytes(output)
 
@@ -147,6 +261,8 @@ class Runtime:
         self.jobs = self.work / 'jobs'
         self.cache = self.work / 'cache'
         self.control_path = self.run_dir / 'control.json'
+        self.current_job = None
+        self.current_step = None
         require(self.work.is_absolute() and self.run_dir.is_absolute(), 'invalid_config')
         require(re.fullmatch(r'https://[A-Za-z0-9.-]+/[A-Za-z0-9_./-]+',
                              config['repo_url']) is not None, 'invalid_config')
@@ -224,6 +340,150 @@ class Runtime:
     def progress_path(self, identifier):
         return self.jobs / job_id(identifier) / 'progress.json'
 
+    def diagnostic_path(self, identifier):
+        return self.jobs / job_id(identifier) / 'diagnostics.json'
+
+    def known_sources(self, identifier):
+        packer = self.jobs / job_id(identifier) / 'repo' / 'packer'
+        if not packer.is_dir() or packer.is_symlink():
+            return {}
+        sources = list(packer.glob('*.pkr.hcl'))
+        variables = packer / 'vars'
+        if variables.is_dir() and not variables.is_symlink():
+            sources += list(variables.glob('*.pkrvars.hcl'))
+        return {str(path.relative_to(packer)): 'packer/' + str(path.relative_to(packer))
+                for path in sources if path.is_file() and not path.is_symlink()
+                and re.fullmatch(r'[A-Za-z0-9_./-]+', str(path.relative_to(packer)))}
+
+    def diagnostics(self, identifier):
+        path = self.diagnostic_path(identifier)
+        if not path.exists():
+            return {'next_sequence': 1, 'records': []}
+        data = read_json(path)
+        require(isinstance(data, dict) and type(data.get('next_sequence')) is int
+                and 1 <= data['next_sequence'] < 2 ** 63 and
+                isinstance(data.get('records'), list) and
+                len(data['records']) <= MAX_LOG_RECORDS, 'invalid_state')
+        records = [validate_log_record(record) for record in data['records']]
+        previous = 0
+        sources = set(self.known_sources(identifier).values())
+        for record in records:
+            require(previous < record['sequence'] < data['next_sequence'], 'invalid_state')
+            require('source' not in record or record['source'] in sources, 'invalid_state')
+            previous = record['sequence']
+        return {'next_sequence': data['next_sequence'], 'records': records}
+
+    def append_diagnostic(self, identifier, step, event, **fields):
+        data = self.diagnostics(identifier)
+        record = validate_log_record(dict(fields, step=step, event=event,
+                                          sequence=data['next_sequence'],
+                                          time=int(time.time())))
+        if 'source' in record:
+            require(record['source'] in set(self.known_sources(identifier).values()),
+                    'invalid_state')
+        data['next_sequence'] += 1
+        data['records'] = (data['records'] + [record])[-MAX_LOG_RECORDS:]
+        while len(json.dumps(data, separators=(',', ':')).encode()) > MAX_LOG_BYTES:
+            data['records'].pop(0)
+        write_json(self.diagnostic_path(identifier), data)
+
+    def diagnostic_page(self, identifier, after):
+        require(type(after) is int and 0 <= after < 2 ** 63)
+        data = self.diagnostics(identifier)
+        pending = [record for record in data['records'] if record['sequence'] > after]
+        records = pending[:256]
+        return {'records': records,
+                'cursor': records[-1]['sequence'] if records else after,
+                'has_more': len(pending) > len(records),
+                'truncated': bool(data['records'] and
+                                  after < data['records'][0]['sequence'] - 1)}
+
+    def diagnostic_output(self, identifier, context, raw):
+        text = raw.decode('utf-8', errors='replace').strip()
+        marker = re.fullmatch(r'IMAGEBUILDER_STEP=(packer-init|packer-build|compress)', text)
+        message = None
+        if not marker:
+            try:
+                fields = next(csv.reader([text]))
+            except (csv.Error, StopIteration):
+                fields = []
+            if (len(fields) >= 4 and re.fullmatch(r'[0-9]+', fields[0])
+                    and fields[1] in ('', 'qemu.custom')):
+                if fields[2] == 'artifact-count' and len(fields) == 4:
+                    if re.fullmatch(r'[0-9]{1,5}', fields[3]):
+                        self.append_diagnostic(identifier, context['step'],
+                                               'artifact-count', count=int(fields[3]))
+                    return
+                if fields[2] == 'ui' and len(fields) >= 5:
+                    value = ','.join(fields[4:]).replace('%!(PACKER_COMMA)', ',')
+                    value = value.replace('\\n', '\n').replace('\\r', '\r')
+                    value = re.sub(r'^(?:==> )?qemu\.custom(?: \(shell-local\))?:\s*',
+                                   '', value.strip())
+                    marker = re.fullmatch(
+                        r'IMAGEBUILDER_STEP=(packer-init|packer-build|compress)', value)
+                    if fields[3] == 'error':
+                        message = value
+            if message is None and (text in HCL_HEADERS or
+                                    re.match(r'^on [A-Za-z0-9_./-]+\.pkr(?:vars)?\.hcl line ', text)):
+                message = text
+        if marker:
+            now = time.monotonic()
+            if context.get('substep'):
+                self.append_diagnostic(identifier, context['step'], 'completed',
+                                       exit_code=0,
+                                       duration_ms=int((now - context['step_started']) * 1000))
+            context.update(step=marker[1], substep=True, step_started=now)
+            self.append_diagnostic(identifier, marker[1], 'started')
+            return
+        if message is None:
+            return
+        details = {'category': 'packer-error'}
+        sources = self.known_sources(identifier)
+        for line in message.splitlines():
+            line = line.strip()
+            if line in HCL_HEADERS:
+                details['category'] = HCL_HEADERS[line]
+            elif line == 'Timeout waiting for SSH.':
+                details['category'] = 'ssh-timeout'
+            status = re.search(r'(?:^|: )Script exited with non-zero exit status: '
+                               r'([0-9]{1,3})\. Allowed exit codes are: \[[0-9, ]+\]$', line)
+            if status and 0 <= int(status[1]) <= 255:
+                details.update(category='provisioner-exit', provisioner_exit_code=int(status[1]))
+            location = re.fullmatch(r'on ([A-Za-z0-9_./-]+\.pkr(?:vars)?\.hcl) line '
+                                    r'([0-9]{1,9})(?:, column ([0-9]{1,9}))?(?:[,:].*)?', line)
+            if location:
+                source = sources.get(location[1])
+                if source is None and location[1] in sources.values():
+                    source = location[1]
+                if source and int(location[2]) > 0:
+                    details.update(source=source, line=int(location[2]))
+                    if location[3] and int(location[3]) > 0:
+                        details['column'] = int(location[3])
+                    if details['category'] == 'packer-error':
+                        details['category'] = 'hcl-validation'
+        self.append_diagnostic(identifier, context['step'], 'packer-error', **details)
+
+    def invoke(self, args, **kwargs):
+        if self.current_job is None or self.current_step is None:
+            return command(args, **kwargs)
+        identifier, step = self.current_job, self.current_step
+        context = {'step': step, 'substep': False}
+
+        def observer(event):
+            if event['event'] == 'output':
+                if step in ('build', 'packer-init', 'packer-build', 'compress'):
+                    self.diagnostic_output(identifier, context, event['line'])
+                return
+            if event['event'] in ('completed', 'failed') and context['substep']:
+                facts = {key: event[key] for key in ('exit_code', 'category') if key in event}
+                facts['duration_ms'] = int((time.monotonic() - context['step_started']) * 1000)
+                self.append_diagnostic(identifier, context['step'], event['event'], **facts)
+            facts = {key: event[key] for key in ('exit_code', 'category', 'duration_ms')
+                     if key in event}
+            self.append_diagnostic(identifier, step, event['event'], **facts)
+
+        return command(args, observer=observer, **kwargs)
+
     def progress(self, identifier):
         path = self.progress_path(identifier)
         if not path.exists():
@@ -263,6 +523,8 @@ class Runtime:
                   'phase': progress['phase'], 'code': progress['code'],
                   'publish': record['publish'], 'created': record['created'],
                   'finished': record['finished']}
+        if 'branch' in record:
+            result['branch'] = validate_branch(record['branch'])
         require(re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', result['revision']))
         require(re.fullmatch(r'[a-z][a-z0-9-]{0,63}', result['target']))
         require(result['code'] in CODES)
@@ -277,17 +539,17 @@ class Runtime:
         require(os.access('/dev/kvm', os.R_OK | os.W_OK), 'kvm_unavailable')
         for permission in ('-r', '-w'):
             try:
-                command(['runuser', '-u', self.user.pw_name, '--',
+                self.invoke(['runuser', '-u', self.user.pw_name, '--',
                          'test', permission, '/dev/kvm'])
             except SafeError:
                 raise SafeError('kvm_unavailable') from None
         for key, permission in (('kernel_path', '-r'), ('kernel_modules', '-x')):
             if key in self.config:
                 try:
-                    command(['runuser', '-u', self.user.pw_name, '--',
+                    self.invoke(['runuser', '-u', self.user.pw_name, '--',
                              'test', '-f' if key == 'kernel_path' else '-d',
                              self.config[key]])
-                    command(['runuser', '-u', self.user.pw_name, '--',
+                    self.invoke(['runuser', '-u', self.user.pw_name, '--',
                              'test', permission, self.config[key]])
                 except SafeError:
                     raise SafeError('kernel_unavailable') from None
@@ -298,7 +560,7 @@ class Runtime:
                      'ssh-keygen', 'cloud-localds', 'curl', 'xz'):
             require(shutil.which(tool, path=BASE_ENV['PATH']) is not None,
                     'missing_tool')
-        command(['cloud-init', 'status', '--wait'], timeout=120)
+        self.invoke(['cloud-init', 'status', '--wait'], timeout=120)
         return {'ok': True, 'phase': 'ready'}
 
     def store_request(self, identifier, request):
@@ -324,7 +586,7 @@ class Runtime:
         require(not state['maintenance'], 'maintenance')
         require(state['active'] is None, 'busy')
         require(not self.publication_guard.exists(), 'publication_blocked')
-        require(set(request) <= {'op', 'revision', 'target', 'publish',
+        require(set(request) <= {'op', 'revision', 'target', 'publish', 'branch',
                                  'credentials'})
         revision, target = request.get('revision'), request.get('target')
         require(isinstance(revision, str) and
@@ -335,6 +597,8 @@ class Runtime:
         require(type(publish) is bool)
         secret_values = credentials(request.get('credentials', {}), publish)
         request = dict(request, publish=publish, credentials=secret_values)
+        if 'branch' in request:
+            validate_branch(request['branch'])
         self.readiness()
         identifier = uuid.uuid4().hex
         work = self.jobs / identifier
@@ -342,12 +606,14 @@ class Runtime:
         os.chown(work, self.user.pw_uid, self.user.pw_gid)
         record = {'revision': revision, 'target': target, 'publish': publish,
                   'created': int(time.time()), 'finished': False}
+        if 'branch' in request:
+            record['branch'] = request['branch']
         write_json(self.record_path(identifier), record)
         self.store_request(identifier, request)
         state['active'] = identifier
         self.save_control(state)
         try:
-            command(['systemctl', 'start', '--no-block',
+            self.invoke(['systemctl', 'start', '--no-block',
                      f'imagebuilder-job@{identifier}.service'])
         except Exception:
             self.cleanup_secrets(identifier)
@@ -385,9 +651,9 @@ class Runtime:
         state['active'] = identifier
         self.save_control(state)
         try:
-            command(['systemctl', 'reset-failed',
+            self.invoke(['systemctl', 'reset-failed',
                      f'imagebuilder-job@{identifier}.service'])
-            command(['systemctl', 'start', '--no-block',
+            self.invoke(['systemctl', 'start', '--no-block',
                      f'imagebuilder-job@{identifier}.service'])
         except Exception:
             self.finish_locked(identifier, state)
@@ -397,21 +663,41 @@ class Runtime:
     def control(self, request):
         require(isinstance(request, dict))
         operation = request.get('op')
+        if operation == 'resolve':
+            require(set(request) == {'op', 'branch'})
+            branch = validate_branch(request['branch'])
+            reference = 'refs/heads/' + branch
+            try:
+                output = self.invoke(['runuser', '-u', self.user.pw_name, '--',
+                                  'git', 'ls-remote', '--exit-code', '--refs',
+                                  self.config['repo_url'], reference],
+                                 capture=True).decode().splitlines()
+                require(len(output) == 1, 'branch_resolution_failed')
+                fields = output[0].split('\t')
+                require(len(fields) == 2 and fields[1] == reference and
+                        re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', fields[0]),
+                        'branch_resolution_failed')
+            except Exception:
+                raise SafeError('branch_resolution_failed') from None
+            return {'ok': True, 'revision': fields[0], 'branch': branch}
         with self.locked() as state:
             if operation == 'submit':
                 return self.submit(request, state)
             if operation == 'publish-retry':
                 return self.retry(request, state)
             if operation == 'ready':
-                require(set(request) == {'op'})
+                require(set(request) <= {'op', 'build_ready'} and
+                        type(request.get('build_ready', True)) is bool)
                 require(not state['stopping'], 'stopping')
-                result = self.readiness()
+                result = (self.readiness() if request.get('build_ready', True)
+                          else {'ok': True, 'phase': 'ready'})
                 if state['active'] is None:
                     state['idle_since'] = int(time.time())
                     self.save_control(state)
                 return result
             if operation in ('status', 'logs'):
-                require(set(request) <= {'op', 'job_id'})
+                require(set(request) <= ({'op', 'job_id', 'after'} if operation == 'logs'
+                                         else {'op', 'job_id'}))
                 identifier = request.get('job_id') or state['active']
                 if identifier is None:
                     latest = sorted(self.records.glob('*.json'),
@@ -426,6 +712,7 @@ class Runtime:
                 result['publication_blocked'] = self.publication_guard.exists()
                 if operation == 'logs':
                     result['events'] = self.progress(identifier)['events']
+                    result.update(self.diagnostic_page(identifier, request.get('after', 0)))
                 return result
             if operation == 'maintenance':
                 require(set(request) == {'op', 'enabled'} and
@@ -447,7 +734,7 @@ class Runtime:
         state['stopping'] = True
         self.save_control(state)
         try:
-            command(['systemctl', 'poweroff', '--no-block'])
+            self.invoke(['systemctl', 'poweroff', '--no-block'])
         except Exception:
             state['stopping'] = False
             self.save_control(state)
@@ -489,7 +776,7 @@ class Runtime:
         with self.locked() as state:
             if state['active'] is not None:
                 identifier = job_id(state['active'])
-                active = command(['systemctl', 'show',
+                active = self.invoke(['systemctl', 'show',
                                   f'imagebuilder-job@{identifier}.service',
                                   '--property=ActiveState', '--value'],
                                  capture=True).decode().strip()
@@ -550,7 +837,7 @@ class Runtime:
                     shutil.rmtree(directory)
                 path.unlink()
         if state['active'] is None and (self.cache / 'packer').exists():
-            command(['runuser', '-u', self.user.pw_name, '--',
+            self.invoke(['runuser', '-u', self.user.pw_name, '--',
                      '/usr/local/libexec/imagebuilder', 'cache-prune'])
 
     def prune_cache(self):
@@ -579,16 +866,17 @@ class Runtime:
             shutil.rmtree(cache)
 
     def checkout(self, identifier, request, env):
+        self.current_step = 'checkout'
         checkout = self.jobs / identifier / 'repo'
         checkout.mkdir(mode=0o700)
-        command(['git', 'init', '--quiet', str(checkout)], env=env)
-        command(['git', '-C', str(checkout), 'remote', 'add', 'origin',
+        self.invoke(['git', 'init', '--quiet', str(checkout)], env=env)
+        self.invoke(['git', '-C', str(checkout), 'remote', 'add', 'origin',
                  self.config['repo_url']], env=env)
-        command(['git', '-C', str(checkout), 'fetch', '--depth=1', 'origin',
+        self.invoke(['git', '-C', str(checkout), 'fetch', '--depth=1', 'origin',
                  request['revision']], env=env, timeout=300)
-        command(['git', '-C', str(checkout), 'checkout', '--detach',
+        self.invoke(['git', '-C', str(checkout), 'checkout', '--detach',
                  request['revision']], env=env)
-        actual = command(['git', '-C', str(checkout), 'rev-parse', 'HEAD'],
+        actual = self.invoke(['git', '-C', str(checkout), 'rev-parse', 'HEAD'],
                          env=env, capture=True).decode().strip()
         require(actual == request['revision'], 'revision_mismatch')
         return checkout
@@ -604,22 +892,24 @@ class Runtime:
         return ['bash', './import-upstream.sh', '-y', target]
 
     def ssh_environment(self, identifier, env):
+        self.current_step = 'ssh-setup'
         directory = self.worker_path(identifier)
         key = directory / 'id_ed25519'
-        command(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-f', str(key)],
+        self.invoke(['ssh-keygen', '-q', '-t', 'ed25519', '-N', '', '-f', str(key)],
                 env=env)
-        agent = command(['ssh-agent', '-s'], env=env, capture=True).decode()
+        agent = self.invoke(['ssh-agent', '-s'], env=env, capture=True).decode()
         sock = re.search(r'^SSH_AUTH_SOCK=([^;\n]+);', agent, re.M)
         pid = re.search(r'^SSH_AGENT_PID=([0-9]+);', agent, re.M)
         require(sock is not None and pid is not None, 'ssh_agent_failed')
         env.update(SSH_AUTH_SOCK=sock[1], SSH_AGENT_PID=pid[1])
-        command(['ssh-add', str(key)], env=env)
+        self.invoke(['ssh-add', str(key)], env=env)
         public = key.with_suffix('.pub').read_text().strip()
         require(re.fullmatch(r'ssh-ed25519 [A-Za-z0-9+/=]+(?: [^\r\n]*)?', public),
                 'ssh_key_failed')
         env['PKR_VAR_ssh_pubkey'] = public
 
     def artifacts(self, checkout):
+        self.current_step = 'artifact-check'
         images = checkout / 'packer' / 'images'
         result = []
         for image in sorted(images.glob('*.img')):
@@ -632,7 +922,7 @@ class Runtime:
             require(not sidecar.is_symlink() and sidecar.stat().st_size <= 65,
                     'invalid_artifact')
             require(sidecar.read_text().strip() == digest, 'checksum_mismatch')
-            command(['qemu-img', 'check', '-f', 'qcow2', str(image)], timeout=300)
+            self.invoke(['qemu-img', 'check', '-f', 'qcow2', str(image)], timeout=300)
             result.append({'name': image.name, 'sha256': digest})
         require(bool(result), 'no_artifacts')
         return result
@@ -652,6 +942,7 @@ class Runtime:
         return configuration, check
 
     def smoke(self, identifier, image, env):
+        self.current_step = 'smoke-boot'
         directory = self.worker_path(identifier)
         overlay = self.jobs / identifier / 'smoke.qcow2'
         seed = directory / 'seed.img'
@@ -659,9 +950,9 @@ class Runtime:
                                                  env['PKR_VAR_ssh_pubkey'])
         (directory / 'user-data').write_text('#cloud-config\n' + json.dumps(userdata))
         (directory / 'meta-data').write_text(json.dumps({'instance-id': identifier}))
-        command(['cloud-localds', str(seed), str(directory / 'user-data'),
+        self.invoke(['cloud-localds', str(seed), str(directory / 'user-data'),
                  str(directory / 'meta-data')], env=env)
-        command(['qemu-img', 'create', '-f', 'qcow2', '-F', 'qcow2', '-b',
+        self.invoke(['qemu-img', 'create', '-f', 'qcow2', '-F', 'qcow2', '-b',
                  str(image), str(overlay)], env=env)
         with socket.socket() as port_socket:
             port_socket.bind(('127.0.0.1', 0))
@@ -683,7 +974,7 @@ class Runtime:
             while time.monotonic() < deadline:
                 require(process.poll() is None, 'smoke_boot_failed')
                 try:
-                    command(['ssh', '-F', '/dev/null', '-o', 'BatchMode=yes',
+                    self.invoke(['ssh', '-F', '/dev/null', '-o', 'BatchMode=yes',
                              '-o', 'ConnectTimeout=5', '-o', 'StrictHostKeyChecking=no',
                              '-o', 'UserKnownHostsFile=/dev/null', '-i',
                              str(directory / 'id_ed25519'), '-p', str(port),
@@ -715,7 +1006,7 @@ class Runtime:
         return result
 
     def remote_digest(self, path, env):
-        return command(['rclone', 'cat', path], env=env,
+        return self.invoke(['rclone', 'cat', path], env=env,
                        timeout=self.config['timeout_seconds'], digest=True)
 
     def publication_snapshot(self, path, manifest):
@@ -735,6 +1026,7 @@ class Runtime:
         return safe
 
     def publish(self, identifier, checkout, manifest, env):
+        self.current_step = 'publish'
         remote_env = self.remote_env(env)
         bucket = env.get('SEAWEEDFS_CLOUD_IMAGES_BUCKET', 'cloud-images')
         remote = f'seaweedfs:{bucket}'
@@ -742,7 +1034,7 @@ class Runtime:
         if not backup.exists():
             old = []
             # A verified pair is retained before any consumer-visible overwrite.
-            listing = command(['rclone', 'lsf', '--files-only', '--max-depth', '1',
+            listing = self.invoke(['rclone', 'lsf', '--files-only', '--max-depth', '1',
                                remote], env=remote_env, capture=True)
             existing = set(listing.decode().splitlines())
             for artifact in manifest:
@@ -753,49 +1045,50 @@ class Runtime:
                 digest = None
                 if present:
                     digest = self.remote_digest(f'{remote}/{name}', remote_env)
-                    sidecar = command(['rclone', 'cat', f'{remote}/{name}.sha256'],
+                    sidecar = self.invoke(['rclone', 'cat', f'{remote}/{name}.sha256'],
                                       env=remote_env, capture=True).decode().strip()
                     require(sidecar == digest, 'remote_checksum_mismatch')
                     for suffix in ('', '.sha256'):
-                        command(['rclone', 'copyto', f'{remote}/{name}{suffix}',
+                        self.invoke(['rclone', 'copyto', f'{remote}/{name}{suffix}',
                                  f'{remote}/.imagebuilder-backups/{identifier}/{name}{suffix}'],
                                 env=remote_env, timeout=self.config['timeout_seconds'])
                 old.append({'name': name, 'present': present, 'sha256': digest})
             write_json(backup, {'artifacts': old})
         snapshot = self.publication_snapshot(backup, manifest)
         try:
-            command(['bash', './push.sh', read_json(self.request_path(identifier))['target']],
+            self.invoke(['bash', './push.sh', read_json(self.request_path(identifier))['target']],
                     cwd=checkout / 'packer', env=env,
                     timeout=self.config['timeout_seconds'])
             for artifact in manifest:
                 name = artifact['name']
                 require(self.remote_digest(f'{remote}/{name}', remote_env) ==
                         artifact['sha256'], 'remote_checksum_mismatch')
-                sidecar = command(['rclone', 'cat', f'{remote}/{name}.sha256'],
+                sidecar = self.invoke(['rclone', 'cat', f'{remote}/{name}.sha256'],
                                   env=remote_env, capture=True).decode().strip()
                 require(sidecar == artifact['sha256'], 'remote_checksum_mismatch')
         except Exception:
+            self.current_step = 'rollback'
             try:
                 for artifact in snapshot:
                     name = artifact['name']
                     for suffix in ('', '.sha256'):
                         if artifact['present']:
-                            command(['rclone', 'copyto',
+                            self.invoke(['rclone', 'copyto',
                                      f'{remote}/.imagebuilder-backups/{identifier}/{name}{suffix}',
                                      f'{remote}/{name}{suffix}'], env=remote_env,
                                     timeout=self.config['timeout_seconds'])
                         else:
                             with contextlib.suppress(SafeError):
-                                command(['rclone', 'deletefile', f'{remote}/{name}{suffix}'],
+                                self.invoke(['rclone', 'deletefile', f'{remote}/{name}{suffix}'],
                                         env=remote_env, timeout=self.config['timeout_seconds'])
                     if artifact['present']:
                         require(self.remote_digest(f'{remote}/{name}', remote_env)
                                 == artifact['sha256'], 'rollback_failed')
-                        restored = command(['rclone', 'cat', f'{remote}/{name}.sha256'],
+                        restored = self.invoke(['rclone', 'cat', f'{remote}/{name}.sha256'],
                                            env=remote_env, capture=True).decode().strip()
                         require(restored == artifact['sha256'], 'rollback_failed')
                     else:
-                        listing = command(['rclone', 'lsf', '--files-only',
+                        listing = self.invoke(['rclone', 'lsf', '--files-only',
                                            '--max-depth', '1', remote],
                                           env=remote_env, capture=True)
                         remaining = set(listing.decode().splitlines())
@@ -819,6 +1112,8 @@ class Runtime:
             if key in self.config:
                 env[variable] = self.config[key]
         agent_pid = None
+        self.current_job = identifier
+        self.current_step = 'checkout'
         try:
             self.update(identifier, 'preparing', 'preparing')
             if request['op'] == 'publish-retry':
@@ -836,7 +1131,9 @@ class Runtime:
                 build_env = env.copy()
                 if 'PKR_VAR_user_password' in secret_values:
                     build_env['PKR_VAR_user_password'] = secret_values['PKR_VAR_user_password']
-                command(args, cwd=checkout / 'packer', env=build_env,
+                build_env['IMAGEBUILDER_LOG_EVENTS'] = '1'
+                self.current_step = 'import' if args[1] == './import-upstream.sh' else 'build'
+                self.invoke(args, cwd=checkout / 'packer', env=build_env,
                         timeout=self.config['timeout_seconds'])
                 self.update(identifier, 'verifying', 'verifying')
                 manifest = self.artifacts(checkout)
@@ -860,6 +1157,8 @@ class Runtime:
             self.update(identifier, 'failed', 'internal_error')
             return 1
         finally:
+            self.current_job = None
+            self.current_step = None
             if agent_pid is not None:
                 with contextlib.suppress(ProcessLookupError):
                     os.kill(agent_pid, signal.SIGTERM)

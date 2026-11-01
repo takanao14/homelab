@@ -179,6 +179,7 @@ build {
   # build.sh deletes output_directory after each build.
   post-processor "shell-local" {
     inline = [
+      "if [ \"$${IMAGEBUILDER_LOG_EVENTS:-0}\" = 1 ]; then printf 'IMAGEBUILDER_STEP=compress\\n'; fi",
       "TMPDIR=${abspath(var.output_directory)} virt-sparsify --compress ${var.output_directory}/${var.vm_name} ${var.image_name}",
     ]
   }
