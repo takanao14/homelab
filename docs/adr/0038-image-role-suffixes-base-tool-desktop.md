@@ -1,6 +1,7 @@
 # ADR-0038: Name custom images by role — base, tool, desktop
 
 - **Status:** Accepted
+- **Amended by:** [ADR-0083](0083-gnome-remote-desktop-for-current-desktop-images.md)
 - **Category:** Provisioning
 - **Date:** 2026-08-27
 - **Related:** [ADR-0037](0037-bake-shared-toolchain-into-server-images.md),

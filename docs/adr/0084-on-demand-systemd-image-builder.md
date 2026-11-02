@@ -1,4 +1,4 @@
-# ADR-0083: Run image builds on an on-demand systemd builder VM
+# ADR-0084: Run image builds on an on-demand systemd builder VM
 
 - **Status:** Accepted
 - **Category:** Provisioning

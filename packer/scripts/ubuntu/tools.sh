@@ -44,13 +44,3 @@ EOF
 apt-get install -y apt-transport-https
 apt-get update
 apt-get install -y code
-
-# https://developer.hashicorp.com/terraform/install
-apt-get install -y gnupg software-properties-common
-wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg > /dev/null
-
-. /etc/os-release
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com ${UBUNTU_CODENAME:-$(lsb_release -cs)} main" | tee /etc/apt/sources.list.d/hashicorp.list > /dev/null
-
-apt-get update
-apt-get install -y terraform packer vault
