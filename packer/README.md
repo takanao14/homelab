@@ -52,6 +52,13 @@ reports its SHA and checks out that exact commit. Later pushes do not change a
 running job. The selected branch and commit remain in the job metadata;
 uncommitted changes must be committed and pushed before building.
 
+Kong generates command help (`image-build.sh run --help`). Boolean flags also
+accept explicit values such as `--publish=false`; repeated scalar flags use the
+last value. Parse errors return `invalid_arguments` without echoing input.
+`--after` accepts non-negative int64 values in Kong's integer syntax, including
+hexadecimal; emitted cursors remain JSON integers. Runtime validation errors keep
+their specific codes.
+
 `run` follows structured logs and waits for job finalization; VM shutdown follows
 after the idle grace period. `--detach` returns the job ID immediately. `status`
 does not start a stopped VM; `logs` and `publish-retry` do. `all` selects the existing

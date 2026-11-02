@@ -159,6 +159,9 @@ func (x *workerTestExecutor) command(args []string, options CommandOptions) (Com
 			switch x.failPush {
 			case "corrupt-image":
 				x.remote["seaweedfs:cloud-images/"+workerTestImage] = []byte("corrupt")
+			case "wrong-pair":
+				x.remote["seaweedfs:cloud-images/"+workerTestImage] = []byte("wrong-image")
+				x.remote["seaweedfs:cloud-images/"+workerTestImage+".sha256"] = []byte(workerTestHash([]byte("wrong-image")) + "\n")
 			case "corrupt-sidecar":
 				x.remote["seaweedfs:cloud-images/"+workerTestImage+".sha256"] = []byte("WORKER_SECRET_MARKER")
 			case "missing-image":
@@ -257,7 +260,7 @@ func TestWorkerRetryRejectsChangedButSelfConsistentArtifact(t *testing.T) {
 }
 
 func TestWorkerPublicationFailureCanBeRepairedWithoutRebuild(t *testing.T) {
-	for _, mode := range []string{"before", "partial", "corrupt-image", "corrupt-sidecar", "missing-image", "missing-sidecar"} {
+	for _, mode := range []string{"before", "partial", "corrupt-image", "corrupt-sidecar", "missing-image", "missing-sidecar", "wrong-pair"} {
 		t.Run(mode, func(t *testing.T) {
 			r := workerTestRuntime(t, true)
 			x := workerTestExecutorFor(t, r)
@@ -266,7 +269,7 @@ func TestWorkerPublicationFailureCanBeRepairedWithoutRebuild(t *testing.T) {
 			x.failPush = mode
 			err := r.Run(workerTestID)
 			want := "command_failed"
-			if strings.HasPrefix(mode, "corrupt-") {
+			if strings.HasPrefix(mode, "corrupt-") || mode == "wrong-pair" {
 				want = "remote_checksum_mismatch"
 			}
 			if err == nil || safeCode(err) != want {

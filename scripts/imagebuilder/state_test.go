@@ -87,7 +87,15 @@ func stateComplete(t *testing.T, r *Runtime, id, phase, code string) {
 
 func stateControl(t *testing.T, r *Runtime, change func(Object)) {
 	t.Helper()
-	_, err := r.locked(func(state Object) (Object, error) { change(state); return nil, r.saveControl(state) })
+	_, err := r.locked(func(state *ControlState) (Object, error) {
+		data := state.Object()
+		change(data)
+		updated, err := controlStateFromObject(data)
+		if err != nil {
+			return nil, err
+		}
+		return nil, r.saveControl(&updated)
+	})
 	stateOK(t, err)
 }
 
@@ -449,6 +457,56 @@ func TestStateRetryStartFailureFinalizesWithoutDeadlock(t *testing.T) {
 	if stateRead(t, f.r.ControlPath())["active"] != nil || exists(f.r.RequestPath(id)) {
 		t.Fatal("failed retry retained active state or secrets")
 	}
+	status, err := f.r.Control(Object{"op": "status", "job_id": id})
+	stateOK(t, err)
+	if s(status, "code") != "start_failed" {
+		t.Fatal("retry start failure was not persisted consistently")
+	}
+}
+
+func TestStateLaunchFailureCleansSecretsAndFinalizes(t *testing.T) {
+	for _, stage := range []string{"store", "start"} {
+		t.Run(stage, func(t *testing.T) {
+			f := newStateFixture(t)
+			if stage == "store" {
+				f.r.Chown = func(path string, _, _ int) error {
+					if strings.HasPrefix(path, filepath.Join(f.r.Cfg.RuntimeDir, "jobs")) {
+						return fail("invalid_state")
+					}
+					return nil
+				}
+			} else {
+				f.r.Exec = func([]string, CommandOptions) (CommandResult, error) {
+					return CommandResult{}, fail("command_failed")
+				}
+			}
+			_, err := f.r.Control(stateRequest())
+			stateError(t, "start_failed", err)
+			status, err := f.r.Control(Object{"op": "status"})
+			stateOK(t, err)
+			if !b(status, "finished") || s(status, "code") != "start_failed" || stateRead(t, f.r.ControlPath())["active"] != nil || exists(f.r.RequestPath(s(status, "job_id"))) {
+				t.Fatal("launch failure did not finalize and clean up")
+			}
+		})
+	}
+}
+
+func TestStateLaunchResultWriteFailureKeepsReservation(t *testing.T) {
+	f := newStateFixture(t)
+	var id string
+	f.r.Exec = func([]string, CommandOptions) (CommandResult, error) {
+		id = s(stateRead(t, f.r.ControlPath()), "active")
+		stateOK(t, os.Remove(f.r.RecordPath(id)))
+		stateOK(t, os.Mkdir(f.r.RecordPath(id), 0700))
+		return CommandResult{}, fail("command_failed")
+	}
+	_, err := f.r.Control(stateRequest())
+	stateError(t, "invalid_state", err)
+	if s(stateRead(t, f.r.ControlPath()), "active") != id || exists(f.r.RequestPath(id)) {
+		t.Fatal("failed result persistence released reservation or retained secrets")
+	}
+	_, err = f.r.Control(stateRequest())
+	stateError(t, "busy", err)
 }
 
 func TestStateRetentionProtectsActiveJobsAndExpiresFailedJobs(t *testing.T) {

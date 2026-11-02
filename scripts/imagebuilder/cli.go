@@ -1,0 +1,122 @@
+package main
+
+import (
+	"bytes"
+	"io"
+
+	"github.com/alecthomas/kong"
+)
+
+type controllerArgs struct {
+	command, target, revision, branch, jobID, enabled string
+	publish, detach, follow, keepRunning              bool
+	after                                             int64
+}
+
+type controllerCLI struct {
+	Run struct {
+		Target   string `arg:"" help:"Build target."`
+		Revision string `xor:"source" required:"" help:"Full repository commit SHA."`
+		Branch   string `xor:"source" required:"" help:"Branch to resolve to a commit SHA."`
+		Publish  bool   `help:"Publish verified images to S3."`
+		Detach   bool   `help:"Return after admission."`
+	} `cmd:"" help:"Build and verify an image. Specify exactly one of --revision or --branch."`
+	Status struct {
+		JobID string `arg:"" optional:""`
+	} `cmd:"" help:"Show builder or job status."`
+	Logs struct {
+		JobID  string `arg:""`
+		Follow bool
+		After  int64
+	} `cmd:"" help:"Read safe job diagnostics."`
+	PublishRetry struct {
+		JobID  string `arg:""`
+		Detach bool
+	} `cmd:"" help:"Republish retained verified artifacts."`
+	Start       struct{ KeepRunning bool } `cmd:"" help:"Start the builder."`
+	Maintenance struct {
+		Enabled string `arg:"" enum:"on,off"`
+	} `cmd:"" help:"Enable or disable maintenance."`
+	Shutdown struct{} `cmd:"" help:"Shut down an idle builder."`
+}
+
+func parseCLI(args []string, output io.Writer) (controllerArgs, bool, error) {
+	var cli controllerCLI
+	var help bytes.Buffer
+	helpRequested := false
+	parser, err := kong.New(&cli, kong.Name("image-build.sh"), kong.Writers(&help, io.Discard), kong.Exit(func(int) { helpRequested = true }))
+	if err != nil {
+		return controllerArgs{}, false, fail("internal_error")
+	}
+	ctx, err := parser.Parse(args)
+	if helpRequested {
+		if _, err := io.Copy(output, &help); err != nil {
+			return controllerArgs{}, false, fail("controller_failed")
+		}
+		return controllerArgs{}, true, nil
+	}
+	if err != nil {
+		return controllerArgs{}, false, fail("invalid_arguments")
+	}
+	r := controllerArgs{}
+	switch ctx.Command() {
+	case "run <target>":
+		r = controllerArgs{command: "run", target: cli.Run.Target, revision: cli.Run.Revision, branch: cli.Run.Branch, publish: cli.Run.Publish, detach: cli.Run.Detach}
+	case "status", "status <job-id>":
+		r = controllerArgs{command: "status", jobID: cli.Status.JobID}
+	case "logs <job-id>":
+		r = controllerArgs{command: "logs", jobID: cli.Logs.JobID, follow: cli.Logs.Follow, after: cli.Logs.After}
+	case "publish-retry <job-id>":
+		r = controllerArgs{command: "publish-retry", jobID: cli.PublishRetry.JobID, detach: cli.PublishRetry.Detach}
+	case "start":
+		r = controllerArgs{command: "start", keepRunning: cli.Start.KeepRunning}
+	case "maintenance <enabled>":
+		r = controllerArgs{command: "maintenance", enabled: cli.Maintenance.Enabled}
+	case "shutdown":
+		r.command = "shutdown"
+	default:
+		return r, false, fail("invalid_arguments")
+	}
+	if r.command == "run" && r.revision == "" && r.branch == "" {
+		return r, false, fail("invalid_arguments")
+	}
+	for _, rule := range []struct {
+		valid bool
+		code  string
+	}{
+		{r.command != "run" || targetPattern.MatchString(r.target), "invalid_target"},
+		{r.revision == "" || revisionPattern.MatchString(r.revision), "invalid_revision"},
+		{r.branch == "" || controllerValidBranch(r.branch), "invalid_branch"},
+		{r.jobID == "" && r.command != "logs" && r.command != "publish-retry" || validJobID(r.jobID), "invalid_job_id"},
+	} {
+		if !rule.valid {
+			return r, false, fail(rule.code)
+		}
+	}
+	if r.after < 0 {
+		return r, false, fail("invalid_arguments")
+	}
+	return r, false, nil
+}
+
+func parseControllerArgs(args []string) (controllerArgs, error) {
+	parsed, _, err := parseCLI(args, io.Discard)
+	return parsed, err
+}
+
+// ControllerMain returns only fixed diagnostic errors; callers decide exit status.
+func ControllerMain(args []string, environ map[string]string, out io.Writer) error {
+	parsed, help, err := parseCLI(args, out)
+	if err != nil || help {
+		return err
+	}
+	control, err := newImageController(environ, out)
+	if err != nil {
+		return err
+	}
+	result, err := control.execute(parsed)
+	if err != nil {
+		return err
+	}
+	return control.emit(result)
+}

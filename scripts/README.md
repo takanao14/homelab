@@ -37,6 +37,8 @@ in dotfiles, then update them through [vendor sync](#vendor).
 `image-build.sh` starts the dedicated builder and submits pinned, asynchronous
 systemd jobs. See [Packer operations](../packer/README.md#on-demand-builds) for
 credentials, publication, diagnostics and automatic shutdown.
+The single Go binary separates CLI/transport, typed job models and storage,
+admission/lifecycle, worker validation, and shared S3 verification by source file.
 
 ### `create-vm.sh`
 

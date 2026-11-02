@@ -99,10 +99,10 @@ func TestControllerInvalidInputsBeforeWake(t *testing.T) {
 		{[]string{"run", "ubuntu26-base", "--revision", "main"}, "invalid_revision"},
 		{[]string{"run", "ubuntu26-base", "--branch", "../main"}, "invalid_branch"},
 		{[]string{"run", "ubuntu26-base", "--branch", "main\n" + controllerSecret}, "invalid_branch"},
-		{[]string{"run", "-invalid", "--revision", controllerTestRevision}, "invalid_target"},
+		{[]string{"run", "-invalid", "--revision", controllerTestRevision}, "invalid_arguments"},
 		{[]string{"logs", "invalid"}, "invalid_job_id"},
-		{[]string{"logs", controllerTestJob, "--after", "-1"}, "invalid_log_cursor"},
-		{[]string{"logs", controllerTestJob, "--after", "9223372036854775808"}, "invalid_log_cursor"},
+		{[]string{"logs", controllerTestJob, "--after", "-1"}, "invalid_arguments"},
+		{[]string{"logs", controllerTestJob, "--after", "9223372036854775808"}, "invalid_arguments"},
 	}
 	for _, test := range cases {
 		output := &bytes.Buffer{}
