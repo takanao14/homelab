@@ -12,10 +12,10 @@ import (
 	"github.com/takanao14/homelab/scripts/imagebuilder/internal/protocol"
 )
 
-type controllerSSH func(context.Context, []string, []string, []byte) ([]byte, int, error)
+type sshRunner func(context.Context, []string, []string, []byte) ([]byte, int, error)
 
 // HTTP responses and SSH output are decoded and projected onto the public protocol.
-func controllerDecode(raw []byte) (map[string]any, error) {
+func decodeResponse(raw []byte) (map[string]any, error) {
 	var data map[string]any
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
@@ -28,11 +28,11 @@ func controllerDecode(raw []byte) (map[string]any, error) {
 	return data, nil
 }
 
-func controllerSSHCommand(ctx context.Context, args, environment []string, input []byte) ([]byte, int, error) {
+func runSSH(ctx context.Context, args, environment []string, input []byte) ([]byte, int, error) {
 	command := exec.CommandContext(ctx, args[0], args[1:]...)
 	command.Env = environment
 	command.Stdin = bytes.NewReader(input)
-	output := &controllerLimitedBuffer{limit: 262145}
+	output := &limitedBuffer{limit: 262145}
 	command.Stdout = output
 	command.Stderr = io.Discard
 	err := command.Run()
@@ -49,12 +49,12 @@ func controllerSSHCommand(ctx context.Context, args, environment []string, input
 	return output.data, 0, nil
 }
 
-type controllerLimitedBuffer struct {
+type limitedBuffer struct {
 	data  []byte
 	limit int
 }
 
-func (b *controllerLimitedBuffer) Write(data []byte) (int, error) {
+func (b *limitedBuffer) Write(data []byte) (int, error) {
 	size := len(data)
 	if remaining := b.limit - len(b.data); remaining > 0 {
 		if len(data) > remaining {
@@ -65,7 +65,7 @@ func (b *controllerLimitedBuffer) Write(data []byte) (int, error) {
 	return size, nil
 }
 
-func (c *imageController) remote(request map[string]any) (map[string]any, error) {
+func (c *builderClient) remote(request map[string]any) (map[string]any, error) {
 	args := []string{"ssh", "-o", "BatchMode=yes", "-o", "ForwardAgent=no", "-o", "SendEnv=-*", "-o", "ConnectTimeout=10", "-o", "StrictHostKeyChecking=yes", "-T", c.user + "@" + c.host, "sudo -n /usr/local/libexec/imagebuilder control"}
 	environment := []string{}
 	for _, key := range []string{"HOME", "PATH", "SSH_AUTH_SOCK"} {
@@ -89,11 +89,11 @@ func (c *imageController) remote(request map[string]any) (map[string]any, error)
 	if len(raw) > 262144 {
 		return nil, protocol.Fail("invalid_builder_response")
 	}
-	data, err := controllerDecode(raw)
+	data, err := decodeResponse(raw)
 	if err != nil {
 		return nil, protocol.Fail("builder_unreachable")
 	}
-	safe, err := controllerSafeResponse(data)
+	safe, err := safeResponse(data)
 	if err != nil {
 		return nil, err
 	}

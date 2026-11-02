@@ -10,22 +10,22 @@ import (
 )
 
 func TestCLIUsesKongFlagSemantics(t *testing.T) {
-	parsed, err := parseControllerArgs([]string{"run", "ubuntu26-base", "--branch=first", "--branch=last", "--publish=true", "--publish=false", "--detach=true"})
+	parsed, err := parseArgs([]string{"run", "ubuntu26-base", "--branch=first", "--branch=last", "--publish=true", "--publish=false", "--detach=true"})
 	if err != nil || parsed.branch != "last" || parsed.publish || !parsed.detach {
 		t.Fatal("scalar or boolean flag semantics changed")
 	}
-	parsed, err = parseControllerArgs([]string{"logs", controllerTestJob, "--after=0x10"})
+	parsed, err = parseArgs([]string{"logs", testJob, "--after=0x10"})
 	if err != nil || parsed.after != 16 {
 		t.Fatal("integer cursor was not parsed")
 	}
 	for _, args := range [][]string{
 		{"run", "ubuntu26-base", "--revision="},
 		{"run", "ubuntu26-base", "--branch="},
-		{"run", "ubuntu26-base", "--branch=main", "--revision=" + controllerTestRevision},
-		{"logs", controllerTestJob, "--after=-1"},
+		{"run", "ubuntu26-base", "--branch=main", "--revision=" + testRevision},
+		{"logs", testJob, "--after=-1"},
 		{"logs", ""},
 	} {
-		if _, err := parseControllerArgs(args); err == nil {
+		if _, err := parseArgs(args); err == nil {
 			t.Fatal("invalid operation was accepted")
 		}
 	}
@@ -33,10 +33,10 @@ func TestCLIUsesKongFlagSemantics(t *testing.T) {
 
 func TestCLICommandSelection(t *testing.T) {
 	for _, args := range [][]string{
-		{"status"}, {"status", controllerTestJob}, {"shutdown"}, {"start"},
-		{"maintenance", "on"}, {"logs", controllerTestJob}, {"publish-retry", controllerTestJob},
+		{"status"}, {"status", testJob}, {"shutdown"}, {"start"},
+		{"maintenance", "on"}, {"logs", testJob}, {"publish-retry", testJob},
 	} {
-		parsed, err := parseControllerArgs(args)
+		parsed, err := parseArgs(args)
 		if err != nil || parsed.command != args[0] {
 			t.Fatal("command selection failed")
 		}
@@ -54,13 +54,13 @@ func TestCLIHelpDoesNotInitializeController(t *testing.T) {
 
 func TestCLIRejectsInputsWithoutEchoingValues(t *testing.T) {
 	for _, args := range [][]string{
-		{"--help", "--unknown=" + controllerSecret},
-		{"run", "ubuntu26-base", "--publish=" + controllerSecret, "--branch=main"},
-		{"logs", controllerTestJob, "--after=" + controllerSecret},
+		{"--help", "--unknown=" + testSecret},
+		{"run", "ubuntu26-base", "--publish=" + testSecret, "--branch=main"},
+		{"logs", testJob, "--after=" + testSecret},
 	} {
 		var output bytes.Buffer
 		err := Main(args, nil, &output)
-		if err == nil || protocol.SafeCode(err) != "invalid_arguments" || output.Len() != 0 || strings.Contains(err.Error(), controllerSecret) {
+		if err == nil || protocol.SafeCode(err) != "invalid_arguments" || output.Len() != 0 || strings.Contains(err.Error(), testSecret) {
 			t.Fatal("parser diagnostics escaped or initialization was attempted")
 		}
 	}

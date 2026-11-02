@@ -336,13 +336,13 @@ func TestWorkerTargetsComeFromCheckoutMetadata(t *testing.T) {
 		t.Fatal("target fixtures unavailable")
 	}
 	for target, script := range map[string]string{"example-base": "./build.sh", "all": "./build.sh", "freebsd151": "./import-upstream.sh"} {
-		args, err := workerTargetCommand(root, target)
+		args, err := targetCommand(root, target)
 		if err != nil || len(args) != 4 || args[1] != script || args[3] != target {
 			t.Fatal("checkout target resolution failed")
 		}
 	}
 	for _, target := range []string{"unknown", "x;id", "../base"} {
-		if _, err := workerTargetCommand(root, target); err == nil {
+		if _, err := targetCommand(root, target); err == nil {
 			t.Fatal("invalid target accepted")
 		}
 	}
@@ -350,7 +350,7 @@ func TestWorkerTargetsComeFromCheckoutMetadata(t *testing.T) {
 
 func TestWorkerSmokeConfigurationMatchesLinuxAndNativeFreeBSD(t *testing.T) {
 	for _, image := range []string{workerTestImage, "freebsd-15.1-cloudinit-ufs.img"} {
-		configuration, check, err := workerSmokeConfiguration(workerTestID, image, "ssh-ed25519 AAAA worker")
+		configuration, check, err := smokeConfiguration(workerTestID, image, "ssh-ed25519 AAAA worker")
 		if err != nil || protocol.Bool(configuration, "ssh_pwauth") {
 			t.Fatal("smoke configuration failed")
 		}
@@ -379,13 +379,13 @@ func TestWorkerArtifactValidationRejectsSymlinksAndWrongChecksums(t *testing.T) 
 	if os.WriteFile(image+".sha256", []byte(strings.Repeat("a", 64)), 0600) != nil {
 		t.Fatal("checksum fixture failed")
 	}
-	if _, err := r.workerArtifacts(filepath.Join(r.JobDir(workerTestID), "repo")); protocol.SafeCode(err) != "checksum_mismatch" {
+	if _, err := r.scanArtifacts(filepath.Join(r.JobDir(workerTestID), "repo")); protocol.SafeCode(err) != "checksum_mismatch" {
 		t.Fatal("wrong checksum accepted")
 	}
 	if os.Remove(image) != nil || os.Symlink(image+".sha256", image) != nil {
 		t.Fatal("symlink fixture failed")
 	}
-	if _, err := r.workerArtifacts(filepath.Join(r.JobDir(workerTestID), "repo")); protocol.SafeCode(err) != "invalid_artifact" {
+	if _, err := r.scanArtifacts(filepath.Join(r.JobDir(workerTestID), "repo")); protocol.SafeCode(err) != "invalid_artifact" {
 		t.Fatal("symlink image accepted")
 	}
 }

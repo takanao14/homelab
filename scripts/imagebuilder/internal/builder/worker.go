@@ -16,18 +16,18 @@ import (
 )
 
 var (
-	workerImportFunction = regexp.MustCompile(`(?s)import_target\(\)\s*\{(.*?)\n\}`)
-	workerImportTarget   = regexp.MustCompile(`(?m)^\s*([a-z][a-z0-9-]*)\)`)
-	workerAgentSocket    = regexp.MustCompile(`(?m)^SSH_AUTH_SOCK=([^;\n]+);`)
-	workerAgentPID       = regexp.MustCompile(`(?m)^SSH_AGENT_PID=([0-9]+);`)
-	workerPublicKey      = regexp.MustCompile(`^ssh-ed25519 [A-Za-z0-9+/=]+(?: [^\r\n]*)?$`)
+	importFunctionPattern = regexp.MustCompile(`(?s)import_target\(\)\s*\{(.*?)\n\}`)
+	importTargetPattern   = regexp.MustCompile(`(?m)^\s*([a-z][a-z0-9-]*)\)`)
+	agentSocketPattern    = regexp.MustCompile(`(?m)^SSH_AUTH_SOCK=([^;\n]+);`)
+	agentPIDPattern       = regexp.MustCompile(`(?m)^SSH_AGENT_PID=([0-9]+);`)
+	publicKeyPattern      = regexp.MustCompile(`^ssh-ed25519 [A-Za-z0-9+/=]+(?: [^\r\n]*)?$`)
 )
 
-func workerSeconds(seconds int) time.Duration {
-	return time.Duration(seconds) * time.Second
+func seconds(n int) time.Duration {
+	return time.Duration(n) * time.Second
 }
 
-func (r *Runtime) checkoutWorker(id, revision string, env map[string]string) (string, error) {
+func (r *Runtime) checkoutRevision(id, revision string, env map[string]string) (string, error) {
 	r.CurrentStep = "checkout"
 	if !protocol.RevisionPattern.MatchString(revision) {
 		return "", protocol.Fail("invalid_request")
@@ -65,7 +65,7 @@ func (r *Runtime) checkoutWorker(id, revision string, env map[string]string) (st
 	return checkout, nil
 }
 
-func workerTargetCommand(checkout, target string) ([]string, error) {
+func targetCommand(checkout, target string) ([]string, error) {
 	if !protocol.TargetPattern.MatchString(target) {
 		return nil, protocol.Fail("invalid_request")
 	}
@@ -78,9 +78,9 @@ func workerTargetCommand(checkout, target string) ([]string, error) {
 	if err != nil {
 		return nil, protocol.Fail("unknown_target")
 	}
-	function := workerImportFunction.FindSubmatch(data)
+	function := importFunctionPattern.FindSubmatch(data)
 	if len(function) == 2 {
-		for _, match := range workerImportTarget.FindAllSubmatch(function[1], -1) {
+		for _, match := range importTargetPattern.FindAllSubmatch(function[1], -1) {
 			if string(match[1]) == target {
 				return []string{"bash", "./import-upstream.sh", "-y", target}, nil
 			}
@@ -89,7 +89,7 @@ func workerTargetCommand(checkout, target string) ([]string, error) {
 	return nil, protocol.Fail("unknown_target")
 }
 
-func (r *Runtime) workerSSHEnvironment(id string, env map[string]string) (int, error) {
+func (r *Runtime) sshEnvironment(id string, env map[string]string) (int, error) {
 	r.CurrentStep = "ssh-setup"
 	key := filepath.Join(r.WorkerPath(id), "id_ed25519")
 	if _, err := r.Invoke([]string{"ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", key}, command.Options{Env: env}); err != nil {
@@ -99,7 +99,7 @@ func (r *Runtime) workerSSHEnvironment(id string, env map[string]string) (int, e
 	if err != nil {
 		return 0, err
 	}
-	socket, pid := workerAgentSocket.FindSubmatch(result.Output), workerAgentPID.FindSubmatch(result.Output)
+	socket, pid := agentSocketPattern.FindSubmatch(result.Output), agentPIDPattern.FindSubmatch(result.Output)
 	if len(socket) != 2 || len(pid) != 2 {
 		return 0, protocol.Fail("ssh_agent_failed")
 	}
@@ -112,7 +112,7 @@ func (r *Runtime) workerSSHEnvironment(id string, env map[string]string) (int, e
 		return pidValue, err
 	}
 	public, err := os.ReadFile(key + ".pub")
-	if err != nil || !workerPublicKey.MatchString(strings.TrimSpace(string(public))) {
+	if err != nil || !publicKeyPattern.MatchString(strings.TrimSpace(string(public))) {
 		return pidValue, protocol.Fail("ssh_key_failed")
 	}
 	env["PKR_VAR_ssh_pubkey"] = strings.TrimSpace(string(public))
@@ -140,7 +140,7 @@ func (r *Runtime) Run(id string) (result error) {
 		}
 	}
 	agentPID := 0
-	r.CurrentJob, r.CurrentStep, r.Deadline = id, "checkout", r.now().Add(workerSeconds(r.Cfg.TimeoutSeconds))
+	r.CurrentJob, r.CurrentStep, r.Deadline = id, "checkout", r.now().Add(seconds(r.Cfg.TimeoutSeconds))
 	defer func() {
 		if result != nil {
 			result = protocol.Fail(protocol.SafeCode(result))
@@ -159,17 +159,17 @@ func (r *Runtime) Run(id string) (result error) {
 		return err
 	}
 	checkout := filepath.Join(r.JobDir(id), "repo")
-	var manifest []workerArtifact
+	var manifest []imageArtifact
 	if protocol.String(request, "op") == "publish-retry" {
 		value, err := store.ReadValue(filepath.Join(r.JobDir(id), "verified.json"))
 		if err != nil {
 			return err
 		}
-		manifest, err = workerManifest(value)
+		manifest, err = parseManifest(value)
 		if err != nil {
 			return err
 		}
-		actual, err := r.workerArtifacts(checkout)
+		actual, err := r.scanArtifacts(checkout)
 		if err != nil {
 			return err
 		}
@@ -177,18 +177,18 @@ func (r *Runtime) Run(id string) (result error) {
 			return protocol.Fail("artifact_changed")
 		}
 	} else {
-		checkout, err = r.checkoutWorker(id, protocol.String(request, "revision"), env)
+		checkout, err = r.checkoutRevision(id, protocol.String(request, "revision"), env)
 		if err != nil {
 			return err
 		}
-		args, err := workerTargetCommand(checkout, protocol.String(request, "target"))
+		args, err := targetCommand(checkout, protocol.String(request, "target"))
 		if err != nil {
 			return err
 		}
 		if args[1] != "./import-upstream.sh" && secretValues["PKR_VAR_user_password"] == "" {
 			return protocol.Fail("missing_credentials")
 		}
-		agentPID, err = r.workerSSHEnvironment(id, env)
+		agentPID, err = r.sshEnvironment(id, env)
 		if err != nil {
 			return err
 		}
@@ -214,12 +214,12 @@ func (r *Runtime) Run(id string) (result error) {
 		if err := r.Update(id, "verifying", "verifying", nil); err != nil {
 			return err
 		}
-		manifest, err = r.workerArtifacts(checkout)
+		manifest, err = r.scanArtifacts(checkout)
 		if err != nil {
 			return err
 		}
 		for _, artifact := range manifest {
-			if err := r.workerSmoke(id, filepath.Join(checkout, "packer", "images", artifact.Name), env); err != nil {
+			if err := r.smokeBoot(id, filepath.Join(checkout, "packer", "images", artifact.Name), env); err != nil {
 				return err
 			}
 		}
@@ -237,7 +237,7 @@ func (r *Runtime) Run(id string) (result error) {
 				publishEnv[key] = value
 			}
 		}
-		if err := r.workerPublish(checkout, protocol.String(request, "target"), manifest, publishEnv); err != nil {
+		if err := r.publishArtifacts(checkout, protocol.String(request, "target"), manifest, publishEnv); err != nil {
 			return err
 		}
 	}

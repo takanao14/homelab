@@ -38,7 +38,7 @@ func Path(bucket, image string) (string, error) {
 	return "seaweedfs:" + bucket + "/" + image, nil
 }
 
-func readRemoteChecksum(path string, env map[string]string, invoke command.Func) (string, error) {
+func readChecksum(path string, env map[string]string, invoke command.Func) (string, error) {
 	result, err := invoke([]string{"rclone", "cat", path + ".sha256"}, command.Options{Env: env, Capture: true, Timeout: time.Minute})
 	if err != nil {
 		return "", err
@@ -50,7 +50,7 @@ func readRemoteChecksum(path string, env map[string]string, invoke command.Func)
 	return value, nil
 }
 
-func remoteImageDigest(path string, env map[string]string, timeout time.Duration, invoke command.Func) (string, error) {
+func imageDigest(path string, env map[string]string, timeout time.Duration, invoke command.Func) (string, error) {
 	result, err := invoke([]string{"rclone", "cat", path}, command.Options{Env: env, Digest: true, Timeout: timeout})
 	if err != nil {
 		return "", err
@@ -62,15 +62,15 @@ func remoteImageDigest(path string, env map[string]string, timeout time.Duration
 }
 
 func VerifyPair(path string, env map[string]string, timeout time.Duration, invoke command.Func) (string, error) {
-	before, err := readRemoteChecksum(path, env, invoke)
+	before, err := readChecksum(path, env, invoke)
 	if err != nil {
 		return "", err
 	}
-	digest, err := remoteImageDigest(path, env, timeout, invoke)
+	digest, err := imageDigest(path, env, timeout, invoke)
 	if err != nil {
 		return "", err
 	}
-	after, err := readRemoteChecksum(path, env, invoke)
+	after, err := readChecksum(path, env, invoke)
 	if err != nil {
 		return "", err
 	}

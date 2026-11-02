@@ -14,7 +14,7 @@ import (
 	"github.com/takanao14/homelab/scripts/imagebuilder/internal/protocol"
 )
 
-func newImageController(environ map[string]string, out io.Writer) (*imageController, error) {
+func newBuilderClient(environ map[string]string, out io.Writer) (*builderClient, error) {
 	environment := map[string]string{}
 	for key, value := range environ {
 		environment[key] = value
@@ -25,7 +25,7 @@ func newImageController(environ map[string]string, out io.Writer) (*imageControl
 		}
 		return fallback
 	}
-	control := &imageController{env: environment, url: strings.TrimRight(get("IMAGEBUILDER_PROXMOX_URL", "https://192.168.10.10:8006"), "/"), node: get("IMAGEBUILDER_NODE", "pve"), token: get("IMAGEBUILDER_PROXMOX_TOKEN", ""), host: get("IMAGEBUILDER_SSH_HOST", "192.168.20.25"), user: get("IMAGEBUILDER_SSH_USER", "imagebuilder-control"), vmid: get("IMAGEBUILDER_VMID", ""), out: out, now: time.Now, sleep: time.Sleep, ssh: controllerSSHCommand}
+	control := &builderClient{env: environment, url: strings.TrimRight(get("IMAGEBUILDER_PROXMOX_URL", "https://192.168.10.10:8006"), "/"), node: get("IMAGEBUILDER_NODE", "pve"), token: get("IMAGEBUILDER_PROXMOX_TOKEN", ""), host: get("IMAGEBUILDER_SSH_HOST", "192.168.20.25"), user: get("IMAGEBUILDER_SSH_USER", "imagebuilder-control"), vmid: get("IMAGEBUILDER_VMID", ""), out: out, now: time.Now, sleep: time.Sleep, ssh: runSSH}
 	for _, rule := range []struct{ value, pattern, code string }{
 		{control.url, `^https://[a-zA-Z0-9.-]+(?::[0-9]+)?$`, "invalid_proxmox_url"},
 		{control.node, `^[a-zA-Z0-9-]+$`, "invalid_node"},
@@ -58,7 +58,7 @@ func newImageController(environ map[string]string, out io.Writer) (*imageControl
 	return control, nil
 }
 
-func (c *imageController) api(suffix string, post bool) (any, error) {
+func (c *builderClient) api(suffix string, post bool) (any, error) {
 	method := http.MethodGet
 	var body io.Reader
 	if post {
@@ -85,7 +85,7 @@ func (c *imageController) api(suffix string, post bool) (any, error) {
 	if len(raw) > 1048576 {
 		return nil, protocol.Fail("invalid_proxmox_response")
 	}
-	data, err := controllerDecode(raw)
+	data, err := decodeResponse(raw)
 	if err != nil {
 		return nil, protocol.Fail("invalid_proxmox_response")
 	}
@@ -96,7 +96,7 @@ func (c *imageController) api(suffix string, post bool) (any, error) {
 	return value, nil
 }
 
-func (c *imageController) power() (string, error) {
+func (c *builderClient) power() (string, error) {
 	if c.vmid == "" {
 		data, err := c.api("qemu", false)
 		if err != nil {

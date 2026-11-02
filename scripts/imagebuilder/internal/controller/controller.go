@@ -9,17 +9,17 @@ import (
 	"github.com/takanao14/homelab/scripts/imagebuilder/internal/protocol"
 )
 
-type imageController struct {
+type builderClient struct {
 	env                                map[string]string
 	url, node, token, host, user, vmid string
 	client                             *http.Client
-	ssh                                controllerSSH
+	ssh                                sshRunner
 	now                                func() time.Time
 	sleep                              func(time.Duration)
 	out                                io.Writer
 }
 
-func (c *imageController) wake(buildReady bool) (map[string]any, error) {
+func (c *builderClient) wake(buildReady bool) (map[string]any, error) {
 	deadline := c.now().Add(900 * time.Second)
 	last := "builder_start_timeout"
 	for c.now().Before(deadline) {
@@ -57,7 +57,7 @@ func (c *imageController) wake(buildReady bool) (map[string]any, error) {
 	return nil, protocol.Fail(last)
 }
 
-func (c *imageController) secrets(publish bool) (map[string]string, error) {
+func (c *builderClient) secrets(publish bool) (map[string]string, error) {
 	values := map[string]string{}
 	for _, key := range []string{"PKR_VAR_user_password", "SEAWEEDFS_S3_ENDPOINT", "SEAWEEDFS_S3_ACCESS_KEY", "SEAWEEDFS_S3_SECRET_KEY", "SEAWEEDFS_CLOUD_IMAGES_BUCKET"} {
 		if value := c.env[key]; value != "" {
@@ -80,14 +80,14 @@ func (c *imageController) secrets(publish bool) (map[string]string, error) {
 	return values, nil
 }
 
-func (c *imageController) emit(value map[string]any) error {
+func (c *builderClient) emit(value map[string]any) error {
 	if err := json.NewEncoder(c.out).Encode(value); err != nil {
 		return protocol.Fail("controller_failed")
 	}
 	return nil
 }
 
-func (c *imageController) followLogs(identifier string, after int64) (map[string]any, error) {
+func (c *builderClient) followLogs(identifier string, after int64) (map[string]any, error) {
 	deadline := c.now().Add(14700 * time.Second)
 	for c.now().Before(deadline) {
 		page, err := c.remote(map[string]any{"op": "logs", "job_id": identifier, "after": after})
@@ -136,7 +136,7 @@ func (c *imageController) followLogs(identifier string, after int64) (map[string
 			continue
 		}
 		if finished, _ := page["finished"].(bool); finished {
-			if !controllerTerminal(page["phase"]) {
+			if !isTerminal(page["phase"]) {
 				return nil, protocol.Fail("invalid_builder_response")
 			}
 			result := map[string]any{}
@@ -152,7 +152,7 @@ func (c *imageController) followLogs(identifier string, after int64) (map[string
 	return nil, protocol.Fail("log_wait_timeout")
 }
 
-func (c *imageController) waitStopped() (map[string]any, error) {
+func (c *builderClient) waitStopped() (map[string]any, error) {
 	deadline := c.now().Add(900 * time.Second)
 	for c.now().Before(deadline) {
 		state, err := c.power()
@@ -167,7 +167,7 @@ func (c *imageController) waitStopped() (map[string]any, error) {
 	return nil, protocol.Fail("shutdown_timeout")
 }
 
-func (c *imageController) execute(args controllerArgs) (map[string]any, error) {
+func (c *builderClient) execute(args options) (map[string]any, error) {
 	if args.command == "status" || args.command == "shutdown" {
 		power, err := c.power()
 		if err != nil {
@@ -265,12 +265,12 @@ func (c *imageController) execute(args controllerArgs) (map[string]any, error) {
 	return state, nil
 }
 
-func controllerValidBranch(value string) bool {
+func validBranch(value string) bool {
 	_, err := protocol.ValidateBranch(value)
 	return err == nil
 }
 
-func controllerTerminal(value any) bool {
+func isTerminal(value any) bool {
 	text, ok := value.(string)
 	return ok && protocol.TerminalSet[text]
 }

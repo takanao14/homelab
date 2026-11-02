@@ -6,7 +6,7 @@ import (
 	"github.com/takanao14/homelab/scripts/imagebuilder/internal/protocol"
 )
 
-func controllerSafeResponse(data map[string]any) (map[string]any, error) {
+func safeResponse(data map[string]any) (map[string]any, error) {
 	ok, valid := data["ok"].(bool)
 	if !valid {
 		return nil, protocol.Fail("invalid_builder_response")

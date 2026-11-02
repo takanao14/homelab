@@ -19,13 +19,13 @@ import (
 	"github.com/takanao14/homelab/scripts/imagebuilder/internal/protocol"
 )
 
-const controllerTestJob = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+const testJob = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
-const controllerTestRevision = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+const testRevision = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 
-const controllerSecret = "SECRET-MARKER"
+const testSecret = "SECRET-MARKER"
 
-func testController(t *testing.T, handler http.HandlerFunc) (*imageController, *bytes.Buffer) {
+func testController(t *testing.T, handler http.HandlerFunc) (*builderClient, *bytes.Buffer) {
 	t.Helper()
 	if handler == nil {
 		handler = func(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +39,7 @@ func testController(t *testing.T, handler http.HandlerFunc) (*imageController, *
 		t.Fatal(err)
 	}
 	output := &bytes.Buffer{}
-	control, err := newImageController(map[string]string{"IMAGEBUILDER_PROXMOX_TOKEN": "test!power=" + controllerSecret, "IMAGEBUILDER_PROXMOX_URL": server.URL, "IMAGEBUILDER_PROXMOX_CA_FILE": ca, "IMAGEBUILDER_VMID": "100", "PKR_VAR_user_password": controllerSecret}, output)
+	control, err := newBuilderClient(map[string]string{"IMAGEBUILDER_PROXMOX_TOKEN": "test!power=" + testSecret, "IMAGEBUILDER_PROXMOX_URL": server.URL, "IMAGEBUILDER_PROXMOX_CA_FILE": ca, "IMAGEBUILDER_VMID": "100", "PKR_VAR_user_password": testSecret}, output)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +49,7 @@ func testController(t *testing.T, handler http.HandlerFunc) (*imageController, *
 	return control, output
 }
 
-func controllerJSON(value any) []byte {
+func testJSON(value any) []byte {
 	raw, err := json.Marshal(value)
 	if err != nil {
 		panic(err)
@@ -57,9 +57,9 @@ func controllerJSON(value any) []byte {
 	return raw
 }
 
-func controllerResult(value any) controllerSSH {
+func testResult(value any) sshRunner {
 	return func(context.Context, []string, []string, []byte) ([]byte, int, error) {
-		return controllerJSON(value), 0, nil
+		return testJSON(value), 0, nil
 	}
 }
 
@@ -72,26 +72,26 @@ func requireControllerError(t *testing.T, err error, expected string) {
 
 func TestControllerArgsSourceAndOrdering(t *testing.T) {
 	for _, arguments := range [][]string{
-		{"run", "ubuntu26-base", "--revision", controllerTestRevision, "--publish", "--detach"},
-		{"run", "--publish", "--revision=" + controllerTestRevision, "ubuntu26-base", "--detach"},
+		{"run", "ubuntu26-base", "--revision", testRevision, "--publish", "--detach"},
+		{"run", "--publish", "--revision=" + testRevision, "ubuntu26-base", "--detach"},
 	} {
-		parsed, err := parseControllerArgs(arguments)
+		parsed, err := parseArgs(arguments)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if parsed.target != "ubuntu26-base" || parsed.revision != controllerTestRevision || !parsed.publish || !parsed.detach {
+		if parsed.target != "ubuntu26-base" || parsed.revision != testRevision || !parsed.publish || !parsed.detach {
 			t.Fatal("lost CLI flags")
 		}
 	}
 	for _, arguments := range [][]string{
-		{"run", "ubuntu26-base"}, {"run", "ubuntu26-base", "--revision", controllerTestRevision, "--branch", "main"},
-		{"run", "ubuntu26-base", "--revision", controllerTestRevision, "--publish=" + controllerSecret},
-		{"run", "ubuntu26-base", "--revision", controllerTestRevision, "--unknown", controllerSecret},
-		{"shutdown", controllerSecret}, {"maintenance", "maybe"}, {"status", "--follow"},
+		{"run", "ubuntu26-base"}, {"run", "ubuntu26-base", "--revision", testRevision, "--branch", "main"},
+		{"run", "ubuntu26-base", "--revision", testRevision, "--publish=" + testSecret},
+		{"run", "ubuntu26-base", "--revision", testRevision, "--unknown", testSecret},
+		{"shutdown", testSecret}, {"maintenance", "maybe"}, {"status", "--follow"},
 	} {
-		_, err := parseControllerArgs(arguments)
+		_, err := parseArgs(arguments)
 		requireControllerError(t, err, "invalid_arguments")
-		if strings.Contains(err.Error(), controllerSecret) {
+		if strings.Contains(err.Error(), testSecret) {
 			t.Fatal("argument echoed")
 		}
 	}
@@ -104,11 +104,11 @@ func TestControllerInvalidInputsBeforeWake(t *testing.T) {
 	}{
 		{[]string{"run", "ubuntu26-base", "--revision", "main"}, "invalid_revision"},
 		{[]string{"run", "ubuntu26-base", "--branch", "../main"}, "invalid_branch"},
-		{[]string{"run", "ubuntu26-base", "--branch", "main\n" + controllerSecret}, "invalid_branch"},
-		{[]string{"run", "-invalid", "--revision", controllerTestRevision}, "invalid_arguments"},
+		{[]string{"run", "ubuntu26-base", "--branch", "main\n" + testSecret}, "invalid_branch"},
+		{[]string{"run", "-invalid", "--revision", testRevision}, "invalid_arguments"},
 		{[]string{"logs", "invalid"}, "invalid_job_id"},
-		{[]string{"logs", controllerTestJob, "--after", "-1"}, "invalid_arguments"},
-		{[]string{"logs", controllerTestJob, "--after", "9223372036854775808"}, "invalid_arguments"},
+		{[]string{"logs", testJob, "--after", "-1"}, "invalid_arguments"},
+		{[]string{"logs", testJob, "--after", "9223372036854775808"}, "invalid_arguments"},
 	}
 	for _, test := range cases {
 		output := &bytes.Buffer{}
@@ -121,21 +121,21 @@ func TestControllerInvalidInputsBeforeWake(t *testing.T) {
 }
 
 func TestControllerResponseProjection(t *testing.T) {
-	raw := map[string]any{"ok": true, "phase": "idle", "credentials": controllerSecret, "records": []any{map[string]any{"sequence": int64(1), "time": int64(1), "step": "packer-init", "event": "started", "raw": controllerSecret}}}
-	safe, err := controllerSafeResponse(raw)
+	raw := map[string]any{"ok": true, "phase": "idle", "credentials": testSecret, "records": []any{map[string]any{"sequence": int64(1), "time": int64(1), "step": "packer-init", "event": "started", "raw": testSecret}}}
+	safe, err := safeResponse(raw)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(controllerJSON(safe)), controllerSecret) {
+	if strings.Contains(string(testJSON(safe)), testSecret) {
 		t.Fatal("unapproved fields leaked")
 	}
 	for _, data := range []map[string]any{
-		{"ok": false, "error": controllerSecret}, {"ok": true, "phase": controllerSecret},
-		{"ok": true, "events": []any{map[string]any{"phase": "failed", "code": controllerSecret, "time": int64(1)}}},
+		{"ok": false, "error": testSecret}, {"ok": true, "phase": testSecret},
+		{"ok": true, "events": []any{map[string]any{"phase": "failed", "code": testSecret, "time": int64(1)}}},
 		{"ok": true, "created": true}, {"ok": true, "cursor": -1}, {"ok": true, "revision": "main"},
-		{"ok": true, "records": []any{map[string]any{"sequence": 1, "time": 1, "step": "checkout", "event": "started", "source": controllerSecret}}},
+		{"ok": true, "records": []any{map[string]any{"sequence": 1, "time": 1, "step": "checkout", "event": "started", "source": testSecret}}},
 	} {
-		_, err := controllerSafeResponse(data)
+		_, err := safeResponse(data)
 		requireControllerError(t, err, "invalid_builder_response")
 	}
 }
@@ -145,10 +145,10 @@ func TestControllerSSHSecretBoundary(t *testing.T) {
 	control.env["HOME"] = "/nonsecret/home"
 	control.env["PATH"] = "/usr/bin"
 	control.env["SSH_AUTH_SOCK"] = "/tmp/auth.sock"
-	control.env["UNRELATED_SECRET"] = controllerSecret
+	control.env["UNRELATED_SECRET"] = testSecret
 	var capturedInput []byte
 	control.ssh = func(ctx context.Context, args, environment []string, input []byte) ([]byte, int, error) {
-		if strings.Contains(strings.Join(args, " "), controllerSecret) || strings.Contains(strings.Join(environment, " "), controllerSecret) {
+		if strings.Contains(strings.Join(args, " "), testSecret) || strings.Contains(strings.Join(environment, " "), testSecret) {
 			t.Fatal("secret escaped stdin")
 		}
 		for _, option := range []string{"ForwardAgent=no", "SendEnv=-*", "StrictHostKeyChecking=yes", "BatchMode=yes"} {
@@ -163,14 +163,14 @@ func TestControllerSSHSecretBoundary(t *testing.T) {
 			t.Fatal("SSH has no timeout")
 		}
 		capturedInput = input
-		return []byte("not-json " + controllerSecret), 1, nil
+		return []byte("not-json " + testSecret), 1, nil
 	}
-	_, err := control.remote(map[string]any{"op": "submit", "credentials": map[string]string{"PKR_VAR_user_password": controllerSecret}})
+	_, err := control.remote(map[string]any{"op": "submit", "credentials": map[string]string{"PKR_VAR_user_password": testSecret}})
 	requireControllerError(t, err, "builder_unreachable")
-	if !bytes.Contains(capturedInput, []byte(controllerSecret)) {
+	if !bytes.Contains(capturedInput, []byte(testSecret)) {
 		t.Fatal("credentials missing from stdin")
 	}
-	if strings.Contains(err.Error(), controllerSecret) || strings.Contains(output.String(), controllerSecret) {
+	if strings.Contains(err.Error(), testSecret) || strings.Contains(output.String(), testSecret) {
 		t.Fatal("secret diagnostics leaked")
 	}
 }
@@ -179,7 +179,7 @@ func TestControllerProxmoxIdentityAndRedirect(t *testing.T) {
 	for _, status := range []string{"running", "stopped"} {
 		calls := 0
 		control, _ := testController(t, func(w http.ResponseWriter, r *http.Request) {
-			if r.Header.Get("Authorization") != "PVEAPIToken=test!power="+controllerSecret {
+			if r.Header.Get("Authorization") != "PVEAPIToken=test!power="+testSecret {
 				t.Error("missing authorization")
 			}
 			calls++
@@ -232,7 +232,7 @@ func TestControllerStatusStoppedDoesNotWake(t *testing.T) {
 		t.Fatal("stopped status opened SSH")
 		return nil, 1, nil
 	}
-	parsed, _ := parseControllerArgs([]string{"status"})
+	parsed, _ := parseArgs([]string{"status"})
 	result, err := control.execute(parsed)
 	if err != nil || result["power"] != "stopped" {
 		t.Fatal("stopped status failed")
@@ -259,7 +259,7 @@ func TestControllerWakeReadinessAndRace(t *testing.T) {
 	})
 	attempts := 0
 	control.ssh = func(_ context.Context, _ []string, _ []string, input []byte) ([]byte, int, error) {
-		request, _ := controllerDecode(input)
+		request, _ := decodeResponse(input)
 		if request["op"] != "ready" {
 			t.Fatal("missing readiness")
 		}
@@ -267,7 +267,7 @@ func TestControllerWakeReadinessAndRace(t *testing.T) {
 		if attempts == 1 {
 			return nil, 1, protocol.Fail("builder_unreachable")
 		}
-		return controllerJSON(map[string]any{"ok": true, "phase": "ready"}), 0, nil
+		return testJSON(map[string]any{"ok": true, "phase": "ready"}), 0, nil
 	}
 	result, err := control.wake(true)
 	if err != nil || result["phase"] != "ready" || starts != 1 || attempts != 2 {
@@ -290,15 +290,15 @@ func TestControllerFatalReadinessDoesNotRetry(t *testing.T) {
 }
 
 func TestControllerDiagnosticReadiness(t *testing.T) {
-	for _, arguments := range [][]string{{"logs", controllerTestJob}, {"maintenance", "on"}, {"start"}} {
+	for _, arguments := range [][]string{{"logs", testJob}, {"maintenance", "on"}, {"start"}} {
 		control, _ := testController(t, nil)
 		requests := []map[string]any{}
 		control.ssh = func(_ context.Context, _ []string, _ []string, input []byte) ([]byte, int, error) {
-			request, _ := controllerDecode(input)
+			request, _ := decodeResponse(input)
 			requests = append(requests, request)
 			return []byte(`{"ok":true,"phase":"idle"}`), 0, nil
 		}
-		args, _ := parseControllerArgs(arguments)
+		args, _ := parseArgs(arguments)
 		_, err := control.execute(args)
 		if err != nil {
 			t.Fatal(err)
@@ -311,33 +311,33 @@ func TestControllerDiagnosticReadiness(t *testing.T) {
 
 func TestControllerBranchFreezesRevisionAndFiltersCredentials(t *testing.T) {
 	control, output := testController(t, nil)
-	control.env["SEAWEEDFS_S3_SECRET_KEY"] = controllerSecret
+	control.env["SEAWEEDFS_S3_SECRET_KEY"] = testSecret
 	requests := []map[string]any{}
 	control.ssh = func(_ context.Context, _ []string, _ []string, input []byte) ([]byte, int, error) {
-		request, _ := controllerDecode(input)
+		request, _ := decodeResponse(input)
 		requests = append(requests, request)
 		switch request["op"] {
 		case "ready":
 			return []byte(`{"ok":true,"phase":"ready"}`), 0, nil
 		case "resolve":
-			return controllerJSON(map[string]any{"ok": true, "branch": "fix/packer", "revision": controllerTestRevision}), 0, nil
+			return testJSON(map[string]any{"ok": true, "branch": "fix/packer", "revision": testRevision}), 0, nil
 		default:
-			return controllerJSON(map[string]any{"ok": true, "job_id": controllerTestJob, "phase": "preparing"}), 0, nil
+			return testJSON(map[string]any{"ok": true, "job_id": testJob, "phase": "preparing"}), 0, nil
 		}
 	}
-	args, _ := parseControllerArgs([]string{"run", "ubuntu26-base", "--branch", "fix/packer", "--detach"})
+	args, _ := parseArgs([]string{"run", "ubuntu26-base", "--branch", "fix/packer", "--detach"})
 	_, err := control.execute(args)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(requests) != 3 || requests[1]["op"] != "resolve" || requests[2]["revision"] != controllerTestRevision || requests[2]["branch"] != "fix/packer" || requests[2]["publish"] != false {
+	if len(requests) != 3 || requests[1]["op"] != "resolve" || requests[2]["revision"] != testRevision || requests[2]["branch"] != "fix/packer" || requests[2]["publish"] != false {
 		t.Fatal("branch not resolved once before submit")
 	}
 	credentials := requests[2]["credentials"].(map[string]any)
-	if len(credentials) != 1 || credentials["PKR_VAR_user_password"] != controllerSecret {
+	if len(credentials) != 1 || credentials["PKR_VAR_user_password"] != testSecret {
 		t.Fatal("unpublished build forwarded S3 credentials")
 	}
-	if !strings.Contains(output.String(), controllerTestRevision) || strings.Contains(output.String(), controllerSecret) {
+	if !strings.Contains(output.String(), testRevision) || strings.Contains(output.String(), testSecret) {
 		t.Fatal("source freeze or secret projection failed")
 	}
 }
@@ -346,16 +346,16 @@ func TestControllerBranchMismatchNeverSubmits(t *testing.T) {
 	control, _ := testController(t, nil)
 	submits := 0
 	control.ssh = func(_ context.Context, _ []string, _ []string, input []byte) ([]byte, int, error) {
-		request, _ := controllerDecode(input)
+		request, _ := decodeResponse(input)
 		if request["op"] == "submit" {
 			submits++
 		}
 		if request["op"] == "resolve" {
-			return controllerJSON(map[string]any{"ok": true, "branch": "other", "revision": controllerTestRevision}), 0, nil
+			return testJSON(map[string]any{"ok": true, "branch": "other", "revision": testRevision}), 0, nil
 		}
 		return []byte(`{"ok":true}`), 0, nil
 	}
-	args, _ := parseControllerArgs([]string{"run", "ubuntu26-base", "--branch", "main"})
+	args, _ := parseArgs([]string{"run", "ubuntu26-base", "--branch", "main"})
 	_, err := control.execute(args)
 	requireControllerError(t, err, "invalid_builder_response")
 	if submits != 0 {
@@ -365,7 +365,7 @@ func TestControllerBranchMismatchNeverSubmits(t *testing.T) {
 
 func TestControllerPublishCredentialsBeforeWake(t *testing.T) {
 	control, _ := testController(t, func(http.ResponseWriter, *http.Request) { t.Fatal("missing secrets woke VM") })
-	args, _ := parseControllerArgs([]string{"run", "ubuntu26-base", "--revision", controllerTestRevision, "--publish"})
+	args, _ := parseArgs([]string{"run", "ubuntu26-base", "--revision", testRevision, "--publish"})
 	_, err := control.execute(args)
 	requireControllerError(t, err, "missing_publish_credentials")
 }
@@ -375,22 +375,22 @@ func TestControllerFollowDrainsPagesAndAwaitsFinish(t *testing.T) {
 	after := []int64{}
 	pageIndex := 0
 	pages := []map[string]any{
-		{"ok": true, "job_id": controllerTestJob, "phase": "succeeded", "finished": false, "cursor": int64(1), "has_more": true, "records": []any{map[string]any{"sequence": int64(1), "time": int64(1), "step": "packer-init", "event": "started"}}},
-		{"ok": true, "job_id": controllerTestJob, "phase": "succeeded", "finished": false, "cursor": int64(2), "has_more": false, "records": []any{map[string]any{"sequence": int64(2), "time": int64(2), "step": "packer-init", "event": "completed", "duration_ms": int64(10)}}},
-		{"ok": true, "job_id": controllerTestJob, "phase": "succeeded", "finished": true, "cursor": int64(2), "has_more": false, "records": []any{}},
+		{"ok": true, "job_id": testJob, "phase": "succeeded", "finished": false, "cursor": int64(1), "has_more": true, "records": []any{map[string]any{"sequence": int64(1), "time": int64(1), "step": "packer-init", "event": "started"}}},
+		{"ok": true, "job_id": testJob, "phase": "succeeded", "finished": false, "cursor": int64(2), "has_more": false, "records": []any{map[string]any{"sequence": int64(2), "time": int64(2), "step": "packer-init", "event": "completed", "duration_ms": int64(10)}}},
+		{"ok": true, "job_id": testJob, "phase": "succeeded", "finished": true, "cursor": int64(2), "has_more": false, "records": []any{}},
 	}
 	control.ssh = func(_ context.Context, _ []string, _ []string, input []byte) ([]byte, int, error) {
-		request, _ := controllerDecode(input)
+		request, _ := decodeResponse(input)
 		cursor, _ := protocol.Int(request["after"])
 		after = append(after, cursor)
 		if pageIndex >= len(pages) {
 			t.Fatal("follow never finished")
 		}
-		raw := controllerJSON(pages[pageIndex])
+		raw := testJSON(pages[pageIndex])
 		pageIndex++
 		return raw, 0, nil
 	}
-	result, err := control.followLogs(controllerTestJob, 0)
+	result, err := control.followLogs(testJob, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -401,36 +401,36 @@ func TestControllerFollowDrainsPagesAndAwaitsFinish(t *testing.T) {
 
 func TestControllerFollowRetentionGapAndInvalidCursors(t *testing.T) {
 	control, output := testController(t, nil)
-	control.ssh = controllerResult(map[string]any{"ok": true, "job_id": controllerTestJob, "phase": "succeeded", "finished": true, "cursor": int64(100), "has_more": false, "truncated": true, "records": []any{map[string]any{"sequence": int64(100), "time": int64(1), "step": "packer-build", "event": "completed"}}})
-	result, err := control.followLogs(controllerTestJob, 0)
+	control.ssh = testResult(map[string]any{"ok": true, "job_id": testJob, "phase": "succeeded", "finished": true, "cursor": int64(100), "has_more": false, "truncated": true, "records": []any{map[string]any{"sequence": int64(100), "time": int64(1), "step": "packer-build", "event": "completed"}}})
+	result, err := control.followLogs(testJob, 0)
 	if err != nil || result["cursor"] != int64(100) {
 		t.Fatal("retention gap rejected")
 	}
 	if !strings.Contains(output.String(), `"truncated":true`) {
 		t.Fatal("retention gap not reported")
 	}
-	control.ssh = controllerResult(map[string]any{"ok": true, "job_id": controllerTestJob, "phase": "succeeded", "finished": true, "cursor": int64(100), "has_more": false, "records": []any{map[string]any{"sequence": int64(100), "time": int64(1), "step": "packer-build", "event": "completed"}}})
-	_, err = control.followLogs(controllerTestJob, 100)
+	control.ssh = testResult(map[string]any{"ok": true, "job_id": testJob, "phase": "succeeded", "finished": true, "cursor": int64(100), "has_more": false, "records": []any{map[string]any{"sequence": int64(100), "time": int64(1), "step": "packer-build", "event": "completed"}}})
+	_, err = control.followLogs(testJob, 100)
 	requireControllerError(t, err, "invalid_builder_response")
 }
 
 func TestControllerDefaultRunFollowsAndReturnsJobFailure(t *testing.T) {
 	control, output := testController(t, nil)
 	control.ssh = func(_ context.Context, _ []string, _ []string, input []byte) ([]byte, int, error) {
-		request, _ := controllerDecode(input)
+		request, _ := decodeResponse(input)
 		switch request["op"] {
 		case "ready":
 			return []byte(`{"ok":true,"phase":"ready"}`), 0, nil
 		case "submit":
-			return controllerJSON(map[string]any{"ok": true, "job_id": controllerTestJob, "phase": "preparing"}), 0, nil
+			return testJSON(map[string]any{"ok": true, "job_id": testJob, "phase": "preparing"}), 0, nil
 		default:
-			return controllerJSON(map[string]any{"ok": true, "job_id": controllerTestJob, "phase": "failed", "finished": true, "cursor": int64(0), "has_more": false, "records": []any{}}), 0, nil
+			return testJSON(map[string]any{"ok": true, "job_id": testJob, "phase": "failed", "finished": true, "cursor": int64(0), "has_more": false, "records": []any{}}), 0, nil
 		}
 	}
-	args, _ := parseControllerArgs([]string{"run", "ubuntu26-base", "--revision", controllerTestRevision})
+	args, _ := parseArgs([]string{"run", "ubuntu26-base", "--revision", testRevision})
 	_, err := control.execute(args)
 	requireControllerError(t, err, "job_failed")
-	if !strings.Contains(output.String(), `"phase":"failed"`) || strings.Contains(output.String(), controllerSecret) {
+	if !strings.Contains(output.String(), `"phase":"failed"`) || strings.Contains(output.String(), testSecret) {
 		t.Fatal("failure summary unsafe or absent")
 	}
 }
@@ -449,13 +449,13 @@ func TestControllerShutdownIsGracefulAndWaits(t *testing.T) {
 		fmt.Fprintf(w, `{"data":{"name":"imagebuilder1","status":%q}}`, status)
 	})
 	control.ssh = func(_ context.Context, _ []string, _ []string, input []byte) ([]byte, int, error) {
-		request, _ := controllerDecode(input)
+		request, _ := decodeResponse(input)
 		if request["op"] != "shutdown" {
 			t.Fatal("unexpected remote operation")
 		}
 		return []byte(`{"ok":true,"phase":"stopping"}`), 0, nil
 	}
-	args, _ := parseControllerArgs([]string{"shutdown"})
+	args, _ := parseArgs([]string{"shutdown"})
 	result, err := control.execute(args)
 	if err != nil || result["power"] != "stopped" {
 		t.Fatal("shutdown failed")
@@ -463,7 +463,7 @@ func TestControllerShutdownIsGracefulAndWaits(t *testing.T) {
 }
 
 func TestControllerBoundedSSHBuffer(t *testing.T) {
-	buffer := controllerLimitedBuffer{limit: 10}
+	buffer := limitedBuffer{limit: 10}
 	input := bytes.Repeat([]byte("x"), 100)
 	count, err := buffer.Write(input)
 	if err != nil || count != 100 || len(buffer.data) != 10 {
@@ -474,14 +474,14 @@ func TestControllerBoundedSSHBuffer(t *testing.T) {
 func TestControllerRemoteErrorsAreValueFree(t *testing.T) {
 	control, output := testController(t, nil)
 	control.ssh = func(context.Context, []string, []string, []byte) ([]byte, int, error) {
-		return nil, 1, fmt.Errorf("unexpected process failure: %s", controllerSecret)
+		return nil, 1, fmt.Errorf("unexpected process failure: %s", testSecret)
 	}
 	_, err := control.remote(map[string]any{"op": "status"})
 	requireControllerError(t, err, "builder_unreachable")
-	if strings.Contains(output.String(), controllerSecret) {
+	if strings.Contains(output.String(), testSecret) {
 		t.Fatal("unexpected error exposed")
 	}
-	control.ssh = controllerResult(map[string]any{"ok": false, "error": controllerSecret})
+	control.ssh = testResult(map[string]any{"ok": false, "error": testSecret})
 	_, err = control.remote(map[string]any{"op": "status"})
 	requireControllerError(t, err, "invalid_builder_response")
 }
@@ -490,26 +490,26 @@ func TestControllerPublishRetryDoesNotRequireBuildPassword(t *testing.T) {
 	control, _ := testController(t, nil)
 	delete(control.env, "PKR_VAR_user_password")
 	for _, key := range []string{"SEAWEEDFS_S3_ENDPOINT", "SEAWEEDFS_S3_ACCESS_KEY", "SEAWEEDFS_S3_SECRET_KEY"} {
-		control.env[key] = controllerSecret
+		control.env[key] = testSecret
 	}
 	var submitted map[string]any
 	control.ssh = func(_ context.Context, _ []string, _ []string, input []byte) ([]byte, int, error) {
-		request, _ := controllerDecode(input)
+		request, _ := decodeResponse(input)
 		if request["op"] == "ready" {
 			return []byte(`{"ok":true,"phase":"ready"}`), 0, nil
 		}
 		submitted = request
-		return controllerJSON(map[string]any{"ok": true, "job_id": controllerTestJob, "phase": "preparing"}), 0, nil
+		return testJSON(map[string]any{"ok": true, "job_id": testJob, "phase": "preparing"}), 0, nil
 	}
-	args, err := parseControllerArgs([]string{"publish-retry", controllerTestJob, "--detach"})
+	args, err := parseArgs([]string{"publish-retry", testJob, "--detach"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	result, err := control.execute(args)
-	if err != nil || result["job_id"] != controllerTestJob {
+	if err != nil || result["job_id"] != testJob {
 		t.Fatalf("publish retry failed: %v", err)
 	}
-	if submitted["op"] != "publish-retry" || submitted["job_id"] != controllerTestJob {
+	if submitted["op"] != "publish-retry" || submitted["job_id"] != testJob {
 		t.Fatal("wrong retry operation")
 	}
 	values := submitted["credentials"].(map[string]any)
@@ -521,13 +521,13 @@ func TestControllerPublishRetryDoesNotRequireBuildPassword(t *testing.T) {
 func TestControllerSSHProcessDiscardsRawStderr(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	output, exit, err := controllerSSHCommand(ctx, []string{"/bin/sh", "-c", `printf '{"ok":true}'; printf 'SECRET-MARKER' >&2; exit 1`}, []string{"PATH=/usr/bin:/bin"}, nil)
+	output, exit, err := runSSH(ctx, []string{"/bin/sh", "-c", `printf '{"ok":true}'; printf 'SECRET-MARKER' >&2; exit 1`}, []string{"PATH=/usr/bin:/bin"}, nil)
 	if err != nil || exit != 1 || string(output) != `{"ok":true}` {
 		t.Fatal("SSH process did not separate raw stderr")
 	}
 }
 
 func TestControllerCustomCAErrorDoesNotExposePath(t *testing.T) {
-	_, err := newImageController(map[string]string{"IMAGEBUILDER_PROXMOX_TOKEN": "test", "IMAGEBUILDER_PROXMOX_CA_FILE": filepath.Join(t.TempDir(), controllerSecret)}, io.Discard)
+	_, err := newBuilderClient(map[string]string{"IMAGEBUILDER_PROXMOX_TOKEN": "test", "IMAGEBUILDER_PROXMOX_CA_FILE": filepath.Join(t.TempDir(), testSecret)}, io.Discard)
 	requireControllerError(t, err, "invalid_proxmox_ca")
 }

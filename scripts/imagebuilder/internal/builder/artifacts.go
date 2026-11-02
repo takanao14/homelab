@@ -16,12 +16,12 @@ import (
 	"github.com/takanao14/homelab/scripts/imagebuilder/internal/store"
 )
 
-type workerArtifact struct {
+type imageArtifact struct {
 	Name   string `json:"name"`
 	SHA256 string `json:"sha256"`
 }
 
-func workerFileDigest(path string) (string, error) {
+func fileDigest(path string) (string, error) {
 	file, err := store.OpenNoFollow(path, os.O_RDONLY|syscall.O_NONBLOCK, 0)
 	if err != nil {
 		return "", protocol.Fail("invalid_artifact")
@@ -37,7 +37,7 @@ func workerFileDigest(path string) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
-func workerReadSmallFile(path string, maximum int64) ([]byte, error) {
+func readSmallFile(path string, maximum int64) ([]byte, error) {
 	info, err := os.Lstat(path)
 	if err != nil || !info.Mode().IsRegular() || info.Size() > maximum {
 		return nil, protocol.Fail("invalid_artifact")
@@ -57,24 +57,24 @@ func workerReadSmallFile(path string, maximum int64) ([]byte, error) {
 	return data, nil
 }
 
-func (r *Runtime) workerArtifacts(checkout string) ([]workerArtifact, error) {
+func (r *Runtime) scanArtifacts(checkout string) ([]imageArtifact, error) {
 	r.CurrentStep = "artifact-check"
 	images, err := filepath.Glob(filepath.Join(checkout, "packer", "images", "*.img"))
 	if err != nil {
 		return nil, protocol.Fail("invalid_artifact")
 	}
 	sort.Strings(images)
-	result := make([]workerArtifact, 0, len(images))
+	result := make([]imageArtifact, 0, len(images))
 	for _, image := range images {
 		info, err := os.Lstat(image)
 		if err != nil || !info.Mode().IsRegular() || !protocol.ImagePattern.MatchString(filepath.Base(image)) {
 			return nil, protocol.Fail("invalid_artifact")
 		}
-		digest, err := workerFileDigest(image)
+		digest, err := fileDigest(image)
 		if err != nil {
 			return nil, err
 		}
-		sidecar, err := workerReadSmallFile(image+".sha256", 65)
+		sidecar, err := readSmallFile(image+".sha256", 65)
 		if err != nil {
 			return nil, err
 		}
@@ -84,7 +84,7 @@ func (r *Runtime) workerArtifacts(checkout string) ([]workerArtifact, error) {
 		if _, err := r.Invoke([]string{"qemu-img", "check", "-f", "qcow2", image}, command.Options{Timeout: 5 * time.Minute}); err != nil {
 			return nil, err
 		}
-		result = append(result, workerArtifact{Name: filepath.Base(image), SHA256: digest})
+		result = append(result, imageArtifact{Name: filepath.Base(image), SHA256: digest})
 	}
 	if len(result) == 0 {
 		return nil, protocol.Fail("no_artifacts")
@@ -92,12 +92,12 @@ func (r *Runtime) workerArtifacts(checkout string) ([]workerArtifact, error) {
 	return result, nil
 }
 
-func workerManifest(value any) ([]workerArtifact, error) {
+func parseManifest(value any) ([]imageArtifact, error) {
 	items, ok := value.([]any)
 	if !ok || len(items) == 0 {
 		return nil, protocol.Fail("invalid_artifact")
 	}
-	result := make([]workerArtifact, 0, len(items))
+	result := make([]imageArtifact, 0, len(items))
 	previous := ""
 	for _, item := range items {
 		entry, ok := item.(protocol.Object)
@@ -107,7 +107,7 @@ func workerManifest(value any) ([]workerArtifact, error) {
 			return nil, protocol.Fail("invalid_artifact")
 		}
 		previous = protocol.String(entry, "name")
-		result = append(result, workerArtifact{Name: previous, SHA256: protocol.String(entry, "sha256")})
+		result = append(result, imageArtifact{Name: previous, SHA256: protocol.String(entry, "sha256")})
 	}
 	return result, nil
 }

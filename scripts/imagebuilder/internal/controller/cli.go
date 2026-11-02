@@ -8,13 +8,13 @@ import (
 	"github.com/takanao14/homelab/scripts/imagebuilder/internal/protocol"
 )
 
-type controllerArgs struct {
+type options struct {
 	command, target, revision, branch, jobID, enabled string
 	publish, detach, follow, keepRunning              bool
 	after                                             int64
 }
 
-type controllerCLI struct {
+type commandLine struct {
 	Run struct {
 		Target   string `arg:"" help:"Build target."`
 		Revision string `xor:"source" required:"" help:"Full repository commit SHA."`
@@ -41,38 +41,38 @@ type controllerCLI struct {
 	Shutdown struct{} `cmd:"" help:"Shut down an idle builder."`
 }
 
-func parseCLI(args []string, output io.Writer) (controllerArgs, bool, error) {
-	var cli controllerCLI
+func parseCLI(args []string, output io.Writer) (options, bool, error) {
+	var cli commandLine
 	var help bytes.Buffer
 	helpRequested := false
 	parser, err := kong.New(&cli, kong.Name("image-build.sh"), kong.Writers(&help, io.Discard), kong.Exit(func(int) { helpRequested = true }))
 	if err != nil {
-		return controllerArgs{}, false, protocol.Fail("internal_error")
+		return options{}, false, protocol.Fail("internal_error")
 	}
 	ctx, err := parser.Parse(args)
 	if helpRequested {
 		if _, err := io.Copy(output, &help); err != nil {
-			return controllerArgs{}, false, protocol.Fail("controller_failed")
+			return options{}, false, protocol.Fail("controller_failed")
 		}
-		return controllerArgs{}, true, nil
+		return options{}, true, nil
 	}
 	if err != nil {
-		return controllerArgs{}, false, protocol.Fail("invalid_arguments")
+		return options{}, false, protocol.Fail("invalid_arguments")
 	}
-	r := controllerArgs{}
+	r := options{}
 	switch ctx.Command() {
 	case "run <target>":
-		r = controllerArgs{command: "run", target: cli.Run.Target, revision: cli.Run.Revision, branch: cli.Run.Branch, publish: cli.Run.Publish, detach: cli.Run.Detach}
+		r = options{command: "run", target: cli.Run.Target, revision: cli.Run.Revision, branch: cli.Run.Branch, publish: cli.Run.Publish, detach: cli.Run.Detach}
 	case "status", "status <job-id>":
-		r = controllerArgs{command: "status", jobID: cli.Status.JobID}
+		r = options{command: "status", jobID: cli.Status.JobID}
 	case "logs <job-id>":
-		r = controllerArgs{command: "logs", jobID: cli.Logs.JobID, follow: cli.Logs.Follow, after: cli.Logs.After}
+		r = options{command: "logs", jobID: cli.Logs.JobID, follow: cli.Logs.Follow, after: cli.Logs.After}
 	case "publish-retry <job-id>":
-		r = controllerArgs{command: "publish-retry", jobID: cli.PublishRetry.JobID, detach: cli.PublishRetry.Detach}
+		r = options{command: "publish-retry", jobID: cli.PublishRetry.JobID, detach: cli.PublishRetry.Detach}
 	case "start":
-		r = controllerArgs{command: "start", keepRunning: cli.Start.KeepRunning}
+		r = options{command: "start", keepRunning: cli.Start.KeepRunning}
 	case "maintenance <enabled>":
-		r = controllerArgs{command: "maintenance", enabled: cli.Maintenance.Enabled}
+		r = options{command: "maintenance", enabled: cli.Maintenance.Enabled}
 	case "shutdown":
 		r.command = "shutdown"
 	default:
@@ -87,7 +87,7 @@ func parseCLI(args []string, output io.Writer) (controllerArgs, bool, error) {
 	}{
 		{r.command != "run" || protocol.TargetPattern.MatchString(r.target), "invalid_target"},
 		{r.revision == "" || protocol.RevisionPattern.MatchString(r.revision), "invalid_revision"},
-		{r.branch == "" || controllerValidBranch(r.branch), "invalid_branch"},
+		{r.branch == "" || validBranch(r.branch), "invalid_branch"},
 		{r.jobID == "" && r.command != "logs" && r.command != "publish-retry" || protocol.ValidJobID(r.jobID), "invalid_job_id"},
 	} {
 		if !rule.valid {
@@ -100,7 +100,7 @@ func parseCLI(args []string, output io.Writer) (controllerArgs, bool, error) {
 	return r, false, nil
 }
 
-func parseControllerArgs(args []string) (controllerArgs, error) {
+func parseArgs(args []string) (options, error) {
 	parsed, _, err := parseCLI(args, io.Discard)
 	return parsed, err
 }
@@ -111,7 +111,7 @@ func Main(args []string, environ map[string]string, out io.Writer) error {
 	if err != nil || help {
 		return err
 	}
-	control, err := newImageController(environ, out)
+	control, err := newBuilderClient(environ, out)
 	if err != nil {
 		return err
 	}

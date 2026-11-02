@@ -9,7 +9,7 @@ import (
 	"github.com/takanao14/homelab/scripts/imagebuilder/internal/protocol"
 )
 
-func TestRemoteImagePair(t *testing.T) {
+func TestVerifyPair(t *testing.T) {
 	digest := strings.Repeat("a", 64)
 	other := strings.Repeat("b", 64)
 	for _, tc := range []struct {
@@ -59,7 +59,7 @@ func TestRemoteImagePair(t *testing.T) {
 	}
 }
 
-func TestRemoteImagePathRejectsInvalidNames(t *testing.T) {
+func TestPathRejectsInvalidNames(t *testing.T) {
 	for _, pair := range [][2]string{{"../bucket", "valid.img"}, {"cloud-images", "../image.img"}, {"bucket:other", "valid.img"}} {
 		if _, err := Path(pair[0], pair[1]); err == nil {
 			t.Fatal("invalid remote path accepted")

@@ -8,7 +8,7 @@ import (
 	"github.com/takanao14/homelab/scripts/imagebuilder/internal/remoteimage"
 )
 
-func (r *Runtime) workerPublish(checkout, target string, manifest []workerArtifact, env map[string]string) error {
+func (r *Runtime) publishArtifacts(checkout, target string, manifest []imageArtifact, env map[string]string) error {
 	r.CurrentStep = "publish"
 	remoteEnv, err := remoteimage.Environment(env)
 	if err != nil {

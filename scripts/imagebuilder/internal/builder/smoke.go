@@ -17,8 +17,8 @@ import (
 	"github.com/takanao14/homelab/scripts/imagebuilder/internal/store"
 )
 
-func workerSmokeConfiguration(id, image, public string) (protocol.Object, string, error) {
-	if !protocol.ValidJobID(id) || !workerPublicKey.MatchString(public) {
+func smokeConfiguration(id, image, public string) (protocol.Object, string, error) {
+	if !protocol.ValidJobID(id) || !publicKeyPattern.MatchString(public) {
 		return nil, "", protocol.Fail("invalid_request")
 	}
 	marker := "/var/tmp/imagebuilder-smoke-" + id
@@ -33,7 +33,7 @@ func workerSmokeConfiguration(id, image, public string) (protocol.Object, string
 	return configuration, check, nil
 }
 
-func (r *Runtime) workerSmoke(id, image string, env map[string]string) error {
+func (r *Runtime) smokeBoot(id, image string, env map[string]string) error {
 	r.CurrentStep = "smoke-boot"
 	if r.SmokeHook != nil {
 		return r.SmokeHook(id, image, env)
@@ -41,7 +41,7 @@ func (r *Runtime) workerSmoke(id, image string, env map[string]string) error {
 	directory := r.WorkerPath(id)
 	overlay, seed := filepath.Join(r.JobDir(id), "smoke.qcow2"), filepath.Join(directory, "seed.img")
 	agentSocket := filepath.Join(directory, "agent.sock")
-	configuration, check, err := workerSmokeConfiguration(id, image, env["PKR_VAR_ssh_pubkey"])
+	configuration, check, err := smokeConfiguration(id, image, env["PKR_VAR_ssh_pubkey"])
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (r *Runtime) workerSmoke(id, image string, env map[string]string) error {
 			<-done
 		}
 	}()
-	timeout, err := r.stepTimeout(workerSeconds(r.Cfg.SmokeTimeoutSeconds))
+	timeout, err := r.stepTimeout(seconds(r.Cfg.SmokeTimeoutSeconds))
 	if err != nil {
 		return err
 	}
