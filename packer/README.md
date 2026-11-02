@@ -22,7 +22,12 @@ apply host needs bucket access, and Proxmox nodes download published artifacts.
 
 Provision the VM and controller credentials as described in the
 [imagebuilder role](../ansible/roles/imagebuilder/README.md). From the repository
-root, with credentials injected from SOPS into the controller environment:
+root, with credentials injected from SOPS into the controller environment.
+
+The CLI builds its Go controller locally with the toolchain pinned in
+`scripts/imagebuilder/go.mod`. Set `IMAGEBUILDER_BINARY` to an existing binary
+to run on a controller without Go. The builder runtime is cross-compiled by
+Ansible on the controller and installed as `/usr/local/libexec/imagebuilder`.
 
 ```bash
 # Build and smoke-test a committed revision without publishing.

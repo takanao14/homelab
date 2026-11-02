@@ -7,7 +7,7 @@ Homelab VM lifecycle, provisioning, secret sync, checks, and integrations.
 ```
 scripts/
 ├── create-vm.sh / remove-vm.sh / provision.sh  # VM lifecycle (run directly)
-├── image-build.sh / imagebuilder/             # On-demand VM controller and systemd job runtime
+├── image-build.sh / imagebuilder/             # Go controller and systemd job runtime
 ├── gpu-switch.sh                             # k8s GPU workload switch
 ├── adr-lint.py                               # ADR metadata, index, and link validation
 ├── check-image-refs.sh                       # CI: image filename map consistency check

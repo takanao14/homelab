@@ -176,6 +176,15 @@
     group: root
     mode: '0644'
 
+- name: Restrict job directory creation to the privileged dispatcher
+  become: true
+  ansible.builtin.file:
+    path: "{{ imagebuilder_work_dir }}/jobs"
+    state: directory
+    owner: root
+    group: "{{ imagebuilder_user }}"
+    mode: '0750'
+
 - name: Download the pinned Packer release
   become: true
   ansible.builtin.get_url:
@@ -207,10 +216,34 @@
     group: root
     mode: '0644'
 
+- name: Create the image builder build directory on the controller
+  delegate_to: localhost
+  become: false
+  ansible.builtin.file:
+    path: "{{ imagebuilder_build_dir }}"
+    state: directory
+    mode: '0755'
+  check_mode: false
+
+- name: Build the image builder binary on the controller
+  delegate_to: localhost
+  become: false
+  throttle: 1
+  ansible.builtin.command:
+    argv:
+      - bash
+      - "{{ role_path }}/../../../scripts/imagebuilder/build.sh"
+      - "{{ imagebuilder_build_dir }}/imagebuilder-linux-amd64"
+  environment:
+    GOOS: linux
+    GOARCH: amd64
+  changed_when: true
+  check_mode: false
+
 - name: Install the image builder runtime
   become: true
   ansible.builtin.copy:
-    src: "{{ role_path }}/../../../scripts/imagebuilder/runtime.py"
+    src: "{{ imagebuilder_build_dir }}/imagebuilder-linux-amd64"
     dest: /usr/local/libexec/imagebuilder
     owner: root
     group: root

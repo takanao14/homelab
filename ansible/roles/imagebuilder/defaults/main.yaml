@@ -13,6 +13,7 @@ imagebuilder_timeout_seconds: 14400
 imagebuilder_retention_days: 7
 imagebuilder_smoke_timeout_seconds: 300
 imagebuilder_kernel_path: /var/lib/imagebuilder-kernel/vmlinuz
+imagebuilder_build_dir: "{{ lookup('ansible.builtin.env', 'HOME') }}/.cache/homelab/imagebuilder"
 # renovate: datasource=github-releases depName=hashicorp/packer
 imagebuilder_packer_version: 1.16.2
 imagebuilder_packer_sha256: abbfe0cf74985084112659b53e3565f264f70a20914c3b7c4f789f54f61c2414
@@ -24,7 +25,6 @@ imagebuilder_packages:
   - git
   - libguestfs-tools
   - openssh-client
-  - python3
   - qemu-system-x86
   - qemu-utils
   - rclone

@@ -70,6 +70,7 @@ in `.sops.yaml` before encrypting them.
 | `terraform` / `terragrunt` | Infrastructure provisioning              |
 | `ansible`                  | Server configuration management          |
 | `packer`                   | Building the custom Proxmox cloud images |
+| `go`                       | Building the image-builder controller and runtime |
 | `k0sctl`                   | k0s cluster lifecycle                    |
 | `helmfile` / `helm`        | Kubernetes workload deployments          |
 | `kubectl`                  | Kubernetes cluster interaction           |

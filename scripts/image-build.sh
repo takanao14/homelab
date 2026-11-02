@@ -2,4 +2,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec python3 "${SCRIPT_DIR}/imagebuilder/controller.py" "$@"
+if [[ -n "${IMAGEBUILDER_BINARY:-}" ]]; then
+    exec "$IMAGEBUILDER_BINARY" controller "$@"
+fi
+(
+    unset GOOS GOARCH
+    bash "${SCRIPT_DIR}/imagebuilder/build.sh"
+)
+exec "${SCRIPT_DIR}/imagebuilder/bin/imagebuilder" controller "$@"

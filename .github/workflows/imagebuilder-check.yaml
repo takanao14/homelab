@@ -16,15 +16,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-go@v6
         with:
-          python-version: "3.14"
+          go-version-file: scripts/imagebuilder/go.mod
+          cache: false
       - name: Test job and power lifecycle without infrastructure access
-        run: python3 -m unittest discover -s scripts/imagebuilder -p 'test_*.py' -v
+        working-directory: scripts/imagebuilder
+        run: |
+          set -euo pipefail
+          test -z "$(gofmt -l .)"
+          go vet ./...
+          go test -race ./...
+      - name: Build the Linux runtime and macOS controller
+        working-directory: scripts/imagebuilder
+        run: |
+          set -euo pipefail
+          GOOS=linux GOARCH=amd64 bash build.sh "${RUNNER_TEMP}/imagebuilder"
+          GOOS=darwin GOARCH=arm64 bash build.sh "${RUNNER_TEMP}/imagebuilder-darwin-arm64"
       - name: Verify systemd unit dependencies and directives
         run: |
           set -euo pipefail
-          sudo install -Dm755 scripts/imagebuilder/runtime.py /usr/local/libexec/imagebuilder
+          sudo install -Dm755 "${RUNNER_TEMP}/imagebuilder" /usr/local/libexec/imagebuilder
           for template in ansible/roles/imagebuilder/templates/*.service.j2; do
             sed -e 's|{{ imagebuilder_work_dir }}|/var/lib/imagebuilder|g' \
                 -e 's|{{ imagebuilder_user }}|imagebuilder|g' \
