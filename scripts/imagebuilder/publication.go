@@ -10,7 +10,11 @@ func (r *Runtime) workerPublish(checkout, target string, manifest []workerArtifa
 	if err != nil {
 		return err
 	}
-	if _, err := r.Invoke([]string{"bash", "./push.sh", target}, CommandOptions{Dir: filepath.Join(checkout, "packer"), Env: env, Timeout: workerSeconds(r.Cfg.TimeoutSeconds)}); err != nil {
+	timeout, err := r.stepTimeout(0)
+	if err != nil {
+		return err
+	}
+	if _, err := r.Invoke([]string{"bash", "./push.sh", target}, CommandOptions{Dir: filepath.Join(checkout, "packer"), Env: env, Timeout: timeout}); err != nil {
 		return err
 	}
 	for _, artifact := range manifest {
@@ -18,7 +22,11 @@ func (r *Runtime) workerPublish(checkout, target string, manifest []workerArtifa
 		if err != nil {
 			return err
 		}
-		digest, err := verifyRemotePair(remote, remoteEnv, workerSeconds(r.Cfg.TimeoutSeconds), r.Invoke)
+		timeout, err := r.stepTimeout(0)
+		if err != nil {
+			return err
+		}
+		digest, err := verifyRemotePair(remote, remoteEnv, timeout, r.Invoke)
 		if err != nil {
 			if safeCode(err) == "invalid_artifact" {
 				return fail("remote_checksum_mismatch")

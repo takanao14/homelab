@@ -88,7 +88,11 @@ func (r *Runtime) workerSmoke(id, image string, env map[string]string) error {
 			<-done
 		}
 	}()
-	deadline := time.Now().Add(workerSeconds(r.Cfg.SmokeTimeoutSeconds))
+	timeout, err := r.stepTimeout(workerSeconds(r.Cfg.SmokeTimeoutSeconds))
+	if err != nil {
+		return err
+	}
+	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		select {
 		case err := <-done:
@@ -98,7 +102,7 @@ func (r *Runtime) workerSmoke(id, image string, env map[string]string) error {
 		}
 		_, err := r.Invoke([]string{"ssh", "-F", "/dev/null", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5",
 			"-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null", "-i", filepath.Join(directory, "id_ed25519"),
-			"-p", port, "imagecheck@127.0.0.1", check}, CommandOptions{Env: env, Timeout: 15 * time.Second})
+			"-p", port, "imagecheck@127.0.0.1", check}, CommandOptions{Env: env, Timeout: 15 * time.Second, Quiet: true})
 		if err == nil {
 			return nil
 		}

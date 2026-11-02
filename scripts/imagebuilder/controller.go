@@ -7,9 +7,6 @@ import (
 	"time"
 )
 
-// All controller failures use fixed codes shared with the runtime protocol.
-func controlFail(code string) error { return fail(code) }
-
 type imageController struct {
 	env                                map[string]string
 	url, node, token, host, user, vmid string
@@ -55,7 +52,7 @@ func (c *imageController) wake(buildReady bool) (map[string]any, error) {
 		}
 		c.sleep(5 * time.Second)
 	}
-	return nil, controlFail(last)
+	return nil, fail(last)
 }
 
 func (c *imageController) secrets(publish bool) (map[string]string, error) {
@@ -68,7 +65,7 @@ func (c *imageController) secrets(publish bool) (map[string]string, error) {
 	if publish {
 		for _, key := range []string{"SEAWEEDFS_S3_ENDPOINT", "SEAWEEDFS_S3_ACCESS_KEY", "SEAWEEDFS_S3_SECRET_KEY"} {
 			if values[key] == "" {
-				return nil, controlFail("missing_publish_credentials")
+				return nil, fail("missing_publish_credentials")
 			}
 		}
 	} else {
@@ -83,7 +80,7 @@ func (c *imageController) secrets(publish bool) (map[string]string, error) {
 
 func (c *imageController) emit(value map[string]any) error {
 	if err := json.NewEncoder(c.out).Encode(value); err != nil {
-		return controlFail("controller_failed")
+		return fail("controller_failed")
 	}
 	return nil
 }
@@ -96,12 +93,12 @@ func (c *imageController) followLogs(identifier string, after int64) (map[string
 			return nil, err
 		}
 		if page["job_id"] != identifier {
-			return nil, controlFail("unexpected_job_identity")
+			return nil, fail("unexpected_job_identity")
 		}
-		cursor, valid := controllerInteger(page["cursor"])
+		cursor, valid := num(page["cursor"])
 		hasMore, validMore := page["has_more"].(bool)
 		if !valid || cursor < after || !validMore {
-			return nil, controlFail("invalid_builder_response")
+			return nil, fail("invalid_builder_response")
 		}
 		if truncated, _ := page["truncated"].(bool); truncated {
 			if err := c.emit(map[string]any{"ok": true, "job_id": identifier, "truncated": true, "cursor": after}); err != nil {
@@ -112,11 +109,11 @@ func (c *imageController) followLogs(identifier string, after int64) (map[string
 		for _, raw := range records {
 			record, ok := raw.(map[string]any)
 			if !ok {
-				return nil, controlFail("invalid_builder_response")
+				return nil, fail("invalid_builder_response")
 			}
-			sequence, valid := controllerInteger(record["sequence"])
+			sequence, valid := num(record["sequence"])
 			if !valid || sequence <= after {
-				return nil, controlFail("invalid_builder_response")
+				return nil, fail("invalid_builder_response")
 			}
 			result := map[string]any{"job_id": identifier}
 			for key, value := range record {
@@ -128,17 +125,17 @@ func (c *imageController) followLogs(identifier string, after int64) (map[string
 			after = sequence
 		}
 		if cursor != after {
-			return nil, controlFail("invalid_builder_response")
+			return nil, fail("invalid_builder_response")
 		}
 		if hasMore {
 			if len(records) == 0 {
-				return nil, controlFail("invalid_builder_response")
+				return nil, fail("invalid_builder_response")
 			}
 			continue
 		}
 		if finished, _ := page["finished"].(bool); finished {
 			if !controllerTerminal(page["phase"]) {
-				return nil, controlFail("invalid_builder_response")
+				return nil, fail("invalid_builder_response")
 			}
 			result := map[string]any{}
 			for _, key := range []string{"ok", "job_id", "phase", "code", "finished", "cursor", "branch", "revision"} {
@@ -150,7 +147,7 @@ func (c *imageController) followLogs(identifier string, after int64) (map[string
 		}
 		c.sleep(2 * time.Second)
 	}
-	return nil, controlFail("log_wait_timeout")
+	return nil, fail("log_wait_timeout")
 }
 
 func (c *imageController) waitStopped() (map[string]any, error) {
@@ -165,7 +162,7 @@ func (c *imageController) waitStopped() (map[string]any, error) {
 		}
 		c.sleep(5 * time.Second)
 	}
-	return nil, controlFail("shutdown_timeout")
+	return nil, fail("shutdown_timeout")
 }
 
 func (c *imageController) execute(args controllerArgs) (map[string]any, error) {
@@ -231,7 +228,7 @@ func (c *imageController) execute(args controllerArgs) (map[string]any, error) {
 		}
 		revision, ok := resolved["revision"].(string)
 		if resolved["branch"] != args.branch || !ok || !revisionPattern.MatchString(revision) {
-			return nil, controlFail("invalid_builder_response")
+			return nil, fail("invalid_builder_response")
 		}
 		request["revision"] = revision
 		request["branch"] = args.branch
@@ -245,7 +242,7 @@ func (c *imageController) execute(args controllerArgs) (map[string]any, error) {
 	}
 	identifier, valid := result["job_id"].(string)
 	if !valid || !jobPattern.MatchString(identifier) {
-		return nil, controlFail("invalid_builder_response")
+		return nil, fail("invalid_builder_response")
 	}
 	if args.detach {
 		return result, nil
@@ -261,11 +258,10 @@ func (c *imageController) execute(args controllerArgs) (map[string]any, error) {
 		if err := c.emit(state); err != nil {
 			return nil, err
 		}
-		return nil, controlFail("job_failed")
+		return nil, fail("job_failed")
 	}
 	return state, nil
 }
 
-func controllerInteger(value any) (int64, bool) { return num(value) }
-func controllerValidBranch(value string) bool   { _, err := validateBranch(value); return err == nil }
-func controllerTerminal(value any) bool         { text, ok := value.(string); return ok && terminalSet[text] }
+func controllerValidBranch(value string) bool { _, err := validateBranch(value); return err == nil }
+func controllerTerminal(value any) bool       { text, ok := value.(string); return ok && terminalSet[text] }

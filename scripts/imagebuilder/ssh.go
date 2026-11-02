@@ -18,10 +18,10 @@ func controllerDecode(raw []byte) (map[string]any, error) {
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
 	if err := decoder.Decode(&data); err != nil || data == nil {
-		return nil, controlFail("invalid_builder_response")
+		return nil, fail("invalid_builder_response")
 	}
 	if err := decoder.Decode(new(any)); err != io.EOF {
-		return nil, controlFail("invalid_builder_response")
+		return nil, fail("invalid_builder_response")
 	}
 	return data, nil
 }
@@ -35,14 +35,14 @@ func controllerSSHCommand(ctx context.Context, args, environment []string, input
 	command.Stderr = io.Discard
 	err := command.Run()
 	if len(output.data) > 262144 {
-		return nil, 1, controlFail("invalid_builder_response")
+		return nil, 1, fail("invalid_builder_response")
 	}
 	if err != nil {
 		var exit *exec.ExitError
 		if errors.As(err, &exit) {
 			return output.data, exit.ExitCode(), nil
 		}
-		return nil, 1, controlFail("builder_unreachable")
+		return nil, 1, fail("builder_unreachable")
 	}
 	return output.data, 0, nil
 }
@@ -73,30 +73,30 @@ func (c *imageController) remote(request map[string]any) (map[string]any, error)
 	}
 	input, err := json.Marshal(request)
 	if err != nil {
-		return nil, controlFail("invalid_arguments")
+		return nil, fail("invalid_arguments")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 	raw, status, err := c.ssh(ctx, args, environment, input)
 	if err != nil {
 		if err.Error() == "invalid_builder_response" {
-			return nil, controlFail("invalid_builder_response")
+			return nil, fail("invalid_builder_response")
 		}
-		return nil, controlFail("builder_unreachable")
+		return nil, fail("builder_unreachable")
 	}
 	if len(raw) > 262144 {
-		return nil, controlFail("invalid_builder_response")
+		return nil, fail("invalid_builder_response")
 	}
 	data, err := controllerDecode(raw)
 	if err != nil {
-		return nil, controlFail("builder_unreachable")
+		return nil, fail("builder_unreachable")
 	}
 	safe, err := controllerSafeResponse(data)
 	if err != nil {
 		return nil, err
 	}
 	if status != 0 {
-		return nil, controlFail("builder_request_failed")
+		return nil, fail("builder_request_failed")
 	}
 	return safe, nil
 }

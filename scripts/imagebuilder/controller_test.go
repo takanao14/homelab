@@ -259,7 +259,7 @@ func TestControllerWakeReadinessAndRace(t *testing.T) {
 		}
 		attempts++
 		if attempts == 1 {
-			return nil, 1, controlFail("builder_unreachable")
+			return nil, 1, fail("builder_unreachable")
 		}
 		return controllerJSON(map[string]any{"ok": true, "phase": "ready"}), 0, nil
 	}
@@ -375,7 +375,7 @@ func TestControllerFollowDrainsPagesAndAwaitsFinish(t *testing.T) {
 	}
 	control.ssh = func(_ context.Context, _ []string, _ []string, input []byte) ([]byte, int, error) {
 		request, _ := controllerDecode(input)
-		cursor, _ := controllerInteger(request["after"])
+		cursor, _ := num(request["after"])
 		after = append(after, cursor)
 		if pageIndex >= len(pages) {
 			t.Fatal("follow never finished")

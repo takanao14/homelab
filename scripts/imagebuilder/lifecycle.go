@@ -111,7 +111,8 @@ func (r *Runtime) Boot() error {
 			}
 			record, err := readJobRecord(path)
 			if err != nil {
-				return nil, err
+				// An unreadable record must not block initialization; status reports it as invalid_state.
+				continue
 			}
 			if !record.Finished {
 				record.Finished, record.Result = true, &JobResult{Phase: "interrupted", Code: "host_restarted"}
@@ -148,18 +149,24 @@ func (r *Runtime) Boot() error {
 		state.Active, state.Maintenance, state.Stopping, state.IdleSince = "", maintenance, false, r.now().Unix()
 		return nil, r.saveControl(state)
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	// Cache eviction is best effort and must not block job admission after boot.
+	_ = r.pruneCache()
+	return nil
 }
 
 func (r *Runtime) Idle() error {
 	_, err := r.locked(func(state *ControlState) (Object, error) {
-		if err := r.prune(state); err != nil {
-			return nil, err
-		}
+		// Retention failures must not keep an idle builder powered on.
+		pruneErr := r.prune(state)
 		if state.Active == "" && !state.Maintenance && !state.Stopping && r.now().Unix()-state.IdleSince >= int64(r.Cfg.IdleSeconds) {
-			return r.shutdown(state)
+			if _, err := r.shutdown(state); err != nil {
+				return nil, err
+			}
 		}
-		return nil, nil
+		return nil, pruneErr
 	})
 	return err
 }

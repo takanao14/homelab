@@ -13,7 +13,8 @@ SupplementaryGroups=kvm
 Environment=LIBGUESTFS_BACKEND=direct
 ExecStart=/usr/local/libexec/imagebuilder run %i
 ExecStopPost=+/usr/local/libexec/imagebuilder finish %i
-RuntimeMaxSec={{ imagebuilder_timeout_seconds }}
+# The worker bounds every step by timeout_seconds; this margin covers finalization.
+RuntimeMaxSec={{ imagebuilder_timeout_seconds | int + 240 }}
 TimeoutStopSec=120
 KillMode=control-group
 Restart=no

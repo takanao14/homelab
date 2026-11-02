@@ -437,6 +437,24 @@ func TestStateRetryReusesVerifiedArtifacts(t *testing.T) {
 	}
 }
 
+func TestStateRetryStartsUnloadedUnit(t *testing.T) {
+	f := newStateFixture(t)
+	id := stateSubmit(t, f.r, nil)
+	stateOK(t, writeJSON(filepath.Join(f.r.JobDir(id), "verified.json"), []any{}, 0600))
+	stateComplete(t, f.r, id, "succeeded", "verified")
+	f.r.Exec = func(args []string, _ CommandOptions) (CommandResult, error) {
+		if len(args) > 1 && args[1] == "reset-failed" {
+			return CommandResult{}, fail("command_failed")
+		}
+		return CommandResult{}, nil
+	}
+	_, err := f.r.Control(Object{"op": "publish-retry", "job_id": id, "credentials": Object{"SEAWEEDFS_S3_ENDPOINT": "https://s3.example.test", "SEAWEEDFS_S3_ACCESS_KEY": "SECRET_MARKER", "SEAWEEDFS_S3_SECRET_KEY": "SECRET_MARKER"}})
+	stateOK(t, err)
+	if s(stateRead(t, f.r.ControlPath()), "active") != id {
+		t.Fatal("retry of an unloaded unit did not start")
+	}
+}
+
 func TestStateRetryStartFailureFinalizesWithoutDeadlock(t *testing.T) {
 	f := newStateFixture(t)
 	id := stateSubmit(t, f.r, nil)
@@ -459,8 +477,8 @@ func TestStateRetryStartFailureFinalizesWithoutDeadlock(t *testing.T) {
 	}
 	status, err := f.r.Control(Object{"op": "status", "job_id": id})
 	stateOK(t, err)
-	if s(status, "code") != "start_failed" {
-		t.Fatal("retry start failure was not persisted consistently")
+	if !b(status, "finished") || s(status, "code") != "verified" {
+		t.Fatal("retry start failure discarded the verified result")
 	}
 }
 
@@ -526,21 +544,32 @@ func TestStateRetentionProtectsActiveJobsAndExpiresFailedJobs(t *testing.T) {
 	}
 }
 
-func TestStateCachePruningRunsAsWorkerOnlyWhenIdle(t *testing.T) {
+func TestStateCachePruningRunsAsWorkerAtBoot(t *testing.T) {
 	f := newStateFixture(t)
 	cache := filepath.Join(f.r.cacheDir(), "packer")
 	stateOK(t, os.Mkdir(cache, 0700))
-	id := stateSubmit(t, f.r, nil)
 	stateOK(t, f.r.Idle())
-	if len(f.commands) != 1 {
-		t.Fatal("active build pruned cache")
+	if len(f.commands) != 0 {
+		t.Fatal("idle tick walked the cache")
 	}
-	stateComplete(t, f.r, id, "succeeded", "verified")
-	stateOK(t, f.r.Idle())
+	stateOK(t, os.Remove(f.r.ControlPath()))
+	stateOK(t, f.r.Boot())
 	want := []string{"runuser", "-u", "worker", "--", "/usr/local/libexec/imagebuilder", "cache-prune"}
 	if !reflect.DeepEqual(f.commands[len(f.commands)-1], want) {
 		t.Fatal("cache prune did not drop privileges")
 	}
+}
+
+func TestStateIdleShutdownSurvivesInvalidRecord(t *testing.T) {
+	f := newStateFixture(t)
+	stateOK(t, os.WriteFile(f.r.RecordPath(strings.Repeat("c", 32)), []byte("{}"), 0600))
+	stateControl(t, f.r, func(state Object) { state["idle_since"] = int64(0) })
+	stateError(t, "invalid_state", f.r.Idle())
+	if len(f.commands) != 1 || f.commands[0][1] != "poweroff" {
+		t.Fatal("invalid record blocked idle shutdown")
+	}
+	stateOK(t, os.Remove(f.r.ControlPath()))
+	stateOK(t, f.r.Boot())
 }
 
 func TestStateCacheEvictsOversizeAndExpiredFilesWithoutFollowingLinks(t *testing.T) {

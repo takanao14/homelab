@@ -24,6 +24,8 @@ var logSourcePattern = regexp.MustCompile(`^packer/(?:[A-Za-z0-9_-][A-Za-z0-9._-
 var markerPattern = regexp.MustCompile(`^IMAGEBUILDER_STEP=(packer-init|packer-build|compress)$`)
 var uiPrefixPattern = regexp.MustCompile(`^(?:==> )?qemu\.custom(?: \(shell-local\))?:\s*`)
 var sourceLocationPattern = regexp.MustCompile(`^on ([A-Za-z0-9_./-]+\.pkr(?:vars)?\.hcl) line ([0-9]{1,9})(?:, column ([0-9]{1,9}))?(?:[,:].*)?$`)
+var csvSequencePattern = regexp.MustCompile(`^[0-9]+$`)
+var artifactCountPattern = regexp.MustCompile(`^[0-9]{1,5}$`)
 var provisionExitPattern = regexp.MustCompile(`(?:^|: )Script exited with non-zero exit status: ([0-9]{1,3})(?:[. ]|$)`)
 
 func validateLogRecord(o Object) (Object, error) {
@@ -211,8 +213,8 @@ func (r *Runtime) diagnosticOutput(id string, ctx *logContext, raw []byte) error
 		reader.FieldsPerRecord = -1
 		reader.LazyQuotes = true
 		fields, e := reader.Read()
-		if e == nil && len(fields) >= 4 && regexp.MustCompile(`^[0-9]+$`).MatchString(fields[0]) && (fields[1] == "" || fields[1] == "qemu.custom") {
-			if fields[2] == "artifact-count" && len(fields) == 4 && regexp.MustCompile(`^[0-9]{1,5}$`).MatchString(fields[3]) {
+		if e == nil && len(fields) >= 4 && csvSequencePattern.MatchString(fields[0]) && (fields[1] == "" || fields[1] == "qemu.custom") {
+			if fields[2] == "artifact-count" && len(fields) == 4 && artifactCountPattern.MatchString(fields[3]) {
 				count, _ := strconv.ParseInt(fields[3], 10, 64)
 				return r.appendDiagnostic(id, ctx.Step, "artifact-count", Object{"count": count})
 			}
@@ -293,7 +295,7 @@ func (r *Runtime) Invoke(args []string, opt CommandOptions) (CommandResult, erro
 	if exec == nil {
 		exec = RunCommand
 	}
-	if r.CurrentJob == "" || r.CurrentStep == "" {
+	if r.CurrentJob == "" || r.CurrentStep == "" || opt.Quiet {
 		return exec(args, opt)
 	}
 	if !logStepSet[r.CurrentStep] || !validJobID(r.CurrentJob) {

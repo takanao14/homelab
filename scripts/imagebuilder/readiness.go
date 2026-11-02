@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -49,14 +48,7 @@ func (r *Runtime) Readiness() (Object, error) {
 		return nil, fail("insufficient_space")
 	}
 	for _, tool := range []string{"git", "packer", "qemu-img", "qemu-system-x86_64", "virt-sparsify", "rclone", "ssh", "ssh-agent", "ssh-add", "ssh-keygen", "cloud-localds", "curl", "xz"} {
-		found := false
-		for _, dir := range filepath.SplitList(baseEnv()["PATH"]) {
-			if info, err := os.Stat(filepath.Join(dir, tool)); err == nil && info.Mode().IsRegular() && info.Mode()&0111 != 0 {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if commandPath(tool, baseEnv()) == "" {
 			return nil, fail("missing_tool")
 		}
 	}

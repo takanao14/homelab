@@ -47,6 +47,7 @@ func (r *Runtime) checkAdmission(state *ControlState) error {
 	return nil
 }
 
+// Build-environment checks run in the controller's preceding ready op, which retries transient failures.
 func (r *Runtime) submit(request Object, state *ControlState) (Object, error) {
 	if err := r.checkAdmission(state); err != nil {
 		return nil, err
@@ -79,9 +80,6 @@ func (r *Runtime) submit(request Object, state *ControlState) (Object, error) {
 			return nil, err
 		}
 	}
-	if _, err := r.Readiness(); err != nil {
-		return nil, err
-	}
 	var random [16]byte
 	if _, err := rand.Read(random[:]); err != nil {
 		return nil, fail("internal_error")
@@ -99,7 +97,7 @@ func (r *Runtime) submit(request Object, state *ControlState) (Object, error) {
 		record.Branch = branch.(string)
 		stored["branch"] = branch
 	}
-	return r.launchLocked(id, record, stored, state, false)
+	return r.launchLocked(id, record, stored, state, nil)
 }
 
 func (r *Runtime) retry(request Object, state *ControlState) (Object, error) {
@@ -124,18 +122,17 @@ func (r *Runtime) retry(request Object, state *ControlState) (Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	if _, err := r.Readiness(); err != nil {
-		return nil, err
-	}
 	stored := Object{"op": "publish-retry", "revision": record.Revision, "target": record.Target, "publish": true, "credentials": values}
 	if err := os.Remove(r.ProgressPath(id)); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, fail("invalid_state")
 	}
+	previous := record
 	record.Finished, record.Publish, record.Result = false, true, nil
-	return r.launchLocked(id, record, stored, state, true)
+	return r.launchLocked(id, record, stored, state, &previous)
 }
 
-func (r *Runtime) launchLocked(id string, record JobRecord, request Object, state *ControlState, restart bool) (Object, error) {
+// A failed retry restores previous so the job keeps its verified outcome.
+func (r *Runtime) launchLocked(id string, record JobRecord, request Object, state *ControlState, previous *JobRecord) (Object, error) {
 	if err := writeJobRecord(r.RecordPath(id), record); err != nil {
 		return nil, err
 	}
@@ -148,16 +145,19 @@ func (r *Runtime) launchLocked(id string, record JobRecord, request Object, stat
 			return err
 		}
 		unit := "imagebuilder-job@" + id + ".service"
-		if restart {
-			if _, err := r.Invoke([]string{"systemctl", "reset-failed", unit}, CommandOptions{}); err != nil {
-				return err
-			}
+		if previous != nil {
+			// systemd rejects reset-failed for unloaded units, e.g. after success or a reboot.
+			_, _ = r.Invoke([]string{"systemctl", "reset-failed", unit}, CommandOptions{})
 		}
 		_, err := r.Invoke([]string{"systemctl", "start", "--no-block", unit}, CommandOptions{})
 		return err
 	}
 	if err := start(); err != nil {
-		if cleanupErr := r.completeLocked(id, record, state, JobResult{Phase: "failed", Code: "start_failed"}); cleanupErr != nil {
+		final, result := record, JobResult{Phase: "failed", Code: "start_failed"}
+		if previous != nil {
+			final, result = *previous, *previous.Result
+		}
+		if cleanupErr := r.completeLocked(id, final, state, result); cleanupErr != nil {
 			return nil, cleanupErr
 		}
 		return nil, fail("start_failed")

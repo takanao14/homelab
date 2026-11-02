@@ -15,30 +15,30 @@ func (r *Runtime) prune(state *ControlState) error {
 	if err != nil {
 		return fail("invalid_state")
 	}
+	var result error
 	for _, path := range paths {
 		id := strings.TrimSuffix(filepath.Base(path), ".json")
-		if !validJobID(id) {
-			return fail("invalid_state")
-		}
 		record, err := readJobRecord(path)
-		if err != nil {
-			return err
+		if !validJobID(id) || err != nil {
+			result = fail("invalid_state")
+			continue
 		}
-
 		if record.Finished && record.Created < cutoff && id != state.Active {
-			if err := os.RemoveAll(r.JobDir(id)); err != nil {
-				return fail("invalid_state")
-			}
-			if err := os.Remove(path); err != nil {
-				return fail("invalid_state")
+			if os.RemoveAll(r.JobDir(id)) != nil || os.Remove(path) != nil {
+				result = fail("invalid_state")
 			}
 		}
 	}
-	if state.Active == "" && exists(filepath.Join(r.cacheDir(), "packer")) {
-		_, err := r.Invoke([]string{"runuser", "-u", r.UserName, "--", "/usr/local/libexec/imagebuilder", "cache-prune"}, CommandOptions{})
-		return err
+	return result
+}
+
+// pruneCache walks the Packer cache, so it runs once per boot instead of on every idle tick.
+func (r *Runtime) pruneCache() error {
+	if !exists(filepath.Join(r.cacheDir(), "packer")) {
+		return nil
 	}
-	return nil
+	_, err := r.Invoke([]string{"runuser", "-u", r.UserName, "--", "/usr/local/libexec/imagebuilder", "cache-prune"}, CommandOptions{})
+	return err
 }
 
 func (r *Runtime) PruneCache() error {
@@ -91,11 +91,7 @@ func (r *Runtime) PruneCache() error {
 	if err != nil {
 		return fail("invalid_state")
 	}
-	limit := r.Cfg.CacheMaxBytes
-	if limit == 0 {
-		limit = 20 * 1024 * 1024 * 1024
-	}
-	if count > 100000 || total > limit || (count > 0 && newest.Before(r.now().Add(-time.Duration(r.Cfg.RetentionDays)*24*time.Hour))) {
+	if count > 100000 || total > r.Cfg.CacheMaxBytes || (count > 0 && newest.Before(r.now().Add(-time.Duration(r.Cfg.RetentionDays)*24*time.Hour))) {
 		if err := os.RemoveAll(cache); err != nil {
 			return fail("invalid_state")
 		}

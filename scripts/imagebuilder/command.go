@@ -25,7 +25,9 @@ type CommandOptions struct {
 	Env             map[string]string
 	Timeout         time.Duration
 	Capture, Digest bool
-	Observer        func(CommandEvent) error
+	// Quiet skips job diagnostics for high-frequency polling commands.
+	Quiet    bool
+	Observer func(CommandEvent) error
 }
 type CommandResult struct {
 	Output   []byte

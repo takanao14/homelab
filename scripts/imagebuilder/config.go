@@ -27,6 +27,13 @@ type Config struct {
 	RequireMount        bool   `json:"require_mount"`
 }
 
+var (
+	repoURLPattern       = regexp.MustCompile(`^https://[A-Za-z0-9.-]+/[A-Za-z0-9_./-]+$`)
+	kernelVersionPattern = regexp.MustCompile(`^[0-9][A-Za-z0-9._+-]{0,127}$`)
+	kernelModulesPattern = regexp.MustCompile(`^/(?:usr/)?lib/modules/[0-9][A-Za-z0-9._+-]*$`)
+	kernelPathPattern    = regexp.MustCompile(`^/[A-Za-z0-9._/+-]+$`)
+)
+
 func LoadConfig(path string) (Config, error) {
 	v, e := readValue(path)
 	if e != nil {
@@ -45,16 +52,16 @@ func LoadConfig(path string) (Config, error) {
 	return c, nil
 }
 func NewRuntime(c Config) (*Runtime, error) {
-	if !filepath.IsAbs(c.WorkDir) || !filepath.IsAbs(c.RuntimeDir) || !regexp.MustCompile(`^https://[A-Za-z0-9.-]+/[A-Za-z0-9_./-]+$`).MatchString(c.RepoURL) || c.MinimumFreeBytes <= 0 || c.CacheMaxBytes <= 0 || c.IdleSeconds <= 0 || c.TimeoutSeconds <= 0 || c.RetentionDays <= 0 || c.SmokeTimeoutSeconds <= 0 {
+	if !filepath.IsAbs(c.WorkDir) || !filepath.IsAbs(c.RuntimeDir) || !repoURLPattern.MatchString(c.RepoURL) || c.MinimumFreeBytes <= 0 || c.CacheMaxBytes <= 0 || c.IdleSeconds <= 0 || c.TimeoutSeconds <= 0 || c.RetentionDays <= 0 || c.SmokeTimeoutSeconds <= 0 {
 		return nil, fail("invalid_config")
 	}
-	if c.KernelVersion != "" && !regexp.MustCompile(`^[0-9][A-Za-z0-9._+-]{0,127}$`).MatchString(c.KernelVersion) {
+	if c.KernelVersion != "" && !kernelVersionPattern.MatchString(c.KernelVersion) {
 		return nil, fail("invalid_config")
 	}
-	if c.KernelModules != "" && (!regexp.MustCompile(`^/(?:usr/)?lib/modules/[0-9][A-Za-z0-9._+-]*$`).MatchString(c.KernelModules) || (c.KernelVersion != "" && filepath.Base(c.KernelModules) != c.KernelVersion)) {
+	if c.KernelModules != "" && (!kernelModulesPattern.MatchString(c.KernelModules) || (c.KernelVersion != "" && filepath.Base(c.KernelModules) != c.KernelVersion)) {
 		return nil, fail("invalid_config")
 	}
-	if c.KernelPath != "" && (!regexp.MustCompile(`^/[A-Za-z0-9._/+-]+$`).MatchString(c.KernelPath) || strings.Contains(c.KernelPath, "/../") || strings.HasSuffix(c.KernelPath, "/..")) {
+	if c.KernelPath != "" && (!kernelPathPattern.MatchString(c.KernelPath) || strings.Contains(c.KernelPath, "/../") || strings.HasSuffix(c.KernelPath, "/..")) {
 		return nil, fail("invalid_config")
 	}
 	u, e := user.Lookup(c.User)

@@ -31,23 +31,23 @@ func newImageController(environ map[string]string, out io.Writer) (*imageControl
 		{control.user, `^[a-z_][a-z0-9_-]*$`, "invalid_ssh_user"},
 	} {
 		if !regexp.MustCompile(rule.pattern).MatchString(rule.value) {
-			return nil, controlFail(rule.code)
+			return nil, fail(rule.code)
 		}
 	}
 	if control.token == "" || strings.ContainsAny(control.token, "\n\r\x00") {
-		return nil, controlFail("missing_proxmox_token")
+		return nil, fail("missing_proxmox_token")
 	}
 	if control.vmid != "" && !regexp.MustCompile(`^[1-9][0-9]{2,8}$`).MatchString(control.vmid) {
-		return nil, controlFail("invalid_vmid")
+		return nil, fail("invalid_vmid")
 	}
 	roots, err := x509.SystemCertPool()
 	if err != nil {
-		return nil, controlFail("invalid_proxmox_ca")
+		return nil, fail("invalid_proxmox_ca")
 	}
 	if caPath, exists := environment["IMAGEBUILDER_PROXMOX_CA_FILE"]; exists {
 		pem, err := os.ReadFile(caPath)
 		if err != nil || !roots.AppendCertsFromPEM(pem) {
-			return nil, controlFail("invalid_proxmox_ca")
+			return nil, fail("invalid_proxmox_ca")
 		}
 	}
 	transport := http.DefaultTransport.(*http.Transport).Clone()
@@ -65,31 +65,31 @@ func (c *imageController) api(suffix string, post bool) (any, error) {
 	}
 	request, err := http.NewRequest(method, c.url+"/api2/json/nodes/"+c.node+"/"+suffix, body)
 	if err != nil {
-		return nil, controlFail("proxmox_request_failed")
+		return nil, fail("proxmox_request_failed")
 	}
 	request.Header.Set("Authorization", "PVEAPIToken="+c.token)
 	response, err := c.client.Do(request)
 	if err != nil {
-		return nil, controlFail("proxmox_request_failed")
+		return nil, fail("proxmox_request_failed")
 	}
 	defer response.Body.Close()
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return nil, controlFail("proxmox_request_failed")
+		return nil, fail("proxmox_request_failed")
 	}
 	raw, err := io.ReadAll(io.LimitReader(response.Body, 1048577))
 	if err != nil {
-		return nil, controlFail("proxmox_request_failed")
+		return nil, fail("proxmox_request_failed")
 	}
 	if len(raw) > 1048576 {
-		return nil, controlFail("invalid_proxmox_response")
+		return nil, fail("invalid_proxmox_response")
 	}
 	data, err := controllerDecode(raw)
 	if err != nil {
-		return nil, controlFail("invalid_proxmox_response")
+		return nil, fail("invalid_proxmox_response")
 	}
 	value, exists := data["data"]
 	if !exists {
-		return nil, controlFail("invalid_proxmox_response")
+		return nil, fail("invalid_proxmox_response")
 	}
 	return value, nil
 }
@@ -102,7 +102,7 @@ func (c *imageController) power() (string, error) {
 		}
 		array, ok := data.([]any)
 		if !ok {
-			return "", controlFail("invalid_proxmox_response")
+			return "", fail("invalid_proxmox_response")
 		}
 		var matches []map[string]any
 		for _, item := range array {
@@ -111,11 +111,11 @@ func (c *imageController) power() (string, error) {
 			}
 		}
 		if len(matches) != 1 {
-			return "", controlFail("builder_not_found")
+			return "", fail("builder_not_found")
 		}
-		vmid, ok := controllerInteger(matches[0]["vmid"])
+		vmid, ok := num(matches[0]["vmid"])
 		if !ok || vmid < 100 || vmid > 999999999 {
-			return "", controlFail("invalid_proxmox_response")
+			return "", fail("invalid_proxmox_response")
 		}
 		c.vmid = strconv.FormatInt(vmid, 10)
 	}
@@ -125,11 +125,11 @@ func (c *imageController) power() (string, error) {
 	}
 	data, ok := raw.(map[string]any)
 	if !ok || data["name"] != "imagebuilder1" {
-		return "", controlFail("unexpected_vm_identity")
+		return "", fail("unexpected_vm_identity")
 	}
 	status, ok := data["status"].(string)
 	if !ok || (status != "running" && status != "stopped") {
-		return "", controlFail("invalid_proxmox_response")
+		return "", fail("invalid_proxmox_response")
 	}
 	return status, nil
 }

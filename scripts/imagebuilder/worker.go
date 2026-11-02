@@ -39,9 +39,13 @@ func (r *Runtime) checkoutWorker(id, revision string, env map[string]string) (st
 		{"git", "-C", checkout, "checkout", "--detach", revision},
 	}
 	for index, args := range commands {
-		timeout := time.Minute
+		limit := time.Minute
 		if index == 2 {
-			timeout = 5 * time.Minute
+			limit = 5 * time.Minute
+		}
+		timeout, err := r.stepTimeout(limit)
+		if err != nil {
+			return "", err
 		}
 		if _, err := r.Invoke(args, CommandOptions{Env: env, Timeout: timeout}); err != nil {
 			return "", err
@@ -132,7 +136,7 @@ func (r *Runtime) Run(id string) (result error) {
 		}
 	}
 	agentPID := 0
-	r.CurrentJob, r.CurrentStep = id, "checkout"
+	r.CurrentJob, r.CurrentStep, r.Deadline = id, "checkout", r.now().Add(workerSeconds(r.Cfg.TimeoutSeconds))
 	defer func() {
 		if result != nil {
 			result = fail(safeCode(result))
@@ -140,7 +144,7 @@ func (r *Runtime) Run(id string) (result error) {
 				result = fail(safeCode(err))
 			}
 		}
-		r.CurrentJob, r.CurrentStep = "", ""
+		r.CurrentJob, r.CurrentStep, r.Deadline = "", "", time.Time{}
 		if agentPID > 0 {
 			if process, err := os.FindProcess(agentPID); err == nil {
 				_ = process.Signal(syscall.SIGTERM)
@@ -196,7 +200,11 @@ func (r *Runtime) Run(id string) (result error) {
 		if args[1] == "./import-upstream.sh" {
 			r.CurrentStep = "import"
 		}
-		if _, err := r.Invoke(args, CommandOptions{Dir: filepath.Join(checkout, "packer"), Env: buildEnv, Timeout: workerSeconds(r.Cfg.TimeoutSeconds)}); err != nil {
+		timeout, err := r.stepTimeout(0)
+		if err != nil {
+			return err
+		}
+		if _, err := r.Invoke(args, CommandOptions{Dir: filepath.Join(checkout, "packer"), Env: buildEnv, Timeout: timeout}); err != nil {
 			return err
 		}
 		if err := r.Update(id, "verifying", "verifying", nil); err != nil {

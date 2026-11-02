@@ -51,6 +51,7 @@ var jobPattern = regexp.MustCompile(`^[0-9a-f]{32}$`)
 var revisionPattern = regexp.MustCompile(`^(?:[0-9a-f]{40}|[0-9a-f]{64})$`)
 var targetPattern = regexp.MustCompile(`^[a-z][a-z0-9-]{0,63}$`)
 var shaPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
+var endpointPattern = regexp.MustCompile(`^https://[A-Za-z0-9.-]+(?::[0-9]+)?/?$`)
 var branchPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._/-]{0,199}$`)
 
 func validJobID(v string) bool { return jobPattern.MatchString(v) }
@@ -119,14 +120,14 @@ func credentials(value any, publish bool) (map[string]string, error) {
 				return nil, fail("missing_credentials")
 			}
 		}
-		if !regexp.MustCompile(`^https://[A-Za-z0-9.-]+(?::[0-9]+)?/?$`).MatchString(r["SEAWEEDFS_S3_ENDPOINT"]) {
+		if !endpointPattern.MatchString(r["SEAWEEDFS_S3_ENDPOINT"]) {
 			return nil, fail("invalid_request")
 		}
 		bucket := r["SEAWEEDFS_CLOUD_IMAGES_BUCKET"]
 		if bucket == "" {
 			bucket = "cloud-images"
 		}
-		if !regexp.MustCompile(`^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$`).MatchString(bucket) {
+		if !remoteBucketPattern.MatchString(bucket) {
 			return nil, fail("invalid_request")
 		}
 	}
