@@ -9,7 +9,7 @@ cd "$SOURCE_DIR"
 # Tooling diagnostics may include credentials from inherited download settings.
 # shellcheck disable=SC2034
 if ! build_output=$(GOTOOLCHAIN="go${GO_VERSION}" CGO_ENABLED=0 go build \
-    -trimpath -buildvcs=false -ldflags='-s -w -buildid=' -o "$OUTPUT" . 2>&1); then
+    -trimpath -buildvcs=false -ldflags='-s -w -buildid=' -o "$OUTPUT" ./cmd/imagebuilder 2>&1); then
     unset build_output
     echo 'Error: imagebuilder Go build failed.' >&2
     exit 1
