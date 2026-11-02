@@ -21,5 +21,7 @@ accounts. Re-run check mode after provisioning.
 
 The running kernel is copied readably for libguestfs without granting build
 jobs sudo. Re-run the role after a kernel upgrade and reboot to refresh this
-copy. Runtime output contains only allowlisted job metadata and phase codes;
-raw build output is not forwarded to journald.
+copy. Runtime services write JSON records to journald with only the command,
+control operation, job ID, result code and duration; raw build output and
+request data are never logged. Polling operations and idle ticks log only
+failures. Inspect them with `journalctl -t imagebuilder -o cat`.
