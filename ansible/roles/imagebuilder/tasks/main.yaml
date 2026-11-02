@@ -66,6 +66,7 @@
   ansible.builtin.group:
     name: "{{ imagebuilder_user }}"
     system: true
+  register: imagebuilder_group
 
 - name: Ensure the KVM device group exists
   become: true
@@ -92,6 +93,7 @@
     system: true
     create_home: true
     shell: /bin/sh
+  register: imagebuilder_control_account
 
 - name: Authorize image builder controllers
   become: true
@@ -100,6 +102,8 @@
     key: "{{ imagebuilder_authorized_keys | join('\n') }}"
     key_options: restrict
     exclusive: true
+  # Check mode cannot resolve the home of an account it would create.
+  when: not (ansible_check_mode and imagebuilder_control_account is changed)
 
 - name: Inspect existing work disk mounts
   become: true
@@ -184,6 +188,7 @@
     owner: root
     group: "{{ imagebuilder_user }}"
     mode: '0750'
+  when: not (ansible_check_mode and imagebuilder_group is changed)
 
 - name: Download the pinned Packer release
   become: true
