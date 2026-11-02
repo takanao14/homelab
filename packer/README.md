@@ -21,8 +21,10 @@ apply host needs bucket access, and Proxmox nodes download published artifacts.
 ## On-demand builds
 
 Provision the VM and controller credentials as described in the
-[imagebuilder role](../ansible/roles/imagebuilder/README.md). From the repository
-root, with credentials injected from SOPS into the controller environment.
+[imagebuilder role](../ansible/roles/imagebuilder/README.md). Run the CLI from
+`packer/`, where `.envrc` loads the controller token and build credentials from
+SOPS; the repository-root `.envrc` does not, which fails with
+`missing_proxmox_token`.
 
 The CLI builds its Go controller locally with the toolchain pinned in
 `scripts/imagebuilder/go.mod`. Set `IMAGEBUILDER_BINARY` to an existing binary
@@ -31,19 +33,19 @@ Ansible on the controller and installed as `/usr/local/libexec/imagebuilder`.
 
 ```bash
 # Build and smoke-test a committed revision without publishing.
-./scripts/image-build.sh run ubuntu26-base --revision "$(git rev-parse HEAD)"
+../scripts/image-build.sh run ubuntu26-base --revision "$(git rev-parse HEAD)"
 
 # Build a pushed branch while iterating on the Packer configuration.
-./scripts/image-build.sh run ubuntu26-base --branch fix/packer --detach
-./scripts/image-build.sh logs <job-id> --follow
+../scripts/image-build.sh run ubuntu26-base --branch fix/packer --detach
+../scripts/image-build.sh logs <job-id> --follow
 
 # Publish only after excluding concurrent customimage downloads, plans and applies.
-./scripts/image-build.sh run ubuntu26-base --revision "$(git rev-parse HEAD)" --publish
+../scripts/image-build.sh run ubuntu26-base --revision "$(git rev-parse HEAD)" --publish
 
-./scripts/image-build.sh status
-./scripts/image-build.sh logs <job-id>
-./scripts/image-build.sh publish-retry <job-id>
-./scripts/image-build.sh shutdown
+../scripts/image-build.sh status
+../scripts/image-build.sh logs <job-id>
+../scripts/image-build.sh publish-retry <job-id>
+../scripts/image-build.sh shutdown
 ```
 
 `run` accepts either `--revision <full-sha>` or `--branch <name>`. Branch names
@@ -87,6 +89,17 @@ both user and token ACLs when privilege separation is enabled. Defaults are
 `IMAGEBUILDER_PROXMOX_CA_FILE` when it is not in the system trust store. SSH
 requires a verified host key in the controller's known_hosts and never forwards
 the controller's agent. The revision must already be fetchable from the remote.
+
+Create the token as root on `pve`, replacing `<vmid>` with imagebuilder1's ID.
+`token add` prints the secret only once.
+
+```bash
+pveum role add ImageBuilderPower -privs "VM.Audit VM.PowerMgmt"
+pveum user add imagebuilder@pve
+pveum aclmod /vms/<vmid> -user imagebuilder@pve -role ImageBuilderPower
+pveum user token add imagebuilder@pve controller --privsep 1
+pveum aclmod /vms/<vmid> -token 'imagebuilder@pve!controller' -role ImageBuilderPower
+```
 
 Build targets require `PKR_VAR_user_password`; publication additionally requires
 the S3 variables listed below. Only these allowlisted credentials cross SSH,
