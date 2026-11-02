@@ -132,7 +132,9 @@ After the remote-login credentials, the GDM greeter asks for the user's own
 account password. Remote login hands the client over to the session with RDP
 server redirection; Microsoft clients (mstsc, and Windows App on macOS) follow
 it only when the `.rdp` file they open contains
-`use redirection server name:i:1`.
+`use redirection server name:i:1`. Windows App on macOS still fails against
+`ubuntu26-desktop` (GNOME Remote Desktop 50); connect to it with FreeRDP
+(`sdl-freerdp /v:<host> /u:<rdp-user> /from-stdin /cert:tofu`).
 
 ## Available Build Targets
 
