@@ -78,7 +78,8 @@ follow those links for the changed parts.
 | [0062](0062-compose-vm-cloud-init-snippets.md) | Compose VM initialization with optional cloud-init snippets | Accepted |
 | [0077](0077-select-guest-os-by-role.md) | Select the guest OS by role | Accepted |
 | [0083](0083-gnome-remote-desktop-for-current-desktop-images.md) | Use GNOME Remote Desktop for the current desktop images | Accepted |
-| [0084](0084-on-demand-systemd-image-builder.md) | Run image builds on an on-demand systemd builder VM | Accepted |
+| [0084](0084-on-demand-systemd-image-builder.md) | Run image builds on an on-demand systemd builder VM | Accepted; amended by [ADR-0085](0085-simplify-imagebuilder-publication-and-state.md) |
+| [0085](0085-simplify-imagebuilder-publication-and-state.md) | Simplify imagebuilder publication and process state | Accepted |
 
 ### Configuration & operations
 

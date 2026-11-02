@@ -304,13 +304,8 @@ func TestStateBootInterruptsJobsAndDiscardsSecrets(t *testing.T) {
 			if stateRead(t, f.r.ControlPath())["active"] != nil {
 				t.Fatal("reboot retained active job")
 			}
-			if phase == "publishing" {
-				if s(stateRead(t, f.r.PublicationGuard()), "job_id") != id {
-					t.Fatal("publication guard missing")
-				}
-				_, err = f.r.Control(stateRequest())
-				stateError(t, "publication_blocked", err)
-			}
+			_, err = f.r.Control(stateRequest())
+			stateOK(t, err)
 		})
 	}
 }
@@ -340,14 +335,12 @@ func TestStateTimeoutFinalizationAndInvalidProgressAreSafe(t *testing.T) {
 			stateOK(t, f.r.Finish(id))
 			result, err := f.r.Control(Object{"op": "status", "job_id": id})
 			stateOK(t, err)
-			want := map[string]string{"building": "service_failed", "publishing": "publication_blocked", "invalid": "invalid_progress"}[phase]
+			want := map[string]string{"building": "service_failed", "publishing": "service_failed", "invalid": "invalid_progress"}[phase]
 			if s(result, "code") != want || exists(f.r.WorkerPath(id)) {
 				t.Fatal("unsafe finalization result")
 			}
-			if phase == "publishing" {
-				_, err = f.r.Control(stateRequest())
-				stateError(t, "publication_blocked", err)
-			}
+			_, err = f.r.Control(stateRequest())
+			stateOK(t, err)
 		})
 	}
 }
@@ -414,11 +407,11 @@ func TestStateBranchProvenanceKeepsPinnedRevision(t *testing.T) {
 	}
 }
 
-func TestStateRetryReusesVerifiedArtifactsAndCanClearGuard(t *testing.T) {
+func TestStateRetryReusesVerifiedArtifacts(t *testing.T) {
 	f := newStateFixture(t)
 	id := stateSubmit(t, f.r, nil)
 	stateOK(t, writeJSON(filepath.Join(f.r.JobDir(id), "verified.json"), []any{}, 0600))
-	stateComplete(t, f.r, id, "failed", "publication_blocked")
+	stateComplete(t, f.r, id, "failed", "remote_checksum_mismatch")
 	request := Object{"op": "publish-retry", "job_id": id, "credentials": Object{"SEAWEEDFS_S3_ENDPOINT": "https://s3.example.test", "SEAWEEDFS_S3_ACCESS_KEY": "SECRET_MARKER", "SEAWEEDFS_S3_SECRET_KEY": "SECRET_MARKER"}}
 	result, err := f.r.Control(request)
 	stateOK(t, err)
@@ -429,8 +422,10 @@ func TestStateRetryReusesVerifiedArtifactsAndCanClearGuard(t *testing.T) {
 		t.Fatal("retry did not reserve active job")
 	}
 	stateComplete(t, f.r, id, "succeeded", "published")
-	if exists(f.r.PublicationGuard()) {
-		t.Fatal("successful retry retained publication guard")
+	result, err = f.r.Control(Object{"op": "status", "job_id": id})
+	stateOK(t, err)
+	if s(result, "code") != "published" {
+		t.Fatal("retry did not finalize publication")
 	}
 }
 
@@ -456,7 +451,7 @@ func TestStateRetryStartFailureFinalizesWithoutDeadlock(t *testing.T) {
 	}
 }
 
-func TestStateRetentionProtectsActiveAndBlockedJobs(t *testing.T) {
+func TestStateRetentionProtectsActiveJobsAndExpiresFailedJobs(t *testing.T) {
 	f := newStateFixture(t)
 	id := stateSubmit(t, f.r, nil)
 	record := stateRead(t, f.r.RecordPath(id))
@@ -466,12 +461,7 @@ func TestStateRetentionProtectsActiveAndBlockedJobs(t *testing.T) {
 	if !exists(f.r.RecordPath(id)) {
 		t.Fatal("retention removed active record")
 	}
-	stateComplete(t, f.r, id, "failed", "publication_blocked")
-	stateOK(t, f.r.Idle())
-	if !exists(f.r.RecordPath(id)) {
-		t.Fatal("retention removed blocked record")
-	}
-	stateOK(t, os.Remove(f.r.PublicationGuard()))
+	stateComplete(t, f.r, id, "failed", "remote_checksum_mismatch")
 	stateOK(t, f.r.Idle())
 	if exists(f.r.RecordPath(id)) || exists(f.r.JobDir(id)) {
 		t.Fatal("retention failed to remove expired job")
@@ -550,5 +540,59 @@ func TestStateStatusAndLogsDiscardUnknownProgressFields(t *testing.T) {
 	}
 	if _, ok := response["secret"]; ok {
 		t.Fatal("unapproved progress field escaped")
+	}
+}
+
+func TestStateFinalizationUsesSystemdExitEvidence(t *testing.T) {
+	for _, tc := range []struct {
+		name, result, code, status string
+		want                       string
+	}{
+		{"success", "success", "exited", "0", "verified"},
+		{"timeout", "timeout", "killed", "TERM", "service_failed"},
+		{"signal", "signal", "killed", "KILL", "service_failed"},
+		{"nonzero", "exit-code", "exited", "1", "service_failed"},
+		{"spawn_failure", "resources", "", "", "service_failed"},
+		{"partial_success", "success", "", "", "service_failed"},
+		{"unknown_value", "SECRET_MARKER", "exited", "0", "service_failed"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("SERVICE_RESULT", tc.result)
+			t.Setenv("EXIT_CODE", tc.code)
+			t.Setenv("EXIT_STATUS", tc.status)
+			f := newStateFixture(t)
+			id := stateSubmit(t, f.r, nil)
+			stateComplete(t, f.r, id, "succeeded", "verified")
+			result, err := f.r.Control(Object{"op": "status", "job_id": id})
+			stateOK(t, err)
+			if s(result, "code") != tc.want || exists(f.r.RequestPath(id)) || stateRead(t, f.r.ControlPath())["active"] != nil {
+				t.Fatal("systemd exit evidence did not finalize safely")
+			}
+		})
+	}
+}
+
+func TestStateStalePublicationGuardDoesNotBlockAdmission(t *testing.T) {
+	f := newStateFixture(t)
+	stateOK(t, os.WriteFile(filepath.Join(f.r.controlDir(), "publication-blocked.json"), []byte("invalid legacy data"), 0600))
+	stateSubmit(t, f.r, nil)
+}
+
+func TestStateRepeatedFinalizationPreservesSystemdFailure(t *testing.T) {
+	f := newStateFixture(t)
+	id := stateSubmit(t, f.r, nil)
+	t.Setenv("SERVICE_RESULT", "timeout")
+	t.Setenv("EXIT_CODE", "killed")
+	t.Setenv("EXIT_STATUS", "TERM")
+	stateComplete(t, f.r, id, "succeeded", "verified")
+	for _, key := range []string{"SERVICE_RESULT", "EXIT_CODE", "EXIT_STATUS"} {
+		t.Setenv(key, "")
+	}
+	stateOK(t, os.Remove(f.r.ProgressPath(id)))
+	stateOK(t, f.r.Finish(id))
+	result, err := f.r.Control(Object{"op": "status", "job_id": id})
+	stateOK(t, err)
+	if s(result, "code") != "service_failed" {
+		t.Fatal("repeated finalization replaced persisted process failure")
 	}
 }

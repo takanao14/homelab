@@ -491,7 +491,7 @@ func (c *imageController) followLogs(identifier string, after int64) (map[string
 				return nil, controlFail("invalid_builder_response")
 			}
 			result := map[string]any{}
-			for _, key := range []string{"ok", "job_id", "phase", "code", "finished", "cursor", "branch", "revision", "publication_blocked"} {
+			for _, key := range []string{"ok", "job_id", "phase", "code", "finished", "cursor", "branch", "revision"} {
 				if value, exists := page[key]; exists {
 					result[key] = value
 				}
@@ -659,7 +659,7 @@ func controllerSafeResponse(data map[string]any) (map[string]any, error) {
 		return nil, controlFail(code)
 	}
 	result := map[string]any{"ok": true}
-	for _, key := range []string{"maintenance", "publication_blocked", "publish", "finished", "truncated", "has_more"} {
+	for _, key := range []string{"maintenance", "publish", "finished", "truncated", "has_more"} {
 		if raw, exists := data[key]; exists {
 			value, valid := raw.(bool)
 			if !valid {

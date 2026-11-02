@@ -7,8 +7,6 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
-	"reflect"
-	"sort"
 	"strings"
 	"testing"
 )
@@ -73,16 +71,14 @@ func workerTestArtifact(t *testing.T, r *Runtime, contents []byte) {
 }
 
 type workerTestExecutor struct {
-	t             *testing.T
-	r             *Runtime
-	remote        map[string][]byte
-	builds        int
-	smokes        int
-	pushes        int
-	copies        int
-	failBuild     bool
-	failPush      string
-	refuseDeletes bool
+	t         *testing.T
+	r         *Runtime
+	remote    map[string][]byte
+	builds    int
+	smokes    int
+	pushes    int
+	failBuild bool
+	failPush  string
 }
 
 func workerTestExecutorFor(t *testing.T, r *Runtime) *workerTestExecutor {
@@ -160,25 +156,22 @@ func (x *workerTestExecutor) command(args []string, options CommandOptions) (Com
 				return CommandResult{}, fail("command_failed")
 			}
 			x.remote["seaweedfs:cloud-images/"+workerTestImage+".sha256"] = []byte(workerTestHash([]byte("image-bytes")) + "\n")
+			switch x.failPush {
+			case "corrupt-image":
+				x.remote["seaweedfs:cloud-images/"+workerTestImage] = []byte("corrupt")
+			case "corrupt-sidecar":
+				x.remote["seaweedfs:cloud-images/"+workerTestImage+".sha256"] = []byte("WORKER_SECRET_MARKER")
+			case "missing-image":
+				delete(x.remote, "seaweedfs:cloud-images/"+workerTestImage)
+			case "missing-sidecar":
+				delete(x.remote, "seaweedfs:cloud-images/"+workerTestImage+".sha256")
+			}
 		}
 	case "rclone":
 		if len(args) < 3 {
 			return CommandResult{}, fail("command_failed")
 		}
 		switch args[1] {
-		case "lsf":
-			prefix := args[len(args)-1] + "/"
-			names := []string{}
-			for key := range x.remote {
-				if strings.HasPrefix(key, prefix) {
-					name := strings.TrimPrefix(key, prefix)
-					if !strings.Contains(name, "/") {
-						names = append(names, name)
-					}
-				}
-			}
-			sort.Strings(names)
-			return CommandResult{Output: []byte(strings.Join(names, "\n"))}, nil
 		case "cat":
 			data, exists := x.remote[args[2]]
 			if !exists {
@@ -188,21 +181,8 @@ func (x *workerTestExecutor) command(args []string, options CommandOptions) (Com
 				return CommandResult{Digest: workerTestHash(data)}, nil
 			}
 			return CommandResult{Output: append([]byte(nil), data...)}, nil
-		case "copyto":
-			data, exists := x.remote[args[2]]
-			if !exists {
-				return CommandResult{}, fail("command_failed")
-			}
-			x.remote[args[3]] = append([]byte(nil), data...)
-			x.copies++
-		case "deletefile":
-			if x.refuseDeletes {
-				return CommandResult{}, fail("command_failed")
-			}
-			if _, exists := x.remote[args[2]]; !exists {
-				return CommandResult{}, fail("command_failed")
-			}
-			delete(x.remote, args[2])
+		default:
+			x.t.Fatal("unexpected remote mutation or listing")
 		}
 	}
 	return CommandResult{}, nil
@@ -276,62 +256,66 @@ func TestWorkerRetryRejectsChangedButSelfConsistentArtifact(t *testing.T) {
 	}
 }
 
-func TestWorkerPublicationFailureRestoresVerifiedOldPair(t *testing.T) {
-	r := workerTestRuntime(t, true)
-	x := workerTestExecutorFor(t, r)
-	old := []byte("old-image")
-	x.remote["seaweedfs:cloud-images/"+workerTestImage] = old
-	x.remote["seaweedfs:cloud-images/"+workerTestImage+".sha256"] = []byte(workerTestHash(old) + "\n")
-	x.failPush = "partial"
-	if err := r.Run(workerTestID); safeCode(err) != "publication_failed_restored" {
-		t.Fatal("failed publication did not restore old pair")
-	}
-	if !reflect.DeepEqual(x.remote["seaweedfs:cloud-images/"+workerTestImage], old) ||
-		string(x.remote["seaweedfs:cloud-images/"+workerTestImage+".sha256"]) != workerTestHash(old)+"\n" || x.copies != 4 {
-		t.Fatal("restored publication pair is inconsistent")
-	}
-	if _, exists := x.remote["seaweedfs:cloud-images/.imagebuilder-backups/"+workerTestID+"/"+workerTestImage]; !exists {
-		t.Fatal("recovery image missing")
+func TestWorkerPublicationFailureCanBeRepairedWithoutRebuild(t *testing.T) {
+	for _, mode := range []string{"before", "partial", "corrupt-image", "corrupt-sidecar", "missing-image", "missing-sidecar"} {
+		t.Run(mode, func(t *testing.T) {
+			r := workerTestRuntime(t, true)
+			x := workerTestExecutorFor(t, r)
+			x.remote["seaweedfs:cloud-images/"+workerTestImage] = []byte("old-image")
+			x.remote["seaweedfs:cloud-images/"+workerTestImage+".sha256"] = []byte(workerTestHash([]byte("old-image")) + "\n")
+			x.failPush = mode
+			err := r.Run(workerTestID)
+			want := "command_failed"
+			if strings.HasPrefix(mode, "corrupt-") {
+				want = "remote_checksum_mismatch"
+			}
+			if err == nil || safeCode(err) != want {
+				t.Fatal("publication failure was not reported")
+			}
+			progress, err := r.Progress(workerTestID)
+			if err != nil || s(progress, "phase") != "failed" || s(progress, "code") != want {
+				t.Fatal("publication failure result missing")
+			}
+			data, err := os.ReadFile(r.ProgressPath(workerTestID))
+			if err != nil || strings.Contains(string(data), "WORKER_SECRET_MARKER") {
+				t.Fatal("publication failure was not sanitized")
+			}
+			if mode == "partial" && string(x.remote["seaweedfs:cloud-images/"+workerTestImage]) != "image-bytes" {
+				t.Fatal("failed publication was unexpectedly rolled back")
+			}
+			if writeJSON(r.RequestPath(workerTestID), workerTestRequest(true, "publish-retry"), 0600) != nil {
+				t.Fatal("retry request failed")
+			}
+			x.failPush = ""
+			if err := r.Run(workerTestID); err != nil {
+				t.Fatal("publication retry failed")
+			}
+			progress, err = r.Progress(workerTestID)
+			if err != nil || s(progress, "code") != "published" || x.builds != 1 || x.smokes != 1 || x.pushes != 2 {
+				t.Fatal("retry rebuilt or did not publish")
+			}
+			if len(x.remote) != 2 || string(x.remote["seaweedfs:cloud-images/"+workerTestImage]) != "image-bytes" || string(x.remote["seaweedfs:cloud-images/"+workerTestImage+".sha256"]) != workerTestHash([]byte("image-bytes"))+"\n" {
+				t.Fatal("retry did not repair pair or created backup objects")
+			}
+		})
 	}
 }
 
-func TestWorkerAbsentPairRollbackAcceptsAlreadyMissingObjects(t *testing.T) {
-	r := workerTestRuntime(t, true)
-	x := workerTestExecutorFor(t, r)
-	x.failPush = "before"
-	x.refuseDeletes = true
-	if err := r.Run(workerTestID); safeCode(err) != "publication_failed_restored" || len(x.remote) != 0 {
-		t.Fatal("already absent pair was not recognized as restored")
-	}
-}
-
-func TestWorkerFailedRollbackBlocksPublication(t *testing.T) {
-	r := workerTestRuntime(t, true)
-	x := workerTestExecutorFor(t, r)
-	x.failPush, x.refuseDeletes = "partial", true
-	if err := r.Run(workerTestID); safeCode(err) != "publication_blocked" {
-		t.Fatal("incomplete rollback was accepted")
-	}
-	progress, err := r.Progress(workerTestID)
-	if err != nil || s(progress, "code") != "publication_blocked" {
-		t.Fatal("blocked publication state missing")
-	}
-}
-
-func TestWorkerPublicationSnapshotRejectsUnrelatedObjectsBeforeCommands(t *testing.T) {
-	r := workerTestRuntime(t, true)
-	if writeJSON(filepath.Join(r.JobDir(workerTestID), "publication.json"), Object{"artifacts": []Object{
-		{"name": "../unrelated.img", "present": false, "sha256": nil},
-	}}, 0600) != nil {
-		t.Fatal("snapshot setup failed")
-	}
-	called := false
-	r.Exec = func([]string, CommandOptions) (CommandResult, error) { called = true; return CommandResult{}, nil }
-	err := r.workerPublish(workerTestID, filepath.Join(r.JobDir(workerTestID), "repo"), "ubuntu26-base",
-		[]workerArtifact{{Name: workerTestImage, SHA256: workerTestHash([]byte("image"))}}, map[string]string{
-			"SEAWEEDFS_S3_ENDPOINT": "https://s3.example.test", "SEAWEEDFS_S3_ACCESS_KEY": "WORKER_SECRET_MARKER", "SEAWEEDFS_S3_SECRET_KEY": "WORKER_SECRET_MARKER"})
-	if safeCode(err) != "invalid_state" || called {
-		t.Fatal("unrelated snapshot objects were accepted")
+func TestWorkerPublicationRepairsPreviouslyIncompleteOrCorruptPair(t *testing.T) {
+	for _, mode := range []string{"image-only", "sidecar-only", "corrupt-pair"} {
+		t.Run(mode, func(t *testing.T) {
+			r := workerTestRuntime(t, true)
+			x := workerTestExecutorFor(t, r)
+			if mode != "sidecar-only" {
+				x.remote["seaweedfs:cloud-images/"+workerTestImage] = []byte("old-image")
+			}
+			if mode != "image-only" {
+				x.remote["seaweedfs:cloud-images/"+workerTestImage+".sha256"] = []byte("invalid-old-checksum")
+			}
+			if err := r.Run(workerTestID); err != nil || x.pushes != 1 || len(x.remote) != 2 {
+				t.Fatal("existing broken pair prevented publication")
+			}
+		})
 	}
 }
 

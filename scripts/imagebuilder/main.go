@@ -10,6 +10,9 @@ func dispatch(args []string, input io.Reader, output io.Writer) error {
 	if len(args) == 0 {
 		return fail("invalid_arguments")
 	}
+	if args[0] == "verify-remote" {
+		return verifyRemote(args[1:], output, RunCommand)
+	}
 	if args[0] == "controller" {
 		env := map[string]string{}
 		for _, line := range os.Environ() {

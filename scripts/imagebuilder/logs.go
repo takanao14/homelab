@@ -16,7 +16,7 @@ import (
 const maxLogRecords = 1000
 const maxLogBytes = 196608
 
-var logStepSet = set("checkout", "ssh-setup", "build", "packer-init", "packer-build", "import", "compress", "artifact-check", "smoke-boot", "publish", "rollback")
+var logStepSet = set("checkout", "ssh-setup", "build", "packer-init", "packer-build", "import", "compress", "artifact-check", "smoke-boot", "publish")
 var logEventSet = set("started", "completed", "failed", "packer-error", "artifact-count")
 var logCategorySet = set("command-exit", "timeout", "packer-error", "hcl-validation", "ssh-timeout", "provisioner-exit", "hcl-unsupported-argument", "hcl-missing-required-argument", "hcl-unsupported-attribute", "hcl-invalid-expression", "hcl-unknown-variable", "hcl-invalid-reference", "hcl-invalid-function-argument")
 var hclHeaders = map[string]string{"Error: Unsupported argument": "hcl-unsupported-argument", "Error: Missing required argument": "hcl-missing-required-argument", "Error: Unsupported attribute": "hcl-unsupported-attribute", "Error: Invalid expression": "hcl-invalid-expression", "Error: Unknown variable": "hcl-unknown-variable", "Error: Invalid reference": "hcl-invalid-reference", "Error: Invalid function argument": "hcl-invalid-function-argument"}

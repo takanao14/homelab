@@ -27,9 +27,6 @@ func (r *Runtime) ProgressPath(id string) string { return filepath.Join(r.JobDir
 func (r *Runtime) DiagnosticsPath(id string) string {
 	return filepath.Join(r.JobDir(id), "diagnostics.json")
 }
-func (r *Runtime) PublicationGuard() string {
-	return filepath.Join(r.controlDir(), "publication-blocked.json")
-}
 func (r *Runtime) maintenancePath() string { return filepath.Join(r.controlDir(), "maintenance.json") }
 
 func exists(path string) bool {
@@ -337,9 +334,6 @@ func (r *Runtime) submit(request, state Object) (Object, error) {
 	if err := r.checkAdmission(state); err != nil {
 		return nil, err
 	}
-	if exists(r.PublicationGuard()) {
-		return nil, fail("publication_blocked")
-	}
 	if !keysAllowed(request, "op", "revision", "target", "publish", "branch", "credentials") {
 		return nil, fail("invalid_request")
 	}
@@ -425,12 +419,6 @@ func (r *Runtime) retry(request, state Object) (Object, error) {
 	if err := r.checkAdmission(state); err != nil {
 		return nil, err
 	}
-	if exists(r.PublicationGuard()) {
-		guard, err := readJSON(r.PublicationGuard())
-		if err != nil || s(guard, "job_id") != id {
-			return nil, fail("publication_blocked")
-		}
-	}
 	record, err := readJSON(r.RecordPath(id))
 	if err != nil {
 		return nil, fail("invalid_state")
@@ -470,7 +458,7 @@ func (r *Runtime) retry(request, state Object) (Object, error) {
 	}
 	for _, args := range [][]string{{"systemctl", "reset-failed", "imagebuilder-job@" + id + ".service"}, {"systemctl", "start", "--no-block", "imagebuilder-job@" + id + ".service"}} {
 		if _, err := r.Invoke(args, CommandOptions{}); err != nil {
-			if finishErr := r.finishLocked(id, state); finishErr != nil {
+			if finishErr := r.finishLocked(id, state, false); finishErr != nil {
 				return nil, finishErr
 			}
 			return nil, fail("start_failed")
@@ -577,13 +565,13 @@ func (r *Runtime) Control(request Object) (Object, error) {
 				if b(state, "stopping") {
 					phase = "stopping"
 				}
-				return Object{"ok": true, "phase": phase, "maintenance": state["maintenance"], "publication_blocked": exists(r.PublicationGuard())}, nil
+				return Object{"ok": true, "phase": phase, "maintenance": state["maintenance"]}, nil
 			}
 			result, err := r.safeJob(id)
 			if err != nil {
 				return nil, err
 			}
-			result["maintenance"], result["publication_blocked"] = state["maintenance"], exists(r.PublicationGuard())
+			result["maintenance"] = state["maintenance"]
 			if op == "logs" {
 				progress, err := r.Progress(id)
 				if err != nil {
@@ -658,48 +646,39 @@ func (r *Runtime) shutdown(state Object) (Object, error) {
 	return Object{"ok": true, "phase": "stopping"}, nil
 }
 
-func (r *Runtime) finishLocked(id string, state Object) error {
+func (r *Runtime) finishLocked(id string, state Object, serviceFailed bool) error {
 	record, err := readJSON(r.RecordPath(id))
 	if err != nil {
 		return fail("invalid_state")
 	}
-	progress, progressErr := r.Progress(id)
 	result := Object{}
-	if progressErr != nil {
-		code := "invalid_progress"
-		if b(record, "publish") {
-			code = "publication_blocked"
+	if b(record, "finished") {
+		stored, ok := record["result"].(map[string]any)
+		if !ok {
+			return fail("invalid_state")
 		}
-		result = Object{"phase": "failed", "code": code}
-	} else if !terminalSet[s(progress, "phase")] {
-		code := "service_failed"
-		if s(progress, "phase") == "publishing" {
-			code = "publication_blocked"
+		result, err = safeProgress(stored)
+		if err != nil || !terminalSet[s(result, "phase")] {
+			return fail("invalid_state")
 		}
-		result = Object{"phase": "failed", "code": code}
 	} else {
-		result = Object{"phase": s(progress, "phase"), "code": s(progress, "code")}
-		if value, ok := progress["sha256"]; ok {
-			result["sha256"] = value
+		progress, progressErr := r.Progress(id)
+		if progressErr != nil {
+			result = Object{"phase": "failed", "code": "invalid_progress"}
+		} else if !terminalSet[s(progress, "phase")] {
+			result = Object{"phase": "failed", "code": "service_failed"}
+		} else {
+			result = Object{"phase": s(progress, "phase"), "code": s(progress, "code")}
+			if value, ok := progress["sha256"]; ok {
+				result["sha256"] = value
+			}
+		}
+		if serviceFailed && s(result, "phase") == "succeeded" {
+			result = Object{"phase": "failed", "code": "service_failed"}
 		}
 	}
 	if err := r.cleanupSecrets(id); err != nil {
 		return err
-	}
-	if s(result, "code") == "publication_blocked" {
-		if err := writeJSON(r.PublicationGuard(), Object{"job_id": id}, 0600); err != nil {
-			return err
-		}
-	} else if s(result, "phase") == "succeeded" && s(result, "code") == "published" && exists(r.PublicationGuard()) {
-		guard, err := readJSON(r.PublicationGuard())
-		if err != nil {
-			return fail("invalid_state")
-		}
-		if s(guard, "job_id") == id {
-			if err := os.Remove(r.PublicationGuard()); err != nil {
-				return fail("invalid_state")
-			}
-		}
 	}
 	record["finished"], record["result"] = true, result
 	if err := writeJSON(r.RecordPath(id), record, 0600); err != nil {
@@ -716,7 +695,11 @@ func (r *Runtime) Finish(id string) error {
 	if !validJobID(id) {
 		return fail("invalid_request")
 	}
-	_, err := r.locked(func(state Object) (Object, error) { return nil, r.finishLocked(id, state) })
+	// Only systemd's fixed success tuple may confirm a successful process exit.
+	serviceResult, exitCode, exitStatus := os.Getenv("SERVICE_RESULT"), os.Getenv("EXIT_CODE"), os.Getenv("EXIT_STATUS")
+	provided := serviceResult != "" || exitCode != "" || exitStatus != ""
+	serviceFailed := provided && (serviceResult != "success" || exitCode != "exited" || exitStatus != "0")
+	_, err := r.locked(func(state Object) (Object, error) { return nil, r.finishLocked(id, state, serviceFailed) })
 	return err
 }
 
@@ -753,13 +736,6 @@ func (r *Runtime) Boot() error {
 				return nil, err
 			}
 			if !b(record, "finished") {
-				progress, progressErr := r.Progress(id)
-				publishing := (progressErr != nil && b(record, "publish")) || s(progress, "phase") == "publishing" || exists(filepath.Join(r.JobDir(id), "publication.json"))
-				if publishing {
-					if err := writeJSON(r.PublicationGuard(), Object{"job_id": id}, 0600); err != nil {
-						return nil, err
-					}
-				}
 				record["finished"], record["result"] = true, Object{"phase": "interrupted", "code": "host_restarted"}
 				if err := writeJSON(path, record, 0600); err != nil {
 					return nil, err
@@ -812,14 +788,6 @@ func (r *Runtime) Idle() error {
 
 func (r *Runtime) prune(state Object) error {
 	cutoff := r.now().Unix() - int64(r.Cfg.RetentionDays)*86400
-	blocked := ""
-	if exists(r.PublicationGuard()) {
-		guard, err := readJSON(r.PublicationGuard())
-		if err != nil || !validJobID(s(guard, "job_id")) {
-			return fail("invalid_state")
-		}
-		blocked = s(guard, "job_id")
-	}
 	paths, err := filepath.Glob(filepath.Join(r.recordsDir(), "*.json"))
 	if err != nil {
 		return fail("invalid_state")
@@ -837,7 +805,7 @@ func (r *Runtime) prune(state Object) error {
 		if !ok {
 			return fail("invalid_state")
 		}
-		if b(record, "finished") && created < cutoff && id != s(state, "active") && id != blocked {
+		if b(record, "finished") && created < cutoff && id != s(state, "active") {
 			if err := os.RemoveAll(r.JobDir(id)); err != nil {
 				return fail("invalid_state")
 			}

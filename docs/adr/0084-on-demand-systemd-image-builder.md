@@ -1,6 +1,7 @@
 # ADR-0084: Run image builds on an on-demand systemd builder VM
 
 - **Status:** Accepted
+- **Amended by:** [ADR-0085](0085-simplify-imagebuilder-publication-and-state.md)
 - **Category:** Provisioning
 - **Date:** 2026-11-01
 - **Related:** [ADR-0006](0006-custom-image-pipeline-monorepo-and-seaweedfs-s3.md),

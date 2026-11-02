@@ -24,12 +24,6 @@ type workerArtifact struct {
 	SHA256 string `json:"sha256"`
 }
 
-type workerSnapshot struct {
-	Name    string  `json:"name"`
-	Present bool    `json:"present"`
-	SHA256  *string `json:"sha256"`
-}
-
 var (
 	workerImagePattern   = regexp.MustCompile(`^[a-z0-9][a-z0-9.-]+\.img$`)
 	workerImportFunction = regexp.MustCompile(`(?s)import_target\(\)\s*\{(.*?)\n\}`)
@@ -344,46 +338,7 @@ func (r *Runtime) workerRemoteDigest(path string, env map[string]string) (string
 	return result.Digest, nil
 }
 
-func workerPublicationSnapshot(path string, manifest []workerArtifact) ([]workerSnapshot, error) {
-	data, err := readJSON(path)
-	if err != nil || len(data) != 1 || !keysAllowed(data, "artifacts") {
-		return nil, fail("invalid_state")
-	}
-	items, ok := data["artifacts"].([]any)
-	if !ok || len(items) != len(manifest) {
-		return nil, fail("invalid_state")
-	}
-	result := make([]workerSnapshot, 0, len(items))
-	for index, item := range items {
-		entry, ok := item.(Object)
-		present, presentOK := entry["present"].(bool)
-		if !ok || len(entry) != 3 || !keysAllowed(entry, "name", "present", "sha256") || !presentOK || s(entry, "name") != manifest[index].Name {
-			return nil, fail("invalid_state")
-		}
-		old := workerSnapshot{Name: s(entry, "name"), Present: present}
-		if present {
-			digest := s(entry, "sha256")
-			if !shaPattern.MatchString(digest) {
-				return nil, fail("invalid_state")
-			}
-			old.SHA256 = &digest
-		} else if entry["sha256"] != nil {
-			return nil, fail("invalid_state")
-		}
-		result = append(result, old)
-	}
-	return result, nil
-}
-
-func workerListing(data []byte) map[string]bool {
-	result := make(map[string]bool)
-	for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {
-		result[strings.TrimSuffix(line, "\r")] = true
-	}
-	return result
-}
-
-func (r *Runtime) workerPublish(id, checkout, target string, manifest []workerArtifact, env map[string]string) error {
+func (r *Runtime) workerPublish(checkout, target string, manifest []workerArtifact, env map[string]string) error {
 	r.CurrentStep = "publish"
 	remoteEnv, err := workerRemoteEnvironment(env)
 	if err != nil {
@@ -393,61 +348,7 @@ func (r *Runtime) workerPublish(id, checkout, target string, manifest []workerAr
 	if bucket == "" {
 		bucket = "cloud-images"
 	}
-	remote := "seaweedfs:" + bucket
-	backup := filepath.Join(r.JobDir(id), "publication.json")
-	if _, err := os.Lstat(backup); errors.Is(err, os.ErrNotExist) {
-		listing, err := r.Invoke([]string{"rclone", "lsf", "--files-only", "--max-depth", "1", remote}, CommandOptions{Env: remoteEnv, Capture: true})
-		if err != nil {
-			return err
-		}
-		existing := workerListing(listing.Output)
-		old := make([]workerSnapshot, 0, len(manifest))
-		for _, artifact := range manifest {
-			present := existing[artifact.Name]
-			if present != existing[artifact.Name+".sha256"] {
-				return fail("remote_pair_incomplete")
-			}
-			entry := workerSnapshot{Name: artifact.Name, Present: present}
-			if present {
-				digest, err := r.workerRemoteDigest(remote+"/"+artifact.Name, remoteEnv)
-				if err != nil {
-					return err
-				}
-				sidecar, err := r.Invoke([]string{"rclone", "cat", remote + "/" + artifact.Name + ".sha256"}, CommandOptions{Env: remoteEnv, Capture: true})
-				if err != nil {
-					return err
-				}
-				if strings.TrimSpace(string(sidecar.Output)) != digest {
-					return fail("remote_checksum_mismatch")
-				}
-				entry.SHA256 = &digest
-				for _, suffix := range []string{"", ".sha256"} {
-					if _, err := r.Invoke([]string{"rclone", "copyto", remote + "/" + artifact.Name + suffix,
-						remote + "/.imagebuilder-backups/" + id + "/" + artifact.Name + suffix}, CommandOptions{Env: remoteEnv, Timeout: workerSeconds(r.Cfg.TimeoutSeconds)}); err != nil {
-						return err
-					}
-				}
-			}
-			old = append(old, entry)
-		}
-		if err := writeJSON(backup, Object{"artifacts": old}, 0600); err != nil {
-			return err
-		}
-	} else if err != nil {
-		return fail("invalid_state")
-	}
-	snapshot, err := workerPublicationSnapshot(backup, manifest)
-	if err != nil {
-		return err
-	}
-	if err := r.workerUploadAndVerify(checkout, target, manifest, remote, env, remoteEnv); err == nil {
-		return nil
-	}
-	r.CurrentStep = "rollback"
-	if err := r.workerRollback(id, remote, snapshot, remoteEnv); err != nil {
-		return fail("publication_blocked")
-	}
-	return fail("publication_failed_restored")
+	return r.workerUploadAndVerify(checkout, target, manifest, "seaweedfs:"+bucket, env, remoteEnv)
 }
 
 func (r *Runtime) workerUploadAndVerify(checkout, target string, manifest []workerArtifact, remote string, env, remoteEnv map[string]string) error {
@@ -468,47 +369,6 @@ func (r *Runtime) workerUploadAndVerify(checkout, target string, manifest []work
 		}
 		if strings.TrimSpace(string(sidecar.Output)) != artifact.SHA256 {
 			return fail("remote_checksum_mismatch")
-		}
-	}
-	return nil
-}
-
-func (r *Runtime) workerRollback(id, remote string, snapshot []workerSnapshot, env map[string]string) error {
-	for _, artifact := range snapshot {
-		for _, suffix := range []string{"", ".sha256"} {
-			if artifact.Present {
-				if _, err := r.Invoke([]string{"rclone", "copyto", remote + "/.imagebuilder-backups/" + id + "/" + artifact.Name + suffix,
-					remote + "/" + artifact.Name + suffix}, CommandOptions{Env: env, Timeout: workerSeconds(r.Cfg.TimeoutSeconds)}); err != nil {
-					return err
-				}
-			} else {
-				_, _ = r.Invoke([]string{"rclone", "deletefile", remote + "/" + artifact.Name + suffix}, CommandOptions{Env: env, Timeout: workerSeconds(r.Cfg.TimeoutSeconds)})
-			}
-		}
-		if artifact.Present {
-			digest, err := r.workerRemoteDigest(remote+"/"+artifact.Name, env)
-			if err != nil {
-				return err
-			}
-			if artifact.SHA256 == nil || digest != *artifact.SHA256 {
-				return fail("rollback_failed")
-			}
-			sidecar, err := r.Invoke([]string{"rclone", "cat", remote + "/" + artifact.Name + ".sha256"}, CommandOptions{Env: env, Capture: true})
-			if err != nil {
-				return err
-			}
-			if strings.TrimSpace(string(sidecar.Output)) != *artifact.SHA256 {
-				return fail("rollback_failed")
-			}
-		} else {
-			listing, err := r.Invoke([]string{"rclone", "lsf", "--files-only", "--max-depth", "1", remote}, CommandOptions{Env: env, Capture: true})
-			if err != nil {
-				return err
-			}
-			remaining := workerListing(listing.Output)
-			if remaining[artifact.Name] || remaining[artifact.Name+".sha256"] {
-				return fail("rollback_failed")
-			}
 		}
 	}
 	return nil
@@ -628,7 +488,7 @@ func (r *Runtime) Run(id string) (result error) {
 				publishEnv[key] = value
 			}
 		}
-		if err := r.workerPublish(id, checkout, s(request, "target"), manifest, publishEnv); err != nil {
+		if err := r.workerPublish(checkout, s(request, "target"), manifest, publishEnv); err != nil {
 			return err
 		}
 	}

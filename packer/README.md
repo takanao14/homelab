@@ -88,12 +88,15 @@ temporary SSH key and agent for the nested guest.
 Store the controller token with the build credentials in
 `packer/.env/secrets.sops.env` and load them through `packer/.envrc`.
 
-Publication verifies and retains existing image/checksum pairs before replacing
-them. These two objects are not an atomic update: keep consumer operations
-excluded until publication or recovery completes. `publication_blocked=true`
-requires `publish-retry` for that job before new builds are accepted. Never
-delete that job's artifacts or remote `.imagebuilder-backups/<job-id>/` while
-recovery is pending. Remote backups are not automatically pruned.
+Publication succeeds only after the uploaded image and checksum match the
+verified local artifact. These fixed-name objects are not an atomic update:
+keep consumer operations excluded during publication and after any publication
+failure until a verified publication succeeds. Failures do not restore the old
+pair or block unrelated builds. Use `publish-retry` with the original job ID to
+republish its retained, verified artifacts without rebuilding, before local
+retention removes them. Retry does not require a consistent existing remote pair.
+Use `verify-s3.sh` below for a read-only check of the current remote pair.
+Existing remote `.imagebuilder-backups/` objects are no longer used or pruned.
 
 For maintenance, run `image-build.sh start --keep-running`, then the
 `ops/imagebuilder_maintenance.yaml` playbook. Maintenance persists across reboots
@@ -138,6 +141,7 @@ the admission and idle checks must run before those services stop.
 ├── build.sh            # Main build script (selects the target's var file)
 ├── import-upstream.sh  # Download/verify/normalize upstream compressed images
 ├── push.sh             # Upload built images + checksums to SeaweedFS S3
+├── verify-s3.sh        # Verify remote image/checksum integrity without uploading
 └── setup.sh            # Entry point for the Ansible build-host setup
 ```
 
@@ -177,6 +181,20 @@ For FreeBSD, use [Upstream Image Imports](#upstream-image-imports).
 # Or upload every image currently in images/
 ./push.sh all
 ```
+
+Verify the current remote pair without local images or a running builder:
+
+```bash
+bash ./verify-s3.sh ubuntu-24.04-base.img
+```
+
+This read-only check streams the entire S3 image, computes SHA-256, and compares
+it with the sidecar read before and after streaming. It requires `rclone`, the
+same S3 environment variables (read access suffices), and Go to build the existing
+imagebuilder binary, or `IMAGEBUILDER_BINARY` pointing to a prebuilt binary.
+Success returns JSON with `ok: true`; missing objects, invalid checksums, read
+failures, and mismatches exit nonzero. Run after publication completes: this is
+an integrity check, not an atomic snapshot, provenance check, or boot test.
 
 ### 4. Deploy Images to Proxmox
 
