@@ -1,0 +1,92 @@
+---
+- name: Check whether the on-demand builder is running
+  become: true
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      qm list | awk '$2 == "imagebuilder1" && $3 == "running" {print "running"}'
+    executable: /bin/bash
+  delegate_to: pve
+  register: imagebuilder_power
+  changed_when: false
+  check_mode: false
+
+- name: Quiesce the running image builder before stopping dependencies
+  when:
+    - not ansible_check_mode
+    - imagebuilder_power.stdout | trim == 'running'
+  block:
+    - name: Disable new image builds
+      become: true
+      ansible.builtin.command:
+        argv: [/usr/local/libexec/imagebuilder, control]
+        stdin: '{"op":"maintenance","enabled":true}'
+      register: imagebuilder_maintenance
+      changed_when: true
+      no_log: true
+      ignore_unreachable: true
+
+    - name: Reconcile a transport failure through the hypervisor
+      ansible.builtin.assert:
+        that: not (imagebuilder_maintenance.unreachable | default(false))
+        fail_msg: The builder became unreachable while disabling admission.
+      delegate_to: localhost
+
+    - name: Wait for the active image build to finish
+      become: true
+      ansible.builtin.command:
+        argv: [/usr/local/libexec/imagebuilder, control]
+        stdin: '{"op":"status"}'
+      register: imagebuilder_status
+      changed_when: false
+      until: >-
+        not (imagebuilder_status.unreachable | default(false)) and
+        (imagebuilder_status.stdout | from_json).ok and
+        ((imagebuilder_status.stdout | from_json).phase == 'idle' or
+         (imagebuilder_status.stdout | from_json).finished | default(false))
+      retries: 120
+      delay: 5
+      no_log: true
+      ignore_unreachable: true
+
+    - name: Require a confirmed idle builder before shutdown
+      ansible.builtin.assert:
+        that: not (imagebuilder_status.unreachable | default(false))
+        fail_msg: The builder became unreachable while waiting for its job.
+      delegate_to: localhost
+
+    - name: Request normal image builder shutdown
+      become: true
+      ansible.builtin.command:
+        argv: [/usr/local/libexec/imagebuilder, control]
+        stdin: '{"op":"shutdown"}'
+      changed_when: true
+      no_log: true
+      ignore_unreachable: true
+
+    - name: Confirm the image builder has stopped
+      ansible.builtin.wait_for:
+        host: "{{ ansible_host }}"
+        port: 22
+        state: stopped
+        timeout: "{{ host_poweroff_timeout }}"
+      delegate_to: localhost
+      become: false
+  rescue:
+    - name: Check for an idle shutdown racing the maintenance request
+      become: true
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          qm list | awk '$2 == "imagebuilder1" && $3 == "running" {print "running"}'
+        executable: /bin/bash
+      delegate_to: pve
+      register: imagebuilder_remaining_power
+      changed_when: false
+
+    - name: Abort if the builder could not be quiesced
+      ansible.builtin.assert:
+        that: imagebuilder_remaining_power.stdout | trim == ''
+        fail_msg: >-
+          The image builder is still running. Keep its dependencies online,
+          inspect the job, and retry shutdown after it finishes. No forced stop was requested.

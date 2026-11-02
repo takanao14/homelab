@@ -1,0 +1,10 @@
+[Unit]
+Description=Check image builder idle timeout
+
+[Timer]
+OnBootSec=60
+OnUnitActiveSec=60
+Unit=imagebuilder-idle.service
+
+[Install]
+WantedBy=timers.target

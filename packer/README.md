@@ -13,15 +13,104 @@ The build and the Proxmox registration are **decoupled** through S3 (SeaweedFS):
    Proxmox node **download** the image from that URL (`proxmox_download_file`),
    pinned by the published sha256.
 
-Builds run on a KVM/libguestfs builder; the apply host needs bucket access,
-and Proxmox nodes download the published artifacts.
+Builds run on the on-demand `imagebuilder1` KVM/libguestfs VM. The controller
+starts it, submits a systemd job and can disconnect without stopping the build.
+The VM shuts down after ten idle minutes, including after a failed job. The
+apply host needs bucket access, and Proxmox nodes download published artifacts.
+
+## On-demand builds
+
+Provision the VM and controller credentials as described in the
+[imagebuilder role](../ansible/roles/imagebuilder/README.md). From the repository
+root, with credentials injected from SOPS into the controller environment.
+
+The CLI builds its Go controller locally with the toolchain pinned in
+`scripts/imagebuilder/go.mod`. Set `IMAGEBUILDER_BINARY` to an existing binary
+to run on a controller without Go. The builder runtime is cross-compiled by
+Ansible on the controller and installed as `/usr/local/libexec/imagebuilder`.
+
+```bash
+# Build and smoke-test a committed revision without publishing.
+./scripts/image-build.sh run ubuntu26-base --revision "$(git rev-parse HEAD)"
+
+# Build a pushed branch while iterating on the Packer configuration.
+./scripts/image-build.sh run ubuntu26-base --branch fix/packer --detach
+./scripts/image-build.sh logs <job-id> --follow
+
+# Publish only after excluding concurrent customimage downloads, plans and applies.
+./scripts/image-build.sh run ubuntu26-base --revision "$(git rev-parse HEAD)" --publish
+
+./scripts/image-build.sh status
+./scripts/image-build.sh logs <job-id>
+./scripts/image-build.sh publish-retry <job-id>
+./scripts/image-build.sh shutdown
+```
+
+`run` accepts either `--revision <full-sha>` or `--branch <name>`. Branch names
+refer to the configured remote repository: the builder resolves the branch once,
+reports its SHA and checks out that exact commit. Later pushes do not change a
+running job. The selected branch and commit remain in the job metadata;
+uncommitted changes must be committed and pushed before building.
+
+`run` follows structured logs and waits for job finalization; VM shutdown follows
+after the idle grace period. `--detach` returns the job ID immediately. `status`
+does not start a stopped VM; `logs` and `publish-retry` do. `all` selects the existing
+Packer build set; upstream-only targets such as `freebsd151` use the import path.
+Log retrieval and maintenance startup do not require successful KVM, kernel or
+free-space checks, so those failures can still be inspected and repaired.
+
+`logs` returns structured stage records with timestamps, command exit codes and
+durations. Packer diagnostics include recognized HCL error categories and source
+locations, provisioner exit codes and artifact counts. `--follow` streams new
+records until finalization; `--after <sequence>` resumes from a previous cursor.
+Each response includes up to 256 records; retention is capped at 1,000 records
+and 192 KiB per job. `has_more` indicates another page and `truncated` reports
+expired records.
+Records follow the job's seven-day retention. Raw provisioner messages and
+`PACKER_LOG` traces are not stored: only explicitly allowed fields are extracted
+in memory before persistence or display. Unknown messages are discarded.
+
+The CLI uses `IMAGEBUILDER_PROXMOX_TOKEN` in Proxmox's `user@realm!token=secret`
+format, and discovers the VM ID by name unless `IMAGEBUILDER_VMID` is set.
+Grant only `VM.Audit` and `VM.PowerMgmt` on this VM to that token, including
+both user and token ACLs when privilege separation is enabled. Defaults are
+`IMAGEBUILDER_PROXMOX_URL=https://192.168.10.10:8006`, `IMAGEBUILDER_NODE=pve`,
+`IMAGEBUILDER_SSH_HOST=192.168.20.25`, and
+`IMAGEBUILDER_SSH_USER=imagebuilder-control`. Trust the Proxmox CA through
+`IMAGEBUILDER_PROXMOX_CA_FILE` when it is not in the system trust store. SSH
+requires a verified host key in the controller's known_hosts and never forwards
+the controller's agent. The revision must already be fetchable from the remote.
+
+Build targets require `PKR_VAR_user_password`; publication additionally requires
+the S3 variables listed below. Only these allowlisted credentials cross SSH,
+through stdin into a job-specific tmpfs directory. The worker creates its own
+temporary SSH key and agent for the nested guest.
+Store the controller token with the build credentials in
+`packer/.env/secrets.sops.env` and load them through `packer/.envrc`.
+
+Publication verifies and retains existing image/checksum pairs before replacing
+them. These two objects are not an atomic update: keep consumer operations
+excluded until publication or recovery completes. `publication_blocked=true`
+requires `publish-retry` for that job before new builds are accepted. Never
+delete that job's artifacts or remote `.imagebuilder-backups/<job-id>/` while
+recovery is pending. Remote backups are not automatically pruned.
+
+For maintenance, run `image-build.sh start --keep-running`, then the
+`ops/imagebuilder_maintenance.yaml` playbook. Maintenance persists across reboots
+to keep job admission disabled while package and kernel updates finish.
+Use `image-build.sh maintenance off` to resume builds and idle shutdown.
+Fleet startup leaves the VM off; fleet shutdown first disables admission and
+waits up to ten minutes for a running job, aborting if it cannot finish.
+After recovery, explicitly clear maintenance before accepting new builds.
+Do not exclude `imagebuilder1` with `--limit` when stopping its dependencies;
+the admission and idle checks must run before those services stop.
 
 ## Requirements
 
 ### Build Requirements
 - Packer >= 1.15.0
 - QEMU tools (`qemu-img`)
-- Linux amd64 builder with KVM and libguestfs (see `setup.sh`)
+- Linux amd64 builder with KVM and libguestfs (see the imagebuilder role)
 - Internet access for downloading base images and packages
 - For upstream imports: `curl`, `xz`, and `sha256sum`
 
@@ -49,7 +138,7 @@ and Proxmox nodes download the published artifacts.
 ├── build.sh            # Main build script (selects the target's var file)
 ├── import-upstream.sh  # Download/verify/normalize upstream compressed images
 ├── push.sh             # Upload built images + checksums to SeaweedFS S3
-└── setup.sh            # One-time build-host setup (QEMU/KVM + libguestfs)
+└── setup.sh            # Entry point for the Ansible build-host setup
 ```
 
 ## Quick Start

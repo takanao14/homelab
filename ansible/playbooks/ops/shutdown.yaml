@@ -9,6 +9,19 @@
 # rpi3/rpi4 stay up for DHCP/probes and are powered off manually.
 # Startup differs; see playbooks/ops/startup.yaml. Clusters stop serially: sandbox, then prd.
 
+- name: Quiesce on-demand image builds before stopping dependencies
+  hosts: imagebuilder
+  gather_facts: false
+  any_errors_fatal: true
+  tags:
+    - workloads
+    - k8s
+    - guests
+    - hypervisors
+  tasks:
+    - name: Stop accepting builds and shut down the builder when idle
+      ansible.builtin.import_tasks: ../tasks/imagebuilder_quiesce.yaml
+
 # Phase 1 — sandbox. Scale to zero because no eviction target remains.
 - name: Stop application workloads on sandbox
   hosts: sandbox_k8s_controller

@@ -1,0 +1,22 @@
+[Unit]
+Description=Image build job %i
+Requires=imagebuilder-boot.service
+After=imagebuilder-boot.service network-online.target
+Wants=network-online.target
+RequiresMountsFor={{ imagebuilder_work_dir }}
+
+[Service]
+Type=exec
+User={{ imagebuilder_user }}
+Group={{ imagebuilder_user }}
+SupplementaryGroups=kvm
+Environment=LIBGUESTFS_BACKEND=direct
+ExecStart=/usr/local/libexec/imagebuilder run %i
+ExecStopPost=+/usr/local/libexec/imagebuilder finish %i
+RuntimeMaxSec={{ imagebuilder_timeout_seconds }}
+TimeoutStopSec=120
+KillMode=control-group
+Restart=no
+UMask=0077
+StandardOutput=null
+StandardError=null

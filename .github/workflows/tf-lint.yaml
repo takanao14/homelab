@@ -46,3 +46,6 @@ jobs:
             rm -f "${dir}provider.tf"
             echo "::endgroup::"
           done
+
+      - name: Test managed and externally controlled VM power lifecycles
+        run: bash tf/tests/check-vm-runtime-power.sh

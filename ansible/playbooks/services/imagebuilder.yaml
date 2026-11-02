@@ -1,0 +1,6 @@
+---
+- name: Configure the on-demand image builder
+  hosts: imagebuilder
+  roles:
+    - role: imagebuilder
+      tags: imagebuilder

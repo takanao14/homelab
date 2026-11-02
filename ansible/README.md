@@ -132,6 +132,9 @@ Package upgrades run serially on DNS hosts and k0s nodes. Workers are drained
 before reboot and uncordoned only after LocalPV is mounted and, where NFS is
 enabled, a probe Pod on that worker successfully mounts the export. The
 `dns`, `k8s`, and `others` phases can be resumed independently.
+The on-demand image builder is excluded from bulk upgrades. Start it in
+maintenance mode and use `ops/imagebuilder_maintenance.yaml` instead; see the
+[imagebuilder role](roles/imagebuilder/README.md).
 
 Shutdown phase tags are `workloads`, `k8s`, `guests`, and `hypervisors`, in that
 order. Startup uses the same tags to wait for hypervisors, start guests, check
