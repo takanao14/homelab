@@ -55,6 +55,12 @@ only to bootstrap the builder; service VMs retain ADR-0077's base-image policy.
   invocation; per-job work directories give isolation without that lifecycle.
 - **Terraform for routine power operations** couples builds to state access
   and conflicts with the separation between provisioning and job execution.
+- **An HTTP control API on the builder** adds a listening daemon, TLS and token
+  authentication. SSH reuses OpenSSH key authentication and host-key
+  verification, carries credentials on stdin and limits the control account to
+  one sudo entry point that accepts validated JSON.
+- **Proxmox guest-agent execution** needs broader token privileges and runs
+  arbitrary commands as root in the guest, with limited output size.
 
 ## Consequences
 
