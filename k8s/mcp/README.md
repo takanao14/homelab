@@ -17,7 +17,9 @@ automatically restarts the affected Deployment after the Secret changes.
 Codex and Claude Code use the HTTP entries in `.codex/config.toml` and
 `.mcp.json`. Restart each client after changing these files. The header helper
 reads the encrypted file directly, so no terminal environment inheritance is
-needed. OpenClaw and Hermes receive caller tokens through the shared Ansible
+needed. Clients that cannot run a header helper, such as IntelliJ IDEA, register
+`scripts/mcp-http-proxy.sh <server>` by absolute path as a stdio server; it
+runs Homebrew `mcp-proxy` against the `.mcp.json` URL. OpenClaw and Hermes receive caller tokens through the shared Ansible
 `mcp_client` role; redeploy both service playbooks after rotation, restart
 OpenClaw and the Hermes Dashboard. Pause evaluations while server and client tokens
 differ.
