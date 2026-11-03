@@ -165,6 +165,10 @@ which must support snippets. Never include decrypted secrets in the payloads.
 `cloudinit.hcl`. Snippet changes require explicit VM replacement to reach the
 guest, as with generated initialization.
 
+`vm/pve/imagebuilder1` provisions the dedicated Packer builder from the Ubuntu
+26.04 tool image; Ansible manages its build dependencies and chezmoi manages
+user configuration.
+
 ## Architecture
 
 - **Backend**: Cloudflare R2 (S3-compatible) remote state with native lockfile
