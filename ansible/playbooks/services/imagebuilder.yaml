@@ -4,3 +4,146 @@
   roles:
     - role: imagebuilder
       tags: imagebuilder
+
+# Only the token secret stays manual: it is shown once and belongs in SOPS.
+- name: Grant the image builder controller VM-scoped Proxmox access
+  hosts: pve
+  gather_facts: false
+  vars:
+    imagebuilder_vm_name: imagebuilder1
+    imagebuilder_proxmox_role: ImageBuilderPower
+    imagebuilder_proxmox_privs: [VM.Audit, VM.PowerMgmt]
+    imagebuilder_proxmox_user: imagebuilder@pve
+    imagebuilder_proxmox_token: controller
+    imagebuilder_proxmox_token_id: "{{ imagebuilder_proxmox_user }}!{{ imagebuilder_proxmox_token }}"
+  tags: proxmox_access
+  tasks:
+    - name: Get Proxmox virtual machines
+      become: true
+      ansible.builtin.command:
+        argv: [pvesh, get, /cluster/resources, --type, vm, --output-format, json]
+      register: imagebuilder_vms
+      check_mode: false
+      changed_when: false
+
+    - name: Resolve the image builder VM ID
+      ansible.builtin.set_fact:
+        imagebuilder_vm_matches: >-
+          {{ imagebuilder_vms.stdout | from_json
+             | selectattr('name', 'defined')
+             | selectattr('name', 'equalto', imagebuilder_vm_name) | list }}
+
+    - name: Require exactly one image builder VM
+      ansible.builtin.assert:
+        that: imagebuilder_vm_matches | length == 1
+        fail_msg: Expected exactly one Proxmox VM named {{ imagebuilder_vm_name }}.
+
+    - name: Get Proxmox roles
+      become: true
+      ansible.builtin.command:
+        argv: [pveum, role, list, --output-format, json]
+      register: imagebuilder_roles
+      check_mode: false
+      changed_when: false
+
+    - name: Get Proxmox users
+      become: true
+      ansible.builtin.command:
+        argv: [pveum, user, list, --output-format, json]
+      register: imagebuilder_users
+      check_mode: false
+      changed_when: false
+
+    - name: Summarize existing Proxmox access
+      ansible.builtin.set_fact:
+        imagebuilder_acl_path: /vms/{{ imagebuilder_vm_matches[0].vmid }}
+        imagebuilder_role_entry: >-
+          {{ imagebuilder_roles.stdout | from_json
+             | selectattr('roleid', 'equalto', imagebuilder_proxmox_role) | list }}
+        imagebuilder_user_exists: >-
+          {{ imagebuilder_proxmox_user in
+             (imagebuilder_users.stdout | from_json | map(attribute='userid') | list) }}
+
+    - name: Create the image builder Proxmox role
+      become: true
+      ansible.builtin.command:
+        argv: [pveum, role, add, "{{ imagebuilder_proxmox_role }}", -privs, "{{ imagebuilder_proxmox_privs | join(',') }}"]
+      when: imagebuilder_role_entry | length == 0
+      changed_when: true
+
+    - name: Restore the image builder Proxmox role privileges
+      become: true
+      ansible.builtin.command:
+        argv: [pveum, role, modify, "{{ imagebuilder_proxmox_role }}", -privs, "{{ imagebuilder_proxmox_privs | join(',') }}"]
+      vars:
+        imagebuilder_current_privs: "{{ imagebuilder_role_entry[0].privs }}"
+      when:
+        - imagebuilder_role_entry | length == 1
+        - >-
+          (imagebuilder_current_privs.split(',') if imagebuilder_current_privs is string
+           else imagebuilder_current_privs) | map('trim') | sort != imagebuilder_proxmox_privs | sort
+      changed_when: true
+
+    - name: Create the image builder Proxmox user
+      become: true
+      ansible.builtin.command:
+        argv: [pveum, user, add, "{{ imagebuilder_proxmox_user }}", --comment, Managed by Ansible]
+      when: not imagebuilder_user_exists
+      changed_when: true
+
+    - name: Get the image builder API tokens
+      become: true
+      ansible.builtin.command:
+        argv: [pveum, user, token, list, "{{ imagebuilder_proxmox_user }}", --output-format, json]
+      register: imagebuilder_tokens
+      check_mode: false
+      changed_when: false
+      when: imagebuilder_user_exists
+
+    - name: Get Proxmox ACLs
+      become: true
+      ansible.builtin.command:
+        argv: [pveum, acl, list, --output-format, json]
+      register: imagebuilder_acls
+      check_mode: false
+      changed_when: false
+
+    - name: Summarize the image builder token and ACLs
+      ansible.builtin.set_fact:
+        imagebuilder_token_exists: >-
+          {{ imagebuilder_user_exists and imagebuilder_proxmox_token in
+             (imagebuilder_tokens.stdout | from_json | map(attribute='tokenid') | list) }}
+        imagebuilder_vm_acls: >-
+          {{ imagebuilder_acls.stdout | from_json
+             | selectattr('path', 'equalto', imagebuilder_acl_path)
+             | selectattr('roleid', 'equalto', imagebuilder_proxmox_role) | list }}
+
+    - name: Grant the image builder role to the Proxmox user
+      become: true
+      ansible.builtin.command:
+        argv: [pveum, acl, modify, "{{ imagebuilder_acl_path }}", -user, "{{ imagebuilder_proxmox_user }}", -role, "{{ imagebuilder_proxmox_role }}"]
+      when: >-
+        imagebuilder_vm_acls | selectattr('type', 'equalto', 'user')
+        | selectattr('ugid', 'equalto', imagebuilder_proxmox_user) | list | length == 0
+      changed_when: true
+
+    - name: Grant the image builder role to the API token
+      become: true
+      ansible.builtin.command:
+        argv: [pveum, acl, modify, "{{ imagebuilder_acl_path }}", -token, "{{ imagebuilder_proxmox_token_id }}", -role, "{{ imagebuilder_proxmox_role }}"]
+      when:
+        - imagebuilder_token_exists
+        - >-
+          imagebuilder_vm_acls | selectattr('type', 'equalto', 'token')
+          | selectattr('ugid', 'equalto', imagebuilder_proxmox_token_id) | list | length == 0
+      changed_when: true
+
+    - name: Require the manually issued API token
+      ansible.builtin.fail:
+        msg: >-
+          Create the token on {{ inventory_hostname }} with
+          'pveum user token add {{ imagebuilder_proxmox_user }} {{ imagebuilder_proxmox_token }} --privsep 1',
+          store it as IMAGEBUILDER_PROXMOX_TOKEN in packer/.env/secrets.sops.env, then rerun this playbook.
+      when:
+        - not imagebuilder_token_exists
+        - not ansible_check_mode

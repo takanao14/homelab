@@ -90,15 +90,12 @@ both user and token ACLs when privilege separation is enabled. Defaults are
 requires a verified host key in the controller's known_hosts and never forwards
 the controller's agent. The revision must already be fetchable from the remote.
 
-Create the token as root on `pve`, replacing `<vmid>` with imagebuilder1's ID.
-`token add` prints the secret only once.
+`playbooks/services/imagebuilder.yaml` manages the `ImageBuilderPower` role, the
+`imagebuilder@pve` user and both ACLs on `pve`, and stops until the token exists.
+Issue the token once as root on `pve`; it prints the secret only once:
 
 ```bash
-pveum role add ImageBuilderPower -privs "VM.Audit VM.PowerMgmt"
-pveum user add imagebuilder@pve
-pveum aclmod /vms/<vmid> -user imagebuilder@pve -role ImageBuilderPower
 pveum user token add imagebuilder@pve controller --privsep 1
-pveum aclmod /vms/<vmid> -token 'imagebuilder@pve!controller' -role ImageBuilderPower
 ```
 
 Build targets require `PKR_VAR_user_password`; publication additionally requires

@@ -3,7 +3,9 @@
 Configure `imagebuilder1` with `playbooks/services/imagebuilder.yaml` after
 creating and starting the VM. The control account accepts the configured admin
 SSH keys and can sudo only the runtime's JSON control entry point. Build jobs
-run as the separate unprivileged `imagebuilder` account under systemd.
+run as the separate unprivileged `imagebuilder` account under systemd. The
+playbook then grants the controller's Proxmox token VM-scoped power access on
+`pve`; do not limit it to `imagebuilder1` when that access must be reconciled.
 
 Install Go on the Ansible controller. The role builds the repository's Go runtime
 there with the toolchain pinned in `scripts/imagebuilder/go.mod`, then copies a
