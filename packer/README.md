@@ -13,8 +13,11 @@ The build and the Proxmox registration are **decoupled** through S3 (SeaweedFS):
    Proxmox node **download** the image from that URL (`proxmox_download_file`),
    pinned by the published sha256.
 
-Builds run on a KVM/libguestfs builder; the apply host needs bucket access,
-and Proxmox nodes download the published artifacts.
+The dedicated KVM/libguestfs builder is defined as `imagebuilder1` on `pve`
+(Ubuntu 26.04 tool, 4 vCPU, 8 GiB RAM, 200 GiB disk). Provision its build
+dependencies with
+`ansible/playbooks/services/imagebuilder.yaml` after the host baseline.
+The apply host needs bucket access, and Proxmox nodes download the published artifacts.
 
 ## Requirements
 

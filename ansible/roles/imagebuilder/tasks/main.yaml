@@ -1,0 +1,51 @@
+---
+- name: Validate builder platform
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] == 'Ubuntu'
+      - ansible_facts['architecture'] == 'x86_64'
+    fail_msg: The builder requires Ubuntu amd64.
+
+- name: Resolve the SSH connection user
+  become: false
+  ansible.builtin.command: id -un
+  changed_when: false
+  check_mode: false
+  register: imagebuilder_connection_user
+  when: imagebuilder_user | length == 0
+
+- name: Select the builder account
+  ansible.builtin.set_fact:
+    imagebuilder_target_user: "{{ imagebuilder_user or imagebuilder_connection_user.stdout }}"
+
+- name: Install headless image build dependencies
+  become: true
+  ansible.builtin.apt:
+    name:
+      - libguestfs-tools
+      - qemu-system-x86
+      - qemu-utils
+      - xorriso
+    state: present
+    install_recommends: false
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Grant the builder access to KVM
+  become: true
+  ansible.builtin.user:
+    name: "{{ imagebuilder_target_user }}"
+    groups: kvm
+    append: true
+
+- name: Check nested KVM availability
+  ansible.builtin.stat:
+    path: /dev/kvm
+  register: imagebuilder_kvm
+
+- name: Require nested KVM
+  ansible.builtin.assert:
+    that:
+      - imagebuilder_kvm.stat.exists
+      - imagebuilder_kvm.stat.ischr | default(false)
+    fail_msg: Expose nested virtualization from the Proxmox host before building images.
