@@ -18,7 +18,7 @@ scripts/
 ├── netbox-mcp.sh                             # NetBox MCP server launcher (stdio)
 ├── netbox-mcp-token.sh                       # generate the managed NetBox MCP v2 token
 ├── mcp-http-headers.py                       # HTTP MCP bearer headers from SOPS
-├── mcp-stdio-bridge.py                       # stdio-to-HTTP MCP bridge for clients without header helpers
+├── mcp-http-proxy.sh                         # stdio bridge to HTTP MCP for clients without header helpers
 ├── lib/openbao-auth.sh                       # shared OpenBao auth helper
 ├── lib/mcp-launcher.sh                       # shared MCP launcher plumbing (SOPS env, container runtime)
 ├── install/                                  # CLI toolchain installers (shared with packer/)
