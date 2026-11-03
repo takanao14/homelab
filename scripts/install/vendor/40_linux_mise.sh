@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# mise-config-sha256: 7fa708da1a1f82a9bab21e12a64746d28c9118a8f3e19ee90b820f4ae3070683
-# mise-lock-sha256: 67c4870ada81356681d90c518d0c806f5ffecb91df56ddb30542848ab82fc467
+# mise-config-sha256: 93107c599bfeda3c95a70e774aee96505ac498750c6308988b7bef364993cecd
+# mise-lock-sha256: bec2d36fbd84bc45be8243097da7d0d04e0185e0dbf7b7ba86cb19f33358117d
 
 [[ "$(uname -s)" == "Linux" ]] || exit 0
 
 # renovate: datasource=github-releases depName=jdx/mise
-readonly MISE_VERSION="${MISE_VERSION:-2026.10.23}"
+readonly MISE_VERSION="${MISE_VERSION:-2026.10.24}"
 # renovate: datasource=github-releases depName=databus23/helm-diff
 readonly HELM_DIFF_VERSION="${HELM_DIFF_VERSION:-3.15.15}"
 readonly MISE_CONFIG_FILE="${MISE_CONFIG_FILE:-$HOME/.config/mise/config.toml}"
@@ -16,11 +16,11 @@ readonly MISE_INSTALL_SCOPE="${MISE_INSTALL_SCOPE:-user}"
 case "$(uname -m)" in
     x86_64)
         readonly MISE_ARCH="x64"
-        readonly MISE_SHA256="a6ac620e73fb58cefbdfef8fb154856fbd8ae08d75ae88103e4b81daef3a836e"
+        readonly MISE_SHA256="be97dbac1c0b1fe08bd8c0cf01690f4273ea9aa02ad766b98d4e20c43eb9059d"
         ;;
     aarch64 | arm64)
         readonly MISE_ARCH="arm64"
-        readonly MISE_SHA256="7a4032ee0f637e2333b78ef937bdffc90efed799a4a85fa64c393799cc428731"
+        readonly MISE_SHA256="ae1151a87d70146119f68f7378001a12f09d2a38853087ed6139b7527a55f148"
         ;;
     *)
         echo "Unsupported architecture: $(uname -m)" >&2
