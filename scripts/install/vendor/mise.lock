@@ -35,20 +35,20 @@ url_api = "https://api.github.com/repos/Byron/dua-cli/releases/assets/644781322"
 provenance = "github-attestations"
 
 [[tools."aqua:ClementTsang/bottom"]]
-version = "0.14.9"
+version = "0.15.0"
 backend = "aqua:ClementTsang/bottom"
-specifiers = ["0.14.9"]
+specifiers = ["0.15.0"]
 
 [tools."aqua:ClementTsang/bottom"."platforms.linux-arm64"]
-checksum = "sha256:a6a0a0dda426b31b2c72e15a26c7e97c2224aafdd66f60632e34ee464a64ec8f"
-url = "https://github.com/ClementTsang/bottom/releases/download/0.14.9/bottom_aarch64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/ClementTsang/bottom/releases/assets/531978123"
+checksum = "sha256:93221c07d549750e5cfac2a76f70e5d792c744958ecc466bbeb9d3bef34288b6"
+url = "https://github.com/ClementTsang/bottom/releases/download/0.15.0/bottom_aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/ClementTsang/bottom/releases/assets/696808752"
 provenance = "github-attestations"
 
 [tools."aqua:ClementTsang/bottom"."platforms.linux-x64"]
-checksum = "sha256:e0c325829e8bdcea25a8a7651da05dbb6f1fc109ac5d2f0187867d3d5d9c0df8"
-url = "https://github.com/ClementTsang/bottom/releases/download/0.14.9/bottom_x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/ClementTsang/bottom/releases/assets/531978159"
+checksum = "sha256:051888e0e064aa037728efed3fcf77820714f8f4dc7bea2b0179d40c54400c26"
+url = "https://github.com/ClementTsang/bottom/releases/download/0.15.0/bottom_x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/ClementTsang/bottom/releases/assets/696808858"
 provenance = "github-attestations"
 
 [[tools."aqua:FiloSottile/age"]]
