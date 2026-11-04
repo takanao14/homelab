@@ -1,7 +1,7 @@
 ---
 sssd_supported_versions:
   Ubuntu: '^(24|26)\.04'
-  Rocky: '^9\.'
+  Rocky: '^(9|10)\.'
 
 sssd_platforms:
   Ubuntu:

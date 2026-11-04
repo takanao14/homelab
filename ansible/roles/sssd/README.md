@@ -1,6 +1,6 @@
 # sssd Role
 
-Connects Ubuntu 24.04/26.04 and Rocky Linux 9 hosts to LLDAP for NSS/PAM
+Connects Ubuntu 24.04/26.04 and Rocky Linux 9/10 hosts to LLDAP for NSS/PAM
 lookups, password authentication, and SSH public keys (ADR-0067).
 
 ```text
