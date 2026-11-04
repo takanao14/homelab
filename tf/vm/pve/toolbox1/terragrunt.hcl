@@ -20,11 +20,30 @@ inputs = {
   vms = {
     "toolbox1" = merge(local.base_vars, {
       cores   = 4
-      memory  = 16384
+      memory  = 8192
       on_boot = true
       bridge  = local.common.locals.pve.net20.bridge
-      ipv4    = "192.168.20.21/24"
-      ipv4gw  = local.common.locals.pve.net20.ipv4gw
+      cloud_init = {
+        network_data = yamlencode({
+          version  = 2
+          renderer = "networkd"
+          ethernets = {
+            primary = {
+              # The VM has one VirtIO NIC; its PCI-derived name can change.
+              match     = { driver = "virtio_net" }
+              addresses = ["192.168.20.21/24"]
+              routes = [{
+                to  = "default"
+                via = local.common.locals.pve.net20.ipv4gw
+              }]
+              nameservers = {
+                addresses = local.common.locals.dns_internal
+                search    = [local.common.locals.dns_domain]
+              }
+            }
+          }
+        })
+      }
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 200
