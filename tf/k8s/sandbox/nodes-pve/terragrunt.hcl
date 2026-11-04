@@ -53,8 +53,6 @@ inputs = {
           }
         })
       }
-      #       ipv4gw = local.common.locals.pve.net20.ipv4gw
-      #       ipv4   = "192.168.20.31/24"
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 40
@@ -87,8 +85,6 @@ inputs = {
           }
         })
       }
-      #       ipv4gw = local.common.locals.pve.net20.ipv4gw
-      #       ipv4   = "192.168.20.32/24"
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 64
@@ -124,8 +120,6 @@ inputs = {
           }
         })
       }
-      #       ipv4gw = local.common.locals.pve.net20.ipv4gw
-      #       ipv4   = "192.168.20.33/24"
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 64
