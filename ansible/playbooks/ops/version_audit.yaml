@@ -322,6 +322,10 @@
       ansible.builtin.package_facts:
         manager: auto
 
+    - name: Gather distribution facts for the exporter mode
+      ansible.builtin.setup:
+        gather_subset: [distribution]
+
     # ROCm 7.14+ replaced the generic `rocm` metapackage with the per-GPU
     # rocm_package_name (e.g. amdrocm10.0-gfx1200); `rocm` no longer exists.
     - name: Report ROCm package version
@@ -388,6 +392,56 @@
              or exporter_audit_installed.startswith(rocm_device_metrics_exporter_version ~ '-')
              or exporter_audit_installed.startswith(rocm_device_metrics_exporter_version ~ '+')
              or exporter_audit_installed.startswith(rocm_device_metrics_exporter_version ~ '~') }}
+      when: rocm_ubuntu_release.exporter_mode == 'native'
+
+    - name: Audit the running AMD device metrics exporter container
+      when: rocm_ubuntu_release.exporter_mode == 'container'
+      vars:
+        exporter_audit_digest: "{{ rocm_device_metrics_exporter_image.split('@') | last }}"
+        exporter_audit_tag: "{{ (rocm_device_metrics_exporter_image.split('@') | first).split(':') | last }}"
+      block:
+        - name: Inspect the running exporter container
+          become: true
+          ansible.builtin.command:
+            argv: [podman, container, inspect, --format, '{{ "{{.State.Running}} {{.Image}}" }}', amd-metrics-exporter]
+          register: exporter_audit_container
+          changed_when: false
+          failed_when: false
+          check_mode: false
+
+        # Compare repo digests, not the image ID: the pin is a multi-arch index digest.
+        - name: Read the running exporter image digests
+          become: true
+          ansible.builtin.command:
+            argv: [podman, image, inspect, --format, '{{ "{{json .RepoDigests}}" }}', "{{ exporter_audit_container.stdout.split() | last }}"]
+          register: exporter_audit_image
+          changed_when: false
+          failed_when: false
+          check_mode: false
+          when:
+            - exporter_audit_container.rc == 0
+            - exporter_audit_container.stdout.startswith('true ')
+
+        - name: Report AMD device metrics exporter container version
+          ansible.builtin.debug:
+            msg: >-
+              {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+                'amdgpu-exporter',
+                inventory_hostname,
+                exporter_audit_tag,
+                exporter_audit_installed,
+                'OK' if exporter_audit_matches else 'DIFF'
+              ) }}
+          vars:
+            exporter_audit_repo_digests: >-
+              {{ (exporter_audit_image.stdout | default('[]') | from_json)
+                 if exporter_audit_image.rc | default(1) == 0 else [] }}
+            exporter_audit_matches: >-
+              {{ exporter_audit_repo_digests | select('search', '@' ~ exporter_audit_digest ~ '$') | list | length > 0 }}
+            exporter_audit_installed: >-
+              {{ exporter_audit_tag if exporter_audit_matches
+                 else ((exporter_audit_repo_digests | first).split('@') | last)[:19] if exporter_audit_repo_digests
+                 else 'not-running' }}
 
 - name: Audit DNS package versions
   hosts: dns_resolver:dnsdist:dns_auth
