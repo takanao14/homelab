@@ -1,7 +1,9 @@
 ---
 # loki_endpoint is defined in all.yaml without DNS dependency.
 
-vector_config:
+vector_internal_metrics_enabled: true
+
+vector_log_config:
   sources:
     syslog_udp:
       type: socket

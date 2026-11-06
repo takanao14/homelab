@@ -47,7 +47,7 @@ inputs = {
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 100
-          file_id = "local:iso/ubuntu-26.04-desktop.img"
+          file_id = "local:iso/ubuntu-26.04-base.img"
         })
       }
     })
@@ -61,7 +61,7 @@ inputs = {
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 100
-          file_id = "local:iso/rocky-10-desktop.img"
+          file_id = "local:iso/rocky-10-base.img"
         })
       }
     })

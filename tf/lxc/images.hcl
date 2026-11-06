@@ -22,7 +22,7 @@ locals {
     caddy1     = "noble"
     forgejo1   = "noble"
     seaweedfs1 = "noble"
-    log1       = "resolute"
+    log1       = "trixie"
   }
 
   images = {
