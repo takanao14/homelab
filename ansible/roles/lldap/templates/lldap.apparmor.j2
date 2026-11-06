@@ -1,0 +1,37 @@
+# Based on the containers/common v0.62.2 default profile.
+#include <tunables/global>
+
+profile {{ lldap_apparmor_profile }} flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  network,
+  capability,
+  file,
+  umount,
+
+  signal (receive) peer=unconfined,
+  signal (send,receive) peer={{ lldap_apparmor_profile }},
+  signal (receive) peer={/usr/bin/,/usr/sbin/,}runc,
+  signal (receive) peer={/usr/bin/,/usr/sbin/,}crun*,
+  signal (receive) set=(int,quit,kill,term) peer={/usr/bin/,/usr/sbin/,}podman,
+  # tini forwards shutdown signals to children with crun-stacked labels.
+  signal (send,receive) set=(term,kill) peer="{{ lldap_apparmor_profile }}//&crun",
+  signal (send,receive) set=(term,kill) peer="crun//&{{ lldap_apparmor_profile }}",
+
+  deny @{PROC}/* w,
+  deny @{PROC}/{[^1-9],[^1-9][^0-9],[^1-9s][^0-9y][^0-9s],[^1-9][^0-9][^0-9]*}/** w,
+  deny @{PROC}/sys/[^k]** w,
+  deny @{PROC}/sys/kernel/{?,??,[^s][^h][^m]**} w,
+  deny @{PROC}/sysrq-trigger rwklx,
+  deny @{PROC}/kcore rwklx,
+  deny mount,
+
+  deny /sys/[^f]*/** wklx,
+  deny /sys/f[^s]*/** wklx,
+  deny /sys/fs/[^c]*/** wklx,
+  deny /sys/fs/c[^g]*/** wklx,
+  deny /sys/fs/cg[^r]*/** wklx,
+  deny /sys/firmware/** rwklx,
+  deny /sys/kernel/security/** rwklx,
+
+  ptrace (trace,read) peer={{ lldap_apparmor_profile }},
+}

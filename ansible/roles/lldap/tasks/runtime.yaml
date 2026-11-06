@@ -1,4 +1,21 @@
 ---
+- name: Install AppArmor
+  become: true
+  ansible.builtin.apt:
+    name: apparmor
+    state: present
+
+- name: Deploy the LLDAP AppArmor profile
+  become: true
+  ansible.builtin.template:
+    src: lldap.apparmor.j2
+    dest: "/etc/apparmor.d/{{ lldap_apparmor_profile }}"
+    owner: root
+    group: root
+    mode: '0644'
+    validate: /usr/sbin/apparmor_parser --skip-kernel-load %s
+  notify: Restart lldap
+
 - name: Create Ansible-owned LLDAP directories
   become: true
   ansible.builtin.file:

@@ -3,6 +3,7 @@
 lldap_version: "v0.6.3-alpine-rootless"
 lldap_image: docker.io/lldap/lldap
 lldap_container: lldap
+lldap_apparmor_profile: homelab-lldap
 
 lldap_base_dir: /opt/lldap
 lldap_data_dir: "{{ lldap_base_dir }}/data"

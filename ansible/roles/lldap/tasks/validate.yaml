@@ -1,4 +1,11 @@
 ---
+- name: Validate the LLDAP AppArmor profile name
+  ansible.builtin.assert:
+    that:
+      - lldap_apparmor_profile is match('^[A-Za-z0-9][A-Za-z0-9_.-]*$')
+      - lldap_apparmor_profile != 'unconfined'
+    quiet: true
+
 - name: Require unique user names and UIDs within the user range
   ansible.builtin.assert:
     that:

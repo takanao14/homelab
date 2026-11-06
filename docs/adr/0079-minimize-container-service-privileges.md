@@ -48,6 +48,8 @@ container. The pinned Valkey image passed with the restriction.
 Use LLDAP's official v0.6.3 non-root image with explicit UID/GID 1000,
 Ansible-managed data directory ownership, and no capabilities. Keep its bootstrap
 credentials root-only and run bootstrap with explicit container UID 0.
+Use a dedicated AppArmor profile based on containers/common v0.62.2, allowing
+TERM/KILL between crun-stacked labels so tini can forward shutdown signals.
 
 The PostgreSQL `18-alpine` image fails startup with this restriction on netbox1.
 Direct UID/GID 70 startup with no capabilities bypasses `gosu` but still stalls

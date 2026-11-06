@@ -10,6 +10,7 @@ User={{ lldap_container_uid }}
 Group={{ lldap_container_gid }}
 NoNewPrivileges=true
 DropCapability=all
+PodmanArgs=--security-opt=apparmor={{ lldap_apparmor_profile }}
 EnvironmentFile={{ lldap_env_file }}
 Environment=LLDAP_LDAP_BASE_DN={{ lldap_base_dn }}
 Environment=LLDAP_LDAP_USER_DN={{ lldap_admin_username }}
@@ -27,6 +28,7 @@ PublishPort={{ lldap_ldaps_port }}:6360
 PublishPort={{ lldap_http_port }}:17170
 
 [Service]
+ExecStartPre=/usr/sbin/apparmor_parser --replace /etc/apparmor.d/{{ lldap_apparmor_profile }}
 Restart=always
 
 [Install]

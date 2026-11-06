@@ -7,6 +7,8 @@ published through Caddy at `https://lldap.home.butaco.net`.
 The official non-root image runs as UID/GID 1000 with `NoNewPrivileges=true`
 and no Linux capabilities. Ansible prepares `/data` ownership; bootstrap runs
 with explicit container UID 0 to read its root-only credentials (ADR-0079).
+The unit loads the dedicated `homelab-lldap` AppArmor profile before startup;
+`lldap_apparmor_profile` controls its name.
 
 ## Functionality
 
