@@ -84,21 +84,21 @@ url = "https://github.com/ajeetdsouza/zoxide/releases/download/v0.10.0/zoxide-0.
 url_api = "https://api.github.com/repos/ajeetdsouza/zoxide/releases/assets/466316293"
 
 [[tools."aqua:argoproj/argo-cd"]]
-version = "3.5.7"
+version = "3.6.0"
 backend = "aqua:argoproj/argo-cd"
-specifiers = ["3.5.7"]
+specifiers = ["3.6.0"]
 
 [tools."aqua:argoproj/argo-cd"."platforms.linux-arm64"]
-checksum = "sha256:6310acfc44f2b492b5cdb5352c86f11a42d35895b3bd522d0f4fa9df4e9ad314"
+checksum = "sha256:45b5c33e4767c80a09c6e824f35bb07fb3f044703e62670b18478e64cbb47fb3"
 checksum_source = "mise-versions"
-url = "https://github.com/argoproj/argo-cd/releases/download/v3.5.7/argocd-linux-arm64"
-url_api = "https://api.github.com/repos/argoproj/argo-cd/releases/assets/703043878"
+url = "https://github.com/argoproj/argo-cd/releases/download/v3.6.0/argocd-linux-arm64"
+url_api = "https://api.github.com/repos/argoproj/argo-cd/releases/assets/707321692"
 
 [tools."aqua:argoproj/argo-cd"."platforms.linux-x64"]
-checksum = "sha256:e9b7c3f5316b8546bdd499dfb8d874e413a5e3605899a55ec2ce0b668a3e2801"
+checksum = "sha256:62f4fe7cf0f97f384993effccbde66a4e541bc9250c6682c75a9f992043263a0"
 checksum_source = "mise-versions"
-url = "https://github.com/argoproj/argo-cd/releases/download/v3.5.7/argocd-linux-amd64"
-url_api = "https://api.github.com/repos/argoproj/argo-cd/releases/assets/703044399"
+url = "https://github.com/argoproj/argo-cd/releases/download/v3.6.0/argocd-linux-amd64"
+url_api = "https://api.github.com/repos/argoproj/argo-cd/releases/assets/707322277"
 
 [[tools."aqua:astral-sh/uv"]]
 version = "0.13.7"
