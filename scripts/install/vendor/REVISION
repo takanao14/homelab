@@ -2,4 +2,4 @@
 # mise-config.toml, mise.lock, or packer/files/kitty.conf; re-run sync.sh to update them.
 repo: takanao14/dotfiles
 ref:  main
-sha:  639469fc67f9313cd39f18a2fd4ca4bf34cd051b
+sha:  453d56e57eb1320b3d303185807655b8cd1c2a7f
