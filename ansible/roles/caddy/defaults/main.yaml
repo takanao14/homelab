@@ -7,7 +7,7 @@ caddy_group: caddy
 
 # Built on the controller with xcaddy; changing any pin changes caddy_sha256.
 # renovate: datasource=github-releases depName=caddyserver/caddy
-caddy_version: "2.11.8"
+caddy_version: "2.11.9"
 # renovate: datasource=github-tags depName=caddy-dns/cloudflare
 caddy_cloudflare_version: "0.2.4"
 # renovate: datasource=github-releases depName=caddyserver/xcaddy
