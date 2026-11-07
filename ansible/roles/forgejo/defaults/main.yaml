@@ -1,6 +1,7 @@
 ---
 # renovate: datasource=gitea-releases depName=forgejo/forgejo registryUrl=https://codeberg.org
 forgejo_version: "17.0.1"
+forgejo_sha256: "51a8cdf4a1252e79f4b3855d7a7891af6c6635105420768c460e2f0690385d6f"
 forgejo_user: git
 forgejo_group: git
 forgejo_home: /var/lib/forgejo
