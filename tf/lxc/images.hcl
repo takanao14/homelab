@@ -19,7 +19,7 @@ locals {
     dist2      = "trixie"
     resolver1  = "trixie"
     resolver2  = "trixie"
-    caddy1     = "noble"
+    caddy1     = "trixie"
     forgejo1   = "noble"
     seaweedfs1 = "noble"
     log1       = "trixie"
