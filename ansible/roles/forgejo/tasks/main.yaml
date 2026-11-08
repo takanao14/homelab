@@ -42,6 +42,7 @@
   become: true
   ansible.builtin.get_url:
     url: "https://codeberg.org/forgejo/forgejo/releases/download/v{{ forgejo_version }}/forgejo-{{ forgejo_version }}-linux-amd64"
+    checksum: "sha256:{{ forgejo_sha256 }}"
     dest: "{{ forgejo_binary }}"
     owner: root
     group: root

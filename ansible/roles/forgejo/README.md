@@ -21,6 +21,7 @@ database service. The database and repositories live under `forgejo_home`.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `forgejo_version` | [defaults/main.yaml](defaults/main.yaml) | Forgejo version to install |
+| `forgejo_sha256` | [defaults/main.yaml](defaults/main.yaml) | SHA-256 of the pinned Linux amd64 release binary |
 | `forgejo_user` | `git` | System user |
 | `forgejo_group` | `git` | System group |
 | `forgejo_home` | `/var/lib/forgejo` | Home and data directory |
