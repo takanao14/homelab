@@ -37,6 +37,7 @@
   ansible.builtin.get_url:
     url: "https://github.com/seaweedfs/seaweedfs/releases/download/{{ seaweedfs_version }}/linux_amd64.tar.gz"
     dest: "{{ seaweedfs_download_dir }}/seaweedfs-{{ seaweedfs_version }}.tar.gz"
+    checksum: "sha256:{{ seaweedfs_sha256 }}"
     owner: root
     group: root
     mode: '0644'

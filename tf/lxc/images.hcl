@@ -21,7 +21,7 @@ locals {
     resolver2  = "trixie"
     caddy1     = "trixie"
     forgejo1   = "trixie"
-    seaweedfs1 = "noble"
+    seaweedfs1 = "trixie"
     log1       = "trixie"
   }
 

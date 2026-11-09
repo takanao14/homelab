@@ -35,6 +35,7 @@ for a single-node homelab backend.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `seaweedfs_version` | [defaults/main.yaml](defaults/main.yaml) | SeaweedFS release tag (managed by Renovate) |
+| `seaweedfs_sha256` | [defaults/main.yaml](defaults/main.yaml) | SHA-256 of the release archive; update together with the version |
 | `seaweedfs_user` / `seaweedfs_group` | `seaweedfs` | System user/group |
 | `seaweedfs_binary` | `/usr/local/bin/weed` | Binary path |
 | `seaweedfs_download_dir` | `/opt/seaweedfs` | Release archive cache directory |
