@@ -76,7 +76,7 @@ spec:
           image: {{ .Values.voicevox.image | quote }}
           command: [/bin/bash, -c]
           args:
-            - exec /entrypoint.sh gosu user /opt/voicevox_engine/run --host 0.0.0.0 >/dev/null 2>&1
+            - exec /entrypoint.sh /opt/voicevox_engine/run --host 0.0.0.0 >/dev/null 2>&1
           env:
             - name: VV_CPU_NUM_THREADS
               value: {{ .Values.voicevox.threads | quote }}
@@ -92,4 +92,13 @@ spec:
             httpGet:
               path: /version
               port: 50021
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
           resources: {{ toYaml .Values.voicevox.resources | nindent 12 }}
