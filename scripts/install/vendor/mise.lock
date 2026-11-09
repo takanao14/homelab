@@ -118,17 +118,17 @@ url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/704009823"
 provenance = "github-attestations"
 
 [[tools."aqua:aws/aws-cli"]]
-version = "2.39.5"
+version = "2.39.6"
 backend = "aqua:aws/aws-cli"
-specifiers = ["2.39.5"]
+specifiers = ["2.39.6"]
 
 [tools."aqua:aws/aws-cli"."platforms.linux-arm64"]
-checksum = "sha256:ce7b03ebceed1dc6a0a8f27134a41a9a3b5671f09c57ab2e7fc6d43710dbaef3"
-url = "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-2.39.5.zip"
+checksum = "sha256:5763332bdcb432c19ee122545856fd350c3bb306753212deedcfccc76f4d20c3"
+url = "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-2.39.6.zip"
 
 [tools."aqua:aws/aws-cli"."platforms.linux-x64"]
-checksum = "sha256:fe0553306b3d001d162bc193d3b040027aab3466b9f910b50e702c122c0f3ff9"
-url = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.39.5.zip"
+checksum = "sha256:7a121264f2637a3b90767aaf5bdd43ee88b8c925a931d0479fa2ce22b1a2fa76"
+url = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.39.6.zip"
 
 [[tools."aqua:bootandy/dust"]]
 version = "1.2.7"
@@ -291,19 +291,21 @@ checksum = "sha256:0403a88ae20913d11b10a2467b50087721fea7581736da6b9d3992f5357fe
 url = "https://get.helm.sh/helm-v4.3.1-linux-amd64.tar.gz"
 
 [[tools."aqua:helmfile/helmfile"]]
-version = "1.8.2"
+version = "1.8.3"
 backend = "aqua:helmfile/helmfile"
-specifiers = ["1.8.2"]
+specifiers = ["1.8.3"]
 
 [tools."aqua:helmfile/helmfile"."platforms.linux-arm64"]
-checksum = "sha256:9163f0d7ad088d243d7305ba09c3465aac02dfebd658d46c62dbdaa11c224b16"
-url = "https://github.com/helmfile/helmfile/releases/download/v1.8.2/helmfile_1.8.2_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/helmfile/helmfile/releases/assets/647791347"
+checksum = "sha256:e035c0338e31e0a8054ae798280532d32edcfbb7d6c4993e3b2efa2dc40647ce"
+checksum_source = "mise-versions"
+url = "https://github.com/helmfile/helmfile/releases/download/v1.8.3/helmfile_1.8.3_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/helmfile/helmfile/releases/assets/717197834"
 
 [tools."aqua:helmfile/helmfile"."platforms.linux-x64"]
-checksum = "sha256:f179485c5bb9f8e20fbd8ea16d8807915988aba4d60131ee864fb3232452716e"
-url = "https://github.com/helmfile/helmfile/releases/download/v1.8.2/helmfile_1.8.2_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/helmfile/helmfile/releases/assets/647791185"
+checksum = "sha256:7d79c6d2099a4819213873164eda23bdbd32f1404fec7a7104d934e5d102596f"
+checksum_source = "mise-versions"
+url = "https://github.com/helmfile/helmfile/releases/download/v1.8.3/helmfile_1.8.3_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/helmfile/helmfile/releases/assets/717197960"
 
 [[tools."aqua:jesseduffield/lazygit"]]
 version = "0.66.2"
@@ -417,19 +419,21 @@ url = "https://github.com/prometheus/prometheus/releases/download/v3.16.0/promet
 url_api = "https://api.github.com/repos/prometheus/prometheus/releases/assets/713900575"
 
 [[tools."aqua:rclone/rclone"]]
-version = "1.75.2"
+version = "1.76.0"
 backend = "aqua:rclone/rclone"
-specifiers = ["1.75.2"]
+specifiers = ["1.76.0"]
 
 [tools."aqua:rclone/rclone"."platforms.linux-arm64"]
-checksum = "sha256:7e1e8d69654941b7b7df84ee74c5f7fb09cce7d5496947fb7bf16b55ff427d10"
-url = "https://github.com/rclone/rclone/releases/download/v1.75.2/rclone-v1.75.2-linux-arm64.zip"
-url_api = "https://api.github.com/repos/rclone/rclone/releases/assets/624698085"
+checksum = "sha256:ee169016675e23a69d77240565133ff7dbc9b33d16fa8f7053d4af39f1eaeb78"
+checksum_source = "mise-versions"
+url = "https://github.com/rclone/rclone/releases/download/v1.76.0/rclone-v1.76.0-linux-arm64.zip"
+url_api = "https://api.github.com/repos/rclone/rclone/releases/assets/717754279"
 
 [tools."aqua:rclone/rclone"."platforms.linux-x64"]
-checksum = "sha256:349ac8fba6ff65d6247043f1750cdcb518ec5d500ef91463a10d37c0ccdf3702"
-url = "https://github.com/rclone/rclone/releases/download/v1.75.2/rclone-v1.75.2-linux-amd64.zip"
-url_api = "https://api.github.com/repos/rclone/rclone/releases/assets/624695998"
+checksum = "sha256:b00f00b3266c3764413afe599d3ec316f6f43b3e0ea8a0bc1d186d2133e46df7"
+checksum_source = "mise-versions"
+url = "https://github.com/rclone/rclone/releases/download/v1.76.0/rclone-v1.76.0-linux-amd64.zip"
+url_api = "https://api.github.com/repos/rclone/rclone/releases/assets/717751926"
 
 [[tools."aqua:rhysd/actionlint"]]
 version = "1.7.12"
