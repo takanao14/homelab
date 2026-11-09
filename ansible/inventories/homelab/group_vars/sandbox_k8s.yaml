@@ -11,6 +11,7 @@ k8s_nfs_share: /mnt/tank1/kubernetes/sandbox
 
 # Ordered application shutdown; monitoring observes it and Argo CD stops last.
 k8s_shutdown_namespaces:
+  - reloader-check
   - homepage
   - headlamp
   - pdns-ui
