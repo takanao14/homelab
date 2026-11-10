@@ -16,7 +16,6 @@
     that:
       - "'amdgpu-exporter' not in ansible_facts.packages"
     fail_msg: "Rebuild the guest before using the container exporter; native package migration is not supported."
-  when: rocm_ubuntu_release.exporter_mode == 'container'
 
 # AMD's installer owns files this role also manages: /etc/apt/keyrings/rocm.gpg,
 # a repo.radeon.com pin, and one-line .list conffiles that duplicate the amdgpu
@@ -207,12 +206,9 @@
   loop:
     - name: amdgpu
       uri: "https://repo.radeon.com/amdgpu/{{ rocm_amdgpu_version }}/ubuntu"
-    - name: device-metrics-exporter
-      uri: "https://repo.radeon.com/device-metrics-exporter/apt/{{ rocm_device_metrics_exporter_version }}"
   register: rocm_deb822_repositories
   when:
     - not ansible_check_mode or rocm_python_debian.rc == 0
-    - item.name != 'device-metrics-exporter' or rocm_ubuntu_release.exporter_mode == 'native'
 
 - name: Report deferred ROCm repository check
   ansible.builtin.debug:
@@ -295,7 +291,6 @@
 - name: Gather services before a container-backed GPU driver upgrade
   ansible.builtin.service_facts:
   when:
-    - rocm_ubuntu_release.exporter_mode == 'container'
     - rocm_amdgpu_package_state == 'latest'
 
 # AMD requires the exporter to stop before unloading or replacing the driver.
@@ -305,7 +300,6 @@
     name: amd-metrics-exporter
     state: stopped
   when:
-    - rocm_ubuntu_release.exporter_mode == 'container'
     - rocm_amdgpu_package_state == 'latest'
     - "'amd-metrics-exporter.service' in ansible_facts.services"
 
@@ -389,13 +383,8 @@
     - rocm_amdgpu_install.changed
     - not ansible_check_mode
 
-- name: Configure the native AMD metrics exporter
-  ansible.builtin.include_tasks: exporter-native.yaml
-  when: rocm_ubuntu_release.exporter_mode == 'native'
-
 - name: Configure the container AMD metrics exporter
   ansible.builtin.include_tasks: exporter-container.yaml
-  when: rocm_ubuntu_release.exporter_mode == 'container'
 
 - name: Read installed ROCm package version
   ansible.builtin.command:

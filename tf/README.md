@@ -143,7 +143,7 @@ To deploy a single image instead of all of them, target its instance key:
 
 ```bash
 cd tf/customimage/node2
-terragrunt apply -target='proxmox_download_file.image["ubuntu-24.04-base"]'
+terragrunt apply -target='proxmox_download_file.image["ubuntu-26.04-base"]'
 ```
 
 ### FreeBSD cloud images

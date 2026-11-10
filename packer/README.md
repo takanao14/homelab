@@ -76,7 +76,7 @@ export SEAWEEDFS_S3_SECRET_KEY='...'
 ### 2. Build Images
 
 ```bash
-./build.sh ubuntu24-base
+./build.sh ubuntu26-base
 ```
 
 Choose other targets from [Available Build Targets](#available-build-targets).
@@ -86,7 +86,7 @@ For FreeBSD, use [Upstream Image Imports](#upstream-image-imports).
 
 ```bash
 # Upload one target (image + .sha256) to the cloud-images bucket
-./push.sh ubuntu24-base
+./push.sh ubuntu26-base
 
 # Or upload every image currently in images/
 ./push.sh all
@@ -147,7 +147,6 @@ users, cloud-init paths, the machine profile and the provisioner list live in
 
 | Target | Profile | Var file | Output |
 |--------|---------|----------|--------|
-| `ubuntu24-base` | server | [vars/ubuntu24-base.pkrvars.hcl](vars/ubuntu24-base.pkrvars.hcl) | `images/ubuntu-24.04-base.img` |
 | `ubuntu24-tool` | server | [vars/ubuntu24-tool.pkrvars.hcl](vars/ubuntu24-tool.pkrvars.hcl) | `images/ubuntu-24.04-tool.img` |
 | `ubuntu24-desktop` | desktop | [vars/ubuntu24-desktop.pkrvars.hcl](vars/ubuntu24-desktop.pkrvars.hcl) | `images/ubuntu-24.04-desktop.img` |
 | `ubuntu26-base` | server | [vars/ubuntu26-base.pkrvars.hcl](vars/ubuntu26-base.pkrvars.hcl) | `images/ubuntu-26.04-base.img` |
@@ -267,7 +266,7 @@ Run Packer directly for custom configurations:
 
 ```bash
 packer build \
-  -var-file "vars/ubuntu24-base.pkrvars.hcl" \
+  -var-file "vars/ubuntu26-base.pkrvars.hcl" \
   -var "output_directory=scratch-output" \
   -var "vm_name=scratch.qcow2" \
   -var "image_name=images/scratch.img" \
