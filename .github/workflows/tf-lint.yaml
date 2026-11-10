@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - "tf/**"
+      - "scripts/audit-guest-os-recipes.py"
+      - "scripts/tests/test_guest_os_recipe_audit.py"
+      - ".github/workflows/tf-lint.yaml"
 
 permissions:
   contents: read
@@ -21,6 +24,9 @@ jobs:
 
       - name: Check formatting
         run: terraform fmt -check -recursive tf/
+
+      - name: Test offline guest OS recipe audit
+        run: python3 -m unittest discover -s scripts/tests -p test_guest_os_recipe_audit.py
 
       - name: Check Terragrunt HCL formatting
         env:
@@ -43,6 +49,9 @@ jobs:
             cp tf/provider.tf "${dir}provider.tf"
             terraform -chdir="${dir}" init -backend=false -input=false -no-color
             terraform -chdir="${dir}" validate -no-color
+            if [ -d "${dir}tests" ]; then
+              terraform -chdir="${dir}" test -no-color
+            fi
             rm -f "${dir}provider.tf"
             echo "::endgroup::"
           done

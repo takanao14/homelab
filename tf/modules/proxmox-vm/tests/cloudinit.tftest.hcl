@@ -15,6 +15,44 @@ mock_provider "local" {
   }
 }
 
+run "empty_creation_recipe" {
+  command = plan
+  assert {
+    condition     = output.guest_os_recipes.test.image == null
+    error_message = "A VM without a creation image must remain unauditable."
+  }
+}
+
+run "creation_recipe_metadata" {
+  command = plan
+  variables {
+    vms = {
+      recipe = {
+        node_name        = "test"
+        config_datastore = "local-zfs"
+        cores            = 2
+        memory           = 1024
+        qemu_guest_agent = false
+        on_boot          = false
+        username         = "test"
+        ipv4             = "192.0.2.2/24"
+        ipv4gw           = "192.0.2.1"
+        bridge           = "vmbr0"
+        disks = {
+          scsi1 = { datastore_id = "local-zfs", size = 32 }
+          scsi0 = { datastore_id = "local-zfs", size = 16, file_id = "local:iso/ubuntu-26.04-base.img" }
+        }
+      }
+    }
+  }
+  assert {
+    condition = output.guest_os_recipes.recipe == {
+      kind = "vm", node = "test", image = "local:iso/ubuntu-26.04-base.img"
+    }
+    error_message = "Export only the placement and first-disk creation image."
+  }
+}
+
 variables {
   password       = "test-only"
   ssh_public_key = "/unused"

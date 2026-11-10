@@ -10,6 +10,7 @@ scripts/
 ├── gpu-switch.sh                             # k8s GPU workload switch
 ├── adr-lint.py                               # ADR metadata, index, and link validation
 ├── check-image-refs.sh                       # CI: image filename map consistency check
+├── audit-guest-os-recipes.py                 # offline creation recipe / OS snapshot audit
 ├── check-proxy-routes.sh                     # CI: Caddy sites <-> Homepage dashboard drift check
 ├── check-openbao-secrets.sh                  # declared secret paths <-> OpenBao KV drift check (local only)
 ├── openbao-init.py                           # operator init on a rebuilt OpenBao host, stored in SOPS
@@ -178,6 +179,42 @@ does not run in CI. `kv-read` is enough; the default user is `homelab`.
 ./check-openbao-secrets.sh
 BAO_TOKEN=xxx ./check-openbao-secrets.sh
 ```
+
+## Guest OS recipe audit
+
+After a migration is accepted, compare creation recipes with an OS observation
+snapshot (ADR-0084). The script uses Python's standard library and never runs
+Terragrunt, changes guests, or loads credentials. It interprets the repository's
+image filename convention, not HCL. Snapshot capture and production Terraform
+operations are operator-owned.
+
+In each VM/LXC stack being audited, first review plan/apply for the new output.
+Export only that named, non-secret output; do not export state or all outputs:
+
+```sh
+terragrunt output -json guest_os_recipes > /tmp/openbao-recipes.json
+```
+
+Take an observation snapshot after the work. With read-only access to Prometheus
+at `PROMETHEUS_URL` (for example, a local port-forward to
+`monitoring/prometheus-kube-prometheus-prometheus:9090`):
+
+```sh
+curl --fail --silent --show-error --get \
+  --data-urlencode 'query=max by (nodename,id,version_id) (label_replace((node_os_info * on(instance,job) group_left(nodename) node_uname_info) and on(instance,job) (up == 1), "nodename", "$1", "nodename", "([^.]+).*"))' \
+  "${PROMETHEUS_URL}/api/v1/query" > /tmp/observed-os.json
+python3 scripts/audit-guest-os-recipes.py \
+  --recipes /tmp/openbao-recipes.json \
+  --observations /tmp/observed-os.json
+```
+
+Pass multiple recipe files after `--recipes` for a wider audit. Short hostnames
+must be unique. Debian/Rocky major releases permit point releases; Ubuntu uses
+the declared release and FreeBSD ignores its release suffix. An opaque image,
+offline/unmonitored guest, or conflicting observation is incomplete, not verified.
+The comparison does not attest snapshot freshness or that an OS update occurred.
+Exit codes: 0 all matched, 1 mismatches, 2 invalid input, 3 incomplete coverage.
+When both mismatches and incomplete entries exist, exit 1 takes precedence.
 
 ## Secrets / environment
 
