@@ -44,10 +44,3 @@ before cutting over the production GPU worker.
   validating metrics and health with the pinned image.
 - Container upgrades are independent of native exporter APT releases. Retain
   the release-specific configuration and health socket contract when updating.
-
-## Addendum (2026-11-10): Retire the Ubuntu 24.04 path
-
-The managed GPU worker has completed its Ubuntu 26.04 migration. Remove the
-unused Ubuntu 24.04 ROCm configuration and native exporter tasks; the role now
-supports Ubuntu 26.04 only. The Ubuntu 24.04 desktop compatibility VM does not
-consume this role.
