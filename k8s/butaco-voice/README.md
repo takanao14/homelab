@@ -21,6 +21,8 @@ knows the key before adding it, or the app refuses to start.
 digest. VOICEVOX's entrypoint prints requests containing the synthesis text,
 so the container redirects stdout and stderr to `/dev/null`. Inspect Pod and
 node log files after deployment to confirm no conversation text is retained.
+Kubernetes uses the image user's UID/GID 1000 directly to avoid a `gosu` startup
+stall observed on the Ubuntu 26.04 worker with kernel `7.0.0-42-generic`.
 
 The route, API, and browser use a 120-second conversation deadline. The API
 rejects input over 2 MiB and responses over 2 MiB. The UI requires HTTPS for
