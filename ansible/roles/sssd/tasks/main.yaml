@@ -67,16 +67,36 @@
     mode: '0644'
   notify: Restart sssd
 
+- name: Read SSSD service account
+  become: true
+  ansible.builtin.command:
+    argv: [systemctl, show, sssd.service, --property=User, --value]
+  register: sssd_service_user
+  changed_when: false
+  check_mode: false
+  when: not (ansible_check_mode and sssd_package_install is changed)
+
+- name: Require a supported SSSD service account
+  ansible.builtin.assert:
+    that:
+      - sssd_service_user.stdout | default('root', true) in ['root', 'sssd']
+    fail_msg: SSSD must run as root or the packaged sssd account.
+
 - name: Deploy sssd.conf
+  vars:
+    sssd_config_access:
+      root: { group: root, mode: '0600' }
+      sssd: { group: sssd, mode: '0640' }
+    sssd_config_user: "{{ sssd_service_user.stdout | default('root', true) }}"
   become: true
   no_log: true
   ansible.builtin.template:
     src: sssd.conf.j2
     dest: /etc/sssd/sssd.conf
     owner: root
-    group: root
-    # Contains LDAP bind password; SSSD requires private permissions.
-    mode: '0600'
+    # Some package units drop privileges before reading the LDAP bind password.
+    group: "{{ sssd_config_access[sssd_config_user].group }}"
+    mode: "{{ sssd_config_access[sssd_config_user].mode }}"
   notify:
     - Restart sssd
     # Apply a changed cache timeout to existing entries.
