@@ -4,10 +4,6 @@ locals {
 
   # Image roles are defined in packer/README.md.
   image_definitions = {
-    "ubuntu-24.04-base" = {
-      file_name    = "ubuntu-24.04-base.img"
-      content_type = "iso"
-    }
     "ubuntu-24.04-tool" = {
       file_name    = "ubuntu-24.04-tool.img"
       content_type = "iso"

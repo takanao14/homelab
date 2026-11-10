@@ -146,11 +146,6 @@
       "groupName": "homepage updates"
     },
     {
-      "matchDatasources": ["custom.amd-device-metrics-exporter"],
-      "extractVersion": "^(?<version>\\d+\\.\\d+(?:\\.\\d+)?)/$",
-      "versioning": "semver-coerced"
-    },
-    {
       "description": "AMD GPU driver repo versions; keep to the 31.x line so a new driver generation is never proposed automatically.",
       "matchDatasources": ["custom.amdgpu"],
       "allowedVersions": "/^31\\./",
@@ -167,10 +162,6 @@
   "customDatasources": {
     "amdgpu": {
       "defaultRegistryUrlTemplate": "https://repo.radeon.com/amdgpu/",
-      "format": "html"
-    },
-    "amd-device-metrics-exporter": {
-      "defaultRegistryUrlTemplate": "https://repo.radeon.com/device-metrics-exporter/apt/",
       "format": "html"
     }
   },

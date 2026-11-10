@@ -25,7 +25,6 @@ OPTIONS:
     -y                Force overwrite existing images without prompting
 
 TARGETS:
-    ubuntu24-base     Ubuntu 24.04, agent and timezone only
     ubuntu24-tool     Ubuntu 24.04 with the shared CLI toolchain
     ubuntu24-desktop  Ubuntu 24.04 with XFCE/XRDP on top of the toolchain
     ubuntu26-base     Ubuntu 26.04, agent and timezone only
@@ -46,7 +45,7 @@ Debian has no tool target: the toolchain's HashiCorp step resolves an apt suite
 from VERSION_CODENAME and releases.hashicorp.com publishes no trixie suite.
 
 EXAMPLES:
-    $0 ubuntu24-base
+    $0 ubuntu26-base
     $0 ubuntu24-desktop
     $0 -y all
 
@@ -128,12 +127,6 @@ readonly PACKER_TEMPLATE="image.pkr.hcl"
 # Map a target to var file/output; CI checks parity with push.sh and tf/customimage.
 build_target() {
     case "$1" in
-        ubuntu24-base)
-            build_image \
-                "vars/ubuntu24-base.pkrvars.hcl" \
-                "output-ubuntu-24.04-base/ubuntu-24.04-base.qcow2" \
-                "images/ubuntu-24.04-base.img"
-            ;;
         ubuntu24-tool)
             build_image \
                 "vars/ubuntu24-tool.pkrvars.hcl" \
@@ -216,7 +209,7 @@ build_target() {
 # Default targets, in build order: the cheap base images first, so an interrupted
 # `all` still leaves the quickest-to-rebuild targets done.
 ALL_TARGETS=(
-    ubuntu24-base rocky10-base rocky9-base debian13-base ubuntu26-base
+    rocky10-base rocky9-base debian13-base ubuntu26-base
     rocky10-tool ubuntu26-tool
     rocky9-desktop ubuntu26-desktop rocky10-desktop
 )
