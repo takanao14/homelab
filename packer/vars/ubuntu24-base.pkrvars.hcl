@@ -6,5 +6,5 @@ provision_scripts = [
   "scripts/ubuntu/qemu-ga.sh",
   "scripts/common/timezone.sh",
 ]
-cleanup_script = "scripts/ubuntu/cleanup.sh"
-disk_size      = "16G"
+cleanup_script    = "scripts/ubuntu/cleanup.sh"
+install_toolchain = false
