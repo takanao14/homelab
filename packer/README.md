@@ -116,8 +116,7 @@ is baked into the image, and each role contains the one before it:
 | `desktop` | `tool` plus a desktop, RDP access, the Japanese IME and the GUI applications | `desktop` | `true` | 20G–30G |
 
 `ubuntu26-desktop` and `rocky10-desktop` run GNOME with GNOME Remote Desktop in
-remote login mode (30G); `ubuntu24-desktop` and `rocky9-desktop` run XFCE with
-XRDP (20G).
+remote login mode (30G); `rocky9-desktop` runs XFCE with XRDP (20G).
 
 ### GNOME desktop images need RDP credentials
 
@@ -147,8 +146,7 @@ users, cloud-init paths, the machine profile and the provisioner list live in
 
 | Target | Profile | Var file | Output |
 |--------|---------|----------|--------|
-| `ubuntu24-tool` | server | [vars/ubuntu24-tool.pkrvars.hcl](vars/ubuntu24-tool.pkrvars.hcl) | `images/ubuntu-24.04-tool.img` |
-| `ubuntu24-desktop` | desktop | [vars/ubuntu24-desktop.pkrvars.hcl](vars/ubuntu24-desktop.pkrvars.hcl) | `images/ubuntu-24.04-desktop.img` |
+| `ubuntu24-base` | server | [vars/ubuntu24-base.pkrvars.hcl](vars/ubuntu24-base.pkrvars.hcl) | `images/ubuntu-24.04-base.img` |
 | `ubuntu26-base` | server | [vars/ubuntu26-base.pkrvars.hcl](vars/ubuntu26-base.pkrvars.hcl) | `images/ubuntu-26.04-base.img` |
 | `ubuntu26-tool` | server | [vars/ubuntu26-tool.pkrvars.hcl](vars/ubuntu26-tool.pkrvars.hcl) | `images/ubuntu-26.04-tool.img` |
 | `ubuntu26-desktop` | desktop | [vars/ubuntu26-desktop.pkrvars.hcl](vars/ubuntu26-desktop.pkrvars.hcl) | `images/ubuntu-26.04-desktop.img` |
@@ -237,8 +235,8 @@ Then publish it like any other custom image:
 - `-y` - Force overwrite existing images without prompting
 
 `IMAGE_TYPE` is any target in the table above or `all`. Pair `all` with `-y`
-for unattended builds. `all` excludes `ubuntu24-tool`, `ubuntu24-desktop`, and
-`rocky9-tool`; these remain available as individual targets.
+for unattended builds. `all` excludes `rocky9-tool`, which remains available
+as an individual target. Ubuntu 24.04 supports only the maintained `base` image.
 
 Upstream imports are handled separately by `import-upstream.sh`; they are not
 included in `build.sh all`.

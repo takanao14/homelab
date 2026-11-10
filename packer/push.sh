@@ -15,8 +15,7 @@ IMAGES_DIR="$(cd "$(dirname "$0")" && pwd)/images"
 # A case statement supports macOS' older Bash.
 target_image() {
     case "$1" in
-        ubuntu24-tool) echo "ubuntu-24.04-tool.img" ;;
-        ubuntu24-desktop) echo "ubuntu-24.04-desktop.img" ;;
+        ubuntu24-base) echo "ubuntu-24.04-base.img" ;;
         ubuntu26-base) echo "ubuntu-26.04-base.img" ;;
         ubuntu26-tool) echo "ubuntu-26.04-tool.img" ;;
         ubuntu26-desktop) echo "ubuntu-26.04-desktop.img" ;;
@@ -42,8 +41,7 @@ list_targets() {
     rocky9-base       rocky-9-base.img
     rocky9-desktop    rocky-9-desktop.img
     rocky9-tool       rocky-9-tool.img
-    ubuntu24-desktop  ubuntu-24.04-desktop.img
-    ubuntu24-tool     ubuntu-24.04-tool.img
+    ubuntu24-base     ubuntu-24.04-base.img
     ubuntu26-base     ubuntu-26.04-base.img
     ubuntu26-desktop  ubuntu-26.04-desktop.img
     ubuntu26-tool     ubuntu-26.04-tool.img

@@ -16,7 +16,7 @@ class AuditTests(unittest.TestCase):
     def test_current_image_conventions(self):
         for image, expected in [
             ("local:iso/ubuntu-26.04-base.img", ("ubuntu", "26.04")),
-            ("local:iso/ubuntu-24.04-desktop.img", ("ubuntu", "24.04")),
+            ("local:iso/ubuntu-24.04-base.img", ("ubuntu", "24.04")),
             ("local:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst", ("debian", "13")),
             ("local:iso/rocky-10-base.img", ("rocky", "10")),
             ("local:iso/freebsd-15.1-cloudinit-ufs.img", ("freebsd", "15.1")),

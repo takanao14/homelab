@@ -1,6 +1,7 @@
 locals {
   node_name = "pve"
   image_keys = [
+    "ubuntu-24.04-base",
     "ubuntu-26.04-base",
     "ubuntu-26.04-tool",
     "ubuntu-26.04-desktop",
