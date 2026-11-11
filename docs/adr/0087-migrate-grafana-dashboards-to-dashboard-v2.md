@@ -21,10 +21,19 @@ DNS Overview panels) have been registered on prd Grafana 13.2.2 as
 every panel type in use except `gauge`, both datasources, Prometheus query
 variables, transformations, overrides, and value mappings.
 
-Two of the three triggers are still open. Foundation SDK `v0.0.22` has no
-Prometheus variable-query builder, so the PoCs keep a local one of about 15
-lines. The managed-fields error was logged without affecting registration or
-rendering; its upstream state was not re-checked for this record.
+Two of the three triggers are still open. Foundation SDK `v0.0.22`, the latest
+release, has no Prometheus variable-query builder, so the PoCs keep a local one
+of about 15 lines. The managed-fields error is logged without affecting
+registration or rendering; upstream redirected it to
+[grafana-app-sdk#1485](https://github.com/grafana/grafana-app-sdk/issues/1485),
+which is open with no fix or maintainer response as of 2026-11-11. The third
+trigger is met: the v2 schema became generally available in Grafana 13.0.
+
+A local Grafana 13.2.0 file provider replaced a Classic dashboard with a v2
+resource of the same UID in place and back again: one dashboard, an incremented
+generation, no conflict, and a served v2 spec equal to the source apart from
+two dropped empty `custom` objects. The ConfigMap sidecar path in sandbox is
+still untested.
 
 The Classic generator covers 22 dashboards, 386 panels, 109 rows, and 55
 variables. It uses no repeats, collapsed rows, links, annotations, or expression
