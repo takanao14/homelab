@@ -182,7 +182,8 @@ make dev-stop
 
 `make poc-v2-up` starts a separate Grafana 13.2.0 at
 <http://localhost:3300/d/uptime-v2-poc> using the same `.env` datasources.
-It provisions the uptime, DHCP leases, and cert-manager v2 dashboards.
+It provisions the uptime, DHCP leases, cert-manager, and DNS Overview v2 dashboards.
+DNS comparison URLs are `/d/dns-overview-v2-poc` and `/d/dns-overview`.
 The Classic comparison is at <http://localhost:3300/d/uptime>.
 `make poc-v2-stop` removes the PoC container.
 
@@ -190,14 +191,19 @@ The Classic comparison is at <http://localhost:3300/d/uptime>.
 `make generate` also includes it in the shared dashboard Helm chart, so prd
 and sandbox receive the v2 PoCs alongside their Classic dashboards through the
 existing ConfigMap sidecar. Their separate UIDs are `uptime-v2-poc`,
-`dhcp-leases-v2-poc`, and `cert-manager-v2-poc`.
+`dhcp-leases-v2-poc`, `cert-manager-v2-poc`, and `dns-overview-v2-poc`.
+The DNS PoC selects 20 metrics panels across dnsdist, resolvers, authoritative DNS,
+CoreDNS and external-dns. Stat panels use instant queries without sparklines;
+queries, units, thresholds and series overrides match the Classic source.
 `go test ./...` checks v2 resources against committed Classic JSON and validates
 references, IDs, and thresholds. Compare values, colors, legends, row collapse,
 datasource switching, and regeneration using the same datasource and absolute
 time range.
 
-All three v2 dashboards were visually verified on prd Grafana 13.2.2; sandbox
-sidecar compatibility remains unverified. The upstream
+The uptime, DHCP leases and cert-manager v2 dashboards were visually verified
+on prd Grafana 13.2.2; sandbox
+sidecar compatibility remains unverified. DNS v2 was checked locally on Grafana
+13.2.0 with live Prometheus data; production UI verification remains pending. The upstream
 [managedFields schema error](https://github.com/grafana/grafana/issues/128991)
 was logged without preventing registration or rendering. Classic dashboards
 remain authoritative under ADR-0007.
