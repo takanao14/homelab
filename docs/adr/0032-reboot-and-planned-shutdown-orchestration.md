@@ -1,7 +1,7 @@
 # ADR-0032: Orchestrate reboots and planned shutdowns from Ansible
 
 - **Status:** Accepted
-- **Amended by:** [ADR-0036](0036-planned-shutdown-restores-via-argocd-selfheal.md)
+- **Amended by:** [ADR-0036](0036-planned-shutdown-restores-via-argocd-selfheal.md), [ADR-0086](0086-manage-vpn-gateway-host-baseline.md)
 - **Category:** Configuration & operations
 - **Date:** 2026-08-09
 - **Related:** [ADR-0001](0001-service-oriented-ansible-playbook-organization.md),

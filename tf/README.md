@@ -183,7 +183,8 @@ user configuration.
 ## Guest OS recipe audits
 
 VM and LXC modules expose `guest_os_recipes`, a non-secret projection of creation
-image inputs. VM disks use their resource's sorted map order. This is a recipe
+image inputs for guests with `os_recipe_audit = true` (default false). Empty
+target sets return null, omitting the root output from state after apply. VM disks use their resource's sorted map order. This is a recipe
 snapshot, not a running-OS baseline; `disk[0].file_id` remains ignored on existing VMs.
 After migration acceptance, follow the [offline audit procedure](../scripts/README.md#guest-os-recipe-audit).
 The operator must plan/apply output additions before exporting the named output.

@@ -1,9 +1,10 @@
 variable "containers" {
   description = "Map of LXC containers to create"
   type = map(object({
-    node_name    = string
-    unprivileged = bool
-    nesting      = bool
+    os_recipe_audit = optional(bool, false)
+    node_name       = string
+    unprivileged    = bool
+    nesting         = bool
 
     ipv4        = string
     ipv4gw      = string

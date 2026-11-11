@@ -9,94 +9,21 @@
     state: present
   when: chrony_install | default(true)
 
-# Stop timesyncd when installing chrony; do not mask it. Tolerate absent units.
-- name: Stop and disable systemd-timesyncd (replaced by chrony)
-  become: true
-  ansible.builtin.systemd:
-    name: systemd-timesyncd
-    state: stopped
-    enabled: false
-  register: chrony_timesyncd_stop
-  failed_when:
-    - chrony_timesyncd_stop is failed
-    - "'Could not find the requested service' not in (chrony_timesyncd_stop.msg | default(''))"
+- name: Check whether chrony configuration is installed
+  ansible.builtin.stat:
+    path: "{{ chrony_conf_path }}"
+  register: chrony_config_installed
+
+- name: Configure installed chrony
+  ansible.builtin.include_tasks: configure.yaml
+  when: not ansible_check_mode or chrony_config_installed.stat.exists
+
+- name: Report deferred chrony configuration check
+  ansible.builtin.debug:
+    msg: >-
+      Chrony is pending installation. Configuration and service checks are
+      deferred until the first normal run because check mode does not install
+      its configuration file or service unit.
   when:
-    - chrony_manage_timesyncd | default(true)
-    - ansible_facts['os_family'] == "Debian"
-
-- name: Ensure chrony source directory exists
-  become: true
-  ansible.builtin.file:
-    path: "{{ chrony_source_dir_path }}"
-    state: directory
-    owner: root
-    group: root
-    mode: "0755"
-
-- name: Ensure chrony source directory is included
-  become: true
-  ansible.builtin.lineinfile:
-    path: "{{ chrony_conf_path }}"
-    regexp: '^[ \t]*#?[ \t]*sourcedir[ \t]+{{ chrony_source_dir_path | regex_escape }}(?:[ \t].*)?$'
-    line: "sourcedir {{ chrony_source_dir_path }}"
-    insertafter: EOF
-  notify: Restart chrony
-
-- name: Remove legacy chrony managed block from main config
-  become: true
-  ansible.builtin.blockinfile:
-    path: "{{ chrony_conf_path }}"
-    marker: "# {mark} ANSIBLE MANAGED BLOCK (chrony role)"
-    state: absent
-  notify: Restart chrony
-
-- name: Configure homelab NTP sources
-  become: true
-  ansible.builtin.copy:
-    dest: "{{ chrony_managed_sources_path }}"
-    owner: root
-    group: root
-    mode: "0644"
-    content: |
-      # Managed by Ansible (chrony role). Do not edit manually.
-      {% for host in chrony_servers + chrony_fallback_servers %}
-      server {{ host }} iburst
-      {% endfor %}
-  notify: Restart chrony
-
-- name: Disable Ubuntu default NTP sources
-  become: true
-  ansible.builtin.command:
-    argv:
-      - mv
-      - -f
-      - /etc/chrony/sources.d/ubuntu-ntp-pools.sources
-      - /etc/chrony/sources.d/ubuntu-ntp-pools.sources.disabled
-    removes: /etc/chrony/sources.d/ubuntu-ntp-pools.sources
-  when: ansible_facts['distribution'] == 'Ubuntu'
-  notify: Restart chrony
-
-# Disable main-config sources so the managed file is authoritative.
-- name: Disable unmanaged NTP sources in main config
-  become: true
-  ansible.builtin.replace:
-    path: "{{ chrony_conf_path }}"
-    regexp: '(?m)^([ \t]*(?:server|pool|peer)[ \t]+.*)$'
-    replace: '# \1  # disabled by ansible (chrony role)'
-  notify: Restart chrony
-
-- name: Disable unmanaged chrony source directories
-  become: true
-  ansible.builtin.replace:
-    path: "{{ chrony_conf_path }}"
-    regexp: '(?m)^([ \t]*sourcedir[ \t]+{{ item | regex_escape }}(?:[ \t].*)?)$'
-    replace: '# \1  # disabled by ansible (chrony role)'
-  loop: "{{ chrony_disabled_source_dirs | default([]) }}"
-  notify: Restart chrony
-
-- name: Ensure chrony is enabled and running
-  become: true
-  ansible.builtin.service:
-    name: "{{ chrony_service }}"
-    enabled: true
-    state: started
+    - ansible_check_mode
+    - not chrony_config_installed.stat.exists

@@ -18,8 +18,19 @@ mock_provider "local" {
 run "empty_creation_recipe" {
   command = plan
   assert {
+    condition     = output.guest_os_recipes == null
+    error_message = "Guests must be excluded unless explicitly opted in."
+  }
+}
+
+run "opted_in_without_image" {
+  command = plan
+  variables {
+    vms = { for name, guest in var.vms : name => merge(guest, { os_recipe_audit = true }) }
+  }
+  assert {
     condition     = output.guest_os_recipes.test.image == null
-    error_message = "A VM without a creation image must remain unauditable."
+    error_message = "Opted-in guests without a creation image must remain unauditable."
   }
 }
 
@@ -27,7 +38,9 @@ run "creation_recipe_metadata" {
   command = plan
   variables {
     vms = {
+      excluded = var.vms.test
       recipe = {
+        os_recipe_audit  = true
         node_name        = "test"
         config_datastore = "local-zfs"
         cores            = 2
@@ -46,7 +59,7 @@ run "creation_recipe_metadata" {
     }
   }
   assert {
-    condition = output.guest_os_recipes.recipe == {
+    condition = length(output.guest_os_recipes) == 1 && output.guest_os_recipes.recipe == {
       kind = "vm", node = "test", image = "local:iso/ubuntu-26.04-base.img"
     }
     error_message = "Export only the placement and first-disk creation image."

@@ -20,9 +20,10 @@ locals {
 inputs = {
   vms = {
     "gpuvm1" = merge(local.base_vars, {
-      cores  = 8
-      memory = 32768
-      bridge = local.common.locals.pve.net20.bridge
+      os_recipe_audit = true
+      cores           = 8
+      memory          = 32768
+      bridge          = local.common.locals.pve.net20.bridge
       cloud_init = {
         network_data = yamlencode({
           version  = 2

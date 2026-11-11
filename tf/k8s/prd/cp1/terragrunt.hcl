@@ -20,11 +20,12 @@ locals {
 inputs = {
   vms = {
     "k0s-cp1" = merge(local.base_vars, {
-      cores  = 2
-      memory = 4096
-      bridge = local.common.locals.node4.net60.bridge
-      ipv4gw = local.common.locals.node4.net60.ipv4gw
-      ipv4   = "192.168.60.11/24"
+      os_recipe_audit = true
+      cores           = 2
+      memory          = 4096
+      bridge          = local.common.locals.node4.net60.bridge
+      ipv4gw          = local.common.locals.node4.net60.ipv4gw
+      ipv4            = "192.168.60.11/24"
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 40

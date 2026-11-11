@@ -1,6 +1,7 @@
 variable "vms" {
   description = "Map of VMs to create"
   type = map(object({
+    os_recipe_audit  = optional(bool, false)
     node_name        = string
     config_datastore = string
     config_interface = optional(string)

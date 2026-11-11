@@ -20,6 +20,7 @@ locals {
 inputs = {
   vms = {
     "k0s-worker2" = merge(local.base_vars, {
+      os_recipe_audit = true
       # Leave the node5 host with ~2 threads and ~3 GiB of memory.
       cores  = 10
       memory = 28672
