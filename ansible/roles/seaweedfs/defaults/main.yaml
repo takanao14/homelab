@@ -1,6 +1,6 @@
 ---
 # renovate: datasource=github-releases depName=seaweedfs/seaweedfs
-seaweedfs_version: "4.52"
+seaweedfs_version: "4.53"
 seaweedfs_sha256: "c03be37416a8ee672c77766e20b22a4e1430744c3af2668599a4b6eeaec14cee"
 
 seaweedfs_user: seaweedfs
