@@ -22,7 +22,7 @@ type translation struct {
 }
 
 var translations = []translation{
-	{name: "uptime", uid: "uptime", build: buildUptime},
+	{name: "uptime", uid: "uptime", build: buildUptime, cutover: true},
 }
 
 func main() {

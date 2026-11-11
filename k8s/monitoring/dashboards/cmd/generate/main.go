@@ -21,7 +21,6 @@ func main() {
 		"disk-health":            buildDiskHealth,
 		"dns-overview":           buildDnsOverview,
 		"network-overview":       buildNetworkOverview,
-		"uptime":                 buildUptime,
 		"kubernetes-overview":    buildKubernetesOverview,
 		"k8s-control-plane":      buildK8sControlPlaneOverview,
 		"monitoring-overview":    buildMonitoringOverview,
