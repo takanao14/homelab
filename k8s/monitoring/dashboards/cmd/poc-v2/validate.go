@@ -52,9 +52,9 @@ func validateDashboard(d *dashboardv2.Dashboard) error {
 	}
 	seen := map[string]bool{}
 	for _, row := range d.Layout.RowsLayoutKind.Spec.Rows {
-		grid := row.Spec.Layout.GridLayoutKind
+		grid := row.Spec.Layout.AutoGridLayoutKind
 		if grid == nil {
-			return fmt.Errorf("expected grid layout in every row")
+			return fmt.Errorf("expected auto grid layout in every row")
 		}
 		for _, item := range grid.Spec.Items {
 			name := item.Spec.Element.Name
@@ -65,10 +65,6 @@ func validateDashboard(d *dashboardv2.Dashboard) error {
 				return fmt.Errorf("duplicate layout reference %s", name)
 			}
 			seen[name] = true
-			g := item.Spec
-			if g.X < 0 || g.Y < 0 || g.Width <= 0 || g.Height <= 0 || g.X+g.Width > 24 {
-				return fmt.Errorf("%s: invalid grid bounds", name)
-			}
 		}
 	}
 	if len(seen) != len(d.Elements) {

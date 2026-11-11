@@ -34,7 +34,8 @@ in sync.
 
 ## Structure
 
-- `cmd/poc-v2/`: isolated Dashboard v2 experiments
+- `cmd/poc-v2/`: `dashboardv2` translations of `cmd/generate/` builders
+  (ADR-0087), with their registry, helpers, and `layout.go`
 - `cmd/generate/main.go`: dashboard registry and JSON output
 - `cmd/generate/helpers.go`: shared visual conventions
 - `cmd/generate/proxmox_nodes.go`: shared Proxmox inventory loader
@@ -178,35 +179,35 @@ Stop Grafana with:
 make dev-stop
 ```
 
-### Dashboard v2 PoC
+### Dashboard v2 translations
 
-`make poc-v2-up` starts a separate Grafana 13.2.0 at
-<http://localhost:3300/d/uptime-v2-poc> using the same `.env` datasources.
-It provisions the uptime, DHCP leases, cert-manager, and DNS Overview v2 dashboards.
-DNS comparison URLs are `/d/dns-overview-v2-poc` and `/d/dns-overview`.
-The Classic comparison is at <http://localhost:3300/d/uptime>.
-`make poc-v2-stop` removes the PoC container.
+Translate a builder from `cmd/generate/` into `cmd/poc-v2/`, keeping its
+queries, visualization settings, constants, and comments, and add it to
+`translations` in `cmd/poc-v2/main.go`. Lay it out for v2 rather than copying
+Classic positions: `newLayout` declares rows, each placed by an AutoGrid
+(`statGrid`, `chartGrid`, or `wideGrid` in `helpers.go`), and names elements
+after panel titles. Split a row when its panels need different sizes. Wrap
+panel queries in `queries(...)` so refIds match Classic.
 
-`make poc-v2` generates local copies in `poc-generated/`.
-`make generate` also includes it in the shared dashboard Helm chart, so prd
-and sandbox receive the v2 PoCs alongside their Classic dashboards through the
-existing ConfigMap sidecar. Their separate UIDs are `uptime-v2-poc`,
-`dhcp-leases-v2-poc`, `cert-manager-v2-poc`, and `dns-overview-v2-poc`.
-The DNS PoC selects 20 metrics panels across dnsdist, resolvers, authoritative DNS,
-CoreDNS and external-dns. Stat panels use instant queries without sparklines;
-queries, units, thresholds and series overrides match the Classic source.
-`go test ./...` checks v2 resources against committed Classic JSON and validates
-references, IDs, and thresholds. Compare values, colors, legends, row collapse,
-datasource switching, and regeneration using the same datasource and absolute
-time range.
+Until a translation is cut over, `make generate` writes it only to
+`poc-generated/` with the UID `<uid>-v2`; the Classic dashboard stays
+authoritative. `go test ./...` then checks that its titles, queries, field
+config, options, transformations, and variables match the Classic JSON;
+layout is not compared. Review the layout with live data:
 
-The uptime, DHCP leases and cert-manager v2 dashboards were visually verified
-on prd Grafana 13.2.2; sandbox
-sidecar compatibility remains unverified. DNS v2 was checked locally on Grafana
-13.2.0 with live Prometheus data; production UI verification remains pending. The upstream
-[managedFields schema error](https://github.com/grafana/grafana/issues/128991)
-was logged without preventing registration or rendering. Classic dashboards
-remain authoritative under ADR-0007.
+```bash
+make poc-v2-up
+```
+
+This starts Grafana 13.2.0 at <http://localhost:3300> with the `.env`
+datasources, the chart dashboards in the `chart` folder, and translations in
+the `v2` folder. `make poc-v2-stop` removes the container.
+
+Cut over in a separate commit: set `cutover: true`, then delete the Classic
+builder and its registry entry in `cmd/generate/`. The translation then
+replaces the chart JSON with the same file name and UID. Grafana logs the upstream
+[managedFields schema error](https://github.com/grafana/grafana-app-sdk/issues/1485)
+once per v2 write without affecting registration or rendering.
 
 ## Production
 
