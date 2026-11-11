@@ -55,9 +55,9 @@ and retire the `dashboard` package.
   sizes is split. Port `helpers.go` to `dashboardv2` types.
 - Accept the local variable-query builders and the managed-fields log line
   instead of waiting for upstream.
-- Before cutover, test that each translation keeps the Classic JSON's titles,
-  queries, field config, options, transformations, and variables. Layout is
-  reviewed visually on local Grafana with live datasources.
+- Before cutover, compare Classic and v2 on local Grafana with live data:
+  values, series, variable selection, colors, and layout at desktop and narrow
+  widths. Keep automated structural validation and generated-file drift checks.
 - Cut over dashboard by dashboard: the v2 resource keeps the Classic file name
   and UID, so ConfigMap names, bookmarks, and alert `dashboard_url` links do not
   change. Until then, translations are generated locally only.
@@ -73,8 +73,8 @@ and retire the `dashboard` package.
   layout identical but needs a placement adapter, and Grafana stacks such grids
   into a single column on narrow screens. AutoGrid reflows by width and is the
   only layout that supports show/hide rules for panels.
-- **Compare against Grafana's own v2 conversion of the Classic JSON.** Requires
-  a running Grafana and treats layout differences as failures.
+- **Compare Classic and v2 JSON content.** Format normalization adds maintenance
+  without verifying query execution or rendered behavior.
 - **Generate Go from JSON with the SDK `DashboardConverter`.** Its output is
   untyped struct literals and maps with unconverted queries, not builder code.
 - **Permanent `-v2` UIDs.** Doubles every dashboard and breaks alert links and

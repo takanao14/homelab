@@ -14,10 +14,10 @@ func panel(title string) *dashboardv2.PanelBuilder {
 func TestLayoutRowsAndNames(t *testing.T) {
 	d, err := newLayout(dashboardv2.NewDashboardBuilder("test")).
 		Row("First", statGrid(4)).
-		Panel(panel("Devices Down")).
-		Panel(panel("Availability (range)")).
+		Panel(42, panel("Devices Down")).
+		Panel(7, panel("Availability (range)")).
 		Row("Second", chartGrid()).
-		Panel(panel("p99 Latency / s")).
+		Panel(3, panel("p99 Latency / s")).
 		Build()
 	if err != nil {
 		t.Fatal(err)
@@ -28,7 +28,7 @@ func TestLayoutRowsAndNames(t *testing.T) {
 	if len(rows) != len(want) {
 		t.Fatalf("got %d rows, want %d", len(rows), len(want))
 	}
-	id := float64(1)
+	ids := map[string]float64{"devices-down": 42, "availability-range": 7, "p99-latency-s": 3}
 	for r, row := range rows {
 		grid := row.Spec.Layout.AutoGridLayoutKind
 		if grid == nil {
@@ -37,10 +37,10 @@ func TestLayoutRowsAndNames(t *testing.T) {
 		var names []string
 		for _, item := range grid.Spec.Items {
 			names = append(names, item.Spec.Element.Name)
+			id := ids[item.Spec.Element.Name]
 			if got := d.Elements[item.Spec.Element.Name].PanelKind.Spec.Id; got != id {
 				t.Errorf("%s: id %v, want %v", item.Spec.Element.Name, got, id)
 			}
-			id++
 		}
 		if !reflect.DeepEqual(names, want[r]) {
 			t.Errorf("row %d: got %v, want %v", r, names, want[r])
@@ -53,10 +53,15 @@ func TestLayoutRowsAndNames(t *testing.T) {
 
 func TestLayoutRejectsInvalidPanels(t *testing.T) {
 	cases := map[string]func(*dashboardLayout) *dashboardLayout{
-		"panel before row": func(l *dashboardLayout) *dashboardLayout { return l.Panel(panel("a")) },
-		"empty title":      func(l *dashboardLayout) *dashboardLayout { return l.Row("r", chartGrid()).Panel(panel("")) },
+		"panel before row": func(l *dashboardLayout) *dashboardLayout { return l.Panel(1, panel("a")) },
+		"empty title":      func(l *dashboardLayout) *dashboardLayout { return l.Row("r", chartGrid()).Panel(1, panel("")) },
+		"zero ID":          func(l *dashboardLayout) *dashboardLayout { return l.Row("r", chartGrid()).Panel(0, panel("a")) },
+		"negative ID":      func(l *dashboardLayout) *dashboardLayout { return l.Row("r", chartGrid()).Panel(-1, panel("a")) },
+		"duplicate ID": func(l *dashboardLayout) *dashboardLayout {
+			return l.Row("r", chartGrid()).Panel(1, panel("a")).Panel(1, panel("b"))
+		},
 		"duplicate title": func(l *dashboardLayout) *dashboardLayout {
-			return l.Row("r", chartGrid()).Panel(panel("Same Name")).Panel(panel("same name"))
+			return l.Row("r", chartGrid()).Panel(1, panel("Same Name")).Panel(2, panel("same name"))
 		},
 	}
 	for name, declare := range cases {

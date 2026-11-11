@@ -16,7 +16,7 @@ type dashboardLayout struct {
 	dashboard *dashboardv2.DashboardBuilder
 	rows      []layoutRow
 	names     map[string]bool
-	nextID    float64
+	ids       map[int]bool
 	err       error
 }
 
@@ -26,7 +26,7 @@ type layoutRow struct {
 }
 
 func newLayout(d *dashboardv2.DashboardBuilder) *dashboardLayout {
-	return &dashboardLayout{dashboard: d, names: map[string]bool{}, nextID: 1}
+	return &dashboardLayout{dashboard: d, names: map[string]bool{}, ids: map[int]bool{}}
 }
 
 // Row starts a row laid out by grid; following panels belong to it.
@@ -36,12 +36,16 @@ func (l *dashboardLayout) Row(title string, grid *dashboardv2.AutoGridBuilder) *
 }
 
 // Panel appends a panel to the current row.
-func (l *dashboardLayout) Panel(panel *dashboardv2.PanelBuilder) *dashboardLayout {
+func (l *dashboardLayout) Panel(id int, panel *dashboardv2.PanelBuilder) *dashboardLayout {
 	if l.err != nil {
 		return l
 	}
 	if len(l.rows) == 0 {
 		l.err = fmt.Errorf("panel declared before any row")
+		return l
+	}
+	if id <= 0 || l.ids[id] {
+		l.err = fmt.Errorf("panel ID %d: must be positive and unique", id)
 		return l
 	}
 	built, err := panel.Build()
@@ -55,8 +59,8 @@ func (l *dashboardLayout) Panel(panel *dashboardv2.PanelBuilder) *dashboardLayou
 		return l
 	}
 	l.names[name] = true
-	l.dashboard.Panel(name, panel.Id(l.nextID))
-	l.nextID++
+	l.ids[id] = true
+	l.dashboard.Panel(name, panel.Id(float64(id)))
 	l.rows[len(l.rows)-1].grid.WithItem(name)
 	return l
 }

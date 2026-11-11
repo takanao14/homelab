@@ -186,14 +186,17 @@ queries, visualization settings, constants, and comments, and add it to
 `translations` in `cmd/poc-v2/main.go`. Lay it out for v2 rather than copying
 Classic positions: `newLayout` declares rows, each placed by an AutoGrid
 (`statGrid`, `chartGrid`, or `wideGrid` in `helpers.go`), and names elements
-after panel titles. Split a row when its panels need different sizes. Wrap
+after panel titles. Pass a fixed, positive panel ID to `Panel(id, builder)`,
+using explicitly numbered constants; keep IDs across title/layout changes and
+do not reuse retired IDs. Split a row when its panels need different sizes. Wrap
 panel queries in `queries(...)` so refIds match Classic.
 
 Until a translation is cut over, `make generate` writes it only to
 `poc-generated/` with the UID `<uid>-v2`; the Classic dashboard stays
-authoritative. `go test ./...` then checks that its titles, queries, field
-config, options, transformations, and variables match the Classic JSON;
-layout is not compared. Review the layout with live data:
+authoritative. `go test ./...` checks structural invariants; `make check`
+checks that committed JSON matches generator output. Compare Classic and v2
+with live data: values, series, variable selection, colors, and layout at
+desktop and narrow widths:
 
 ```bash
 make poc-v2-up

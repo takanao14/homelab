@@ -9,6 +9,23 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 )
 
+// Panel IDs stay fixed across title and layout changes; do not reuse retired IDs.
+const (
+	uptimePanelICMPDevicesDown          = 1
+	uptimePanelDNSDevicesDown           = 2
+	uptimePanelICMPAvailabilityRange    = 3
+	uptimePanelDNSAvailabilityRange     = 4
+	uptimePanelICMPStatus               = 5
+	uptimePanelDNSExternalStatus        = 6
+	uptimePanelDNSInternalStatus        = 7
+	uptimePanelICMPAvailabilityByDevice = 8
+	uptimePanelDNSAvailabilityByDevice  = 9
+	uptimePanelICMPStatusHistory        = 10
+	uptimePanelICMPResponseTime         = 11
+	uptimePanelDNSStatusHistory         = 12
+	uptimePanelDNSResponseTime          = 13
+)
+
 // buildUptime covers blackbox ICMP and DNS probe success.
 // ScrapeConfig jobs use scrapeConfig/<namespace>/<name>.
 func buildUptime() (*dashboardv2.Dashboard, error) {
@@ -63,7 +80,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 
 	return newLayout(d).
 		Row("Summary", statGrid(4)).
-		Panel(dashboardv2.NewPanelBuilder().
+		Panel(uptimePanelICMPDevicesDown, dashboardv2.NewPanelBuilder().
 			Title("ICMP Devices Down").
 			Visualization(stat.NewVisualizationV2Builder().
 				Unit("short").
@@ -73,7 +90,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			Data(queries(promQuery().
 				Expr(`count(probe_success{`+icmpJob+`} == 0) or vector(0)`).
 				LegendFormat("down")))).
-		Panel(dashboardv2.NewPanelBuilder().
+		Panel(uptimePanelDNSDevicesDown, dashboardv2.NewPanelBuilder().
 			Title("DNS Devices Down").
 			Visualization(stat.NewVisualizationV2Builder().
 				Unit("short").
@@ -83,7 +100,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			Data(queries(promQuery().
 				Expr(`count(probe_success{`+dnsJobs+`} == 0) or vector(0)`).
 				LegendFormat("down")))).
-		Panel(dashboardv2.NewPanelBuilder().
+		Panel(uptimePanelICMPAvailabilityRange, dashboardv2.NewPanelBuilder().
 			Title("ICMP Availability (range)").
 			Description("Mean probe success across all ICMP targets over the dashboard's time range, so it moves with the zoom.").
 			Visualization(stat.NewVisualizationV2Builder().
@@ -95,7 +112,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 				Expr(`avg(avg_over_time(probe_success{`+icmpJob+`}[$__range])) * 100`).
 				LegendFormat("availability")))).
 		// Give ICMP and DNS symmetric range availability and current-down tiles.
-		Panel(dashboardv2.NewPanelBuilder().
+		Panel(uptimePanelDNSAvailabilityRange, dashboardv2.NewPanelBuilder().
 			Title("DNS Availability (range)").
 			Description("Mean probe success across all DNS probes, external and internal together, over the dashboard's time range.").
 			Visualization(stat.NewVisualizationV2Builder().
@@ -107,7 +124,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 				Expr(`avg(avg_over_time(probe_success{`+dnsJobs+`}[$__range])) * 100`).
 				LegendFormat("availability")))).
 		Row("ICMP Status", wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeShort)).
-		Panel(dashboardv2.NewPanelBuilder().
+		Panel(uptimePanelICMPStatus, dashboardv2.NewPanelBuilder().
 			Title("ICMP Status").
 			Visualization(stat.NewVisualizationV2Builder().
 				Thresholds(probeThresholds).
@@ -119,7 +136,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 				Expr(`probe_success{`+icmpJob+`}`).
 				LegendFormat("{{instance}}")))).
 		Row("DNS Status", statGrid(2)).
-		Panel(dashboardv2.NewPanelBuilder().
+		Panel(uptimePanelDNSExternalStatus, dashboardv2.NewPanelBuilder().
 			Title("DNS External Status").
 			Visualization(stat.NewVisualizationV2Builder().
 				Thresholds(probeThresholds).
@@ -130,7 +147,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			Data(queries(promQuery().
 				Expr(`probe_success{`+dnsExtJob+`}`).
 				LegendFormat("{{instance}}")))).
-		Panel(dashboardv2.NewPanelBuilder().
+		Panel(uptimePanelDNSInternalStatus, dashboardv2.NewPanelBuilder().
 			Title("DNS Internal Status").
 			Visualization(stat.NewVisualizationV2Builder().
 				Thresholds(probeThresholds).
@@ -142,7 +159,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 				Expr(`probe_success{`+dnsIntJob+`}`).
 				LegendFormat("{{instance}}")))).
 		Row("Availability", chartGrid()).
-		Panel(dashboardv2.NewPanelBuilder().
+		Panel(uptimePanelICMPAvailabilityByDevice, dashboardv2.NewPanelBuilder().
 			Title("ICMP Availability by Device").
 			Visualization(bargauge.NewVisualizationV2Builder().
 				Unit("percent").
@@ -154,7 +171,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 				Expr(`avg_over_time(probe_success{`+icmpJob+`}[$__range]) * 100`).
 				Instant(true).Range(false).
 				LegendFormat("{{instance}}")))).
-		Panel(dashboardv2.NewPanelBuilder().
+		Panel(uptimePanelDNSAvailabilityByDevice, dashboardv2.NewPanelBuilder().
 			Title("DNS Availability by Device").
 			Visualization(bargauge.NewVisualizationV2Builder().
 				Unit("percent").
@@ -173,7 +190,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 					LegendFormat("{{instance}} Internal"),
 			))).
 		Row("ICMP Diagnostics", chartGrid()).
-		Panel(dashboardv2.NewPanelBuilder().
+		Panel(uptimePanelICMPStatusHistory, dashboardv2.NewPanelBuilder().
 			Title("ICMP Status History").
 			Visualization(statetimeline.NewVisualizationV2Builder().
 				Thresholds(probeThresholds).
@@ -184,7 +201,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			Data(queries(promQuery().
 				Expr(`probe_success{`+icmpJob+`}`).
 				LegendFormat("{{instance}}")))).
-		Panel(dashboardv2.NewPanelBuilder().
+		Panel(uptimePanelICMPResponseTime, dashboardv2.NewPanelBuilder().
 			Title("ICMP Response Time").
 			Description("Round-trip time of the echo request itself, excluding the time blackbox spent resolving the target name and opening its socket.").
 			Visualization(timeseries.NewVisualizationV2Builder().
@@ -197,7 +214,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 				Expr(`probe_icmp_duration_seconds{`+icmpJob+`, phase="rtt"}`).
 				LegendFormat("{{instance}}")))).
 		Row("DNS Diagnostics", chartGrid()).
-		Panel(dashboardv2.NewPanelBuilder().
+		Panel(uptimePanelDNSStatusHistory, dashboardv2.NewPanelBuilder().
 			Title("DNS Status History").
 			Visualization(statetimeline.NewVisualizationV2Builder().
 				Thresholds(probeThresholds).
@@ -213,7 +230,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 					Expr(`probe_success{`+dnsIntJob+`}`).
 					LegendFormat("{{instance}} Internal"),
 			))).
-		Panel(dashboardv2.NewPanelBuilder().
+		Panel(uptimePanelDNSResponseTime, dashboardv2.NewPanelBuilder().
 			Title("DNS Response Time").
 			Description("How long each resolver took to answer the test query. External resolves a public name, internal an in-fleet one, so the two are expected to differ.").
 			Visualization(timeseries.NewVisualizationV2Builder().
