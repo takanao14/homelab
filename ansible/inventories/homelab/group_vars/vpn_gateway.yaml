@@ -1,0 +1,5 @@
+---
+# Collect host services only; VPN application logs remain externally managed.
+vector_journald_units:
+  - ssh.service
+  - prometheus-node-exporter.service

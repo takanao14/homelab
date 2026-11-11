@@ -111,7 +111,7 @@ all:
     sandbox-k0s-worker2:
       ansible_host: 192.168.20.33
 
-    # Managed outside this repo; power sequencing only.
+    # VPN application configuration remains externally managed.
     vpngw:
       ansible_host: 192.168.10.3
 
@@ -182,6 +182,10 @@ all:
       hosts:
         imagebuilder1: null
 
+    vpn_gateway:
+      hosts:
+        vpngw: null
+
     # Directory for SSSD and web authentication (ADR-0067).
     lldap:
       hosts:
@@ -249,7 +253,7 @@ all:
         resolver2: null
         seaweedfs1: null
 
-    # Terraform-built VMs; PoC guests and vpngw stay out.
+    # Terraform-built VMs; PoC guests stay out.
     vm:
       hosts:
         hermes1: null
@@ -261,6 +265,7 @@ all:
         pdm1: null
         runner1: null
         toolbox1: null
+        vpngw: null
       children:
         prd_k8s: {}
         sandbox_k8s: {}
@@ -350,6 +355,7 @@ all:
             pdm1: null
             runner1: null
             toolbox1: null
+            vpngw: null
       # Hypervisors; the only hosts with real sensors, NVMe and zpools.
       hosts:
         pve: null
@@ -388,6 +394,7 @@ all:
         openclaw: {}
         openbao: {}
         pdm: {}
+        vpn_gateway: {}
 
     # All Vector agents; targeted by playbooks/common/vector.yaml.
     vector:
@@ -433,6 +440,7 @@ all:
         pdm: {}
         seaweedfs: {}
         sssd: {}
+        vpn_gateway: {}
       hosts:
         rpi3: null
 
@@ -448,10 +456,9 @@ all:
     # =================================================================
     # Operational sequencing — host order is execution order. Do not sort.
     # =================================================================
-    # Power sequencing only; configuration is managed outside this repo.
+    # Reserved for hosts whose configuration is managed outside this repo.
     power_only:
-      hosts:
-        vpngw: null
+      hosts: {}
 
     # Planned shutdown order: least-dependent first, logging and DNS last.
     # k0s nodes stop earlier in their own play.

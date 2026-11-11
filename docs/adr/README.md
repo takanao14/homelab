@@ -84,7 +84,7 @@ follow those links for the changed parts.
 | ADR | Title | Status |
 |-----|-------|--------|
 | [0001](0001-service-oriented-ansible-playbook-organization.md) | Service-oriented Ansible playbook organization | Accepted; amended by [ADR-0059](0059-group-ansible-playbooks-by-purpose.md) |
-| [0032](0032-reboot-and-planned-shutdown-orchestration.md) | Orchestrate reboots and planned shutdowns from Ansible | Accepted; amended by [ADR-0036](0036-planned-shutdown-restores-via-argocd-selfheal.md) |
+| [0032](0032-reboot-and-planned-shutdown-orchestration.md) | Orchestrate reboots and planned shutdowns from Ansible | Accepted; amended by [ADR-0036](0036-planned-shutdown-restores-via-argocd-selfheal.md), [ADR-0086](0086-manage-vpn-gateway-host-baseline.md) |
 | [0036](0036-planned-shutdown-restores-via-argocd-selfheal.md) | Planned-shutdown restore relies on Argo CD self-heal, not a replica snapshot | Accepted |
 | [0059](0059-group-ansible-playbooks-by-purpose.md) | Group Ansible playbooks by purpose | Accepted |
 | [0068](0068-build-caddy-on-the-ansible-controller.md) | Build Caddy on the Ansible controller | Accepted |
@@ -139,6 +139,8 @@ follow those links for the changed parts.
 | [0061](0061-long-term-metrics-in-victoriametrics-single.md) | Keep long-term metrics in VictoriaMetrics single-node | Accepted |
 | [0081](0081-containerize-gpu-metrics-on-ubuntu-26.md) | Run GPU metrics in a container on Ubuntu 26.04 | Accepted |
 | [0084](0084-audit-guest-os-creation-recipes-after-migrations.md) | Audit guest OS creation recipes after migrations | Accepted |
+| [0085](0085-opt-in-service-guest-os-audits.md) | Opt in service guests to OS recipe audits | Accepted |
+| [0086](0086-manage-vpn-gateway-host-baseline.md) | Manage the VPN gateway host baseline with Ansible | Accepted |
 
 ### Identity & secrets
 

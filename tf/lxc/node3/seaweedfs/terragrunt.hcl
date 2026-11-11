@@ -15,6 +15,7 @@ locals {
 inputs = {
   containers = {
     "seaweedfs1" = merge(local.env.locals.container_defaults, local.images.locals.images.seaweedfs1, {
+      os_recipe_audit = true
       # Allow for LXC page cache and the Go heap during multi-GB image transfers.
       cores       = 4
       memory      = 8192

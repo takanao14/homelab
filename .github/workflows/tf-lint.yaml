@@ -4,8 +4,10 @@ on:
   pull_request:
     paths:
       - "tf/**"
-      - "scripts/audit-guest-os-recipes.py"
-      - "scripts/tests/test_guest_os_recipe_audit.py"
+      - "scripts/audit-guest-os-recipes.*"
+      - "scripts/run-guest-os-audit.sh"
+      - "scripts/tests/test-guest-os-recipe-audit.sh"
+      - "scripts/tests/test-run-guest-os-audit.sh"
       - ".github/workflows/tf-lint.yaml"
 
 permissions:
@@ -26,7 +28,9 @@ jobs:
         run: terraform fmt -check -recursive tf/
 
       - name: Test offline guest OS recipe audit
-        run: python3 -m unittest discover -s scripts/tests -p test_guest_os_recipe_audit.py
+        run: |
+          bash scripts/tests/test-guest-os-recipe-audit.sh
+          bash scripts/tests/test-run-guest-os-audit.sh
 
       - name: Check Terragrunt HCL formatting
         env:

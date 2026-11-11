@@ -30,10 +30,23 @@ variables {
 
 run "creation_recipe_metadata" {
   command = plan
+  variables {
+    containers = merge({
+      for name, guest in var.containers : name => merge(guest, { os_recipe_audit = true })
+    }, { excluded = var.containers.recipe })
+  }
   assert {
-    condition = output.guest_os_recipes.recipe == {
+    condition = length(output.guest_os_recipes) == 1 && output.guest_os_recipes.recipe == {
       kind = "lxc", node = "test", image = "local:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst"
     }
     error_message = "Export only placement and the creation template."
+  }
+}
+
+run "excluded_by_default" {
+  command = plan
+  assert {
+    condition     = output.guest_os_recipes == null
+    error_message = "Guests must be excluded unless explicitly opted in."
   }
 }

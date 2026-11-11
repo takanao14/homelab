@@ -5,6 +5,11 @@ metricsPath: /metrics
 # `service` isolates TargetDown aggregation and textfile expectations per host.
 # Required `kind` lets dashboards exclude LXC guests from host-kernel panels.
 targets:
+  - ip: "192.168.10.3"
+    name: "vpngw"
+    service: "vpn-gateway"
+    kind: "vm"
+    logShipping: true
   - ip: "192.168.10.240"
     name: "rpi3"
     service: "rpi"

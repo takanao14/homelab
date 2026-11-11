@@ -10,7 +10,8 @@ scripts/
 ├── gpu-switch.sh                             # k8s GPU workload switch
 ├── adr-lint.py                               # ADR metadata, index, and link validation
 ├── check-image-refs.sh                       # CI: image filename map consistency check
-├── audit-guest-os-recipes.py                 # offline creation recipe / OS snapshot audit
+├── run-guest-os-audit.sh                     # operator: collect snapshots and audit service guests
+├── audit-guest-os-recipes.sh                 # offline creation recipe / OS snapshot audit
 ├── check-proxy-routes.sh                     # CI: Caddy sites <-> Homepage dashboard drift check
 ├── check-openbao-secrets.sh                  # declared secret paths <-> OpenBao KV drift check (local only)
 ├── openbao-init.py                           # operator init on a rebuilt OpenBao host, stored in SOPS
@@ -183,12 +184,43 @@ BAO_TOKEN=xxx ./check-openbao-secrets.sh
 ## Guest OS recipe audit
 
 After a migration is accepted, compare creation recipes with an OS observation
-snapshot (ADR-0084). The script uses Python's standard library and never runs
+snapshot (ADR-0084, ADR-0085). The script requires Bash and jq; it never runs
 Terragrunt, changes guests, or loads credentials. It interprets the repository's
 image filename convention, not HCL. Snapshot capture and production Terraform
 operations are operator-owned.
 
-In each VM/LXC stack being audited, first review plan/apply for the new output.
+Set `os_recipe_audit = true` on each service guest to audit; the default is false.
+Production Kubernetes nodes and infrastructure service guests are opted in.
+Stacks with no opted-in guests emit null, so their root output is absent after apply.
+Disposable, compatibility-test, sandbox and agent-evaluation guests are excluded
+unless explicitly selected. Neither boot settings nor current availability select
+targets. CI tests fixtures and mock providers, not production state or live guests.
+
+For a local operator-run audit after outputs have been updated:
+
+```sh
+bash scripts/run-guest-os-audit.sh
+# Limit the run to specific stacks, or use an existing Prometheus connection.
+PROMETHEUS_URL=http://127.0.0.1:9090 \
+  bash scripts/run-guest-os-audit.sh tf/vm/node3/idp tf/lxc/node2/caddy
+```
+
+The wrapper requires direnv, Terragrunt, jq and curl. It reads only the named
+output from each VM/LXC/k8s stack, with automatic init disabled; it never runs
+plan/apply. Stacks without `guest_os_recipes`, or with an empty output, are
+reported as skipped. Authentication, initialization and other retrieval errors
+stop the run. Use explicit stack paths to limit collection, not HCL parsing.
+Only outputs already present in state select targets; unapplied definitions do
+not. If every stack is skipped, the wrapper exits 3 without querying Prometheus.
+Without `PROMETHEUS_URL`, it also requires kubectl and starts a private, dynamically
+allocated port-forward using context `prd-homelab` and `~/.kube/prd.yaml`.
+Override these with `AUDIT_KUBE_CONTEXT` and `AUDIT_KUBECONFIG`. Temporary snapshots
+and its own port-forward are removed on exit. No saved plan files are created.
+CI stubs the retrieval commands; it does not access production infrastructure.
+
+In each VM/LXC stack being audited, first review plan/apply for the filtered output.
+Refresh existing snapshots after changing target flags; old exports include the
+previous target set.
 Export only that named, non-secret output; do not export state or all outputs:
 
 ```sh
@@ -203,7 +235,7 @@ at `PROMETHEUS_URL` (for example, a local port-forward to
 curl --fail --silent --show-error --get \
   --data-urlencode 'query=max by (nodename,id,version_id) (label_replace((node_os_info * on(instance,job) group_left(nodename) node_uname_info) and on(instance,job) (up == 1), "nodename", "$1", "nodename", "([^.]+).*"))' \
   "${PROMETHEUS_URL}/api/v1/query" > /tmp/observed-os.json
-python3 scripts/audit-guest-os-recipes.py \
+bash scripts/audit-guest-os-recipes.sh \
   --recipes /tmp/openbao-recipes.json \
   --observations /tmp/observed-os.json
 ```
@@ -213,6 +245,7 @@ must be unique. Debian/Rocky major releases permit point releases; Ubuntu uses
 the declared release and FreeBSD ignores its release suffix. An opaque image,
 offline/unmonitored guest, or conflicting observation is incomplete, not verified.
 The comparison does not attest snapshot freshness or that an OS update occurred.
+Empty outputs from excluded stacks are accepted; zero total targets exits 3.
 Exit codes: 0 all matched, 1 mismatches, 2 invalid input, 3 incomplete coverage.
 When both mismatches and incomplete entries exist, exit 1 takes precedence.
 

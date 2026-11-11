@@ -20,6 +20,7 @@ locals {
 inputs = {
   vms = {
     "k0s-worker1" = merge(local.base_vars, {
+      os_recipe_audit = true
       # Leave the host about 2 threads and 3 GiB.
       cores  = 10
       memory = 28672

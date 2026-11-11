@@ -43,6 +43,10 @@ Fleet-wide settings (`apt_mirror`, `chrony`, `unattended_upgrades`,
 `node_exporter`) belong to the host baseline. Cross-cutting roles have
 `common/<role>.yaml` entry points for fleet updates.
 
+`vpngw` receives the VM baseline, node_exporter and Vector. VPN application and
+network configuration remain externally managed; Vector collects only SSH and
+node_exporter journals (ADR-0086).
+
 ### Downloading release artifacts
 
 `get_url` defaults to a 10s socket timeout, which aborts mid-transfer on the
