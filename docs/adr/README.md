@@ -52,7 +52,7 @@ deleting it:
 Pending proposals: [ADR-0034](0034-hubble-ui-for-service-traffic-visibility.md)
 (review by 2026-11-14) and
 [ADR-0087](0087-migrate-grafana-dashboards-to-dashboard-v2.md) (review on the
-sandbox in-place replacement result).
+first sandbox cutover).
 
 `Accepted` entries with amendment links retain decisions that still apply;
 follow those links for the changed parts.
@@ -143,7 +143,7 @@ follow those links for the changed parts.
 | [0084](0084-audit-guest-os-creation-recipes-after-migrations.md) | Audit guest OS creation recipes after migrations | Accepted |
 | [0085](0085-opt-in-service-guest-os-audits.md) | Opt in service guests to OS recipe audits | Accepted |
 | [0086](0086-manage-vpn-gateway-host-baseline.md) | Manage the VPN gateway host baseline with Ansible | Accepted |
-| [0087](0087-migrate-grafana-dashboards-to-dashboard-v2.md) | Migrate Grafana dashboards to Dashboard v2 | Proposed |
+| [0087](0087-migrate-grafana-dashboards-to-dashboard-v2.md) | Migrate the dashboard generator to the dashboardv2 SDK API | Proposed |
 
 ### Identity & secrets
 
