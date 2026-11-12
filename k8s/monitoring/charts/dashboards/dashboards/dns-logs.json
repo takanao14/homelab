@@ -1,738 +1,1267 @@
 {
-  "uid": "dns-logs",
-  "title": "DNS Query Logs",
-  "tags": [
-    "dns",
-    "logs",
-    "infrastructure"
-  ],
-  "timezone": "browser",
-  "editable": true,
-  "graphTooltip": 1,
-  "time": {
-    "from": "now-3h",
-    "to": "now"
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "dns-logs"
   },
-  "fiscalYearStartMonth": 0,
-  "refresh": "30s",
-  "schemaVersion": 42,
-  "panels": [
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Summary",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__auto]))",
-          "legendFormat": "queries/s"
-        }
-      ],
-      "title": "Query Rate",
-      "transparent": false,
-      "datasource": {
-        "type": "loki",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 12,
-        "x": 0,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": ""
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
+  "spec": {
+    "annotations": [],
+    "cursorSync": "Crosshair",
+    "editable": true,
+    "elements": {
+      "dns-query-logs": {
+        "kind": "Panel",
+        "spec": {
+          "id": 11,
+          "title": "DNS Query Logs",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "{job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | line_format \"{{.identity}} {{.dnstap_operation}} {{.network_query_ip}} -\u003e {{.dns_qname}} {{.dns_qtype}} {{.dns_rcode}} latency={{.dnstap_latency_ms}}ms\"",
+                        "maxLines": 500
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "logs",
+            "version": "",
+            "spec": {
+              "options": {
+                "showLabels": false,
+                "showCommonLabels": false,
+                "showTime": true,
+                "showLogContextToggle": true,
+                "wrapLogMessage": false,
+                "prettifyLogMessage": false,
+                "enableLogDetails": true,
+                "sortOrder": "Descending",
+                "dedupStrategy": "",
+                "showControls": true,
+                "showFieldSelector": true
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
               }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "count(sum by (network_query_ip) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\" | network_query_ip != \"\" [$__range])))",
-          "legendFormat": "clients"
-        }
-      ],
-      "title": "Unique Clients",
-      "transparent": false,
-      "datasource": {
-        "type": "loki",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 12,
-        "x": 12,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": ""
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Query Trends",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 5
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (dns_qtype) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__auto])) or sum by (dns_qtype) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__range])) * 0",
-          "legendFormat": "{{dns_qtype}}"
-        }
-      ],
-      "title": "Query Rate by Type",
-      "transparent": false,
-      "datasource": {
-        "type": "loki",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 6
-      },
-      "repeatDirection": "h",
-      "interval": "1m",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "min": 0,
-          "custom": {
-            "fillOpacity": 10,
-            "stacking": {
-              "mode": "normal"
             }
           }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (dns_rcode) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__auto])) or sum by (dns_rcode) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__range])) * 0",
-          "legendFormat": "{{dns_rcode}}"
-        }
-      ],
-      "title": "Response Code Distribution",
-      "transparent": false,
-      "datasource": {
-        "type": "loki",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 6
-      },
-      "repeatDirection": "h",
-      "interval": "1m",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
         }
       },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "min": 0,
-          "custom": {
-            "fillOpacity": 10,
-            "stacking": {
-              "mode": "normal"
+      "nxdomain-by-category": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "NXDOMAIN by Category",
+          "description": "Known-benign noise categories vs. unexpected NXDOMAIN. Only the unexpected series is worth investigating.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\".*\\\\._dns-sd\\\\._udp\\\\..*\" [$__auto])) or vector(0)",
+                        "legendFormat": "dns-sd discovery"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\"_grpclb\\\\._tcp\\\\..*\" [$__auto])) or vector(0)",
+                        "legendFormat": "grpc lb discovery"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\"(.+\\\\.)?local\" [$__auto])) or vector(0)",
+                        "legendFormat": "mdns (.local)"
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\".+\\\\.arpa\" | dns_qname!~\".*\\\\._dns-sd\\\\._udp\\\\..*\" [$__auto])) or vector(0)",
+                        "legendFormat": "reverse lookup (PTR)"
+                      }
+                    },
+                    "refId": "D",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\"wpad\\\\..*\" [$__auto])) or vector(0)",
+                        "legendFormat": "wpad"
+                      }
+                    },
+                    "refId": "E",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\".+\\\\..+\\\\.home\\\\.butaco\\\\.net\" | dns_qname!~\".*\\\\._dns-sd\\\\._udp\\\\..*\" | dns_qname!~\"_grpclb\\\\._tcp\\\\..*\" | dns_qname!~\"wpad\\\\..*\" [$__auto])) or vector(0)",
+                        "legendFormat": "search-domain suffix"
+                      }
+                    },
+                    "refId": "F",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname!~\".+\\\\.arpa\" | dns_qname!~\"wpad\\\\..*\" | dns_qname!~\".*\\\\._dns-sd\\\\._udp\\\\..*\" | dns_qname!~\"(.+\\\\.)?local\" | dns_qname!~\"_grpclb\\\\._tcp\\\\..*\" | dns_qname!~\".+\\\\..+\\\\.home\\\\.butaco\\\\.net\" [$__auto])) or vector(0)",
+                        "legendFormat": "unexpected"
+                      }
+                    },
+                    "refId": "G",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "1m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "min": 0,
+                  "custom": {
+                    "fillOpacity": 10,
+                    "stacking": {
+                      "mode": "normal"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "unexpected"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "red",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
             }
           }
-        },
-        "overrides": [
+        }
+      },
+      "nxdomain-rate-by-host": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "NXDOMAIN Rate by Host",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (identity) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" [$__auto])) or sum by (identity) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__range])) * 0",
+                        "legendFormat": "{{identity}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "1m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "query-rate": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Query Rate",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__auto]))",
+                        "legendFormat": "queries/s"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": ""
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "query-rate-by-host": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Query Rate by Host",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (identity) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__auto])) or sum by (identity) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__range])) * 0",
+                        "legendFormat": "{{identity}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "1m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "query-rate-by-type": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Query Rate by Type",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (dns_qtype) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__auto])) or sum by (dns_qtype) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__range])) * 0",
+                        "legendFormat": "{{dns_qtype}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "1m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "min": 0,
+                  "custom": {
+                    "fillOpacity": 10,
+                    "stacking": {
+                      "mode": "normal"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "response-code-distribution": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Response Code Distribution",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (dns_rcode) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__auto])) or sum by (dns_rcode) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__range])) * 0",
+                        "legendFormat": "{{dns_rcode}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "1m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "min": 0,
+                  "custom": {
+                    "fillOpacity": 10,
+                    "stacking": {
+                      "mode": "normal"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "NOERROR"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "green",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "NXDOMAIN"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "yellow",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "SERVFAIL"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "red",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "REFUSED"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "orange",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "servfail-rate-by-host": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "SERVFAIL Rate by Host",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (identity) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"SERVFAIL\" [$__auto])) or sum by (identity) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__range])) * 0",
+                        "legendFormat": "{{identity}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "1m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "min": 0,
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "top-nxdomain-time-range": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Top NXDOMAIN (Time Range)",
+          "description": "Every NXDOMAIN name, unfiltered, over the full dashboard time range. The composition by category is in NXDOMAIN by Category above; this panel deliberately hides nothing.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sort_desc(topk(10, sum by (dns_qname) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname != \"\" [$__range]))))",
+                        "legendFormat": "{{dns_qname}}",
+                        "range": false,
+                        "instant": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
+                },
+                "reduceOptions": {
+                  "values": true,
+                  "limit": 10,
+                  "calcs": []
+                },
+                "maxVizHeight": 300,
+                "orientation": "horizontal"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short"
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "top-queried-domains-last-5m": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Top Queried Domains (Last 5m)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sort_desc(topk(10, sum by (dns_qname) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\" | dns_qname != \"\" [5m]))))",
+                        "legendFormat": "{{dns_qname}}",
+                        "range": false,
+                        "instant": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
+                },
+                "reduceOptions": {
+                  "values": true,
+                  "limit": 10,
+                  "calcs": []
+                },
+                "maxVizHeight": 300,
+                "orientation": "horizontal"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short"
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "unique-clients": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Unique Clients",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "loki",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "count(sum by (network_query_ip) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\" | network_query_ip != \"\" [$__range])))",
+                        "legendFormat": "clients"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": ""
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "RowsLayout",
+      "spec": {
+        "rows": [
           {
-            "matcher": {
-              "id": "byName",
-              "options": "NOERROR"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Summary",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "narrow",
+                  "rowHeightMode": "short",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "query-rate"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "unique-clients"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
-            ]
+            }
           },
           {
-            "matcher": {
-              "id": "byName",
-              "options": "NXDOMAIN"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "yellow",
-                  "mode": "fixed"
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Query Trends",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "query-rate-by-type"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "response-code-distribution"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
-            ]
+            }
           },
           {
-            "matcher": {
-              "id": "byName",
-              "options": "SERVFAIL"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "NXDOMAIN by Category",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "nxdomain-by-category"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
-            ]
+            }
           },
           {
-            "matcher": {
-              "id": "byName",
-              "options": "REFUSED"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Top Domains",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "top-queried-domains-last-5m"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "top-nxdomain-time-range"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
-            ]
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "By Host",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "query-rate-by-host"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "nxdomain-rate-by-host"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "SERVFAIL Rate by Host",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "servfail-rate-by-host"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Logs",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "dns-query-logs"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           }
         ]
       }
     },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\".*\\\\._dns-sd\\\\._udp\\\\..*\" [$__auto])) or vector(0)",
-          "legendFormat": "dns-sd discovery"
-        },
-        {
-          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\"_grpclb\\\\._tcp\\\\..*\" [$__auto])) or vector(0)",
-          "legendFormat": "grpc lb discovery"
-        },
-        {
-          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\"(.+\\\\.)?local\" [$__auto])) or vector(0)",
-          "legendFormat": "mdns (.local)"
-        },
-        {
-          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\".+\\\\.arpa\" | dns_qname!~\".*\\\\._dns-sd\\\\._udp\\\\..*\" [$__auto])) or vector(0)",
-          "legendFormat": "reverse lookup (PTR)"
-        },
-        {
-          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\"wpad\\\\..*\" [$__auto])) or vector(0)",
-          "legendFormat": "wpad"
-        },
-        {
-          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname=~\".+\\\\..+\\\\.home\\\\.butaco\\\\.net\" | dns_qname!~\".*\\\\._dns-sd\\\\._udp\\\\..*\" | dns_qname!~\"_grpclb\\\\._tcp\\\\..*\" | dns_qname!~\"wpad\\\\..*\" [$__auto])) or vector(0)",
-          "legendFormat": "search-domain suffix"
-        },
-        {
-          "expr": "sum(rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname!~\".+\\\\.arpa\" | dns_qname!~\"wpad\\\\..*\" | dns_qname!~\".*\\\\._dns-sd\\\\._udp\\\\..*\" | dns_qname!~\"(.+\\\\.)?local\" | dns_qname!~\"_grpclb\\\\._tcp\\\\..*\" | dns_qname!~\".+\\\\..+\\\\.home\\\\.butaco\\\\.net\" [$__auto])) or vector(0)",
-          "legendFormat": "unexpected"
-        }
+    "links": [],
+    "preload": false,
+    "tags": [
+      "dns",
+      "logs",
+      "infrastructure"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-3h",
+      "to": "now",
+      "autoRefresh": "30s",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
       ],
-      "title": "NXDOMAIN by Category",
-      "description": "Known-benign noise categories vs. unexpected NXDOMAIN. Only the unexpected series is worth investigating.",
-      "transparent": false,
-      "datasource": {
-        "type": "loki",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 14
-      },
-      "repeatDirection": "h",
-      "interval": "1m",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "DNS Query Logs",
+    "variables": [
+      {
+        "kind": "DatasourceVariable",
+        "spec": {
+          "name": "datasource",
+          "pluginId": "loki",
+          "refresh": "never",
+          "regex": "",
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "options": [],
+          "multi": false,
+          "includeAll": false,
+          "label": "Datasource",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": true
         }
       },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "min": 0,
-          "custom": {
-            "fillOpacity": 10,
-            "stacking": {
-              "mode": "normal"
-            }
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "unexpected"
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "host",
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "label": "Host",
+          "hide": "dontHide",
+          "refresh": "onTimeRangeChanged",
+          "skipUrlSync": false,
+          "query": {
+            "kind": "DataQuery",
+            "group": "loki",
+            "version": "v0",
+            "datasource": {
+              "name": "$datasource"
             },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Top Domains",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 22
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "sort_desc(topk(10, sum by (dns_qname) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\" | dns_qname != \"\" [5m]))))",
-          "legendFormat": "{{dns_qname}}",
-          "range": false,
-          "instant": true
+            "spec": {
+              "__legacyStringValue": "label_values({job=\"dns\"}, identity)"
+            }
+          },
+          "regex": "",
+          "regexApplyTo": "value",
+          "sort": "alphabeticalAsc",
+          "options": [],
+          "multi": true,
+          "includeAll": true,
+          "allowCustomValue": true
         }
-      ],
-      "title": "Top Queried Domains (Last 5m)",
-      "transparent": false,
-      "datasource": {
-        "type": "loki",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 12,
-        "x": 0,
-        "y": 23
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "values": true,
-          "limit": 10,
-          "calcs": []
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "sort_desc(topk(10, sum by (dns_qname) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" | dns_qname != \"\" [$__range]))))",
-          "legendFormat": "{{dns_qname}}",
-          "range": false,
-          "instant": true
-        }
-      ],
-      "title": "Top NXDOMAIN (Time Range)",
-      "description": "Every NXDOMAIN name, unfiltered, over the full dashboard time range. The composition by category is in NXDOMAIN by Category above; this panel deliberately hides nothing.",
-      "transparent": false,
-      "datasource": {
-        "type": "loki",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 12,
-        "x": 12,
-        "y": 23
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "values": true,
-          "limit": 10,
-          "calcs": []
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "By Host",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 33
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (identity) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__auto])) or sum by (identity) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_QUERY\"[$__range])) * 0",
-          "legendFormat": "{{identity}}"
-        }
-      ],
-      "title": "Query Rate by Host",
-      "transparent": false,
-      "datasource": {
-        "type": "loki",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 34
-      },
-      "repeatDirection": "h",
-      "interval": "1m",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (identity) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"NXDOMAIN\" [$__auto])) or sum by (identity) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__range])) * 0",
-          "legendFormat": "{{identity}}"
-        }
-      ],
-      "title": "NXDOMAIN Rate by Host",
-      "transparent": false,
-      "datasource": {
-        "type": "loki",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 34
-      },
-      "repeatDirection": "h",
-      "interval": "1m",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (identity) (rate({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\" | dns_rcode=\"SERVFAIL\" [$__auto])) or sum by (identity) (count_over_time({job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | dnstap_operation=\"CLIENT_RESPONSE\"[$__range])) * 0",
-          "legendFormat": "{{identity}}"
-        }
-      ],
-      "title": "SERVFAIL Rate by Host",
-      "transparent": false,
-      "datasource": {
-        "type": "loki",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 42
-      },
-      "repeatDirection": "h",
-      "interval": "1m",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "min": 0,
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Logs",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 50
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "logs",
-      "targets": [
-        {
-          "expr": "{job=\"dns\", identity=~\"$host\"} | json | __error__=\"\" | line_format \"{{.identity}} {{.dnstap_operation}} {{.network_query_ip}} -\u003e {{.dns_qname}} {{.dns_qtype}} {{.dns_rcode}} latency={{.dnstap_latency_ms}}ms\"",
-          "maxLines": 500
-        }
-      ],
-      "title": "DNS Query Logs",
-      "transparent": false,
-      "datasource": {
-        "type": "loki",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 12,
-        "w": 24,
-        "x": 0,
-        "y": 51
-      },
-      "repeatDirection": "h",
-      "options": {
-        "showLabels": false,
-        "showCommonLabels": false,
-        "showTime": true,
-        "showLogContextToggle": true,
-        "wrapLogMessage": false,
-        "prettifyLogMessage": false,
-        "enableLogDetails": true,
-        "sortOrder": "Descending",
-        "dedupStrategy": "",
-        "showControls": true,
-        "showFieldSelector": true
-      }
-    }
-  ],
-  "templating": {
-    "list": [
-      {
-        "type": "datasource",
-        "name": "datasource",
-        "label": "Datasource",
-        "skipUrlSync": false,
-        "query": "loki",
-        "multi": false,
-        "allowCustomValue": true,
-        "includeAll": false,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
-      },
-      {
-        "type": "query",
-        "name": "host",
-        "label": "Host",
-        "skipUrlSync": false,
-        "query": "label_values({job=\"dns\"}, identity)",
-        "datasource": {
-          "type": "loki",
-          "uid": "$datasource"
-        },
-        "multi": true,
-        "allowCustomValue": true,
-        "refresh": 2,
-        "sort": 1,
-        "includeAll": true,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
       }
     ]
-  },
-  "annotations": {}
+  }
 }

@@ -12,19 +12,19 @@ import (
 
 // Shared fragment factories return fresh builders to avoid mutable state aliasing.
 
-// selectedDatasource refers to the dashboard's datasource variable.
-func selectedDatasource() *dashboardv2.Dashboardv2DataQueryKindDatasourceBuilder {
-	return dashboardv2.NewDashboardv2DataQueryKindDatasourceBuilder().Name("$datasource")
+// queryDatasource refers to a dashboard datasource variable.
+func queryDatasource(name string) *dashboardv2.Dashboardv2DataQueryKindDatasourceBuilder {
+	return dashboardv2.NewDashboardv2DataQueryKindDatasourceBuilder().Name("$" + name)
 }
 
 // promQuery starts a query against the selected Prometheus datasource.
 func promQuery() *prometheus.QueryV2Builder {
-	return prometheus.NewQueryV2Builder().Datasource(selectedDatasource())
+	return prometheus.NewQueryV2Builder().Datasource(queryDatasource("datasource"))
 }
 
 // lokiQuery starts a query against the selected Loki datasource.
 func lokiQuery() *loki.QueryV2Builder {
-	return loki.NewQueryV2Builder().Datasource(selectedDatasource())
+	return loki.NewQueryV2Builder().Datasource(queryDatasource("datasource"))
 }
 
 // queries assigns default refIds (A, B, ...); queryWithRef preserves explicit
@@ -191,4 +191,15 @@ func zeroLineThresholds() *dashboardv2.ThresholdsConfigBuilder {
 func zeroLineStyle() *common.GraphThresholdsStyleConfigBuilder {
 	return common.NewGraphThresholdsStyleConfigBuilder().
 		Mode(common.GraphThresholdsStyleModeLine)
+}
+
+// Loki's variable editor reads string queries through Grafana's legacy wrapper.
+type lokiVariableQuery string
+
+func (q lokiVariableQuery) Build() (dashboardv2.DataQueryKind, error) {
+	return dashboardv2.DataQueryKind{
+		Kind: "DataQuery", Group: "loki", Version: "v0",
+		Datasource: &dashboardv2.Dashboardv2DataQueryKindDatasource{Name: new("$datasource")},
+		Spec:       map[string]any{"__legacyStringValue": string(q)},
+	}, nil
 }

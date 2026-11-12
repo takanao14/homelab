@@ -22,6 +22,19 @@ type translation struct {
 }
 
 var translations = []translation{
+	{name: "dns-overview", uid: "dns-overview", build: buildDnsOverview, cutover: true},
+	{name: "service-logs", uid: "service-logs", build: buildServiceLogs, cutover: true},
+	{name: "proxmox-logs", uid: "proxmox-logs", build: buildProxmoxLogs, cutover: true},
+	{name: "syslog", uid: "syslog", build: buildSyslog, cutover: true},
+	{name: "dns-logs", uid: "dns-logs", build: buildDnsLogs, cutover: true},
+	{name: "dhcp-leases", uid: "dhcp-leases", build: buildDhcpLeases, cutover: true},
+	{name: "k8s-control-plane", uid: "k8s-control-plane-overview", build: buildK8sControlPlaneOverview, cutover: true},
+	{name: "kubernetes-overview", uid: "kubernetes-overview", build: buildKubernetesOverview, cutover: true},
+	{name: "monitoring-overview", uid: "monitoring-overview", build: buildMonitoringOverview, cutover: true},
+	{name: "node-overview", uid: "node-overview", build: buildNodeOverview, cutover: true},
+	{name: "disk-health", uid: "disk-health", build: buildDiskHealth, cutover: true},
+	{name: "k8s-node-overview", uid: "k8s-node-overview", build: buildK8sNodeOverview, cutover: true},
+	{name: "argocd-overview", uid: "argocd-overview", build: buildArgocdOverview, cutover: true},
 	{name: "cilium-overview", uid: "cilium-overview", build: buildCiliumOverview, cutover: true},
 	{name: "cert-manager-overview", uid: "cert-manager-overview", build: buildCertManagerOverview, cutover: true},
 	{name: "network-overview", uid: "network-overview", build: buildNetworkOverview, cutover: true},

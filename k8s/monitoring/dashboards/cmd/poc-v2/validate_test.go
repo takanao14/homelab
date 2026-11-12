@@ -7,6 +7,7 @@ import (
 )
 
 func TestTranslationsValidate(t *testing.T) {
+	t.Chdir("../..")
 	seen := map[string]bool{}
 	for _, tr := range translations {
 		if seen[tr.name] || seen["uid:"+tr.uid] {
