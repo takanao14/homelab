@@ -49,10 +49,8 @@ deleting it:
 
 ## Index
 
-Pending proposals: [ADR-0034](0034-hubble-ui-for-service-traffic-visibility.md)
-(review by 2026-11-14) and
-[ADR-0087](0087-migrate-grafana-dashboards-to-dashboard-v2.md) (review on the
-first sandbox cutover).
+Pending proposal: [ADR-0034](0034-hubble-ui-for-service-traffic-visibility.md)
+(review by 2026-11-14).
 
 `Accepted` entries with amendment links retain decisions that still apply;
 follow those links for the changed parts.
@@ -133,7 +131,7 @@ follow those links for the changed parts.
 |-----|-------|--------|
 | [0003](0003-proxmox-host-log-collection-via-rsyslog-forwarding.md) | Proxmox host log collection via rsyslog forwarding to a central Vector | Accepted |
 | [0004](0004-alertmanager-single-notification-hub.md) | Alertmanager as the single notification hub (metrics + logs) | Accepted |
-| [0007](0007-defer-grafana-dashboard-v2-migration.md) | Defer Grafana Dashboard v2 migration | Accepted |
+| [0007](0007-defer-grafana-dashboard-v2-migration.md) | Defer Grafana Dashboard v2 migration | Superseded by ADR-0087 |
 | [0016](0016-cluster-label-via-default-scrape-class.md) | Cluster label via default scrape class, asymmetric per environment | Accepted; amended by [ADR-0061](0061-long-term-metrics-in-victoriametrics-single.md) |
 | [0024](0024-shared-proxmox-node-inventory-for-monitoring.md) | Shared Proxmox node inventory for monitoring | Accepted |
 | [0047](0047-service-vm-logs-via-vector-journald-agent.md) | Collect service VM logs with a Vector journald agent | Accepted |
@@ -143,7 +141,7 @@ follow those links for the changed parts.
 | [0084](0084-audit-guest-os-creation-recipes-after-migrations.md) | Audit guest OS creation recipes after migrations | Accepted |
 | [0085](0085-opt-in-service-guest-os-audits.md) | Opt in service guests to OS recipe audits | Accepted |
 | [0086](0086-manage-vpn-gateway-host-baseline.md) | Manage the VPN gateway host baseline with Ansible | Accepted |
-| [0087](0087-migrate-grafana-dashboards-to-dashboard-v2.md) | Migrate the dashboard generator to the dashboardv2 SDK API | Proposed |
+| [0087](0087-migrate-grafana-dashboards-to-dashboard-v2.md) | Migrate the dashboard generator to the dashboardv2 SDK API | Accepted |
 
 ### Identity & secrets
 

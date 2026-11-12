@@ -1,8 +1,9 @@
 # ADR-0087: Migrate the dashboard generator to the dashboardv2 SDK API
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Category:** Observability
 - **Date:** 2026-11-11
+- **Last reviewed:** 2026-11-12
 - **Review trigger:** The first rewritten dashboard has replaced its Classic
   version, with the same file name and UID, through the sandbox ConfigMap
   sidecar.
@@ -40,6 +41,13 @@ On a local Grafana 13.2.0, all 22 Classic dashboards convert to v2 without
 failure and keep their panel, row, and variable counts (386, 113, and 55). The
 largest v2 resource is DNS Overview at 139 KB. The file provider replaced a
 Classic dashboard with a v2 resource of the same UID in place and back again.
+
+The uptime rewrite replaced its Classic resource through the sandbox sidecar on
+Grafana 13.3.0, preserving its UID and internal ID without duplication. All 16
+queries succeeded; 14 returned no series because sandbox omits the external
+scrapes. On local Grafana 13.2.0 with live data, Classic and v2 showed matching
+status, availability, and series. AutoGrid rendered at 1440 px and reflowed to
+one column at 375 px. The sandbox test configuration was restored afterward.
 
 ## Decision
 
@@ -89,4 +97,4 @@ and retire the `dashboard` package.
   there only at cutover.
 - Local development needs Grafana 13.2 or later.
 - `SA1019` deprecation warnings end with the `dashboard` package.
-- On acceptance, mark ADR-0007 `Superseded by ADR-0087`.
+- ADR-0007 is superseded by this decision.
