@@ -4,6 +4,4 @@ providers:
     type: file
     options:
       path: /var/lib/grafana/dashboards
-      # Folders keep a translation and its Classic dashboard, which share a
-      # title, apart in the PoC Grafana.
       foldersFromFilesStructure: true

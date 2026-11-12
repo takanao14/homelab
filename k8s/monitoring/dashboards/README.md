@@ -2,8 +2,8 @@
 
 Define Grafana dashboards in Go with
 [grafana-foundation-sdk](https://github.com/grafana/grafana-foundation-sdk) and
-generate JSON from those definitions to keep source and deployment artifacts
-in sync.
+generate dashboardv2 JSON resources from those definitions to keep source and
+deployment artifacts in sync.
 
 ## Dashboards
 
@@ -34,10 +34,9 @@ in sync.
 
 ## Structure
 
-- `cmd/poc-v2/`: `dashboardv2` translations of `cmd/generate/` builders
-  (ADR-0087), with their registry, helpers, and `layout.go`
 - `cmd/generate/main.go`: dashboard registry and JSON output
 - `cmd/generate/helpers.go`: shared visual conventions
+- `cmd/generate/layout.go`: rows and AutoGrid panel placement
 - `cmd/generate/proxmox_nodes.go`: shared Proxmox inventory loader
 - `cmd/generate/node_exporter_targets.go`: node-exporter target classification
 - `cmd/generate/validate*.go`: generated-dashboard invariants
@@ -87,8 +86,8 @@ Do not describe missing data from the other environment as a dashboard gap.
 
   For a single-value stat, use `or vector(0)`.
 
-- Use `$__auto` for zoom-dependent log windows and set `Interval("1m")` to
-  floor the step. Fixed windows such as `[1h]` are appropriate when the panel
+- Use `$__auto` for zoom-dependent log windows and set the query group's
+  minimum interval to `1m` to floor the step. Fixed windows such as `[1h]` are appropriate when the panel
   explicitly reports that period.
 
 - Plot sparse discrete events with `count_over_time` bars, not per-second
@@ -127,9 +126,18 @@ Name rows by subject or question, not chart type. Use `Summary` only for a
 mixed high-level row; prefer `Status` or a component-qualified name when more
 specific.
 
-Grafana uses a 24-column grid. Keep each visual line at 24 columns, place peers
-together, and use equal widths unless hierarchy or density requires otherwise.
-Prefer spans 4, 6, 8, 12, and 24.
+`newLayout` declares rows and places their panels with AutoGrid. Use `statGrid`
+for single-value summaries, `chartGrid` for peer charts, and `wideGrid` for
+many-value stats, tables, and logs. Split a row when panels need different
+sizes. Use tall rows for dense device inventories. Grafana wraps panels for
+narrow screens; do not assign grid coordinates.
+
+Pass a fixed, positive panel ID to `Panel(id, builder)` using explicitly numbered
+constants. Keep IDs across title/layout changes and do not reuse retired IDs.
+Element names derive from unique panel titles. Wrap queries in `queries(...)`
+and preserve references used by overrides with `queryWithRef(name, query)`.
+Attach transformations to the query group; table cell overrides use
+`custom.cellOptions`.
 
 For panels denser than their allocated space:
 
@@ -144,7 +152,9 @@ Keep these choices inline because density is panel-specific.
 - Review rendered dashboards against the query and layout conventions above.
 - Confirm scope and health are visible without scrolling and descriptions work
   for either environment.
-- Run `make check` and commit generated JSON with its Go definitions.
+- Run `go test ./...` for structural invariants and `make check` for generator
+  drift; commit generated JSON with its Go definitions. Compare live values,
+  series, variable selection, colors, and desktop/narrow layouts in Grafana.
 
 ## Development
 
@@ -179,45 +189,15 @@ Stop Grafana with:
 make dev-stop
 ```
 
-### Dashboard v2 translations
-
-Translate a builder from `cmd/generate/` into `cmd/poc-v2/`, keeping its
-queries, visualization settings, constants, and comments, and add it to
-`translations` in `cmd/poc-v2/main.go`. Lay it out for v2 rather than copying
-Classic positions: `newLayout` declares rows, each placed by an AutoGrid
-(`statGrid`, `chartGrid`, or `wideGrid` in `helpers.go`), and names elements
-after panel titles. Pass a fixed, positive panel ID to `Panel(id, builder)`,
-using explicitly numbered constants; keep IDs across title/layout changes and
-do not reuse retired IDs. Split a row when its panels need different sizes. Wrap
-panel queries in `queries(...)`; preserve named references used by overrides
-with `queryWithRef(name, query)`. Attach transformations to the query group;
-table cell overrides use `custom.cellOptions`.
-
-Until a translation is cut over, `make generate` writes it only to
-`poc-generated/` with the UID `<uid>-v2`; the Classic dashboard stays
-authoritative. `go test ./...` checks structural invariants; `make check`
-checks that committed JSON matches generator output. Compare Classic and v2
-with live data: values, series, variable selection, colors, and layout at
-desktop and narrow widths:
-
-```bash
-make poc-v2-up
-```
-
-This starts Grafana 13.2.0 at <http://localhost:3300> with the `.env`
-datasources, the chart dashboards in the `chart` folder, and translations in
-the `v2` folder. `make poc-v2-stop` removes the container.
-
-Cut over in a separate commit: set `cutover: true`, then delete the Classic
-builder and its registry entry in `cmd/generate/`. The translation then
-replaces the chart JSON with the same file name and UID. Grafana logs the upstream
-[managedFields schema error](https://github.com/grafana/grafana-app-sdk/issues/1485)
-once per v2 write without affecting registration or rendering.
-
 ## Production
 
 `make generate` writes JSON to `charts/dashboards/dashboards/`.
 `make check` regenerates into a temporary directory and detects drift.
+Both environments deploy the same resources under stable dashboard UIDs
+([ADR-0087](../../../docs/adr/0087-migrate-grafana-dashboards-to-dashboard-v2.md)).
+Grafana logs the upstream
+[managedFields schema error](https://github.com/grafana/grafana-app-sdk/issues/1485)
+on v2 writes without affecting registration or rendering.
 
 ```bash
 make generate

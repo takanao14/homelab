@@ -1,70 +1,54 @@
 package main
 
 import (
-	"strings"
 	"testing"
+
+	"github.com/grafana/grafana-foundation-sdk/go/dashboardv2"
 )
 
-func TestValidateDashboardJSON(t *testing.T) {
-	t.Parallel()
+func TestDashboardsValidate(t *testing.T) {
+	t.Chdir("../..")
+	seen := map[string]bool{}
+	for _, definition := range dashboards {
+		if seen[definition.name] || seen["uid:"+definition.uid] {
+			t.Fatalf("%s: duplicate name or UID", definition.name)
+		}
+		seen[definition.name], seen["uid:"+definition.uid] = true, true
+		d, err := definition.build()
+		if err != nil {
+			t.Fatalf("%s: %v", definition.name, err)
+		}
+		if err := validateDashboard(d); err != nil {
+			t.Errorf("%s: %v", definition.name, err)
+		}
+	}
+}
 
-	tests := []struct {
-		name        string
-		data        string
-		wantErr     bool
-		wantErrText string
-	}{
-		{
-			name: "explicit thresholds",
-			data: `{"panels":[{"title":"Healthy","options":{"colorMode":"background"},"fieldConfig":{"defaults":{"thresholds":{"steps":[{"color":"blue"}]}}}}]}`,
+func TestValidationRejectsBrokenDashboard(t *testing.T) {
+	cases := map[string]func(*dashboardv2.Dashboard){
+		"empty": func(d *dashboardv2.Dashboard) { d.Elements = nil },
+		"missing reference": func(d *dashboardv2.Dashboard) {
+			d.Layout.RowsLayoutKind.Spec.Rows[0].Spec.Layout.AutoGridLayoutKind.Spec.Items[0].Spec.Element.Name = "missing"
 		},
-		{
-			name: "color disabled",
-			data: `{"panels":[{"title":"Plain","options":{"colorMode":"none"},"fieldConfig":{"defaults":{}}}]}`,
+		"duplicate ID": func(d *dashboardv2.Dashboard) {
+			d.Elements["dns-devices-down"].PanelKind.Spec.Id = d.Elements["icmp-devices-down"].PanelKind.Spec.Id
 		},
-		{
-			name: "color mode absent",
-			data: `{"panels":[{"title":"Graph","options":{},"fieldConfig":{"defaults":{}}}]}`,
+		"missing thresholds": func(d *dashboardv2.Dashboard) {
+			d.Elements["icmp-devices-down"].PanelKind.Spec.VizConfig.Spec.FieldConfig.Defaults.Thresholds = nil
 		},
-		{
-			name:        "thresholds absent",
-			data:        `{"panels":[{"title":"Missing","options":{"colorMode":"value"},"fieldConfig":{"defaults":{}}}]}`,
-			wantErr:     true,
-			wantErrText: `audit: panel "Missing" uses colorMode "value" without threshold steps`,
-		},
-		{
-			name:        "threshold steps empty",
-			data:        `{"panels":[{"title":"Empty","options":{"colorMode":"background"},"fieldConfig":{"defaults":{"thresholds":{"steps":[]}}}}]}`,
-			wantErr:     true,
-			wantErrText: `audit: panel "Empty" uses colorMode "background" without threshold steps`,
-		},
-		{
-			name:        "nested row panel",
-			data:        `{"panels":[{"title":"Summary","panels":[{"title":"Nested","options":{"colorMode":"background"},"fieldConfig":{"defaults":{}}}]}]}`,
-			wantErr:     true,
-			wantErrText: `audit: panel "Nested" uses colorMode "background" without threshold steps`,
-		},
-		{
-			name:        "invalid JSON",
-			data:        `{`,
-			wantErr:     true,
-			wantErrText: "audit: decode generated JSON",
+		"missing query reference": func(d *dashboardv2.Dashboard) {
+			d.Elements["icmp-devices-down"].PanelKind.Spec.Data.Spec.Queries[0].Spec.RefId = ""
 		},
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			err := validateDashboardJSON("audit", []byte(tt.data))
-			if tt.wantErr && err == nil {
-				t.Fatal("validateDashboardJSON() error = nil, want an error")
+	for name, mutate := range cases {
+		t.Run(name, func(t *testing.T) {
+			d, err := buildUptime()
+			if err != nil {
+				t.Fatal(err)
 			}
-			if !tt.wantErr && err != nil {
-				t.Fatalf("validateDashboardJSON() unexpected error: %v", err)
-			}
-			if tt.wantErrText != "" && !strings.Contains(err.Error(), tt.wantErrText) {
-				t.Fatalf("validateDashboardJSON() error = %q, want substring %q", err, tt.wantErrText)
+			mutate(d)
+			if validateDashboard(d) == nil {
+				t.Fatal("invalid dashboard accepted")
 			}
 		})
 	}
