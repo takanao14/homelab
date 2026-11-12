@@ -10,6 +10,5 @@ services:
       - LOKI_URL=${LOKI_URL:?Set LOKI_URL in .env}
     volumes:
       - ./provisioning:/etc/grafana/provisioning:ro,z
-      - ./poc-generated:/var/lib/grafana/dashboards/poc:ro,z
-      - ../charts/dashboards/dashboards/uptime.json:/var/lib/grafana/dashboards/uptime-classic.json:ro,z
-      - ../charts/dashboards/dashboards/dns-overview.json:/var/lib/grafana/dashboards/dns-classic.json:ro,z
+      - ../charts/dashboards/dashboards:/var/lib/grafana/dashboards/chart:ro,z
+      - ./poc-generated:/var/lib/grafana/dashboards/v2:ro,z

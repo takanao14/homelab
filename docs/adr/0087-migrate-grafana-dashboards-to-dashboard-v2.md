@@ -1,8 +1,9 @@
 # ADR-0087: Migrate the dashboard generator to the dashboardv2 SDK API
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Category:** Observability
 - **Date:** 2026-11-11
+- **Last reviewed:** 2026-11-12
 - **Review trigger:** The first rewritten dashboard has replaced its Classic
   version, with the same file name and UID, through the sandbox ConfigMap
   sidecar.
@@ -41,22 +42,30 @@ failure and keep their panel, row, and variable counts (386, 113, and 55). The
 largest v2 resource is DNS Overview at 139 KB. The file provider replaced a
 Classic dashboard with a v2 resource of the same UID in place and back again.
 
+The uptime rewrite replaced its Classic resource through the sandbox sidecar on
+Grafana 13.3.0, preserving its UID and internal ID without duplication. All 16
+queries succeeded; 14 returned no series because sandbox omits the external
+scrapes. On local Grafana 13.2.0 with live data, Classic and v2 showed matching
+status, availability, and series. AutoGrid rendered at 1440 px and reflowed to
+one column at 375 px. The sandbox test configuration was restored afterward.
+
 ## Decision
 
 Rewrite the generator on `dashboardv2` by translating the existing builders,
 and retire the `dashboard` package.
 
-- Translate each `cmd/generate/*.go` file into `cmd/poc-v2/` with the same file
-  and function names, constants, comments, and panel order. Replace the current
+- Translate each `cmd/generate/*.go` file into `cmd/poc-v2/`, keeping its
+  queries, visualization settings, constants, and comments. Replace the current
   PoC code; keep only its variable-query builder.
-- Port `helpers.go` to `dashboardv2` types and add a local layout adapter that
-  keeps the declarative row-then-panels form with span and height, and assigns
-  element names, panel IDs, and grid coordinates.
+- Lay translations out for v2 instead of reproducing Classic positions: rows
+  of AutoGrid-placed panels, with per-row column and height settings and
+  element names derived from panel titles. A row whose panels need different
+  sizes is split. Port `helpers.go` to `dashboardv2` types.
 - Accept the local variable-query builders and the managed-fields log line
   instead of waiting for upstream.
-- Check each translation against Grafana's own v2 conversion of the Classic
-  JSON it replaces, allowing only an explicit list of default-value
-  differences, and review it visually on local Grafana with live datasources.
+- Before cutover, compare Classic and v2 on local Grafana with live data:
+  values, series, variable selection, colors, and layout at desktop and narrow
+  widths. Keep automated structural validation and generated-file drift checks.
 - Cut over dashboard by dashboard: the v2 resource keeps the Classic file name
   and UID, so ConfigMap names, bookmarks, and alert `dashboard_url` links do not
   change. Until then, translations are generated locally only.
@@ -68,6 +77,12 @@ and retire the `dashboard` package.
   triggers cost a few lines or a log line.
 - **Extend the current PoC code.** It does not follow the generator's
   conventions, and hand-written coordinates do not scale to 386 panels.
+- **Reproduce Classic positions with explicit grid coordinates.** Keeps the
+  layout identical but needs a placement adapter, and Grafana stacks such grids
+  into a single column on narrow screens. AutoGrid reflows by width and is the
+  only layout that supports show/hide rules for panels.
+- **Compare Classic and v2 JSON content.** Format normalization adds maintenance
+  without verifying query execution or rendered behavior.
 - **Generate Go from JSON with the SDK `DashboardConverter`.** Its output is
   untyped struct literals and maps with unconverted queries, not builder code.
 - **Permanent `-v2` UIDs.** Doubles every dashboard and breaks alert links and
@@ -82,4 +97,4 @@ and retire the `dashboard` package.
   there only at cutover.
 - Local development needs Grafana 13.2 or later.
 - `SA1019` deprecation warnings end with the `dashboard` package.
-- On acceptance, mark ADR-0007 `Superseded by ADR-0087`.
+- ADR-0007 is superseded by this decision.

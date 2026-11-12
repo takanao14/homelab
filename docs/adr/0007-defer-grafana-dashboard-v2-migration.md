@@ -1,6 +1,6 @@
 # ADR-0007: Defer Grafana Dashboard v2 migration
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0087](0087-migrate-grafana-dashboards-to-dashboard-v2.md)
 - **Category:** Observability
 - **Date:** 2026-06-21
 - **Last reviewed:** 2026-09-17

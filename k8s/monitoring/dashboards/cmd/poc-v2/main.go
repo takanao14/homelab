@@ -11,31 +11,54 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/resource"
 )
 
+// translation is a dashboardv2 rewrite of a cmd/generate builder. Until it is
+// cut over, its Classic version stays authoritative and the translation is
+// written only to the local directory, under a separate UID, for comparison.
+type translation struct {
+	name    string // output file name, shared with the Classic dashboard
+	uid     string // Classic UID, kept at cutover
+	build   func() (*dashboardv2.Dashboard, error)
+	cutover bool
+}
+
+var translations = []translation{
+	{name: "uptime", uid: "uptime", build: buildUptime, cutover: true},
+}
+
 func main() {
-	if len(os.Args) != 2 {
-		log.Fatal("usage: poc-v2 OUTPUT_DIRECTORY")
+	if len(os.Args) != 3 {
+		log.Fatal("usage: poc-v2 CHART_DIRECTORY LOCAL_DIRECTORY")
 	}
-	if err := os.MkdirAll(os.Args[1], 0o755); err != nil {
+	chartDir, localDir := os.Args[1], os.Args[2]
+	for _, dir := range []string{chartDir, localDir} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			log.Fatal(err)
+		}
+	}
+	// Drop translations that have since been cut over or removed.
+	stale, err := filepath.Glob(filepath.Join(localDir, "*.json"))
+	if err != nil {
 		log.Fatal(err)
 	}
-	dashboards := []struct {
-		name  string
-		build func() (*dashboardv2.Dashboard, error)
-	}{
-		{name: "uptime-v2-poc", build: buildUptime},
-		{name: "dhcp-leases-v2-poc", build: buildDhcpLeases},
-		{name: "cert-manager-v2-poc", build: buildCertManager},
-		{name: "dns-overview-v2-poc", build: buildDnsOverview},
-	}
-	for _, dashboard := range dashboards {
-		d, err := dashboard.build()
-		if err != nil {
+	for _, path := range stale {
+		if err := os.Remove(path); err != nil {
 			log.Fatal(err)
+		}
+	}
+
+	for _, t := range translations {
+		d, err := t.build()
+		if err != nil {
+			log.Fatalf("%s: %v", t.name, err)
 		}
 		if err := validateDashboard(d); err != nil {
-			log.Fatal(err)
+			log.Fatalf("%s: %v", t.name, err)
 		}
-		manifest, err := resource.NewManifestBuilder().ApiVersion("dashboard.grafana.app/v2").Kind("Dashboard").Metadata(resource.Named(dashboard.name)).Spec(d).Build()
+		dir, uid := localDir, t.uid+"-v2"
+		if t.cutover {
+			dir, uid = chartDir, t.uid
+		}
+		manifest, err := resource.NewManifestBuilder().ApiVersion("dashboard.grafana.app/v2").Kind("Dashboard").Metadata(resource.Named(uid)).Spec(d).Build()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -43,7 +66,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		path := filepath.Join(os.Args[1], dashboard.name+".json")
+		path := filepath.Join(dir, t.name+".json")
 		if err := os.WriteFile(path, append(data, '\n'), 0o644); err != nil {
 			log.Fatal(err)
 		}
