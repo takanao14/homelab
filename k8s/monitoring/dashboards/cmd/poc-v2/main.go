@@ -22,7 +22,7 @@ type translation struct {
 }
 
 var translations = []translation{
-	{name: "argocd-overview", uid: "argocd-overview", build: buildArgocdOverview},
+	{name: "argocd-overview", uid: "argocd-overview", build: buildArgocdOverview, cutover: true},
 	{name: "cilium-overview", uid: "cilium-overview", build: buildCiliumOverview, cutover: true},
 	{name: "cert-manager-overview", uid: "cert-manager-overview", build: buildCertManagerOverview, cutover: true},
 	{name: "network-overview", uid: "network-overview", build: buildNetworkOverview, cutover: true},
