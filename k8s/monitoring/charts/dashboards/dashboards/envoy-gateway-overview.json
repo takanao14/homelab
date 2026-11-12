@@ -1,872 +1,1451 @@
 {
-  "uid": "envoy-gateway-overview",
-  "title": "Envoy Gateway Overview",
-  "tags": [
-    "envoy-gateway",
-    "gateway-api",
-    "infrastructure"
-  ],
-  "timezone": "browser",
-  "editable": true,
-  "graphTooltip": 1,
-  "time": {
-    "from": "now-24h",
-    "to": "now"
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "envoy-gateway-overview"
   },
-  "fiscalYearStartMonth": 0,
-  "refresh": "1m",
-  "schemaVersion": 42,
-  "panels": [
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Summary",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "count(envoy_control_plane_connected_state{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\"} == 0) or vector(0)",
-          "legendFormat": "Disconnected"
-        }
-      ],
-      "title": "xDS Disconnected Proxies",
-      "description": "Envoy proxies without a live xDS connection to the envoy-gateway controller.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 0,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "background",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": ""
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
+  "spec": {
+    "annotations": [],
+    "cursorSync": "Crosshair",
+    "editable": true,
+    "elements": {
+      "4xx-5xx-by-httproute": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "4xx / 5xx by HTTPRoute",
+          "description": "Upstream error responses per second per HTTPRoute.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\",envoy_response_code_class=\"4\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")) or sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_total{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")) * 0",
+                        "legendFormat": "{{cluster}} {{route}} 4xx"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\",envoy_response_code_class=\"5\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")) or sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_total{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")) * 0",
+                        "legendFormat": "{{cluster}} {{route}} 5xx"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
               },
-              {
-                "value": 1,
-                "color": "red"
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "custom": {}
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": ".* 5xx"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "red",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  }
+                ]
               }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "sum(rate(envoy_http_downstream_rq_total{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_http_conn_manager_prefix!~\"admin|eg-.*\"}[$__rate_interval]))",
-          "legendFormat": "RPS"
-        }
-      ],
-      "title": "Listener RPS",
-      "description": "Total downstream requests per second across traffic listeners.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 6,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": ""
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "decimals": 2,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "sum(rate(envoy_cluster_upstream_rq_xx{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\",envoy_response_code_class=\"5\"}[$__rate_interval])) or vector(0)",
-          "legendFormat": "5xx"
-        }
-      ],
-      "title": "Upstream 5xx Rate",
-      "description": "5xx responses per second from HTTPRoute upstreams.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "background",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": ""
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "decimals": 3,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 0.001,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(envoy_cluster_upstream_rq_time_bucket{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])))",
-          "legendFormat": "p99"
-        }
-      ],
-      "title": "Upstream Latency p99",
-      "description": "99th percentile upstream request time across all HTTPRoutes.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "interval": "15m",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "background",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": ""
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ms",
-          "decimals": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 250,
-                "color": "yellow"
-              },
-              {
-                "value": 1000,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Traffic",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 5
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (cluster, envoy_http_conn_manager_prefix) (rate(envoy_http_downstream_rq_total{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_http_conn_manager_prefix!~\"admin|eg-.*\"}[$__rate_interval]))",
-          "legendFormat": "{{cluster}} {{envoy_http_conn_manager_prefix}}"
-        }
-      ],
-      "title": "Request Rate by Listener",
-      "description": "Downstream requests per second per traffic listener.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 6
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_total{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\"))",
-          "legendFormat": "{{cluster}} {{route}}"
-        }
-      ],
-      "title": "Request Rate by HTTPRoute",
-      "description": "Upstream requests per second per HTTPRoute.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 6
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (envoy_response_code_class) (rate(envoy_http_downstream_rq_xx{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_http_conn_manager_prefix!~\"admin|eg-.*\"}[$__rate_interval]))",
-          "legendFormat": "{{envoy_response_code_class}}xx"
-        }
-      ],
-      "title": "Downstream Response Codes",
-      "description": "Responses per second by status code class, across traffic listeners.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 14
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "custom": {
-            "fillOpacity": 10,
-            "stacking": {
-              "mode": "normal"
             }
           }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "2xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
+        }
+      },
+      "controller-reconcile-errors": {
+        "kind": "Panel",
+        "spec": {
+          "id": 13,
+          "title": "Controller Reconcile Errors",
+          "description": "controller-runtime reconcile errors per second in the envoy-gateway controller.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (cluster) (rate(controller_runtime_reconcile_errors_total{job=\"envoy-gateway\",cluster=~\"$cluster\"}[$__rate_interval]))",
+                        "legendFormat": "{{cluster}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
                 }
-              }
-            ]
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
           },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "3xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
                 }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "4xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "5xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\",envoy_response_code_class=\"4\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")) or sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_total{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")) * 0",
-          "legendFormat": "{{cluster}} {{route}} 4xx"
-        },
-        {
-          "expr": "sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\",envoy_response_code_class=\"5\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")) or sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_total{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")) * 0",
-          "legendFormat": "{{cluster}} {{route}} 5xx"
-        }
-      ],
-      "title": "4xx / 5xx by HTTPRoute",
-      "description": "Upstream error responses per second per HTTPRoute.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 22
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "reqps",
-          "custom": {}
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": ".* 5xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Latency \u0026 Connections",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 30
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.99, sum by (cluster, route, le) (label_replace(sum by (cluster, envoy_cluster_name, le) (rate(envoy_cluster_upstream_rq_time_bucket{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")))",
-          "legendFormat": "{{cluster}} {{route}}"
-        }
-      ],
-      "title": "Upstream Latency p99 by HTTPRoute",
-      "description": "99th percentile upstream request time per HTTPRoute. Routes here are sparse, so samples are drawn as points; a gap means no request was served in that window, not that the route was slow.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 31
-      },
-      "repeatDirection": "h",
-      "interval": "15m",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ms",
-          "custom": {
-            "showPoints": "always",
-            "pointSize": 6
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (cluster, envoy_http_conn_manager_prefix) (envoy_http_downstream_cx_active{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_http_conn_manager_prefix!~\"admin|eg-.*\"})",
-          "legendFormat": "{{cluster}} {{envoy_http_conn_manager_prefix}}"
-        }
-      ],
-      "title": "Downstream Active Connections",
-      "description": "Active downstream connections per traffic listener.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 31
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "xDS / Control Plane",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 39
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "min by (cluster, pod) (envoy_control_plane_connected_state{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\"})",
-          "legendFormat": "{{cluster}} {{pod}}"
-        }
-      ],
-      "title": "xDS Connected State",
-      "description": "Per-proxy xDS connection to the envoy-gateway controller (1 = connected).",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 40
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "max": 1,
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (cluster) (rate(envoy_cluster_manager_cds_update_failure{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\"}[$__rate_interval]))",
-          "legendFormat": "{{cluster}} CDS failure"
-        },
-        {
-          "expr": "sum by (cluster) (rate(envoy_cluster_manager_cds_update_rejected{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\"}[$__rate_interval]))",
-          "legendFormat": "{{cluster}} CDS rejected"
-        },
-        {
-          "expr": "sum by (cluster) (rate(envoy_listener_manager_lds_update_failure{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\"}[$__rate_interval]))",
-          "legendFormat": "{{cluster}} LDS failure"
-        },
-        {
-          "expr": "sum by (cluster) (rate(envoy_listener_manager_lds_update_rejected{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\"}[$__rate_interval]))",
-          "legendFormat": "{{cluster}} LDS rejected"
-        }
-      ],
-      "title": "xDS Update Failures",
-      "description": "CDS/LDS update failures and rejections per second. Rejections indicate config the proxy refused (NACK).",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 40
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
               },
-              {
-                "value": 1,
-                "color": "red"
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "ops",
+                  "custom": {}
+                },
+                "overrides": []
               }
-            ]
+            }
+          }
+        }
+      },
+      "downstream-active-connections": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "Downstream Active Connections",
+          "description": "Active downstream connections per traffic listener.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (cluster, envoy_http_conn_manager_prefix) (envoy_http_downstream_cx_active{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_http_conn_manager_prefix!~\"admin|eg-.*\"})",
+                        "legendFormat": "{{cluster}} {{envoy_http_conn_manager_prefix}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
           },
-          "custom": {}
-        },
-        "overrides": []
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "downstream-response-codes": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Downstream Response Codes",
+          "description": "Responses per second by status code class, across traffic listeners.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (envoy_response_code_class) (rate(envoy_http_downstream_rq_xx{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_http_conn_manager_prefix!~\"admin|eg-.*\"}[$__rate_interval]))",
+                        "legendFormat": "{{envoy_response_code_class}}xx"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "custom": {
+                    "fillOpacity": 10,
+                    "stacking": {
+                      "mode": "normal"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "2xx"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "green",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "3xx"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "blue",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "4xx"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "orange",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "5xx"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "red",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "gateway-api-status-updates": {
+        "kind": "Panel",
+        "spec": {
+          "id": 14,
+          "title": "Gateway API Status Updates",
+          "description": "Status updates actually written by the envoy-gateway controller, per resource kind. Evaluations that concluded nothing needed writing (status=\"no_action\") are excluded.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (cluster, kind) (rate(status_update_total{job=\"envoy-gateway\",cluster=~\"$cluster\",status=\"success\"}[$__rate_interval]))",
+                        "legendFormat": "{{cluster}} {{kind}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "ops",
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "listener-rps": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Listener RPS",
+          "description": "Total downstream requests per second across traffic listeners.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum(rate(envoy_http_downstream_rq_total{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_http_conn_manager_prefix!~\"admin|eg-.*\"}[$__rate_interval]))",
+                        "legendFormat": "RPS"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": ""
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "decimals": 2,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "request-rate-by-httproute": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Request Rate by HTTPRoute",
+          "description": "Upstream requests per second per HTTPRoute.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (cluster, route) (label_replace(sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_total{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\"))",
+                        "legendFormat": "{{cluster}} {{route}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "request-rate-by-listener": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Request Rate by Listener",
+          "description": "Downstream requests per second per traffic listener.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (cluster, envoy_http_conn_manager_prefix) (rate(envoy_http_downstream_rq_total{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_http_conn_manager_prefix!~\"admin|eg-.*\"}[$__rate_interval]))",
+                        "legendFormat": "{{cluster}} {{envoy_http_conn_manager_prefix}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "upstream-5xx-rate": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Upstream 5xx Rate",
+          "description": "5xx responses per second from HTTPRoute upstreams.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum(rate(envoy_cluster_upstream_rq_xx{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\",envoy_response_code_class=\"5\"}[$__rate_interval])) or vector(0)",
+                        "legendFormat": "5xx"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "background",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": ""
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "decimals": 3,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 0.001,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "upstream-latency-p99": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Upstream Latency p99",
+          "description": "99th percentile upstream request time across all HTTPRoutes.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "histogram_quantile(0.99, sum by (le) (rate(envoy_cluster_upstream_rq_time_bucket{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])))",
+                        "legendFormat": "p99"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "15m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "background",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": ""
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "ms",
+                  "decimals": 1,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 250,
+                        "color": "yellow"
+                      },
+                      {
+                        "value": 1000,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "upstream-latency-p99-by-httproute": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "Upstream Latency p99 by HTTPRoute",
+          "description": "99th percentile upstream request time per HTTPRoute. Routes here are sparse, so samples are drawn as points; a gap means no request was served in that window, not that the route was slow.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "histogram_quantile(0.99, sum by (cluster, route, le) (label_replace(sum by (cluster, envoy_cluster_name, le) (rate(envoy_cluster_upstream_rq_time_bucket{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\",envoy_cluster_name=~\"httproute/.*\"}[$__rate_interval])), \"route\", \"$1/$2\", \"envoy_cluster_name\", \"httproute/([^/]+)/([^/]+)/.*\")))",
+                        "legendFormat": "{{cluster}} {{route}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "15m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "ms",
+                  "custom": {
+                    "showPoints": "always",
+                    "pointSize": 6
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "xds-connected-state": {
+        "kind": "Panel",
+        "spec": {
+          "id": 11,
+          "title": "xDS Connected State",
+          "description": "Per-proxy xDS connection to the envoy-gateway controller (1 = connected).",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "min by (cluster, pod) (envoy_control_plane_connected_state{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\"})",
+                        "legendFormat": "{{cluster}} {{pod}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "min": 0,
+                  "max": 1,
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "xds-disconnected-proxies": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "xDS Disconnected Proxies",
+          "description": "Envoy proxies without a live xDS connection to the envoy-gateway controller.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "count(envoy_control_plane_connected_state{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\"} == 0) or vector(0)",
+                        "legendFormat": "Disconnected"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "background",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": ""
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "xds-update-failures": {
+        "kind": "Panel",
+        "spec": {
+          "id": 12,
+          "title": "xDS Update Failures",
+          "description": "CDS/LDS update failures and rejections per second. Rejections indicate config the proxy refused (NACK).",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (cluster) (rate(envoy_cluster_manager_cds_update_failure{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\"}[$__rate_interval]))",
+                        "legendFormat": "{{cluster}} CDS failure"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (cluster) (rate(envoy_cluster_manager_cds_update_rejected{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\"}[$__rate_interval]))",
+                        "legendFormat": "{{cluster}} CDS rejected"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (cluster) (rate(envoy_listener_manager_lds_update_failure{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\"}[$__rate_interval]))",
+                        "legendFormat": "{{cluster}} LDS failure"
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (cluster) (rate(envoy_listener_manager_lds_update_rejected{job=\"monitoring/envoy-gateway-proxy\",cluster=~\"$cluster\"}[$__rate_interval]))",
+                        "legendFormat": "{{cluster}} LDS rejected"
+                      }
+                    },
+                    "refId": "D",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "ops",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
       }
     },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (cluster) (rate(controller_runtime_reconcile_errors_total{job=\"envoy-gateway\",cluster=~\"$cluster\"}[$__rate_interval]))",
-          "legendFormat": "{{cluster}}"
-        }
-      ],
-      "title": "Controller Reconcile Errors",
-      "description": "controller-runtime reconcile errors per second in the envoy-gateway controller.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 48
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "custom": {}
-        },
-        "overrides": []
+    "layout": {
+      "kind": "RowsLayout",
+      "spec": {
+        "rows": [
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Summary",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 4,
+                  "columnWidthMode": "narrow",
+                  "rowHeightMode": "short",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "xds-disconnected-proxies"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "listener-rps"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "upstream-5xx-rate"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "upstream-latency-p99"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Traffic",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "request-rate-by-listener"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "request-rate-by-httproute"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Downstream Response Codes",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "downstream-response-codes"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "4xx / 5xx by HTTPRoute",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "4xx-5xx-by-httproute"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Latency \u0026 Connections",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "upstream-latency-p99-by-httproute"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "downstream-active-connections"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "xDS / Control Plane",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "xds-connected-state"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "xds-update-failures"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "controller-reconcile-errors"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "gateway-api-status-updates"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
       }
     },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (cluster, kind) (rate(status_update_total{job=\"envoy-gateway\",cluster=~\"$cluster\",status=\"success\"}[$__rate_interval]))",
-          "legendFormat": "{{cluster}} {{kind}}"
-        }
+    "links": [],
+    "preload": false,
+    "tags": [
+      "envoy-gateway",
+      "gateway-api",
+      "infrastructure"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-24h",
+      "to": "now",
+      "autoRefresh": "1m",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
       ],
-      "title": "Gateway API Status Updates",
-      "description": "Status updates actually written by the envoy-gateway controller, per resource kind. Evaluations that concluded nothing needed writing (status=\"no_action\") are excluded.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 48
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Envoy Gateway Overview",
+    "variables": [
+      {
+        "kind": "DatasourceVariable",
+        "spec": {
+          "name": "datasource",
+          "pluginId": "prometheus",
+          "refresh": "never",
+          "regex": "",
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "options": [],
+          "multi": false,
+          "includeAll": false,
+          "label": "Datasource",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": true
         }
       },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "custom": {}
-        },
-        "overrides": []
-      }
-    }
-  ],
-  "templating": {
-    "list": [
       {
-        "type": "datasource",
-        "name": "datasource",
-        "label": "Datasource",
-        "skipUrlSync": false,
-        "query": "prometheus",
-        "multi": false,
-        "allowCustomValue": true,
-        "includeAll": false,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
-      },
-      {
-        "type": "query",
-        "name": "cluster",
-        "label": "Cluster",
-        "skipUrlSync": false,
-        "query": "label_values(envoy_server_live, cluster)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "$datasource"
-        },
-        "multi": true,
-        "allowCustomValue": true,
-        "refresh": 2,
-        "sort": 1,
-        "includeAll": true,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "cluster",
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "label": "Cluster",
+          "hide": "dontHide",
+          "refresh": "onTimeRangeChanged",
+          "skipUrlSync": false,
+          "query": {
+            "kind": "DataQuery",
+            "group": "prometheus",
+            "version": "v0",
+            "datasource": {
+              "name": "$datasource"
+            },
+            "spec": {
+              "qryType": 1,
+              "query": "label_values(envoy_server_live, cluster)",
+              "refId": "PrometheusVariableQueryEditor-VariableQuery"
+            }
+          },
+          "regex": "",
+          "regexApplyTo": "value",
+          "sort": "alphabeticalAsc",
+          "options": [],
+          "multi": true,
+          "includeAll": true,
+          "allowCustomValue": true
+        }
       }
     ]
-  },
-  "annotations": {}
+  }
 }

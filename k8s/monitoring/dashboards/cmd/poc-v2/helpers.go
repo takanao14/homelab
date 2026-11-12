@@ -27,14 +27,27 @@ func lokiQuery() *loki.QueryV2Builder {
 	return loki.NewQueryV2Builder().Datasource(selectedDatasource())
 }
 
-// queries wraps panel queries in targets with the refIds Grafana assigns to
-// Classic targets (A, B, ...), so overrides and comparisons keep their keys.
+// queries assigns default refIds (A, B, ...); queryWithRef preserves explicit
+// references used by field overrides.
 func queries(qs ...cog.Builder[dashboardv2.DataQueryKind]) *dashboardv2.QueryGroupBuilder {
 	group := dashboardv2.NewQueryGroupBuilder()
 	for i, q := range qs {
-		group.Target(dashboardv2.NewTargetBuilder().RefId(refID(i)).Query(q))
+		ref := refID(i)
+		if named, ok := q.(namedPanelQuery); ok {
+			ref = named.ref
+		}
+		group.Target(dashboardv2.NewTargetBuilder().RefId(ref).Query(q))
 	}
 	return group
+}
+
+type namedPanelQuery struct {
+	cog.Builder[dashboardv2.DataQueryKind]
+	ref string
+}
+
+func queryWithRef(ref string, query cog.Builder[dashboardv2.DataQueryKind]) namedPanelQuery {
+	return namedPanelQuery{Builder: query, ref: ref}
 }
 
 func refID(i int) string {

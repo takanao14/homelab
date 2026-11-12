@@ -1,815 +1,1508 @@
 {
-  "uid": "network-overview",
-  "title": "Network Overview",
-  "tags": [
-    "network",
-    "infrastructure"
-  ],
-  "timezone": "browser",
-  "editable": true,
-  "graphTooltip": 1,
-  "time": {
-    "from": "now-24h",
-    "to": "now"
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "network-overview"
   },
-  "fiscalYearStartMonth": 0,
-  "refresh": "60s",
-  "schemaVersion": 42,
-  "panels": [
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Summary",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
-          "legendFormat": "{{instance}}"
-        }
-      ],
-      "title": "Interfaces Up",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 8,
-        "x": 0,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} != 1 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)) or count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}) * 0",
-          "legendFormat": "{{instance}}"
-        }
-      ],
-      "title": "Interfaces Down",
-      "description": "Ports that are enabled but have no link. Ports shut down on purpose are excluded and counted separately, so anything here is a fault.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 8,
-        "x": 8,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "background",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "count by (instance) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 2) or count by (instance) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}) * 0",
-          "legendFormat": "{{instance}}"
-        }
-      ],
-      "title": "Interfaces Shutdown",
-      "description": "Ports administratively disabled (ifAdminStatus=down). Not a fault, but these are excluded from Interfaces Up and Down, so the count is here to make the exclusion visible.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 8,
-        "x": 16,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "sum by (instance) (rate(ifHCInOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
-          "legendFormat": "{{instance}} In"
-        },
-        {
-          "expr": "sum by (instance) (rate(ifHCOutOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
-          "legendFormat": "{{instance}} Out"
-        }
-      ],
-      "title": "Total Traffic",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 24,
-        "x": 0,
-        "y": 5
-      },
-      "repeatDirection": "h",
-      "interval": "2m",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bps",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Traffic",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 9
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (instance) (rate(ifHCInOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
-          "legendFormat": "{{instance}} In",
-          "refId": "In"
-        },
-        {
-          "expr": "sum by (instance) (rate(ifHCOutOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
-          "legendFormat": "{{instance}} Out",
-          "refId": "Out"
-        }
-      ],
-      "title": "Traffic (bps)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 10
-      },
-      "repeatDirection": "h",
-      "interval": "2m",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bps",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "transparent"
-              },
-              {
-                "value": 0,
-                "color": "white"
-              }
-            ]
+  "spec": {
+    "annotations": [],
+    "cursorSync": "Crosshair",
+    "editable": true,
+    "elements": {
+      "current-napt-entries": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "Current NAPT Entries",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "naptCacheEntries{instance=\"bgw1\"}",
+                        "legendFormat": "{{ifDescr}} {{ifAlias}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
           },
-          "custom": {
-            "thresholdsStyle": {
-              "mode": "line"
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
             }
           }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "Out"
-            },
-            "properties": [
-              {
-                "id": "custom.transform",
-                "value": "negative-Y"
+        }
+      },
+      "interface-discards": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Interface Discards",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(ifInDiscards{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)",
+                        "legendFormat": "{{instance}} {{ifDescr}} In"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(ifOutDiscards{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)",
+                        "legendFormat": "{{instance}} {{ifDescr}} Out"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "2m"
               }
-            ]
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "pps",
+                  "min": 0,
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "interface-errors": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Interface Errors",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(ifInErrors{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)",
+                        "legendFormat": "{{instance}} {{ifDescr}} In"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(ifOutErrors{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)",
+                        "legendFormat": "{{instance}} {{ifDescr}} Out"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "2m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "pps",
+                  "min": 0,
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "interfaces-down": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Interfaces Down",
+          "description": "Ports that are enabled but have no link. Ports shut down on purpose are excluded and counted separately, so anything here is a fault.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} != 1 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)) or count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}) * 0",
+                        "legendFormat": "{{instance}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "background",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "interfaces-shutdown": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Interfaces Shutdown",
+          "description": "Ports administratively disabled (ifAdminStatus=down). Not a fault, but these are excluded from Interfaces Up and Down, so the count is here to make the exclusion visible.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "count by (instance) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 2) or count by (instance) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}) * 0",
+                        "legendFormat": "{{instance}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "interfaces-up": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Interfaces Up",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "count by (instance) (ifOperStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
+                        "legendFormat": "{{instance}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "ipv4-forwarding-diagnostics": {
+        "kind": "Panel",
+        "spec": {
+          "id": 13,
+          "title": "IPv4 Forwarding Diagnostics",
+          "description": "Device-wide MIB-II counters. Compare failures with sub-interface errors; these counters do not identify the affected interface, ACL, or destination.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(ipInDiscards{instance=\"bgw1\"}[$__rate_interval])",
+                        "legendFormat": "IPv4 input discards"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(ipOutDiscards{instance=\"bgw1\"}[$__rate_interval])",
+                        "legendFormat": "IPv4 output discards"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(ipOutNoRoutes{instance=\"bgw1\"}[$__rate_interval])",
+                        "legendFormat": "IPv4 no route"
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(ipFragFails{instance=\"bgw1\"}[$__rate_interval])",
+                        "legendFormat": "IPv4 fragmentation failures"
+                      }
+                    },
+                    "refId": "D",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(ipFragCreates{instance=\"bgw1\"}[$__rate_interval])",
+                        "legendFormat": "IPv4 fragments created"
+                      }
+                    },
+                    "refId": "E",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(ipReasmFails{instance=\"bgw1\"}[$__rate_interval])",
+                        "legendFormat": "IPv4 reassembly failures"
+                      }
+                    },
+                    "refId": "F",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(icmpOutDestUnreachs{instance=\"bgw1\"}[$__rate_interval])",
+                        "legendFormat": "ICMP destination unreachable"
+                      }
+                    },
+                    "refId": "G",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(udpInErrors{instance=\"bgw1\"}[$__rate_interval])",
+                        "legendFormat": "UDP input errors"
+                      }
+                    },
+                    "refId": "H",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(udpNoPorts{instance=\"bgw1\"}[$__rate_interval])",
+                        "legendFormat": "UDP no port"
+                      }
+                    },
+                    "refId": "I",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "2m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "pps",
+                  "min": 0,
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "napt-cache-activity": {
+        "kind": "Panel",
+        "spec": {
+          "id": 12,
+          "title": "NAPT Cache Activity",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(naptCacheCreates{instance=\"bgw1\"}[$__rate_interval])",
+                        "legendFormat": "{{ifDescr}} creates"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "rate(naptCacheOverflows{instance=\"bgw1\"}[$__rate_interval])",
+                        "legendFormat": "{{ifDescr}} overflows"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "2m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "ops",
+                  "min": 0,
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "napt-utilization": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "NAPT Utilization",
+          "description": "Current entries divided by the IX2106 default 65,535-entry capacity. Update the chart value if the router config overrides it.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "naptCacheEntries{instance=\"bgw1\"} / 65535",
+                        "legendFormat": "{{ifDescr}} {{ifAlias}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percentunit",
+                  "min": 0,
+                  "max": 1,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "peak-napt-entries": {
+        "kind": "Panel",
+        "spec": {
+          "id": 11,
+          "title": "Peak NAPT Entries",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "naptCachePeak{instance=\"bgw1\"}",
+                        "legendFormat": "{{ifDescr}} {{ifAlias}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "sub-interface-errors-per-hour": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Sub-interface Errors (per hour)",
+          "description": "Errors on logical L3 sub-interfaces, which every other panel on this dashboard excludes. Physical ports have held at zero for seven days; these have not. Not alerted -- transmit errors here may be routine for the device, so the count is presented for judgement rather than paging.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "increase(ifInErrors{ifDescr=~\".+\\\\.[0-9]+\", ifDescr!~\"Loopback.*|Null.*\", instance=~\"$instance\"}[1h])",
+                        "legendFormat": "{{instance}} {{ifDescr}} {{ifAlias}} In"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "increase(ifOutErrors{ifDescr=~\".+\\\\.[0-9]+\", ifDescr!~\"Loopback.*|Null.*\", instance=~\"$instance\"}[1h])",
+                        "legendFormat": "{{instance}} {{ifDescr}} {{ifAlias}} Out"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "min": 0,
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "total-traffic": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Total Traffic",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (instance) (rate(ifHCInOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
+                        "legendFormat": "{{instance}} In"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (instance) (rate(ifHCOutOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
+                        "legendFormat": "{{instance}} Out"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "2m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "bps",
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "traffic-bps": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Traffic (bps)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (instance) (rate(ifHCInOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
+                        "legendFormat": "{{instance}} In",
+                        "refId": "In"
+                      }
+                    },
+                    "refId": "In",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (instance) (rate(ifHCOutOctets{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) * 8 and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1))",
+                        "legendFormat": "{{instance}} Out",
+                        "refId": "Out"
+                      }
+                    },
+                    "refId": "Out",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {
+                "interval": "2m"
+              }
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "bps",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "transparent"
+                      },
+                      {
+                        "value": 0,
+                        "color": "white"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "thresholdsStyle": {
+                      "mode": "line"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byFrameRefID",
+                      "options": "Out"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.transform",
+                        "value": "negative-Y"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "RowsLayout",
+      "spec": {
+        "rows": [
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Summary",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 4,
+                  "columnWidthMode": "narrow",
+                  "rowHeightMode": "short",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "interfaces-up"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "interfaces-down"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "interfaces-shutdown"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "total-traffic"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Traffic",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "traffic-bps"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Errors \u0026 Discards",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "interface-errors"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "interface-discards"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Sub-interface Errors (per hour)",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "sub-interface-errors-per-hour"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "IX2106 NAPT",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 3,
+                  "columnWidthMode": "narrow",
+                  "rowHeightMode": "short",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "current-napt-entries"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "napt-utilization"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "peak-napt-entries"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "NAPT Cache Activity",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "napt-cache-activity"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "ipv4-forwarding-diagnostics"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           }
         ]
       }
     },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Errors \u0026 Discards",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 18
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "rate(ifInErrors{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)",
-          "legendFormat": "{{instance}} {{ifDescr}} In"
-        },
-        {
-          "expr": "rate(ifOutErrors{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)",
-          "legendFormat": "{{instance}} {{ifDescr}} Out"
-        }
+    "links": [],
+    "preload": false,
+    "tags": [
+      "network",
+      "infrastructure"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-24h",
+      "to": "now",
+      "autoRefresh": "60s",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
       ],
-      "title": "Interface Errors",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 19
-      },
-      "repeatDirection": "h",
-      "interval": "2m",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "pps",
-          "min": 0,
-          "custom": {}
-        },
-        "overrides": []
-      }
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
     },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "rate(ifInDiscards{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)",
-          "legendFormat": "{{instance}} {{ifDescr}} In"
-        },
-        {
-          "expr": "rate(ifOutDiscards{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"}[$__rate_interval]) and on(instance, ifIndex) (ifAdminStatus{ifDescr=~\"GigaEthernet[0-9]+|GigabitEthernet[0-9]+\", instance=~\"$instance\"} == 1)",
-          "legendFormat": "{{instance}} {{ifDescr}} Out"
-        }
-      ],
-      "title": "Interface Discards",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 19
-      },
-      "repeatDirection": "h",
-      "interval": "2m",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "pps",
-          "min": 0,
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "increase(ifInErrors{ifDescr=~\".+\\\\.[0-9]+\", ifDescr!~\"Loopback.*|Null.*\", instance=~\"$instance\"}[1h])",
-          "legendFormat": "{{instance}} {{ifDescr}} {{ifAlias}} In"
-        },
-        {
-          "expr": "increase(ifOutErrors{ifDescr=~\".+\\\\.[0-9]+\", ifDescr!~\"Loopback.*|Null.*\", instance=~\"$instance\"}[1h])",
-          "legendFormat": "{{instance}} {{ifDescr}} {{ifAlias}} Out"
-        }
-      ],
-      "title": "Sub-interface Errors (per hour)",
-      "description": "Errors on logical L3 sub-interfaces, which every other panel on this dashboard excludes. Physical ports have held at zero for seven days; these have not. Not alerted -- transmit errors here may be routine for the device, so the count is presented for judgement rather than paging.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 27
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "IX2106 NAPT",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 35
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "naptCacheEntries{instance=\"bgw1\"}",
-          "legendFormat": "{{ifDescr}} {{ifAlias}}"
-        }
-      ],
-      "title": "Current NAPT Entries",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 8,
-        "x": 0,
-        "y": 36
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "naptCacheEntries{instance=\"bgw1\"} / 65535",
-          "legendFormat": "{{ifDescr}} {{ifAlias}}"
-        }
-      ],
-      "title": "NAPT Utilization",
-      "description": "Current entries divided by the IX2106 default 65,535-entry capacity. Update the chart value if the router config overrides it.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 8,
-        "x": 8,
-        "y": 36
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
-          "min": 0,
-          "max": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "naptCachePeak{instance=\"bgw1\"}",
-          "legendFormat": "{{ifDescr}} {{ifAlias}}"
-        }
-      ],
-      "title": "Peak NAPT Entries",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 8,
-        "x": 16,
-        "y": 36
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "rate(naptCacheCreates{instance=\"bgw1\"}[$__rate_interval])",
-          "legendFormat": "{{ifDescr}} creates"
-        },
-        {
-          "expr": "rate(naptCacheOverflows{instance=\"bgw1\"}[$__rate_interval])",
-          "legendFormat": "{{ifDescr}} overflows"
-        }
-      ],
-      "title": "NAPT Cache Activity",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 40
-      },
-      "repeatDirection": "h",
-      "interval": "2m",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "min": 0,
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "rate(ipInDiscards{instance=\"bgw1\"}[$__rate_interval])",
-          "legendFormat": "IPv4 input discards"
-        },
-        {
-          "expr": "rate(ipOutDiscards{instance=\"bgw1\"}[$__rate_interval])",
-          "legendFormat": "IPv4 output discards"
-        },
-        {
-          "expr": "rate(ipOutNoRoutes{instance=\"bgw1\"}[$__rate_interval])",
-          "legendFormat": "IPv4 no route"
-        },
-        {
-          "expr": "rate(ipFragFails{instance=\"bgw1\"}[$__rate_interval])",
-          "legendFormat": "IPv4 fragmentation failures"
-        },
-        {
-          "expr": "rate(ipFragCreates{instance=\"bgw1\"}[$__rate_interval])",
-          "legendFormat": "IPv4 fragments created"
-        },
-        {
-          "expr": "rate(ipReasmFails{instance=\"bgw1\"}[$__rate_interval])",
-          "legendFormat": "IPv4 reassembly failures"
-        },
-        {
-          "expr": "rate(icmpOutDestUnreachs{instance=\"bgw1\"}[$__rate_interval])",
-          "legendFormat": "ICMP destination unreachable"
-        },
-        {
-          "expr": "rate(udpInErrors{instance=\"bgw1\"}[$__rate_interval])",
-          "legendFormat": "UDP input errors"
-        },
-        {
-          "expr": "rate(udpNoPorts{instance=\"bgw1\"}[$__rate_interval])",
-          "legendFormat": "UDP no port"
-        }
-      ],
-      "title": "IPv4 Forwarding Diagnostics",
-      "description": "Device-wide MIB-II counters. Compare failures with sub-interface errors; these counters do not identify the affected interface, ACL, or destination.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 40
-      },
-      "repeatDirection": "h",
-      "interval": "2m",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "pps",
-          "min": 0,
-          "custom": {}
-        },
-        "overrides": []
-      }
-    }
-  ],
-  "templating": {
-    "list": [
+    "title": "Network Overview",
+    "variables": [
       {
-        "type": "datasource",
-        "name": "datasource",
-        "label": "Datasource",
-        "skipUrlSync": false,
-        "query": "prometheus",
-        "multi": false,
-        "allowCustomValue": true,
-        "includeAll": false,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
+        "kind": "DatasourceVariable",
+        "spec": {
+          "name": "datasource",
+          "pluginId": "prometheus",
+          "refresh": "never",
+          "regex": "",
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "options": [],
+          "multi": false,
+          "includeAll": false,
+          "label": "Datasource",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": true
+        }
       },
       {
-        "type": "custom",
-        "name": "instance",
-        "label": "Device",
-        "skipUrlSync": false,
-        "query": "bgw1,c1200",
-        "multi": true,
-        "allowCustomValue": true,
-        "includeAll": true,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "instance",
+          "query": "bgw1,c1200",
+          "current": {
+            "text": null,
+            "value": null
+          },
+          "options": [],
+          "multi": true,
+          "includeAll": true,
+          "label": "Device",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": true
+        }
       }
     ]
-  },
-  "annotations": {}
+  }
 }
