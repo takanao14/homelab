@@ -18,7 +18,6 @@ func main() {
 		"k8s-node-overview":     buildK8sNodeOverview,
 		"disk-health":           buildDiskHealth,
 		"dns-overview":          buildDnsOverview,
-		"network-overview":      buildNetworkOverview,
 		"kubernetes-overview":   buildKubernetesOverview,
 		"k8s-control-plane":     buildK8sControlPlaneOverview,
 		"monitoring-overview":   buildMonitoringOverview,
