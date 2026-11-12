@@ -34,7 +34,7 @@ jobs:
           go-version-file: k8s/monitoring/dashboards/go.mod
           cache-dependency-path: k8s/monitoring/dashboards/go.sum
 
-      - name: Test dashboard generators
+      - name: Test dashboard generator
         working-directory: k8s/monitoring/dashboards
         run: go test ./...
 
