@@ -22,6 +22,7 @@ type translation struct {
 }
 
 var translations = []translation{
+	{name: "gpu-overview", uid: "gpu-overview", build: buildGpuOverview},
 	{name: "uptime", uid: "uptime", build: buildUptime, cutover: true},
 }
 
