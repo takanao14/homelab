@@ -57,6 +57,12 @@
       path "secret/metadata/k8s/homepage/*" {
         capabilities = ["read"]
       }
+      path "secret/data/k8s/monitoring/grafana" {
+        capabilities = ["read"]
+      }
+      path "secret/data/k8s-sandbox/grafana" {
+        capabilities = ["read"]
+      }
   environment:
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
