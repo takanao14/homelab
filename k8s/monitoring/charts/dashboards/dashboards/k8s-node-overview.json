@@ -1,1203 +1,2004 @@
 {
-  "uid": "k8s-node-overview",
-  "title": "K8s Node Overview",
-  "tags": [
-    "kubernetes",
-    "nodes",
-    "infrastructure"
-  ],
-  "timezone": "browser",
-  "editable": true,
-  "graphTooltip": 1,
-  "time": {
-    "from": "now-1d",
-    "to": "now"
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "k8s-node-overview"
   },
-  "fiscalYearStartMonth": 0,
-  "refresh": "30s",
-  "schemaVersion": 42,
-  "panels": [
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Summary",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})) * 100)",
-          "legendFormat": "{{nodename}}"
-        }
-      ],
-      "title": "CPU Usage",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 0,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "maxVizHeight": 300,
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "decimals": 1,
-          "min": 0,
-          "max": 100
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "max by (nodename) ((1 - node_memory_MemAvailable_bytes{cluster=~\"$cluster\"} / node_memory_MemTotal_bytes{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}) * 100)",
-          "legendFormat": "{{nodename}}"
-        }
-      ],
-      "title": "Memory Usage",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 12,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "maxVizHeight": 300,
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "decimals": 1,
-          "min": 0,
-          "max": 100
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "sum by (nodename) (kubelet_running_pods{cluster=~\"$cluster\"} * on(node) group_left(nodename) (label_replace(max by (nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}), \"node\", \"$1\", \"nodename\", \"(.*)\")))",
-          "legendFormat": "{{nodename}}"
-        }
-      ],
-      "title": "Pods Running",
-      "description": "Worker nodes only -- k0s controllers run no kubelet unless started with --enable-worker, so a control-plane node is absent here, not zero.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 12,
-        "x": 0,
-        "y": 7
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "center",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "count by (nodename) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}}"
-        }
-      ],
-      "title": "CPU Cores",
-      "description": "Logical cores per node. Inventory, not a measurement -- it changes only when a VM is resized.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 12,
-        "x": 12,
-        "y": 7
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "center",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "max by (nodename) (node_memory_MemTotal_bytes{cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}}"
-        }
-      ],
-      "title": "Memory Total",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 12,
-        "x": 0,
-        "y": 11
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "area",
-        "colorMode": "value",
-        "justifyMode": "center",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "max by (nodename) ((time() - node_boot_time_seconds{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}}"
-        }
-      ],
-      "title": "Uptime",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 12,
-        "x": 12,
-        "y": 11
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "background",
-        "justifyMode": "center",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "red"
-              },
-              {
-                "value": 3600,
-                "color": "yellow"
-              },
-              {
-                "value": 86400,
-                "color": "green"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "CPU",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 15
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})) * 100)",
-          "legendFormat": "{{nodename}}"
-        }
-      ],
-      "title": "CPU Usage (%)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 16
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "max by (nodename) (node_load1{cluster=~\"$cluster\"} / on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} 1m"
-        },
-        {
-          "expr": "max by (nodename) (node_load5{cluster=~\"$cluster\"} / on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} 5m"
-        },
-        {
-          "expr": "max by (nodename) (node_load15{cluster=~\"$cluster\"} / on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} 15m"
-        }
-      ],
-      "title": "Load Average per CPU",
-      "description": "Run-queue length divided by the node's CPU count -- the fraction of CPUs with work waiting, so 100% is saturated regardless of node size (red line). Raw load averages are not comparable across this cluster: k0s-cp1 has 2 CPUs against 10 on the workers, so the same load1 of 0.08 is 13.5%/CPU on cp1 vs 0.9% on worker1.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 24
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "transparent"
-              },
-              {
-                "value": 1,
-                "color": "red"
-              }
-            ]
+  "spec": {
+    "annotations": [],
+    "cursorSync": "Crosshair",
+    "editable": true,
+    "elements": {
+      "cpu-cores": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "CPU Cores",
+          "description": "Logical cores per node. Inventory, not a measurement -- it changes only when a VM is resized.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "count by (nodename) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
           },
-          "custom": {
-            "thresholdsStyle": {
-              "mode": "line"
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "center",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
             }
           }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": ".* 5m$"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "dash": [
-                    8,
-                    8
-                  ],
-                  "fill": "dash"
+        }
+      },
+      "cpu-pressure-some": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "CPU Pressure (some)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename) (rate(node_pressure_cpu_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
                 }
-              }
-            ]
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
           },
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": ".* 15m$"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "dash": [
-                    2,
-                    4
-                  ],
-                  "fill": "dot"
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
                 }
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Memory",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 32
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "max by (nodename) ((node_memory_MemTotal_bytes{cluster=~\"$cluster\"} - node_memory_MemAvailable_bytes{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} Used"
-        },
-        {
-          "expr": "max by (nodename) (node_memory_MemAvailable_bytes{cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} Available"
-        }
-      ],
-      "title": "Memory Usage",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 33
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "min": 0,
-          "custom": {}
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": ".* Available$"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "dash": [
-                    2,
-                    4
-                  ],
-                  "fill": "dot"
-                }
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Pressure (PSI)",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 41
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "max by (nodename) (rate(node_pressure_cpu_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}}"
-        }
-      ],
-      "title": "CPU Pressure (some)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 42
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "max by (nodename) (rate(node_pressure_memory_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} some",
-          "refId": "Some"
-        },
-        {
-          "expr": "max by (nodename) (rate(node_pressure_memory_stalled_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} full",
-          "refId": "Full"
-        }
-      ],
-      "title": "Memory Pressure",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 50
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "custom": {}
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": ".* full$"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "dash": [
-                    8,
-                    8
-                  ],
-                  "fill": "dash"
-                }
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "max by (nodename) (rate(node_pressure_io_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} some",
-          "refId": "Some"
-        },
-        {
-          "expr": "max by (nodename) (rate(node_pressure_io_stalled_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} full",
-          "refId": "Full"
-        }
-      ],
-      "title": "IO Pressure",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 50
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "custom": {}
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": ".* full$"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "dash": [
-                    8,
-                    8
-                  ],
-                  "fill": "dash"
-                }
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Disk",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 58
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "sort_desc((1 - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}) * 100)",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{mountpoint}}",
-          "range": false
-        }
-      ],
-      "title": "Filesystem Usage (%)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 59
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "decimals": 1,
-          "min": 0,
-          "max": 100
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "max by (nodename, mountpoint) ((node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} {{mountpoint}} Used"
-        },
-        {
-          "expr": "max by (nodename, mountpoint) (node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} {{mountpoint}} Total"
-        }
-      ],
-      "title": "Disk Space Used",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 59
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "min": 0,
-          "custom": {}
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": ".* Total$"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "dash": [
-                    2,
-                    4
-                  ],
-                  "fill": "dot"
-                }
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "sort(clamp_max((node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / deriv(node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}[7d]) / -86400) \u003e 0, 3650) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{mountpoint}}",
-          "range": false
-        }
-      ],
-      "title": "Time Until Filesystem Full",
-      "description": "Days until free space reaches zero, projected from the last 7 days. Capped at 3650 d; filesystems that are not filling are omitted.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 67
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "d",
-          "decimals": 0,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "red"
               },
-              {
-                "value": 30,
-                "color": "yellow"
-              },
-              {
-                "value": 90,
-                "color": "green"
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "min": 0,
+                  "custom": {}
+                },
+                "overrides": []
               }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "max by (nodename, device) (rate(node_disk_read_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} {{device}} Read",
-          "refId": "Read"
-        },
-        {
-          "expr": "max by (nodename, device) (rate(node_disk_written_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} {{device}} Write",
-          "refId": "Write"
-        }
-      ],
-      "title": "Disk I/O",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 75
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "transparent"
-              },
-              {
-                "value": 0,
-                "color": "white"
-              }
-            ]
-          },
-          "custom": {
-            "thresholdsStyle": {
-              "mode": "line"
             }
           }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "Write"
-            },
-            "properties": [
-              {
-                "id": "custom.transform",
-                "value": "negative-Y"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Network",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 83
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "sum by (nodename) (rate(node_network_receive_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*|lxc.*|cilium_.*\"} [$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} Rx",
-          "refId": "Rx"
-        },
-        {
-          "expr": "sum by (nodename) (rate(node_network_transmit_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*|lxc.*|cilium_.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
-          "legendFormat": "{{nodename}} Tx",
-          "refId": "Tx"
-        }
-      ],
-      "title": "Network I/O",
-      "description": "Traffic across each node's physical interfaces. The CNI's per-pod veths and Cilium's own devices are excluded, so pod traffic is counted once, where it leaves the node, rather than again on every virtual hop.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 12,
-        "w": 24,
-        "x": 0,
-        "y": 84
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
         }
       },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "transparent"
-              },
-              {
-                "value": 0,
-                "color": "white"
-              }
-            ]
+      "cpu-usage": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "CPU Usage (%)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})) * 100)",
+                        "legendFormat": "{{nodename}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
           },
-          "custom": {
-            "thresholdsStyle": {
-              "mode": "line"
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100,
+                  "custom": {}
+                },
+                "overrides": []
+              }
             }
           }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "Tx"
-            },
-            "properties": [
-              {
-                "id": "custom.transform",
-                "value": "negative-Y"
+        }
+      },
+      "cpu-usage-current": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "CPU Usage (Current)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"})) * 100)",
+                        "legendFormat": "{{nodename}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
+                },
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "maxVizHeight": 300,
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "decimals": 1,
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
               }
-            ]
+            }
+          }
+        }
+      },
+      "disk-i-o": {
+        "kind": "Panel",
+        "spec": {
+          "id": 16,
+          "title": "Disk I/O",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename, device) (rate(node_disk_read_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} {{device}} Read",
+                        "refId": "Read"
+                      }
+                    },
+                    "refId": "Read",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename, device) (rate(node_disk_written_bytes_total{cluster=~\"$cluster\", device!~\"dm-.*|loop.*|sr.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} {{device}} Write",
+                        "refId": "Write"
+                      }
+                    },
+                    "refId": "Write",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "Bps",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "transparent"
+                      },
+                      {
+                        "value": 0,
+                        "color": "white"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "thresholdsStyle": {
+                      "mode": "line"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byFrameRefID",
+                      "options": "Write"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.transform",
+                        "value": "negative-Y"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "disk-space-used": {
+        "kind": "Panel",
+        "spec": {
+          "id": 14,
+          "title": "Disk Space Used",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename, mountpoint) ((node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} {{mountpoint}} Used"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename, mountpoint) (node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} {{mountpoint}} Total"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "bytes",
+                  "min": 0,
+                  "custom": {}
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": ".* Total$"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.lineStyle",
+                        "value": {
+                          "dash": [
+                            2,
+                            4
+                          ],
+                          "fill": "dot"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "filesystem-usage": {
+        "kind": "Panel",
+        "spec": {
+          "id": 13,
+          "title": "Filesystem Usage (%)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sort_desc((1 - node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / node_filesystem_size_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}) * 100)",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{mountpoint}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
+                },
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "maxVizHeight": 300,
+                "orientation": "horizontal"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "decimals": 1,
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "io-pressure": {
+        "kind": "Panel",
+        "spec": {
+          "id": 12,
+          "title": "IO Pressure",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename) (rate(node_pressure_io_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} some",
+                        "refId": "Some"
+                      }
+                    },
+                    "refId": "Some",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename) (rate(node_pressure_io_stalled_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} full",
+                        "refId": "Full"
+                      }
+                    },
+                    "refId": "Full",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "min": 0,
+                  "custom": {}
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": ".* full$"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.lineStyle",
+                        "value": {
+                          "dash": [
+                            8,
+                            8
+                          ],
+                          "fill": "dash"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "load-average-per-cpu": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Load Average per CPU",
+          "description": "Run-queue length divided by the node's CPU count -- the fraction of CPUs with work waiting, so 100% is saturated regardless of node size (red line). Raw load averages are not comparable across this cluster: k0s-cp1 has 2 CPUs against 10 on the workers, so the same load1 of 0.08 is 13.5%/CPU on cp1 vs 0.9% on worker1.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename) (node_load1{cluster=~\"$cluster\"} / on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} 1m"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename) (node_load5{cluster=~\"$cluster\"} / on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} 5m"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename) (node_load15{cluster=~\"$cluster\"} / on(instance) group_left() count by (instance) (node_cpu_seconds_total{mode=\"idle\", cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} 15m"
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percentunit",
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "transparent"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "thresholdsStyle": {
+                      "mode": "line"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": ".* 5m$"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.lineStyle",
+                        "value": {
+                          "dash": [
+                            8,
+                            8
+                          ],
+                          "fill": "dash"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": ".* 15m$"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.lineStyle",
+                        "value": {
+                          "dash": [
+                            2,
+                            4
+                          ],
+                          "fill": "dot"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "memory-pressure": {
+        "kind": "Panel",
+        "spec": {
+          "id": 11,
+          "title": "Memory Pressure",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename) (rate(node_pressure_memory_waiting_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} some",
+                        "refId": "Some"
+                      }
+                    },
+                    "refId": "Some",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename) (rate(node_pressure_memory_stalled_seconds_total{cluster=~\"$cluster\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} full",
+                        "refId": "Full"
+                      }
+                    },
+                    "refId": "Full",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "min": 0,
+                  "custom": {}
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": ".* full$"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.lineStyle",
+                        "value": {
+                          "dash": [
+                            8,
+                            8
+                          ],
+                          "fill": "dash"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "memory-total": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Memory Total",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename) (node_memory_MemTotal_bytes{cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "center",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "bytes",
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "memory-usage": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "Memory Usage",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename) ((node_memory_MemTotal_bytes{cluster=~\"$cluster\"} - node_memory_MemAvailable_bytes{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} Used"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename) (node_memory_MemAvailable_bytes{cluster=~\"$cluster\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} Available"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "bytes",
+                  "min": 0,
+                  "custom": {}
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "options": ".* Available$"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.lineStyle",
+                        "value": {
+                          "dash": [
+                            2,
+                            4
+                          ],
+                          "fill": "dot"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "memory-usage-current": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Memory Usage (Current)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename) ((1 - node_memory_MemAvailable_bytes{cluster=~\"$cluster\"} / node_memory_MemTotal_bytes{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}) * 100)",
+                        "legendFormat": "{{nodename}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
+                },
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "maxVizHeight": 300,
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "decimals": 1,
+                  "min": 0,
+                  "max": 100
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "network-i-o": {
+        "kind": "Panel",
+        "spec": {
+          "id": 17,
+          "title": "Network I/O",
+          "description": "Traffic across each node's physical interfaces. The CNI's per-pod veths and Cilium's own devices are excluded, so pod traffic is counted once, where it leaves the node, rather than again on every virtual hop.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (nodename) (rate(node_network_receive_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*|lxc.*|cilium_.*\"} [$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} Rx",
+                        "refId": "Rx"
+                      }
+                    },
+                    "refId": "Rx",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (nodename) (rate(node_network_transmit_bytes_total{cluster=~\"$cluster\", device!~\"lo|veth.*|docker.*|br-.*|lxc.*|cilium_.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}} Tx",
+                        "refId": "Tx"
+                      }
+                    },
+                    "refId": "Tx",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "Bps",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "transparent"
+                      },
+                      {
+                        "value": 0,
+                        "color": "white"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "thresholdsStyle": {
+                      "mode": "line"
+                    }
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byFrameRefID",
+                      "options": "Tx"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.transform",
+                        "value": "negative-Y"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "pods-running": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Pods Running",
+          "description": "Worker nodes only -- k0s controllers run no kubelet unless started with --enable-worker, so a control-plane node is absent here, not zero.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum by (nodename) (kubelet_running_pods{cluster=~\"$cluster\"} * on(node) group_left(nodename) (label_replace(max by (nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}), \"node\", \"$1\", \"nodename\", \"(.*)\")))",
+                        "legendFormat": "{{nodename}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "center",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "short",
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "time-until-filesystem-full": {
+        "kind": "Panel",
+        "spec": {
+          "id": 15,
+          "title": "Time Until Filesystem Full",
+          "description": "Days until free space reaches zero, projected from the last 7 days. Capped at 3650 d; filesystems that are not filling are omitted.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sort(clamp_max((node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"} / deriv(node_filesystem_avail_bytes{cluster=~\"$cluster\", fstype=~\"ext[234]|xfs|btrfs|zfs|vfat\",mountpoint!~\"/var/lib/docker/.*|/boot/efi|/boot/firmware\"}[7d]) / -86400) \u003e 0, 3650) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{mountpoint}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
+                },
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "maxVizHeight": 300,
+                "orientation": "horizontal"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "d",
+                  "decimals": 0,
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "red"
+                      },
+                      {
+                        "value": 30,
+                        "color": "yellow"
+                      },
+                      {
+                        "value": 90,
+                        "color": "green"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "uptime": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Uptime",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename) ((time() - node_boot_time_seconds{cluster=~\"$cluster\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info{cluster=~\"$cluster\", nodename=~\"$node\"}))",
+                        "legendFormat": "{{nodename}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "none",
+                "colorMode": "background",
+                "justifyMode": "center",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "s",
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "red"
+                      },
+                      {
+                        "value": 3600,
+                        "color": "yellow"
+                      },
+                      {
+                        "value": 86400,
+                        "color": "green"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "RowsLayout",
+      "spec": {
+        "rows": [
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Summary",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "cpu-usage-current"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "memory-usage-current"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Node Capacity",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "pods-running"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "cpu-cores"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "memory-total"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "uptime"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "CPU Usage (%)",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "cpu-usage"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Load Average per CPU",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "load-average-per-cpu"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Memory",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "memory-usage"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "CPU Pressure (some)",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "cpu-pressure-some"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Memory Pressure",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "memory-pressure"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "io-pressure"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Disk",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "filesystem-usage"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "disk-space-used"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Time Until Filesystem Full",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "time-until-filesystem-full"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Disk I/O",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "disk-i-o"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Network",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "network-i-o"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           }
         ]
       }
-    }
-  ],
-  "templating": {
-    "list": [
+    },
+    "links": [],
+    "preload": false,
+    "tags": [
+      "kubernetes",
+      "nodes",
+      "infrastructure"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-1d",
+      "to": "now",
+      "autoRefresh": "30s",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "K8s Node Overview",
+    "variables": [
       {
-        "type": "datasource",
-        "name": "datasource",
-        "label": "Datasource",
-        "skipUrlSync": false,
-        "query": "prometheus",
-        "multi": false,
-        "allowCustomValue": true,
-        "includeAll": false,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
+        "kind": "DatasourceVariable",
+        "spec": {
+          "name": "datasource",
+          "pluginId": "prometheus",
+          "refresh": "never",
+          "regex": "",
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "options": [],
+          "multi": false,
+          "includeAll": false,
+          "label": "Datasource",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": true
+        }
       },
       {
-        "type": "query",
-        "name": "cluster",
-        "label": "Cluster",
-        "skipUrlSync": false,
-        "query": "label_values(node_uname_info, cluster)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "$datasource"
-        },
-        "multi": true,
-        "allowCustomValue": true,
-        "refresh": 2,
-        "sort": 1,
-        "includeAll": true,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "cluster",
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "label": "Cluster",
+          "hide": "dontHide",
+          "refresh": "onTimeRangeChanged",
+          "skipUrlSync": false,
+          "query": {
+            "kind": "DataQuery",
+            "group": "prometheus",
+            "version": "v0",
+            "datasource": {
+              "name": "$datasource"
+            },
+            "spec": {
+              "qryType": 1,
+              "query": "label_values(node_uname_info, cluster)",
+              "refId": "PrometheusVariableQueryEditor-VariableQuery"
+            }
+          },
+          "regex": "",
+          "regexApplyTo": "value",
+          "sort": "alphabeticalAsc",
+          "options": [],
+          "multi": true,
+          "includeAll": true,
+          "allowCustomValue": true
+        }
       },
       {
-        "type": "query",
-        "name": "node",
-        "label": "Node",
-        "skipUrlSync": false,
-        "query": "label_values(node_uname_info{cluster=~\"$cluster\"}, nodename)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "$datasource"
-        },
-        "multi": true,
-        "allowCustomValue": true,
-        "refresh": 2,
-        "sort": 1,
-        "includeAll": true,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "node",
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "label": "Node",
+          "hide": "dontHide",
+          "refresh": "onTimeRangeChanged",
+          "skipUrlSync": false,
+          "query": {
+            "kind": "DataQuery",
+            "group": "prometheus",
+            "version": "v0",
+            "datasource": {
+              "name": "$datasource"
+            },
+            "spec": {
+              "qryType": 1,
+              "query": "label_values(node_uname_info{cluster=~\"$cluster\"}, nodename)",
+              "refId": "PrometheusVariableQueryEditor-VariableQuery"
+            }
+          },
+          "regex": "",
+          "regexApplyTo": "value",
+          "sort": "alphabeticalAsc",
+          "options": [],
+          "multi": true,
+          "includeAll": true,
+          "allowCustomValue": true
+        }
       }
     ]
-  },
-  "annotations": {}
+  }
 }

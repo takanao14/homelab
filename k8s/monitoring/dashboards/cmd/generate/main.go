@@ -15,7 +15,6 @@ func main() {
 	// Dashboard names become output filenames.
 	dashboards := map[string]func() (*dashboard.Dashboard, error){
 		"node-overview":       buildNodeOverview,
-		"k8s-node-overview":   buildK8sNodeOverview,
 		"disk-health":         buildDiskHealth,
 		"dns-overview":        buildDnsOverview,
 		"kubernetes-overview": buildKubernetesOverview,
