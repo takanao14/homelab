@@ -26,7 +26,6 @@ func main() {
 		"syslog":              buildSyslog,
 		"proxmox-logs":        buildProxmoxLogs,
 		"service-logs":        buildServiceLogs,
-		"cilium-overview":     buildCiliumOverview,
 		"argocd-overview":     buildArgocdOverview,
 	}
 
