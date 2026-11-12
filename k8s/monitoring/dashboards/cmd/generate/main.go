@@ -16,7 +16,6 @@ func main() {
 	dashboards := map[string]func() (*dashboard.Dashboard, error){
 		"dns-overview": buildDnsOverview,
 		"dns-logs":     buildDnsLogs,
-		"dhcp-leases":  buildDhcpLeases,
 		"syslog":       buildSyslog,
 		"proxmox-logs": buildProxmoxLogs,
 		"service-logs": buildServiceLogs,
