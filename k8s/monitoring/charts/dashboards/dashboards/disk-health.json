@@ -1,1731 +1,2919 @@
 {
-  "uid": "disk-health",
-  "title": "Disk Health (S.M.A.R.T.)",
-  "tags": [
-    "disk",
-    "smart",
-    "infrastructure"
-  ],
-  "timezone": "browser",
-  "editable": true,
-  "graphTooltip": 1,
-  "time": {
-    "from": "now-30d",
-    "to": "now"
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "disk-health"
   },
-  "fiscalYearStartMonth": 0,
-  "refresh": "5m",
-  "schemaVersion": 42,
-  "panels": [
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Summary",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "(sum(smartmon_device_smart_healthy{type=\"sat\",instance=~\"$instance\"} == bool 0) or vector(0)) + (sum(nvme_critical_warning{instance=~\"$instance\"} \u003e bool 0) or vector(0)) + (sum(smartctl_device_smart_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"} == bool 0) or vector(0))",
-          "instant": true,
-          "legendFormat": "Unhealthy",
-          "range": false
-        }
-      ],
-      "title": "Unhealthy Disks",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 0,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "background",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "(count(smartmon_device_smart_healthy{type=\"sat\",instance=~\"$instance\"}) or vector(0)) + (count(nvme_critical_warning{instance=~\"$instance\"}) or vector(0)) + (count(smartctl_device_smart_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"}) or vector(0))",
-          "instant": true,
-          "legendFormat": "Disks",
-          "range": false
-        }
-      ],
-      "title": "Disks Monitored",
-      "description": "Number of disks whose health is evaluated, i.e. exactly the tiles in the SMART Health panel below.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 6,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "background",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "sum((smartmon_wear_leveling_count_value{instance=~\"$instance\"} or smartmon_media_wearout_indicator_value{instance=~\"$instance\"} or smartmon_ssd_life_left_value{instance=~\"$instance\"} or smartmon_percent_lifetime_remain_value{instance=~\"$instance\"}) \u003c bool 10) or vector(0)",
-          "instant": true,
-          "legendFormat": "Worn",
-          "range": false
-        }
-      ],
-      "title": "SSDs Worn (\u003c10% life)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "background",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "(count(max by (instance, disk) (smartmon_reallocated_sector_ct_raw_value{instance=~\"$instance\"} or smartmon_current_pending_sector_raw_value{instance=~\"$instance\"} or smartmon_offline_uncorrectable_raw_value{instance=~\"$instance\"} or smartmon_reported_uncorrect_raw_value{instance=~\"$instance\"}) \u003e 0) or vector(0)) + (count(max by (instance, device) (smartctl_device_attribute{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",attribute_value_type=\"raw\",attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect\"}) \u003e 0) or vector(0))",
-          "instant": true,
-          "legendFormat": "Precursors",
-          "range": false
-        }
-      ],
-      "title": "Disks with Failure Precursors",
-      "description": "Disks reporting any reallocated, pending, offline-uncorrectable or reported-uncorrectable sectors. A nonzero count is not an outage: it means those disks have remapped or failed to read sectors at some point. Growth is what matters, and is alerted separately.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 1
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "background",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "yellow"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "smartmon_device_smart_healthy{type=\"sat\",instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{disk}} (SATA)",
-          "range": false
-        },
-        {
-          "expr": "(nvme_critical_warning{instance=~\"$instance\"} == bool 0) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{device}} (NVMe)",
-          "range": false
-        },
-        {
-          "expr": "smartctl_device_smart_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"}",
-          "instant": true,
-          "legendFormat": "{{instance}} {{device}} (SATA)",
-          "range": false
-        }
-      ],
-      "title": "SMART Health",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 24,
-        "x": 0,
-        "y": 5
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "background",
-        "justifyMode": "center",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16,
-          "valueSize": 32
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "type": "value",
+  "spec": {
+    "annotations": [],
+    "cursorSync": "Crosshair",
+    "editable": true,
+    "elements": {
+      "available-spare-nvme": {
+        "kind": "Panel",
+        "spec": {
+          "id": 15,
+          "title": "Available Spare (NVMe)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "(nvme_available_spare_ratio{instance=~\"$instance\"} * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{device}} {{model}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
               "options": {
-                "0": {
-                  "text": "FAIL",
-                  "color": "red"
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
                 },
-                "1": {
-                  "text": "OK",
-                  "color": "green"
-                }
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16
+                },
+                "maxVizHeight": 300,
+                "orientation": "horizontal"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "red"
+                      },
+                      {
+                        "value": 10,
+                        "color": "yellow"
+                      },
+                      {
+                        "value": 20,
+                        "color": "green"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
               }
             }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "red"
-              },
-              {
-                "value": 1,
-                "color": "green"
-              }
-            ]
           }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Failure Precursors",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 11
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "sort_desc(smartmon_reallocated_sector_ct_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
-          "range": false
-        }
-      ],
-      "title": "Reallocated Sectors (SATA)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 12
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "sort_desc(smartmon_current_pending_sector_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
-          "range": false
-        }
-      ],
-      "title": "Current Pending Sectors (SATA)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 12
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "sort_desc(smartmon_offline_uncorrectable_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
-          "range": false
-        }
-      ],
-      "title": "Offline Uncorrectable (SATA)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 12
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "sort_desc(smartmon_reported_uncorrect_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
-          "range": false
-        }
-      ],
-      "title": "Reported Uncorrectable (SATA)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 20
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "sort_desc(smartmon_udma_crc_error_count_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
-          "range": false
-        }
-      ],
-      "title": "UDMA CRC Errors (SATA)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 20
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "yellow"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "smartmon_reallocated_sector_ct_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{disk}} reallocated"
-        },
-        {
-          "expr": "smartmon_current_pending_sector_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{disk}} pending"
-        }
-      ],
-      "title": "Pending / Reallocated Sector Trend (SATA)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 28
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
         }
       },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "max by (nodename, model, serial) (nvme_media_errors_total{instance=~\"$instance\"} * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
-          "legendFormat": "{{nodename}} {{model}} media errors"
-        },
-        {
-          "expr": "max by (nodename, model, serial) (nvme_num_err_log_entries_total{instance=~\"$instance\"} * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
-          "legendFormat": "{{nodename}} {{model}} err-log entries"
-        },
-        {
-          "expr": "max by (nodename, model, serial) (nvme_unsafe_shutdowns_total{instance=~\"$instance\"} * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
-          "legendFormat": "{{nodename}} {{model}} unsafe shutdowns"
-        }
-      ],
-      "title": "Media \u0026 Error-Log Entries (NVMe)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 36
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Wear \u0026 Lifetime",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 44
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "(smartmon_wear_leveling_count_value{instance=~\"$instance\"} or smartmon_media_wearout_indicator_value{instance=~\"$instance\"} or smartmon_ssd_life_left_value{instance=~\"$instance\"} or smartmon_percent_lifetime_remain_value{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
-          "range": false
-        }
-      ],
-      "title": "SSD Life Remaining (SATA)",
-      "description": "Normalized SSD wear (100 = new). Sourced from whichever vendor attribute a disk exposes (wear_leveling_count, media_wearout_indicator, ssd_life_left, percent_lifetime_remain). SSDs that expose none, plus all HDDs, do not appear; NVMe endurance is the panel to the right.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 45
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "background",
-        "justifyMode": "auto",
-        "textMode": "value_and_name",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16,
-          "valueSize": 32
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "decimals": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "red"
-              },
-              {
-                "value": 10,
-                "color": "yellow"
-              },
-              {
-                "value": 20,
-                "color": "green"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "(nvme_percentage_used_ratio{instance=~\"$instance\"} * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{device}} {{model}}",
-          "range": false
-        }
-      ],
-      "title": "Endurance Used (NVMe)",
-      "description": "The drive's own estimate of write endurance consumed. Counts up, unlike the SATA panel to the left, which counts down.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 45
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "decimals": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 80,
-                "color": "yellow"
-              },
-              {
-                "value": 100,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "(nvme_available_spare_ratio{instance=~\"$instance\"} * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{device}} {{model}}",
-          "range": false
-        }
-      ],
-      "title": "Available Spare (NVMe)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 45
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "decimals": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "red"
-              },
-              {
-                "value": 10,
-                "color": "yellow"
-              },
-              {
-                "value": 20,
-                "color": "green"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "smartmon_power_on_hours_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
-          "range": false
-        },
-        {
-          "expr": "nvme_power_on_hours_total{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{device}} {{model}}",
-          "range": false
-        }
-      ],
-      "title": "Power On Hours",
-      "description": "How long each disk has been powered on. A figure to plan replacements against, not a health signal, so it carries no threshold colour: nothing here is good or bad on its own.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 53
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "value_and_name",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16,
-          "valueSize": 32
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "h",
-          "decimals": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "NVMe",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 63
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "nvme_critical_warning{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{device}}",
-          "range": false
-        }
-      ],
-      "title": "Critical Warning",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 64
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "background",
-        "justifyMode": "auto",
-        "textMode": "value_and_name",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "type": "value",
+      "critical-warning": {
+        "kind": "Panel",
+        "spec": {
+          "id": 17,
+          "title": "Critical Warning",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "nvme_critical_warning{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{device}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
               "options": {
-                "0": {
-                  "text": "OK",
-                  "color": "green"
+                "graphMode": "none",
+                "colorMode": "background",
+                "justifyMode": "auto",
+                "textMode": "value_and_name",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [
+                    {
+                      "type": "value",
+                      "options": {
+                        "0": {
+                          "text": "OK",
+                          "color": "green"
+                        }
+                      }
+                    }
+                  ],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "current-pending-sectors-sata": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Current Pending Sectors (SATA)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sort_desc(smartmon_current_pending_sector_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
+                },
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16
+                },
+                "maxVizHeight": 300,
+                "orientation": "horizontal"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "disk-temperature": {
+        "kind": "Panel",
+        "spec": {
+          "id": 26,
+          "title": "Disk Temperature",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "smartmon_temperature_celsius_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+                        "legendFormat": "{{nodename}} {{disk}} (SATA)"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename, model, serial) (nvme_temperature_celsius{instance=~\"$instance\"} * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
+                        "legendFormat": "{{nodename}} {{model}} (NVMe)"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "smartctl_device_temperature{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",temperature_type=\"current\"}",
+                        "legendFormat": "{{instance}} {{device}} (SATA)"
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "celsius",
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "disks-monitored": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Disks Monitored",
+          "description": "Number of disks whose health is evaluated, i.e. exactly the tiles in the SMART Health panel below.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "(count(smartmon_device_smart_healthy{type=\"sat\",instance=~\"$instance\"}) or vector(0)) + (count(nvme_critical_warning{instance=~\"$instance\"}) or vector(0)) + (count(smartctl_device_smart_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"}) or vector(0))",
+                        "instant": true,
+                        "legendFormat": "Disks",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "none",
+                "colorMode": "background",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "disks-with-failure-precursors": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Disks with Failure Precursors",
+          "description": "Disks reporting any reallocated, pending, offline-uncorrectable or reported-uncorrectable sectors. A nonzero count is not an outage: it means those disks have remapped or failed to read sectors at some point. Growth is what matters, and is alerted separately.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "(count(max by (instance, disk) (smartmon_reallocated_sector_ct_raw_value{instance=~\"$instance\"} or smartmon_current_pending_sector_raw_value{instance=~\"$instance\"} or smartmon_offline_uncorrectable_raw_value{instance=~\"$instance\"} or smartmon_reported_uncorrect_raw_value{instance=~\"$instance\"}) \u003e 0) or vector(0)) + (count(max by (instance, device) (smartctl_device_attribute{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",attribute_value_type=\"raw\",attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect\"}) \u003e 0) or vector(0))",
+                        "instant": true,
+                        "legendFormat": "Precursors",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "none",
+                "colorMode": "background",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "yellow"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "endurance-used-nvme": {
+        "kind": "Panel",
+        "spec": {
+          "id": 14,
+          "title": "Endurance Used (NVMe)",
+          "description": "The drive's own estimate of write endurance consumed. Counts up, unlike the SATA panel to the left, which counts down.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "(nvme_percentage_used_ratio{instance=~\"$instance\"} * 100) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{device}} {{model}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
+                },
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16
+                },
+                "maxVizHeight": 300,
+                "orientation": "horizontal"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "decimals": 1,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "yellow"
+                      },
+                      {
+                        "value": 100,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "failure-precursors": {
+        "kind": "Panel",
+        "spec": {
+          "id": 22,
+          "title": "Failure Precursors",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sort_desc(smartctl_device_attribute{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",attribute_value_type=\"raw\",attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect\"})",
+                        "instant": true,
+                        "legendFormat": "{{device}} {{attribute_name}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
+                },
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16
+                },
+                "maxVizHeight": 300,
+                "orientation": "horizontal"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "media-error-log-entries-nvme": {
+        "kind": "Panel",
+        "spec": {
+          "id": 12,
+          "title": "Media \u0026 Error-Log Entries (NVMe)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename, model, serial) (nvme_media_errors_total{instance=~\"$instance\"} * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
+                        "legendFormat": "{{nodename}} {{model}} media errors"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename, model, serial) (nvme_num_err_log_entries_total{instance=~\"$instance\"} * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
+                        "legendFormat": "{{nodename}} {{model}} err-log entries"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename, model, serial) (nvme_unsafe_shutdowns_total{instance=~\"$instance\"} * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
+                        "legendFormat": "{{nodename}} {{model}} unsafe shutdowns"
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "offline-uncorrectable-sata": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Offline Uncorrectable (SATA)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sort_desc(smartmon_offline_uncorrectable_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
+                },
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16
+                },
+                "maxVizHeight": 300,
+                "orientation": "horizontal"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "pending-reallocated-sector-trend-sata": {
+        "kind": "Panel",
+        "spec": {
+          "id": 11,
+          "title": "Pending / Reallocated Sector Trend (SATA)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "smartmon_reallocated_sector_ct_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+                        "legendFormat": "{{nodename}} {{disk}} reallocated"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "smartmon_current_pending_sector_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+                        "legendFormat": "{{nodename}} {{disk}} pending"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "pending-reallocated-sector-trend-truenas": {
+        "kind": "Panel",
+        "spec": {
+          "id": 25,
+          "title": "Pending / Reallocated Sector Trend (TrueNAS)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "smartctl_device_attribute{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",attribute_value_type=\"raw\",attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector\"}",
+                        "legendFormat": "{{device}} {{attribute_name}}"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "power-on-hours": {
+        "kind": "Panel",
+        "spec": {
+          "id": 16,
+          "title": "Power On Hours",
+          "description": "How long each disk has been powered on. A figure to plan replacements against, not a health signal, so it carries no threshold colour: nothing here is good or bad on its own.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "smartmon_power_on_hours_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "nvme_power_on_hours_total{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{device}} {{model}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "none",
+                "colorMode": "value",
+                "justifyMode": "auto",
+                "textMode": "value_and_name",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16,
+                  "valueSize": 32
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "h",
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "power-on-hours-truenas": {
+        "kind": "Panel",
+        "spec": {
+          "id": 24,
+          "title": "Power On Hours (TrueNAS)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "(smartctl_device_power_on_seconds{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"} / 3600) * on(instance, device) group_left(model_name) smartctl_device",
+                        "instant": true,
+                        "legendFormat": "{{device}} {{model_name}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "none",
+                "colorMode": "value",
+                "justifyMode": "auto",
+                "textMode": "value_and_name",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "horizontal"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "h",
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "reallocated-sectors-sata": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Reallocated Sectors (SATA)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sort_desc(smartmon_reallocated_sector_ct_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
+                },
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16
+                },
+                "maxVizHeight": 300,
+                "orientation": "horizontal"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "reported-uncorrectable-sata": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "Reported Uncorrectable (SATA)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sort_desc(smartmon_reported_uncorrect_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
+                },
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16
+                },
+                "maxVizHeight": 300,
+                "orientation": "horizontal"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "smart-health": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "SMART Health",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "smartmon_device_smart_healthy{type=\"sat\",instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{disk}} (SATA)",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "(nvme_critical_warning{instance=~\"$instance\"} == bool 0) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{device}} (NVMe)",
+                        "range": false
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "smartctl_device_smart_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"}",
+                        "instant": true,
+                        "legendFormat": "{{instance}} {{device}} (SATA)",
+                        "range": false
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "none",
+                "colorMode": "background",
+                "justifyMode": "center",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16,
+                  "valueSize": 32
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [
+                    {
+                      "type": "value",
+                      "options": {
+                        "0": {
+                          "text": "FAIL",
+                          "color": "red"
+                        },
+                        "1": {
+                          "text": "OK",
+                          "color": "green"
+                        }
+                      }
+                    }
+                  ],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "red"
+                      },
+                      {
+                        "value": 1,
+                        "color": "green"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "smartctl-exit-status": {
+        "kind": "Panel",
+        "spec": {
+          "id": 21,
+          "title": "smartctl Exit Status",
+          "description": "0 = disk read OK. Nonzero means smartctl failed or the disk was skipped in standby; the series in this row then stop updating.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "smartctl_device_smartctl_exit_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"}",
+                        "instant": true,
+                        "legendFormat": "{{instance}} {{device}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "none",
+                "colorMode": "background",
+                "justifyMode": "auto",
+                "textMode": "value_and_name",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "mappings": [
+                    {
+                      "type": "value",
+                      "options": {
+                        "0": {
+                          "text": "OK",
+                          "color": "green"
+                        }
+                      }
+                    }
+                  ],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "ssd-life-remaining-sata": {
+        "kind": "Panel",
+        "spec": {
+          "id": 13,
+          "title": "SSD Life Remaining (SATA)",
+          "description": "Normalized SSD wear (100 = new). Sourced from whichever vendor attribute a disk exposes (wear_leveling_count, media_wearout_indicator, ssd_life_left, percent_lifetime_remain). SSDs that expose none, plus all HDDs, do not appear; NVMe endurance is the panel to the right.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "(smartmon_wear_leveling_count_value{instance=~\"$instance\"} or smartmon_media_wearout_indicator_value{instance=~\"$instance\"} or smartmon_ssd_life_left_value{instance=~\"$instance\"} or smartmon_percent_lifetime_remain_value{instance=~\"$instance\"}) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "none",
+                "colorMode": "background",
+                "justifyMode": "auto",
+                "textMode": "value_and_name",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16,
+                  "valueSize": 32
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "red"
+                      },
+                      {
+                        "value": 10,
+                        "color": "yellow"
+                      },
+                      {
+                        "value": 20,
+                        "color": "green"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "ssds-worn-10-life": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "SSDs Worn (\u003c10% life)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sum((smartmon_wear_leveling_count_value{instance=~\"$instance\"} or smartmon_media_wearout_indicator_value{instance=~\"$instance\"} or smartmon_ssd_life_left_value{instance=~\"$instance\"} or smartmon_percent_lifetime_remain_value{instance=~\"$instance\"}) \u003c bool 10) or vector(0)",
+                        "instant": true,
+                        "legendFormat": "Worn",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "none",
+                "colorMode": "background",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "total-data-read": {
+        "kind": "Panel",
+        "spec": {
+          "id": 19,
+          "title": "Total Data Read",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "(nvme_data_units_read_total{instance=~\"$instance\"} * 512000) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{device}} {{model}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "none",
+                "colorMode": "value",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "bytes",
+                  "decimals": 1,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "total-data-written-tbw": {
+        "kind": "Panel",
+        "spec": {
+          "id": 18,
+          "title": "Total Data Written (TBW)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "(nvme_data_units_written_total{instance=~\"$instance\"} * 512000) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{device}} {{model}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "none",
+                "colorMode": "value",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "bytes",
+                  "decimals": 1,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "blue"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "udma-crc-errors-sata": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "UDMA CRC Errors (SATA)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sort_desc(smartmon_udma_crc_error_count_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, disk) group_left(device_model) smartmon_device_info)",
+                        "instant": true,
+                        "legendFormat": "{{nodename}} {{disk}} {{device_model}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
+                },
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16
+                },
+                "maxVizHeight": 300,
+                "orientation": "horizontal"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "yellow"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "udma-crc-errors-truenas": {
+        "kind": "Panel",
+        "spec": {
+          "id": 23,
+          "title": "UDMA CRC Errors (TrueNAS)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "sort_desc(smartctl_device_attribute{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",attribute_value_type=\"raw\",attribute_name=\"UDMA_CRC_Error_Count\"})",
+                        "instant": true,
+                        "legendFormat": "{{device}} {{attribute_name}}",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "bargauge",
+            "version": "",
+            "spec": {
+              "options": {
+                "displayMode": "gradient",
+                "valueMode": "color",
+                "namePlacement": "auto",
+                "showUnfilled": true,
+                "sizing": "auto",
+                "minVizWidth": 8,
+                "minVizHeight": 16,
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": false,
+                  "calcs": []
+                },
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "text": {
+                  "titleSize": 16
+                },
+                "maxVizHeight": 300,
+                "orientation": "horizontal"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "yellow"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "unhealthy-disks": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Unhealthy Disks",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "(sum(smartmon_device_smart_healthy{type=\"sat\",instance=~\"$instance\"} == bool 0) or vector(0)) + (sum(nvme_critical_warning{instance=~\"$instance\"} \u003e bool 0) or vector(0)) + (sum(smartctl_device_smart_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"} == bool 0) or vector(0))",
+                        "instant": true,
+                        "legendFormat": "Unhealthy",
+                        "range": false
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "graphMode": "none",
+                "colorMode": "background",
+                "justifyMode": "auto",
+                "textMode": "auto",
+                "wideLayout": true,
+                "showPercentChange": false,
+                "reduceOptions": {
+                  "calcs": []
+                },
+                "percentChangeColorMode": "standard",
+                "orientation": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 1,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "write-read-throughput": {
+        "kind": "Panel",
+        "spec": {
+          "id": 20,
+          "title": "Write / Read Throughput",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename, model, serial) ((rate(nvme_data_units_written_total{instance=~\"$instance\"}[$__rate_interval]) * 512000) * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
+                        "legendFormat": "{{nodename}} {{model}} Write",
+                        "refId": "Write"
+                      }
+                    },
+                    "refId": "Write",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "prometheus",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "$datasource"
+                      },
+                      "spec": {
+                        "expr": "max by (nodename, model, serial) ((rate(nvme_data_units_read_total{instance=~\"$instance\"}[$__rate_interval]) * 512000) * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
+                        "legendFormat": "{{nodename}} {{model}} Read",
+                        "refId": "Read"
+                      }
+                    },
+                    "refId": "Read",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true,
+                  "calcs": []
+                },
+                "tooltip": {
+                  "mode": "multi",
+                  "sort": ""
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "Bps",
+                  "custom": {}
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byFrameRefID",
+                      "options": "Read"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.transform",
+                        "value": "negative-Y"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "RowsLayout",
+      "spec": {
+        "rows": [
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Summary",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 4,
+                  "columnWidthMode": "narrow",
+                  "rowHeightMode": "short",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "unhealthy-disks"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "disks-monitored"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "ssds-worn-10-life"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "disks-with-failure-precursors"
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "(nvme_data_units_written_total{instance=~\"$instance\"} * 512000) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{device}} {{model}}",
-          "range": false
-        }
-      ],
-      "title": "Total Data Written (TBW)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 64
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "decimals": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "(nvme_data_units_read_total{instance=~\"$instance\"} * 512000) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info) * on(instance, device) group_left(model) nvme_device_info",
-          "instant": true,
-          "legendFormat": "{{nodename}} {{device}} {{model}}",
-          "range": false
-        }
-      ],
-      "title": "Total Data Read",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 64
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "auto",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "decimals": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "max by (nodename, model, serial) ((rate(nvme_data_units_written_total{instance=~\"$instance\"}[$__rate_interval]) * 512000) * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
-          "legendFormat": "{{nodename}} {{model}} Write",
-          "refId": "Write"
-        },
-        {
-          "expr": "max by (nodename, model, serial) ((rate(nvme_data_units_read_total{instance=~\"$instance\"}[$__rate_interval]) * 512000) * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
-          "legendFormat": "{{nodename}} {{model}} Read",
-          "refId": "Read"
-        }
-      ],
-      "title": "Write / Read Throughput",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 72
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps",
-          "custom": {}
-        },
-        "overrides": [
+          },
           {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "Read"
-            },
-            "properties": [
-              {
-                "id": "custom.transform",
-                "value": "negative-Y"
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "SMART Health",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "tall",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "smart-health"
+                        }
+                      }
+                    }
+                  ]
+                }
               }
-            ]
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Failure Precursors",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "reallocated-sectors-sata"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "current-pending-sectors-sata"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Offline Uncorrectable (SATA)",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "offline-uncorrectable-sata"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "reported-uncorrectable-sata"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "UDMA CRC Errors (SATA)",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "udma-crc-errors-sata"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Pending / Reallocated Sector Trend (SATA)",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "pending-reallocated-sector-trend-sata"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Media \u0026 Error-Log Entries (NVMe)",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "media-error-log-entries-nvme"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Wear \u0026 Lifetime",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "ssd-life-remaining-sata"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Endurance Used (NVMe)",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "endurance-used-nvme"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "available-spare-nvme"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Power On Hours",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "power-on-hours"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "NVMe",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "critical-warning"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "total-data-written-tbw"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "total-data-read"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Write / Read Throughput",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "write-read-throughput"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "TrueNAS Disks",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "smartctl-exit-status"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Failure Precursors",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "failure-precursors"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "udma-crc-errors-truenas"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Power On Hours (TrueNAS)",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "power-on-hours-truenas"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Pending / Reallocated Sector Trend (TrueNAS)",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "pending-reallocated-sector-trend-truenas"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "RowsLayoutRow",
+            "spec": {
+              "title": "Temperature",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "disk-temperature"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           }
         ]
       }
     },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "TrueNAS Disks",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 80
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "smartctl_device_smartctl_exit_status{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"}",
-          "instant": true,
-          "legendFormat": "{{instance}} {{device}}",
-          "range": false
-        }
+    "links": [],
+    "preload": false,
+    "tags": [
+      "disk",
+      "smart",
+      "infrastructure"
+    ],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-30d",
+      "to": "now",
+      "autoRefresh": "5m",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
       ],
-      "title": "smartctl Exit Status",
-      "description": "0 = disk read OK. Nonzero means smartctl failed or the disk was skipped in standby; the series in this row then stop updating.",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Disk Health (S.M.A.R.T.)",
+    "variables": [
+      {
+        "kind": "DatasourceVariable",
+        "spec": {
+          "name": "datasource",
+          "pluginId": "prometheus",
+          "refresh": "never",
+          "regex": "",
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "options": [],
+          "multi": false,
+          "includeAll": false,
+          "label": "Datasource",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": true
+        }
       },
-      "gridPos": {
-        "h": 4,
-        "w": 24,
-        "x": 0,
-        "y": 81
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "background",
-        "justifyMode": "auto",
-        "textMode": "value_and_name",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "0": {
-                  "text": "OK",
-                  "color": "green"
-                }
-              }
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "node",
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "label": "Node",
+          "hide": "dontHide",
+          "refresh": "onTimeRangeChanged",
+          "skipUrlSync": false,
+          "query": {
+            "kind": "DataQuery",
+            "group": "prometheus",
+            "version": "v0",
+            "datasource": {
+              "name": "$datasource"
+            },
+            "spec": {
+              "qryType": 1,
+              "query": "label_values(node_uname_info{job=\"scrapeConfig/monitoring/node-exporter-external\"}, nodename)",
+              "refId": "PrometheusVariableQueryEditor-VariableQuery"
             }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "sort_desc(smartctl_device_attribute{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",attribute_value_type=\"raw\",attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect\"})",
-          "instant": true,
-          "legendFormat": "{{device}} {{attribute_name}}",
-          "range": false
+          },
+          "regex": "",
+          "regexApplyTo": "value",
+          "sort": "alphabeticalAsc",
+          "options": [],
+          "multi": true,
+          "includeAll": true,
+          "allowCustomValue": true
         }
-      ],
-      "title": "Failure Precursors",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 85
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "red"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "bargauge",
-      "targets": [
-        {
-          "expr": "sort_desc(smartctl_device_attribute{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",attribute_value_type=\"raw\",attribute_name=\"UDMA_CRC_Error_Count\"})",
-          "instant": true,
-          "legendFormat": "{{device}} {{attribute_name}}",
-          "range": false
-        }
-      ],
-      "title": "UDMA CRC Errors (TrueNAS)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 85
-      },
-      "repeatDirection": "h",
-      "options": {
-        "displayMode": "gradient",
-        "valueMode": "color",
-        "namePlacement": "auto",
-        "showUnfilled": true,
-        "sizing": "auto",
-        "minVizWidth": 8,
-        "minVizHeight": 16,
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false,
-          "calcs": []
-        },
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16
-        },
-        "maxVizHeight": 300,
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 1,
-                "color": "yellow"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "(smartctl_device_power_on_seconds{job=\"scrapeConfig/monitoring/smartctl-exporter-external\"} / 3600) * on(instance, device) group_left(model_name) smartctl_device",
-          "instant": true,
-          "legendFormat": "{{device}} {{model_name}}",
-          "range": false
-        }
-      ],
-      "title": "Power On Hours (TrueNAS)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 85
-      },
-      "repeatDirection": "h",
-      "options": {
-        "graphMode": "none",
-        "colorMode": "value",
-        "justifyMode": "auto",
-        "textMode": "value_and_name",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "reduceOptions": {
-          "calcs": []
-        },
-        "text": {
-          "titleSize": 16
-        },
-        "percentChangeColorMode": "standard",
-        "orientation": "horizontal"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "h",
-          "decimals": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "blue"
-              }
-            ]
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "smartctl_device_attribute{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",attribute_value_type=\"raw\",attribute_name=~\"Reallocated_Sector_Ct|Current_Pending_Sector\"}",
-          "legendFormat": "{{device}} {{attribute_name}}"
-        }
-      ],
-      "title": "Pending / Reallocated Sector Trend (TrueNAS)",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 93
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "row",
-      "collapsed": false,
-      "title": "Temperature",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 101
-      },
-      "id": 0,
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "smartmon_temperature_celsius_raw_value{instance=~\"$instance\"} * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-          "legendFormat": "{{nodename}} {{disk}} (SATA)"
-        },
-        {
-          "expr": "max by (nodename, model, serial) (nvme_temperature_celsius{instance=~\"$instance\"} * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
-          "legendFormat": "{{nodename}} {{model}} (NVMe)"
-        },
-        {
-          "expr": "smartctl_device_temperature{job=\"scrapeConfig/monitoring/smartctl-exporter-external\",temperature_type=\"current\"}",
-          "legendFormat": "{{instance}} {{device}} (SATA)"
-        }
-      ],
-      "title": "Disk Temperature",
-      "transparent": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 102
-      },
-      "repeatDirection": "h",
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true,
-          "calcs": []
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": ""
-        }
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "celsius",
-          "custom": {}
-        },
-        "overrides": []
-      }
-    }
-  ],
-  "templating": {
-    "list": [
-      {
-        "type": "datasource",
-        "name": "datasource",
-        "label": "Datasource",
-        "skipUrlSync": false,
-        "query": "prometheus",
-        "multi": false,
-        "allowCustomValue": true,
-        "includeAll": false,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
       },
       {
-        "type": "query",
-        "name": "node",
-        "label": "Node",
-        "skipUrlSync": false,
-        "query": "label_values(node_uname_info{job=\"scrapeConfig/monitoring/node-exporter-external\"}, nodename)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "$datasource"
-        },
-        "multi": true,
-        "allowCustomValue": true,
-        "refresh": 2,
-        "sort": 1,
-        "includeAll": true,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
-      },
-      {
-        "type": "query",
-        "name": "instance",
-        "hide": 2,
-        "skipUrlSync": false,
-        "query": "label_values(node_uname_info{job=\"scrapeConfig/monitoring/node-exporter-external\",nodename=~\"$node\"}, instance)",
-        "datasource": {
-          "type": "prometheus",
-          "uid": "$datasource"
-        },
-        "multi": true,
-        "allowCustomValue": true,
-        "refresh": 2,
-        "includeAll": true,
-        "auto": false,
-        "auto_min": "10s",
-        "auto_count": 30
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "instance",
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "hide": "hideVariable",
+          "refresh": "onTimeRangeChanged",
+          "skipUrlSync": false,
+          "query": {
+            "kind": "DataQuery",
+            "group": "prometheus",
+            "version": "v0",
+            "datasource": {
+              "name": "$datasource"
+            },
+            "spec": {
+              "qryType": 1,
+              "query": "label_values(node_uname_info{job=\"scrapeConfig/monitoring/node-exporter-external\",nodename=~\"$node\"}, instance)",
+              "refId": "PrometheusVariableQueryEditor-VariableQuery"
+            }
+          },
+          "regex": "",
+          "regexApplyTo": "value",
+          "sort": "",
+          "options": [],
+          "multi": true,
+          "includeAll": true,
+          "allowCustomValue": true
+        }
       }
     ]
-  },
-  "annotations": {}
+  }
 }
