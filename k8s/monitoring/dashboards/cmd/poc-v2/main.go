@@ -22,7 +22,7 @@ type translation struct {
 }
 
 var translations = []translation{
-	{name: "openbao-overview", uid: "openbao-overview", build: buildOpenbaoOverview},
+	{name: "openbao-overview", uid: "openbao-overview", build: buildOpenbaoOverview, cutover: true},
 	{name: "gpu-overview", uid: "gpu-overview", build: buildGpuOverview, cutover: true},
 	{name: "uptime", uid: "uptime", build: buildUptime, cutover: true},
 }
