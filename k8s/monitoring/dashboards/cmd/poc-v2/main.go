@@ -22,7 +22,7 @@ type translation struct {
 }
 
 var translations = []translation{
-	{name: "proxmox-logs", uid: "proxmox-logs", build: buildProxmoxLogs},
+	{name: "proxmox-logs", uid: "proxmox-logs", build: buildProxmoxLogs, cutover: true},
 	{name: "syslog", uid: "syslog", build: buildSyslog, cutover: true},
 	{name: "dns-logs", uid: "dns-logs", build: buildDnsLogs, cutover: true},
 	{name: "dhcp-leases", uid: "dhcp-leases", build: buildDhcpLeases, cutover: true},
