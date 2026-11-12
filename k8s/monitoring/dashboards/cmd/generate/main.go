@@ -14,13 +14,12 @@ import (
 func main() {
 	// Dashboard names become output filenames.
 	dashboards := map[string]func() (*dashboard.Dashboard, error){
-		"dns-overview":      buildDnsOverview,
-		"k8s-control-plane": buildK8sControlPlaneOverview,
-		"dns-logs":          buildDnsLogs,
-		"dhcp-leases":       buildDhcpLeases,
-		"syslog":            buildSyslog,
-		"proxmox-logs":      buildProxmoxLogs,
-		"service-logs":      buildServiceLogs,
+		"dns-overview": buildDnsOverview,
+		"dns-logs":     buildDnsLogs,
+		"dhcp-leases":  buildDhcpLeases,
+		"syslog":       buildSyslog,
+		"proxmox-logs": buildProxmoxLogs,
+		"service-logs": buildServiceLogs,
 	}
 
 	outputDir := "generated"
