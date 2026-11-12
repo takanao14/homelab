@@ -17,7 +17,6 @@ func main() {
 		"node-overview":          buildNodeOverview,
 		"k8s-node-overview":      buildK8sNodeOverview,
 		"proxmox-otlp-overview":  buildProxmoxOtlpOverview,
-		"gpu-overview":           buildGpuOverview,
 		"disk-health":            buildDiskHealth,
 		"dns-overview":           buildDnsOverview,
 		"network-overview":       buildNetworkOverview,
