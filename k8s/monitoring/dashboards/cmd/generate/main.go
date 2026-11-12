@@ -32,7 +32,6 @@ func main() {
 		"cilium-overview":        buildCiliumOverview,
 		"envoy-gateway-overview": buildEnvoyGatewayOverview,
 		"argocd-overview":        buildArgocdOverview,
-		"slack-bot-overview":     buildSlackBotOverview,
 	}
 
 	outputDir := "generated"
