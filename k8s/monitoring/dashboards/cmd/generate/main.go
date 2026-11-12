@@ -17,7 +17,6 @@ func main() {
 		"dns-overview":        buildDnsOverview,
 		"kubernetes-overview": buildKubernetesOverview,
 		"k8s-control-plane":   buildK8sControlPlaneOverview,
-		"monitoring-overview": buildMonitoringOverview,
 		"dns-logs":            buildDnsLogs,
 		"dhcp-leases":         buildDhcpLeases,
 		"syslog":              buildSyslog,
