@@ -22,7 +22,7 @@ type translation struct {
 }
 
 var translations = []translation{
-	{name: "kubernetes-overview", uid: "kubernetes-overview", build: buildKubernetesOverview},
+	{name: "kubernetes-overview", uid: "kubernetes-overview", build: buildKubernetesOverview, cutover: true},
 	{name: "monitoring-overview", uid: "monitoring-overview", build: buildMonitoringOverview, cutover: true},
 	{name: "node-overview", uid: "node-overview", build: buildNodeOverview, cutover: true},
 	{name: "disk-health", uid: "disk-health", build: buildDiskHealth, cutover: true},
