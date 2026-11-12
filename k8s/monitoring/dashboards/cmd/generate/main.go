@@ -15,7 +15,6 @@ func main() {
 	// Dashboard names become output filenames.
 	dashboards := map[string]func() (*dashboard.Dashboard, error){
 		"dns-overview": buildDnsOverview,
-		"syslog":       buildSyslog,
 		"proxmox-logs": buildProxmoxLogs,
 		"service-logs": buildServiceLogs,
 	}
