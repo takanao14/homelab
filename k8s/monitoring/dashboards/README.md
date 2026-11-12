@@ -189,7 +189,8 @@ Classic positions: `newLayout` declares rows, each placed by an AutoGrid
 after panel titles. Pass a fixed, positive panel ID to `Panel(id, builder)`,
 using explicitly numbered constants; keep IDs across title/layout changes and
 do not reuse retired IDs. Split a row when its panels need different sizes. Wrap
-panel queries in `queries(...)` so refIds match Classic.
+panel queries in `queries(...)`; preserve named references used by overrides
+with `queryWithRef(name, query)`.
 
 Until a translation is cut over, `make generate` writes it only to
 `poc-generated/` with the UID `<uid>-v2`; the Classic dashboard stays

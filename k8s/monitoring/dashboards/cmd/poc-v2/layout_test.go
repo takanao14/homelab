@@ -80,3 +80,21 @@ func TestRefIDs(t *testing.T) {
 		}
 	}
 }
+
+func TestQueriesPreserveNamedReferences(t *testing.T) {
+	group, err := queries(
+		queryWithRef("Used", promQuery().RefId("Used").Expr("used")),
+		queryWithRef("Total", promQuery().RefId("Total").Expr("total")),
+		promQuery().Expr("other"),
+	).Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var refs []string
+	for _, query := range group.Spec.Queries {
+		refs = append(refs, query.Spec.RefId)
+	}
+	if want := []string{"Used", "Total", "C"}; !reflect.DeepEqual(refs, want) {
+		t.Errorf("query references = %v, want %v", refs, want)
+	}
+}
