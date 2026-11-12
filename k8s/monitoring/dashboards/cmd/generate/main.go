@@ -13,9 +13,7 @@ import (
 
 func main() {
 	// Dashboard names become output filenames.
-	dashboards := map[string]func() (*dashboard.Dashboard, error){
-		"dns-overview": buildDnsOverview,
-	}
+	dashboards := map[string]func() (*dashboard.Dashboard, error){}
 
 	outputDir := "generated"
 	if len(os.Args) > 1 {
