@@ -13,7 +13,7 @@ caddy_cloudflare_version: "0.2.4"
 # renovate: datasource=github-releases depName=caddyserver/xcaddy
 caddy_xcaddy_version: "0.4.7"
 # renovate: datasource=golang-version depName=go
-caddy_go_version: "1.27.3"
+caddy_go_version: "1.27.4"
 caddy_sha256: "62e2c4d1134b12f6bc28b8573d1d20d80d63ea42057de2b3ce63d2d3dcb69949"
 caddy_build_dir: "{{ lookup('env', 'HOME') }}/.cache/homelab/caddy"
 caddy_build_artifact: >-
