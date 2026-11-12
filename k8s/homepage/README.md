@@ -49,4 +49,10 @@ OpenBao KV paths:
 | `k8s/homepage/proxmox` | `{host}-token` | API token ID (`pve`, `node1`–`node5`; `user@pam!tokenname`) |
 | `k8s/homepage/proxmox` | `{host}-secret` | Matching API token secret |
 | `k8s/homepage/truenas` | `key` | TrueNAS API key |
-| `k8s/homepage/grafana` | `password` | Grafana admin password |
+| `k8s/monitoring/grafana` | `adminPassword` | `HOMEPAGE_VAR_GRAFANA_PRD_PASSWORD` |
+| `k8s-sandbox/grafana` | `adminPassword` | `HOMEPAGE_VAR_GRAFANA_SANDBOX_PASSWORD` |
+
+The Grafana widgets read the same environment-specific secrets as Grafana.
+Apply the Homepage policy in `ansible/playbooks/ops/openbao/configure.yaml`
+before deploying these references. Restart Homepage after ESO updates
+`homepage-secrets`; its environment variables are read at process startup.

@@ -155,7 +155,7 @@
           version: 2
           url: https://grafana.prd.butaco.net
           username: admin
-          password: "{{HOMEPAGE_VAR_GRAFANA_PASSWORD}}"
+          password: "{{HOMEPAGE_VAR_GRAFANA_PRD_PASSWORD}}"
 
     - Prometheus:
         icon: prometheus.png
@@ -178,7 +178,7 @@
           version: 2
           url: http://grafana.sandbox.butaco.net
           username: admin
-          password: "{{HOMEPAGE_VAR_GRAFANA_PASSWORD}}"
+          password: "{{HOMEPAGE_VAR_GRAFANA_SANDBOX_PASSWORD}}"
 
     - Prometheus (sandbox):
         icon: prometheus.png
