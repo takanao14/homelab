@@ -190,7 +190,8 @@ after panel titles. Pass a fixed, positive panel ID to `Panel(id, builder)`,
 using explicitly numbered constants; keep IDs across title/layout changes and
 do not reuse retired IDs. Split a row when its panels need different sizes. Wrap
 panel queries in `queries(...)`; preserve named references used by overrides
-with `queryWithRef(name, query)`.
+with `queryWithRef(name, query)`. Attach transformations to the query group;
+table cell overrides use `custom.cellOptions`.
 
 Until a translation is cut over, `make generate` writes it only to
 `poc-generated/` with the UID `<uid>-v2`; the Classic dashboard stays

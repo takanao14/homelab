@@ -22,6 +22,7 @@ type translation struct {
 }
 
 var translations = []translation{
+	{name: "cert-manager-overview", uid: "cert-manager-overview", build: buildCertManagerOverview, cutover: true},
 	{name: "network-overview", uid: "network-overview", build: buildNetworkOverview, cutover: true},
 	{name: "proxmox-otlp-overview", uid: "proxmox-otlp-overview", build: buildProxmoxOtlpOverview, cutover: true},
 	{name: "envoy-gateway-overview", uid: "envoy-gateway-overview", build: buildEnvoyGatewayOverview, cutover: true},
