@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/grafana/grafana-foundation-sdk/go/cog"
 	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboardv2"
 	"github.com/grafana/grafana-foundation-sdk/go/loki"
@@ -25,29 +24,6 @@ func promQuery() *prometheus.QueryV2Builder {
 // lokiQuery starts a query against the selected Loki datasource.
 func lokiQuery() *loki.QueryV2Builder {
 	return loki.NewQueryV2Builder().Datasource(queryDatasource("datasource"))
-}
-
-// queries assigns default refIds (A, B, ...); queryWithRef preserves explicit
-// references used by field overrides.
-func queries(qs ...cog.Builder[dashboardv2.DataQueryKind]) *dashboardv2.QueryGroupBuilder {
-	group := dashboardv2.NewQueryGroupBuilder()
-	for i, q := range qs {
-		ref := refID(i)
-		if named, ok := q.(namedPanelQuery); ok {
-			ref = named.ref
-		}
-		group.Target(dashboardv2.NewTargetBuilder().RefId(ref).Query(q))
-	}
-	return group
-}
-
-type namedPanelQuery struct {
-	cog.Builder[dashboardv2.DataQueryKind]
-	ref string
-}
-
-func queryWithRef(ref string, query cog.Builder[dashboardv2.DataQueryKind]) namedPanelQuery {
-	return namedPanelQuery{Builder: query, ref: ref}
 }
 
 func refID(i int) string {

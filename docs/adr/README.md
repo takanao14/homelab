@@ -141,7 +141,8 @@ follow those links for the changed parts.
 | [0084](0084-audit-guest-os-creation-recipes-after-migrations.md) | Audit guest OS creation recipes after migrations | Accepted |
 | [0085](0085-opt-in-service-guest-os-audits.md) | Opt in service guests to OS recipe audits | Accepted |
 | [0086](0086-manage-vpn-gateway-host-baseline.md) | Manage the VPN gateway host baseline with Ansible | Accepted |
-| [0087](0087-migrate-grafana-dashboards-to-dashboard-v2.md) | Migrate the dashboard generator to the dashboardv2 SDK API | Accepted |
+| [0087](0087-migrate-grafana-dashboards-to-dashboard-v2.md) | Migrate the dashboard generator to the dashboardv2 SDK API | Accepted; amended by [ADR-0088](0088-use-native-dashboard-v2-builders.md) |
+| [0088](0088-use-native-dashboard-v2-builders.md) | Use native dashboardv2 builders for dashboard structure | Accepted |
 
 ### Identity & secrets
 

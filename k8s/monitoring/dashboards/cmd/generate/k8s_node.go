@@ -33,6 +33,26 @@ const (
 
 func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 	const (
+		elementCPUUsageCurrent         = "cpu-usage-current"
+		elementMemoryUsageCurrent      = "memory-usage-current"
+		elementPodsRunning             = "pods-running"
+		elementCPUCores                = "cpu-cores"
+		elementMemoryTotal             = "memory-total"
+		elementUptime                  = "uptime"
+		elementCPUUsage                = "cpu-usage"
+		elementLoadAveragePerCPU       = "load-average-per-cpu"
+		elementMemoryUsage             = "memory-usage"
+		elementCPUPressureSome         = "cpu-pressure-some"
+		elementMemoryPressure          = "memory-pressure"
+		elementIOPressure              = "io-pressure"
+		elementFilesystemUsage         = "filesystem-usage"
+		elementDiskSpaceUsed           = "disk-space-used"
+		elementTimeUntilFilesystemFull = "time-until-filesystem-full"
+		elementDiskIO                  = "disk-i-o"
+		elementNetworkIO               = "network-i-o"
+	)
+
+	const (
 		clusterFilter = `cluster=~"$cluster"`
 		nodeFilter    = `nodename=~"$node"`
 		// Match node-overview filesystem exclusions.
@@ -95,283 +115,354 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 			Multi(true).
 			IncludeAll(true))
 
-	return newLayout(d).
-		Row("Summary", chartGrid()).
-		Panel(k8sNodePanelCPUUsageCurrent, dashboardv2.NewPanelBuilder().
-			Title("CPU Usage (Current)").
-			Visualization(bargauge.NewVisualizationV2Builder().
-				Unit("percent").
-				Min(0).
-				Max(100).
-				Orientation(common.VizOrientationAuto).
-				Decimals(1)).
-			Data(queries(promQuery().
+	d.Panel(elementCPUUsageCurrent, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelCPUUsageCurrent).
+		Title("CPU Usage (Current)").
+		Visualization(bargauge.NewVisualizationV2Builder().
+			Unit("percent").
+			Min(0).
+			Max(100).
+			Orientation(common.VizOrientationAuto).
+			Decimals(1)).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
 				Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", `+clusterFilter+`}[$__rate_interval]) `+joinNode+`) * 100)`).
-				LegendFormat("{{nodename}}")))).
-		Panel(k8sNodePanelMemoryUsageCurrent, dashboardv2.NewPanelBuilder().
-			Title("Memory Usage (Current)").
-			Visualization(bargauge.NewVisualizationV2Builder().
-				Unit("percent").
-				Min(0).
-				Max(100).
-				Orientation(common.VizOrientationAuto).
-				Decimals(1)).
-			Data(queries(promQuery().
+				LegendFormat("{{nodename}}")))))
+
+	d.Panel(elementMemoryUsageCurrent, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelMemoryUsageCurrent).
+		Title("Memory Usage (Current)").
+		Visualization(bargauge.NewVisualizationV2Builder().
+			Unit("percent").
+			Min(0).
+			Max(100).
+			Orientation(common.VizOrientationAuto).
+			Decimals(1)).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
 				// MemAvailable includes reclaimable cache, giving a more realistic usage figure than MemFree.
 				Expr(byNode(`(1 - node_memory_MemAvailable_bytes{`+clusterFilter+`} / node_memory_MemTotal_bytes{`+clusterFilter+`}) `+joinNode+` * 100`)).
-				LegendFormat("{{nodename}}")))).
-		Row("Node Capacity", chartGrid()).
-		Panel(k8sNodePanelPodsRunning, dashboardv2.NewPanelBuilder().
-			Title("Pods Running").
-			Description("Worker nodes only -- k0s controllers run no kubelet unless started with --enable-worker, so a control-plane node is absent here, not zero.").
-			Visualization(stat.NewVisualizationV2Builder().
-				Unit("short").
-				Min(0).
-				Thresholds(measurementThresholds()).
-				Orientation(common.VizOrientationAuto).
-				JustifyMode(common.BigValueJustifyModeCenter)).
-			Data(queries(promQuery().
+				LegendFormat("{{nodename}}")))))
+
+	d.Panel(elementPodsRunning, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelPodsRunning).
+		Title("Pods Running").
+		Description("Worker nodes only -- k0s controllers run no kubelet unless started with --enable-worker, so a control-plane node is absent here, not zero.").
+		Visualization(stat.NewVisualizationV2Builder().
+			Unit("short").
+			Min(0).
+			Thresholds(measurementThresholds()).
+			Orientation(common.VizOrientationAuto).
+			JustifyMode(common.BigValueJustifyModeCenter)).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
 				// Deduplicate node_uname_info before joining kubelet node labels.
 				Expr(`sum by (nodename) (kubelet_running_pods{`+clusterFilter+`} * on(node) group_left(nodename) (label_replace(max by (nodename) (node_uname_info{`+clusterFilter+`, `+nodeFilter+`}), "node", "$1", "nodename", "(.*)")))`).
-				LegendFormat("{{nodename}}")))).
-		Panel(k8sNodePanelCPUCores, dashboardv2.NewPanelBuilder().
-			Title("CPU Cores").
-			Description("Logical cores per node. Inventory, not a measurement -- it changes only when a VM is resized.").
-			Visualization(stat.NewVisualizationV2Builder().
-					Unit("short").
-					Min(0).
-					Thresholds(measurementThresholds()).
-					Orientation(common.VizOrientationAuto).
-					JustifyMode(common.BigValueJustifyModeCenter)).
-			Data(queries( // Core count has no meaningful maximum, so use a stat.
-				promQuery().
-					Expr(`count by (nodename) (node_cpu_seconds_total{mode="idle", `+clusterFilter+`} `+joinNode+`)`).
-					LegendFormat("{{nodename}}")))).
-		Panel(k8sNodePanelMemoryTotal, dashboardv2.NewPanelBuilder().
-			Title("Memory Total").
-			Visualization(stat.NewVisualizationV2Builder().
-				Unit("bytes").
-				Min(0).
-				Thresholds(measurementThresholds()).
-				Orientation(common.VizOrientationAuto).
-				JustifyMode(common.BigValueJustifyModeCenter)).
-			Data(queries(promQuery().
+				LegendFormat("{{nodename}}")))))
+
+	d.Panel(elementCPUCores, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelCPUCores).
+		Title("CPU Cores").
+		Description("Logical cores per node. Inventory, not a measurement -- it changes only when a VM is resized.").
+		Visualization(stat.NewVisualizationV2Builder().
+			Unit("short").
+			Min(0).
+			Thresholds(measurementThresholds()).
+			Orientation(common.VizOrientationAuto).
+			JustifyMode(common.BigValueJustifyModeCenter)).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			// Core count has no meaningful maximum, so use a stat.
+			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+				Expr(`count by (nodename) (node_cpu_seconds_total{mode="idle", `+clusterFilter+`} `+joinNode+`)`).
+				LegendFormat("{{nodename}}")))))
+
+	d.Panel(elementMemoryTotal, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelMemoryTotal).
+		Title("Memory Total").
+		Visualization(stat.NewVisualizationV2Builder().
+			Unit("bytes").
+			Min(0).
+			Thresholds(measurementThresholds()).
+			Orientation(common.VizOrientationAuto).
+			JustifyMode(common.BigValueJustifyModeCenter)).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
 				Expr(byNode(`node_memory_MemTotal_bytes{`+clusterFilter+`} `+joinNode)).
-				LegendFormat("{{nodename}}")))).
-		Panel(k8sNodePanelUptime, dashboardv2.NewPanelBuilder().
-			Title("Uptime").
-			Visualization(stat.NewVisualizationV2Builder().
-				Unit("s").
-				Min(0).
-				GraphMode(common.BigValueGraphModeNone).
-				ColorMode(common.BigValueColorModeBackground).
-				Orientation(common.VizOrientationAuto).
-				JustifyMode(common.BigValueJustifyModeCenter).
-				Thresholds(dashboardv2.NewThresholdsConfigBuilder().
-					Mode(dashboardv2.ThresholdsModeAbsolute).
-					Steps([]dashboardv2.Threshold{
-						{Value: nil, Color: "red"},
-						{Value: new(float64(3600)), Color: "yellow"},
-						{Value: new(float64(86400)), Color: "green"},
-					}))).
-			Data(queries(promQuery().
+				LegendFormat("{{nodename}}")))))
+
+	d.Panel(elementUptime, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelUptime).
+		Title("Uptime").
+		Visualization(stat.NewVisualizationV2Builder().
+			Unit("s").
+			Min(0).
+			GraphMode(common.BigValueGraphModeNone).
+			ColorMode(common.BigValueColorModeBackground).
+			Orientation(common.VizOrientationAuto).
+			JustifyMode(common.BigValueJustifyModeCenter).
+			Thresholds(dashboardv2.NewThresholdsConfigBuilder().
+				Mode(dashboardv2.ThresholdsModeAbsolute).
+				Steps([]dashboardv2.Threshold{
+					{Value: nil, Color: "red"},
+					{Value: new(float64(3600)), Color: "yellow"},
+					{Value: new(float64(86400)), Color: "green"},
+				}))).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
 				Expr(byNode(`(time() - node_boot_time_seconds{`+clusterFilter+`}) `+joinNode)).
-				LegendFormat("{{nodename}}")))).
-		Row("CPU Usage (%)", wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeStandard)).
-		Panel(k8sNodePanelCPUUsage, dashboardv2.NewPanelBuilder().
-			Title("CPU Usage (%)").
-			Visualization(timeseries.NewVisualizationV2Builder().
-				Unit("percent").
-				Min(0).
-				Max(100).
-				Tooltip(tooltipAll).
-				Legend(legend)).
-			Data(queries(promQuery().
+				LegendFormat("{{nodename}}")))))
+
+	d.Panel(elementCPUUsage, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelCPUUsage).
+		Title("CPU Usage (%)").
+		Visualization(timeseries.NewVisualizationV2Builder().
+			Unit("percent").
+			Min(0).
+			Max(100).
+			Tooltip(tooltipAll).
+			Legend(legend)).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
 				Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", `+clusterFilter+`}[$__rate_interval]) `+joinNode+`) * 100)`).
-				LegendFormat("{{nodename}}")))).
-		Row("Load Average per CPU", wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeStandard)).
-		Panel(k8sNodePanelLoadAveragePerCPU, dashboardv2.NewPanelBuilder().
-			Title("Load Average per CPU").
-			Description("Run-queue length divided by the node's CPU count -- the fraction of CPUs with work waiting, so 100% is saturated regardless of node size (red line). Raw load averages are not comparable across this cluster: k0s-cp1 has 2 CPUs against 10 on the workers, so the same load1 of 0.08 is 13.5%/CPU on cp1 vs 0.9% on worker1.").
-			Visualization(timeseries.NewVisualizationV2Builder().
-				// Match node-overview's normalized percentage display.
-				Unit("percentunit").
-				Min(0).
-				Tooltip(tooltipAll).
-				Legend(legend).
-				Thresholds(saturationThresholds).
-				ThresholdsStyle(common.NewGraphThresholdsStyleConfigBuilder().
-					Mode(common.GraphThresholdsStyleModeLine)).
-				// 5m/15m as dashed to distinguish from 1m (solid) without adding noise.
-				Override(dashboardv2.MatcherConfig{Id: "byRegexp", Options: ".* 5m$"}, []dashboardv2.DynamicConfigValue{
-					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
-				}).
-				Override(dashboardv2.MatcherConfig{Id: "byRegexp", Options: ".* 15m$"}, []dashboardv2.DynamicConfigValue{
-					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
-				})).
-			Data(queries(promQuery().
+				LegendFormat("{{nodename}}")))))
+
+	d.Panel(elementLoadAveragePerCPU, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelLoadAveragePerCPU).
+		Title("Load Average per CPU").
+		Description("Run-queue length divided by the node's CPU count -- the fraction of CPUs with work waiting, so 100% is saturated regardless of node size (red line). Raw load averages are not comparable across this cluster: k0s-cp1 has 2 CPUs against 10 on the workers, so the same load1 of 0.08 is 13.5%/CPU on cp1 vs 0.9% on worker1.").
+		Visualization(timeseries.NewVisualizationV2Builder().
+			// Match node-overview's normalized percentage display.
+			Unit("percentunit").
+			Min(0).
+			Tooltip(tooltipAll).
+			Legend(legend).
+			Thresholds(saturationThresholds).
+			ThresholdsStyle(common.NewGraphThresholdsStyleConfigBuilder().
+				Mode(common.GraphThresholdsStyleModeLine)).
+			// 5m/15m as dashed to distinguish from 1m (solid) without adding noise.
+			Override(dashboardv2.MatcherConfig{Id: "byRegexp", Options: ".* 5m$"}, []dashboardv2.DynamicConfigValue{
+				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
+			}).
+			Override(dashboardv2.MatcherConfig{Id: "byRegexp", Options: ".* 15m$"}, []dashboardv2.DynamicConfigValue{
+				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
+			})).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
 				Expr(byNode(perCore(`node_load1{`+clusterFilter+`}`)+` `+joinNode)).
-				LegendFormat("{{nodename}} 1m"),
-				promQuery().
-					Expr(byNode(perCore(`node_load5{`+clusterFilter+`}`)+` `+joinNode)).
-					LegendFormat("{{nodename}} 5m"),
-				promQuery().
-					Expr(byNode(perCore(`node_load15{`+clusterFilter+`}`)+` `+joinNode)).
-					LegendFormat("{{nodename}} 15m")))).
-		Row("Memory", wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeStandard)).
-		Panel(k8sNodePanelMemoryUsage, dashboardv2.NewPanelBuilder().
-			Title("Memory Usage").
-			Visualization(timeseries.NewVisualizationV2Builder().
-				Unit("bytes").
-				Min(0).
-				Tooltip(tooltipAll).
-				Legend(legend).
-				// Draw available memory dotted against solid used memory.
-				Override(dashboardv2.MatcherConfig{Id: "byRegexp", Options: ".* Available$"}, []dashboardv2.DynamicConfigValue{
-					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
-				})).
-			Data(queries(promQuery().
+				LegendFormat("{{nodename}} 1m"))).
+			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+				Expr(byNode(perCore(`node_load5{`+clusterFilter+`}`)+` `+joinNode)).
+				LegendFormat("{{nodename}} 5m"))).
+			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+				Expr(byNode(perCore(`node_load15{`+clusterFilter+`}`)+` `+joinNode)).
+				LegendFormat("{{nodename}} 15m")))))
+
+	d.Panel(elementMemoryUsage, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelMemoryUsage).
+		Title("Memory Usage").
+		Visualization(timeseries.NewVisualizationV2Builder().
+			Unit("bytes").
+			Min(0).
+			Tooltip(tooltipAll).
+			Legend(legend).
+			// Draw available memory dotted against solid used memory.
+			Override(dashboardv2.MatcherConfig{Id: "byRegexp", Options: ".* Available$"}, []dashboardv2.DynamicConfigValue{
+				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
+			})).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
 				Expr(byNode(`(node_memory_MemTotal_bytes{`+clusterFilter+`} - node_memory_MemAvailable_bytes{`+clusterFilter+`}) `+joinNode)).
-				LegendFormat("{{nodename}} Used"),
-				promQuery().
-					Expr(byNode(`node_memory_MemAvailable_bytes{`+clusterFilter+`} `+joinNode)).
-					LegendFormat("{{nodename}} Available")))).
-		// PSI `some` is partial stall time; `full` is total stall time.
-		// Linux exposes no CPU `full` series.
-		Row("CPU Pressure (some)", wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeStandard)).
-		Panel(k8sNodePanelCPUPressureSome, dashboardv2.NewPanelBuilder().
-			Title("CPU Pressure (some)").
-			Visualization(timeseries.NewVisualizationV2Builder().
-				Unit("percent").
-				Min(0).
-				Tooltip(tooltipAll).
-				Legend(legend)).
-			Data(queries(promQuery().
+				LegendFormat("{{nodename}} Used"))).
+			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+				Expr(byNode(`node_memory_MemAvailable_bytes{`+clusterFilter+`} `+joinNode)).
+				LegendFormat("{{nodename}} Available")))))
+
+	d.Panel(elementCPUPressureSome, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelCPUPressureSome).
+		Title("CPU Pressure (some)").
+		Visualization(timeseries.NewVisualizationV2Builder().
+			Unit("percent").
+			Min(0).
+			Tooltip(tooltipAll).
+			Legend(legend)).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
 				Expr(byNode(`rate(node_pressure_cpu_waiting_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
-				LegendFormat("{{nodename}}")))).
-		Row("Memory Pressure", chartGrid()).
-		Panel(k8sNodePanelMemoryPressure, dashboardv2.NewPanelBuilder().
-			Title("Memory Pressure").
-			Visualization(timeseries.NewVisualizationV2Builder().
-				Unit("percent").
-				Min(0).
-				Tooltip(tooltipAll).
-				Legend(legend).
-				Override(dashboardv2.MatcherConfig{Id: "byRegexp", Options: ".* full$"}, []dashboardv2.DynamicConfigValue{
-					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
-				})).
-			Data(queries(queryWithRef("Some", promQuery().
+				LegendFormat("{{nodename}}")))))
+
+	d.Panel(elementMemoryPressure, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelMemoryPressure).
+		Title("Memory Pressure").
+		Visualization(timeseries.NewVisualizationV2Builder().
+			Unit("percent").
+			Min(0).
+			Tooltip(tooltipAll).
+			Legend(legend).
+			Override(dashboardv2.MatcherConfig{Id: "byRegexp", Options: ".* full$"}, []dashboardv2.DynamicConfigValue{
+				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
+			})).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("Some").Query(promQuery().
 				RefId("Some").
 				Expr(byNode(`rate(node_pressure_memory_waiting_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
-				LegendFormat("{{nodename}} some")),
-				queryWithRef("Full", promQuery().
-					RefId("Full").
-					Expr(byNode(`rate(node_pressure_memory_stalled_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
-					LegendFormat("{{nodename}} full"))))).
-		Panel(k8sNodePanelIOPressure, dashboardv2.NewPanelBuilder().
-			Title("IO Pressure").
-			Visualization(timeseries.NewVisualizationV2Builder().
-				Unit("percent").
-				Min(0).
-				Tooltip(tooltipAll).
-				Legend(legend).
-				Override(dashboardv2.MatcherConfig{Id: "byRegexp", Options: ".* full$"}, []dashboardv2.DynamicConfigValue{
-					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
-				})).
-			Data(queries(queryWithRef("Some", promQuery().
+				LegendFormat("{{nodename}} some"))).
+			Target(dashboardv2.NewTargetBuilder().RefId("Full").Query(promQuery().
+				RefId("Full").
+				Expr(byNode(`rate(node_pressure_memory_stalled_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
+				LegendFormat("{{nodename}} full")))))
+
+	d.Panel(elementIOPressure, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelIOPressure).
+		Title("IO Pressure").
+		Visualization(timeseries.NewVisualizationV2Builder().
+			Unit("percent").
+			Min(0).
+			Tooltip(tooltipAll).
+			Legend(legend).
+			Override(dashboardv2.MatcherConfig{Id: "byRegexp", Options: ".* full$"}, []dashboardv2.DynamicConfigValue{
+				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
+			})).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("Some").Query(promQuery().
 				RefId("Some").
 				Expr(byNode(`rate(node_pressure_io_waiting_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
-				LegendFormat("{{nodename}} some")),
-				queryWithRef("Full", promQuery().
-					RefId("Full").
-					Expr(byNode(`rate(node_pressure_io_stalled_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
-					LegendFormat("{{nodename}} full"))))).
-		Row("Disk", chartGrid()).
-		Panel(k8sNodePanelFilesystemUsage, dashboardv2.NewPanelBuilder().
-			Title("Filesystem Usage (%)").
-			Visualization(bargauge.NewVisualizationV2Builder().
-				Unit("percent").
-				Min(0).
-				Max(100).
-				Orientation(common.VizOrientationHorizontal).
-				Decimals(1)).
-			Data(queries(promQuery().
+				LegendFormat("{{nodename}} some"))).
+			Target(dashboardv2.NewTargetBuilder().RefId("Full").Query(promQuery().
+				RefId("Full").
+				Expr(byNode(`rate(node_pressure_io_stalled_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
+				LegendFormat("{{nodename}} full")))))
+
+	d.Panel(elementFilesystemUsage, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelFilesystemUsage).
+		Title("Filesystem Usage (%)").
+		Visualization(bargauge.NewVisualizationV2Builder().
+			Unit("percent").
+			Min(0).
+			Max(100).
+			Orientation(common.VizOrientationHorizontal).
+			Decimals(1)).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
 				Expr(`sort_desc((1 - node_filesystem_avail_bytes{`+clusterFilter+`, `+fsFilter+`} / node_filesystem_size_bytes{`+clusterFilter+`, `+fsFilter+`}) `+joinNode+` * 100)`).
 				Instant(true).Range(false).
-				LegendFormat("{{nodename}} {{mountpoint}}")))).
-		Panel(k8sNodePanelDiskSpaceUsed, dashboardv2.NewPanelBuilder().
-			Title("Disk Space Used").
-			Visualization(timeseries.NewVisualizationV2Builder().
-				Unit("bytes").
-				Min(0).
-				Tooltip(tooltipAll).
-				Legend(legend).
-				Override(dashboardv2.MatcherConfig{Id: "byRegexp", Options: ".* Total$"}, []dashboardv2.DynamicConfigValue{
-					{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
-				})).
-			Data(queries(promQuery().
+				LegendFormat("{{nodename}} {{mountpoint}}")))))
+
+	d.Panel(elementDiskSpaceUsed, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelDiskSpaceUsed).
+		Title("Disk Space Used").
+		Visualization(timeseries.NewVisualizationV2Builder().
+			Unit("bytes").
+			Min(0).
+			Tooltip(tooltipAll).
+			Legend(legend).
+			Override(dashboardv2.MatcherConfig{Id: "byRegexp", Options: ".* Total$"}, []dashboardv2.DynamicConfigValue{
+				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
+			})).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
 				Expr(byNode(`(node_filesystem_size_bytes{`+clusterFilter+`, `+fsFilter+`} - node_filesystem_avail_bytes{`+clusterFilter+`, `+fsFilter+`}) `+joinNode, "mountpoint")).
-				LegendFormat("{{nodename}} {{mountpoint}} Used"),
-				promQuery().
-					Expr(byNode(`node_filesystem_size_bytes{`+clusterFilter+`, `+fsFilter+`} `+joinNode, "mountpoint")).
-					LegendFormat("{{nodename}} {{mountpoint}} Total")))).
-		Row("Time Until Filesystem Full", wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeStandard)).
-		Panel(k8sNodePanelTimeUntilFilesystemFull, dashboardv2.NewPanelBuilder().
-			Title("Time Until Filesystem Full").
-			// deriv is negative while filling, so /-86400 gives positive days;
-			// the clamp stops idle filesystems flattening the bar scale.
-			Description("Days until free space reaches zero, projected from the last 7 days. Capped at 3650 d; filesystems that are not filling are omitted.").
-			Visualization(bargauge.NewVisualizationV2Builder().
-				Unit("d").
-				Min(0).
-				Decimals(0).
-				Thresholds(timeToFullThresholds()).
-				Orientation(common.VizOrientationHorizontal)).
-			Data(queries(promQuery().
+				LegendFormat("{{nodename}} {{mountpoint}} Used"))).
+			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+				Expr(byNode(`node_filesystem_size_bytes{`+clusterFilter+`, `+fsFilter+`} `+joinNode, "mountpoint")).
+				LegendFormat("{{nodename}} {{mountpoint}} Total")))))
+
+	d.Panel(elementTimeUntilFilesystemFull, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelTimeUntilFilesystemFull).
+		Title("Time Until Filesystem Full").
+		// deriv is negative while filling, so /-86400 gives positive days;
+		// the clamp stops idle filesystems flattening the bar scale.
+		Description("Days until free space reaches zero, projected from the last 7 days. Capped at 3650 d; filesystems that are not filling are omitted.").
+		Visualization(bargauge.NewVisualizationV2Builder().
+			Unit("d").
+			Min(0).
+			Decimals(0).
+			Thresholds(timeToFullThresholds()).
+			Orientation(common.VizOrientationHorizontal)).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
 				Expr(`sort(clamp_max((node_filesystem_avail_bytes{`+clusterFilter+`, `+fsFilter+`} / deriv(node_filesystem_avail_bytes{`+clusterFilter+`, `+fsFilter+`}[7d]) / -86400) > 0, 3650) `+joinNode+`)`).
 				Instant(true).Range(false).
-				LegendFormat("{{nodename}} {{mountpoint}}")))).
-		Row("Disk I/O", wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeStandard)).
-		Panel(k8sNodePanelDiskIO, dashboardv2.NewPanelBuilder().
-			Title("Disk I/O").
-			Visualization(timeseries.NewVisualizationV2Builder().
-				Unit("Bps").
-				Tooltip(tooltipAll).
-				Legend(legend).
-				Thresholds(zeroLineThresholds).
-				ThresholdsStyle(zeroLineStyle).
-				OverrideByQuery("Write", []dashboardv2.DynamicConfigValue{
-					{Id: "custom.transform", Value: "negative-Y"},
-				})).
-			Data(queries(queryWithRef("Read", promQuery().
+				LegendFormat("{{nodename}} {{mountpoint}}")))))
+
+	d.Panel(elementDiskIO, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelDiskIO).
+		Title("Disk I/O").
+		Visualization(timeseries.NewVisualizationV2Builder().
+			Unit("Bps").
+			Tooltip(tooltipAll).
+			Legend(legend).
+			Thresholds(zeroLineThresholds).
+			ThresholdsStyle(zeroLineStyle).
+			OverrideByQuery("Write", []dashboardv2.DynamicConfigValue{
+				{Id: "custom.transform", Value: "negative-Y"},
+			})).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("Read").Query(promQuery().
 				RefId("Read").
 				// Exclude dm-*, loop*, and sr* to avoid double-counting or noise from virtual/optical devices.
 				Expr(byNode(`rate(node_disk_read_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[$__rate_interval]) `+joinNode, "device")).
-				LegendFormat("{{nodename}} {{device}} Read")),
-				queryWithRef("Write", promQuery().
-					RefId("Write").
-					Expr(byNode(`rate(node_disk_written_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[$__rate_interval]) `+joinNode, "device")).
-					LegendFormat("{{nodename}} {{device}} Write"))))).
-		Row("Network", wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeStandard)).
-		Panel(k8sNodePanelNetworkIO, dashboardv2.NewPanelBuilder().
-			Title("Network I/O").
-			Description("Traffic across each node's physical interfaces. The CNI's per-pod veths and Cilium's own devices are excluded, so pod traffic is counted once, where it leaves the node, rather than again on every virtual hop.").
-			Visualization(timeseries.NewVisualizationV2Builder().
-				Unit("Bps").
-				Tooltip(tooltipAll).
-				Legend(legend).
-				Thresholds(zeroLineThresholds).
-				ThresholdsStyle(zeroLineStyle).
-				OverrideByQuery("Tx", []dashboardv2.DynamicConfigValue{
-					{Id: "custom.transform", Value: "negative-Y"},
-				})).
-			Data(queries(queryWithRef("Rx", promQuery().
+				LegendFormat("{{nodename}} {{device}} Read"))).
+			Target(dashboardv2.NewTargetBuilder().RefId("Write").Query(promQuery().
+				RefId("Write").
+				Expr(byNode(`rate(node_disk_written_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[$__rate_interval]) `+joinNode, "device")).
+				LegendFormat("{{nodename}} {{device}} Write")))))
+
+	d.Panel(elementNetworkIO, dashboardv2.NewPanelBuilder().
+		Id(k8sNodePanelNetworkIO).
+		Title("Network I/O").
+		Description("Traffic across each node's physical interfaces. The CNI's per-pod veths and Cilium's own devices are excluded, so pod traffic is counted once, where it leaves the node, rather than again on every virtual hop.").
+		Visualization(timeseries.NewVisualizationV2Builder().
+			Unit("Bps").
+			Tooltip(tooltipAll).
+			Legend(legend).
+			Thresholds(zeroLineThresholds).
+			ThresholdsStyle(zeroLineStyle).
+			OverrideByQuery("Tx", []dashboardv2.DynamicConfigValue{
+				{Id: "custom.transform", Value: "negative-Y"},
+			})).
+		Data(dashboardv2.NewQueryGroupBuilder().
+			Target(dashboardv2.NewTargetBuilder().RefId("Rx").Query(promQuery().
 				RefId("Rx").
 				Expr(`sum by (nodename) (rate(node_network_receive_bytes_total{`+clusterFilter+`, `+netDeviceFilter+`} [$__rate_interval]) `+joinNode+`)`).
-				LegendFormat("{{nodename}} Rx")),
-				queryWithRef("Tx", promQuery().
-					RefId("Tx").
-					Expr(`sum by (nodename) (rate(node_network_transmit_bytes_total{`+clusterFilter+`, `+netDeviceFilter+`}[$__rate_interval]) `+joinNode+`)`).
-					LegendFormat("{{nodename}} Tx"))))).
-		Build()
+				LegendFormat("{{nodename}} Rx"))).
+			Target(dashboardv2.NewTargetBuilder().RefId("Tx").Query(promQuery().
+				RefId("Tx").
+				Expr(`sum by (nodename) (rate(node_network_transmit_bytes_total{`+clusterFilter+`, `+netDeviceFilter+`}[$__rate_interval]) `+joinNode+`)`).
+				LegendFormat("{{nodename}} Tx")))))
+
+	built, err := d.RowsLayout(dashboardv2.NewRowsBuilder().
+		Row(dashboardv2.NewRowBuilder().Title("Summary").AutoGridLayout(chartGrid().
+			WithItem(elementCPUUsageCurrent).
+			WithItem(elementMemoryUsageCurrent))).
+		Row(dashboardv2.NewRowBuilder().Title("Node Capacity").AutoGridLayout(chartGrid().
+			WithItem(elementPodsRunning).
+			WithItem(elementCPUCores).
+			WithItem(elementMemoryTotal).
+			WithItem(elementUptime))).
+		Row(dashboardv2.NewRowBuilder().Title("CPU Usage (%)").AutoGridLayout(wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeStandard).
+			WithItem(elementCPUUsage))).
+		Row(dashboardv2.NewRowBuilder().Title("Load Average per CPU").AutoGridLayout(wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeStandard).
+			WithItem(elementLoadAveragePerCPU))).
+		Row(dashboardv2.NewRowBuilder().Title("Memory").AutoGridLayout(wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeStandard).
+			WithItem(elementMemoryUsage))).
+		// PSI `some` is partial stall time; `full` is total stall time.
+		// Linux exposes no CPU `full` series.
+		Row(dashboardv2.NewRowBuilder().Title("CPU Pressure (some)").AutoGridLayout(wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeStandard).
+			WithItem(elementCPUPressureSome))).
+		Row(dashboardv2.NewRowBuilder().Title("Memory Pressure").AutoGridLayout(chartGrid().
+			WithItem(elementMemoryPressure).
+			WithItem(elementIOPressure))).
+		Row(dashboardv2.NewRowBuilder().Title("Disk").AutoGridLayout(chartGrid().
+			WithItem(elementFilesystemUsage).
+			WithItem(elementDiskSpaceUsed))).
+		Row(dashboardv2.NewRowBuilder().Title("Time Until Filesystem Full").AutoGridLayout(wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeStandard).
+			WithItem(elementTimeUntilFilesystemFull))).
+		Row(dashboardv2.NewRowBuilder().Title("Disk I/O").AutoGridLayout(wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeStandard).
+			WithItem(elementDiskIO))).
+		Row(dashboardv2.NewRowBuilder().Title("Network").AutoGridLayout(wideGrid(dashboardv2.AutoGridLayoutSpecRowHeightModeStandard).
+			WithItem(elementNetworkIO)))).Build()
+	if err != nil {
+		return nil, err
+	}
+	return &built, nil
 }

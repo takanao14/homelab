@@ -4,6 +4,7 @@
 - **Category:** Observability
 - **Date:** 2026-11-11
 - **Last reviewed:** 2026-11-12
+- **Amended by:** [ADR-0088](0088-use-native-dashboard-v2-builders.md)
 - **Review trigger:** The first rewritten dashboard has replaced its Classic
   version, with the same file name and UID, through the sandbox ConfigMap
   sidecar.

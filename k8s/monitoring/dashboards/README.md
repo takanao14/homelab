@@ -36,7 +36,6 @@ deployment artifacts in sync.
 
 - `cmd/generate/main.go`: dashboard registry and JSON output
 - `cmd/generate/helpers.go`: shared visual conventions
-- `cmd/generate/layout.go`: rows and AutoGrid panel placement
 - `cmd/generate/proxmox_nodes.go`: shared Proxmox inventory loader
 - `cmd/generate/node_exporter_targets.go`: node-exporter target classification
 - `cmd/generate/validate*.go`: generated-dashboard invariants
@@ -126,16 +125,20 @@ Name rows by subject or question, not chart type. Use `Summary` only for a
 mixed high-level row; prefer `Status` or a component-qualified name when more
 specific.
 
-`newLayout` declares rows and places their panels with AutoGrid. Use `statGrid`
+Register panels with the SDK's `DashboardBuilder.Panel` and declare placement
+separately with `RowsLayout`, `Row`, and `AutoGrid.WithItem`. Define element keys
+as constants local to each dashboard builder and reuse them for registration and
+layout references; keep keys stable when titles change. Use `statGrid`
 for single-value summaries, `chartGrid` for peer charts, and `wideGrid` for
 many-value stats, tables, and logs. Split a row when panels need different
 sizes. Use tall rows for dense device inventories. Grafana wraps panels for
 narrow screens; do not assign grid coordinates.
 
-Pass a fixed, positive panel ID to `Panel(id, builder)` using explicitly numbered
+Set a fixed, positive panel ID with `PanelBuilder.Id` using explicitly numbered
 constants. Keep IDs across title/layout changes and do not reuse retired IDs.
-Element names derive from unique panel titles. Wrap queries in `queries(...)`
-and preserve references used by overrides with `queryWithRef(name, query)`.
+Build query groups and targets with the SDK's `QueryGroupBuilder` and
+`TargetBuilder`, setting explicit target reference IDs and preserving query
+reference IDs used by transformations and overrides.
 Attach transformations to the query group; table cell overrides use
 `custom.cellOptions`.
 
