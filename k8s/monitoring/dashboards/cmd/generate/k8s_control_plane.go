@@ -144,7 +144,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(apiserver_request_total{`+clusterFilter+`,code=~"5.."}[5m]))) or vector(0)`).
 				LegendFormat("5xx")))))
 
@@ -159,7 +159,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(apiserver_request_total{`+clusterFilter+`,code="429"}[5m]))) or vector(0)`).
 				LegendFormat("429")))))
 
@@ -174,7 +174,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(apiserver_flowcontrol_current_inqueue_requests{`+clusterFilter+`}) or vector(0)`).
 				LegendFormat("Queued")))))
 
@@ -189,7 +189,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(coredns_dns_responses_total{`+clusterFilter+`,rcode="SERVFAIL"}[5m]))) or vector(0)`).
 				LegendFormat("SERVFAIL")))))
 
@@ -204,7 +204,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(kube_pod_status_unschedulable{`+clusterFilter+`,`+nsFilter+`}) or vector(0)`).
 				LegendFormat("Unschedulable")))))
 
@@ -219,7 +219,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(kube_job_status_failed{`+clusterFilter+`,`+nsFilter+`}) or vector(0)`).
 				LegendFormat("Failed")))))
 
@@ -234,7 +234,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(kube_node_spec_unschedulable{`+clusterFilter+`}) or vector(0)`).
 				LegendFormat("Cordoned")))))
 
@@ -249,7 +249,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// status="true" only selects the "true" series; == 1 checks it's actually asserted.
 				Expr(`count(kube_node_status_condition{`+clusterFilter+`,condition=~"MemoryPressure|DiskPressure|PIDPressure|NetworkUnavailable",status="true"} == 1) or vector(0)`).
 				LegendFormat("Under pressure")))))
@@ -265,7 +265,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(kube_persistentvolume_status_phase{`+clusterFilter+`,phase!="Bound"} == 1) or vector(0)`).
 				LegendFormat("Not bound")))))
 
@@ -278,7 +278,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, code) (rate(apiserver_request_total{`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{code}}")))))
 
@@ -292,7 +292,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.99, sum by (cluster, le, verb) (rate(apiserver_request_duration_seconds_bucket{`+clusterFilter+`,subresource="",verb!="WATCH"}[$__rate_interval]))) and on (cluster, verb) sum by (cluster, verb) (rate(apiserver_request_duration_seconds_count{`+clusterFilter+`,subresource="",verb!="WATCH"}[$__rate_interval])) > 0`).
 				LegendFormat("{{cluster}} {{verb}}")))))
 
@@ -306,7 +306,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, request_kind) (apiserver_current_inflight_requests{`+clusterFilter+`})`).
 				LegendFormat("{{cluster}} {{request_kind}}")))))
 
@@ -320,7 +320,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, priority_level) (apiserver_flowcontrol_current_inqueue_requests{`+clusterFilter+`})`).
 				LegendFormat("{{cluster}} {{priority_level}}")))))
 
@@ -334,7 +334,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, priority_level) (apiserver_flowcontrol_current_executing_requests{`+clusterFilter+`})`).
 				LegendFormat("{{cluster}} {{priority_level}}")))))
 
@@ -348,7 +348,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, flow_schema, priority_level) (rate(apiserver_flowcontrol_rejected_requests_total{`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{priority_level}} {{flow_schema}}")))))
 
@@ -362,10 +362,10 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(apiserver_storage_decode_errors_total{`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} decode errors"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(apiserver_storage_data_key_generation_failures_total{`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} key generation failures")))))
 
@@ -379,7 +379,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.99, sum by (cluster, le, operation) (rate(etcd_request_duration_seconds_bucket{`+clusterFilter+`}[$__rate_interval])))`).
 				LegendFormat("{{cluster}} {{operation}}")))))
 
@@ -393,7 +393,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, operation) (rate(etcd_request_duration_seconds_count{`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{operation}}")))))
 
@@ -407,7 +407,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, operation) (rate(etcd_request_errors_total{`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{operation}}")))))
 
@@ -421,7 +421,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (apiserver_longrunning_requests{`+clusterFilter+`})`).
 				LegendFormat("{{cluster}}")))))
 
@@ -435,7 +435,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "decimals", Value: 0},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(topk(20, sum by (cluster, resource) (apiserver_storage_objects{`+clusterFilter+`})))`).
 				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable).
 				LegendFormat("{{cluster}} {{resource}}"))).Transformation(dashboardv2.NewTransformationBuilder().Group("merge").Options(map[string]any{})).Transformation(dashboardv2.NewTransformationBuilder().Group("organize").Options(map[string]any{
@@ -461,7 +461,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(coredns_panics_total{`+clusterFilter+`}[1h]))) or vector(0)`).
 				LegendFormat("Panics")))))
 
@@ -476,7 +476,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(coredns_forward_healthcheck_broken_total{`+clusterFilter+`}[5m]))) or vector(0)`).
 				LegendFormat("Failures")))))
 
@@ -491,7 +491,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(coredns_reload_failed_total{`+clusterFilter+`}[1h]))) or vector(0)`).
 				LegendFormat("Reload failures")))))
 
@@ -504,7 +504,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, rcode) (rate(coredns_dns_responses_total{`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{rcode}}")))))
 
@@ -517,7 +517,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(coredns_dns_request_duration_seconds_bucket{`+clusterFilter+`}[$__rate_interval])))`).
 				LegendFormat("{{cluster}} p99")))))
 
@@ -531,7 +531,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(coredns_cache_hits_total{`+clusterFilter+`}[$__rate_interval])) / clamp_min(sum by (cluster) (rate(coredns_cache_requests_total{`+clusterFilter+`}[$__rate_interval])), 1e-9)`).
 				LegendFormat("{{cluster}} hit ratio")))))
 
@@ -544,7 +544,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.99, sum by (cluster, le, proxy_name, to) (rate(coredns_proxy_request_duration_seconds_bucket{`+clusterFilter+`}[$__rate_interval])))`).
 				LegendFormat("{{cluster}} {{proxy_name}} {{to}}")))))
 
@@ -559,7 +559,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(issueThresholds).
 			Decimals(0)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(sum by (cluster, namespace) (kube_pod_status_unschedulable{`+clusterFilter+`,`+nsFilter+`}))`).
 				Instant(true).Range(false).
 				LegendFormat("{{cluster}} {{namespace}}")))))
@@ -575,7 +575,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(issueThresholds).
 			Decimals(0)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(kube_node_spec_unschedulable{`+clusterFilter+`} > 0)`).
 				Instant(true).Range(false).
 				LegendFormat("{{cluster}} {{node}}")))))
@@ -590,7 +590,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "decimals", Value: 0},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, namespace, pod, container, reason) (kube_pod_container_status_waiting_reason{`+clusterFilter+`,`+nsFilter+`} == 1)`).
 				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable).
 				LegendFormat("{{cluster}} {{namespace}}/{{pod}}/{{container}} {{reason}}"))).Transformation(dashboardv2.NewTransformationBuilder().Group("merge").Options(map[string]any{})).Transformation(dashboardv2.NewTransformationBuilder().Group("organize").Options(map[string]any{
@@ -618,7 +618,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "decimals", Value: 0},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(kube_job_status_failed{`+clusterFilter+`,`+nsFilter+`} > 0)`).
 				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable).
 				LegendFormat("{{cluster}} {{namespace}}/{{job_name}}"))).Transformation(dashboardv2.NewTransformationBuilder().Group("merge").Options(map[string]any{})).Transformation(dashboardv2.NewTransformationBuilder().Group("organize").Options(map[string]any{
@@ -644,7 +644,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, result) (rate(scheduler_schedule_attempts_total{`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{result}}")))))
 
@@ -658,7 +658,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, queue) (scheduler_pending_pods{`+clusterFilter+`})`).
 				LegendFormat("{{cluster}} {{queue}}")))))
 
@@ -672,7 +672,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(scheduler_scheduling_attempt_duration_seconds_bucket{`+clusterFilter+`}[$__rate_interval])))`).
 				LegendFormat("{{cluster}} p99")))))
 
@@ -686,7 +686,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (workqueue_depth{`+clusterFilter+`,job="kube-controller-manager"})`).
 				LegendFormat("{{cluster}}")))))
 
@@ -700,7 +700,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(workqueue_work_duration_seconds_bucket{`+clusterFilter+`,job="kube-controller-manager"}[$__rate_interval])))`).
 				LegendFormat("{{cluster}} p99")))))
 
@@ -714,7 +714,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(workqueue_retries_total{`+clusterFilter+`,job="kube-controller-manager"}[$__rate_interval]))`).
 				LegendFormat("{{cluster}}")))))
 
@@ -731,7 +731,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ShowThresholdLabels(false).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(100 * sum by (cluster) (kube_pod_container_resource_requests{`+clusterFilter+`,resource="cpu",`+nsFilter+`}) / clamp_min(sum by (cluster) (kube_node_status_allocatable{`+clusterFilter+`,resource="cpu"}), 1e-9))`).
 				Instant(true).Range(false).
 				LegendFormat("{{cluster}}")))))
@@ -749,7 +749,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ShowThresholdLabels(false).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(100 * sum by (cluster) (kube_pod_container_resource_requests{`+clusterFilter+`,resource="memory",`+nsFilter+`}) / clamp_min(sum by (cluster) (kube_node_status_allocatable{`+clusterFilter+`,resource="memory"}), 1e-9))`).
 				Instant(true).Range(false).
 				LegendFormat("{{cluster}}")))))
@@ -767,7 +767,7 @@ func buildK8sControlPlaneOverview() (*dashboardv2.Dashboard, error) {
 			ShowThresholdLabels(false).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(100 * sum by (cluster) (kubelet_running_pods{`+clusterFilter+`}) / clamp_min(sum by (cluster) (kube_node_status_allocatable{`+clusterFilter+`,resource="pods"}), 1e-9))`).
 				Instant(true).Range(false).
 				LegendFormat("{{cluster}}")))))

@@ -83,7 +83,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(cilium_endpoint_state{`+clusterFilter+`,endpoint_state!="ready"}) or vector(0)`).
 				LegendFormat("Not ready")))))
 
@@ -98,7 +98,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(cilium_controllers_failing{`+clusterFilter+`}) or vector(0)`).
 				LegendFormat("Failing")))))
 
@@ -113,7 +113,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(cilium_unreachable_nodes{`+clusterFilter+`}) or vector(0)`).
 				LegendFormat("Unreachable")))))
 
@@ -128,7 +128,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(cilium_errors_warnings_total{`+clusterFilter+`,level="ERROR"}[5m]))) or vector(0)`).
 				LegendFormat("Errors")))))
 
@@ -143,7 +143,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(hubble_lost_events_total{`+clusterFilter+`}[5m]))) or vector(0)`).
 				LegendFormat("Lost")))))
 
@@ -157,7 +157,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum by (cluster, node, source) (increase(hubble_lost_events_total{`+clusterFilter+`}[5m])))`).
 				LegendFormat("{{cluster}} {{node}} {{source}}")))))
 
@@ -177,7 +177,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "red"}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, reason) (rate(cilium_drop_count_total{`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{reason}}")))))
 
@@ -191,7 +191,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, verdict) (rate(hubble_flows_processed_total{`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{verdict}}")))))
 
@@ -211,7 +211,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "red"}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, reason) (rate(hubble_drop_total{`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{reason}}")))))
 
@@ -225,7 +225,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, endpoint_state) (cilium_endpoint_state{`+clusterFilter+`})`).
 				LegendFormat("{{cluster}} {{endpoint_state}}")))))
 
@@ -239,7 +239,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(cilium_endpoint_regenerations_total{`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}}")))))
 
@@ -253,7 +253,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, level) (rate(cilium_errors_warnings_total{`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{level}}")))))
 
@@ -270,7 +270,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(capacityThresholds).
 			Decimals(2)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(topk(10, 100 * max by (cluster, map_name) (cilium_bpf_map_pressure{`+clusterFilter+`})))`).
 				Instant(true).Range(false).
 				LegendFormat("{{cluster}} {{map_name}}")))))
@@ -285,7 +285,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (cilium_datapath_conntrack_gc_entries{`+clusterFilter+`})`).
 				LegendFormat("{{cluster}}")))))
 
@@ -299,7 +299,7 @@ func buildCiliumOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, type) (rate(hubble_flows_processed_total{`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{type}}")))))
 

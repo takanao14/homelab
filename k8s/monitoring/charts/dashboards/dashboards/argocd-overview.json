@@ -35,7 +35,7 @@
                         "legendFormat": "{{cluster}} p99"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -54,7 +54,7 @@
                         "legendFormat": "{{cluster}} p50"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -119,7 +119,7 @@
                         "legendFormat": "{{cluster}} {{health_status}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -233,7 +233,7 @@
                         "legendFormat": "{{cluster}} {{sync_status}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -334,7 +334,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -430,7 +430,7 @@
                         "legendFormat": "Not Healthy"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -507,7 +507,7 @@
                         "legendFormat": "OutOfSync"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -584,7 +584,7 @@
                         "legendFormat": "Down"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -661,7 +661,7 @@
                         "legendFormat": "Failures"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -738,7 +738,7 @@
                         "legendFormat": "{{cluster}} {{request_type}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -806,7 +806,7 @@
                         "legendFormat": "{{cluster}} ls-remote"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -825,7 +825,7 @@
                         "legendFormat": "{{cluster}} fetch"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -897,7 +897,7 @@
                         "legendFormat": "{{cluster}} Succeeded"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -916,7 +916,7 @@
                         "legendFormat": "{{cluster}} {{phase}}"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -1019,7 +1019,7 @@
                         "legendFormat": "Failures"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }

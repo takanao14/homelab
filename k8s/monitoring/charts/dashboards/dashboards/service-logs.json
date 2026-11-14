@@ -35,7 +35,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -112,7 +112,7 @@
                         "legendFormat": "{{unit}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -185,7 +185,7 @@
                         "legendFormat": "{{instance}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -258,7 +258,7 @@
                         "legendFormat": "{{instance}} received"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -277,7 +277,7 @@
                         "legendFormat": "{{instance}} sent"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -350,7 +350,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -422,7 +422,7 @@
                         "legendFormat": "{{host}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -493,7 +493,7 @@
                         "legendFormat": "{{unit}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -566,7 +566,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -586,7 +586,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -606,7 +606,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 },
@@ -626,7 +626,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "D",
+                    "refId": "query-3",
                     "hidden": false
                   }
                 },
@@ -646,7 +646,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "E",
+                    "refId": "query-4",
                     "hidden": false
                   }
                 },
@@ -666,7 +666,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "F",
+                    "refId": "query-5",
                     "hidden": false
                   }
                 },
@@ -686,7 +686,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "G",
+                    "refId": "query-6",
                     "hidden": false
                   }
                 },
@@ -706,7 +706,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "H",
+                    "refId": "query-7",
                     "hidden": false
                   }
                 },
@@ -726,7 +726,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "I",
+                    "refId": "query-8",
                     "hidden": false
                   }
                 }
@@ -813,7 +813,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -887,7 +887,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -965,7 +965,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1046,7 +1046,7 @@
                         "maxLines": 500
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1108,7 +1108,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1186,7 +1186,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1268,7 +1268,7 @@
                         "legendFormat": "hermes1"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1287,7 +1287,7 @@
                         "legendFormat": "idp1"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -1306,7 +1306,7 @@
                         "legendFormat": "netbox1"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 },
@@ -1325,7 +1325,7 @@
                         "legendFormat": "openbao1"
                       }
                     },
-                    "refId": "D",
+                    "refId": "query-3",
                     "hidden": false
                   }
                 },
@@ -1344,7 +1344,7 @@
                         "legendFormat": "openclaw1"
                       }
                     },
-                    "refId": "E",
+                    "refId": "query-4",
                     "hidden": false
                   }
                 },
@@ -1363,7 +1363,7 @@
                         "legendFormat": "pdm1"
                       }
                     },
-                    "refId": "F",
+                    "refId": "query-5",
                     "hidden": false
                   }
                 },
@@ -1382,7 +1382,7 @@
                         "legendFormat": "runner1"
                       }
                     },
-                    "refId": "G",
+                    "refId": "query-6",
                     "hidden": false
                   }
                 },
@@ -1401,7 +1401,7 @@
                         "legendFormat": "toolbox1"
                       }
                     },
-                    "refId": "H",
+                    "refId": "query-7",
                     "hidden": false
                   }
                 },
@@ -1420,7 +1420,7 @@
                         "legendFormat": "vpngw"
                       }
                     },
-                    "refId": "I",
+                    "refId": "query-8",
                     "hidden": false
                   }
                 }
@@ -1518,7 +1518,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1594,7 +1594,7 @@
                         "legendFormat": "{{unit}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }

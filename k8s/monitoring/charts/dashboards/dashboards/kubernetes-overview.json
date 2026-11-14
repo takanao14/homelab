@@ -37,7 +37,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -120,11 +120,10 @@
                         "expr": "sum by (cluster, namespace, pod, container) (kube_pod_container_resource_requests{cluster=~\"$cluster\",resource=\"cpu\",namespace=~\"$namespace\"})",
                         "format": "table",
                         "instant": true,
-                        "range": false,
-                        "refId": "A"
+                        "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -142,11 +141,10 @@
                         "expr": "sum by (cluster, namespace, pod, container) (rate(container_cpu_usage_seconds_total{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"}[$__rate_interval]))",
                         "format": "table",
                         "instant": true,
-                        "range": false,
-                        "refId": "B"
+                        "range": false
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -164,11 +162,10 @@
                         "expr": "sum by (cluster, namespace, pod, container) (kube_pod_container_resource_requests{cluster=~\"$cluster\",resource=\"memory\",namespace=~\"$namespace\"})",
                         "format": "table",
                         "instant": true,
-                        "range": false,
-                        "refId": "C"
+                        "range": false
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 },
@@ -186,11 +183,10 @@
                         "expr": "sum by (cluster, namespace, pod, container) (container_memory_working_set_bytes{cluster=~\"$cluster\",namespace=~\"$namespace\",container!=\"\",pod!=\"\"})",
                         "format": "table",
                         "instant": true,
-                        "range": false,
-                        "refId": "D"
+                        "range": false
                       }
                     },
-                    "refId": "D",
+                    "refId": "query-3",
                     "hidden": false
                   }
                 }
@@ -345,7 +341,7 @@
                         "legendFormat": "Restarts"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -421,7 +417,7 @@
                         "legendFormat": "Requested"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -440,7 +436,7 @@
                         "legendFormat": "Actual"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -503,7 +499,7 @@
                         "legendFormat": "{{cluster}} {{namespace}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -566,7 +562,7 @@
                         "legendFormat": "Degraded"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -642,7 +638,7 @@
                         "legendFormat": "Degraded"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -719,7 +715,7 @@
                         "legendFormat": "Healthy"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -791,7 +787,7 @@
                         "legendFormat": "Requested"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -810,7 +806,7 @@
                         "legendFormat": "Actual"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -873,7 +869,7 @@
                         "legendFormat": "{{cluster}} {{namespace}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -933,11 +929,10 @@
                       },
                       "spec": {
                         "expr": "sum by (cluster, namespace) (rate(container_network_receive_bytes_total{cluster=~\"$cluster\",namespace=~\"$namespace\",pod!=\"\"}[$__rate_interval]))",
-                        "legendFormat": "{{cluster}} {{namespace}} Rx",
-                        "refId": "Rx"
+                        "legendFormat": "{{cluster}} {{namespace}} Rx"
                       }
                     },
-                    "refId": "Rx",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -953,8 +948,7 @@
                       },
                       "spec": {
                         "expr": "sum by (cluster, namespace) (rate(container_network_transmit_bytes_total{cluster=~\"$cluster\",namespace=~\"$namespace\",pod!=\"\"}[$__rate_interval]))",
-                        "legendFormat": "{{cluster}} {{namespace}} Tx",
-                        "refId": "Tx"
+                        "legendFormat": "{{cluster}} {{namespace}} Tx"
                       }
                     },
                     "refId": "Tx",
@@ -1049,7 +1043,7 @@
                         "legendFormat": "Pressure"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1125,7 +1119,7 @@
                         "legendFormat": "NotReady"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1201,7 +1195,7 @@
                         "legendFormat": "Ready"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1273,7 +1267,7 @@
                         "legendFormat": "Total"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1346,7 +1340,7 @@
                         "legendFormat": "OOMKilled"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1423,7 +1417,7 @@
                         "legendFormat": "{{cluster}} {{phase}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1486,7 +1480,7 @@
                         "legendFormat": "Issues"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1562,7 +1556,7 @@
                         "legendFormat": "Running"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1636,7 +1630,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1711,7 +1705,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1800,7 +1794,7 @@
                         "legendFormat": "{{cluster}} {{phase}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1871,7 +1865,7 @@
                         "legendFormat": "Degraded"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1950,7 +1944,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2041,7 +2035,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }

@@ -108,7 +108,7 @@ func buildCertManagerOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			GraphMode(common.BigValueGraphModeNone)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Use Argo CD presence to distinguish a missing target from a cluster that
 				// intentionally omits cert-manager.
 				Expr(`min by (cluster) (up{job="cert-manager",`+clusterFilter+`}) or (0 * max by (cluster) (argocd_app_info{`+clusterFilter+`,name="cert-manager"}))`).
@@ -126,7 +126,7 @@ func buildCertManagerOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(certmanager_certificate_ready_status{`+clusterFilter+`,condition="True"} != 1) or vector(0)`).
 				LegendFormat("Not Ready")))))
 
@@ -141,7 +141,7 @@ func buildCertManagerOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(certmanager_clusterissuer_ready_status{`+clusterFilter+`,condition="True"} != 1) or vector(0)`).
 				LegendFormat("Not Ready")))))
 
@@ -156,7 +156,7 @@ func buildCertManagerOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(certmanager_controller_sync_error_count{`+clusterFilter+`}[1h]))) or vector(0)`).
 				LegendFormat("Errors")))))
 
@@ -171,7 +171,7 @@ func buildCertManagerOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Follow the selected range because ACME activity is months apart.
 				Expr(`ceil(sum(increase(certmanager_http_acme_client_request_count{`+clusterFilter+`,status=~"4..|5.."}[$__range]))) or vector(0)`).
 				LegendFormat("Errors")))))
@@ -197,17 +197,16 @@ func buildCertManagerOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.cellOptions", Value: common.NewTableColoredBackgroundCellOptions()},
 				{Id: "mappings", Value: readyMappings},
 			})).
-		// A: days until expiry, B: days until renewal trigger, C: ready (0/1)
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort((certmanager_certificate_expiration_timestamp_seconds{`+clusterFilter+`} - time()) / 86400)`).
-				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable).RefId("A"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable))).
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort((certmanager_certificate_renewal_timestamp_seconds{`+clusterFilter+`} - time()) / 86400)`).
-				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable).RefId("B"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable))).
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`certmanager_certificate_ready_status{`+clusterFilter+`,condition="True"}`).
-				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable).RefId("C"))).
+				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable))).
 			Transformation(dashboardv2.NewTransformationBuilder().
 				Group("merge").
 				Options(map[string]any{})).
@@ -258,7 +257,7 @@ func buildCertManagerOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "mappings", Value: readyMappings},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`certmanager_clusterissuer_ready_status{`+clusterFilter+`,condition="True"}`).
 				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable).
 				LegendFormat("{{cluster}} {{name}}"))).
@@ -302,7 +301,7 @@ func buildCertManagerOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Aggregate pod churn to legend labels; max also deduplicates rollouts.
 				Expr(`(max by (cluster, exported_namespace, name) (certmanager_certificate_expiration_timestamp_seconds{`+clusterFilter+`}) - time()) / 86400`).
 				LegendFormat("{{cluster}} {{exported_namespace}}/{{name}}")))))

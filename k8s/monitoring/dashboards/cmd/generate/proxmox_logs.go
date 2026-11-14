@@ -120,7 +120,7 @@ func buildProxmoxLogs() (*dashboardv2.Dashboard, error) {
 			Min(0).
 			Thresholds(measurementThresholds())).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(rate(`+base+`[5m])) or vector(0)`).
 				Instant(true).
 				LegendFormat("logs/s")))))
@@ -133,7 +133,7 @@ func buildProxmoxLogs() (*dashboardv2.Dashboard, error) {
 			Min(0).
 			Thresholds(issueThresholds())).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(count_over_time(`+errSel+`[1h])) or vector(0)`).
 				Instant(true).
 				LegendFormat("errors")))))
@@ -146,7 +146,7 @@ func buildProxmoxLogs() (*dashboardv2.Dashboard, error) {
 			Min(0).
 			Thresholds(warnThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(count_over_time(`+warnSel+`[1h])) or vector(0)`).
 				Instant(true).
 				LegendFormat("warnings")))))
@@ -160,7 +160,7 @@ func buildProxmoxLogs() (*dashboardv2.Dashboard, error) {
 			Min(0).
 			Thresholds(issueThresholds())).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(count_over_time(`+messageBase+matches(signalRegex)+` [24h])) or vector(0)`).
 				Instant(true).
 				LegendFormat("signals")))))
@@ -179,7 +179,7 @@ func buildProxmoxLogs() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				// Key zero on the full range so quiet nodes remain visible.
 				Expr(`sum by (host) (count_over_time(`+errSel+`[$__auto]))`+
 					` or sum by (host) (count_over_time(`+base+`[$__range])) * 0`).
@@ -198,7 +198,7 @@ func buildProxmoxLogs() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum by (host) (count_over_time(`+warnSel+`[$__auto]))`+
 					` or sum by (host) (count_over_time(`+base+`[$__range])) * 0`).
 				LegendFormat("{{host}}"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
@@ -217,7 +217,7 @@ func buildProxmoxLogs() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				// Baseline from unfiltered app streams; an empty error selector cannot
 				// enumerate zero rows.
 				Expr(`sum by (appname) (count_over_time(`+errSel+`[$__auto]))`+
@@ -236,7 +236,7 @@ func buildProxmoxLogs() (*dashboardv2.Dashboard, error) {
 			Legend(legend).
 			SpanNulls(common.BoolOrFloat64{Bool: new(true)})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum by (appname) (rate(`+pveServices+`[$__auto]))`+
 					` or sum by (appname) (count_over_time(`+pveServices+`[$__range])) * 0`).
 				LegendFormat("{{appname}}"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
@@ -256,22 +256,22 @@ func buildProxmoxLogs() (*dashboardv2.Dashboard, error) {
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
 			// Scalar categories use vector(0) so a quiet cluster stays explicit.
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(count_over_time(`+messageBase+matches(sigCluster)+` [$__auto])) or vector(0)`).
 				LegendFormat("Cluster / quorum"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(count_over_time(`+messageBase+matches(sigHA)+` [$__auto])) or vector(0)`).
 				LegendFormat("HA"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(count_over_time(`+messageBase+matches(sigBackup)+` [$__auto])) or vector(0)`).
 				LegendFormat("Backup"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("D").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(count_over_time(`+messageBase+matches(sigStorage)+` [$__auto])) or vector(0)`).
 				LegendFormat("Storage / ZFS"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("E").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(count_over_time(`+messageBase+matches(sigOOM)+` [$__auto])) or vector(0)`).
 				LegendFormat("OOM"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("F").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(count_over_time(`+messageBase+matches(sigAppArmor)+` [$__auto])) or vector(0)`).
 				LegendFormat("AppArmor denied"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
 
@@ -286,7 +286,7 @@ func buildProxmoxLogs() (*dashboardv2.Dashboard, error) {
 			ShowFieldSelector(true).
 			SortOrder(common.LogsSortOrderDescending)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(messageBase+matches(signalRegex)+` | line_format "{{.host}} [{{.severity}}] {{.appname}}: {{.message}}"`).
 				MaxLines(500)))))
 
@@ -301,7 +301,7 @@ func buildProxmoxLogs() (*dashboardv2.Dashboard, error) {
 			ShowFieldSelector(true).
 			SortOrder(common.LogsSortOrderDescending)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(baseJSON+` | line_format "{{.host}} [{{.severity}}] {{.appname}}: {{.message}}"`).
 				MaxLines(1000)))))
 

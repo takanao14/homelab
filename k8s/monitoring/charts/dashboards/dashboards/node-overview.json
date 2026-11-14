@@ -34,7 +34,7 @@
                         "legendFormat": "{{nodename}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -98,7 +98,7 @@
                         "legendFormat": "{{nodename}} Throttles"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -161,7 +161,7 @@
                         "legendFormat": "{{nodename}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -244,7 +244,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -333,7 +333,7 @@
                         "legendFormat": "{{nodename}} Read {{device}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -349,8 +349,7 @@
                       },
                       "spec": {
                         "expr": "rate(node_disk_written_bytes_total{instance=~\"$instance\", device=~\"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-                        "legendFormat": "{{nodename}} Write {{device}}",
-                        "refId": "Write"
+                        "legendFormat": "{{nodename}} Write {{device}}"
                       }
                     },
                     "refId": "Write",
@@ -450,7 +449,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -539,7 +538,7 @@
                         "legendFormat": "{{nodename}} {{mountpoint}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -623,7 +622,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -696,11 +695,10 @@
                       },
                       "spec": {
                         "expr": "rate(node_pressure_io_waiting_seconds_total{instance=~\"$instance\", instance!~\"forgejo1|seaweedfs1|ns1|ns2|ns3|resolver1|resolver2|log1|caddy1|dist1|dist2\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-                        "legendFormat": "{{nodename}} some",
-                        "refId": "Some"
+                        "legendFormat": "{{nodename}} some"
                       }
                     },
-                    "refId": "Some",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -716,11 +714,10 @@
                       },
                       "spec": {
                         "expr": "rate(node_pressure_io_stalled_seconds_total{instance=~\"$instance\", instance!~\"forgejo1|seaweedfs1|ns1|ns2|ns3|resolver1|resolver2|log1|caddy1|dist1|dist2\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-                        "legendFormat": "{{nodename}} full",
-                        "refId": "Full"
+                        "legendFormat": "{{nodename}} full"
                       }
                     },
-                    "refId": "Full",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -802,7 +799,7 @@
                         "legendFormat": "{{nodename}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -883,7 +880,7 @@
                         "legendFormat": "{{nodename}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -943,11 +940,10 @@
                       },
                       "spec": {
                         "expr": "rate(node_pressure_memory_waiting_seconds_total{instance=~\"$instance\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-                        "legendFormat": "{{nodename}} some",
-                        "refId": "Some"
+                        "legendFormat": "{{nodename}} some"
                       }
                     },
-                    "refId": "Some",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -963,11 +959,10 @@
                       },
                       "spec": {
                         "expr": "rate(node_pressure_memory_stalled_seconds_total{instance=~\"$instance\"}[$__rate_interval]) * 100 * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-                        "legendFormat": "{{nodename}} full",
-                        "refId": "Full"
+                        "legendFormat": "{{nodename}} full"
                       }
                     },
-                    "refId": "Full",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -1049,7 +1044,7 @@
                         "legendFormat": "{{nodename}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1132,7 +1127,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1221,7 +1216,7 @@
                         "legendFormat": "{{nodename}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1281,11 +1276,10 @@
                       },
                       "spec": {
                         "expr": "rate(node_network_receive_bytes_total{instance=~\"$instance\", device!~\"lo|veth.*|docker.*|podman.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*|vnets.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-                        "legendFormat": "{{nodename}} Rx {{device}}",
-                        "refId": "Rx"
+                        "legendFormat": "{{nodename}} Rx {{device}}"
                       }
                     },
-                    "refId": "Rx",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1301,8 +1295,7 @@
                       },
                       "spec": {
                         "expr": "rate(node_network_transmit_bytes_total{instance=~\"$instance\", device!~\"lo|veth.*|docker.*|podman.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*|vnets.*\"}[$__rate_interval]) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-                        "legendFormat": "{{nodename}} Tx {{device}}",
-                        "refId": "Tx"
+                        "legendFormat": "{{nodename}} Tx {{device}}"
                       }
                     },
                     "refId": "Tx",
@@ -1399,7 +1392,7 @@
                         "legendFormat": "{{nodename}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1491,7 +1484,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1570,7 +1563,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1649,7 +1642,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1728,7 +1721,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1806,7 +1799,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1827,7 +1820,7 @@
                         "range": false
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -1848,7 +1841,7 @@
                         "range": false
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 },
@@ -1869,7 +1862,7 @@
                         "range": false
                       }
                     },
-                    "refId": "D",
+                    "refId": "query-3",
                     "hidden": false
                   }
                 }
@@ -1965,7 +1958,7 @@
                         "legendFormat": "{{nodename}} CPU {{sensor}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1984,7 +1977,7 @@
                         "legendFormat": "{{nodename}} NVMe {{device}}"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -2003,7 +1996,7 @@
                         "legendFormat": "{{nodename}} Disk {{device}}"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 }
@@ -2065,7 +2058,7 @@
                         "legendFormat": "{{nodename}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2144,11 +2137,10 @@
                       },
                       "spec": {
                         "expr": "(node_zfs_arc_size{instance=~\"$instance\"} and on(instance) (node_zfs_arc_size{instance=~\"$instance\"} \u003e 1024 * 1024)) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-                        "legendFormat": "{{nodename}} ARC Size",
-                        "refId": "A"
+                        "legendFormat": "{{nodename}} ARC Size"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -2164,11 +2156,10 @@
                       },
                       "spec": {
                         "expr": "(node_zfs_arc_c_max{instance=~\"$instance\"} and on(instance) (node_zfs_arc_size{instance=~\"$instance\"} \u003e 1024 * 1024)) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-                        "legendFormat": "{{nodename}} ARC Max",
-                        "refId": "B"
+                        "legendFormat": "{{nodename}} ARC Max"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -2184,11 +2175,10 @@
                       },
                       "spec": {
                         "expr": "(node_zfs_arc_c_min{instance=~\"$instance\"} and on(instance) (node_zfs_arc_size{instance=~\"$instance\"} \u003e 1024 * 1024)) * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info)",
-                        "legendFormat": "{{nodename}} ARC Min",
-                        "refId": "C"
+                        "legendFormat": "{{nodename}} ARC Min"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 }

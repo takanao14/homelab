@@ -125,7 +125,7 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", `+clusterFilter+`}[$__rate_interval]) `+joinNode+`) * 100)`).
 				LegendFormat("{{nodename}}")))))
 
@@ -139,7 +139,7 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// MemAvailable includes reclaimable cache, giving a more realistic usage figure than MemFree.
 				Expr(byNode(`(1 - node_memory_MemAvailable_bytes{`+clusterFilter+`} / node_memory_MemTotal_bytes{`+clusterFilter+`}) `+joinNode+` * 100`)).
 				LegendFormat("{{nodename}}")))))
@@ -155,7 +155,7 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			JustifyMode(common.BigValueJustifyModeCenter)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Deduplicate node_uname_info before joining kubelet node labels.
 				Expr(`sum by (nodename) (kubelet_running_pods{`+clusterFilter+`} * on(node) group_left(nodename) (label_replace(max by (nodename) (node_uname_info{`+clusterFilter+`, `+nodeFilter+`}), "node", "$1", "nodename", "(.*)")))`).
 				LegendFormat("{{nodename}}")))))
@@ -172,7 +172,7 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 			JustifyMode(common.BigValueJustifyModeCenter)).
 		Data(dashboardv2.NewQueryGroupBuilder().
 			// Core count has no meaningful maximum, so use a stat.
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count by (nodename) (node_cpu_seconds_total{mode="idle", `+clusterFilter+`} `+joinNode+`)`).
 				LegendFormat("{{nodename}}")))))
 
@@ -186,7 +186,7 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			JustifyMode(common.BigValueJustifyModeCenter)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNode(`node_memory_MemTotal_bytes{`+clusterFilter+`} `+joinNode)).
 				LegendFormat("{{nodename}}")))))
 
@@ -208,7 +208,7 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 					{Value: new(float64(86400)), Color: "green"},
 				}))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNode(`(time() - node_boot_time_seconds{`+clusterFilter+`}) `+joinNode)).
 				LegendFormat("{{nodename}}")))))
 
@@ -222,7 +222,7 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", `+clusterFilter+`}[$__rate_interval]) `+joinNode+`) * 100)`).
 				LegendFormat("{{nodename}}")))))
 
@@ -247,13 +247,13 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNode(perCore(`node_load1{`+clusterFilter+`}`)+` `+joinNode)).
 				LegendFormat("{{nodename}} 1m"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNode(perCore(`node_load5{`+clusterFilter+`}`)+` `+joinNode)).
 				LegendFormat("{{nodename}} 5m"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNode(perCore(`node_load15{`+clusterFilter+`}`)+` `+joinNode)).
 				LegendFormat("{{nodename}} 15m")))))
 
@@ -270,10 +270,10 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNode(`(node_memory_MemTotal_bytes{`+clusterFilter+`} - node_memory_MemAvailable_bytes{`+clusterFilter+`}) `+joinNode)).
 				LegendFormat("{{nodename}} Used"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNode(`node_memory_MemAvailable_bytes{`+clusterFilter+`} `+joinNode)).
 				LegendFormat("{{nodename}} Available")))))
 
@@ -286,7 +286,7 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNode(`rate(node_pressure_cpu_waiting_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
 				LegendFormat("{{nodename}}")))))
 
@@ -302,12 +302,10 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Some").Query(promQuery().
-				RefId("Some").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNode(`rate(node_pressure_memory_waiting_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
 				LegendFormat("{{nodename}} some"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("Full").Query(promQuery().
-				RefId("Full").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNode(`rate(node_pressure_memory_stalled_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
 				LegendFormat("{{nodename}} full")))))
 
@@ -323,12 +321,10 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Some").Query(promQuery().
-				RefId("Some").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNode(`rate(node_pressure_io_waiting_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
 				LegendFormat("{{nodename}} some"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("Full").Query(promQuery().
-				RefId("Full").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNode(`rate(node_pressure_io_stalled_seconds_total{`+clusterFilter+`}[$__rate_interval]) * 100 `+joinNode)).
 				LegendFormat("{{nodename}} full")))))
 
@@ -342,7 +338,7 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationHorizontal).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc((1 - node_filesystem_avail_bytes{`+clusterFilter+`, `+fsFilter+`} / node_filesystem_size_bytes{`+clusterFilter+`, `+fsFilter+`}) `+joinNode+` * 100)`).
 				Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{mountpoint}}")))))
@@ -359,10 +355,10 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNode(`(node_filesystem_size_bytes{`+clusterFilter+`, `+fsFilter+`} - node_filesystem_avail_bytes{`+clusterFilter+`, `+fsFilter+`}) `+joinNode, "mountpoint")).
 				LegendFormat("{{nodename}} {{mountpoint}} Used"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNode(`node_filesystem_size_bytes{`+clusterFilter+`, `+fsFilter+`} `+joinNode, "mountpoint")).
 				LegendFormat("{{nodename}} {{mountpoint}} Total")))))
 
@@ -379,7 +375,7 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(timeToFullThresholds()).
 			Orientation(common.VizOrientationHorizontal)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort(clamp_max((node_filesystem_avail_bytes{`+clusterFilter+`, `+fsFilter+`} / deriv(node_filesystem_avail_bytes{`+clusterFilter+`, `+fsFilter+`}[7d]) / -86400) > 0, 3650) `+joinNode+`)`).
 				Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{mountpoint}}")))))
@@ -397,13 +393,11 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.transform", Value: "negative-Y"},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Read").Query(promQuery().
-				RefId("Read").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Exclude dm-*, loop*, and sr* to avoid double-counting or noise from virtual/optical devices.
 				Expr(byNode(`rate(node_disk_read_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[$__rate_interval]) `+joinNode, "device")).
 				LegendFormat("{{nodename}} {{device}} Read"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Write").Query(promQuery().
-				RefId("Write").
 				Expr(byNode(`rate(node_disk_written_bytes_total{`+clusterFilter+`, device!~"dm-.*|loop.*|sr.*"}[$__rate_interval]) `+joinNode, "device")).
 				LegendFormat("{{nodename}} {{device}} Write")))))
 
@@ -421,12 +415,10 @@ func buildK8sNodeOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.transform", Value: "negative-Y"},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Rx").Query(promQuery().
-				RefId("Rx").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (nodename) (rate(node_network_receive_bytes_total{`+clusterFilter+`, `+netDeviceFilter+`} [$__rate_interval]) `+joinNode+`)`).
 				LegendFormat("{{nodename}} Rx"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Tx").Query(promQuery().
-				RefId("Tx").
 				Expr(`sum by (nodename) (rate(node_network_transmit_bytes_total{`+clusterFilter+`, `+netDeviceFilter+`}[$__rate_interval]) `+joinNode+`)`).
 				LegendFormat("{{nodename}} Tx")))))
 

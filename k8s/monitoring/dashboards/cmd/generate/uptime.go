@@ -103,7 +103,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			Thresholds(downThresholds).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(probe_success{`+icmpJob+`} == 0) or vector(0)`).
 				LegendFormat("down")))))
 
@@ -116,7 +116,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			Thresholds(downThresholds).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(probe_success{`+dnsJobs+`} == 0) or vector(0)`).
 				LegendFormat("down")))))
 
@@ -130,7 +130,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			Thresholds(availabilityThresholds).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`avg(avg_over_time(probe_success{`+icmpJob+`}[$__range])) * 100`).
 				LegendFormat("availability")))))
 
@@ -145,7 +145,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			Thresholds(availabilityThresholds).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`avg(avg_over_time(probe_success{`+dnsJobs+`}[$__range])) * 100`).
 				LegendFormat("availability")))))
 
@@ -159,7 +159,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`probe_success{`+icmpJob+`}`).
 				LegendFormat("{{instance}}")))))
 
@@ -173,7 +173,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`probe_success{`+dnsExtJob+`}`).
 				LegendFormat("{{instance}}")))))
 
@@ -187,7 +187,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`probe_success{`+dnsIntJob+`}`).
 				LegendFormat("{{instance}}")))))
 
@@ -201,7 +201,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationHorizontal).
 			ReduceOptions(common.NewReduceDataOptionsBuilder().Values(true))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`avg_over_time(probe_success{`+icmpJob+`}[$__range]) * 100`).
 				Instant(true).Range(false).
 				LegendFormat("{{instance}}")))))
@@ -216,11 +216,11 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationHorizontal).
 			ReduceOptions(common.NewReduceDataOptionsBuilder().Values(true))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`avg_over_time(probe_success{`+dnsExtJob+`}[$__range]) * 100`).
 				Instant(true).Range(false).
 				LegendFormat("{{instance}} External"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`avg_over_time(probe_success{`+dnsIntJob+`}[$__range]) * 100`).
 				Instant(true).Range(false).
 				LegendFormat("{{instance}} Internal")))))
@@ -235,7 +235,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			MergeValues(true).
 			Tooltip(tooltipAll)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`probe_success{`+icmpJob+`}`).
 				LegendFormat("{{instance}}")))))
 
@@ -250,7 +250,7 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			Legend(legend)).
 		// Use the ICMP rtt phase; total probe duration also includes setup and DNS.
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`probe_icmp_duration_seconds{`+icmpJob+`, phase="rtt"}`).
 				LegendFormat("{{instance}}")))))
 
@@ -264,10 +264,10 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 			MergeValues(true).
 			Tooltip(tooltipAll)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`probe_success{`+dnsExtJob+`}`).
 				LegendFormat("{{instance}} External"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`probe_success{`+dnsIntJob+`}`).
 				LegendFormat("{{instance}} Internal")))))
 
@@ -283,10 +283,10 @@ func buildUptime() (*dashboardv2.Dashboard, error) {
 		// Use total DNS probe duration; lookup_time measures resolution of the
 		// probe target itself, not the test query.
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`probe_duration_seconds{`+dnsExtJob+`}`).
 				LegendFormat("{{instance}} External"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`probe_duration_seconds{`+dnsIntJob+`}`).
 				LegendFormat("{{instance}} Internal")))))
 

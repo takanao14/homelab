@@ -107,7 +107,7 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count by (node) (proxmox_vm_cpu_percent{`+nodeFilter+`, type="qemu"}) or on(node) count by (node) (proxmox_node_cpustat_cpu_percent{`+nodeFilter+`}) * 0`).
 				Instant(true).Range(false).
 				LegendFormat("{{node}}")))))
@@ -121,7 +121,7 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count by (node) (proxmox_vm_cpu_percent{`+nodeFilter+`, type="lxc"}) or on(node) count by (node) (proxmox_node_cpustat_cpu_percent{`+nodeFilter+`}) * 0`).
 				Instant(true).Range(false).
 				LegendFormat("{{node}}")))))
@@ -138,7 +138,7 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_node_cpustat_cpu_percent{`+nodeFilter+`}`).
 				Instant(true).Range(false).
 				LegendFormat("{{node}}")))))
@@ -155,7 +155,7 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_node_memory_memused_bytes{`+nodeFilter+`} / proxmox_node_memory_memtotal_bytes{`+nodeFilter+`} * 100`).
 				Instant(true).Range(false).
 				LegendFormat("{{node}}")))))
@@ -174,7 +174,7 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_node_blockstat_per_percent{`+nodeFilter+`}`).
 				Instant(true).Range(false).
 				LegendFormat("{{node}}")))))
@@ -191,7 +191,7 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_storage_used_bytes{`+nodeFilter+`} / proxmox_storage_total_bytes{`+nodeFilter+`} * 100`).
 				Instant(true).Range(false).
 				LegendFormat("{{node}}/{{storage}}")))))
@@ -206,7 +206,7 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_node_cpustat_cpu_percent{`+nodeFilter+`}`).
 				LegendFormat("{{node}}")))))
 
@@ -222,12 +222,10 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Used").Query(promQuery().
-				RefId("Used").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_node_memory_memused_bytes{`+nodeFilter+`}`).
 				LegendFormat("{{node}} Used"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Total").Query(promQuery().
-				RefId("Total").
 				Expr(`proxmox_node_memory_memtotal_bytes{`+nodeFilter+`}`).
 				LegendFormat("{{node}} Total")))))
 
@@ -243,12 +241,10 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Used").Query(promQuery().
-				RefId("Used").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_node_memory_swapused_bytes{`+nodeFilter+`}`).
 				LegendFormat("{{node}} Used"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Total").Query(promQuery().
-				RefId("Total").
 				Expr(`proxmox_node_memory_swaptotal_bytes{`+nodeFilter+`}`).
 				LegendFormat("{{node}} Total")))))
 
@@ -265,14 +261,12 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.transform", Value: "negative-Y"},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Rx").Query(promQuery().
-				RefId("Rx").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Exclude loopback, guest, firewall, and unused nic0 devices. Keep nic1,
 				// bridges, and SDN vnets; parallel NIC/bridge lines show traffic layers.
 				Expr(`rate(proxmox_node_network_receive_bytes_total{`+nodeFilter+`, device!~"lo|tap.*|fwbr.*|fwpr.*|fwln.*|veth.*|nic0"}[$__rate_interval])`).
 				LegendFormat("{{node}} {{device}} RX"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Tx").Query(promQuery().
-				RefId("Tx").
 				Expr(`rate(proxmox_node_network_transmit_bytes_total{`+nodeFilter+`, device!~"lo|tap.*|fwbr.*|fwpr.*|fwln.*|veth.*|nic0"}[$__rate_interval])`).
 				LegendFormat("{{node}} {{device}} TX")))))
 
@@ -284,19 +278,19 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Map OTLP node labels to nodenames before joining temperatures.
 				Expr(`node_thermal_zone_temp{type=~"x86_pkg_temp|cpu-thermal"} * on(instance) group_left(nodename)
   (node_uname_info * on(nodename) group_left()
     label_replace(target_info{`+job+`, proxmox_node=~"$node"}, "nodename", "$1", "proxmox_node", "(.*)"))`).
 				LegendFormat("{{nodename}} CPU {{type}}"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Ryzen: k10temp exposed as PCI device (0000:00:18.x), temp1=Tctl
 				Expr(`node_hwmon_temp_celsius{chip=~".*_0000:00:18_.*", sensor="temp1"} * on(instance) group_left(nodename)
   (node_uname_info * on(nodename) group_left()
     label_replace(target_info{`+job+`, proxmox_node=~"$node"}, "nodename", "$1", "proxmox_node", "(.*)"))`).
 				LegendFormat("{{nodename}} CPU Tctl"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`smartmon_temperature_celsius_raw_value * on(instance) group_left(nodename)
   (node_uname_info * on(nodename) group_left()
     label_replace(target_info{`+job+`, proxmox_node=~"$node"}, "nodename", "$1", "proxmox_node", "(.*)"))`).
@@ -314,12 +308,10 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Used").Query(promQuery().
-				RefId("Used").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_storage_used_bytes{`+nodeFilter+`}`).
 				LegendFormat("{{node}}/{{storage}} Used"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Total").Query(promQuery().
-				RefId("Total").
 				Expr(`proxmox_storage_total_bytes{`+nodeFilter+`}`).
 				LegendFormat("{{node}}/{{storage}} Total")))))
 
@@ -340,16 +332,13 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Avg1").Query(promQuery().
-				RefId("Avg1").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_node_cpustat_avg1_ratio{`+nodeFilter+`} / proxmox_node_cpustat_cpus_ratio{`+nodeFilter+`}`).
 				LegendFormat("{{node}} 1m"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Avg5").Query(promQuery().
-				RefId("Avg5").
 				Expr(`proxmox_node_cpustat_avg5_ratio{`+nodeFilter+`} / proxmox_node_cpustat_cpus_ratio{`+nodeFilter+`}`).
 				LegendFormat("{{node}} 5m"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Avg15").Query(promQuery().
-				RefId("Avg15").
 				Expr(`proxmox_node_cpustat_avg15_ratio{`+nodeFilter+`} / proxmox_node_cpustat_cpus_ratio{`+nodeFilter+`}`).
 				LegendFormat("{{node}} 15m")))))
 
@@ -363,7 +352,7 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_node_memory_arcsize_bytes{`+nodeFilter+`}`+zfsActive).
 				LegendFormat("{{node}} ARC")))))
 
@@ -386,7 +375,7 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 					{Value: new(float64(3600)), Color: "green"},
 				}))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_vm_uptime_seconds{`+nodeFilter+`}`).
 				Instant(true).Range(false).
 				LegendFormat("{{name}}")))))
@@ -401,7 +390,7 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipSingle).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_vm_cpu_percent{`+nodeFilter+`}`).
 				LegendFormat("{{name}} ({{type}})")))))
 
@@ -417,12 +406,10 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dot", "dash": []int{2, 4}}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Used").Query(promQuery().
-				RefId("Used").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_vm_mem_bytes{`+nodeFilter+`}`).
 				LegendFormat("{{name}} Used"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Total").Query(promQuery().
-				RefId("Total").
 				Expr(`proxmox_vm_maxmem_bytes{`+nodeFilter+`}`).
 				LegendFormat("{{name}} Total")))))
 
@@ -439,12 +426,10 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.transform", Value: "negative-Y"},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Read").Query(promQuery().
-				RefId("Read").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(proxmox_vm_diskread_bytes_total{`+nodeFilter+`}[$__rate_interval])`).
 				LegendFormat("{{name}} Read"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Write").Query(promQuery().
-				RefId("Write").
 				Expr(`rate(proxmox_vm_diskwrite_bytes_total{`+nodeFilter+`}[$__rate_interval])`).
 				LegendFormat("{{name}} Write")))))
 
@@ -461,12 +446,10 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.transform", Value: "negative-Y"},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Rx").Query(promQuery().
-				RefId("Rx").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(proxmox_vm_netin_bytes_total{`+nodeFilter+`}[$__rate_interval])`).
 				LegendFormat("{{name}} RX"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Tx").Query(promQuery().
-				RefId("Tx").
 				Expr(`rate(proxmox_vm_netout_bytes_total{`+nodeFilter+`}[$__rate_interval])`).
 				LegendFormat("{{name}} TX")))))
 
@@ -484,7 +467,7 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipSingle).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_vm_pressurecpusome_percent{`+nodeFilter+`}`).
 				LegendFormat("{{name}} ({{type}})")))))
 
@@ -499,7 +482,7 @@ func buildProxmoxOtlpOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipSingle).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`proxmox_vm_pressureiosome_ratio{`+nodeFilter+`}`).
 				LegendFormat("{{name}} ({{type}})")))))
 

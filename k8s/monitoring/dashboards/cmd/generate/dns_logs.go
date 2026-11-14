@@ -93,7 +93,7 @@ func buildDnsLogs() (*dashboardv2.Dashboard, error) {
 			Min(0).
 			Thresholds(measurementThresholds())).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(rate(`+queryJSON+`[$__auto]))`).
 				LegendFormat("queries/s")))))
 
@@ -108,7 +108,7 @@ func buildDnsLogs() (*dashboardv2.Dashboard, error) {
 			Min(0).
 			Thresholds(measurementThresholds())).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				// count(sum by ...) counts distinct IPs, not log lines.
 				Expr(`count(sum by (network_query_ip) (count_over_time(`+queryJSON+` | network_query_ip != "" [$__range])))`).
 				LegendFormat("clients")))))
@@ -124,7 +124,7 @@ func buildDnsLogs() (*dashboardv2.Dashboard, error) {
 			FillOpacity(10).
 			Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum by (dns_qtype) (rate(`+queryJSON+`[$__auto]))`+
 					` or sum by (dns_qtype) (count_over_time(`+queryJSON+`[$__range])) * 0`).
 				LegendFormat("{{dns_qtype}}"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
@@ -153,7 +153,7 @@ func buildDnsLogs() (*dashboardv2.Dashboard, error) {
 				{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "orange"}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum by (dns_rcode) (rate(`+responseJSON+`[$__auto]))`+
 					` or sum by (dns_rcode) (count_over_time(`+responseJSON+`[$__range])) * 0`).
 				LegendFormat("{{dns_rcode}}"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
@@ -175,28 +175,28 @@ func buildDnsLogs() (*dashboardv2.Dashboard, error) {
 		Data(dashboardv2.NewQueryGroupBuilder().
 			// Stacked categories must partition NXDOMAIN. Apply specific matches first
 			// and subtract only real overlaps from broader suffix patterns.
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(rate(`+nxdomainJSON+` | dns_qname=~"`+nxNoiseDnssd+`" [$__auto])) or vector(0)`).
 				LegendFormat("dns-sd discovery"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(rate(`+nxdomainJSON+` | dns_qname=~"`+nxNoiseGrpclb+`" [$__auto])) or vector(0)`).
 				LegendFormat("grpc lb discovery"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(rate(`+nxdomainJSON+` | dns_qname=~"`+nxNoiseLocal+`" [$__auto])) or vector(0)`).
 				LegendFormat("mdns (.local)"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("D").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(rate(`+nxdomainJSON+` | dns_qname=~"`+nxNoiseArpa+`" | dns_qname!~"`+nxNoiseDnssd+`" [$__auto])) or vector(0)`).
 				LegendFormat("reverse lookup (PTR)"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("E").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(rate(`+nxdomainJSON+` | dns_qname=~"`+nxNoiseWpad+`" [$__auto])) or vector(0)`).
 				LegendFormat("wpad"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("F").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(rate(`+nxdomainJSON+` | dns_qname=~"`+nxNoiseSuffix+`"`+
 					` | dns_qname!~"`+nxNoiseDnssd+`"`+
 					` | dns_qname!~"`+nxNoiseGrpclb+`"`+
 					` | dns_qname!~"`+nxNoiseWpad+`" [$__auto])) or vector(0)`).
 				LegendFormat("search-domain suffix"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("G").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(rate(`+nxUnexpected+` [$__auto])) or vector(0)`).
 				LegendFormat("unexpected"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
 
@@ -210,7 +210,7 @@ func buildDnsLogs() (*dashboardv2.Dashboard, error) {
 				Values(true).
 				Limit(10))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sort_desc(topk(10, sum by (dns_qname) (count_over_time(`+queryJSON+` | dns_qname != "" [5m]))))`).
 				Instant(true).
 				Range(false).
@@ -227,7 +227,7 @@ func buildDnsLogs() (*dashboardv2.Dashboard, error) {
 				Values(true).
 				Limit(10))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				// Keep rankings unfiltered: hardcoded noise lists hid real suffix errors
 				// while missing newer benign categories. Drop only empty qnames.
 				Expr(`sort_desc(topk(10, sum by (dns_qname) (count_over_time(`+nxdomainJSON+` | dns_qname != "" [$__range]))))`).
@@ -243,7 +243,7 @@ func buildDnsLogs() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum by (identity) (rate(`+queryJSON+`[$__auto]))`+
 					` or sum by (identity) (count_over_time(`+queryJSON+`[$__range])) * 0`).
 				LegendFormat("{{identity}}"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
@@ -256,7 +256,7 @@ func buildDnsLogs() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum by (identity) (rate(`+responseJSON+` | dns_rcode="NXDOMAIN" [$__auto]))`+
 					` or sum by (identity) (count_over_time(`+responseJSON+`[$__range])) * 0`).
 				LegendFormat("{{identity}}"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
@@ -270,7 +270,7 @@ func buildDnsLogs() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum by (identity) (rate(`+responseJSON+` | dns_rcode="SERVFAIL" [$__auto]))`+
 					` or sum by (identity) (count_over_time(`+responseJSON+`[$__range])) * 0`).
 				LegendFormat("{{identity}}"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
@@ -286,7 +286,7 @@ func buildDnsLogs() (*dashboardv2.Dashboard, error) {
 			ShowControls(true).
 			ShowFieldSelector(true)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				// line_format persists displayed fields. Exclude policy-action because its
 				// proto2 default claims NXDOMAIN even for successful queries.
 				Expr(baseJSON+` | line_format "{{.identity}} {{.dnstap_operation}} {{.network_query_ip}} -> {{.dns_qname}} {{.dns_qtype}} {{.dns_rcode}} latency={{.dnstap_latency_ms}}ms"`).

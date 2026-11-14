@@ -36,7 +36,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -128,7 +128,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -218,7 +218,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -302,7 +302,7 @@
                         "legendFormat": "{{nodename}} {{disk}} (SATA)"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -321,7 +321,7 @@
                         "legendFormat": "{{nodename}} {{model}} (NVMe)"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -340,7 +340,7 @@
                         "legendFormat": "{{instance}} {{device}} (SATA)"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 }
@@ -405,7 +405,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -478,7 +478,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -555,7 +555,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -647,7 +647,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -731,7 +731,7 @@
                         "legendFormat": "{{nodename}} {{model}} media errors"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -750,7 +750,7 @@
                         "legendFormat": "{{nodename}} {{model}} err-log entries"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -769,7 +769,7 @@
                         "legendFormat": "{{nodename}} {{model}} unsafe shutdowns"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 }
@@ -832,7 +832,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -916,7 +916,7 @@
                         "legendFormat": "{{nodename}} {{disk}} reallocated"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -935,7 +935,7 @@
                         "legendFormat": "{{nodename}} {{disk}} pending"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -996,7 +996,7 @@
                         "legendFormat": "{{device}} {{attribute_name}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1060,7 +1060,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1081,7 +1081,7 @@
                         "range": false
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -1159,7 +1159,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1236,7 +1236,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1322,7 +1322,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1408,7 +1408,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1429,7 +1429,7 @@
                         "range": false
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -1450,7 +1450,7 @@
                         "range": false
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 }
@@ -1546,7 +1546,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1634,7 +1634,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1720,7 +1720,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1796,7 +1796,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1873,7 +1873,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1950,7 +1950,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2036,7 +2036,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2122,7 +2122,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2193,11 +2193,10 @@
                       },
                       "spec": {
                         "expr": "max by (nodename, model, serial) ((rate(nvme_data_units_written_total{instance=~\"$instance\"}[$__rate_interval]) * 512000) * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
-                        "legendFormat": "{{nodename}} {{model}} Write",
-                        "refId": "Write"
+                        "legendFormat": "{{nodename}} {{model}} Write"
                       }
                     },
-                    "refId": "Write",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -2213,8 +2212,7 @@
                       },
                       "spec": {
                         "expr": "max by (nodename, model, serial) ((rate(nvme_data_units_read_total{instance=~\"$instance\"}[$__rate_interval]) * 512000) * on(instance, device) group_left(model, serial) nvme_device_info * on(instance) group_left(nodename) max by (instance, nodename) (node_uname_info))",
-                        "legendFormat": "{{nodename}} {{model}} Read",
-                        "refId": "Read"
+                        "legendFormat": "{{nodename}} {{model}} Read"
                       }
                     },
                     "refId": "Read",

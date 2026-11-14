@@ -152,7 +152,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			JustifyMode(common.BigValueJustifyModeCenter)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(up{job="scrapeConfig/monitoring/node-exporter-external", `+instFilter+`} == 0) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("down")))))
@@ -169,7 +169,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			JustifyMode(common.BigValueJustifyModeCenter)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count((time() - node_boot_time_seconds{`+ownKernel+`}) < 3600) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("rebooted")))))
@@ -186,7 +186,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			JustifyMode(common.BigValueJustifyModeCenter)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count((node_load1{`+instFilter+`} `+normByCPU+`) > 1) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("saturated")))))
@@ -203,7 +203,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			JustifyMode(common.BigValueJustifyModeCenter)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(((1 - node_memory_MemAvailable_bytes{`+instFilter+`} / node_memory_MemTotal_bytes{`+instFilter+`}) * 100) > 80) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("over 80%")))))
@@ -220,7 +220,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			JustifyMode(common.BigValueJustifyModeCenter)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(((1 - node_filesystem_avail_bytes{`+instFilter+`,`+fsFilter+`} / node_filesystem_size_bytes{`+instFilter+`,`+fsFilter+`}) * 100) > 85) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("over 85%")))))
@@ -250,7 +250,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 				}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Deduplicate stale kernel-release series in the lookback.
 				Expr(`up{job="scrapeConfig/monitoring/node-exporter-external", `+instFilter+`} * on(instance) group_left(nodename) max by (instance, nodename) (last_over_time(node_uname_info{job="scrapeConfig/monitoring/node-exporter-external"}[1d]))`).
 				LegendFormat("{{nodename}}")))))
@@ -274,7 +274,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 				})).
 			Decimals(0)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(time() - node_boot_time_seconds{`+ownKernel+`}) `+joinNodename).
 				LegendFormat("{{nodename}}")))))
 
@@ -292,7 +292,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(capacityThresholds()).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", `+instFilter+`}[$__rate_interval]) `+joinNodename+`) * 100))`).
 				Instant(true).Range(false).
 				LegendFormat("{{nodename}}")))))
@@ -310,7 +310,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(capacityThresholds()).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc((1 - node_memory_MemAvailable_bytes{`+instFilter+`} / node_memory_MemTotal_bytes{`+instFilter+`}) `+joinNodename+` * 100)`).
 				Instant(true).Range(false).
 				LegendFormat("{{nodename}}")))))
@@ -327,7 +327,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(capacityThresholds()).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc((1 - node_filesystem_avail_bytes{`+instFilter+`,`+fsFilter+`} / node_filesystem_size_bytes{`+instFilter+`,`+fsFilter+`}) * 100 `+joinNodename+`)`).
 				Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{mountpoint}}")))))
@@ -352,7 +352,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 				})).
 			Decimals(0)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(node_load1{`+instFilter+`} `+normByCPU+`) `+joinNodename).
 				LegendFormat("{{nodename}}")))))
 
@@ -367,7 +367,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`100 - (avg by (nodename) (rate(node_cpu_seconds_total{mode="idle", `+instFilter+`}[$__rate_interval]) `+joinNodename+`) * 100)`).
 				LegendFormat("{{nodename}}")))))
 
@@ -380,7 +380,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(node_load1{`+instFilter+`} `+normByCPU+`) `+joinNodename).
 				LegendFormat("{{nodename}}")))))
 
@@ -393,7 +393,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(node_memory_MemTotal_bytes{`+instFilter+`} - node_memory_MemAvailable_bytes{`+instFilter+`}) `+joinNodename).
 				LegendFormat("{{nodename}}")))))
 
@@ -408,7 +408,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(1 - node_memory_MemAvailable_bytes{`+instFilter+`} / node_memory_MemTotal_bytes{`+instFilter+`}) * 100 `+joinNodename).
 				LegendFormat("{{nodename}}")))))
 
@@ -421,7 +421,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(node_pressure_cpu_waiting_seconds_total{`+instFilter+`}[$__rate_interval]) * 100 `+joinNodename).
 				LegendFormat("{{nodename}}")))))
 
@@ -437,12 +437,10 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Some").Query(promQuery().
-				RefId("Some").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(node_pressure_memory_waiting_seconds_total{`+instFilter+`}[$__rate_interval]) * 100 `+joinNodename).
 				LegendFormat("{{nodename}} some"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("Full").Query(promQuery().
-				RefId("Full").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(node_pressure_memory_stalled_seconds_total{`+instFilter+`}[$__rate_interval]) * 100 `+joinNodename).
 				LegendFormat("{{nodename}} full")))))
 
@@ -458,12 +456,10 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.lineStyle", Value: map[string]any{"fill": "dash", "dash": []int{8, 8}}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Some").Query(promQuery().
-				RefId("Some").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(node_pressure_io_waiting_seconds_total{`+ownKernel+`}[$__rate_interval]) * 100 `+joinNodename).
 				LegendFormat("{{nodename}} some"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("Full").Query(promQuery().
-				RefId("Full").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(node_pressure_io_stalled_seconds_total{`+ownKernel+`}[$__rate_interval]) * 100 `+joinNodename).
 				LegendFormat("{{nodename}} full")))))
 
@@ -476,13 +472,13 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
 			// CPU temp: x86 Package (Intel), cpu-thermal (RPi), or k10temp Tctl (Ryzen, PCI device 0000:00:18.x)
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`((label_replace(node_thermal_zone_temp{type=~"x86_pkg_temp|cpu-thermal", `+instFilter+`}, "sensor", "$1", "type", "(.*)")) or (label_replace(node_hwmon_temp_celsius{chip=~".*_0000:00:18_.*", sensor="temp1", `+instFilter+`}, "sensor", "cpu", "", ""))) `+joinNodename).
 				LegendFormat("{{nodename}} CPU {{sensor}}"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(nvme_temperature_celsius{`+instFilter+`}) `+joinNodename).
 				LegendFormat("{{nodename}} NVMe {{device}}"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(smartmon_temperature_celsius_raw_value{`+instFilter+`}) `+joinNodename).
 				LegendFormat("{{nodename}} Disk {{device}}")))))
 
@@ -496,7 +492,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Restrict package throttles to hypervisors because LXC guests inherit
 				// the host cpu collector series.
 				Expr(`(rate(node_cpu_package_throttles_total{`+instFilter+`, instance=~"`+proxmoxHosts+`"}[$__rate_interval])) `+joinNodename).
@@ -525,19 +521,19 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 				}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(rpi_throttled_thermal_throttling{`+instFilter+`}) `+joinNodename).
 				Instant(true).Range(false).
 				LegendFormat("{{nodename}} Thermal Throttled"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(rpi_throttled_occurred{`+instFilter+`}) `+joinNodename).
 				Instant(true).Range(false).
 				LegendFormat("{{nodename}} Thermal Throttled Since Boot"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(rpi_throttled_under_voltage{`+instFilter+`}) `+joinNodename).
 				Instant(true).Range(false).
 				LegendFormat("{{nodename}} Under Voltage"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("D").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(rpi_throttled_under_voltage_occurred{`+instFilter+`}) `+joinNodename).
 				Instant(true).Range(false).
 				LegendFormat("{{nodename}} Under Voltage Since Boot")))))
@@ -555,13 +551,11 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.transform", Value: "negative-Y"},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Rx").Query(promQuery().
-				RefId("Rx").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Keep physical NICs and vmbr (Proxmox bridges); exclude per-VM/LXC virtual interfaces.
 				Expr(`rate(node_network_receive_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|podman.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*|vnets.*"}[$__rate_interval]) `+joinNodename).
 				LegendFormat("{{nodename}} Rx {{device}}"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Tx").Query(promQuery().
-				RefId("Tx").
 				Expr(`rate(node_network_transmit_bytes_total{`+instFilter+`, device!~"lo|veth.*|docker.*|podman.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|tun.*|virbr.*|cilium.*|vnets.*"}[$__rate_interval]) `+joinNodename).
 				LegendFormat("{{nodename}} Tx {{device}}")))))
 
@@ -578,11 +572,10 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.transform", Value: "negative-Y"},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(node_disk_read_bytes_total{`+instFilter+`, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[$__rate_interval]) `+joinNodename).
 				LegendFormat("{{nodename}} Read {{device}}"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Write").Query(promQuery().
-				RefId("Write").
 				Expr(`rate(node_disk_written_bytes_total{`+instFilter+`, device=~"[svh]d[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+"}[$__rate_interval]) `+joinNodename).
 				LegendFormat("{{nodename}} Write {{device}}")))))
 
@@ -597,7 +590,7 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(1 - node_filesystem_avail_bytes{`+instFilter+`,`+fsFilter+`} / node_filesystem_size_bytes{`+instFilter+`,`+fsFilter+`}) * 100 `+joinNodename).
 				LegendFormat("{{nodename}} {{mountpoint}}")))))
 
@@ -615,16 +608,13 @@ func buildNodeOverview() (*dashboardv2.Dashboard, error) {
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
 			// Draw configured ARC bounds dashed around the live size.
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
-				RefId("A").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(node_zfs_arc_size{`+instFilter+`}`+zfsActive+`) `+joinNodename).
 				LegendFormat("{{nodename}} ARC Size"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
-				RefId("B").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(node_zfs_arc_c_max{`+instFilter+`}`+zfsActive+`) `+joinNodename).
 				LegendFormat("{{nodename}} ARC Max"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
-				RefId("C").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(node_zfs_arc_c_min{`+instFilter+`}`+zfsActive+`) `+joinNodename).
 				LegendFormat("{{nodename}} ARC Min")))))
 

@@ -209,7 +209,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(dnsdist_queries{`+dnsdist+`}[$__rate_interval]))`).
 				LegendFormat("QPS")))))
 
@@ -223,7 +223,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`avg(dnsdist_latency_avg100{`+dnsdist+`})`).
 				LegendFormat("Avg Latency")))))
 
@@ -240,12 +240,10 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.transform", Value: "negative-Y"},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Queries").Query(promQuery().
-				RefId("Queries").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(dnsdist_queries{`+dnsdist+`}[$__rate_interval])`).
 				LegendFormat("{{instance}} Queries"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Responses").Query(promQuery().
-				RefId("Responses").
 				Expr(`rate(dnsdist_responses{`+dnsdist+`}[$__rate_interval])`).
 				LegendFormat("{{instance}} Responses")))))
 
@@ -272,16 +270,16 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "orange"}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(dnsdist_frontend_noerror{`+dnsdist+`}[$__rate_interval]))`).
 				LegendFormat("NOERROR"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(dnsdist_frontend_nxdomain{`+dnsdist+`}[$__rate_interval]))`).
 				LegendFormat("NXDOMAIN"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(dnsdist_frontend_servfail{`+dnsdist+`}[$__rate_interval]))`).
 				LegendFormat("SERVFAIL"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("D").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(dnsdist_frontend_refused{`+dnsdist+`}[$__rate_interval]))`).
 				LegendFormat("REFUSED")))))
 
@@ -303,10 +301,10 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "fillOpacity", Value: 10},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`dnsdist_latency_avg100{`+dnsdist+`}`).
 				LegendFormat("{{instance}} avg100"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`dnsdist_latency_avg1000{`+dnsdist+`}`).
 				LegendFormat("{{instance}} avg1000")))))
 
@@ -320,13 +318,13 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			FillOpacity(10).
 			Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(dnsdist_acl_drops{`+dnsdist+`}[$__rate_interval])`).
 				LegendFormat("{{instance}} ACL Drop"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(dnsdist_rule_drops{`+dnsdist+`}[$__rate_interval])`).
 				LegendFormat("{{instance}} Rule Drop"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(dnsdist_dynamic_blocked{`+dnsdist+`}[$__rate_interval])`).
 				LegendFormat("{{instance}} Dynamic Block")))))
 
@@ -338,7 +336,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(dnsdist_queries{`+dnsdist+`}[$__rate_interval]) - rate(dnsdist_responses{`+dnsdist+`}[$__rate_interval])`).
 				LegendFormat("{{instance}}")))))
 
@@ -350,7 +348,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(resolver_request_total{`+resolver+`}[$__rate_interval]))`).
 				Instant(true).Range(false).
 				LegendFormat("QPS")))))
@@ -363,7 +361,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(resolverCacheHitRateThresholds).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Preserve a gap for undefined 0/0 cache ratios; clamping would report a
 				// false 0% failure during idle windows.
 				Expr(`100 * sum(rate(resolver_answer_cached_total{`+resolver+`}[$__rate_interval])) / sum(rate(resolver_answer_total{`+resolver+`}[$__rate_interval]))`).
@@ -379,7 +377,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.95, sum by (le) (rate(resolver_response_latency_bucket{`+resolver+`}[$__rate_interval])))`).
 				Instant(true).Range(false).
 				LegendFormat("p95")))))
@@ -401,7 +399,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 				})).
 			Decimals(0)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`max(time() - node_textfile_mtime_seconds{`+resolver+`,file=~".*knot_resolver\\.prom"})`).
 				Instant(true).Range(false).
 				LegendFormat("Age")))))
@@ -414,7 +412,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (instance) (rate(resolver_request_total{`+resolver+`}[$__rate_interval]))`).
 				LegendFormat("{{instance}}")))))
 
@@ -427,7 +425,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Legend(legend).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Preserve gaps for undefined cache ratios.
 				Expr(`100 * sum by (instance) (rate(resolver_answer_cached_total{`+resolver+`}[$__rate_interval])) / sum by (instance) (rate(resolver_answer_total{`+resolver+`}[$__rate_interval]))`).
 				LegendFormat("{{instance}}")))))
@@ -442,16 +440,16 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			FillOpacity(10).
 			Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(resolver_answer_rcode_noerror_total{`+resolver+`}[$__rate_interval]))`).
 				LegendFormat("NOERROR"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(resolver_answer_rcode_nodata_total{`+resolver+`}[$__rate_interval]))`).
 				LegendFormat("NODATA"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(resolver_answer_rcode_nxdomain_total{`+resolver+`}[$__rate_interval]))`).
 				LegendFormat("NXDOMAIN"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("D").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(resolver_answer_rcode_servfail_total{`+resolver+`}[$__rate_interval]))`).
 				LegendFormat("SERVFAIL")))))
 
@@ -464,13 +462,13 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Legend(legend).
 			Thresholds(corednsLatencyThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.50, sum by (instance, le) (rate(resolver_response_latency_bucket{`+resolver+`}[$__rate_interval])))`).
 				LegendFormat("{{instance}} p50"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.95, sum by (instance, le) (rate(resolver_response_latency_bucket{`+resolver+`}[$__rate_interval])))`).
 				LegendFormat("{{instance}} p95"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.99, sum by (instance, le) (rate(resolver_response_latency_bucket{`+resolver+`}[$__rate_interval])))`).
 				LegendFormat("{{instance}} p99")))))
 
@@ -494,7 +492,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 				})).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`100 * knot_resolver_cache_used_bytes{`+resolver+`} / knot_resolver_cache_size_bytes{`+resolver+`}`).
 				LegendFormat("{{instance}}")))))
 
@@ -507,7 +505,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`process_resident_memory_bytes{`+resolver+`}`).
 				LegendFormat("{{instance}} RSS")))))
 
@@ -520,7 +518,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`time() - node_textfile_mtime_seconds{`+resolver+`,file=~".*knot_resolver\\.prom"}`).
 				LegendFormat("{{instance}}")))))
 
@@ -535,7 +533,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			MergeValues(true).
 			Tooltip(tooltipAll)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`probe_success{`+authoritativeDNSJobs+`}`).
 				LegendFormat("{{probe_source}} {{transport}} {{dns_server}}")))))
 
@@ -549,7 +547,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`probe_duration_seconds{`+authoritativeDNSJobs+`}`).
 				LegendFormat("{{probe_source}} {{transport}} {{dns_server}}")))))
 
@@ -565,7 +563,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationHorizontal).
 			ReduceOptions(common.NewReduceDataOptionsBuilder().Values(true))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`avg_over_time(probe_success{`+authoritativeDNSJobs+`}[$__range]) * 100`).
 				Instant(true).Range(false).
 				LegendFormat("{{probe_source}} {{transport}} {{dns_server}}")))))
@@ -580,7 +578,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(issueThresholds).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(probe_success{`+authoritativeDNSJobs+`} == 0) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("Failed")))))
@@ -594,7 +592,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			EnableLogDetails(true).
 			SortOrder(common.LogsSortOrderDescending)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().Datasource(queryDatasource("loki_datasource")).
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().Datasource(queryDatasource("loki_datasource")).
 				Expr(resolverValidationLogs).
 				MaxLines(500)))))
 
@@ -607,7 +605,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Count UDP and TCP consistently with the Query Rate panel; TCP includes
 				// large responses and zone transfers.
 				Expr(`sum(rate(pdns_auth_udp_queries{`+pdns+`}[$__rate_interval]))`+
@@ -624,7 +622,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`avg(pdns_auth_latency{`+pdns+`})`).
 				LegendFormat("Avg Latency")))))
 
@@ -636,10 +634,10 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(pdns_auth_udp_queries{`+pdns+`}[$__rate_interval])`).
 				LegendFormat("{{instance}} UDP"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(pdns_auth_tcp_queries{`+pdns+`}[$__rate_interval])`).
 				LegendFormat("{{instance}} TCP")))))
 
@@ -666,16 +664,16 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "orange"}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(pdns_auth_noerror_packets{`+pdns+`}[$__rate_interval]))`).
 				LegendFormat("NOERROR"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(pdns_auth_nxdomain_packets{`+pdns+`}[$__rate_interval]))`).
 				LegendFormat("NXDOMAIN"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(pdns_auth_servfail_packets{`+pdns+`}[$__rate_interval]))`).
 				LegendFormat("SERVFAIL"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("D").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(pdns_auth_refused_packets{`+pdns+`}[$__rate_interval]))`).
 				LegendFormat("REFUSED")))))
 
@@ -688,7 +686,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Legend(legend).
 			Thresholds(latencyThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`pdns_auth_latency{`+pdns+`}`).
 				LegendFormat("{{instance}}")))))
 
@@ -701,7 +699,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Legend(legend).
 			Thresholds(latencyThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`pdns_auth_backend_latency{`+pdns+`}`).
 				LegendFormat("{{instance}}")))))
 
@@ -713,7 +711,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(coredns_dns_requests_total{`+coredns+`}[$__rate_interval]))`).
 				Instant(true).Range(false).
 				LegendFormat("QPS")))))
@@ -727,7 +725,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(up{`+coredns+`} == 0) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("Down")))))
@@ -742,7 +740,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			Decimals(2)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(coredns_dns_responses_total{`+coredns+`,rcode="SERVFAIL"}[$__rate_interval]))`).
 				Instant(true).Range(false).
 				LegendFormat("SERVFAIL")))))
@@ -756,7 +754,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.99, sum by (le) (rate(coredns_dns_request_duration_seconds_bucket{`+coredns+`}[$__rate_interval])))`).
 				Instant(true).Range(false).
 				LegendFormat("p99")))))
@@ -770,7 +768,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(coredns_dns_requests_total{`+coredns+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}}")))))
 
@@ -783,7 +781,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(coredns_dns_responses_total{`+coredns+`,rcode="SERVFAIL"}[$__rate_interval]))`).
 				LegendFormat("{{cluster}}")))))
 
@@ -797,7 +795,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Legend(legend).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`100 * sum by (cluster) (rate(coredns_cache_hits_total{`+coredns+`}[$__rate_interval])) / clamp_min(sum by (cluster) (rate(coredns_cache_requests_total{`+coredns+`}[$__rate_interval])), 1e-9)`).
 				LegendFormat("{{cluster}}")))))
 
@@ -810,7 +808,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(coredns_dns_request_duration_seconds_bucket{`+coredns+`}[$__rate_interval])))`).
 				LegendFormat("{{cluster}}")))))
 
@@ -825,7 +823,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(external_dns_registry_errors_total{`+extdns+`}[1h]))) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("Errors")))))
@@ -841,7 +839,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(external_dns_source_errors_total{`+extdns+`}[1h]))) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("Errors")))))
@@ -857,7 +855,7 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			Decimals(0)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`max(time() - external_dns_controller_last_sync_timestamp_seconds{`+extdns+`})`).
 				Instant(true).Range(false).
 				LegendFormat("Age")))))
@@ -873,10 +871,10 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 		Data(dashboardv2.NewQueryGroupBuilder().
 			// Aggregate pod and instance churn to the cluster label shown in the legend.
 			// max reports the stalest replica, matching the summary tile.
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`max by (cluster) (time() - external_dns_controller_last_sync_timestamp_seconds{`+extdns+`})`).
 				LegendFormat("{{cluster}} sync"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`max by (cluster) (time() - external_dns_controller_last_reconcile_timestamp_seconds{`+extdns+`})`).
 				LegendFormat("{{cluster}} reconcile")))))
 
@@ -889,10 +887,10 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(external_dns_registry_errors_total{`+extdns+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} registry"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(external_dns_source_errors_total{`+extdns+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} source")))))
 
@@ -905,10 +903,10 @@ func buildDnsOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (external_dns_source_records{`+extdns+`})`).
 				LegendFormat("{{cluster}} source"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Exclude apex NS/SOA records that no external-dns source can produce;
 				// retain all other record types for future sources.
 				Expr(`sum by (cluster) (external_dns_registry_records{`+extdns+`,record_type!~"ns|soa"})`).

@@ -53,3 +53,31 @@ func TestValidationRejectsBrokenDashboard(t *testing.T) {
 		})
 	}
 }
+
+func TestValidationQueryOverrides(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		option  any
+		wantErr bool
+	}{
+		{name: "SDK reference", option: new("query-0")},
+		{name: "string reference", option: "query-0"},
+		{name: "missing reference", option: new("missing"), wantErr: true},
+		{name: "invalid reference", option: 42, wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			d, err := buildUptime()
+			if err != nil {
+				t.Fatal(err)
+			}
+			p := d.Elements["icmp-devices-down"].PanelKind
+			p.Spec.VizConfig.Spec.FieldConfig.Overrides = append(p.Spec.VizConfig.Spec.FieldConfig.Overrides,
+				dashboardv2.Dashboardv2FieldConfigSourceOverrides{
+					Matcher: dashboardv2.MatcherConfig{Id: "byFrameRefID", Options: tc.option},
+				})
+			if err := validateDashboard(d); (err != nil) != tc.wantErr {
+				t.Errorf("validateDashboard error = %v, want error: %v", err, tc.wantErr)
+			}
+		})
+	}
+}

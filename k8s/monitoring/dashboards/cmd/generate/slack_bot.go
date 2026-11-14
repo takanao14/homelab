@@ -79,7 +79,7 @@ func buildSlackBotOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			GraphMode(common.BigValueGraphModeNone)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Single replica: max avoids double counting an overlapping rollout.
 				Expr(`max by (cluster) (slack_bot_socket_connected{`+jobFilter+`})`).
 				Instant(true).Range(false).
@@ -95,7 +95,7 @@ func buildSlackBotOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeNone).
 			GraphMode(common.BigValueGraphModeNone)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`time() - max by (cluster) (process_start_time_seconds{`+jobFilter+`})`).
 				Instant(true).Range(false).
 				LegendFormat("{{cluster}}")))))
@@ -111,7 +111,7 @@ func buildSlackBotOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(slack_bot_led_send_total{`+jobFilter+`,result="error"}[24h]))) or vector(0)`).
 				LegendFormat("Failures")))))
 
@@ -126,7 +126,7 @@ func buildSlackBotOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(slack_bot_render_failures_total{`+jobFilter+`}[24h]))) or vector(0)`).
 				LegendFormat("Failures")))))
 
@@ -145,13 +145,13 @@ func buildSlackBotOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "red"}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`round(sum by (cluster) (increase(slack_bot_messages_rendered_total{`+jobFilter+`}[$__interval])))`).
 				LegendFormat("{{cluster}} rendered"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`round(sum by (cluster) (increase(slack_bot_led_send_total{`+jobFilter+`,result="ok"}[$__interval])))`).
 				LegendFormat("{{cluster}} delivered"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`round(sum by (cluster) (increase(slack_bot_led_send_total{`+jobFilter+`,result="error"}[$__interval])))`).
 				LegendFormat("{{cluster}} failed"))). // Channel traffic is sparse; count per bucket instead of a per-second
 			// rate, and floor the bucket so single messages stay visible.
@@ -169,10 +169,10 @@ func buildSlackBotOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.95, sum by (cluster, le) (rate(slack_bot_led_send_duration_seconds_bucket{`+jobFilter+`}[$__rate_interval])))`).
 				LegendFormat("{{cluster}} p95"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// The mean stays readable at one or two samples, where a quantile
 				// only reports its bucket boundary.
 				Expr(`sum by (cluster) (rate(slack_bot_led_send_duration_seconds_sum{`+jobFilter+`}[$__rate_interval]))`+
@@ -190,10 +190,10 @@ func buildSlackBotOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`max by (cluster) (go_memstats_heap_inuse_bytes{`+jobFilter+`})`).
 				LegendFormat("{{cluster}} heap in use"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`max by (cluster) (process_resident_memory_bytes{`+jobFilter+`})`).
 				LegendFormat("{{cluster}} resident")))))
 
@@ -207,7 +207,7 @@ func buildSlackBotOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`max by (cluster) (go_goroutines{`+jobFilter+`})`).
 				LegendFormat("{{cluster}}")))))
 

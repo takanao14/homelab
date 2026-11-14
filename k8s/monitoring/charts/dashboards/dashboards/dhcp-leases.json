@@ -34,7 +34,7 @@
                         "legendFormat": "{{source_instance}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -106,7 +106,7 @@
                         "legendFormat": "{{source_instance}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -179,7 +179,7 @@
                         "legendFormat": "{{source_instance}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -257,7 +257,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -365,7 +365,7 @@
                         "legendFormat": "{{device_id}} {{ip}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -437,7 +437,7 @@
                         "maxLines": 500
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -498,7 +498,7 @@
                         "legendFormat": "{{event}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -579,7 +579,7 @@
                         "legendFormat": "{{source_instance}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -653,7 +653,7 @@
                         "legendFormat": "{{source_instance}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }

@@ -100,7 +100,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(up == 1)`).
 				LegendFormat("Up")))))
 
@@ -114,7 +114,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(up == 0) or vector(0)`).
 				LegendFormat("Down")))))
 
@@ -128,7 +128,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(prometheus_notifications_dropped_total{`+promJob+`}[5m]))) or vector(0)`).
 				LegendFormat("Dropped")))))
 
@@ -142,7 +142,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(prometheus_tsdb_wal_corruptions_total{`+promJob+`}) or vector(0)`).
 				LegendFormat("Corruptions")))))
 
@@ -157,7 +157,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(reloader_last_reload_successful == 0) or vector(0)`).
 				LegendFormat("Failed")))))
 
@@ -172,7 +172,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(ALERTS{alertstate="firing"}) or vector(0)`).
 				LegendFormat("Firing")))))
 
@@ -182,7 +182,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 		Description("Current firing alerts and their Prometheus labels.").
 		Visualization(table.NewVisualizationV2Builder()).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ALERTS{alertstate="firing"}`).
 				Instant(true).Range(false).
 				Format(prometheus.PromQueryFormatTable)))))
@@ -197,7 +197,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (integration, reason) (rate(alertmanager_notifications_failed_total[$__rate_interval])) > 0 or on() vector(0)`).
 				LegendFormat("{{integration}} {{reason}}")))))
 
@@ -211,7 +211,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(histogram_quantile(0.99, sum by (le, integration) (rate(alertmanager_notification_latency_seconds_bucket[$__rate_interval]))) and on (integration) sum by (integration) (rate(alertmanager_notifications_total[$__rate_interval])) > 0) or on() vector(0)`).
 				LegendFormat("{{integration}}")))))
 
@@ -224,7 +224,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(loki_ingester_memory_streams{`+lokiJob+`})`).
 				LegendFormat("Streams")))))
 
@@ -238,7 +238,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(loki_ingester_chunk_utilization_sum{`+lokiJob+`}) / sum(loki_ingester_chunk_utilization_count{`+lokiJob+`})`).
 				LegendFormat("Utilization")))))
 
@@ -251,7 +251,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Select float samples; native histograms need a separately labelled target.
 				// Aggregate away instance: the pod IP changes on every reschedule, so a
 				// long range would otherwise draw one broken series per past address.
@@ -268,12 +268,12 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// max, not sum: a single replica per cluster, so this only drops the
 				// churning instance label without doubling the value during a handover.
 				Expr(`max by (cluster) (prometheus_tsdb_storage_blocks_bytes{`+promJob+`})`).
 				LegendFormat("{{cluster}} Blocks"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Use measured head storage bytes, not an assumed size per chunk.
 				Expr(`max by (cluster) (prometheus_tsdb_head_chunks_storage_size_bytes{`+promJob+`})`).
 				LegendFormat("{{cluster}} Head")))))
@@ -287,7 +287,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`max by (cluster) (prometheus_tsdb_head_series{`+promJob+`})`).
 				LegendFormat("{{cluster}}")))))
 
@@ -301,7 +301,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Guard quiet histogram slices so NaN quantiles do not appear broken.
 				// Keep cluster in the grouping so the legend prefix resolves.
 				Expr(`histogram_quantile(0.99, sum by (le, slice, cluster) (rate(prometheus_engine_query_duration_histogram_seconds_bucket{`+promJob+`}[$__rate_interval])))`+
@@ -317,7 +317,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationHorizontal).
 			Decimals(3)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(topk(10, avg by (job) (scrape_duration_seconds)))`).
 				Instant(true).Range(false).
 				LegendFormat("{{job}}")))))
@@ -331,16 +331,16 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(prometheus_target_scrapes_exceeded_sample_limit_total{`+promJob+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} sample limit exceeded"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(prometheus_target_scrapes_sample_duplicate_timestamp_total{`+promJob+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} duplicate timestamp"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(prometheus_target_scrapes_sample_out_of_order_total{`+promJob+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} out of order"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("D").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(prometheus_target_scrapes_sample_out_of_bounds_total{`+promJob+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} out of bounds")))))
 
@@ -353,7 +353,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(loki_distributor_bytes_received_total{`+lokiJob+`}[$__rate_interval]))`).
 				LegendFormat("bytes/s")))))
 
@@ -368,7 +368,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(loki_ingester_chunk_stored_bytes_total{`+lokiJob+`}[$__rate_interval]))`).
 				LegendFormat("bytes/s")))))
 
@@ -381,7 +381,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(loki_distributor_lines_received_total{`+lokiJob+`}[$__rate_interval]))`).
 				LegendFormat("lines/s")))))
 
@@ -394,7 +394,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.99, sum by (le, route) (rate(loki_request_duration_seconds_bucket{`+lokiJob+`, route!~"ready|/grpc\\..*|/frontendv2pb\\..*|/logproto\\..*"}[$__rate_interval]))) and on (route) sum by (route) (rate(loki_request_duration_seconds_count{`+lokiJob+`, route!~"ready|/grpc\\..*|/frontendv2pb\\..*|/logproto\\..*"}[$__rate_interval])) > 0`).
 				LegendFormat("{{route}}")))))
 
@@ -407,7 +407,7 @@ func buildMonitoringOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(loki_ingester_memory_streams{`+lokiJob+`})`).
 				LegendFormat("Streams")))))
 

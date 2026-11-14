@@ -137,8 +137,11 @@ narrow screens; do not assign grid coordinates.
 Set a fixed, positive panel ID with `PanelBuilder.Id` using explicitly numbered
 constants. Keep IDs across title/layout changes and do not reuse retired IDs.
 Build query groups and targets with the SDK's `QueryGroupBuilder` and
-`TargetBuilder`, setting explicit target reference IDs and preserving query
-reference IDs used by transformations and overrides.
+`TargetBuilder`. Let the SDK assign reference IDs unless a transformation,
+override, or expression references the query; give referenced queries explicit,
+meaningful IDs. Do not duplicate the SDK's automatic numbering.
+Set panel-query IDs on `TargetBuilder`; omit nested datasource-query IDs so they
+cannot override the runtime reference.
 Attach transformations to the query group; table cell overrides use
 `custom.cellOptions`.
 
