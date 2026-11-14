@@ -146,7 +146,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			Thresholds(issueThresholds())).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(sum(smartmon_device_smart_healthy{type="sat",`+instFilter+`} == bool 0) or vector(0)) + (sum(nvme_critical_warning{`+instFilter+`} > bool 0) or vector(0)) + (sum(smartctl_device_smart_status{`+truenasFilter+`} == bool 0) or vector(0))`).
 				Instant(true).Range(false).
 				LegendFormat("Unhealthy")))))
@@ -167,7 +167,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 		Data(dashboardv2.NewQueryGroupBuilder().
 			// Count exactly the sources displayed by SMART Health, excluding virtual
 			// SCSI disks and including NVMe.
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(count(smartmon_device_smart_healthy{type="sat",`+instFilter+`}) or vector(0)) + (count(nvme_critical_warning{`+instFilter+`}) or vector(0)) + (count(smartctl_device_smart_status{`+truenasFilter+`}) or vector(0))`).
 				Instant(true).Range(false).
 				LegendFormat("Disks")))))
@@ -181,7 +181,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			Thresholds(issueThresholds())).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Preserve zero when selected disks expose no wear attribute.
 				Expr(`sum((`+
 					`smartmon_wear_leveling_count_value{`+instFilter+`}`+
@@ -207,7 +207,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			Thresholds(noticeThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(count(max by (instance, disk) (`+
 					`smartmon_reallocated_sector_ct_raw_value{`+instFilter+`}`+
 					` or smartmon_current_pending_sector_raw_value{`+instFilter+`}`+
@@ -249,15 +249,15 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 		Data(dashboardv2.NewQueryGroupBuilder().
 			// Evaluate current health to avoid historical device/model cross-products.
 			// Omit models so per-disk tiles remain readable.
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`smartmon_device_smart_healthy{type="sat",`+instFilter+`} `+joinNodename).
 				Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{disk}} (SATA)"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(nvme_critical_warning{`+instFilter+`} == bool 0) `+joinNodename).
 				Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{device}} (NVMe)"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`smartctl_device_smart_status{`+truenasFilter+`}`).
 				Instant(true).Range(false).
 				LegendFormat("{{instance}} {{device}} (SATA)")))))
@@ -270,7 +270,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Text(diskHealthLabelText()).
 			Thresholds(precursorThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(smartmon_reallocated_sector_ct_raw_value{`+instFilter+`} `+joinNodename+` `+joinModel+`)`).Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{disk}} {{device_model}}")))))
 
@@ -282,7 +282,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Text(diskHealthLabelText()).
 			Thresholds(precursorThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(smartmon_current_pending_sector_raw_value{`+instFilter+`} `+joinNodename+` `+joinModel+`)`).Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{disk}} {{device_model}}")))))
 
@@ -294,7 +294,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Text(diskHealthLabelText()).
 			Thresholds(precursorThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(smartmon_offline_uncorrectable_raw_value{`+instFilter+`} `+joinNodename+` `+joinModel+`)`).Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{disk}} {{device_model}}")))))
 
@@ -306,7 +306,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Text(diskHealthLabelText()).
 			Thresholds(precursorThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(smartmon_reported_uncorrect_raw_value{`+instFilter+`} `+joinNodename+` `+joinModel+`)`).Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{disk}} {{device_model}}")))))
 
@@ -318,7 +318,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Text(diskHealthLabelText()).
 			Thresholds(crcThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(smartmon_udma_crc_error_count_raw_value{`+instFilter+`} `+joinNodename+` `+joinModel+`)`).Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{disk}} {{device_model}}")))))
 
@@ -330,10 +330,10 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`smartmon_reallocated_sector_ct_raw_value{`+instFilter+`} `+joinNodename).
 				LegendFormat("{{nodename}} {{disk}} reallocated"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`smartmon_current_pending_sector_raw_value{`+instFilter+`} `+joinNodename).
 				LegendFormat("{{nodename}} {{disk}} pending")))))
 
@@ -346,13 +346,13 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNvmeDisk(`nvme_media_errors_total{`+instFilter+`}`)).
 				LegendFormat("{{nodename}} {{model}} media errors"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNvmeDisk(`nvme_num_err_log_entries_total{`+instFilter+`}`)).
 				LegendFormat("{{nodename}} {{model}} err-log entries"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNvmeDisk(`nvme_unsafe_shutdowns_total{`+instFilter+`}`)).
 				LegendFormat("{{nodename}} {{model}} unsafe shutdowns")))))
 
@@ -382,7 +382,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 				})).
 			Decimals(0)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(`+
 					`smartmon_wear_leveling_count_value{`+instFilter+`}`+
 					` or smartmon_media_wearout_indicator_value{`+instFilter+`}`+
@@ -410,7 +410,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 				})).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(nvme_percentage_used_ratio{`+instFilter+`} * 100) `+joinNodename+` `+joinNvmeModel).Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{device}} {{model}}")))))
 
@@ -430,7 +430,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 				})).
 			Decimals(0)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(nvme_available_spare_ratio{`+instFilter+`} * 100) `+joinNodename+` `+joinNvmeModel).Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{device}} {{model}}")))))
 
@@ -453,11 +453,11 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Decimals(0)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`smartmon_power_on_hours_raw_value{`+instFilter+`} `+joinNodename+` `+joinModel).
 				Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{disk}} {{device_model}}"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`nvme_power_on_hours_total{`+instFilter+`} `+joinNodename+` `+joinNvmeModel).
 				Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{device}} {{model}}")))))
@@ -482,7 +482,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 				}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`nvme_critical_warning{`+instFilter+`} `+joinNodename).Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{device}}")))))
 
@@ -498,7 +498,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(nvme_data_units_written_total{`+instFilter+`} * 512000) `+joinNodename+` `+joinNvmeModel).Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{device}} {{model}}")))))
 
@@ -514,7 +514,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(nvme_data_units_read_total{`+instFilter+`} * 512000) `+joinNodename+` `+joinNvmeModel).Instant(true).Range(false).
 				LegendFormat("{{nodename}} {{device}} {{model}}")))))
 
@@ -531,12 +531,10 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.transform", Value: "negative-Y"},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Write").Query(promQuery().
-				RefId("Write").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNvmeDisk(`(rate(nvme_data_units_written_total{`+instFilter+`}[$__rate_interval]) * 512000)`)).
 				LegendFormat("{{nodename}} {{model}} Write"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Read").Query(promQuery().
-				RefId("Read").
 				Expr(byNvmeDisk(`(rate(nvme_data_units_read_total{`+instFilter+`}[$__rate_interval]) * 512000)`)).
 				LegendFormat("{{nodename}} {{model}} Read")))))
 
@@ -561,7 +559,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 				}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`smartctl_device_smartctl_exit_status{`+truenasFilter+`}`).
 				Instant(true).Range(false).
 				LegendFormat("{{instance}} {{device}}")))))
@@ -574,7 +572,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Text(diskHealthLabelText()).
 			Thresholds(issueThresholds())).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(smartctl_device_attribute{`+truenasFilter+`,attribute_value_type="raw",attribute_name=~"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect"})`).
 				Instant(true).Range(false).
 				LegendFormat("{{device}} {{attribute_name}}")))))
@@ -593,7 +591,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 					{Value: new(float64(1)), Color: "yellow"},
 				}))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(smartctl_device_attribute{`+truenasFilter+`,attribute_value_type="raw",attribute_name="UDMA_CRC_Error_Count"})`).
 				Instant(true).Range(false).
 				LegendFormat("{{device}} {{attribute_name}}")))))
@@ -611,7 +609,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Decimals(0)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`(smartctl_device_power_on_seconds{`+truenasFilter+`} / 3600) `+joinSmartctlModel).
 				Instant(true).Range(false).
 				LegendFormat("{{device}} {{model_name}}")))))
@@ -624,7 +622,7 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`smartctl_device_attribute{`+truenasFilter+`,attribute_value_type="raw",attribute_name=~"Reallocated_Sector_Ct|Current_Pending_Sector"}`).
 				LegendFormat("{{device}} {{attribute_name}}")))))
 
@@ -637,14 +635,14 @@ func buildDiskHealth() (*dashboardv2.Dashboard, error) {
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
 			// SATA device names are stable here; avoid historical model joins.
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`smartmon_temperature_celsius_raw_value{`+instFilter+`} `+joinNodename).
 				LegendFormat("{{nodename}} {{disk}} (SATA)"))).
 			// NVMe history uses serial identity across device-name swaps.
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byNvmeDisk(`nvme_temperature_celsius{`+instFilter+`}`)).
 				LegendFormat("{{nodename}} {{model}} (NVMe)"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`smartctl_device_temperature{`+truenasFilter+`,temperature_type="current"}`).
 				LegendFormat("{{instance}} {{device}} (SATA)")))))
 

@@ -87,7 +87,7 @@ func buildOpenbaoOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			GraphMode(common.BigValueGraphModeNone)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`up{`+openbao+`}`).
 				Instant(true).Range(false).
 				LegendFormat("Up")))))
@@ -110,7 +110,7 @@ func buildOpenbaoOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			GraphMode(common.BigValueGraphModeNone)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`vault_core_unsealed{`+openbao+`}`).
 				Instant(true).Range(false).
 				LegendFormat("Seal")))))
@@ -133,7 +133,7 @@ func buildOpenbaoOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			GraphMode(common.BigValueGraphModeNone)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`vault_core_active{`+openbao+`}`).
 				Instant(true).Range(false).
 				LegendFormat("Active")))))
@@ -147,7 +147,7 @@ func buildOpenbaoOverview() (*dashboardv2.Dashboard, error) {
 			Min(0).
 			Thresholds(measurementThresholds())).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(`+usageGauge(`vault_token_count{`+openbao+`}`)+`)`).
 				Instant(true).Range(false).
 				LegendFormat("Tokens")))))
@@ -168,11 +168,11 @@ func buildOpenbaoOverview() (*dashboardv2.Dashboard, error) {
 			// OpenBao's go-metrics sink republishes per-interval request counts rather
 			// than monotonic counters. Plot raw values and use up{} as a zero baseline
 			// when quiet intervals omit the series. sum() aligns label sets.
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(vault_core_handle_request_count{`+openbao+`})`+
 					` or sum(up{`+openbao+`}) * 0`).
 				LegendFormat("requests"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(vault_core_handle_login_request_count{`+openbao+`})`+
 					` or sum(up{`+openbao+`}) * 0`).
 				LegendFormat("logins")))))
@@ -189,7 +189,7 @@ func buildOpenbaoOverview() (*dashboardv2.Dashboard, error) {
 			ShowPoints(common.VisibilityModeAlways).
 			PointSize(5)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`vault_core_handle_request{`+openbao+`,quantile=~"0.5|0.9|0.99"}`).
 				LegendFormat("p{{quantile}}")))))
 
@@ -203,7 +203,7 @@ func buildOpenbaoOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Raft apply is also a republished interval count, so plot it raw and
 				// baseline omitted quiet intervals against up{}.
 				Expr(`sum(vault_raft_apply{`+openbao+`})`+
@@ -222,7 +222,7 @@ func buildOpenbaoOverview() (*dashboardv2.Dashboard, error) {
 			ShowPoints(common.VisibilityModeAlways).
 			PointSize(5)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`vault_raft_commitTime{`+openbao+`,quantile=~"0.5|0.9|0.99"}`).
 				LegendFormat("p{{quantile}}")))))
 
@@ -238,7 +238,7 @@ func buildOpenbaoOverview() (*dashboardv2.Dashboard, error) {
 			ShowPoints(common.VisibilityModeAlways).
 			PointSize(5)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`vault_raft_boltdb_storeLogs{`+openbao+`,quantile=~"0.5|0.9|0.99"}`).
 				LegendFormat("p{{quantile}}")))))
 
@@ -254,10 +254,10 @@ func buildOpenbaoOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "red"}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`vault_expire_num_leases{`+openbao+`}`).
 				LegendFormat("leases"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`vault_expire_num_irrevocable_leases{`+openbao+`}`).
 				LegendFormat("irrevocable")))))
 
@@ -271,10 +271,10 @@ func buildOpenbaoOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(`+usageGauge(`vault_token_count{`+openbao+`}`)+`)`).
 				LegendFormat("tokens"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(usageGauge(`vault_identity_num_entities{`+openbao+`}`)).
 				LegendFormat("entities")))))
 

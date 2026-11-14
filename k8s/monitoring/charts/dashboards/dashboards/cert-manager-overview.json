@@ -35,7 +35,7 @@
                         "legendFormat": "Errors"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -111,11 +111,10 @@
                         "expr": "sort((certmanager_certificate_expiration_timestamp_seconds{cluster=~\"$cluster\"} - time()) / 86400)",
                         "format": "table",
                         "instant": true,
-                        "range": false,
-                        "refId": "A"
+                        "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -133,11 +132,10 @@
                         "expr": "sort((certmanager_certificate_renewal_timestamp_seconds{cluster=~\"$cluster\"} - time()) / 86400)",
                         "format": "table",
                         "instant": true,
-                        "range": false,
-                        "refId": "B"
+                        "range": false
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -155,11 +153,10 @@
                         "expr": "certmanager_certificate_ready_status{cluster=~\"$cluster\",condition=\"True\"}",
                         "format": "table",
                         "instant": true,
-                        "range": false,
-                        "refId": "C"
+                        "range": false
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 }
@@ -380,7 +377,7 @@
                         "legendFormat": "Not Ready"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -460,7 +457,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -614,7 +611,7 @@
                         "legendFormat": "Not Ready"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -691,7 +688,7 @@
                         "legendFormat": "{{cluster}} {{exported_namespace}}/{{name}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -758,7 +755,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -848,7 +845,7 @@
                         "legendFormat": "Errors"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }

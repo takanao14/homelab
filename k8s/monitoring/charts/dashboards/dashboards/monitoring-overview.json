@@ -34,7 +34,7 @@
                         "legendFormat": "{{cluster}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -98,7 +98,7 @@
                         "legendFormat": "{{integration}} {{reason}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -162,7 +162,7 @@
                         "legendFormat": "{{integration}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -226,7 +226,7 @@
                         "legendFormat": "bytes/s"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -290,7 +290,7 @@
                         "legendFormat": "Failed"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -366,7 +366,7 @@
                         "legendFormat": "Dropped"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -445,7 +445,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -509,7 +509,7 @@
                         "legendFormat": "Firing"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -585,7 +585,7 @@
                         "legendFormat": "bytes/s"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -648,7 +648,7 @@
                         "legendFormat": "lines/s"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -711,7 +711,7 @@
                         "legendFormat": "Streams"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -783,7 +783,7 @@
                         "legendFormat": "Streams"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -846,7 +846,7 @@
                         "legendFormat": "Utilization"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -919,7 +919,7 @@
                         "legendFormat": "{{route}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -983,7 +983,7 @@
                         "legendFormat": "{{cluster}} {{slice}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1046,7 +1046,7 @@
                         "legendFormat": "{{cluster}} samples/s"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1109,7 +1109,7 @@
                         "legendFormat": "{{cluster}} sample limit exceeded"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1128,7 +1128,7 @@
                         "legendFormat": "{{cluster}} duplicate timestamp"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -1147,7 +1147,7 @@
                         "legendFormat": "{{cluster}} out of order"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 },
@@ -1166,7 +1166,7 @@
                         "legendFormat": "{{cluster}} out of bounds"
                       }
                     },
-                    "refId": "D",
+                    "refId": "query-3",
                     "hidden": false
                   }
                 }
@@ -1229,7 +1229,7 @@
                         "legendFormat": "Down"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1305,7 +1305,7 @@
                         "legendFormat": "Up"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1379,7 +1379,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1451,7 +1451,7 @@
                         "legendFormat": "{{cluster}} Blocks"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1470,7 +1470,7 @@
                         "legendFormat": "{{cluster}} Head"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -1533,7 +1533,7 @@
                         "legendFormat": "Corruptions"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }

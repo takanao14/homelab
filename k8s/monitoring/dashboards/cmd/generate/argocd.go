@@ -72,7 +72,7 @@ func buildArgocdOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(issueThresholds).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(argocd_app_info{`+clusterFilter+`,health_status!="Healthy"}) or vector(0)`).
 				LegendFormat("Not Healthy")))))
 
@@ -86,7 +86,7 @@ func buildArgocdOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(issueThresholds).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(argocd_app_info{`+clusterFilter+`,sync_status!="Synced"}) or vector(0)`).
 				LegendFormat("OutOfSync")))))
 
@@ -100,7 +100,7 @@ func buildArgocdOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(issueThresholds).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(argocd_app_sync_total{`+clusterFilter+`,phase=~"Error|Failed"}[1h]))) or vector(0)`).
 				LegendFormat("Failures")))))
 
@@ -115,7 +115,7 @@ func buildArgocdOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(issueThresholds).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(argocd_cluster_connection_status{`+clusterFilter+`} == 0) or vector(0)`).
 				LegendFormat("Down")))))
 
@@ -129,7 +129,7 @@ func buildArgocdOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(issueThresholds).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Drop restart-specific local clone paths from the repo label.
 				Expr(`ceil(sum(increase(argocd_git_lsremote_fail_total{`+clusterFilter+`}[1h]))) or vector(0)`).
 				LegendFormat("Failures")))))
@@ -154,7 +154,7 @@ func buildArgocdOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "yellow"}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count by (cluster, health_status) (argocd_app_info{`+clusterFilter+`})`).
 				LegendFormat("{{cluster}} {{health_status}}")))))
 
@@ -175,7 +175,7 @@ func buildArgocdOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "orange"}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count by (cluster, sync_status) (argocd_app_info{`+clusterFilter+`})`).
 				LegendFormat("{{cluster}} {{sync_status}}")))))
 
@@ -185,7 +185,7 @@ func buildArgocdOverview() (*dashboardv2.Dashboard, error) {
 		Description("Applications that are not Healthy or not Synced. Empty is good.").
 		Visualization(table.NewVisualizationV2Builder()).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`argocd_app_info{`+clusterFilter+`,health_status!="Healthy"} or argocd_app_info{`+clusterFilter+`,sync_status!="Synced"}`).
 				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable))).Transformation(dashboardv2.NewTransformationBuilder().Group("organize").Options(map[string]any{
 			"includeByName": map[string]any{
@@ -234,10 +234,10 @@ func buildArgocdOverview() (*dashboardv2.Dashboard, error) {
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
 			// Separate targets fix stack order with failures above successes.
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`round(sum by (cluster) (increase(argocd_app_sync_total{`+clusterFilter+`,dry_run="false",phase="Succeeded"}[$__interval])))`).
 				LegendFormat("{{cluster}} Succeeded"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`round(sum by (cluster, phase) (increase(argocd_app_sync_total{`+clusterFilter+`,dry_run="false",phase=~"Error|Failed"}[$__interval])))`).
 				LegendFormat("{{cluster}} {{phase}}"))). // Count sparse sync events per non-overlapping bucket. Round increase()
 			// extrapolation and floor bars at ten minutes for readability.
@@ -252,10 +252,10 @@ func buildArgocdOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.99, sum by (cluster, le) (rate(argocd_app_reconcile_bucket{`+clusterFilter+`}[$__rate_interval])))`).
 				LegendFormat("{{cluster}} p99"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.50, sum by (cluster, le) (rate(argocd_app_reconcile_bucket{`+clusterFilter+`}[$__rate_interval])))`).
 				LegendFormat("{{cluster}} p50"))). // Floor bursty reconcile histograms so quantiles retain enough samples.
 			QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("5m"))))
@@ -274,10 +274,10 @@ func buildArgocdOverview() (*dashboardv2.Dashboard, error) {
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
 			// Separate request types to keep rare fetch bars above ls-remote.
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`round(sum by (cluster) (increase(argocd_git_request_total{`+clusterFilter+`,request_type="ls-remote"}[$__interval])))`).
 				LegendFormat("{{cluster}} ls-remote"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`round(sum by (cluster) (increase(argocd_git_request_total{`+clusterFilter+`,request_type="fetch"}[$__interval])))`).
 				LegendFormat("{{cluster}} fetch"))). // Count sparse Git requests per bucket so rare fetches remain visible.
 			QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("10m"))))
@@ -293,7 +293,7 @@ func buildArgocdOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.95, sum by (cluster, request_type, le) (rate(argocd_git_request_duration_seconds_bucket{`+clusterFilter+`}[$__rate_interval])))`).
 				LegendFormat("{{cluster}} {{request_type}}"))). // Floor sparse Git latency windows; show naturally sparse fetches as points.
 			QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("15m"))))

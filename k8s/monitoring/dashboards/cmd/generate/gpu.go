@@ -108,7 +108,7 @@ func buildGpuOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_gfx_activity{`+gpuFilter+`}`)).
 				LegendFormat("GFX Activity")))))
 
@@ -123,7 +123,7 @@ func buildGpuOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_used_vram{`+gpuFilter+`}`)+` / `+byGpu(`amd_gpu_total_vram{`+gpuFilter+`}`)+` * 100`).
 				LegendFormat("VRAM Usage")))))
 
@@ -137,7 +137,7 @@ func buildGpuOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_edge_temperature{`+gpuFilter+`}`)).
 				LegendFormat("Edge Temp")))))
 
@@ -151,7 +151,7 @@ func buildGpuOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_average_package_power{`+gpuFilter+`}`)).
 				LegendFormat("Power")))))
 
@@ -166,7 +166,7 @@ func buildGpuOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(`+byGpu(`amd_gpu_health{`+gpuFilter+`}`)+` != 1) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("Health Issues")))))
@@ -182,7 +182,7 @@ func buildGpuOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(`+byGpu(`amd_gpu_ecc_uncorrect_total{`+gpuFilter+`}`)+`) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("ECC Errors")))))
@@ -197,7 +197,7 @@ func buildGpuOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_junction_temperature{`+gpuFilter+`}`)).
 				Instant(true).Range(false).
 				LegendFormat("Junction Temp")))))
@@ -214,13 +214,13 @@ func buildGpuOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_gfx_activity{`+gpuFilter+`}`)).
 				LegendFormat("GFX"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_umc_activity{`+gpuFilter+`}`)).
 				LegendFormat("Memory Controller"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_vcn_activity{`+gpuFilter+`}`)).
 				LegendFormat("Video Codec")))))
 
@@ -233,10 +233,10 @@ func buildGpuOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_used_vram{`+gpuFilter+`}`)+` * 1024 * 1024`).
 				LegendFormat("Used"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_total_vram{`+gpuFilter+`}`)+` * 1024 * 1024`).
 				LegendFormat("Total")))))
 
@@ -249,10 +249,10 @@ func buildGpuOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_used_gtt{`+gpuFilter+`}`)+` * 1024 * 1024`).
 				LegendFormat("Used"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_total_gtt{`+gpuFilter+`}`)+` * 1024 * 1024`).
 				LegendFormat("Total")))))
 
@@ -265,13 +265,13 @@ func buildGpuOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_edge_temperature{`+gpuFilter+`}`)).
 				LegendFormat("Edge"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_junction_temperature{`+gpuFilter+`}`)).
 				LegendFormat("Junction (Hotspot)"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_memory_temperature{`+gpuFilter+`}`)).
 				LegendFormat("Memory")))))
 
@@ -286,7 +286,7 @@ func buildGpuOverview() (*dashboardv2.Dashboard, error) {
 		Data(dashboardv2.NewQueryGroupBuilder().
 			// Only amd_gpu_average_package_power exists; label it as average rather
 			// than implying a missing instantaneous series.
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_average_package_power{`+gpuFilter+`}`)).
 				LegendFormat("Average package power")))))
 
@@ -299,10 +299,10 @@ func buildGpuOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_clock{`+gpuFilter+`, clock_type="system"}`)+` * 1000 * 1000`).
 				LegendFormat("GPU Core"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byGpu(`amd_gpu_clock{`+gpuFilter+`, clock_type="memory"}`)+` * 1000 * 1000`).
 				LegendFormat("Memory")))))
 

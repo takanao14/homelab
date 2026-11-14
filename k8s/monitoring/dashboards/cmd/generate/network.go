@@ -84,7 +84,7 @@ func buildNetworkOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count by (instance) (ifOperStatus{`+ifFilter+`} == 1`+adminUp+`)`).
 				LegendFormat("{{instance}}")))))
 
@@ -100,7 +100,7 @@ func buildNetworkOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Key zero on the unfiltered selector so all-healthy devices remain visible.
 				Expr(`count by (instance) (ifOperStatus{`+ifFilter+`} != 1`+adminUp+`) or count by (instance) (ifOperStatus{`+ifFilter+`}) * 0`).
 				LegendFormat("{{instance}}")))))
@@ -119,7 +119,7 @@ func buildNetworkOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count by (instance) (ifAdminStatus{`+ifFilter+`} == 2) or count by (instance) (ifAdminStatus{`+ifFilter+`}) * 0`).
 				LegendFormat("{{instance}}")))))
 
@@ -132,10 +132,10 @@ func buildNetworkOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (instance) (rate(ifHCInOctets{`+ifFilter+`}[$__rate_interval]) * 8`+adminUp+`)`).
 				LegendFormat("{{instance}} In"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (instance) (rate(ifHCOutOctets{`+ifFilter+`}[$__rate_interval]) * 8`+adminUp+`)`).
 				LegendFormat("{{instance}} Out"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval(snmpMinInterval))))
 
@@ -152,12 +152,10 @@ func buildNetworkOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.transform", Value: "negative-Y"},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("In").Query(promQuery().
-				RefId("In").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (instance) (rate(ifHCInOctets{`+ifFilter+`}[$__rate_interval]) * 8`+adminUp+`)`).
 				LegendFormat("{{instance}} In"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Out").Query(promQuery().
-				RefId("Out").
 				Expr(`sum by (instance) (rate(ifHCOutOctets{`+ifFilter+`}[$__rate_interval]) * 8`+adminUp+`)`).
 				LegendFormat("{{instance}} Out"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval(snmpMinInterval))))
 
@@ -170,10 +168,10 @@ func buildNetworkOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(ifInErrors{`+ifFilter+`}[$__rate_interval])`+adminUp).
 				LegendFormat("{{instance}} {{ifDescr}} In"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(ifOutErrors{`+ifFilter+`}[$__rate_interval])`+adminUp).
 				LegendFormat("{{instance}} {{ifDescr}} Out"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval(snmpMinInterval))))
 
@@ -186,10 +184,10 @@ func buildNetworkOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(ifInDiscards{`+ifFilter+`}[$__rate_interval])`+adminUp).
 				LegendFormat("{{instance}} {{ifDescr}} In"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(ifOutDiscards{`+ifFilter+`}[$__rate_interval])`+adminUp).
 				LegendFormat("{{instance}} {{ifDescr}} Out"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval(snmpMinInterval))))
 
@@ -209,10 +207,10 @@ func buildNetworkOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`increase(ifInErrors{`+subIfFilter+`}[1h])`).
 				LegendFormat("{{instance}} {{ifDescr}} {{ifAlias}} In"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`increase(ifOutErrors{`+subIfFilter+`}[1h])`).
 				LegendFormat("{{instance}} {{ifDescr}} {{ifAlias}} Out")))))
 
@@ -225,7 +223,7 @@ func buildNetworkOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`naptCacheEntries{instance="bgw1"}`).
 				LegendFormat("{{ifDescr}} {{ifAlias}}")))))
 
@@ -240,7 +238,7 @@ func buildNetworkOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`naptCacheEntries{instance="bgw1"} / 65535`).
 				LegendFormat("{{ifDescr}} {{ifAlias}}")))))
 
@@ -253,7 +251,7 @@ func buildNetworkOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`naptCachePeak{instance="bgw1"}`).
 				LegendFormat("{{ifDescr}} {{ifAlias}}")))))
 
@@ -266,10 +264,10 @@ func buildNetworkOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(naptCacheCreates{instance="bgw1"}[$__rate_interval])`).
 				LegendFormat("{{ifDescr}} creates"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(naptCacheOverflows{instance="bgw1"}[$__rate_interval])`).
 				LegendFormat("{{ifDescr}} overflows"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval(snmpMinInterval))))
 
@@ -283,31 +281,31 @@ func buildNetworkOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(ipInDiscards{instance="bgw1"}[$__rate_interval])`).
 				LegendFormat("IPv4 input discards"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(ipOutDiscards{instance="bgw1"}[$__rate_interval])`).
 				LegendFormat("IPv4 output discards"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(ipOutNoRoutes{instance="bgw1"}[$__rate_interval])`).
 				LegendFormat("IPv4 no route"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("D").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(ipFragFails{instance="bgw1"}[$__rate_interval])`).
 				LegendFormat("IPv4 fragmentation failures"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("E").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(ipFragCreates{instance="bgw1"}[$__rate_interval])`).
 				LegendFormat("IPv4 fragments created"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("F").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(ipReasmFails{instance="bgw1"}[$__rate_interval])`).
 				LegendFormat("IPv4 reassembly failures"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("G").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(icmpOutDestUnreachs{instance="bgw1"}[$__rate_interval])`).
 				LegendFormat("ICMP destination unreachable"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("H").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(udpInErrors{instance="bgw1"}[$__rate_interval])`).
 				LegendFormat("UDP input errors"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("I").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`rate(udpNoPorts{instance="bgw1"}[$__rate_interval])`).
 				LegendFormat("UDP no port"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval(snmpMinInterval))))
 

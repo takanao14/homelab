@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana-foundation-sdk/go/common"
 	"github.com/grafana/grafana-foundation-sdk/go/dashboardv2"
 	"github.com/grafana/grafana-foundation-sdk/go/loki"
@@ -24,13 +22,6 @@ func promQuery() *prometheus.QueryV2Builder {
 // lokiQuery starts a query against the selected Loki datasource.
 func lokiQuery() *loki.QueryV2Builder {
 	return loki.NewQueryV2Builder().Datasource(queryDatasource("datasource"))
-}
-
-func refID(i int) string {
-	if i < 26 {
-		return string(rune('A' + i))
-	}
-	return fmt.Sprintf("%s%c", refID(i/26-1), rune('A'+i%26))
 }
 
 // statGrid lays out stat tiles in up to columns narrow, short cells.

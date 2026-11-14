@@ -122,7 +122,7 @@ func buildEnvoyGatewayOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(issueThresholds).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(envoy_control_plane_connected_state{`+proxyJob+`,`+clusterFilter+`} == 0) or vector(0)`).
 				LegendFormat("Disconnected")))))
 
@@ -135,7 +135,7 @@ func buildEnvoyGatewayOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Decimals(2)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(envoy_http_downstream_rq_total{`+proxyJob+`,`+clusterFilter+`,`+trafficListeners+`}[$__rate_interval]))`).
 				LegendFormat("RPS")))))
 
@@ -149,7 +149,7 @@ func buildEnvoyGatewayOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Decimals(3)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(envoy_cluster_upstream_rq_xx{`+proxyJob+`,`+clusterFilter+`,`+httprouteClusters+`,envoy_response_code_class="5"}[$__rate_interval])) or vector(0)`).
 				LegendFormat("5xx")))))
 
@@ -163,7 +163,7 @@ func buildEnvoyGatewayOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`histogram_quantile(0.99, sum by (le) (rate(envoy_cluster_upstream_rq_time_bucket{`+proxyJob+`,`+clusterFilter+`,`+httprouteClusters+`}[$__rate_interval])))`).
 				LegendFormat("p99"))). // Sparse traffic needs a wider window for a stable summary quantile.
 			QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("15m"))))
@@ -177,7 +177,7 @@ func buildEnvoyGatewayOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, envoy_http_conn_manager_prefix) (rate(envoy_http_downstream_rq_total{`+proxyJob+`,`+clusterFilter+`,`+trafficListeners+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{envoy_http_conn_manager_prefix}}")))))
 
@@ -190,7 +190,7 @@ func buildEnvoyGatewayOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byRoute(`sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_total{`+proxyJob+`,`+clusterFilter+`,`+httprouteClusters+`}[$__rate_interval]))`)).
 				LegendFormat("{{cluster}} {{route}}")))))
 
@@ -218,7 +218,7 @@ func buildEnvoyGatewayOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "red"}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (envoy_response_code_class) (rate(envoy_http_downstream_rq_xx{`+proxyJob+`,`+clusterFilter+`,`+trafficListeners+`}[$__rate_interval]))`).
 				LegendFormat("{{envoy_response_code_class}}xx")))))
 
@@ -234,10 +234,10 @@ func buildEnvoyGatewayOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "red"}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(withRouteBaseline(byRoute(`sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx{`+proxyJob+`,`+clusterFilter+`,`+httprouteClusters+`,envoy_response_code_class="4"}[$__rate_interval]))`))).
 				LegendFormat("{{cluster}} {{route}} 4xx"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(withRouteBaseline(byRoute(`sum by (cluster, envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx{`+proxyJob+`,`+clusterFilter+`,`+httprouteClusters+`,envoy_response_code_class="5"}[$__rate_interval]))`))).
 				LegendFormat("{{cluster}} {{route}} 5xx")))))
 
@@ -252,7 +252,7 @@ func buildEnvoyGatewayOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(byRouteQuantile("0.99", `sum by (cluster, envoy_cluster_name, le) (rate(envoy_cluster_upstream_rq_time_bucket{`+proxyJob+`,`+clusterFilter+`,`+httprouteClusters+`}[$__rate_interval]))`)).
 				LegendFormat("{{cluster}} {{route}}"))). // A 15-minute floor reduces sparse gaps; draw remaining samples as points.
 			QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("15m"))))
@@ -266,7 +266,7 @@ func buildEnvoyGatewayOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, envoy_http_conn_manager_prefix) (envoy_http_downstream_cx_active{`+proxyJob+`,`+clusterFilter+`,`+trafficListeners+`})`).
 				LegendFormat("{{cluster}} {{envoy_http_conn_manager_prefix}}")))))
 
@@ -281,7 +281,7 @@ func buildEnvoyGatewayOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`min by (cluster, pod) (envoy_control_plane_connected_state{`+proxyJob+`,`+clusterFilter+`})`).
 				LegendFormat("{{cluster}} {{pod}}")))))
 
@@ -295,16 +295,16 @@ func buildEnvoyGatewayOverview() (*dashboardv2.Dashboard, error) {
 			Legend(legend).
 			Thresholds(issueThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(envoy_cluster_manager_cds_update_failure{`+proxyJob+`,`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} CDS failure"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(envoy_cluster_manager_cds_update_rejected{`+proxyJob+`,`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} CDS rejected"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(envoy_listener_manager_lds_update_failure{`+proxyJob+`,`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} LDS failure"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("D").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(envoy_listener_manager_lds_update_rejected{`+proxyJob+`,`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} LDS rejected")))))
 
@@ -318,7 +318,7 @@ func buildEnvoyGatewayOverview() (*dashboardv2.Dashboard, error) {
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
 			// Aggregate away restart-specific controller labels.
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster) (rate(controller_runtime_reconcile_errors_total{`+controllerJob+`,`+clusterFilter+`}[$__rate_interval]))`).
 				LegendFormat("{{cluster}}")))))
 
@@ -331,7 +331,7 @@ func buildEnvoyGatewayOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Count written status updates only; no_action is evaluation noise.
 				Expr(`sum by (cluster, kind) (rate(status_update_total{`+controllerJob+`,`+clusterFilter+`,status="success"}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{kind}}")))))

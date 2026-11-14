@@ -99,7 +99,7 @@ func buildDhcpLeases() (*dashboardv2.Dashboard, error) {
 			Thresholds(healthThresholds).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`dhcp_lease_observer_up{`+observer+`}`).
 				LegendFormat("{{source_instance}}")))))
 
@@ -112,7 +112,7 @@ func buildDhcpLeases() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`dhcp_lease_observer_leases{`+observer+`,state="bound"}`).
 				LegendFormat("{{source_instance}}")))))
 
@@ -126,7 +126,7 @@ func buildDhcpLeases() (*dashboardv2.Dashboard, error) {
 			Thresholds(snapshotAgeThresholds).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`time() - dhcp_lease_observer_last_success_timestamp_seconds{`+observer+`}`).
 				LegendFormat("{{source_instance}}")))))
 
@@ -140,7 +140,7 @@ func buildDhcpLeases() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`dhcp_lease_observer_collection_duration_seconds{`+observer+`}`).
 				LegendFormat("{{source_instance}}")))))
 
@@ -150,7 +150,7 @@ func buildDhcpLeases() (*dashboardv2.Dashboard, error) {
 		Description("Last good snapshot of the router lease table. Device IDs are opaque HMACs; no MAC or hostname is collected.").
 		Visualization(table.NewVisualizationV2Builder()).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// sort_by_label needs promql-experimental-functions, so the
 				// table transformation orders the rows instead.
 				Expr(leaseInfo).
@@ -191,7 +191,7 @@ func buildDhcpLeases() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`dhcp_lease_observer_leases{`+observer+`,state="bound"}`).
 				LegendFormat("{{source_instance}}")))))
 
@@ -206,7 +206,7 @@ func buildDhcpLeases() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`dhcp_lease_observer_lease_info{`+observer+`,device_id=~"$device"}`).
 				LegendFormat("{{device_id}} {{ip}}")))))
 
@@ -225,7 +225,7 @@ func buildDhcpLeases() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().Datasource(queryDatasource("loki_datasource")).
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().Datasource(queryDatasource("loki_datasource")).
 				Expr(`sum by (event) (count_over_time(`+baseJSON+
 					` | event =~ "lease_.*" | ip =~ "$ip" [$__auto]))`).
 				LegendFormat("{{event}}"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
@@ -241,7 +241,7 @@ func buildDhcpLeases() (*dashboardv2.Dashboard, error) {
 			ShowControls(true).
 			ShowFieldSelector(true)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().Datasource(queryDatasource("loki_datasource")).
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().Datasource(queryDatasource("loki_datasource")).
 				Expr(baseJSON+` | ip =~ "$ip" | device_id =~ "$device"`+
 					` | line_format "{{.event}} {{.ip}} {{.device_id}} {{.state}}"`).
 				MaxLines(500)))))

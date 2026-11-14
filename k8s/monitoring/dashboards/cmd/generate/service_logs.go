@@ -122,15 +122,15 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll))
 	logsByVMQueries := dashboardv2.NewQueryGroupBuilder()
 	vmActivityQueries := dashboardv2.NewQueryGroupBuilder()
-	for i, host := range logShippingVMs {
+	for _, host := range logShippingVMs {
 		selector := fmt.Sprintf(`{host=%q, unit=~".+"}`, host)
 		last24h := `sum(count_over_time(` + selector + `[24h])) or vector(0)`
 		reportingVMExpressions = append(reportingVMExpressions, `((`+last24h+`) > bool 0)`)
-		logsByVMQueries.Target(dashboardv2.NewTargetBuilder().RefId(refID(i)).Query(lokiQuery().
+		logsByVMQueries.Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 			Expr(last24h).
 			Instant(true).
 			LegendFormat(host)))
-		vmActivityQueries.Target(dashboardv2.NewTargetBuilder().RefId(refID(i)).Query(lokiQuery().
+		vmActivityQueries.Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 			Expr(`((sum(count_over_time(` + selector + `[15m])) or vector(0)) > bool 0)`).
 			LegendFormat(host)))
 	}
@@ -180,7 +180,7 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(rate(`+base+`[5m])) or vector(0)`).
 				Instant(true).
 				LegendFormat("logs/s")))))
@@ -197,7 +197,7 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(reportingVMs).
 				Instant(true).
 				LegendFormat("reporting")))))
@@ -211,7 +211,7 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			Thresholds(errorThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				// PRIORITY 0-3: emerg, alert, crit, err
 				Expr(`sum(count_over_time(`+baseJSON+` | PRIORITY =~ "[0-3]" [1h])) or vector(0)`).
 				Instant(true).
@@ -226,7 +226,7 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationAuto).
 			Thresholds(warnThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				// PRIORITY 4: warning
 				Expr(`sum(count_over_time(`+baseJSON+` | PRIORITY = "4" [1h])) or vector(0)`).
 				Instant(true).
@@ -246,7 +246,7 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			Thresholds(vectorTargetThresholds).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().Datasource(queryDatasource("prometheus")).
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().Datasource(queryDatasource("prometheus")).
 				Expr(`sum(up{`+vectorJob+`}) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("targets")))))
@@ -260,7 +260,7 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			Thresholds(issueThresholds()).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().Datasource(queryDatasource("prometheus")).
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().Datasource(queryDatasource("prometheus")).
 				Expr(`sum(increase(vector_component_errors_total{`+vectorJob+`,component_id="loki"}[15m])) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("errors")))))
@@ -274,7 +274,7 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			Thresholds(issueThresholds()).
 			ColorMode(common.BigValueColorModeBackground)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().Datasource(queryDatasource("prometheus")).
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().Datasource(queryDatasource("prometheus")).
 				Expr(`sum(increase(vector_component_discarded_events_total{`+vectorJob+`,intentional="false"}[15m])) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("discards")))))
@@ -288,7 +288,7 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			Min(0).
 			Thresholds(measurementThresholds())).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().Datasource(queryDatasource("prometheus")).
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().Datasource(queryDatasource("prometheus")).
 				Expr(`sum(vector_buffer_size_events{`+vectorJob+`,component_id="loki"}) or vector(0)`).
 				Instant(true).Range(false).
 				LegendFormat("events")))))
@@ -303,10 +303,10 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().Datasource(queryDatasource("prometheus")).
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().Datasource(queryDatasource("prometheus")).
 				Expr(`sum by (instance) (rate(vector_component_received_events_total{`+vectorJob+`,component_id="journald"}[$__rate_interval]))`).
 				LegendFormat("{{instance}} received"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().Datasource(queryDatasource("prometheus")).
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().Datasource(queryDatasource("prometheus")).
 				Expr(`sum by (instance) (rate(vector_component_sent_events_total{`+vectorJob+`,component_id="loki"}[$__rate_interval]))`).
 				LegendFormat("{{instance}} sent")))))
 
@@ -322,7 +322,7 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().Datasource(queryDatasource("prometheus")).
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().Datasource(queryDatasource("prometheus")).
 				Expr(`max by (instance) (vector_source_buffer_utilization_level{`+vectorJob+`,component_id="journald"}) * 100`).
 				LegendFormat("{{instance}}")))))
 
@@ -338,7 +338,7 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 			Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum by (host) (rate(`+base+`[$__auto]))`+
 					` or sum by (host) (count_over_time(`+base+`[$__range])) * 0`).
 				LegendFormat("{{host}}"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
@@ -355,7 +355,7 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 			Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum by (unit) (rate(`+base+`[$__auto]))`+
 					` or sum by (unit) (count_over_time(`+base+`[$__range])) * 0`).
 				LegendFormat("{{unit}}"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
@@ -374,7 +374,7 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				// Key zero on the full range so quiet units remain visible.
 				Expr(`sum by (unit) (count_over_time(`+baseJSON+` | PRIORITY =~ "[0-3]" [$__auto]))`+
 					` or sum by (unit) (count_over_time(`+base+`[$__range])) * 0`).
@@ -393,7 +393,7 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum by (unit) (count_over_time(`+baseJSON+` | PRIORITY = "4" [$__auto]))`+
 					` or sum by (unit) (count_over_time(`+base+`[$__range])) * 0`).
 				LegendFormat("{{unit}}"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
@@ -409,7 +409,7 @@ func buildServiceLogs() (*dashboardv2.Dashboard, error) {
 			ShowControls(true).
 			ShowFieldSelector(true)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				// line_format persists host, unit, and message for unfiltered log views.
 				Expr(baseJSON+` | line_format "{{.host}} [{{.unit}}] {{.message}}"`).
 				MaxLines(500)))))

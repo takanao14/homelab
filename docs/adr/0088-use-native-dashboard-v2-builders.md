@@ -3,6 +3,7 @@
 - **Status:** Accepted
 - **Category:** Observability
 - **Date:** 2026-11-13
+- **Amended by:** [ADR-0089](0089-use-dashboard-v2-query-defaults.md)
 - **Validated:** Native SDK definitions for Uptime and Disk Health, followed by
   all 22 dashboards, produce byte-identical JSON on 2026-11-13.
 - **Related:** [ADR-0087](0087-migrate-grafana-dashboards-to-dashboard-v2.md)

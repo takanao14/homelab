@@ -34,7 +34,7 @@
                         "legendFormat": "GPU Core"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -53,7 +53,7 @@
                         "legendFormat": "Memory"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -118,7 +118,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -194,7 +194,7 @@
                         "legendFormat": "GFX Activity"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -274,7 +274,7 @@
                         "legendFormat": "GFX"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -293,7 +293,7 @@
                         "legendFormat": "Memory Controller"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -312,7 +312,7 @@
                         "legendFormat": "Video Codec"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 }
@@ -379,7 +379,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -455,7 +455,7 @@
                         "legendFormat": "Used"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -474,7 +474,7 @@
                         "legendFormat": "Total"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -537,7 +537,7 @@
                         "legendFormat": "Average package power"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -599,7 +599,7 @@
                         "legendFormat": "Power"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -679,7 +679,7 @@
                         "legendFormat": "Edge"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -698,7 +698,7 @@
                         "legendFormat": "Junction (Hotspot)"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -717,7 +717,7 @@
                         "legendFormat": "Memory"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 }
@@ -779,7 +779,7 @@
                         "legendFormat": "Edge Temp"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -861,7 +861,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -940,7 +940,7 @@
                         "legendFormat": "Used"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -959,7 +959,7 @@
                         "legendFormat": "Total"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -1021,7 +1021,7 @@
                         "legendFormat": "VRAM Usage"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }

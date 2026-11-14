@@ -111,7 +111,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(kube_node_status_condition{`+clusterFilter+`,condition="Ready",status="true"})`).
 				LegendFormat("Ready")))))
 
@@ -125,7 +125,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(kube_node_status_condition{`+clusterFilter+`,condition="Ready",status="true"} == 0) or vector(0)`).
 				LegendFormat("NotReady")))))
 
@@ -138,7 +138,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(kube_node_info{`+clusterFilter+`})`).
 				LegendFormat("Total")))))
 
@@ -152,7 +152,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Any active MemoryPressure, DiskPressure, or PIDPressure across all nodes.
 				Expr(`count(kube_node_status_condition{`+clusterFilter+`,condition=~"MemoryPressure|DiskPressure|PIDPressure",status="true"} == 1) or vector(0)`).
 				LegendFormat("Pressure")))))
@@ -166,7 +166,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// == 1 filters to the active phase only; other phases exist as 0-valued series.
 				Expr(`count(kube_pod_status_phase{`+clusterFilter+`,phase="Running",`+nsFilter+`} == 1) or vector(0)`).
 				LegendFormat("Running")))))
@@ -181,7 +181,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Exclude Succeeded (completed Jobs) — only flag genuinely unhealthy phases.
 				Expr(`count(kube_pod_status_phase{`+clusterFilter+`,phase!="Running",phase!="Succeeded",`+nsFilter+`} == 1) or vector(0)`).
 				LegendFormat("Issues")))))
@@ -196,7 +196,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`ceil(sum(increase(kube_pod_container_status_restarts_total{`+clusterFilter+`,`+nsFilter+`}[1h]))) or vector(0)`).
 				LegendFormat("Restarts")))))
 
@@ -211,7 +211,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Counts containers whose most recent termination reason was OOMKilled.
 				Expr(`count(kube_pod_container_status_last_terminated_reason{`+clusterFilter+`,reason="OOMKilled",`+nsFilter+`} == 1) or vector(0)`).
 				LegendFormat("OOMKilled")))))
@@ -226,7 +226,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(measurementThresholds()).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Exclude deployments intentionally scaled to zero; 0 available == 0 desired
 				// is not a running healthy deployment.
 				Expr(`count((kube_deployment_status_replicas_available{`+clusterFilter+`,`+nsFilter+`} == kube_deployment_spec_replicas{`+clusterFilter+`,`+nsFilter+`}) and (kube_deployment_spec_replicas{`+clusterFilter+`,`+nsFilter+`} > 0)) or vector(0)`).
@@ -242,7 +242,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(kube_deployment_status_replicas_available{`+clusterFilter+`,`+nsFilter+`} < kube_deployment_spec_replicas{`+clusterFilter+`,`+nsFilter+`}) or vector(0)`).
 				LegendFormat("Degraded")))))
 
@@ -256,7 +256,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(kube_daemonset_status_number_ready{`+clusterFilter+`,`+nsFilter+`} < kube_daemonset_status_desired_number_scheduled{`+clusterFilter+`,`+nsFilter+`}) or vector(0)`).
 				LegendFormat("Degraded")))))
 
@@ -270,7 +270,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			ColorMode(common.BigValueColorModeBackground).
 			Orientation(common.VizOrientationAuto)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count(kube_statefulset_status_replicas_ready{`+clusterFilter+`,`+nsFilter+`} < kube_statefulset_replicas{`+clusterFilter+`,`+nsFilter+`}) or vector(0)`).
 				LegendFormat("Degraded")))))
 
@@ -283,7 +283,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// container="" excludes pause containers; pod="" excludes node-level cgroup rollups.
 				Expr(`sum by (cluster, namespace) (rate(container_cpu_usage_seconds_total{`+clusterFilter+`,`+nsFilter+`,container!="",pod!=""}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{namespace}}")))))
@@ -297,7 +297,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, namespace) (container_memory_working_set_bytes{`+clusterFilter+`,`+nsFilter+`,container!="",pod!=""})`).
 				LegendFormat("{{cluster}} {{namespace}}")))))
 
@@ -310,10 +310,10 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(kube_pod_container_resource_requests{`+clusterFilter+`,resource="cpu",`+nsFilter+`})`).
 				LegendFormat("Requested"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(rate(container_cpu_usage_seconds_total{`+clusterFilter+`,`+nsFilter+`,container!="",pod!=""}[$__rate_interval]))`).
 				LegendFormat("Actual")))))
 
@@ -326,10 +326,10 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(kube_pod_container_resource_requests{`+clusterFilter+`,resource="memory",`+nsFilter+`})`).
 				LegendFormat("Requested"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum(container_memory_working_set_bytes{`+clusterFilter+`,`+nsFilter+`,container!="",pod!=""})`).
 				LegendFormat("Actual")))))
 
@@ -352,19 +352,19 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "unit", Value: "bytes"},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, namespace, pod, container) (kube_pod_container_resource_requests{`+clusterFilter+`,resource="cpu",`+nsFilter+`})`).
-				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable).RefId("A"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("B").Query(promQuery().
+				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable))).
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// container!="" excludes pause containers; pod!="" excludes node-level cgroup rollups.
 				Expr(`sum by (cluster, namespace, pod, container) (rate(container_cpu_usage_seconds_total{`+clusterFilter+`,`+nsFilter+`,container!="",pod!=""}[$__rate_interval]))`).
-				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable).RefId("B"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("C").Query(promQuery().
+				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable))).
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, namespace, pod, container) (kube_pod_container_resource_requests{`+clusterFilter+`,resource="memory",`+nsFilter+`})`).
-				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable).RefId("C"))).
-			Target(dashboardv2.NewTargetBuilder().RefId("D").Query(promQuery().
+				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable))).
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sum by (cluster, namespace, pod, container) (container_memory_working_set_bytes{`+clusterFilter+`,`+nsFilter+`,container!="",pod!=""})`).
-				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable).RefId("D"))).Transformation(dashboardv2.NewTransformationBuilder().Group("merge").Options(map[string]any{})).Transformation(dashboardv2.NewTransformationBuilder().Group("organize").Options(map[string]any{
+				Instant(true).Range(false).Format(prometheus.PromQueryFormatTable))).Transformation(dashboardv2.NewTransformationBuilder().Group("merge").Options(map[string]any{})).Transformation(dashboardv2.NewTransformationBuilder().Group("organize").Options(map[string]any{
 			"excludeByName": map[string]any{"Time": true},
 			"indexByName": map[string]any{
 				"cluster":   0,
@@ -402,7 +402,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 				})).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Avoid NaN for idle containers. Keep the named five-minute window fixed;
 				// $__rate_interval would change this instant KPI with dashboard zoom.
 				Expr(`sort_desc(topk(10, (100 * sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{`+clusterFilter+`,`+nsFilter+`,container!="",pod!=""}[5m])) / clamp_min(sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{`+clusterFilter+`,`+nsFilter+`,container!="",pod!=""}[5m])), 1e-9)) > 0)) or on() label_replace(vector(0), "cluster", "No throttling", "", "")`).
@@ -420,7 +420,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(issueThresholds).
 			Decimals(0)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(sum by (cluster, namespace, pod, container) (increase(container_oom_events_total{`+clusterFilter+`,`+nsFilter+`,container!="",pod!=""}[1h])) > 0) or on() label_replace(vector(0), "cluster", "No OOM events", "", "")`).
 				Instant(true).Range(false).
 				LegendFormat("{{cluster}} {{namespace}}/{{pod}}/{{container}}")))))
@@ -435,7 +435,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Sum phase gauges so empty phases remain visible at zero. Filtering ==1
 				// removes those series entirely.
 				Expr(`sum by (cluster, phase) (kube_pod_status_phase{`+clusterFilter+`,`+nsFilter+`})`).
@@ -450,7 +450,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationHorizontal).
 			Decimals(0)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// Exclude zero restarts; sort without topk's per-step instability.
 				Expr(`sort_desc(sum by (cluster, namespace, pod, container) (increase(kube_pod_container_status_restarts_total{`+clusterFilter+`,`+nsFilter+`}[1h])) > 0) or on() label_replace(vector(0), "cluster", "No restarts", "", "")`).
 				Instant(true).Range(false).
@@ -469,13 +469,11 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 				{Id: "custom.transform", Value: "negative-Y"},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("Rx").Query(promQuery().
-				RefId("Rx").
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				// pod!="" excludes node-level aggregates.
 				Expr(`sum by (cluster, namespace) (rate(container_network_receive_bytes_total{`+clusterFilter+`,`+nsFilter+`,pod!=""}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{namespace}} Rx"))).
 			Target(dashboardv2.NewTargetBuilder().RefId("Tx").Query(promQuery().
-				RefId("Tx").
 				Expr(`sum by (cluster, namespace) (rate(container_network_transmit_bytes_total{`+clusterFilter+`,`+nsFilter+`,pod!=""}[$__rate_interval]))`).
 				LegendFormat("{{cluster}} {{namespace}} Tx")))))
 
@@ -489,7 +487,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationHorizontal).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(kubelet_volume_stats_used_bytes{`+clusterFilter+`,`+nsFilter+`} / kubelet_volume_stats_capacity_bytes{`+clusterFilter+`,`+nsFilter+`} * 100)`).
 				Instant(true).Range(false).
 				LegendFormat("{{cluster}} {{namespace}}/{{persistentvolumeclaim}}")))))
@@ -503,7 +501,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			Orientation(common.VizOrientationHorizontal).
 			Decimals(0)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`count by (cluster, phase) (kube_persistentvolumeclaim_status_phase{`+clusterFilter+`,`+nsFilter+`} == 1)`).
 				LegendFormat("{{cluster}} {{phase}}")))))
 
@@ -519,7 +517,7 @@ func buildKubernetesOverview() (*dashboardv2.Dashboard, error) {
 			Thresholds(capacityThresholds()).
 			Decimals(1)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(promQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(promQuery().
 				Expr(`sort_desc(100 * (1 - kubelet_volume_stats_inodes_free{`+clusterFilter+`,`+nsFilter+`} / clamp_min(kubelet_volume_stats_inodes{`+clusterFilter+`,`+nsFilter+`}, 1)))`).
 				Instant(true).Range(false).
 				LegendFormat("{{cluster}} {{namespace}}/{{persistentvolumeclaim}}")))))

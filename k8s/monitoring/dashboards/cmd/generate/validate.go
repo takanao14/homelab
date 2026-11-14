@@ -46,6 +46,23 @@ func validateDashboard(d *dashboardv2.Dashboard) error {
 			}
 			refs[q.Spec.RefId] = true
 		}
+		for _, override := range p.VizConfig.Spec.FieldConfig.Overrides {
+			if override.Matcher.Id != "byFrameRefID" {
+				continue
+			}
+			var ref string
+			switch value := override.Matcher.Options.(type) {
+			case string:
+				ref = value
+			case *string:
+				if value != nil {
+					ref = *value
+				}
+			}
+			if !refs[ref] {
+				return fmt.Errorf("%s: override references unknown query %q", name, ref)
+			}
+		}
 	}
 	if d.Layout.RowsLayoutKind == nil {
 		return fmt.Errorf("expected rows layout")

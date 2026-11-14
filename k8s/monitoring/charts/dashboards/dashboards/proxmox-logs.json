@@ -35,7 +35,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -112,7 +112,7 @@
                         "legendFormat": "{{host}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -185,7 +185,7 @@
                         "legendFormat": "{{appname}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -258,7 +258,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -330,7 +330,7 @@
                         "maxLines": 500
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -392,7 +392,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -468,7 +468,7 @@
                         "maxLines": 1000
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -529,7 +529,7 @@
                         "legendFormat": "{{appname}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -598,7 +598,7 @@
                         "legendFormat": "Cluster / quorum"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -617,7 +617,7 @@
                         "legendFormat": "HA"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -636,7 +636,7 @@
                         "legendFormat": "Backup"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 },
@@ -655,7 +655,7 @@
                         "legendFormat": "Storage / ZFS"
                       }
                     },
-                    "refId": "D",
+                    "refId": "query-3",
                     "hidden": false
                   }
                 },
@@ -674,7 +674,7 @@
                         "legendFormat": "OOM"
                       }
                     },
-                    "refId": "E",
+                    "refId": "query-4",
                     "hidden": false
                   }
                 },
@@ -693,7 +693,7 @@
                         "legendFormat": "AppArmor denied"
                       }
                     },
-                    "refId": "F",
+                    "refId": "query-5",
                     "hidden": false
                   }
                 }
@@ -766,7 +766,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -842,7 +842,7 @@
                         "legendFormat": "{{host}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }

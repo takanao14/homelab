@@ -117,7 +117,7 @@ func buildSyslog() (*dashboardv2.Dashboard, error) {
 			Min(0).
 			Thresholds(measurementThresholds())).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(rate(`+base+`[5m])) or vector(0)`).
 				Instant(true).
 				LegendFormat("logs/s")))))
@@ -130,7 +130,7 @@ func buildSyslog() (*dashboardv2.Dashboard, error) {
 			Min(0).
 			Thresholds(issueThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(count_over_time(`+errSel+` [1h])) or vector(0)`).
 				Instant(true).
 				LegendFormat("errors")))))
@@ -144,7 +144,7 @@ func buildSyslog() (*dashboardv2.Dashboard, error) {
 			Min(0).
 			Thresholds(warnThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(count_over_time(`+warnSelHost+` [1h])) or vector(0)`).
 				Instant(true).
 				LegendFormat("warnings")))))
@@ -158,7 +158,7 @@ func buildSyslog() (*dashboardv2.Dashboard, error) {
 			Min(0).
 			Thresholds(neutralThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum(count_over_time(`+warnSelDevice+` [1h])) or vector(0)`).
 				Instant(true).
 				LegendFormat("warnings")))))
@@ -172,7 +172,7 @@ func buildSyslog() (*dashboardv2.Dashboard, error) {
 			Min(0).
 			Thresholds(issueThresholds)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				// Restrict parse failures to syslog streams.
 				Expr(`sum(count_over_time(`+baseAll+` | json | __error__!="" [1h])) or vector(0)`).
 				Instant(true).
@@ -190,7 +190,7 @@ func buildSyslog() (*dashboardv2.Dashboard, error) {
 			SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 			Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum by (host) (rate(`+base+`[$__auto]))`+
 					` or sum by (host) (count_over_time(`+base+`[$__range])) * 0`).
 				LegendFormat("{{host}}"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
@@ -220,7 +220,7 @@ func buildSyslog() (*dashboardv2.Dashboard, error) {
 				{Id: "color", Value: map[string]any{"mode": "fixed", "fixedColor": "green"}},
 			})).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				// Ignore the severity dropdown for the full breakdown.
 				Expr(`sum by (severity) (rate(`+baseAll+`[$__auto]))`+
 					` or sum by (severity) (count_over_time(`+baseAll+`[$__range])) * 0`).
@@ -238,7 +238,7 @@ func buildSyslog() (*dashboardv2.Dashboard, error) {
 			SpanNulls(common.BoolOrFloat64{Bool: new(true)}).
 			Stacking(common.NewStackingConfigBuilder().Mode(common.StackingModeNormal))).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum by (appname) (rate(`+baseApp+`[$__auto]))`+
 					` or sum by (appname) (count_over_time(`+baseApp+`[$__range])) * 0`).
 				LegendFormat("{{appname}}"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
@@ -257,7 +257,7 @@ func buildSyslog() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				// Baseline hosts over the full range so quiet series remain visible.
 				Expr(`sum by (host) (count_over_time(`+errSel+`[$__auto]))`+
 					` or sum by (host) (count_over_time(`+base+`[$__range])) * 0`).
@@ -276,7 +276,7 @@ func buildSyslog() (*dashboardv2.Dashboard, error) {
 			Tooltip(tooltipAll).
 			Legend(legend)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				Expr(`sum by (host) (count_over_time(`+warnSel+`[$__auto]))`+
 					` or sum by (host) (count_over_time(`+base+`[$__range])) * 0`).
 				LegendFormat("{{host}}"))).QueryOptions(dashboardv2.NewQueryOptionsSpecBuilder().Interval("1m"))))
@@ -292,7 +292,7 @@ func buildSyslog() (*dashboardv2.Dashboard, error) {
 			ShowControls(true).
 			ShowFieldSelector(true)).
 		Data(dashboardv2.NewQueryGroupBuilder().
-			Target(dashboardv2.NewTargetBuilder().RefId("A").Query(lokiQuery().
+			Target(dashboardv2.NewTargetBuilder().Query(lokiQuery().
 				// line_format persists host, severity, app, and message for All views.
 				Expr(baseApp+` | line_format "{{.host}} [{{.severity}}] {{.appname}}: {{.message}}"`).
 				MaxLines(500)))))

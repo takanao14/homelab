@@ -35,7 +35,7 @@
                         "legendFormat": "{{cluster}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -99,7 +99,7 @@
                         "legendFormat": "{{cluster}} {{priority_level}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -163,7 +163,7 @@
                         "legendFormat": "Queued"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -240,7 +240,7 @@
                         "legendFormat": "{{cluster}} {{priority_level}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -304,7 +304,7 @@
                         "legendFormat": "{{cluster}} {{priority_level}} {{flow_schema}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -368,7 +368,7 @@
                         "legendFormat": "429"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -445,7 +445,7 @@
                         "legendFormat": "5xx"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -522,7 +522,7 @@
                         "legendFormat": "{{cluster}} {{request_kind}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -586,7 +586,7 @@
                         "legendFormat": "{{cluster}} {{verb}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -649,7 +649,7 @@
                         "legendFormat": "{{cluster}} {{code}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -713,7 +713,7 @@
                         "legendFormat": "{{cluster}} decode errors"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -732,7 +732,7 @@
                         "legendFormat": "{{cluster}} key generation failures"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -799,7 +799,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -912,7 +912,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -997,7 +997,7 @@
                         "legendFormat": "Cordoned"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1073,7 +1073,7 @@
                         "legendFormat": "{{cluster}} hit ratio"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1138,7 +1138,7 @@
                         "legendFormat": "Failures"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1215,7 +1215,7 @@
                         "legendFormat": "Panics"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1292,7 +1292,7 @@
                         "legendFormat": "Reload failures"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1368,7 +1368,7 @@
                         "legendFormat": "{{cluster}} {{proxy_name}} {{to}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1434,7 +1434,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1514,7 +1514,7 @@
                         "legendFormat": "{{cluster}} p99"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1577,7 +1577,7 @@
                         "legendFormat": "{{cluster}} {{rcode}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1641,7 +1641,7 @@
                         "legendFormat": "SERVFAIL"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1721,7 +1721,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1829,7 +1829,7 @@
                         "legendFormat": "{{cluster}} {{operation}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1893,7 +1893,7 @@
                         "legendFormat": "{{cluster}} {{operation}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1957,7 +1957,7 @@
                         "legendFormat": "{{cluster}} {{operation}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2024,7 +2024,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2133,7 +2133,7 @@
                         "legendFormat": "Failed"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2212,7 +2212,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2293,7 +2293,7 @@
                         "legendFormat": "Under pressure"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2370,7 +2370,7 @@
                         "legendFormat": "{{cluster}} {{queue}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2436,7 +2436,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2517,7 +2517,7 @@
                         "legendFormat": "Not bound"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2594,7 +2594,7 @@
                         "legendFormat": "{{cluster}} p99"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2658,7 +2658,7 @@
                         "legendFormat": "{{cluster}} {{result}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2722,7 +2722,7 @@
                         "legendFormat": "Unschedulable"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2801,7 +2801,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2886,7 +2886,7 @@
                         "legendFormat": "{{cluster}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2950,7 +2950,7 @@
                         "legendFormat": "{{cluster}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -3014,7 +3014,7 @@
                         "legendFormat": "{{cluster}} p99"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }

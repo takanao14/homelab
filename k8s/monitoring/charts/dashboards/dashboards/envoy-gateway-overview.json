@@ -35,7 +35,7 @@
                         "legendFormat": "{{cluster}} {{route}} 4xx"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -54,7 +54,7 @@
                         "legendFormat": "{{cluster}} {{route}} 5xx"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -133,7 +133,7 @@
                         "legendFormat": "{{cluster}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -196,7 +196,7 @@
                         "legendFormat": "{{cluster}} {{envoy_http_conn_manager_prefix}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -259,7 +259,7 @@
                         "legendFormat": "{{envoy_response_code_class}}xx"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -388,7 +388,7 @@
                         "legendFormat": "{{cluster}} {{kind}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -451,7 +451,7 @@
                         "legendFormat": "RPS"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -524,7 +524,7 @@
                         "legendFormat": "{{cluster}} {{route}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -587,7 +587,7 @@
                         "legendFormat": "{{cluster}} {{envoy_http_conn_manager_prefix}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -650,7 +650,7 @@
                         "legendFormat": "5xx"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -727,7 +727,7 @@
                         "legendFormat": "p99"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -810,7 +810,7 @@
                         "legendFormat": "{{cluster}} {{route}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -878,7 +878,7 @@
                         "legendFormat": "{{cluster}} {{pod}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -943,7 +943,7 @@
                         "legendFormat": "Disconnected"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1020,7 +1020,7 @@
                         "legendFormat": "{{cluster}} CDS failure"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1039,7 +1039,7 @@
                         "legendFormat": "{{cluster}} CDS rejected"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -1058,7 +1058,7 @@
                         "legendFormat": "{{cluster}} LDS failure"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 },
@@ -1077,7 +1077,7 @@
                         "legendFormat": "{{cluster}} LDS rejected"
                       }
                     },
-                    "refId": "D",
+                    "refId": "query-3",
                     "hidden": false
                   }
                 }

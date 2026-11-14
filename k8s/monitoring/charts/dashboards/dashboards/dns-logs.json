@@ -34,7 +34,7 @@
                         "maxLines": 500
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -95,7 +95,7 @@
                         "legendFormat": "dns-sd discovery"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -114,7 +114,7 @@
                         "legendFormat": "grpc lb discovery"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -133,7 +133,7 @@
                         "legendFormat": "mdns (.local)"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 },
@@ -152,7 +152,7 @@
                         "legendFormat": "reverse lookup (PTR)"
                       }
                     },
-                    "refId": "D",
+                    "refId": "query-3",
                     "hidden": false
                   }
                 },
@@ -171,7 +171,7 @@
                         "legendFormat": "wpad"
                       }
                     },
-                    "refId": "E",
+                    "refId": "query-4",
                     "hidden": false
                   }
                 },
@@ -190,7 +190,7 @@
                         "legendFormat": "search-domain suffix"
                       }
                     },
-                    "refId": "F",
+                    "refId": "query-5",
                     "hidden": false
                   }
                 },
@@ -209,7 +209,7 @@
                         "legendFormat": "unexpected"
                       }
                     },
-                    "refId": "G",
+                    "refId": "query-6",
                     "hidden": false
                   }
                 }
@@ -295,7 +295,7 @@
                         "legendFormat": "{{identity}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -359,7 +359,7 @@
                         "legendFormat": "queries/s"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -431,7 +431,7 @@
                         "legendFormat": "{{identity}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -495,7 +495,7 @@
                         "legendFormat": "{{dns_qtype}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -565,7 +565,7 @@
                         "legendFormat": "{{dns_rcode}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -696,7 +696,7 @@
                         "legendFormat": "{{identity}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -764,7 +764,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -837,7 +837,7 @@
                         "instant": true
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -908,7 +908,7 @@
                         "legendFormat": "clients"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }

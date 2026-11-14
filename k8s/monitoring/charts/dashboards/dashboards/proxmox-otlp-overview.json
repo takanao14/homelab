@@ -35,7 +35,7 @@
                         "legendFormat": "{{name}} ({{type}})"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -100,7 +100,7 @@
                         "legendFormat": "{{name}} ({{type}})"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -161,11 +161,10 @@
                       },
                       "spec": {
                         "expr": "rate(proxmox_vm_diskread_bytes_total{job=\"proxmox-ve\", node=~\"$node\"}[$__rate_interval])",
-                        "legendFormat": "{{name}} Read",
-                        "refId": "Read"
+                        "legendFormat": "{{name}} Read"
                       }
                     },
-                    "refId": "Read",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -181,8 +180,7 @@
                       },
                       "spec": {
                         "expr": "rate(proxmox_vm_diskwrite_bytes_total{job=\"proxmox-ve\", node=~\"$node\"}[$__rate_interval])",
-                        "legendFormat": "{{name}} Write",
-                        "refId": "Write"
+                        "legendFormat": "{{name}} Write"
                       }
                     },
                     "refId": "Write",
@@ -277,7 +275,7 @@
                         "legendFormat": "{{name}} ({{type}})"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -338,11 +336,10 @@
                       },
                       "spec": {
                         "expr": "proxmox_vm_mem_bytes{job=\"proxmox-ve\", node=~\"$node\"}",
-                        "legendFormat": "{{name}} Used",
-                        "refId": "Used"
+                        "legendFormat": "{{name}} Used"
                       }
                     },
-                    "refId": "Used",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -358,8 +355,7 @@
                       },
                       "spec": {
                         "expr": "proxmox_vm_maxmem_bytes{job=\"proxmox-ve\", node=~\"$node\"}",
-                        "legendFormat": "{{name}} Total",
-                        "refId": "Total"
+                        "legendFormat": "{{name}} Total"
                       }
                     },
                     "refId": "Total",
@@ -441,11 +437,10 @@
                       },
                       "spec": {
                         "expr": "rate(proxmox_vm_netin_bytes_total{job=\"proxmox-ve\", node=~\"$node\"}[$__rate_interval])",
-                        "legendFormat": "{{name}} RX",
-                        "refId": "Rx"
+                        "legendFormat": "{{name}} RX"
                       }
                     },
-                    "refId": "Rx",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -461,8 +456,7 @@
                       },
                       "spec": {
                         "expr": "rate(proxmox_vm_netout_bytes_total{job=\"proxmox-ve\", node=~\"$node\"}[$__rate_interval])",
-                        "legendFormat": "{{name}} TX",
-                        "refId": "Tx"
+                        "legendFormat": "{{name}} TX"
                       }
                     },
                     "refId": "Tx",
@@ -559,7 +553,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -640,7 +634,7 @@
                         "legendFormat": "{{node}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -706,7 +700,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -786,11 +780,10 @@
                       },
                       "spec": {
                         "expr": "proxmox_node_cpustat_avg1_ratio{job=\"proxmox-ve\", node=~\"$node\"} / proxmox_node_cpustat_cpus_ratio{job=\"proxmox-ve\", node=~\"$node\"}",
-                        "legendFormat": "{{node}} 1m",
-                        "refId": "Avg1"
+                        "legendFormat": "{{node}} 1m"
                       }
                     },
-                    "refId": "Avg1",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -806,8 +799,7 @@
                       },
                       "spec": {
                         "expr": "proxmox_node_cpustat_avg5_ratio{job=\"proxmox-ve\", node=~\"$node\"} / proxmox_node_cpustat_cpus_ratio{job=\"proxmox-ve\", node=~\"$node\"}",
-                        "legendFormat": "{{node}} 5m",
-                        "refId": "Avg5"
+                        "legendFormat": "{{node}} 5m"
                       }
                     },
                     "refId": "Avg5",
@@ -826,8 +818,7 @@
                       },
                       "spec": {
                         "expr": "proxmox_node_cpustat_avg15_ratio{job=\"proxmox-ve\", node=~\"$node\"} / proxmox_node_cpustat_cpus_ratio{job=\"proxmox-ve\", node=~\"$node\"}",
-                        "legendFormat": "{{node}} 15m",
-                        "refId": "Avg15"
+                        "legendFormat": "{{node}} 15m"
                       }
                     },
                     "refId": "Avg15",
@@ -927,11 +918,10 @@
                       },
                       "spec": {
                         "expr": "proxmox_node_memory_memused_bytes{job=\"proxmox-ve\", node=~\"$node\"}",
-                        "legendFormat": "{{node}} Used",
-                        "refId": "Used"
+                        "legendFormat": "{{node}} Used"
                       }
                     },
-                    "refId": "Used",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -947,8 +937,7 @@
                       },
                       "spec": {
                         "expr": "proxmox_node_memory_memtotal_bytes{job=\"proxmox-ve\", node=~\"$node\"}",
-                        "legendFormat": "{{node}} Total",
-                        "refId": "Total"
+                        "legendFormat": "{{node}} Total"
                       }
                     },
                     "refId": "Total",
@@ -1035,7 +1024,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1114,11 +1103,10 @@
                       },
                       "spec": {
                         "expr": "rate(proxmox_node_network_receive_bytes_total{job=\"proxmox-ve\", node=~\"$node\", device!~\"lo|tap.*|fwbr.*|fwpr.*|fwln.*|veth.*|nic0\"}[$__rate_interval])",
-                        "legendFormat": "{{node}} {{device}} RX",
-                        "refId": "Rx"
+                        "legendFormat": "{{node}} {{device}} RX"
                       }
                     },
-                    "refId": "Rx",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1134,8 +1122,7 @@
                       },
                       "spec": {
                         "expr": "rate(proxmox_node_network_transmit_bytes_total{job=\"proxmox-ve\", node=~\"$node\", device!~\"lo|tap.*|fwbr.*|fwpr.*|fwln.*|veth.*|nic0\"}[$__rate_interval])",
-                        "legendFormat": "{{node}} {{device}} TX",
-                        "refId": "Tx"
+                        "legendFormat": "{{node}} {{device}} TX"
                       }
                     },
                     "refId": "Tx",
@@ -1232,7 +1219,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1311,11 +1298,10 @@
                       },
                       "spec": {
                         "expr": "proxmox_node_memory_swapused_bytes{job=\"proxmox-ve\", node=~\"$node\"}",
-                        "legendFormat": "{{node}} Used",
-                        "refId": "Used"
+                        "legendFormat": "{{node}} Used"
                       }
                     },
-                    "refId": "Used",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1331,8 +1317,7 @@
                       },
                       "spec": {
                         "expr": "proxmox_node_memory_swaptotal_bytes{job=\"proxmox-ve\", node=~\"$node\"}",
-                        "legendFormat": "{{node}} Total",
-                        "refId": "Total"
+                        "legendFormat": "{{node}} Total"
                       }
                     },
                     "refId": "Total",
@@ -1417,7 +1402,7 @@
                         "legendFormat": "{{nodename}} CPU {{type}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1436,7 +1421,7 @@
                         "legendFormat": "{{nodename}} CPU Tctl"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -1455,7 +1440,7 @@
                         "legendFormat": "{{nodename}} Disk {{disk}}"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 }
@@ -1518,7 +1503,7 @@
                         "legendFormat": "{{node}} ARC"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1583,7 +1568,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1657,7 +1642,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1726,11 +1711,10 @@
                       },
                       "spec": {
                         "expr": "proxmox_storage_used_bytes{job=\"proxmox-ve\", node=~\"$node\"}",
-                        "legendFormat": "{{node}}/{{storage}} Used",
-                        "refId": "Used"
+                        "legendFormat": "{{node}}/{{storage}} Used"
                       }
                     },
-                    "refId": "Used",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1746,8 +1730,7 @@
                       },
                       "spec": {
                         "expr": "proxmox_storage_total_bytes{job=\"proxmox-ve\", node=~\"$node\"}",
-                        "legendFormat": "{{node}}/{{storage}} Total",
-                        "refId": "Total"
+                        "legendFormat": "{{node}}/{{storage}} Total"
                       }
                     },
                     "refId": "Total",
@@ -1834,7 +1817,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }

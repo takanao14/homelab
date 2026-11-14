@@ -37,7 +37,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -127,7 +127,7 @@
                         "legendFormat": "{{probe_source}} {{transport}} {{dns_server}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -191,7 +191,7 @@
                         "legendFormat": "{{probe_source}} {{transport}} {{dns_server}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -289,7 +289,7 @@
                         "legendFormat": "{{cluster}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -353,7 +353,7 @@
                         "legendFormat": "{{cluster}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -417,7 +417,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -490,7 +490,7 @@
                         "legendFormat": "{{cluster}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -554,7 +554,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -634,7 +634,7 @@
                         "legendFormat": "{{cluster}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -698,7 +698,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -776,7 +776,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -851,7 +851,7 @@
                         "legendFormat": "Avg Latency"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -931,7 +931,7 @@
                         "legendFormat": "{{instance}} ACL Drop"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -950,7 +950,7 @@
                         "legendFormat": "{{instance}} Rule Drop"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -969,7 +969,7 @@
                         "legendFormat": "{{instance}} Dynamic Block"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 }
@@ -1036,7 +1036,7 @@
                         "legendFormat": "{{instance}} avg100"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1055,7 +1055,7 @@
                         "legendFormat": "{{instance}} avg1000"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -1161,7 +1161,7 @@
                         "legendFormat": "QPS"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1230,11 +1230,10 @@
                       },
                       "spec": {
                         "expr": "rate(dnsdist_queries{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval])",
-                        "legendFormat": "{{instance}} Queries",
-                        "refId": "Queries"
+                        "legendFormat": "{{instance}} Queries"
                       }
                     },
-                    "refId": "Queries",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1250,8 +1249,7 @@
                       },
                       "spec": {
                         "expr": "rate(dnsdist_responses{job=\"scrapeConfig/monitoring/dnsdist-external\"}[$__rate_interval])",
-                        "legendFormat": "{{instance}} Responses",
-                        "refId": "Responses"
+                        "legendFormat": "{{instance}} Responses"
                       }
                     },
                     "refId": "Responses",
@@ -1346,7 +1344,7 @@
                         "legendFormat": "NOERROR"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1365,7 +1363,7 @@
                         "legendFormat": "NXDOMAIN"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -1384,7 +1382,7 @@
                         "legendFormat": "SERVFAIL"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 },
@@ -1403,7 +1401,7 @@
                         "legendFormat": "REFUSED"
                       }
                     },
-                    "refId": "D",
+                    "refId": "query-3",
                     "hidden": false
                   }
                 }
@@ -1531,7 +1529,7 @@
                         "legendFormat": "{{instance}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1594,7 +1592,7 @@
                         "maxLines": 500
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1653,7 +1651,7 @@
                         "legendFormat": "{{cluster}} registry"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1672,7 +1670,7 @@
                         "legendFormat": "{{cluster}} source"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -1737,7 +1735,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1818,7 +1816,7 @@
                         "legendFormat": "{{cluster}} source"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -1837,7 +1835,7 @@
                         "legendFormat": "{{cluster}} registry"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -1902,7 +1900,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -1981,7 +1979,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2058,7 +2056,7 @@
                         "legendFormat": "{{cluster}} sync"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -2077,7 +2075,7 @@
                         "legendFormat": "{{cluster}} reconcile"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -2142,7 +2140,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2218,7 +2216,7 @@
                         "legendFormat": "Avg Latency"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2298,7 +2296,7 @@
                         "legendFormat": "{{instance}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2377,7 +2375,7 @@
                         "legendFormat": "{{instance}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2457,7 +2455,7 @@
                         "legendFormat": "QPS"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2529,7 +2527,7 @@
                         "legendFormat": "{{instance}} UDP"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -2548,7 +2546,7 @@
                         "legendFormat": "{{instance}} TCP"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 }
@@ -2610,7 +2608,7 @@
                         "legendFormat": "NOERROR"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -2629,7 +2627,7 @@
                         "legendFormat": "NXDOMAIN"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -2648,7 +2646,7 @@
                         "legendFormat": "SERVFAIL"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 },
@@ -2667,7 +2665,7 @@
                         "legendFormat": "REFUSED"
                       }
                     },
-                    "refId": "D",
+                    "refId": "query-3",
                     "hidden": false
                   }
                 }
@@ -2795,7 +2793,7 @@
                         "legendFormat": "{{instance}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2860,7 +2858,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -2941,7 +2939,7 @@
                         "legendFormat": "{{instance}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -3025,7 +3023,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -3105,7 +3103,7 @@
                         "legendFormat": "{{instance}} RSS"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -3170,7 +3168,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -3247,7 +3245,7 @@
                         "legendFormat": "{{instance}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -3311,7 +3309,7 @@
                         "range": false
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -3383,7 +3381,7 @@
                         "legendFormat": "{{instance}}"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 }
@@ -3445,7 +3443,7 @@
                         "legendFormat": "NOERROR"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -3464,7 +3462,7 @@
                         "legendFormat": "NODATA"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -3483,7 +3481,7 @@
                         "legendFormat": "NXDOMAIN"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 },
@@ -3502,7 +3500,7 @@
                         "legendFormat": "SERVFAIL"
                       }
                     },
-                    "refId": "D",
+                    "refId": "query-3",
                     "hidden": false
                   }
                 }
@@ -3569,7 +3567,7 @@
                         "legendFormat": "{{instance}} p50"
                       }
                     },
-                    "refId": "A",
+                    "refId": "query-0",
                     "hidden": false
                   }
                 },
@@ -3588,7 +3586,7 @@
                         "legendFormat": "{{instance}} p95"
                       }
                     },
-                    "refId": "B",
+                    "refId": "query-1",
                     "hidden": false
                   }
                 },
@@ -3607,7 +3605,7 @@
                         "legendFormat": "{{instance}} p99"
                       }
                     },
-                    "refId": "C",
+                    "refId": "query-2",
                     "hidden": false
                   }
                 }
