@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# mise-config-sha256: 98613adc03f50007e82791460d43061571c3702c0588b9bc0b69642c9e46015e
-# mise-lock-sha256: 14f4c83e8f29b3c05d8ec03c54ea097262a7d19a34ee45eccede5d3406ae80b2
+# mise-config-sha256: c0f4911285b9ea5c02c7417bd0c785e34777a1243a95adbbd1ed5a12ab8d0311
+# mise-lock-sha256: 930048c8fc355ef98bca4b1c2709839f55f02857ac9c82fe43b9806dd801819e
 
 [[ "$(uname -s)" == "Linux" ]] || exit 0
 
