@@ -18,20 +18,20 @@ url = "https://github.com/BurntSushi/ripgrep/releases/download/15.2.0/ripgrep-15
 url_api = "https://api.github.com/repos/BurntSushi/ripgrep/releases/assets/478120097"
 
 [[tools."aqua:Byron/dua-cli"]]
-version = "3.0.1"
+version = "3.0.3"
 backend = "aqua:Byron/dua-cli"
-specifiers = ["3.0.1"]
+specifiers = ["3.0.3"]
 
 [tools."aqua:Byron/dua-cli"."platforms.linux-arm64"]
-checksum = "sha256:30b6e9f14c9ac6cf1daaf0f54f3e54bde6dd0e88daf4d3d95c0c8dd9c00b526b"
-url = "https://github.com/Byron/dua-cli/releases/download/v3.0.1/dua-v3.0.1-aarch64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/Byron/dua-cli/releases/assets/728824291"
+checksum = "sha256:aa95a658bd6216621c11686b41be09437a1aec7c49361b5a6a21a2188024a701"
+url = "https://github.com/Byron/dua-cli/releases/download/v3.0.3/dua-v3.0.3-aarch64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/Byron/dua-cli/releases/assets/739680313"
 provenance = "github-attestations"
 
 [tools."aqua:Byron/dua-cli"."platforms.linux-x64"]
-checksum = "sha256:a0834d1247c39a0048fa3e7f520a2afa23538c06c5945ca992e49813290319e0"
-url = "https://github.com/Byron/dua-cli/releases/download/v3.0.1/dua-v3.0.1-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/Byron/dua-cli/releases/assets/728820662"
+checksum = "sha256:68c3142969cf19b29353dbab3c456a483753d49116dbf19ae44ddd545a0abad8"
+url = "https://github.com/Byron/dua-cli/releases/download/v3.0.3/dua-v3.0.3-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/Byron/dua-cli/releases/assets/739680978"
 provenance = "github-attestations"
 
 [[tools."aqua:ClementTsang/bottom"]]
@@ -148,37 +148,37 @@ url = "https://github.com/bootandy/dust/releases/download/v1.2.7/dust-v1.2.7-x86
 url_api = "https://api.github.com/repos/bootandy/dust/releases/assets/699456259"
 
 [[tools."aqua:cilium/cilium-cli"]]
-version = "0.20.2"
+version = "0.20.3"
 backend = "aqua:cilium/cilium-cli"
-specifiers = ["0.20.2"]
+specifiers = ["0.20.3"]
 
 [tools."aqua:cilium/cilium-cli"."platforms.linux-arm64"]
-checksum = "sha256:922af9c977e781500eb96c51137e495409b1cdd248c9e1b7fffb863e6b6efdf8"
+checksum = "sha256:fa1bd66b407ec205e88746fc0b17590a247f255bf71bb9dfb0008b14d158f68d"
 checksum_source = "mise-versions"
-url = "https://github.com/cilium/cilium-cli/releases/download/v0.20.2/cilium-linux-arm64.tar.gz"
-url_api = "https://api.github.com/repos/cilium/cilium-cli/releases/assets/687888468"
+url = "https://github.com/cilium/cilium-cli/releases/download/v0.20.3/cilium-linux-arm64.tar.gz"
+url_api = "https://api.github.com/repos/cilium/cilium-cli/releases/assets/739456165"
 
 [tools."aqua:cilium/cilium-cli"."platforms.linux-x64"]
-checksum = "sha256:b7224a62bfed0e84f1a84567d274fefc5017df76a936e067c42012bb7fc30856"
+checksum = "sha256:b987ad0d195310d3fc96553aa7bcd41d1e97b64713ecdfee3eb48dd27e1ec7d7"
 checksum_source = "mise-versions"
-url = "https://github.com/cilium/cilium-cli/releases/download/v0.20.2/cilium-linux-amd64.tar.gz"
-url_api = "https://api.github.com/repos/cilium/cilium-cli/releases/assets/687888470"
+url = "https://github.com/cilium/cilium-cli/releases/download/v0.20.3/cilium-linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/cilium/cilium-cli/releases/assets/739456158"
 
 [[tools."aqua:cli/cli"]]
-version = "2.103.3"
+version = "2.104.0"
 backend = "aqua:cli/cli"
-specifiers = ["2.103.3"]
+specifiers = ["2.104.0"]
 
 [tools."aqua:cli/cli"."platforms.linux-arm64"]
-checksum = "sha256:ee32df2323c8847f5fac6cb6b4b69ca75828e9329a8f22f677021f7b3306ce63"
-url = "https://github.com/cli/cli/releases/download/v2.103.3/gh_2.103.3_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/cli/cli/releases/assets/679195636"
+checksum = "sha256:cb34cefc6f4e77b90731374a2b737516bb8f3033c6ca46aa949e5344f68069e3"
+url = "https://github.com/cli/cli/releases/download/v2.104.0/gh_2.104.0_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/740718938"
 provenance = "github-attestations"
 
 [tools."aqua:cli/cli"."platforms.linux-x64"]
-checksum = "sha256:4c806978ffce1cec70853302a56d70ac6da4f19bae7adca4e1a8ab00633dd91d"
-url = "https://github.com/cli/cli/releases/download/v2.103.3/gh_2.103.3_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/cli/cli/releases/assets/679195621"
+checksum = "sha256:98cb101ad87dbbd3f6b2f2bfcbd43197ccd07643140121d8a9cfaa91eadbc24e"
+url = "https://github.com/cli/cli/releases/download/v2.104.0/gh_2.104.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/740718892"
 provenance = "github-attestations"
 
 [[tools."aqua:dandavison/delta"]]
@@ -583,20 +583,20 @@ url = "https://github.com/zellij-org/zellij/releases/download/v0.46.0/zellij-x86
 url_api = "https://api.github.com/repos/zellij-org/zellij/releases/assets/734911871"
 
 [[tools."github:DNSControl/dnscontrol"]]
-version = "5.8.1"
+version = "5.8.2"
 backend = "github:DNSControl/dnscontrol"
-specifiers = ["v5.8.1"]
+specifiers = ["v5.8.2"]
 
 [tools."github:DNSControl/dnscontrol"."platforms.linux-arm64"]
-checksum = "sha256:b84838ed0a3bce2f08bfa17ebee810550fcaacb685989c9377909e677008c0a0"
-url = "https://github.com/DNSControl/dnscontrol/releases/download/v5.8.1/dnscontrol_5.8.1_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/DNSControl/dnscontrol/releases/assets/735880953"
+checksum = "sha256:e478cd3d438ff770c0640dd83920ba43aca86ebe79198a7d93b41acb62dbf0d5"
+url = "https://github.com/DNSControl/dnscontrol/releases/download/v5.8.2/dnscontrol_5.8.2_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/DNSControl/dnscontrol/releases/assets/739433008"
 provenance = "github-attestations"
 
 [tools."github:DNSControl/dnscontrol"."platforms.linux-x64"]
-checksum = "sha256:7e7b1dd532e4647a5772d128c3b6e8537a89490ed4d2aa3efb703adbba54644d"
-url = "https://github.com/DNSControl/dnscontrol/releases/download/v5.8.1/dnscontrol_5.8.1_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/DNSControl/dnscontrol/releases/assets/735880814"
+checksum = "sha256:b1a5154b85eecd18b9247194f42c1b7e7c1128a63317ca3140c8b8224f87e6d2"
+url = "https://github.com/DNSControl/dnscontrol/releases/download/v5.8.2/dnscontrol_5.8.2_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/DNSControl/dnscontrol/releases/assets/739433007"
 provenance = "github-attestations"
 
 [[tools."pipx:ansible-core"]]
