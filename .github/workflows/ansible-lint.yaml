@@ -5,6 +5,14 @@ on:
     paths:
       - ".github/workflows/ansible-lint.yaml"
       - "ansible/**"
+  # PRs can only restore caches saved on the base branch, so refresh the
+  # collections cache on main whenever its key changes.
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/ansible-lint.yaml"
+      - "ansible/requirements.yaml"
 
 permissions:
   contents: read
