@@ -64,7 +64,12 @@
     },
     {
       "description": "Review binary updates until version and checksum updates have been verified in real Renovate PRs.",
-      "matchPackageNames": ["dmachard/DNS-collector", "forgejo/runner"],
+      "matchPackageNames": [
+        "dmachard/DNS-collector",
+        "seaweedfs/seaweedfs",
+        "forgejo/forgejo",
+        "forgejo/runner"
+      ],
       "automerge": false,
       "labels": ["dependencies", "renovate", "manual-review"]
     },
@@ -195,6 +200,17 @@
         "dnscollector_version: \"(?<currentValue>[^\"]+)\"\\ndnscollector_sha256: \"(?<currentDigest>[a-f0-9]{64})\""
       ],
       "depNameTemplate": "dmachard/DNS-collector",
+      "datasourceTemplate": "github-release-attachments"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^ansible/roles/seaweedfs/defaults/main\\.yaml$/"
+      ],
+      "matchStrings": [
+        "seaweedfs_version: \"(?<currentValue>[^\"]+)\"\\nseaweedfs_sha256: \"(?<currentDigest>[a-f0-9]{64})\""
+      ],
+      "depNameTemplate": "seaweedfs/seaweedfs",
       "datasourceTemplate": "github-release-attachments"
     },
     {
