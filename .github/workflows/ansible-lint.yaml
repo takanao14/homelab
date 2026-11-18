@@ -28,11 +28,16 @@ jobs:
         with:
           python-version: "3.14"
 
+      - uses: astral-sh/setup-uv@v10
+        with:
+          # renovate: datasource=github-releases depName=astral-sh/uv
+          version: "0.13.9"
+
       - name: Install ansible-lint
         env:
           # renovate: datasource=pypi depName=ansible-lint
           ANSIBLE_LINT_VERSION: "26.11.0"
-        run: pip install "ansible-lint==${ANSIBLE_LINT_VERSION}"
+        run: uv pip install --system "ansible-lint==${ANSIBLE_LINT_VERSION}"
 
       # requirements.yaml pins exact versions, so its hash fully identifies the
       # installed set.
@@ -60,11 +65,16 @@ jobs:
         with:
           python-version: "3.14"
 
+      - uses: astral-sh/setup-uv@v10
+        with:
+          # renovate: datasource=github-releases depName=astral-sh/uv
+          version: "0.13.9"
+
       - name: Install PyYAML
         env:
           # renovate: datasource=pypi depName=PyYAML
           PYYAML_VERSION: "6.0.3"
-        run: pip install "PyYAML==${PYYAML_VERSION}"
+        run: uv pip install --system "PyYAML==${PYYAML_VERSION}"
 
       - name: Verify pinned release checksums
         run: |
