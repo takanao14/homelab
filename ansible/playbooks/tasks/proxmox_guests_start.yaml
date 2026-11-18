@@ -6,16 +6,20 @@
   ansible.builtin.shell:
     cmd: |
       set -o pipefail
-      vmid=$(qm list | awk -v n="{{ item }}" '$2 == n {print $1}')
+      manager={{ startup_guest_manager | default('qm') | quote }}
+      vmid=$("$manager" list | awk -v name={{ item | quote }} \
+        -v column={{ startup_guest_name_column | default(2) }} \
+        '$(column ? column : NF) == name {print $1}') || exit 1
       if [ -z "$vmid" ]; then
         echo "no such guest: {{ item }}" >&2
         exit 1
       fi
-      if [ "$(qm status "$vmid" | awk '{print $2}')" = "running" ]; then
+      status=$("$manager" status "$vmid") || exit 1
+      if [ "$status" = "status: running" ]; then
         echo already-running
         exit 0
       fi
-      qm start "$vmid" >/dev/null && echo started
+      "$manager" start "$vmid" >/dev/null && echo started
   loop: "{{ startup_guests }}"
   register: startup_guest_started
   changed_when: startup_guest_started.stdout == "started"

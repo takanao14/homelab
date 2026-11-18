@@ -1,11 +1,11 @@
 ---
-# Planned-outage recovery: ensure cluster guests, wait by dependency, restore workloads.
+# Planned-outage recovery: restore prd and selected shared services by default.
 #   --tags hypervisors  wait for the Proxmox nodes to answer
 #   --tags guests       ensure cluster guests run, wait in dependency order
 #   --tags k8s          wait for the clusters to report every node Ready
 #   --tags workloads    resume GitOps and wait for it to self-heal replicas
 #   --tags prd          restore only the prd cluster and its guests
-#   --tags sandbox      restore only the sandbox cluster and its guests
+#   --tags sandbox      explicitly restore the sandbox cluster and its guests
 # Hypervisor power-on is external: BIOS AC recovery, or AMT for node1-node4.
 
 # Phase 1 — wait for hypervisors.
@@ -23,7 +23,27 @@
       delegate_to: localhost
       become: false
 
-# Phase 2a — idempotently start cluster guests, including environment-only recovery.
+# Phase 2a — start shared services and cluster guests.
+- name: Start selected shared guests
+  hosts: proxmox
+  gather_facts: false
+  any_errors_fatal: true
+  tags:
+    - guests
+    - prd
+  tasks:
+    - name: Ensure shared VMs are running
+      ansible.builtin.import_tasks: ../tasks/proxmox_guests_start.yaml
+      vars:
+        startup_guests: "{{ startup_shared_vms }}"
+
+    - name: Ensure shared containers are running
+      ansible.builtin.import_tasks: ../tasks/proxmox_guests_start.yaml
+      vars:
+        startup_guests: "{{ startup_shared_containers }}"
+        startup_guest_manager: pct
+        startup_guest_name_column: 0
+
 - name: Start prd cluster guests
   hosts: prd_k8s_hypervisor
   gather_facts: false
@@ -40,7 +60,7 @@
   hosts: sandbox_k8s_hypervisor
   gather_facts: false
   tags:
-    - guests
+    - never
     - sandbox
   tasks:
     - name: Ensure sandbox guests are running
@@ -49,12 +69,14 @@
         startup_guests: "{{ startup_sandbox_guests }}"
 
 # Phase 2b — wait for guests in reverse shutdown order, DNS first.
-- name: Wait for guests in dependency order
-  hosts: guest_shutdown_order
+- name: Wait for selected shared guests in dependency order
+  hosts: "guest_shutdown_order:&shared_startup_guests"
   serial: 1
   order: reverse_inventory
   gather_facts: false
-  tags: guests
+  tags:
+    - guests
+    - prd
   tasks:
     - name: Wait for SSH
       ansible.builtin.wait_for:
@@ -95,7 +117,7 @@
   hosts: sandbox_k8s_controller
   gather_facts: false
   tags:
-    - k8s
+    - never
     - sandbox
   tasks:
     - name: Wait for every node to report Ready
@@ -105,7 +127,7 @@
   hosts: sandbox_k8s_controller
   gather_facts: false
   tags:
-    - workloads
+    - never
     - sandbox
   tasks:
     - name: Verify NFS before restoring workloads

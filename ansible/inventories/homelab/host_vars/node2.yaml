@@ -1,0 +1,14 @@
+---
+startup_shared_vms:
+  - openbao1
+  - vpngw
+  - runner1
+
+startup_shared_containers:
+  - ns1
+  - ns3
+  - dist1
+  - resolver1
+  - log1
+  - caddy1
+  - forgejo1

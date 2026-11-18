@@ -1,4 +1,9 @@
 ---
+startup_shared_vms:
+  - truenas
+  - toolbox1
+  - imagebuilder1
+
 startup_prd_guests:
   - gpuvm1
 

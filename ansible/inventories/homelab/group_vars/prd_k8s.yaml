@@ -8,6 +8,9 @@ k8s_storage_providers:
 
 # Ordered application shutdown; monitoring observes it and Argo CD stops last.
 k8s_shutdown_namespaces:
+  - slack-bot
+  - butaco-voice
+  - mcp
   - comfyui
   - ollama
   - vllm
