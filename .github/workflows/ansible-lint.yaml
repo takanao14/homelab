@@ -3,7 +3,16 @@ name: Ansible Lint
 on:
   pull_request:
     paths:
+      - ".github/workflows/ansible-lint.yaml"
       - "ansible/**"
+  # PRs can only restore caches saved on the base branch, so refresh the
+  # collections cache on main whenever its key changes.
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/ansible-lint.yaml"
+      - "ansible/requirements.yaml"
 
 permissions:
   contents: read
@@ -19,11 +28,23 @@ jobs:
         with:
           python-version: "3.14"
 
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          # renovate: datasource=github-releases depName=astral-sh/uv
+          version: "0.13.9"
+
       - name: Install ansible-lint
         env:
           # renovate: datasource=pypi depName=ansible-lint
           ANSIBLE_LINT_VERSION: "26.11.0"
-        run: pip install "ansible-lint==${ANSIBLE_LINT_VERSION}"
+        run: uv pip install --system "ansible-lint==${ANSIBLE_LINT_VERSION}"
+
+      # requirements.yaml pins exact versions, so its hash fully identifies the
+      # installed set.
+      - uses: actions/cache@v6
+        with:
+          path: ansible/collections
+          key: ansible-collections-${{ hashFiles('ansible/requirements.yaml') }}
 
       - name: Install Ansible collections
         run: ansible-galaxy collection install -r ansible/requirements.yaml -p ansible/collections
@@ -33,6 +54,27 @@ jobs:
         env:
           ANSIBLE_ROLES_PATH: ansible/roles
           ANSIBLE_COLLECTIONS_PATH: ansible/collections
+
+  checksums:
+    name: release-checksums
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          # renovate: datasource=github-releases depName=astral-sh/uv
+          version: "0.13.9"
+
+      - name: Install PyYAML
+        env:
+          # renovate: datasource=pypi depName=PyYAML
+          PYYAML_VERSION: "6.0.3"
+        run: uv pip install --system "PyYAML==${PYYAML_VERSION}"
 
       - name: Verify pinned release checksums
         run: |
