@@ -1,5 +1,7 @@
 ---
-# Cluster guests started during recovery; tf on_boot only covers host boot.
+# Guests started during recovery; tf on_boot only covers host boot.
+startup_shared_vms: []
+startup_shared_containers: []
 startup_prd_guests: []
 startup_sandbox_guests: []
 

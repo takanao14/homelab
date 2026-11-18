@@ -1,3 +1,6 @@
 ---
+startup_shared_vms:
+  - pdm1
+
 startup_prd_guests:
   - k0s-cp1

@@ -1,0 +1,10 @@
+---
+startup_shared_vms:
+  - idp1
+  - netbox1
+
+startup_shared_containers:
+  - ns2
+  - dist2
+  - resolver2
+  - seaweedfs1

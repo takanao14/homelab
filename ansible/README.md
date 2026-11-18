@@ -140,10 +140,11 @@ enabled, a probe Pod on that worker successfully mounts the export. The
 Shutdown phase tags are `workloads`, `k8s`, `guests`, and `hypervisors`, in that
 order. Startup uses the same tags to wait for hypervisors, start guests, check
 cluster readiness, and restore workloads.
-Startup ensures cluster guests are running, waits for dependencies, and
-restores workloads through Argo CD. NFS-enabled clusters must pass a
-kubelet-backed mount probe before GitOps resumes. Environment tags cover all
-cluster phases and leave hypervisors running; no `--limit` is needed.
+Startup defaults to prd recovery. It starts the prd cluster and selected
+shared guests, waits for managed shared guests over SSH, and restores
+workloads through Argo CD. Use `--tags sandbox` to restore sandbox. NFS-enabled
+clusters must pass a kubelet-backed mount probe before GitOps resumes.
+Environment tags cover cluster recovery without requiring `--limit`.
 
 ```bash
 # Upgrade OS packages, or resume one phase.
@@ -228,7 +229,7 @@ Use the OpenBao role README for:
 | `playbooks/ops/package_upgrade.yaml` | `dns` (serial), k0s workers (serial, drained), k0s controllers (serial), then `all:!proxmox:!dns:!power_only:!prd_k8s:!sandbox_k8s` | ops |
 | `playbooks/ops/nfs_storage_check.yaml` | `prd_k8s:sandbox_k8s` (only clusters with NFS enabled) | ops |
 | `playbooks/ops/shutdown.yaml` | `k8s_controller`, `k8s_worker`, `guest_shutdown_order`, `proxmox_shutdown_order` | ops (planned outage) |
-| `playbooks/ops/startup.yaml` | `proxmox`, `prd_k8s_hypervisor`, `sandbox_k8s_hypervisor`, `guest_shutdown_order` (reversed), `k8s_controller` | ops (planned outage / per-cluster recovery) |
+| `playbooks/ops/startup.yaml` | `proxmox`, `prd_k8s_hypervisor`, `sandbox_k8s_hypervisor`, `guest_shutdown_order:&shared_startup_guests` (reversed), `k8s_controller` | ops (planned outage / per-cluster recovery) |
 | `playbooks/ops/version_audit.yaml` | `lldap`, `authelia`, `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `dns_resolver`, `dns_auth`, `seaweedfs`, `openbao`, `gpuvm`, `code_server`, `openclaw`, `hermes` | ops |
 | `playbooks/ops/dns_failover_test.yaml` | delegated DNS hosts; orchestration on localhost | ops (state-changing failure test) |
 | `playbooks/ops/lldap_cert_rotate.yaml` | `lldap`, then `sssd`, `authelia`, `blackbox_exporter` | ops (certificate rotation) |
