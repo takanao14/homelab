@@ -125,3 +125,35 @@
     name: "user@{{ podman_rootless_uid }}.service"
     state: started
   when: not ansible_check_mode
+
+# Podman's runtime refresh joins pause.pid without a liveness check, so a dead
+# PID fails every rootless command with "cannot re-exec process to join the
+# existing user namespace". Podman itself discards such files on other paths.
+- name: Remove a stale rootless Podman pause PID file
+  become: true
+  ansible.builtin.command:
+    argv:
+      - python3
+      - -c
+      - |
+        import pathlib, sys
+        path, uid = pathlib.Path(sys.argv[1]), sys.argv[2]
+        try:
+            pid = int(path.read_text())
+        except FileNotFoundError:
+            sys.exit(0)
+        except Exception:
+            pid = 0
+        try:
+            status = pathlib.Path(f'/proc/{pid}/status').read_text().splitlines() if pid > 0 else []
+            if any(line.split()[:2] == ['Uid:', uid] for line in status):
+                sys.exit(0)
+        except OSError:
+            pass
+        path.unlink(missing_ok=True)
+        print('removed')
+      - "/run/user/{{ podman_rootless_uid }}/libpod/tmp/pause.pid"
+      - "{{ podman_rootless_uid | string }}"
+  register: podman_rootless_pause_pid
+  changed_when: podman_rootless_pause_pid.stdout == 'removed'
+  check_mode: false

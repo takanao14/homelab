@@ -26,7 +26,8 @@ pattern) or list directly in a playbook before the consuming role.
 ## Opt-in rootless services
 
 The `rootless` task entrypoint prepares a dedicated local account, fixed UID/GID,
-non-overlapping subordinate IDs, a private home, and a lingering user manager.
+non-overlapping subordinate IDs, a private home, and a lingering user manager,
+and discards a pause PID file whose process no longer runs.
 Call it with `import_role` and `podman_rootless_user`, `podman_rootless_uid`, and
 `podman_rootless_subid_start`. Existing conflicting allocations fail rather than
 being remapped. The default subordinate range size is 65536.
