@@ -32,7 +32,7 @@ runtime="$(mcp_resolve_container_runtime "${NETBOX_MCP_RUNTIME:-}")" || exit $?
 export NETBOX_URL NETBOX_TOKEN VERIFY_SSL ENABLE_PLUGIN_DISCOVERY
 
 # renovate: datasource=docker depName=netboxlabs/netbox-mcp-server
-netbox_mcp_version="${NETBOX_MCP_VERSION:-1.2.2}"
+netbox_mcp_version="${NETBOX_MCP_VERSION:-1.2.3}"
 
 # Keep stdin open without a TTY; pass only environment variable names.
 exec "${runtime}" run -i --rm \
