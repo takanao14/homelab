@@ -189,6 +189,9 @@ or `.env` changes.
 Rootless Podman must let container UID 472 traverse and read the bind mounts,
 and the user needs a `/etc/subuid` range. Run `setup-linux.sh` for checks.
 
+Run `make dev-status` to check whether the project's Grafana container is
+running. Look for `Up` in the status column.
+
 Stop Grafana with:
 
 ```bash
