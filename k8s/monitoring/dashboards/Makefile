@@ -43,3 +43,7 @@ dev: compose-check generate
 .PHONY: dev-stop
 dev-stop: compose-check
 	$(COMPOSE) down
+
+.PHONY: dev-status
+dev-status: compose-check
+	@$(COMPOSE) ps
