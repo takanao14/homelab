@@ -67,6 +67,7 @@ not change the shared directory itself.
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `node_exporter_install_lm_sensors` | `true` | Install `lm-sensors` on x86_64 hosts |
+| `node_exporter_disable_nvme_collector` | `false` | Stop and disable the packaged NVMe timer and remove its textfile |
 
 Set `node_exporter_install_lm_sensors: false` where `hwmon` is disabled,
 including LXC guests. The role explicitly removes `lm-sensors` with

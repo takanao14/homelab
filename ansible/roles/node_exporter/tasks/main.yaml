@@ -9,6 +9,27 @@
     update_cache: true
     lock_timeout: 600
 
+- name: Disable the packaged NVMe collector
+  tags: node_exporter_nvme
+  become: true
+  when: node_exporter_disable_nvme_collector | bool
+  block:
+    - name: Stop and disable the NVMe collector timer
+      ansible.builtin.systemd_service:
+        name: prometheus-node-exporter-nvme.timer
+        state: stopped
+        enabled: false
+
+    - name: Stop any in-flight NVMe collector run
+      ansible.builtin.systemd_service:
+        name: prometheus-node-exporter-nvme.service
+        state: stopped
+
+    - name: Remove the retired NVMe metrics file
+      ansible.builtin.file:
+        path: "{{ node_exporter_textfile_dir }}/nvme.prom"
+        state: absent
+
 - name: Check whether node_exporter is already installed
   ansible.builtin.command:
     argv:
