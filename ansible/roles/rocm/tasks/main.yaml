@@ -277,6 +277,7 @@
       - /boot
   register: rocm_boot_available
   changed_when: false
+  check_mode: false
   when: rocm_amdgpu_package_state == 'latest'
 
 - name: Verify boot partition space before AMD GPU driver upgrade

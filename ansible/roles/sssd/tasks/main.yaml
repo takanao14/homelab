@@ -104,11 +104,13 @@
 
 # Enable pam_mkhomedir through Ubuntu's PAM manager; report only real changes.
 - name: Check whether pam_mkhomedir is already enabled on Ubuntu
+  become: true
   ansible.builtin.command:
     cmd: grep -q pam_mkhomedir /etc/pam.d/common-session
   register: sssd_mkhomedir_check
   changed_when: false
   failed_when: false
+  check_mode: false
   when: ansible_facts['distribution'] == 'Ubuntu'
 
 - name: Enable automatic home directory creation on Ubuntu

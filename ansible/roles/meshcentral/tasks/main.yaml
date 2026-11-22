@@ -14,6 +14,11 @@
       - meshcentral_apparmor_profile is match('^[A-Za-z0-9][A-Za-z0-9_.-]*$')
     quiet: true
 
+- name: Check whether AppArmor parser is installed
+  ansible.builtin.stat:
+    path: /usr/sbin/apparmor_parser
+  register: meshcentral_apparmor_parser
+
 - name: Deploy the MeshCentral AppArmor profile
   become: true
   ansible.builtin.template:
@@ -23,7 +28,9 @@
     group: root
     mode: '0644'
     validate: /usr/sbin/apparmor_parser --skip-kernel-load %s
-  when: meshcentral_apparmor_profile != 'unconfined'
+  when:
+    - meshcentral_apparmor_profile != 'unconfined'
+    - not ansible_check_mode or meshcentral_apparmor_parser.stat.exists
   notify: Restart meshcentral
 
 - name: Create MeshCentral data directories
@@ -35,6 +42,11 @@
     group: root
     mode: '0750'
   loop: "{{ meshcentral_data_dirs }}"
+
+- name: Check whether Podman is installed
+  ansible.builtin.stat:
+    path: /usr/bin/podman
+  register: meshcentral_podman_binary
 
 - name: Check whether the MeshCentral image is present
   become: true
@@ -48,6 +60,7 @@
   changed_when: false
   failed_when: meshcentral_image_present.rc not in [0, 1]
   check_mode: false
+  when: meshcentral_podman_binary.stat.exists
 
 - name: Pull the MeshCentral image
   become: true
@@ -57,6 +70,7 @@
       - pull
       - "{{ meshcentral_image }}"
   when:
+    - meshcentral_podman_binary.stat.exists
     - meshcentral_image_present.rc == 1
     - not ansible_check_mode
   changed_when: true
