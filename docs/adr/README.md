@@ -63,6 +63,7 @@ follow those links for the changed parts.
 | [0017](0017-renovate-automerge-golive-adjustments.md) | Renovate automerge go-live adjustments | Accepted |
 | [0022](0022-commit-terraform-provider-lock-files.md) | Commit Terraform provider lock files | Accepted |
 | [0069](0069-track-dotfiles-vendor-with-renovate.md) | Track dotfiles vendor with Renovate | Accepted |
+| [0090](0090-refresh-non-github-release-checksums.md) | Refresh non-GitHub release checksums on Renovate PRs | Accepted |
 
 ### Provisioning
 

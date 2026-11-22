@@ -1,0 +1,90 @@
+name: Refresh release checksums
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "ansible/roles/forgejo/defaults/main.yaml"
+      - "ansible/roles/forgejo_runner/defaults/main.yaml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-checksums-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    if: >-
+      github.event.pull_request.user.login == 'renovate[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      # Execute only the base revision's script; the bot branch supplies pin data.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+      - name: Preserve trusted refresh script
+        run: cp scripts/release-checksums.py "$RUNNER_TEMP/release-checksums.py"
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          # renovate: datasource=github-releases depName=astral-sh/uv
+          version: "0.13.9"
+
+      - name: Install PyYAML
+        env:
+          # renovate: datasource=pypi depName=PyYAML
+          PYYAML_VERSION: "6.0.3"
+        run: uv pip install --system "PyYAML==${PYYAML_VERSION}"
+
+      - name: Fetch and validate bot branch
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$HEAD_SHA"
+          git diff --name-only "$BASE_SHA...$HEAD_SHA" > "$RUNNER_TEMP/changed-paths"
+          while IFS= read -r path; do
+            case "$path" in
+              ansible/roles/forgejo/defaults/main.yaml|ansible/roles/forgejo_runner/defaults/main.yaml) ;;
+              *) echo "Unexpected path in release update: $path" >&2; exit 1 ;;
+            esac
+            mode=$(git ls-tree "$HEAD_SHA" -- "$path" | awk '{print $1}')
+            [[ "$mode" == 100644 ]] || exit 1
+          done < "$RUNNER_TEMP/changed-paths"
+          git checkout --detach "$HEAD_SHA"
+
+      - name: Refresh checksums and commit
+        id: commit
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          python "$RUNNER_TEMP/release-checksums.py" --update
+          git add ansible/roles/forgejo/defaults/main.yaml ansible/roles/forgejo_runner/defaults/main.yaml
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'chore(deps): refresh release checksums from upstream'
+            git push origin "HEAD:refs/heads/$HEAD_REF"
+          fi
+          echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # GITHUB_TOKEN PR updates require workflow approval; dispatch checks to validate automatically.
+      - name: Validate updated branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          REVISION: ${{ steps.commit.outputs.revision }}
+        run: gh workflow run ansible-lint.yaml --ref "$HEAD_REF" -f revision="$REVISION"
