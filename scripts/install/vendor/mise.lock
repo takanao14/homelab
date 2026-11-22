@@ -118,17 +118,17 @@ url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/758513954"
 provenance = "github-attestations"
 
 [[tools."aqua:aws/aws-cli"]]
-version = "2.41.1"
+version = "2.41.2"
 backend = "aqua:aws/aws-cli"
-specifiers = ["2.41.1"]
+specifiers = ["2.41.2"]
 
 [tools."aqua:aws/aws-cli"."platforms.linux-arm64"]
-checksum = "sha256:83f3bb8440cf6a05e6289f8024126b8c8e15e9513adfe0d6c059747350cdb1e2"
-url = "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-2.41.1.zip"
+checksum = "sha256:710601ab1a7d15622416e3a6c238dc04a58cce6d920cae3307dbe4667d4f96bb"
+url = "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-2.41.2.zip"
 
 [tools."aqua:aws/aws-cli"."platforms.linux-x64"]
-checksum = "sha256:f1b67518c009e9deb94152aaba5cc015e80af6b0630a7931d3662df42b5f568e"
-url = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.41.1.zip"
+checksum = "sha256:2db6f80635cf554a506f3b3c1d070937b87526193fb37e0ac80c8705398219da"
+url = "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.41.2.zip"
 
 [[tools."aqua:bootandy/dust"]]
 version = "1.2.7"
@@ -182,21 +182,21 @@ url_api = "https://api.github.com/repos/cli/cli/releases/assets/761188566"
 provenance = "github-attestations"
 
 [[tools."aqua:dandavison/delta"]]
-version = "0.21.1"
+version = "0.21.2"
 backend = "aqua:dandavison/delta"
-specifiers = ["0.21.1"]
+specifiers = ["0.21.2"]
 
 [tools."aqua:dandavison/delta"."platforms.linux-arm64"]
-checksum = "sha256:efe38626967f550c1d3bbe2014990dff5c8028a0a65a3f9b9b6c4a3bb53bfa28"
+checksum = "sha256:36dca3ddb293d2fa635aa2bf9c53c0ba2d38dcd749290d81c6685974cf3799c4"
 checksum_source = "mise-versions"
-url = "https://github.com/dandavison/delta/releases/download/0.21.1/delta-0.21.1-aarch64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/dandavison/delta/releases/assets/765882036"
+url = "https://github.com/dandavison/delta/releases/download/0.21.2/delta-0.21.2-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/dandavison/delta/releases/assets/768826544"
 
 [tools."aqua:dandavison/delta"."platforms.linux-x64"]
-checksum = "sha256:d3fa53f78b8d63f2c0620aad591441e7d47b5c77e552869aa6fe21fd08b21ff6"
+checksum = "sha256:5d41046c4ada17e7d080e1e5dbbd46544146bb5597e2ab56881a8c594272cd06"
 checksum_source = "mise-versions"
-url = "https://github.com/dandavison/delta/releases/download/0.21.1/delta-0.21.1-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/dandavison/delta/releases/assets/765880079"
+url = "https://github.com/dandavison/delta/releases/download/0.21.2/delta-0.21.2-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/dandavison/delta/releases/assets/768821396"
 
 [[tools."aqua:derailed/k9s"]]
 version = "0.51.0"
