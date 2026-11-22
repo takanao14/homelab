@@ -35,6 +35,7 @@
         create_home: true
         state: present
       register: maintenance_user_account
+      no_log: true
 
     - name: Configure passwordless sudo for the user
       become: true

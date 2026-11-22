@@ -15,3 +15,4 @@
     BAO_TOKEN: "{{ openbao_admin_token }}"
   loop: "{{ openbao_k8s_target_clusters | default(openbao_k8s_clusters) }}"
   changed_when: true
+  no_log: true

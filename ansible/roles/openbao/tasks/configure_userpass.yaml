@@ -13,6 +13,7 @@
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
   changed_when: true
+  no_log: true
 
 - name: Write kv-read policy
   ansible.builtin.command:
@@ -28,6 +29,7 @@
     BAO_ADDR: "{{ openbao_local_addr }}"
     BAO_TOKEN: "{{ openbao_admin_token }}"
   changed_when: true
+  no_log: true
 
 - name: Create or update userpass users
   ansible.builtin.command:
