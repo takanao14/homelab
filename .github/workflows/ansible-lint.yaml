@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/ansible-lint.yaml"
       - "ansible/**"
+      - "scripts/release-checksums.py"
   # PRs can only restore caches saved on the base branch, so refresh the
   # collections cache on main whenever its key changes.
   push:
@@ -13,6 +14,12 @@ on:
     paths:
       - ".github/workflows/ansible-lint.yaml"
       - "ansible/requirements.yaml"
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Commit SHA to validate (defaults to the event revision)
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -23,6 +30,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.revision || github.sha }}
 
       - uses: actions/setup-python@v7
         with:
@@ -60,6 +69,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.revision || github.sha }}
+          fetch-depth: 0
+
+      - name: Detect pending automatic checksum refresh
+        id: refresh
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.user.login == 'renovate[bot]' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          changed_paths=$(git diff --name-only "$BASE_SHA...$HEAD_SHA")
+          if ! grep -vxE 'ansible/roles/(forgejo|forgejo_runner)/defaults/main\.yaml' <<<"$changed_paths" >/dev/null; then
+            echo 'pending=true' >> "$GITHUB_OUTPUT"
+            echo 'Checksum validation is delegated to Refresh release checksums.' >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - uses: actions/setup-python@v7
         with:
@@ -77,62 +106,5 @@ jobs:
         run: uv pip install --system "PyYAML==${PYYAML_VERSION}"
 
       - name: Verify pinned release checksums
-        run: |
-          python - <<'PY'
-          import hashlib
-          import re
-          import urllib.request
-          from pathlib import Path
-
-          import yaml
-
-          targets = [
-              (
-                  'dnscollector',
-                  'ansible/roles/dnscollector/defaults/main.yaml',
-                  'dnscollector_version',
-                  'dnscollector_sha256',
-                  r'v\d+\.\d+\.\d+',
-                  lambda v: f'https://github.com/dmachard/DNS-collector/releases/download/{v}/DNS-collector_{v[1:]}_linux_amd64.tar.gz',
-              ),
-              (
-                  'seaweedfs',
-                  'ansible/roles/seaweedfs/defaults/main.yaml',
-                  'seaweedfs_version',
-                  'seaweedfs_sha256',
-                  r'\d+\.\d+(?:\.\d+)?',
-                  lambda v: f'https://github.com/seaweedfs/seaweedfs/releases/download/{v}/linux_amd64.tar.gz',
-              ),
-              (
-                  'forgejo',
-                  'ansible/roles/forgejo/defaults/main.yaml',
-                  'forgejo_version',
-                  'forgejo_sha256',
-                  r'\d+\.\d+\.\d+(?:-\d+)?',
-                  lambda v: f'https://codeberg.org/forgejo/forgejo/releases/download/v{v}/forgejo-{v}-linux-amd64',
-              ),
-              (
-                  'forgejo_runner',
-                  'ansible/roles/forgejo_runner/defaults/main.yaml',
-                  'forgejo_runner_version',
-                  'forgejo_runner_sha256',
-                  r'\d+\.\d+\.\d+',
-                  lambda v: f'https://code.forgejo.org/forgejo/runner/releases/download/v{v}/forgejo-runner-{v}-linux-amd64',
-              ),
-          ]
-
-          for name, path, version_key, sha_key, version_re, build_url in targets:
-              pins = yaml.safe_load(Path(path).read_text())
-              version = str(pins[version_key])
-              expected = str(pins[sha_key])
-              if not re.fullmatch(version_re, version) or not re.fullmatch(r'[a-f0-9]{64}', expected):
-                  raise SystemExit(f'Invalid {name} release pins')
-              try:
-                  with urllib.request.urlopen(build_url(version), timeout=60) as archive:
-                      actual = hashlib.file_digest(archive, 'sha256').hexdigest()
-              except Exception:
-                  raise SystemExit(f'Could not fetch {name} release archive') from None
-              if actual != expected:
-                  raise SystemExit(f'{name} release checksum mismatch')
-              print(f'{name} release checksum verified')
-          PY
+        if: steps.refresh.outputs.pending != 'true'
+        run: python scripts/release-checksums.py
