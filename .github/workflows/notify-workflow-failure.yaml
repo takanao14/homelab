@@ -14,6 +14,7 @@ on:
       - Terraform Lint
       - Vendor Sync Check
       - Refresh dotfiles vendor
+      - Refresh release checksums
     types: [completed]
 
 permissions: {}

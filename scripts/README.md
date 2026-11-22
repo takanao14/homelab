@@ -13,6 +13,7 @@ scripts/
 ├── run-guest-os-audit.sh                     # operator: collect snapshots and audit service guests
 ├── audit-guest-os-recipes.sh                 # offline creation recipe / OS snapshot audit
 ├── check-proxy-routes.sh                     # CI: Caddy sites <-> Homepage dashboard drift check
+├── release-checksums.py                      # CI: verify/refresh pinned release binary SHA-256
 ├── check-openbao-secrets.sh                  # declared secret paths <-> OpenBao KV drift check (local only)
 ├── openbao-init.py                           # operator init on a rebuilt OpenBao host, stored in SOPS
 ├── grafana-mcp.sh                            # Grafana MCP server launcher (stdio)
