@@ -46,6 +46,8 @@ vector_config:
 blackbox_exporter_ldaps_enabled: true
 blackbox_exporter_networkd_wait_interface: eth0
 
+node_exporter_disable_nvme_collector: true
+
 # Public resolvers keep the recovery path off the cluster it recovers
 # (ADR-0053). Do not point rpi4 at dist1/dist2.
 netplan_ethernets:
