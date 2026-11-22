@@ -1,7 +1,7 @@
 ---
 # renovate: datasource=gitea-releases depName=forgejo/runner registryUrl=https://code.forgejo.org
-forgejo_runner_version: "13.2.1"
-forgejo_runner_sha256: "bb369fe1ecb50fdc983c0b1d993f19b0920df6e5864511892b3cdbf16d858b34"
+forgejo_runner_version: "13.2.2"
+forgejo_runner_sha256: "6b077ccadc22036ba049cea39b09cfbdc5e5ad6000a38f90c83a19e4fb815543"
 forgejo_runner_user: runner
 forgejo_runner_group: runner
 forgejo_runner_home: /var/lib/forgejo-runner
