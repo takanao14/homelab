@@ -46,6 +46,37 @@
     mode: '0644'
   notify: Restart blackbox_exporter
 
+- name: Configure Blackbox Exporter network startup ordering
+  become: true
+  when: blackbox_exporter_networkd_wait_interface | length > 0
+  block:
+    - name: Create the Blackbox Exporter systemd drop-in directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/prometheus-blackbox-exporter.service.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      register: blackbox_exporter_drop_in_directory
+
+    - name: Wait for routable IPv4 before starting Blackbox Exporter
+      ansible.builtin.template:
+        src: wait-for-ipv4.conf.j2
+        dest: /etc/systemd/system/prometheus-blackbox-exporter.service.d/20-wait-for-ipv4.conf
+        owner: root
+        group: root
+        mode: '0644'
+      when: not ansible_check_mode or not blackbox_exporter_drop_in_directory.changed
+      notify: Restart blackbox_exporter
+
+- name: Remove the Blackbox Exporter network startup drop-in when disabled
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/prometheus-blackbox-exporter.service.d/20-wait-for-ipv4.conf
+    state: absent
+  when: blackbox_exporter_networkd_wait_interface | length == 0
+  notify: Restart blackbox_exporter
+
 - name: Check for installed blackbox_exporter binary
   ansible.builtin.stat:
     path: /usr/bin/prometheus-blackbox-exporter

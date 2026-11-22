@@ -28,6 +28,7 @@ LDAPS probes check application responses and certificate validation.
 |----------|---------|-------------|
 | `blackbox_exporter_port` | `9115` | Port the exporter listens on |
 | `blackbox_exporter_listen_address` | `ansible_host` | Address the exporter listens on |
+| `blackbox_exporter_networkd_wait_interface` | `""` | systemd-networkd interface that must have routable IPv4 before the exporter starts |
 | `blackbox_exporter_config_path` | `/etc/prometheus/blackbox.yml` | Path to the deployed config file |
 | `blackbox_exporter_dns_internal_query` | `ns1.home.butaco.net` | Hostname used for the `dns_internal` probe |
 | `blackbox_exporter_ldaps_enabled` | `false` | Deploy the `ldaps` module and certificate; `true` only on rpi4 |
