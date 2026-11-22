@@ -21,12 +21,14 @@
   tasks:
     - name: Drain the node
       ansible.builtin.import_tasks: ../tasks/k8s_node_drain.yaml
+      when: not ansible_check_mode
 
     - name: Run package upgrade tasks
       ansible.builtin.import_tasks: ../tasks/package_upgrade.yaml
 
     - name: Restore the node to service
       ansible.builtin.import_tasks: ../tasks/k8s_node_restore.yaml
+      when: not ansible_check_mode
 
 # Reboot workload-free controllers after workers to preserve the drain API.
 - name: Upgrade OS packages on k0s controllers
