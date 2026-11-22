@@ -1,0 +1,3 @@
+---
+vector_journald_units:
+  - ssh

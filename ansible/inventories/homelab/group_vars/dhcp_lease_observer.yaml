@@ -6,6 +6,7 @@ dhcp_lease_observer_archive_checksum: >-
 
 dhcp_lease_observer_source_instance: bgw1
 dhcp_lease_observer_scope: lan
+# NEC IX2106 border router is outside the Ansible inventory.
 dhcp_lease_observer_ix2106_address: "192.168.10.1:22"
 dhcp_lease_observer_ix2106_username: dhcp-observer
 
