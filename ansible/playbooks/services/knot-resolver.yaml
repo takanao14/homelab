@@ -6,6 +6,8 @@
   roles:
     - role: timezone
       tags: timezone
+    - role: node_exporter
+      tags: node_exporter
     - role: knot_resolver
       tags: knot_resolver
     - role: lxc_logging
