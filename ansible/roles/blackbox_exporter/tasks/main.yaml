@@ -93,8 +93,9 @@
 
 - name: Ensure prometheus-blackbox-exporter is started and enabled
   become: true
-  ansible.builtin.service:
+  ansible.builtin.systemd:
     name: prometheus-blackbox-exporter
     state: started
     enabled: true
+    daemon_reload: true
   when: blackbox_exporter_binary.stat.exists

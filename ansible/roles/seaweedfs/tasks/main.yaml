@@ -46,6 +46,11 @@
   retries: 3
   delay: 5
 
+- name: Check whether weed binary is installed
+  ansible.builtin.stat:
+    path: "{{ seaweedfs_binary }}"
+  register: seaweedfs_installed_binary
+
 - name: Install weed binary  # noqa no-handler
   become: true
   ansible.builtin.unarchive:
@@ -55,7 +60,7 @@
     owner: root
     group: root
     mode: '0755'
-  when: seaweedfs_download.changed
+  when: seaweedfs_download.changed or not seaweedfs_installed_binary.stat.exists
   notify: Restart seaweedfs
 
 - name: Ensure homelab version marker directory exists
@@ -101,10 +106,11 @@
 
 - name: Ensure seaweedfs is started and enabled
   become: true
-  ansible.builtin.service:
+  ansible.builtin.systemd:
     name: seaweedfs
     state: started
     enabled: true
+    daemon_reload: true
 
 - name: Apply SeaweedFS service changes before bucket management
   ansible.builtin.meta: flush_handlers
@@ -184,10 +190,11 @@
 
     - name: Ensure seaweedfs-admin is started and enabled
       become: true
-      ansible.builtin.service:
+      ansible.builtin.systemd:
         name: seaweedfs-admin
         state: started
         enabled: true
+        daemon_reload: true
 
 - name: Configure R2 -> SeaweedFS state backup
   when: seaweedfs_backup_enabled | bool
