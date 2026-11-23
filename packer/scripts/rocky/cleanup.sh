@@ -22,4 +22,4 @@ rm -f /var/lib/systemd/random-seed
 truncate -s 0 /etc/machine-id
 
 sync
-userdel -r -f rocky || true
+userdel -r -f "${SUDO_USER:-rocky}" || true
