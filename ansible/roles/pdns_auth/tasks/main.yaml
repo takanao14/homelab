@@ -145,6 +145,7 @@
     owner: root
     group: pdns
     mode: "0640"
+  no_log: true
   notify: Restart pdns
 
 - name: Check ifupdown service availability
@@ -283,6 +284,7 @@
   when: pdns_role == 'secondary'
   # Run the read-only GET in check mode so later conditions receive JSON; POST stays skipped.
   check_mode: false
+  no_log: true
 
 - name: Register autoprimary on secondary
   ansible.builtin.uri:
@@ -296,3 +298,4 @@
   when:
     - pdns_role == 'secondary'
     - pdns_auth_autoprimaries.json | selectattr('ip', 'equalto', pdns_primary_addr) | list | length == 0
+  no_log: true
