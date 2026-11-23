@@ -72,6 +72,7 @@ confirm_overwrite() {
 download_archive() {
     local url="$1"
     local archive_file="$2"
+    local temp_file="${archive_file}.part"
 
     if [ -f "$archive_file" ]; then
         echo "Using cached archive ${archive_file}"
@@ -79,7 +80,8 @@ download_archive() {
     fi
 
     echo "Downloading ${url}"
-    curl -fL --retry 3 --retry-delay 5 -o "$archive_file" "$url"
+    curl -fL --retry 3 --retry-delay 5 -o "$temp_file" "$url"
+    mv "$temp_file" "$archive_file"
 }
 
 verify_sha256() {
@@ -100,6 +102,7 @@ write_output_sha256() {
 import_freebsd151() {
     local archive_file="${DOWNLOAD_DIR}/${FREEBSD_151_ARCHIVE}"
     local output_file="${IMAGES_DIR}/${FREEBSD_151_OUTPUT}"
+    local temp_output="${output_file}.part"
 
     mkdir -p "$IMAGES_DIR" "$DOWNLOAD_DIR"
     confirm_overwrite "$output_file"
@@ -107,7 +110,8 @@ import_freebsd151() {
     verify_sha256 "$archive_file" "$FREEBSD_151_SHA256"
 
     echo "Decompressing ${archive_file} -> ${output_file}"
-    xz -dc "$archive_file" > "$output_file"
+    xz -dc "$archive_file" > "$temp_output"
+    mv "$temp_output" "$output_file"
     write_output_sha256 "$output_file"
 }
 

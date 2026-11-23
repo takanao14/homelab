@@ -83,8 +83,13 @@ build_image() {
     packer_output_dir=$(dirname "$packer_output")
     packer_vm_name=$(basename "$packer_output")
 
-    echo "Setting read permissions on host kernel for libguestfs..."
-    sudo chmod 0644 /boot/vmlinuz-*
+    for kernel in /boot/vmlinuz-*; do
+        if [ -e "$kernel" ] && [ ! -r "$kernel" ]; then
+            echo "Setting read permissions on host kernel for libguestfs..."
+            sudo chmod 0644 /boot/vmlinuz-*
+            break
+        fi
+    done
 
     check_overwrite "$image_file" "$packer_output_dir"
 
