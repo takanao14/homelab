@@ -3,11 +3,28 @@
   hosts: dns_resolver
   serial: 1
   any_errors_fatal: true
+  pre_tasks:
+    - name: Check Knot Resolver metrics output directory
+      become: true
+      ansible.builtin.stat:
+        path: "{{ knot_resolver_metrics_path | dirname }}"
+        follow: true
+      register: knot_resolver_metrics_directory
+      tags: knot_resolver
+
+    - name: Require the Knot Resolver metrics output directory
+      ansible.builtin.assert:
+        that:
+          - knot_resolver_metrics_directory.stat.isdir | default(false)
+        fail_msg: >-
+          Metrics output directory {{ knot_resolver_metrics_path | dirname }}
+          is missing or is not a directory. Run playbooks/bootstrap.yaml for
+          this host before deploying Knot Resolver.
+      tags: knot_resolver
+
   roles:
     - role: timezone
       tags: timezone
-    - role: node_exporter
-      tags: node_exporter
     - role: knot_resolver
       tags: knot_resolver
     - role: lxc_logging

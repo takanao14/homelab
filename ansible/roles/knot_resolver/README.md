@@ -77,6 +77,10 @@ reloads the recursive configuration, and clears that resolver's cache before
 continuing to the peer. This prevents answers accepted under the upstream's
 validation policy from remaining available in the locally validating mode.
 
+Run `playbooks/bootstrap.yaml` for a new resolver before running the service
+playbook. The service playbook checks that the metrics output directory exists
+before applying any configuration.
+
 Run the homelab playbook in check mode before provisioning:
 
 ```bash

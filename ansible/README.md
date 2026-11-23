@@ -34,10 +34,13 @@ for their multiple entry points:
 
 ### What a system playbook embeds
 
-Service playbooks include the service role, its log-shipping roles (`vector`
-and `journald` through `lxc_logging`), and `timezone` for consistent timestamps.
-Each service defines its own `vector_journald_units`. OpenClaw and Hermes also
-include `mcp_client` for their SOPS-managed caller credentials.
+Service playbooks include the service role and `timezone` for consistent
+timestamps. LXC service playbooks also include `lxc_logging` (`vector` and
+`journald`), and RPi4 service playbooks include `vector`; VM services rely on
+the host baseline (`bootstrap.yaml` or `common/vector.yaml`) to configure
+Vector. Each Vector-managed service defines its own `vector_journald_units`.
+OpenClaw and Hermes also include `mcp_client` for their SOPS-managed caller
+credentials.
 
 Fleet-wide settings (`apt_mirror`, `chrony`, `unattended_upgrades`,
 `node_exporter`) belong to the host baseline. Cross-cutting roles have
@@ -193,7 +196,7 @@ Use the OpenBao role README for:
 | `playbooks/services/knot-resolver.yaml` | `dns_resolver` | system |
 | `playbooks/services/dhcp.yaml` | `dhcp` | system |
 | `playbooks/services/dhcp_lease_observer.yaml` | `dhcp_lease_observer` | system |
-| `playbooks/services/caddy.yaml` | `caddy` | system |
+| `playbooks/services/caddy.yaml` | `caddy`, `localhost` (DNS sync) | system |
 | `playbooks/services/log_collector.yaml` | `log_collector` | system |
 | `playbooks/services/blackbox_exporter.yaml` | `blackbox_exporter` | system |
 | `playbooks/services/forgejo.yaml` | `forgejo` | system |
@@ -213,7 +216,7 @@ Use the OpenBao role README for:
 | `playbooks/services/openclaw.yaml` | `openclaw` | system |
 | `playbooks/services/hermes.yaml` | `hermes` | system |
 | `playbooks/common/vector.yaml` | `vector` | cross-cutting |
-| `playbooks/common/journald.yaml` | `vector_lxc` | cross-cutting |
+| `playbooks/common/journald.yaml` | `journald` | cross-cutting |
 | `playbooks/common/timezone.yaml` | `timezone` | cross-cutting |
 | `playbooks/common/rsyslog.yaml` | `rsyslog` | cross-cutting |
 | `playbooks/common/node_exporter.yaml` | `node_exporter` | cross-cutting |
@@ -226,10 +229,10 @@ Use the OpenBao role README for:
 | `playbooks/common/users.yaml` | `shared_vms` | cross-cutting |
 | `playbooks/common/netplan.yaml` | `netplan` | cross-cutting |
 | `playbooks/common/networkmanager.yaml` | `networkmanager` | cross-cutting |
-| `playbooks/ops/package_upgrade.yaml` | `dns` (serial), k0s workers (serial, drained), k0s controllers (serial), then `all:!proxmox:!dns:!power_only:!prd_k8s:!sandbox_k8s` | ops |
+| `playbooks/ops/package_upgrade.yaml` | `dns` (serial), `prd_k8s_worker:sandbox_k8s_worker` (serial, drained), `prd_k8s_controller:sandbox_k8s_controller` (serial), then `all:!proxmox:!dns:!power_only:!prd_k8s:!sandbox_k8s` | ops |
 | `playbooks/ops/nfs_storage_check.yaml` | `prd_k8s:sandbox_k8s` (only clusters with NFS enabled) | ops |
-| `playbooks/ops/shutdown.yaml` | `k8s_controller`, `k8s_worker`, `guest_shutdown_order`, `proxmox_shutdown_order` | ops (planned outage) |
-| `playbooks/ops/startup.yaml` | `proxmox`, `prd_k8s_hypervisor`, `sandbox_k8s_hypervisor`, `guest_shutdown_order:&shared_startup_guests` (reversed), `k8s_controller` | ops (planned outage / per-cluster recovery) |
+| `playbooks/ops/shutdown.yaml` | `sandbox_k8s_controller`, `sandbox_k8s`, `sandbox_k8s_worker`, `prd_k8s_controller`, `prd_k8s`, `prd_k8s_worker`, `guest_shutdown_order`, `proxmox_shutdown_order` | ops (planned outage) |
+| `playbooks/ops/startup.yaml` | `proxmox`, `prd_k8s_hypervisor`, `sandbox_k8s_hypervisor`, `guest_shutdown_order:&shared_startup_guests` (reversed), `prd_k8s_controller`, `sandbox_k8s_controller` | ops (planned outage / per-cluster recovery) |
 | `playbooks/ops/version_audit.yaml` | `lldap`, `authelia`, `forgejo`, `forgejo_runner`, `netbox`, `dnsdist`, `dns_resolver`, `dns_auth`, `seaweedfs`, `openbao`, `gpuvm`, `code_server`, `openclaw`, `hermes`, `caddy`, `dhcp_lease_observer`, `meshcentral` | ops |
 | `playbooks/ops/dns_failover_test.yaml` | delegated DNS hosts; orchestration on localhost | ops (state-changing failure test) |
 | `playbooks/ops/lldap_cert_rotate.yaml` | `lldap`, then `sssd`, `authelia`, `blackbox_exporter` | ops (certificate rotation) |
