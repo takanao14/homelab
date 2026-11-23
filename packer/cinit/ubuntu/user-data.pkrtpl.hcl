@@ -1,6 +1,6 @@
 #cloud-config
 users:
-  - name: ubuntu
+  - name: ${ssh_username}
     sudo: ALL=(ALL) NOPASSWD:ALL
     shell: /bin/bash
     lock_passwd: false

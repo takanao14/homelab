@@ -120,6 +120,7 @@ source "qemu" "custom" {
   # Attach Cloud-Init as a seed disk
   cd_content = {
     "/user-data" = templatefile("./cinit/${var.distro}/user-data.pkrtpl.hcl", {
+      ssh_username  = var.ssh_username
       ssh_pubkey    = local.ssh_pubkey
       user_password = var.user_password
     }),
