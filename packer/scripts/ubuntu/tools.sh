@@ -22,7 +22,7 @@ EOF
 apt-get update
 apt-get install -y firefox-esr
 
-DEBIAN_FRONTEND=noninteractive apt-get install -y wireshark
+apt-get install -y wireshark
 
 # https://code.visualstudio.com/docs/setup/linux#_install-vs-code-on-linux
 echo "code code/add-microsoft-repo boolean true" | debconf-set-selections
