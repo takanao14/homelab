@@ -77,6 +77,10 @@ reloads the recursive configuration, and clears that resolver's cache before
 continuing to the peer. This prevents answers accepted under the upstream's
 validation policy from remaining available in the locally validating mode.
 
+Before provisioning a new resolver, run `playbooks/bootstrap.yaml` for that host.
+Its node_exporter role creates the textfile collector directory used by the
+Knot Resolver metrics timer.
+
 Run the homelab playbook in check mode before provisioning:
 
 ```bash
