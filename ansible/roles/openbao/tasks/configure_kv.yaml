@@ -10,6 +10,7 @@
     BAO_TOKEN: "{{ openbao_admin_token }}"
   register: openbao_secrets_engines
   changed_when: false
+  no_log: true
 
 - name: Enable KV v2 secrets engine at secret/
   ansible.builtin.command:
@@ -19,3 +20,4 @@
     BAO_TOKEN: "{{ openbao_admin_token }}"
   when: "'secret/' not in (openbao_secrets_engines.stdout | default('{}', true) | from_json)"
   changed_when: true
+  no_log: true

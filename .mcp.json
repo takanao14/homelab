@@ -3,12 +3,12 @@
     "grafana": {
       "type": "http",
       "url": "https://mcp-grafana.prd.butaco.net/mcp",
-      "headersHelper": "./scripts/mcp-http-headers.py grafana"
+      "headersHelper": "./scripts/mcp-http-headers.sh grafana"
     },
     "netbox": {
       "type": "http",
       "url": "https://mcp-netbox.prd.butaco.net/mcp",
-      "headersHelper": "./scripts/mcp-http-headers.py netbox"
+      "headersHelper": "./scripts/mcp-http-headers.sh netbox"
     }
   }
 }

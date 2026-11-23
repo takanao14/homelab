@@ -10,6 +10,7 @@
     BAO_TOKEN: "{{ openbao_admin_token }}"
   register: openbao_auth_methods
   changed_when: false
+  no_log: true
 
 - name: Enable Kubernetes auth method
   ansible.builtin.command:
@@ -20,6 +21,7 @@
   loop: "{{ openbao_k8s_target_clusters | default(openbao_k8s_clusters) }}"
   when: "(item.mount_path + '/') not in (openbao_auth_methods.stdout | default('{}', true) | from_json)"
   changed_when: true
+  no_log: true
 
 - name: Deploy Kubernetes CA certificate
   become: true
@@ -45,3 +47,4 @@
   loop: "{{ openbao_k8s_target_clusters | default(openbao_k8s_clusters) }}"
   when: item.ca_cert | default('') | length > 0
   changed_when: true
+  no_log: true

@@ -66,6 +66,7 @@
     group: "{{ caddy_group }}"
     mode: "0640"
   when: caddy_acme_enabled | bool
+  no_log: true
   notify: Restart caddy
 
 # Remove stale Cloudflare credentials from HTTP-only hosts.

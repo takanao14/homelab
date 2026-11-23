@@ -29,6 +29,8 @@
   ansible.builtin.file:
     path: /etc/apt/keyrings
     state: directory
+    owner: root
+    group: root
     mode: "0755"
 
 - name: Install deb822 repository prerequisites
@@ -54,6 +56,8 @@
   ansible.builtin.get_url:
     url: "{{ dnsdist_repo_key_url }}"
     dest: "{{ dnsdist_repo_key_path }}"
+    owner: root
+    group: root
     mode: "0644"
     checksum: "sha256:{{ dnsdist_repo_key_sha256 }}"
   retries: 3
@@ -63,6 +67,8 @@
   become: true
   ansible.builtin.copy:
     dest: "{{ dnsdist_repo_pin_path }}"
+    owner: root
+    group: root
     mode: "0644"
     content: |
       Package: dnsdist*
@@ -125,6 +131,7 @@
     validate: >-
       /bin/sh -c 'f=$(mktemp /tmp/dnsdist-validate.XXXXXX.yml) || exit 1;
       cp %s "$f"; /usr/bin/dnsdist --check-config -C "$f"; rc=$?; rm -f "$f"; exit $rc'
+  no_log: true
   notify: Restart dnsdist
 
 # Remove legacy Lua only after YAML is installed to avoid ambiguous live config.
