@@ -23,7 +23,7 @@ servers:
       - --max-loki-log-limit
       - "20"
   netbox:
-    image: docker.io/netboxlabs/netbox-mcp-server:1.2.3@sha256:0a12d074d2734191b877d84aefc907ad3f3c677960dff3bc35ce8d663e9046e0
+    image: docker.io/netboxlabs/netbox-mcp-server:1.3.0@sha256:79298525676fa907cdc30cf9ce7b24beeee08ae4671f17bf2b36f972855e858c
     command: netbox-mcp-server
     hostname: ""
     upstream: https://netbox.home.butaco.net/
