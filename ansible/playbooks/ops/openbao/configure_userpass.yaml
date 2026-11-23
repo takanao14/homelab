@@ -1,6 +1,7 @@
 ---
 - name: Configure OpenBao userpass auth
   hosts: openbao
+  gather_facts: false
   tasks:
     - name: Configure userpass auth method and users
       ansible.builtin.include_role:

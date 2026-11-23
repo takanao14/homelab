@@ -1,6 +1,7 @@
 ---
 - name: Bootstrap OpenBao admin token
   hosts: openbao
+  gather_facts: false
   tasks:
     - name: Run bootstrap tasks
       ansible.builtin.include_role:
