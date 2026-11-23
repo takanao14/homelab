@@ -1,4 +1,20 @@
 ---
+- name: Check PowerDNS zone serial metrics directory
+  become: true
+  ansible.builtin.stat:
+    path: "{{ pdns_zone_serial_metrics_path | dirname }}"
+    follow: true
+  register: pdns_auth_zone_serial_metrics_directory
+
+- name: Require the PowerDNS zone serial metrics directory
+  ansible.builtin.assert:
+    that:
+      - pdns_auth_zone_serial_metrics_directory.stat.isdir | default(false)
+    fail_msg: >-
+      Metrics output directory {{ pdns_zone_serial_metrics_path | dirname }}
+      is missing or is not a directory. Run playbooks/bootstrap.yaml for
+      this host before deploying PowerDNS.
+
 - name: Validate pdns role parameter
   ansible.builtin.assert:
     that:
