@@ -146,6 +146,13 @@
     mode: '0600'
   when: forgejo_runner_registration_file.stat.exists or not ansible_check_mode
 
+- name: Check runner unit availability in check mode
+  become: true
+  ansible.builtin.stat:
+    path: "/etc/systemd/system/{{ forgejo_runner_service_name }}.service"
+  register: forgejo_runner_unit
+  when: ansible_check_mode
+
 - name: Deploy forgejo-runner systemd unit
   become: true
   ansible.builtin.template:
@@ -164,3 +171,4 @@
     name: "{{ forgejo_runner_service_name }}"
     state: started
     enabled: true
+  when: not ansible_check_mode or forgejo_runner_unit.stat.exists

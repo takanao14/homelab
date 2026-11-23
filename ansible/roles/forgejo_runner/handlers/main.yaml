@@ -3,9 +3,11 @@
   become: true
   ansible.builtin.systemd:
     daemon_reload: true
+  when: not ansible_check_mode or forgejo_runner_unit.stat.exists
 
 - name: "Restart {{ forgejo_runner_service_name }}"
   become: true
   ansible.builtin.service:
     name: "{{ forgejo_runner_service_name }}"
     state: restarted
+  when: not ansible_check_mode or forgejo_runner_unit.stat.exists
