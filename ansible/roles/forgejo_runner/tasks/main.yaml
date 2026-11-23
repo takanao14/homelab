@@ -156,7 +156,8 @@
 
 - name: Ensure forgejo-runner is started and enabled
   become: true
-  ansible.builtin.service:
+  ansible.builtin.systemd:
     name: "{{ forgejo_runner_service_name }}"
     state: started
     enabled: true
+    daemon_reload: true

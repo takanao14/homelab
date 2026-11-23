@@ -94,7 +94,8 @@
 
 - name: Ensure forgejo is started and enabled
   become: true
-  ansible.builtin.service:
+  ansible.builtin.systemd:
     name: forgejo
     state: started
     enabled: true
+    daemon_reload: true

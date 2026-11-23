@@ -126,7 +126,8 @@
 
 - name: Ensure code-server is started and enabled
   become: true
-  ansible.builtin.service:
+  ansible.builtin.systemd:
     name: "code-server@{{ code_server_user }}"
     state: started
     enabled: true
+    daemon_reload: true
