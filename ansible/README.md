@@ -44,9 +44,7 @@ credentials.
 
 Fleet-wide settings (`apt_mirror`, `chrony`, `unattended_upgrades`,
 `node_exporter`) belong to the host baseline. Cross-cutting roles have
-`common/<role>.yaml` entry points for fleet updates. The Knot Resolver service
-playbook also includes `node_exporter` so standalone provisioning creates the
-textfile collector directory for resolver metrics.
+`common/<role>.yaml` entry points for fleet updates.
 
 `vpngw` receives the VM baseline, node_exporter and Vector. VPN application and
 network configuration remain externally managed; Vector collects only SSH and
