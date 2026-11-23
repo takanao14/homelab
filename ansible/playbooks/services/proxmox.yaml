@@ -1,5 +1,5 @@
 ---
-- name: Create Proxmox maintenance user
+- name: Configure Proxmox VE host baseline and platform settings
   hosts: proxmox
   any_errors_fatal: true
   vars:
@@ -36,6 +36,7 @@
       register: proxmox_user_list
       check_mode: false
       changed_when: false
+      tags: maintenance_user
 
     - name: Add user to Proxmox VE
       become: true
@@ -51,6 +52,7 @@
         proxmox_maintenance_user_id not in
         (proxmox_user_list.stdout | from_json | map(attribute='userid') | list)
       changed_when: true
+      tags: maintenance_user
 
     - name: Get Proxmox ACLs
       become: true
@@ -64,6 +66,7 @@
       register: proxmox_acl_list
       check_mode: false
       changed_when: false
+      tags: maintenance_user
 
     - name: Grant Administrator role to user
       become: true
@@ -89,3 +92,4 @@
           | length
         ) == 0
       changed_when: true
+      tags: maintenance_user

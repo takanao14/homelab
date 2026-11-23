@@ -1,6 +1,7 @@
 ---
 - name: Configure OpenBao for Kubernetes ESO integration
   hosts: openbao
+  gather_facts: false
   tasks:
     - name: Configure KV v2 secrets engine
       ansible.builtin.include_role:

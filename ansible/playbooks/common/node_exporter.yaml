@@ -2,4 +2,5 @@
 - name: Install and configure prometheus-node-exporter
   hosts: node_exporter
   roles:
-    - node_exporter
+    - role: node_exporter
+      tags: node_exporter
