@@ -6,6 +6,7 @@ k8s_kubeconfig: "~/.kube/sandbox.yaml"
 k8s_storage_providers:
   - openebs
   - nfs
+# TrueNAS is outside the Ansible inventory.
 k8s_nfs_server: 192.168.20.10
 k8s_nfs_share: /mnt/tank1/kubernetes/sandbox
 
