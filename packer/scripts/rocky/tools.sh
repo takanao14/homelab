@@ -3,7 +3,6 @@ set -euo pipefail
 
 echo "Installing desktop and development tools..."
 
-dnf update -y
 dnf install -y firefox
 dnf install -y wireshark
 
@@ -20,5 +19,4 @@ gpgcheck=1
 gpgkey=https://packages.microsoft.com/keys/microsoft.asc
 EOF
 
-dnf update -y
 dnf install -y code

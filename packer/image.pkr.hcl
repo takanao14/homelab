@@ -144,8 +144,9 @@ build {
   }
 
   provisioner "shell" {
-    scripts         = var.provision_scripts
-    execute_command = "chmod +x {{ .Path }}; sudo -S bash -c '{{ .Vars }} {{ .Path }}'"
+    scripts          = var.provision_scripts
+    environment_vars = ["DEBIAN_FRONTEND=noninteractive"]
+    execute_command  = "chmod +x {{ .Path }}; sudo -n bash -c '{{ .Vars }} {{ .Path }}'"
   }
 
   # Upload the install wrappers with their vendored installers; the staged
@@ -171,8 +172,9 @@ build {
 
   # Clean up last: purges caches, cloud-init data and the build user.
   provisioner "shell" {
-    script          = var.cleanup_script
-    execute_command = "chmod +x {{ .Path }}; sudo -S bash -c '{{ .Vars }} {{ .Path }}'"
+    script           = var.cleanup_script
+    environment_vars = ["DEBIAN_FRONTEND=noninteractive"]
+    execute_command  = "chmod +x {{ .Path }}; sudo -n bash -c '{{ .Vars }} {{ .Path }}'"
   }
 
   # The overlay needs up to the virtual disk size; /tmp is often too small, and
