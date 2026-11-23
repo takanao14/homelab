@@ -1,7 +1,6 @@
 ---
 - name: Upgrade OpenBao to the reviewed version
   hosts: openbao
-  gather_facts: false
   serial: 1
   any_errors_fatal: true
   tasks:
