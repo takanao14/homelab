@@ -5,7 +5,7 @@ set -euo pipefail
 #
 # Checks:
 #   1. create-vm.sh FILE_IDs        exist in customimage or cloudimage images.hcl
-#   2. build.sh output image names  exist in customimage images.hcl
+#   2. build.sh and import-upstream.sh output image names exist in customimage images.hcl
 #   3. push.sh target image names   match customimage images.hcl exactly
 #      (both directions: every pushable image is defined, every defined image
 #      is pushable)
@@ -18,6 +18,7 @@ CUSTOMIMAGE_HCL="${REPO_ROOT}/tf/customimage/images.hcl"
 CLOUDIMAGE_HCL="${REPO_ROOT}/tf/cloudimage/images.hcl"
 CREATE_VM="${REPO_ROOT}/scripts/create-vm.sh"
 BUILD_SH="${REPO_ROOT}/packer/build.sh"
+IMPORT_UPSTREAM_SH="${REPO_ROOT}/packer/import-upstream.sh"
 PUSH_SH="${REPO_ROOT}/packer/push.sh"
 
 hcl_file_names() {
@@ -45,9 +46,12 @@ create_vm_files="$(grep -o 'local:iso/[^"]*' "$CREATE_VM" | sed 's|local:iso/||'
 check_subset "create-vm.sh" "$defined_all" "$create_vm_files" \
     "is not defined in images.hcl"
 
-# 2. build.sh: images/<file> build outputs (custom images only).
+# 2. build.sh and import-upstream.sh: custom image outputs.
 build_files="$(grep -o '"images/[^"]*\.img"' "$BUILD_SH" | sed 's|"images/||; s|"$||' | sort -u)"
 check_subset "build.sh" "$defined_custom" "$build_files" \
+    "is not defined in tf/customimage/images.hcl"
+import_files="$(sed -n 's/^[A-Z0-9_]*_OUTPUT="\([^"]*\.img\)"/\1/p' "$IMPORT_UPSTREAM_SH" | sort -u)"
+check_subset "import-upstream.sh" "$defined_custom" "$import_files" \
     "is not defined in tf/customimage/images.hcl"
 
 # 3. push.sh: target_image() basenames, bidirectional against customimage.

@@ -24,14 +24,6 @@ locals {
       file_name    = "rocky-9-base.img"
       content_type = "iso"
     }
-    "rocky-9-tool" = {
-      file_name    = "rocky-9-tool.img"
-      content_type = "iso"
-    }
-    "rocky-9-desktop" = {
-      file_name    = "rocky-9-desktop.img"
-      content_type = "iso"
-    }
     "rocky-10-base" = {
       file_name    = "rocky-10-base.img"
       content_type = "iso"

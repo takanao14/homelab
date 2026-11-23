@@ -8,6 +8,7 @@ on:
       - "tf/customimage/images.hcl"
       - "tf/cloudimage/images.hcl"
       - "packer/build.sh"
+      - "packer/import-upstream.sh"
       - "packer/push.sh"
       - "scripts/create-vm.sh"
       - "scripts/check-image-refs.sh"
