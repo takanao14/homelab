@@ -44,7 +44,7 @@ jobs:
       - name: Install PyYAML
         env:
           # renovate: datasource=pypi depName=PyYAML
-          PYYAML_VERSION: "6.0.3"
+          PYYAML_VERSION: "6.0.4"
         run: uv pip install --system "PyYAML==${PYYAML_VERSION}"
 
       - name: Fetch and validate bot branch
