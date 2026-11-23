@@ -46,8 +46,9 @@ on disk.
 | `pdns_zone_serial_script_path` | `/usr/local/sbin/pdns-zone-serial` | Collector script |
 | `pdns_zone_serial_interval` | `5min` | Timer interval |
 
-Hosts running this role must also be in the `node_exporter` group, or nothing
-reads the file.
+Hosts running this role must be in the `node_exporter` group. Run
+`playbooks/bootstrap.yaml` before deploying PowerDNS on a new host. The role
+checks that the configured metrics directory exists before applying changes.
 
 ## Variables
 

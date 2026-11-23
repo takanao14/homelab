@@ -64,10 +64,26 @@
   changed_when: false
   failed_when: false
 
+- name: Check DHCP lease observer metrics output directory
+  become: true
+  ansible.builtin.stat:
+    path: "{{ dhcp_lease_observer_prometheus_path | dirname }}"
+    follow: true
+  register: dhcp_lease_observer_metrics_directory
+
+- name: Require the DHCP lease observer textfile collector prerequisites
+  ansible.builtin.assert:
+    that:
+      - dhcp_lease_observer_metrics_directory.stat.isdir | default(false)
+      - dhcp_lease_observer_prerequisites.results[0].rc == 0
+    fail_msg: >-
+      The textfile output directory {{ dhcp_lease_observer_prometheus_path | dirname }}
+      must exist and the writer group {{ dhcp_lease_observer_textfile_group }} must be present.
+      Run playbooks/bootstrap.yaml for this host before deploying DHCP Lease Observer.
+    quiet: true
+
 - name: Record DHCP lease observer prerequisite state
   ansible.builtin.set_fact:
-    dhcp_lease_observer_textfile_group_exists: >-
-      {{ dhcp_lease_observer_prerequisites.results[0].rc == 0 }}
     dhcp_lease_observer_group_exists: >-
       {{ dhcp_lease_observer_prerequisites.results[1].rc == 0 }}
     dhcp_lease_observer_user_exists: >-
@@ -99,10 +115,7 @@
     shell: /usr/sbin/nologin
     system: true
     state: present
-  when: >-
-    not ansible_check_mode or
-    (dhcp_lease_observer_textfile_group_exists and
-    dhcp_lease_observer_group_exists)
+  when: not ansible_check_mode or dhcp_lease_observer_group_exists
 
 - name: Create root-owned DHCP lease observer directories
   become: true
@@ -153,13 +166,10 @@
   ansible.builtin.debug:
     msg: >-
       Service-user-owned paths and artifact-dependent checks are deferred in
-      check mode until the node_exporter writer group and observer user exist.
+      check mode until the observer account exists.
   when:
     - ansible_check_mode
-    - >-
-      not dhcp_lease_observer_textfile_group_exists or
-      not dhcp_lease_observer_group_exists or
-      not dhcp_lease_observer_user_exists
+    - not dhcp_lease_observer_group_exists or not dhcp_lease_observer_user_exists
 
 - name: Download pinned DHCP lease observer archive
   become: true
