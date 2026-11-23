@@ -64,8 +64,9 @@ already-installed unsupported kernel. Boot the pinned ABI before running the rol
 
 Renovate tracks `rocm_amdgpu_version` from AMD's repository index and the exporter
 container image from its registry. AMD GPU driver updates are limited to the
-`31.x` release line and are not automerged. Update `rocm_udev_rules` manually
-in the corresponding driver PR, for every OS release entry.
+`31.x` release line and are not automerged. In each driver PR, update `udev_rules`
+and `udev_rules_sha256` together for every OS entry in `rocm_ubuntu_releases`.
+Calculate the SHA-256 from the matching package in AMD's repository.
 
 `rocm_version`, `rocm_previous_version`, and `rocm_gpu_target` are not tracked
 by renovate. The rolling repo publishes no version-numbered index to scrape,
