@@ -196,7 +196,7 @@
       register: dns_failover_internal_forward
       failed_when: >-
         'status: NOERROR' not in dns_failover_internal_forward.stdout
-        or '192.168.10.233' not in dns_failover_internal_forward.stdout
+        or hostvars['ns1']['ansible_host'] not in dns_failover_internal_forward.stdout
 
     - name: Query internal reverse name through surviving frontends
       ansible.builtin.command:
@@ -204,7 +204,7 @@
           - dig
           - "@{{ dns_failover_frontends[item] }}"
           - -x
-          - 192.168.10.233
+          - "{{ hostvars['ns1']['ansible_host'] }}"
           - +time=3
           - +tries=1
           - +short

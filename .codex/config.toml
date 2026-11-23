@@ -1,7 +1,7 @@
 [mcp_servers.grafana]
 url = "https://mcp-grafana.prd.butaco.net/mcp"
-http_headers_helper = "./scripts/mcp-http-headers.py grafana"
+http_headers_helper = "./scripts/mcp-http-headers.sh grafana"
 
 [mcp_servers.netbox]
 url = "https://mcp-netbox.prd.butaco.net/mcp"
-http_headers_helper = "./scripts/mcp-http-headers.py netbox"
+http_headers_helper = "./scripts/mcp-http-headers.sh netbox"
