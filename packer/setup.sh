@@ -16,6 +16,9 @@ echo "Adding user '${TARGET_USER}' to the kvm and libvirt groups..."
 sudo usermod -aG kvm "${TARGET_USER}"
 sudo usermod -aG libvirt "${TARGET_USER}"
 
+echo "Setting read permissions on host kernel for libguestfs..."
+sudo chmod 0644 /boot/vmlinuz-*
+
 echo ""
 echo "✅ Installation complete!"
 echo "⚠️  Note: Group changes may not take effect immediately."
