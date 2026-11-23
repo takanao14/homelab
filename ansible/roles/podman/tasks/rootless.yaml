@@ -137,7 +137,7 @@
       - -c
       - |
         import pathlib, sys
-        path, uid = pathlib.Path(sys.argv[1]), sys.argv[2]
+        path, uid, check_only = pathlib.Path(sys.argv[1]), sys.argv[2], sys.argv[3] == 'True'
         try:
             pid = int(path.read_text())
         except FileNotFoundError:
@@ -150,10 +150,12 @@
                 sys.exit(0)
         except OSError:
             pass
-        path.unlink(missing_ok=True)
+        if not check_only:
+            path.unlink(missing_ok=True)
         print('removed')
       - "/run/user/{{ podman_rootless_uid }}/libpod/tmp/pause.pid"
       - "{{ podman_rootless_uid | string }}"
+      - "{{ ansible_check_mode | string }}"
   register: podman_rootless_pause_pid
   changed_when: podman_rootless_pause_pid.stdout == 'removed'
   check_mode: false

@@ -102,6 +102,17 @@
     update_cache: true
   when: dnsdist_repo.changed | default(false)
 
+- name: Check whether dnsdist is already installed
+  ansible.builtin.command:
+    argv:
+      - /usr/bin/test
+      - -x
+      - /usr/bin/dnsdist
+  check_mode: false
+  changed_when: false
+  failed_when: false
+  register: dnsdist_installed
+
 - name: Install dnsdist package
   become: true
   ansible.builtin.apt:
@@ -113,11 +124,13 @@
   ansible.builtin.getent:
     database: passwd
     key: "{{ dnsdist_service_user }}"
+  when: not ansible_check_mode or dnsdist_installed.rc == 0
 
 - name: Resolve the primary group of the dnsdist service account
   ansible.builtin.getent:
     database: group
     key: "{{ ansible_facts.getent_passwd[dnsdist_service_user][2] }}"
+  when: not ansible_check_mode or dnsdist_installed.rc == 0
 
 - name: Deploy dnsdist configuration
   become: true
@@ -132,6 +145,7 @@
       /bin/sh -c 'f=$(mktemp /tmp/dnsdist-validate.XXXXXX.yml) || exit 1;
       cp %s "$f"; /usr/bin/dnsdist --check-config -C "$f"; rc=$?; rm -f "$f"; exit $rc'
   no_log: true
+  when: not ansible_check_mode or dnsdist_installed.rc == 0
   notify: Restart dnsdist
 
 # Remove legacy Lua only after YAML is installed to avoid ambiguous live config.
@@ -193,3 +207,4 @@
     enabled: true
     state: started
     daemon_reload: true
+  when: not ansible_check_mode or dnsdist_installed.rc == 0

@@ -11,6 +11,8 @@
           X-API-Key: "{{ PDNS_PRIMARY_API_KEY }}"
       register: pdns_zones
       changed_when: false
+      check_mode: false
+      no_log: true
 
     - name: Send NOTIFY for each zone
       ansible.builtin.uri:
@@ -22,6 +24,7 @@
       loop: "{{ pdns_zones.json }}"
       loop_control:
         label: "{{ item.name }}"
+      no_log: true
 
 - name: Trigger AXFR retrieve on secondary
   hosts: dns_secondary
@@ -36,6 +39,8 @@
           X-API-Key: "{{ PDNS_SECONDARY_API_KEY }}"
       register: pdns_secondary_zones
       changed_when: false
+      check_mode: false
+      no_log: true
 
     - name: Trigger AXFR retrieve for each zone
       ansible.builtin.uri:
@@ -47,3 +52,4 @@
       loop: "{{ pdns_secondary_zones.json }}"
       loop_control:
         label: "{{ item.name }}"
+      no_log: true
