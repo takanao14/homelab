@@ -2,4 +2,5 @@
 - name: Configure apt mirror for Ubuntu hosts
   hosts: all:!power_only
   roles:
-    - apt_mirror
+    - role: apt_mirror
+      tags: apt_mirror

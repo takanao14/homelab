@@ -36,6 +36,13 @@
   when: not ansible_check_mode or dnscollector_archive.stat.exists
   notify: Restart dnscollector
 
+- name: Check dnscollector binary availability in check mode
+  become: true
+  ansible.builtin.stat:
+    path: /usr/local/bin/dnscollector
+  register: dnscollector_binary
+  when: ansible_check_mode
+
 - name: Ensure dnscollector binary is executable
   become: true
   ansible.builtin.file:
@@ -43,6 +50,7 @@
     mode: "0755"
     owner: root
     group: root
+  when: not ansible_check_mode or dnscollector_binary.stat.exists
 
 - name: Ensure homelab version marker directory exists
   become: true
@@ -81,6 +89,13 @@
     mode: "0644"
   notify: Restart dnscollector
 
+- name: Check dnscollector unit availability in check mode
+  become: true
+  ansible.builtin.stat:
+    path: /etc/systemd/system/dnscollector.service
+  register: dnscollector_unit
+  when: ansible_check_mode
+
 - name: Deploy dnscollector systemd unit
   become: true
   ansible.builtin.copy:
@@ -111,3 +126,4 @@
     enabled: true
     state: started
     daemon_reload: true
+  when: not ansible_check_mode or dnscollector_unit.stat.exists

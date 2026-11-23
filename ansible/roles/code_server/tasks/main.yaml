@@ -18,6 +18,7 @@
   become: true
   ansible.builtin.get_url:
     url: "{{ code_server_deb_url }}"
+    checksum: "sha256:{{ code_server_sha256 }}"
     dest: "{{ code_server_deb_path }}"
     owner: root
     group: root
@@ -126,7 +127,8 @@
 
 - name: Ensure code-server is started and enabled
   become: true
-  ansible.builtin.service:
+  ansible.builtin.systemd:
     name: "code-server@{{ code_server_user }}"
     state: started
     enabled: true
+    daemon_reload: true

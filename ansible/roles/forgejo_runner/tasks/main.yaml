@@ -114,7 +114,9 @@
     status_code: 200
   register: forgejo_runner_registration
   no_log: true
-  when: not forgejo_runner_registration_file.stat.exists
+  when:
+    - not forgejo_runner_registration_file.stat.exists
+    - not ansible_check_mode
 
 - name: Register forgejo-runner
   become: true
@@ -129,7 +131,9 @@
       --labels {{ forgejo_runner_labels | join(',') }}
       --config {{ forgejo_runner_config }}
     creates: "{{ forgejo_runner_home }}/.runner"
-  when: not forgejo_runner_registration_file.stat.exists
+  when:
+    - not forgejo_runner_registration_file.stat.exists
+    - not ansible_check_mode
   no_log: true
 
 # forgejo-runner register writes the runner token world-readable.
@@ -141,6 +145,13 @@
     group: "{{ forgejo_runner_group }}"
     mode: '0600'
   when: forgejo_runner_registration_file.stat.exists or not ansible_check_mode
+
+- name: Check runner unit availability in check mode
+  become: true
+  ansible.builtin.stat:
+    path: "/etc/systemd/system/{{ forgejo_runner_service_name }}.service"
+  register: forgejo_runner_unit
+  when: ansible_check_mode
 
 - name: Deploy forgejo-runner systemd unit
   become: true
@@ -156,7 +167,9 @@
 
 - name: Ensure forgejo-runner is started and enabled
   become: true
-  ansible.builtin.service:
+  ansible.builtin.systemd:
     name: "{{ forgejo_runner_service_name }}"
     state: started
     enabled: true
+    daemon_reload: true
+  when: not ansible_check_mode or forgejo_runner_unit.stat.exists

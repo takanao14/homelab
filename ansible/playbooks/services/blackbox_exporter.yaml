@@ -2,4 +2,5 @@
 - name: Install and configure prometheus-blackbox-exporter
   hosts: blackbox_exporter
   roles:
-    - blackbox_exporter
+    - role: blackbox_exporter
+      tags: blackbox_exporter

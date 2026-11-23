@@ -594,3 +594,103 @@
             (agent_audit_probe.stdout | from_json).installed_version,
             'OK' if (agent_audit_probe.stdout | from_json).image_matches else 'DIFF'
           ) }}
+
+- name: Audit Caddy version
+  hosts: caddy
+  gather_facts: false
+  vars_files:
+    - ../../roles/caddy/defaults/main.yaml
+  tasks:
+    - name: Read installed Caddy version
+      ansible.builtin.command:
+        argv:
+          - "{{ caddy_binary }}"
+          - version
+      register: caddy_audit_version
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Report Caddy version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            'caddy',
+            inventory_hostname,
+            caddy_version,
+            caddy_audit_installed,
+            'OK' if caddy_audit_installed == caddy_version else 'DIFF'
+          ) }}
+      vars:
+        caddy_audit_installed: >-
+          {{ (caddy_audit_version.stdout
+              | regex_search('v?[0-9]+\\.[0-9]+\\.[0-9]+')
+              | default('unknown', true)
+              | regex_replace('^v', '')) }}
+
+- name: Audit DHCP lease observer version
+  hosts: dhcp_lease_observer
+  gather_facts: false
+  vars_files:
+    - ../../roles/dhcp_lease_observer/defaults/main.yaml
+  tasks:
+    - name: Read installed DHCP lease observer version
+      ansible.builtin.command:
+        argv:
+          - "{{ dhcp_lease_observer_binary_path }}"
+          - --version
+      register: dhcp_lease_observer_audit_version
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Report DHCP lease observer version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            'dhcp_lease_obs',
+            inventory_hostname,
+            dhcp_lease_observer_version,
+            dhcp_lease_observer_audit_installed,
+            'OK' if dhcp_lease_observer_audit_installed == dhcp_lease_observer_version else 'DIFF'
+          ) }}
+      vars:
+        dhcp_lease_observer_audit_installed: >-
+          {{ (dhcp_lease_observer_audit_version.stdout | trim)
+             if dhcp_lease_observer_audit_version.rc == 0 else 'unknown' }}
+
+- name: Audit MeshCentral version
+  hosts: meshcentral
+  gather_facts: false
+  vars_files:
+    - ../../roles/meshcentral/defaults/main.yaml
+  tasks:
+    - name: Read the deployed MeshCentral image
+      become: true
+      ansible.builtin.command:
+        argv:
+          - podman
+          - inspect
+          - --format
+          - "{{ '{{.ImageName}}' }}"
+          - "{{ meshcentral_container_name }}"
+      register: meshcentral_audit_image
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Report MeshCentral version
+      ansible.builtin.debug:
+        msg: >-
+          {{ '%-18s %-20s desired=%-12s installed=%-12s %s' | format(
+            'meshcentral',
+            inventory_hostname,
+            meshcentral_audit_desired,
+            meshcentral_audit_installed,
+            'OK' if meshcentral_audit_installed == meshcentral_audit_desired else 'DIFF'
+          ) }}
+      vars:
+        meshcentral_audit_desired: "{{ meshcentral_image | regex_replace('^.*:', '') }}"
+        meshcentral_audit_installed: >-
+          {{ (meshcentral_audit_image.stdout | regex_replace('^.*:', ''))
+             if meshcentral_audit_image.rc == 0 else 'unknown' }}
