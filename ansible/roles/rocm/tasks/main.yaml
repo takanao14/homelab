@@ -102,6 +102,7 @@
 - name: Download amdgpu-insecure-instinct-udev-rules
   ansible.builtin.get_url:
     url: "https://repo.radeon.com/amdgpu/{{ rocm_amdgpu_version }}/ubuntu/pool/main/a/amdgpu-insecure-instinct-udev-rules/{{ rocm_udev_rules }}"
+    checksum: "sha256:{{ rocm_udev_rules_sha256 }}"
     dest: "/tmp/{{ rocm_udev_rules }}"
     mode: '0644'
     timeout: 60

@@ -1,6 +1,7 @@
 ---
-# renovate: datasource=github-releases depName=coder/code-server
-code_server_version: "4.146.0"
+code_server_release_tag: "v4.146.0"
+code_server_sha256: "e4825ae7afb441dfa63a4f579c121569de7c7958d2f35c3d18d803c8a3c7018f"
+code_server_version: "{{ code_server_release_tag | regex_replace('^v', '') }}"
 
 # Existing editor account; inherits agent config, keys, git, and SOPS state.
 code_server_user: ""
@@ -23,5 +24,5 @@ code_server_hostname: vscode.home.butaco.net
 code_server_hashed_password: ""
 
 code_server_deb_url: >-
-  https://github.com/coder/code-server/releases/download/v{{ code_server_version }}/code-server_{{ code_server_version }}_amd64.deb
+  https://github.com/coder/code-server/releases/download/{{ code_server_release_tag }}/code-server_{{ code_server_version }}_amd64.deb
 code_server_deb_path: "/tmp/code-server_{{ code_server_version }}_amd64.deb"

@@ -19,6 +19,8 @@
     owner: root
     group: root
     mode: '0644'
+  retries: 3
+  delay: 5
 
 - name: Configure the PDM no-subscription repository
   become: true
