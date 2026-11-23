@@ -22,7 +22,7 @@
       - dnsdist_preferred_resolver | length > 0
       - dns_resolver_servers | selectattr('name', 'equalto', dnsdist_preferred_resolver) | list | length == 1
       - dnsdist_default_check_name | length > 0
-    fail_msg: "Required environment variables (PRIMARY_AUTH_SERVER, etc.) are missing. Check your .envrc.prd.dev."
+    fail_msg: "Required dnsdist inventory variables are missing. Check group_vars/dns.yaml, group_vars/dnsdist.yaml, and group_vars/dnsdist.sops.yaml."
 
 - name: Ensure apt keyring directory exists
   become: true

@@ -36,7 +36,7 @@ Store these in `inventories/homelab/group_vars/lldap.sops.yaml`.
 |----------|-------------|
 | `lldap_jwt_secret` | Web session signing secret |
 | `lldap_key_seed` | Seed for the server key that protects stored passwords; changing it invalidates every password |
-| `lldap_admin_password` | Built-in `admin` password; LLDAP applies it only when it creates the database |
+| `lldap_admin_password` | Built-in `admin` password; reset from SOPS on every container start (`LLDAP_FORCE_LDAP_USER_PASS_RESET=always`) |
 | `lldap_bind_password` | SSSD lookup account password; must equal `sssd_ldap_bind_password` |
 | `lldap_authelia_password` | Authelia lookup account password; read by the `authelia` role |
 | `lldap_users` | Managed account list |

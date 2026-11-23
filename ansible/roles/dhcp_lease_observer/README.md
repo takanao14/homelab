@@ -17,6 +17,15 @@ The timer is disabled by default. After deployment, verify `--version`,
 `--check-config`, one manual service invocation, state, metrics, and structured
 journal delivery before enabling `dhcp_lease_observer_timer_enabled`.
 
+Required non-secret inventory variables (`group_vars/dhcp_lease_observer.yaml`):
+
+- `dhcp_lease_observer_version`
+- `dhcp_lease_observer_archive_checksum`
+- `dhcp_lease_observer_source_instance`
+- `dhcp_lease_observer_scope`
+- `dhcp_lease_observer_ix2106_address`
+- `dhcp_lease_observer_ix2106_username`
+
 Secrets are required from SOPS inventory:
 
 - `dhcp_lease_observer_ix2106_password`

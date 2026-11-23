@@ -47,8 +47,8 @@ Disable collectors only for:
   `netclass`, `filesystem`, `pressure`, `cpu`) enabled. VMs disable only `zfs`;
   their sensor collectors return empty rather than duplicate host data.
 
-Keep collectors enabled when hardware or mounts may appear later, including
-`nfs`. Before adding an exclusion, check `node_scrape_collector_success == 0`
+Keep collectors enabled when hardware or mounts may appear later (for example
+`nfs` on VM and LXC guests; Raspberry Pi hosts disable `nfs`). Before adding an exclusion, check `node_scrape_collector_success == 0`
 or compare the guest's series with its Proxmox host to establish duplication.
 
 ### Textfile collector

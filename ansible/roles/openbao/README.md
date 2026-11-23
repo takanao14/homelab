@@ -48,6 +48,8 @@ Installs and configures [OpenBao](https://openbao.org/) secret management server
 | `openbao_seal_key_id` | `key-1` | Permanent identifier for the static seal key (update when rotating) |
 | `openbao_local_addr` | `http://127.0.0.1:8200` | API address used by `bao` CLI tasks running on the openbao host. Plain HTTP because TLS is terminated by Caddy upstream. |
 | `openbao_ansible_user` | `ansible-admin` | Dedicated userpass account for OpenBao operational playbooks |
+| `openbao_prometheus_retention_time` | `"60s"` | Telemetry retention window in `openbao.hcl` |
+| `openbao_absent_policies` | `[k8s-dev]` | Retired server-side policy names deleted during `configure.yaml` |
 | `openbao_k8s_host` | `""` | prd cluster API server URL (e.g. `https://192.168.60.11:6443`) |
 | `openbao_k8s_sandbox_host` | `""` | sandbox cluster API server URL (e.g. `https://192.168.20.31:6443`) |
 | `openbao_k8s_clusters` | see defaults | List of Kubernetes clusters to configure auth for. Each entry defines `name`, `mount_path`, `host`, `ca_cert_file`, `role`, and `policies`. Runtime CA data is injected by `playbooks/ops/openbao/register_cluster.yaml`. |

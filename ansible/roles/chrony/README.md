@@ -23,8 +23,8 @@ paths and service names for Debian/Ubuntu and RedHat/Rocky come from
 | `chrony_servers` | `[192.168.10.1]` | NTP source(s) — the router (single internal NTP server). |
 | `chrony_fallback_servers` | `[]` | Optional extra sources appended after `chrony_servers`. Empty by default: external-source redundancy is handled on the router, not per-client. |
 | `chrony_disabled_source_dirs` | `[]` | Optional `sourcedir` paths to comment out when a dynamic source directory is untrusted or noisy. DHCP-provided sources are allowed by default. |
-| `chrony_source_dir_path` | `/etc/chrony/sources.d` | Source directory included from the main chrony config. |
-| `chrony_managed_sources_path` | `/etc/chrony/sources.d/homelab.sources` | Managed chrony source file containing homelab NTP sources. |
+| `chrony_source_dir_path` | `/etc/chrony/sources.d` | OS-family constant (`vars/<os_family>.yaml`); source directory included from the main chrony config. |
+| `chrony_managed_sources_path` | `/etc/chrony/sources.d/homelab.sources` | OS-family constant (`vars/<os_family>.yaml`); managed chrony source file containing homelab NTP sources. |
 
 ## Scope
 
