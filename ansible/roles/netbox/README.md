@@ -7,7 +7,7 @@ The web, worker, and both Valkey containers use `NoNewPrivileges=true`;
 NetBox and its worker run without Linux capabilities. Database and Valkey
 entrypoints retain their default capabilities to initialize ownership and drop
 privileges.
-PostgreSQL retains privilege escalation because the pinned `18-alpine` image
+PostgreSQL retains privilege escalation because the pinned `19-alpine` image
 fails startup with `NoNewPrivileges` on netbox1. Direct UID 70 startup bypasses
 `gosu` but still stalls during initialization; the cause remains unresolved
 (ADR-0079).
@@ -99,7 +99,7 @@ is replaced.
 |----------|---------|-------------|
 | `netbox_version` | [defaults/main.yaml](defaults/main.yaml) | NetBox release half of the image tag |
 | `netbox_docker_version` | [defaults/main.yaml](defaults/main.yaml) | netbox-docker release half of the image tag |
-| `netbox_pg_image` | `docker.io/postgres:18-alpine` | PostgreSQL image; track the upstream compose file |
+| `netbox_pg_image` | `docker.io/postgres:19-alpine` | PostgreSQL image; track the upstream compose file |
 | `netbox_redis_image` | [defaults/main.yaml](defaults/main.yaml) | Valkey image; track the upstream compose file |
 | `netbox_domain` | `netbox.home.butaco.net` | `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` entry |
 | `netbox_port` | `8080` | Published port Caddy proxies to |

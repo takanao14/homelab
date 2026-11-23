@@ -20,6 +20,7 @@ password.
 
 | Variable | Description |
 |----------|-------------|
+| `code_server_user` | Existing login account the editor runs as |
 | `code_server_hashed_password` | argon2 hash of the login password |
 
 Generate the hash and store the output. Read the password interactively rather

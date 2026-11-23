@@ -25,6 +25,8 @@ for a single-node homelab backend.
 |----------|-------------|
 | `seaweedfs_s3_access_key` | S3 access key for the Terraform identity |
 | `seaweedfs_s3_secret_key` | S3 secret key for the Terraform identity |
+| `seaweedfs_imagebuilder_access_key` | Optional S3 access key for the Packer image upload identity |
+| `seaweedfs_imagebuilder_secret_key` | Optional S3 secret key for the Packer image upload identity |
 | `seaweedfs_admin_password` | Admin UI password (empty = auth disabled) |
 | `seaweedfs_backup_r2_endpoint` | Cloudflare R2 S3 endpoint (`https://<account_id>.r2.cloudflarestorage.com`) |
 | `seaweedfs_backup_r2_access_key` | R2 access key (read-only on the state bucket is enough) |
@@ -54,6 +56,7 @@ for a single-node homelab backend.
 | `seaweedfs_admin_enabled` | `true` | Deploy the `weed admin` UI as a separate service |
 | `seaweedfs_admin_port` | `23646` | Admin UI HTTP port |
 | `seaweedfs_admin_data_dir` | `/var/lib/seaweedfs-admin` | Admin state directory |
+| `seaweedfs_admin_env_file` | `/etc/seaweedfs/admin.env` | Environment file holding `WEED_ADMIN_PASSWORD` |
 | `seaweedfs_admin_user` | `admin` | Admin UI username |
 | `seaweedfs_backup_enabled` | `true` | Deploy the R2 -> SeaweedFS state backup timer |
 | `seaweedfs_backup_r2_bucket` | `homelab-tfstate` | Source R2 bucket (primary state) |

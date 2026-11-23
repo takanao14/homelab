@@ -8,9 +8,11 @@ The `50unattended-upgrades` config allows only security-related origins to
 apply security fixes automatically while keeping other package upgrades under
 operator control:
 
-- `${distro_id}:${distro_codename}-security`
-- `${distro_id}ESMApps:${distro_codename}-apps-security`
-- `${distro_id}ESM:${distro_codename}-infra-security`
+- Debian (`Origins-Pattern`): `origin=Debian,codename=${distro_codename}-security,label=Debian-Security`
+- Ubuntu (`Allowed-Origins`):
+  - `${distro_id}:${distro_codename}-security`
+  - `${distro_id}ESMApps:${distro_codename}-apps-security`
+  - `${distro_id}ESM:${distro_codename}-infra-security`
 
 `Automatic-Reboot "false"` disables automatic reboots to keep service
 disruption within operator-controlled maintenance. Unused dependencies are

@@ -35,8 +35,9 @@ Each layer validates what it owns:
 - Safety invariants sit immediately before the dangerous operation, such as the
   lockout guard before `exclusive: true` in `ssh_authorized_keys`.
 
-`meta/argument_specs.yml` is used only for roles that other roles call through
-`include_role`, currently `ssh_authorized_keys`. There it declares the
+`meta/argument_specs.yml` (or `.yaml`) is used only for roles that other roles
+or playbooks call through `include_role` / `import_role` entrypoints, currently
+`ssh_authorized_keys` and `podman` (`rootless`). There it declares the
 contract, makes required variables fail at the call site by leaving them out of
 `defaults/main.yaml`, and keeps asserts for what specs cannot express. Other
 roles are not converted.

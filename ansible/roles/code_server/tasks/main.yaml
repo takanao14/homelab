@@ -6,7 +6,7 @@
       - code_server_hashed_password | length > 0
     fail_msg: >-
       code_server_user and code_server_hashed_password must be set
-      (see group_vars/code_server.yaml and group_vars/code_server.sops.yaml).
+      (see group_vars/code_server.sops.yaml).
 
 - name: Verify the editor account exists
   ansible.builtin.getent:

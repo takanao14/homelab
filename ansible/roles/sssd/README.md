@@ -62,6 +62,10 @@ exclusively; an empty list leaves existing keys unchanged.
 | `sssd_sudoers_file` | `/etc/sudoers.d/60-lab-linux-admins` | Managed sudoers file |
 | `sssd_offline_credentials_expiration` | `2` | Offline-login days |
 | `sssd_entry_cache_timeout` | `600` | Host cache lifetime in seconds |
+| `sssd_domain` | `home.butaco.net` | SSSD domain section name |
+| `sssd_home_dir_template` | `/home/%u` | Fallback home directory template |
+| `sssd_default_shell` | `/bin/bash` | Fallback login shell |
+| `sssd_ldap_ca_cert_src` | `lldap-server.pem` | Exported LLDAP certificate filename in `files/` |
 | `sssd_ldap_ca_cert_path` | `/etc/ssl/certs/…` (Ubuntu), `/etc/openldap/certs/…` (Rocky) | Trusted LDAP certificate |
 
 Ubuntu enables home creation through `pam-auth-update`. Rocky Linux selects
