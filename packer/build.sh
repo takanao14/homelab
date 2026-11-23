@@ -33,10 +33,8 @@ TARGETS:
     rocky10-tool      Rocky 10 with the shared CLI toolchain
     rocky10-desktop   Rocky 10 with GNOME Remote Desktop on top of the toolchain
     rocky9-base       Rocky 9, agent and timezone only
-    rocky9-tool       Rocky 9 with the shared CLI toolchain
-    rocky9-desktop    Rocky 9 with XFCE/XRDP on top of the toolchain
     debian13-base     Debian 13, agent and timezone only
-    all               Build default targets (excluding rocky9-tool)
+    all               Build all targets
     help              Display this help message
 
 Debian has no tool target: the toolchain's HashiCorp step resolves an apt suite
@@ -173,18 +171,6 @@ build_target() {
                 "output-rocky-9-base/rocky-9-base.qcow2" \
                 "images/rocky-9-base.img"
             ;;
-        rocky9-tool)
-            build_image \
-                "vars/rocky9-tool.pkrvars.hcl" \
-                "output-rocky-9-tool/rocky-9-tool.qcow2" \
-                "images/rocky-9-tool.img"
-            ;;
-        rocky9-desktop)
-            build_image \
-                "vars/rocky9-desktop.pkrvars.hcl" \
-                "output-rocky-9-desktop/rocky-9-desktop.qcow2" \
-                "images/rocky-9-desktop.img"
-            ;;
         debian13-base)
             build_image \
                 "vars/debian13-base.pkrvars.hcl" \
@@ -203,7 +189,7 @@ build_target() {
 ALL_TARGETS=(
     ubuntu24-base rocky10-base rocky9-base debian13-base ubuntu26-base
     rocky10-tool ubuntu26-tool
-    rocky9-desktop ubuntu26-desktop rocky10-desktop
+    ubuntu26-desktop rocky10-desktop
 )
 
 FORCE_OVERWRITE=false

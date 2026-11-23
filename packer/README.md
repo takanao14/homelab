@@ -113,10 +113,10 @@ is baked into the image, and each role contains the one before it:
 |------|----------|-------------------|---------------------|------|
 | `base` | QEMU Guest Agent and the timezone (JST) only | `server` | `false` | 10G |
 | `tool` | `base` plus the shared CLI toolchain in `/usr/local` | `server` | `true` | 16G |
-| `desktop` | `tool` plus a desktop, RDP access, the Japanese IME and the GUI applications | `desktop` | `true` | 20G–30G |
+| `desktop` | `tool` plus a desktop, RDP access, the Japanese IME and the GUI applications | `desktop` | `true` | 30G |
 
 `ubuntu26-desktop` and `rocky10-desktop` run GNOME with GNOME Remote Desktop in
-remote login mode (30G); `rocky9-desktop` runs XFCE with XRDP (20G).
+remote login mode (30G).
 
 ### GNOME desktop images need RDP credentials
 
@@ -154,8 +154,6 @@ users, cloud-init paths, the machine profile and the provisioner list live in
 | `rocky10-tool` | server | [vars/rocky10-tool.pkrvars.hcl](vars/rocky10-tool.pkrvars.hcl) | `images/rocky-10-tool.img` |
 | `rocky10-desktop` | desktop | [vars/rocky10-desktop.pkrvars.hcl](vars/rocky10-desktop.pkrvars.hcl) | `images/rocky-10-desktop.img` |
 | `rocky9-base` | server | [vars/rocky9-base.pkrvars.hcl](vars/rocky9-base.pkrvars.hcl) | `images/rocky-9-base.img` |
-| `rocky9-tool` | server | [vars/rocky9-tool.pkrvars.hcl](vars/rocky9-tool.pkrvars.hcl) | `images/rocky-9-tool.img` |
-| `rocky9-desktop` | desktop | [vars/rocky9-desktop.pkrvars.hcl](vars/rocky9-desktop.pkrvars.hcl) | `images/rocky-9-desktop.img` |
 | `debian13-base` | server | [vars/debian13-base.pkrvars.hcl](vars/debian13-base.pkrvars.hcl) | `images/debian-13-base.img` |
 
 Debian has no `tool` target: the toolchain's HashiCorp step resolves an apt
@@ -235,8 +233,8 @@ Then publish it like any other custom image:
 - `-y` - Force overwrite existing images without prompting
 
 `IMAGE_TYPE` is any target in the table above or `all`. Pair `all` with `-y`
-for unattended builds. `all` excludes `rocky9-tool`, which remains available
-as an individual target. Ubuntu 24.04 supports only the maintained `base` image.
+for unattended builds. Ubuntu 24.04 and Rocky 9 support only the maintained
+`base` image.
 
 Upstream imports are handled separately by `import-upstream.sh`; they are not
 included in `build.sh all`.

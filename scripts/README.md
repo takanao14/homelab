@@ -59,7 +59,7 @@ operator can inspect and resume a failed operation directly with Terragrunt.
 | cores  | `4`          | vCPUs                                                      |
 | memory | `8192`       | MB                                                         |
 | disk   | `80`         | GB                                                         |
-| image  | `ubuntu26-base` | `ubuntu26-{base,tool,desktop}`, `rocky10-base`, `rocky9-desktop`, `debian13-base` |
+| image  | `ubuntu26-base` | `ubuntu26-{base,tool,desktop}`, `rocky10-{base,desktop}`, `debian13-base` |
 
 Image roles and build targets are described in [packer/README.md](../packer/README.md#image-roles).
 
