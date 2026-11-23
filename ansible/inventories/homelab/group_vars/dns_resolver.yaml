@@ -9,6 +9,7 @@ knot_resolver_allowed_clients:
 
 knot_resolver_mode: "emergency_forward"
 knot_resolver_forwarders:
+  # Public DNS-over-TLS forwarders outside the Ansible inventory.
   - address:
       - 8.8.8.8
       - 8.8.4.4

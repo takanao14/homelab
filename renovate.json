@@ -68,7 +68,8 @@
         "dmachard/DNS-collector",
         "seaweedfs/seaweedfs",
         "forgejo/forgejo",
-        "forgejo/runner"
+        "forgejo/runner",
+        "coder/code-server"
       ],
       "automerge": false,
       "labels": ["dependencies", "renovate", "manual-review"]
@@ -159,7 +160,7 @@
       "automerge": false,
       "labels": ["dependencies", "renovate", "manual-review"],
       "prBodyNotes": [
-        "Update `rocm_udev_rules` to the matching package filename before merging.",
+        "Update `udev_rules` and `udev_rules_sha256` together for each OS entry in `rocm_ubuntu_releases` before merging.",
         "Validate the ROCm userspace update before explicitly upgrading `amdgpu-dkms`."
       ]
     }
@@ -211,6 +212,17 @@
         "seaweedfs_version: \"(?<currentValue>[^\"]+)\"\\nseaweedfs_sha256: \"(?<currentDigest>[a-f0-9]{64})\""
       ],
       "depNameTemplate": "seaweedfs/seaweedfs",
+      "datasourceTemplate": "github-release-attachments"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^ansible/roles/code_server/defaults/main\\.yaml$/"
+      ],
+      "matchStrings": [
+        "code_server_release_tag: \"(?<currentValue>[^\"]+)\"\\ncode_server_sha256: \"(?<currentDigest>[a-f0-9]{64})\""
+      ],
+      "depNameTemplate": "coder/code-server",
       "datasourceTemplate": "github-release-attachments"
     },
     {

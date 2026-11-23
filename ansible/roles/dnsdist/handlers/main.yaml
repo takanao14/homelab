@@ -1,6 +1,8 @@
 ---
 - name: Restart dnsdist
+  become: true
   ansible.builtin.systemd:
     name: dnsdist
     state: restarted
     daemon_reload: true
+  when: not ansible_check_mode or dnsdist_installed.rc == 0

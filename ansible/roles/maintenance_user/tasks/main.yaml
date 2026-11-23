@@ -35,6 +35,7 @@
         create_home: true
         state: present
       register: maintenance_user_account
+      no_log: true
 
     - name: Configure passwordless sudo for the user
       become: true
@@ -42,6 +43,8 @@
         dest: "/etc/sudoers.d/{{ maintenance_user }}"
         content: |
           {{ maintenance_user }} ALL=(ALL) NOPASSWD: ALL
+        owner: root
+        group: root
         mode: '0440'
         validate: /usr/sbin/visudo -cf %s
 

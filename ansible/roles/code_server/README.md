@@ -43,7 +43,7 @@ and compare the strings.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `code_server_version` | [defaults/main.yaml](defaults/main.yaml) | Release to install (Renovate-tracked) |
+| `code_server_release_tag` | [defaults/main.yaml](defaults/main.yaml) | GitHub release tag (Renovate-tracked with `code_server_sha256`) |
 | `code_server_user` | (required) | Account the editor runs as |
 | `code_server_group` | `{{ code_server_user }}` | Primary group of that account |
 | `code_server_home` | `/home/{{ code_server_user }}` | Home directory |

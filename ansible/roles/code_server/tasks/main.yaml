@@ -18,6 +18,7 @@
   become: true
   ansible.builtin.get_url:
     url: "{{ code_server_deb_url }}"
+    checksum: "sha256:{{ code_server_sha256 }}"
     dest: "{{ code_server_deb_path }}"
     owner: root
     group: root

@@ -1,5 +1,6 @@
 ---
 - name: Restart pdns
+  become: true
   ansible.builtin.systemd:
     name: pdns
     state: restarted

@@ -16,7 +16,8 @@
   ansible.builtin.set_fact:
     rsyslog_imjournal_input_supported: >-
       {{
-        (ansible_facts.packages['rsyslog'][0].version
+        'rsyslog' not in ansible_facts.packages
+        or (ansible_facts.packages['rsyslog'][0].version
           | regex_replace('-.*$', ''))
         is version('8.2312.0', '>=', version_type='loose')
       }}
@@ -30,6 +31,7 @@
     group: root
     mode: '0644'
     validate: rsyslogd -N1 -f %s
+  when: not ansible_check_mode or 'rsyslog' in ansible_facts.packages
   notify: Restart rsyslog
 
 - name: Ensure rsyslog is started and enabled
@@ -38,3 +40,4 @@
     name: rsyslog
     state: started
     enabled: true
+  when: not ansible_check_mode or 'rsyslog' in ansible_facts.packages

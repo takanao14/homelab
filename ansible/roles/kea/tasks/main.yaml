@@ -21,7 +21,6 @@
     owner: _kea
     group: _kea
     mode: "0750"
-    recurse: true
 
 - name: Ensure /run/kea exists and has correct permissions
   become: true

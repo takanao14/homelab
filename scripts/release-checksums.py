@@ -52,6 +52,14 @@ TARGETS = [
         'url': lambda v: f'https://code.forgejo.org/forgejo/runner/releases/download/v{v}/forgejo-runner-{v}-linux-amd64',
         'checksum_url': lambda v: f'https://code.forgejo.org/forgejo/runner/releases/download/v{v}/forgejo-runner-{v}-linux-amd64.sha256',
     },
+    {
+        'name': 'code_server',
+        'path': 'ansible/roles/code_server/defaults/main.yaml',
+        'version_key': 'code_server_release_tag',
+        'sha_key': 'code_server_sha256',
+        'version_re': r'v\d+\.\d+\.\d+',
+        'url': lambda tag: f'https://github.com/coder/code-server/releases/download/{tag}/code-server_{tag[1:]}_amd64.deb',
+    },
 ]
 
 

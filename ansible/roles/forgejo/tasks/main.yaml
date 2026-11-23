@@ -78,6 +78,7 @@
     owner: "{{ forgejo_user }}"
     group: "{{ forgejo_group }}"
     mode: '0640'
+  no_log: true
   notify: Restart forgejo
 
 - name: Deploy forgejo systemd unit

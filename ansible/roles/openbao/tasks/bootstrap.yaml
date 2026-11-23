@@ -42,6 +42,7 @@
   register: openbao_admin_policy_check
   changed_when: false
   failed_when: false
+  no_log: true
 
 - name: Ensure admin policy
   ansible.builtin.command:
@@ -52,6 +53,7 @@
     BAO_TOKEN: "{{ openbao_root_token }}"
   when: openbao_admin_policy_check.rc != 0 or openbao_admin_policy_check.stdout != openbao_admin_policy
   changed_when: true
+  no_log: true
 
 - name: List enabled auth methods
   ansible.builtin.command:
@@ -61,6 +63,7 @@
     BAO_TOKEN: "{{ openbao_root_token }}"
   register: openbao_auth_methods
   changed_when: false
+  no_log: true
 
 - name: Enable userpass auth method
   ansible.builtin.command:
@@ -70,6 +73,7 @@
     BAO_TOKEN: "{{ openbao_root_token }}"
   when: "'userpass/' not in (openbao_auth_methods.stdout | default('{}', true) | from_json)"
   changed_when: true
+  no_log: true
 
 - name: Create or update Ansible admin user
   ansible.builtin.command:
