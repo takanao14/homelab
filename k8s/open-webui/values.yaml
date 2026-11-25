@@ -26,6 +26,9 @@ persistence:
   enabled: true
   size: 2Gi
 
+workload:
+  kind: Deployment
+
 strategy:
   type: Recreate
 
