@@ -612,6 +612,6 @@ backend = "pipx:ansible-lint"
 specifiers = ["26.11.0"]
 
 [[tools."pipx:argcomplete"]]
-version = "3.7.2"
+version = "3.8.0"
 backend = "pipx:argcomplete"
-specifiers = ["3.7.2"]
+specifiers = ["3.8.0"]
