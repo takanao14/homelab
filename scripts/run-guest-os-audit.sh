@@ -112,6 +112,7 @@ if [ -z "$prometheus_url" ]; then
             fi
         fi
     done
+    exec 3<&-
     [ -n "$port" ] || fail 'Prometheus port-forward timed out.'
     prometheus_url="http://127.0.0.1:$port"
 fi
