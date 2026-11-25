@@ -26,6 +26,7 @@ inputs = {
       bridge          = local.common.locals.node4.net60.bridge
       ipv4gw          = local.common.locals.node4.net60.ipv4gw
       ipv4            = "192.168.60.11/24"
+      cloud_init      = { netplan_virtio_static = true }
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 40
