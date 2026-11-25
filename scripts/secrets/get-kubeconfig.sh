@@ -26,7 +26,7 @@ ENVS=(prd sandbox)
 
 tmp_files=()
 cleanup() {
-  rm -f "${tmp_files[@]}"
+  rm -f ${tmp_files[@]+"${tmp_files[@]}"}
 }
 trap cleanup EXIT
 
