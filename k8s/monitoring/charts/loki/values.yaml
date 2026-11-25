@@ -13,3 +13,6 @@ proxmoxAlerts:
     oom: false
     storage: false
     backup: false
+    quorum: false
+    ha: false
+    serviceErrors: false
