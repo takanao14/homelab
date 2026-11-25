@@ -51,6 +51,8 @@ spec:
             readOnlyRootFilesystem: true
             capabilities:
               drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -76,7 +78,7 @@ spec:
           image: {{ .Values.voicevox.image | quote }}
           command: [/bin/bash, -c]
           args:
-            - exec /entrypoint.sh /opt/voicevox_engine/run --host 0.0.0.0 >/dev/null 2>&1
+            - exec /entrypoint.sh /opt/voicevox_engine/run --host 0.0.0.0
           env:
             - name: VV_CPU_NUM_THREADS
               value: {{ .Values.voicevox.threads | quote }}
