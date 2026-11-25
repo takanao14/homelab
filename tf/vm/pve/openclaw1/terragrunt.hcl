@@ -25,7 +25,7 @@ inputs = {
       bridge     = local.common.locals.pve.net20.bridge
       ipv4       = "192.168.20.23/24"
       ipv4gw     = local.common.locals.pve.net20.ipv4gw
-      cloud_init = { netplan_virtio = true }
+      cloud_init = { netplan_virtio_static = true }
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 40

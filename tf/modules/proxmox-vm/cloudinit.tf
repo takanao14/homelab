@@ -2,7 +2,7 @@ locals {
   network_data = {
     for name, vm in var.vms : name => (
       vm.cloud_init.network_data != null ? vm.cloud_init.network_data :
-      vm.cloud_init.netplan_virtio ? yamlencode({
+      vm.cloud_init.netplan_virtio_static ? yamlencode({
         version  = 2
         renderer = "networkd"
         ethernets = {

@@ -156,7 +156,10 @@ with `packer/push.sh freebsd151`, then consume it through `tf/customimage`.
 
 `proxmox-vm` accepts `cloud_init.user_data` and `cloud_init.network_data` YAML
 strings, replacing generated `user_account` and `ip_config`/`dns` settings
-respectively. `cloud_init.type` selects the datasource; omission preserves the
+respectively. For one VirtIO NIC with a static IPv4 address,
+`cloud_init.netplan_virtio_static` generates a Netplan snippet from `ipv4` (CIDR),
+`ipv4gw`, and the DNS inputs. It is mutually exclusive with `cloud_init.network_data`.
+`cloud_init.type` selects the datasource; omission preserves the
 provider default. The `cloudinit-snippets` child module uploads payloads through
 `proxmox.snippets` using SSH. `cloud_init.snippet_datastore` defaults to `local`,
 which must support snippets. Never include decrypted secrets in the payloads.

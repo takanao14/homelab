@@ -29,11 +29,11 @@ variable "vms" {
     }))
     balloon = optional(bool, false)
     cloud_init = optional(object({
-      type              = optional(string)
-      snippet_datastore = optional(string, "local")
-      user_data         = optional(string)
-      network_data      = optional(string)
-      netplan_virtio    = optional(bool, false)
+      type                  = optional(string)
+      snippet_datastore     = optional(string, "local")
+      user_data             = optional(string)
+      network_data          = optional(string)
+      netplan_virtio_static = optional(bool, false)
     }), {})
     pci_devices = optional(map(object({
       id      = optional(string)
@@ -66,16 +66,16 @@ variable "vms" {
 
   validation {
     condition = alltrue([for vm in values(var.vms) :
-      !(vm.cloud_init.netplan_virtio && vm.cloud_init.network_data != null)
+      !(vm.cloud_init.netplan_virtio_static && vm.cloud_init.network_data != null)
     ])
-    error_message = "cloud_init.netplan_virtio cannot be combined with cloud_init.network_data."
+    error_message = "cloud_init.netplan_virtio_static cannot be combined with cloud_init.network_data."
   }
 
   validation {
     condition = alltrue([for vm in values(var.vms) :
-      vm.cloud_init.netplan_virtio ? vm.ipv4 != "dhcp" : true
+      vm.cloud_init.netplan_virtio_static ? can(cidrnetmask(vm.ipv4)) && can(cidrnetmask("${vm.ipv4gw}/32")) : true
     ])
-    error_message = "cloud_init.netplan_virtio requires a static CIDR ipv4 address."
+    error_message = "cloud_init.netplan_virtio_static requires ipv4 in IPv4 CIDR notation and ipv4gw as an IPv4 address."
   }
 }
 
