@@ -1,3 +1,4 @@
+{{- $hostname := required "hostname is required" .Values.hostname -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,24 +28,24 @@ spec:
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
         ports:
         - containerPort: 3000
-        livenessProbe:
-          httpGet:
-            path: /api/healthcheck
-            port: 3000
-            httpHeaders:
-            - name: Host
-              value: {{ .Values.hostname | default "localhost:3000" | quote }}
-          initialDelaySeconds: 10
-          periodSeconds: 20
         readinessProbe:
           httpGet:
             path: /api/healthcheck
             port: 3000
             httpHeaders:
             - name: Host
-              value: {{ .Values.hostname | default "localhost:3000" | quote }}
+              value: {{ $hostname | quote }}
           initialDelaySeconds: 5
           periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /api/healthcheck
+            port: 3000
+            httpHeaders:
+            - name: Host
+              value: {{ $hostname | quote }}
+          initialDelaySeconds: 15
+          periodSeconds: 30
         resources:
           requests:
             cpu: 100m
@@ -58,7 +59,7 @@ spec:
               - ALL
         env:
         - name: HOMEPAGE_ALLOWED_HOSTS
-          value: {{ .Values.hostname | default "*" | quote }}
+          value: {{ $hostname | quote }}
         envFrom:
         - secretRef:
             name: homepage-secrets

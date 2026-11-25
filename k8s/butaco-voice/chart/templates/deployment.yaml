@@ -15,6 +15,7 @@ spec:
       annotations:
         checksum/character: {{ toJson .Values.character | sha256sum }}
     spec:
+      automountServiceAccountToken: false
       volumes:
         - name: character
           configMap:
@@ -61,6 +62,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
+  revisionHistoryLimit: 1
   strategy:
     type: Recreate
   selector:
@@ -71,6 +73,7 @@ spec:
       labels:
         app: voicevox
     spec:
+      automountServiceAccountToken: false
       nodeSelector:
         kubernetes.io/arch: amd64
       containers:
@@ -94,6 +97,12 @@ spec:
             httpGet:
               path: /version
               port: 50021
+          livenessProbe:
+            httpGet:
+              path: /version
+              port: 50021
+            periodSeconds: 30
+            failureThreshold: 3
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000

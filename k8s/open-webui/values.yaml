@@ -26,6 +26,12 @@ persistence:
   enabled: true
   size: 2Gi
 
+workload:
+  kind: Deployment
+
+strategy:
+  type: Recreate
+
 # Requests only (README): 7-day mean/peak 1644/1937 Mi, p95 CPU 1m.
 resources:
   requests:
