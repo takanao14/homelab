@@ -311,3 +311,150 @@ run "invalid_type" {
   }
   expect_failures = [var.vms]
 }
+
+run "netplan_virtio_static" {
+  command = plan
+  variables {
+    vms = {
+      test = {
+        node_name        = "test"
+        config_datastore = "local-zfs"
+        cores            = 2
+        memory           = 1024
+        qemu_guest_agent = false
+        on_boot          = false
+        username         = "test"
+        ipv4             = "192.0.2.2/24"
+        ipv4gw           = "192.0.2.1"
+        bridge           = "vmbr0"
+        dns_domain       = "example.internal"
+        dns_servers      = ["192.0.2.53"]
+        os_type          = "other"
+        disks            = {}
+        cloud_init       = { netplan_virtio_static = true }
+      }
+    }
+  }
+  assert {
+    condition     = toset(keys(module.cloudinit_snippets["test"].file_ids)) == toset(["network"]) && length(proxmox_virtual_environment_vm.vm["test"].initialization[0].user_account) == 1 && length(proxmox_virtual_environment_vm.vm["test"].initialization[0].ip_config) == 0 && length(proxmox_virtual_environment_vm.vm["test"].initialization[0].dns) == 0
+    error_message = "netplan_virtio_static must generate a network snippet and suppress native ip_config and dns."
+  }
+  assert {
+    condition = yamldecode(local.network_data["test"]) == yamldecode(<<-YAML
+      version: 2
+      renderer: networkd
+      ethernets:
+        primary:
+          match:
+            driver: virtio_net
+          addresses: ["192.0.2.2/24"]
+          routes:
+            - to: default
+              via: "192.0.2.1"
+          nameservers:
+            addresses: ["192.0.2.53"]
+            search: ["example.internal"]
+    YAML
+    )
+    error_message = "The generated Netplan must preserve the NIC match, static address, default route, and DNS."
+  }
+}
+
+run "netplan_virtio_static_conflict" {
+  command = plan
+  variables {
+    vms = {
+      test = {
+        node_name        = "test"
+        config_datastore = "local-zfs"
+        cores            = 2
+        memory           = 1024
+        qemu_guest_agent = false
+        on_boot          = false
+        username         = "test"
+        ipv4             = "192.0.2.2/24"
+        ipv4gw           = "192.0.2.1"
+        bridge           = "vmbr0"
+        os_type          = "other"
+        disks            = {}
+        cloud_init = {
+          netplan_virtio_static = true
+          network_data          = "version: 2\nethernets: {}\n"
+        }
+      }
+    }
+  }
+  expect_failures = [var.vms]
+}
+
+run "netplan_virtio_static_dhcp" {
+  command = plan
+  variables {
+    vms = {
+      test = {
+        node_name        = "test"
+        config_datastore = "local-zfs"
+        cores            = 2
+        memory           = 1024
+        qemu_guest_agent = false
+        on_boot          = false
+        username         = "test"
+        ipv4             = "dhcp"
+        ipv4gw           = "192.0.2.1"
+        bridge           = "vmbr0"
+        os_type          = "other"
+        disks            = {}
+        cloud_init       = { netplan_virtio_static = true }
+      }
+    }
+  }
+  expect_failures = [var.vms]
+}
+
+run "netplan_virtio_static_missing_prefix" {
+  command = plan
+  variables {
+    vms = {
+      test = {
+        node_name        = "test"
+        config_datastore = "local-zfs"
+        cores            = 2
+        memory           = 1024
+        qemu_guest_agent = false
+        on_boot          = false
+        username         = "test"
+        ipv4             = "192.0.2.2"
+        ipv4gw           = "192.0.2.1"
+        bridge           = "vmbr0"
+        os_type          = "other"
+        disks            = {}
+        cloud_init       = { netplan_virtio_static = true }
+      }
+    }
+  }
+  expect_failures = [var.vms]
+}
+
+run "netplan_virtio_static_invalid_gateway" {
+  command = plan
+  variables {
+    vms = {
+      test = {
+        node_name        = "test"
+        config_datastore = "local-zfs"
+        cores            = 2
+        memory           = 1024
+        qemu_guest_agent = false
+        on_boot          = false
+        username         = "test"
+        ipv4             = "192.0.2.2/24"
+        ipv4gw           = "192.0.2.1/24"
+        bridge           = "vmbr0"
+        os_type          = "other"
+        disks            = {}
+        cloud_init       = { netplan_virtio_static = true }
+      }
+    }
+  }
+  expect_failures = [var.vms]
+}
