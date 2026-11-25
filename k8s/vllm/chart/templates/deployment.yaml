@@ -7,6 +7,7 @@ metadata:
     homelab/gpu-switchable: "true"
 spec:
   replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 1
   strategy:
     type: Recreate
   selector:
@@ -18,6 +19,7 @@ spec:
         app: vllm
         homelab/gpu-switchable: "true"
     spec:
+      automountServiceAccountToken: false
       # Prevent the Service from injecting a URI into vLLM's numeric VLLM_PORT.
       enableServiceLinks: false
       nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
@@ -57,6 +59,12 @@ spec:
               path: /health
               port: http
             periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+            failureThreshold: 6
           volumeMounts:
             - name: models
               mountPath: /root/.cache/huggingface
@@ -64,6 +72,9 @@ spec:
               mountPath: /dev/shm
           # The device plugin injects permitted nodes; do not shadow them with hostPath.
           securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
             seccompProfile:
               type: Unconfined
       volumes:

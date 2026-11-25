@@ -15,6 +15,7 @@ spec:
       path: k8s/butaco-voice/chart
       helm:
         releaseName: butaco-voice
+        ignoreMissingValueFiles: true
         valueFiles:
           - $values/k8s/butaco-voice/values.yaml
           - $values/k8s/butaco-voice/{{ include "argocd-apps.env" . }}/values.yaml

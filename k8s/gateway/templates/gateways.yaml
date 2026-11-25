@@ -21,7 +21,7 @@ spec:
         certificateRefs:
           - group: ""
             kind: Secret
-            name: wildcard-{{ $root.Values.domain | replace "." "-" }}-tls
+            name: wildcard-{{ required "domain is required for https listener" $root.Values.domain | replace "." "-" }}-tls
             namespace: cert-manager
       allowedRoutes:
         namespaces:

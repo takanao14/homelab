@@ -3,6 +3,12 @@ gateway-helm:
     gatewayAPI:
       safeUpgradePolicy:
         enabled: false
+  deployment:
+    envoyGateway:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
   config:
     envoyGateway:
       # Enables GPU Switch to reference Authelia on idp1 as a Backend.

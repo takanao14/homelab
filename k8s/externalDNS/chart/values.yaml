@@ -10,9 +10,10 @@ ownerId: ""
 domainFilter: ""
 policy: ""
 
+logLevel: info
+
 sources:
   - service
-  - ingress
   - gateway-httproute
 
 serviceTypeFilter:

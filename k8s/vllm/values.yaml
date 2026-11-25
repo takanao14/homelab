@@ -1,4 +1,4 @@
-hostname: vllm.prd.butaco.net
+hostname: ""
 
 gateway:
   # Allow model loading and long generations past Envoy's default.

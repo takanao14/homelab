@@ -1,4 +1,4 @@
-hostname: ollama.prd.butaco.net
+hostname: ""
 gateway:
   # Override Envoy's 15s default for long agent responses.
   timeouts:

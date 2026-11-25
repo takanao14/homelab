@@ -10,6 +10,8 @@ resources:
   limits:
     amd.com/gpu: "1"
   requests:
+    cpu: 250m
+    memory: 4Gi
     amd.com/gpu: "1"
 
 storage:
@@ -28,7 +30,7 @@ tolerations:
     value: amd
     effect: NoSchedule
 
-hostname: comfyui.prd.butaco.net
+hostname: ""
 
 gateway:
   name: shared-gateway-envoy

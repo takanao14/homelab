@@ -37,6 +37,7 @@ kube-prometheus-stack:
       retention: 3d
       resources:
         requests:
+          cpu: 50m
           memory: 512Mi
       storageSpec:
         volumeClaimTemplate:
