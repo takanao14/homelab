@@ -178,7 +178,12 @@ _l2_segment_from_ip() {
 _render_worker_host() {
     local addr="$1"
     local kind="${2:-}"
-    local labels l2_segment
+    local labels l2_segment hook_dir
+    hook_dir="${K0S_DIR//\\/\\\\}/hook"
+    hook_dir="${hook_dir//\"/\\\"}"
+    hook_dir="${hook_dir//$'\n'/\\n}"
+    hook_dir="${hook_dir//$'\r'/\\r}"
+    hook_dir="${hook_dir//$'\t'/\\t}"
     l2_segment="$(_l2_segment_from_ip "$addr")"
     labels="homelab/l2-segment=${l2_segment}"
     if [[ "$kind" == "gpu" ]]; then
@@ -205,11 +210,11 @@ EOF
     cat <<EOF
     files:
       - name: setup-ssd
-        src: ${K0S_DIR}/hook/ssdsetup.sh
+        src: "${hook_dir}/ssdsetup.sh"
         dstDir: /home/${K0S_SSH_USER}/k0sctl-hooks/
         perm: 0755
       - name: mirror-config
-        src: ${K0S_DIR}/hook/mirror.sh
+        src: "${hook_dir}/mirror.sh"
         dstDir: /home/${K0S_SSH_USER}/k0sctl-hooks/
         perm: 0755
     hooks:
