@@ -177,7 +177,7 @@ user configuration.
 - **Stack binding (ADR-0020)**: each stack uses one Proxmox endpoint from
   `.envrc`; cross-host k8s stacks override inherited host defaults and credentials.
 - **Networking**: Configured via `common.hcl` per host (e.g. `vmbr0`, `vnets001`)
-- **Storage**: pve=local-zfs, node1/node5=data-nvme, node2/node3/node4=local-lvm;
+- **Storage**: pve=local-zfs, node1/node4/node5=data-nvme, node2/node3=local-lvm;
   SeaweedFS data on node3 uses usb-ssd
 
 ## Guest OS recipe audits
