@@ -7,6 +7,7 @@ metadata:
     homelab/gpu-switchable: "true"
 spec:
   replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 1
   strategy:
     type: Recreate
   selector:
@@ -17,7 +18,10 @@ spec:
       labels:
         app: lemonade-server
         homelab/gpu-switchable: "true"
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
+      automountServiceAccountToken: false
       securityContext:
         fsGroup: 999
         fsGroupChangePolicy: OnRootMismatch
@@ -34,6 +38,16 @@ spec:
               set -eu
               cp /defaults/config.json /config/config.json
               cp /defaults/recipe_options.json /config/recipe_options.json
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
           volumeMounts:
             - name: config-defaults
               mountPath: /defaults
@@ -56,6 +70,20 @@ spec:
               value: {{ printf "https://%s" .Values.hostname | quote }}
           ports:
             - containerPort: 13305
+          startupProbe:
+            tcpSocket:
+              port: 13305
+            periodSeconds: 10
+            failureThreshold: 30
+          readinessProbe:
+            tcpSocket:
+              port: 13305
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 13305
+            periodSeconds: 30
+            failureThreshold: 5
           resources: {{ toYaml .Values.resources | nindent 12 }}
           startupProbe:
             tcpSocket:
@@ -75,6 +103,9 @@ spec:
               mountPath: /opt/lemonade/.config/lemonade
           # The device plugin injects permitted nodes; do not shadow them with hostPath.
           securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
             seccompProfile:
               type: Unconfined
       volumes:
