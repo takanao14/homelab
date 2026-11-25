@@ -26,7 +26,23 @@ run "empty_creation_recipe" {
 run "opted_in_without_image" {
   command = plan
   variables {
-    vms = { for name, guest in var.vms : name => merge(guest, { os_recipe_audit = true }) }
+    vms = {
+      test = {
+        os_recipe_audit  = true
+        node_name        = "test"
+        config_datastore = "local-zfs"
+        cores            = 2
+        memory           = 1024
+        qemu_guest_agent = false
+        on_boot          = false
+        username         = "test"
+        ipv4             = "192.0.2.2/24"
+        ipv4gw           = "192.0.2.1"
+        bridge           = "vmbr0"
+        os_type          = "other"
+        disks            = {}
+      }
+    }
   }
   assert {
     condition     = output.guest_os_recipes.test.image == null
@@ -38,7 +54,20 @@ run "creation_recipe_metadata" {
   command = plan
   variables {
     vms = {
-      excluded = var.vms.test
+      excluded = {
+        node_name        = "test"
+        config_datastore = "local-zfs"
+        cores            = 2
+        memory           = 1024
+        qemu_guest_agent = false
+        on_boot          = false
+        username         = "test"
+        ipv4             = "192.0.2.2/24"
+        ipv4gw           = "192.0.2.1"
+        bridge           = "vmbr0"
+        os_type          = "other"
+        disks            = {}
+      }
       recipe = {
         os_recipe_audit  = true
         node_name        = "test"
