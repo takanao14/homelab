@@ -1,4 +1,4 @@
-hostname: lemonade.prd.butaco.net
+hostname: ""
 gateway:
   # Override Envoy's 15s default for long streaming responses.
   timeouts:

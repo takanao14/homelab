@@ -7,6 +7,7 @@ metadata:
     homelab/gpu-switchable: "true"
 spec:
   replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 1
   strategy:
     type: Recreate
   selector:
@@ -18,6 +19,7 @@ spec:
         app: comfyui
         homelab/gpu-switchable: "true"
     spec:
+      automountServiceAccountToken: false
       nodeSelector: {{ toYaml .Values.nodeSelector | nindent 8 }}
       tolerations: {{ toYaml .Values.tolerations | nindent 8 }}
       containers:
@@ -26,6 +28,23 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: 8188
+          startupProbe:
+            httpGet:
+              path: /
+              port: 8188
+            periodSeconds: 10
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8188
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8188
+            periodSeconds: 30
+            failureThreshold: 5
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: data
@@ -37,6 +56,9 @@ spec:
             {{- end }}
           # The device plugin injects permitted nodes; do not shadow them with hostPath.
           securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
             seccompProfile:
               type: Unconfined
       volumes:

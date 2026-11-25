@@ -28,6 +28,8 @@ resources:
   limits:
     amd.com/gpu: "1"
   requests:
+    cpu: 500m
+    memory: 8Gi
     amd.com/gpu: "1"
 
 storage:
