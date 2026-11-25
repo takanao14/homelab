@@ -24,7 +24,7 @@ mkdir -p "$KUBE_DIR"
 
 ENVS=(prd sandbox)
 
-declare -A tmp_files
+tmp_files=()
 cleanup() {
   rm -f "${tmp_files[@]}"
 }
@@ -32,7 +32,7 @@ trap cleanup EXIT
 
 for env in "${ENVS[@]}"; do
   tmp="$(mktemp "${KUBE_DIR}/${env}.yaml.tmp.XXXXXX")"
-  tmp_files["$env"]="$tmp"
+  tmp_files+=("$tmp")
   bao kv get -field=kubeconfig "secret/kubeconfig/${env}" > "$tmp"
   if [[ ! -s "$tmp" ]]; then
     echo "Error: OpenBao returned an empty kubeconfig for ${env}." >&2
@@ -40,8 +40,9 @@ for env in "${ENVS[@]}"; do
   fi
 done
 
-for env in "${ENVS[@]}"; do
-  tmp="${tmp_files[$env]}"
+for i in "${!ENVS[@]}"; do
+  env="${ENVS[$i]}"
+  tmp="${tmp_files[$i]}"
   chmod 600 "$tmp"
   mv "$tmp" "${KUBE_DIR}/${env}.yaml"
 done
