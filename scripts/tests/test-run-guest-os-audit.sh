@@ -41,6 +41,13 @@ STUB
 cat > "$workdir/bin/curl" <<'STUB'
 #!/usr/bin/env bash
 touch "$STUB_ROOT/queried"
+if [ "${STUB_MODE:-}" = forward-connection-log ]; then
+    for ((attempt=0; attempt<50; attempt++)); do
+        [ ! -f "$STUB_ROOT/connected" ] || break
+        sleep 0.02
+    done
+    [ -f "$STUB_ROOT/connected" ] || exit 1
+fi
 if [ "${STUB_MODE:-}" = query-failure ]; then echo redaction-test-sentinel >&2; exit 1; fi
 if [ "${STUB_MODE:-}" = invalid-observation ]; then echo redaction-test-sentinel; exit 0; fi
 version=13
@@ -52,6 +59,16 @@ cat > "$workdir/bin/kubectl" <<'STUB'
 if [ "${STUB_MODE:-}" = forward-failure ]; then echo redaction-test-sentinel >&2; exit 1; fi
 echo "$$" > "$STUB_ROOT/forward-pid"
 echo 'Forwarding from 127.0.0.1:48765 -> 9090'
+if [ "${STUB_MODE:-}" = forward-connection-log ]; then
+    set -e
+    for ((attempt=0; attempt<100; attempt++)); do
+        [ ! -f "$STUB_ROOT/queried" ] || break
+        sleep 0.02
+    done
+    [ -f "$STUB_ROOT/queried" ]
+    echo 'Handling connection for 48765'
+    touch "$STUB_ROOT/connected"
+fi
 exec sleep 60
 STUB
 chmod +x "$workdir/bin/"*
@@ -103,6 +120,7 @@ check query-failure 2
 check invalid-observation 2
 check match 2 ../outside
 TEST_PROMETHEUS_URL=
+check forward-connection-log 0
 check match 0
 check mismatch 1
 check query-failure 2
