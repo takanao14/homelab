@@ -59,6 +59,9 @@ terragrunt plan
 terragrunt apply
 ```
 
+Run `./scripts/test-proxmox-modules.sh` from the repository root to test the
+VM and LXC modules with mock providers in temporary directories.
+
 VMs ignore `disk.file_id` after creation because Proxmox clears it. To rebuild
 a VM from a new image, import the image on its node, then use `-replace` for
 that VM in both the plan and apply commands.
