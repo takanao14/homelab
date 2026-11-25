@@ -26,6 +26,17 @@ spec:
           ports:
             - containerPort: 11434
           resources: {{ toYaml .Values.resources | nindent 12 }}
+          startupProbe:
+            httpGet:
+              path: /
+              port: 11434
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 11434
+            periodSeconds: 10
           env:
             # OLLAMA_NUM_CTX is ignored; use OLLAMA_CONTEXT_LENGTH.
             - name: OLLAMA_CONTEXT_LENGTH

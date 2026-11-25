@@ -27,6 +27,17 @@ spec:
           ports:
             - containerPort: 8188
           resources: {{ toYaml .Values.resources | nindent 12 }}
+          startupProbe:
+            httpGet:
+              path: /
+              port: 8188
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8188
+            periodSeconds: 10
           volumeMounts:
             - name: data
               mountPath: /app/ComfyUI/models
