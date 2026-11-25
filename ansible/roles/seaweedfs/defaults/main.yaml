@@ -1,6 +1,6 @@
 ---
-seaweedfs_version: "4.54"
-seaweedfs_sha256: "e7424a82eee327809bfa449fda4924c9a0f42f6669a01288eebb1b79674c8196"
+seaweedfs_version: "4.55"
+seaweedfs_sha256: "f156c609eeaf9e5fcfeea33fd70411222005f83760aa95893c9d58eff006b45c"
 
 seaweedfs_user: seaweedfs
 seaweedfs_group: seaweedfs
