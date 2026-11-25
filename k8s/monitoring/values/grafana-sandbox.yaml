@@ -25,6 +25,10 @@ grafana:
   service:
     type: ClusterIP
   defaultDashboardsEnabled: false
+  resources:
+    requests:
+      cpu: 25m
+      memory: 128Mi
 
 hostname: grafana.sandbox.butaco.net
 adminSecretKey: k8s-sandbox/grafana
