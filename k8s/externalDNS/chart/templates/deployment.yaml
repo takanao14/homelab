@@ -20,6 +20,7 @@ spec:
       serviceAccountName: external-dns
       securityContext:
         runAsNonRoot: true
+        runAsUser: 65532
         seccompProfile:
           type: RuntimeDefault
       containers:
