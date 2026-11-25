@@ -60,6 +60,8 @@ spec:
         env:
         - name: HOMEPAGE_ALLOWED_HOSTS
           value: {{ $hostname | quote }}
+        - name: LOG_TARGETS
+          value: stdout
         envFrom:
         - secretRef:
             name: homepage-secrets
