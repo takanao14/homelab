@@ -15,6 +15,7 @@ spec:
       annotations:
         checksum/character: {{ toJson .Values.character | sha256sum }}
     spec:
+      automountServiceAccountToken: false
       volumes:
         - name: character
           configMap:
@@ -51,6 +52,8 @@ spec:
             readOnlyRootFilesystem: true
             capabilities:
               drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -59,6 +62,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
+  revisionHistoryLimit: 1
   strategy:
     type: Recreate
   selector:
@@ -69,6 +73,7 @@ spec:
       labels:
         app: voicevox
     spec:
+      automountServiceAccountToken: false
       nodeSelector:
         kubernetes.io/arch: amd64
       containers:
@@ -76,7 +81,7 @@ spec:
           image: {{ .Values.voicevox.image | quote }}
           command: [/bin/bash, -c]
           args:
-            - exec /entrypoint.sh /opt/voicevox_engine/run --host 0.0.0.0 >/dev/null 2>&1
+            - exec /entrypoint.sh /opt/voicevox_engine/run --host 0.0.0.0
           env:
             - name: VV_CPU_NUM_THREADS
               value: {{ .Values.voicevox.threads | quote }}
@@ -92,6 +97,12 @@ spec:
             httpGet:
               path: /version
               port: 50021
+          livenessProbe:
+            httpGet:
+              path: /version
+              port: 50021
+            periodSeconds: 30
+            failureThreshold: 3
           securityContext:
             runAsUser: 1000
             runAsGroup: 1000

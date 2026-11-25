@@ -22,6 +22,17 @@ readOnly:
 
 headlamp:
   namespaceOverride: headlamp
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 100
+    runAsGroup: 101
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
   # Requests only (README): 7-day mean/peak 57/111 Mi, p95 CPU 0.3m.
   resources:
     requests:

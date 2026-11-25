@@ -19,12 +19,15 @@ spec:
         checksum/web: {{ include (print $.Template.BasePath "/configmap-web.yaml") . | sha256sum }}
         checksum/nginx: {{ include (print $.Template.BasePath "/configmap-nginx.yaml") . | sha256sum }}
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         # fsGroup lets the entrypoint render the guarded config into emptyDir.
         runAsUser: 101
         runAsGroup: 101
         fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: nginx
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}

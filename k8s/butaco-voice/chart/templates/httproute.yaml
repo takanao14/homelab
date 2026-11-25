@@ -10,7 +10,7 @@ spec:
       name: {{ .Values.gateway.name }}
       namespace: {{ .Values.gateway.namespace }}
   hostnames:
-    - {{ .Values.hostname }}
+    - {{ required "hostname is required" .Values.hostname | quote }}
   rules:
     - matches:
         - path:
