@@ -60,14 +60,14 @@ if [[ -n "${K0S_GPU_WORKER_ADDRESSES:-}" ]]; then
     addresses+=",${K0S_GPU_WORKER_ADDRESSES}"
 fi
 
-declare -A seen=()
+seen=","
 IFS=',' read -ra address_list <<< "$addresses"
 
 for address in "${address_list[@]}"; do
     address="${address//[[:space:]]/}"
     [[ -n "$address" ]] || continue
-    [[ -z "${seen[$address]:-}" ]] || continue
-    seen["$address"]=1
+    [[ "$seen" != *",${address},"* ]] || continue
+    seen+="${address},"
 
     echo "Removing $address from known_hosts..."
     ssh-keygen -f "$KNOWN_HOSTS_FILE" -R "$address"

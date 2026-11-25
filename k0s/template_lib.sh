@@ -6,6 +6,8 @@ if [[ "${TEMPLATE_LIB_LOADED:-0}" -eq 1 ]]; then
 fi
 TEMPLATE_LIB_LOADED=1
 
+K0S_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 export RED='\033[0;31m'
 export GREEN='\033[0;32m'
 export YELLOW='\033[1;33m'
@@ -203,11 +205,11 @@ EOF
     cat <<EOF
     files:
       - name: setup-ssd
-        src: ./hook/ssdsetup.sh
+        src: ${K0S_DIR}/hook/ssdsetup.sh
         dstDir: /home/${K0S_SSH_USER}/k0sctl-hooks/
         perm: 0755
       - name: mirror-config
-        src: ./hook/mirror.sh
+        src: ${K0S_DIR}/hook/mirror.sh
         dstDir: /home/${K0S_SSH_USER}/k0sctl-hooks/
         perm: 0755
     hooks:
@@ -423,6 +425,7 @@ wait_for_cluster() {
     done
     log_success "API server is reachable"
 
+    elapsed=0
     log_info "Waiting for at least one worker node to register..."
     until kubectl get nodes --no-headers 2>/dev/null | grep -qv "^$"; do
         if [[ "$elapsed" -ge "$timeout" ]]; then
@@ -696,10 +699,12 @@ run_main() {
             generate_kubeconfig "$k0sctl_file" "$kubeconfig_out"
             ;;
         helmfile)
+            validate_file_exists "$kubeconfig_out" "Kubeconfig"
             export KUBECONFIG="$kubeconfig_out"
             helmfile_apply "$helmfile_file"
             ;;
         smoke-test)
+            validate_file_exists "$kubeconfig_out" "Kubeconfig"
             export KUBECONFIG="$kubeconfig_out"
             "$base_dir/tests/smoke-test.sh"
             ;;

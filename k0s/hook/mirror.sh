@@ -60,18 +60,14 @@ configure_hosts() {
     local hosts_file="$1"
     local mirror_endpoint="$2"
 
-    if [ -f "$hosts_file" ]; then
-        echo -e "${GREEN}✓${NC} docker.io hosts configuration already exists"
-    else
-        echo -e "${YELLOW}→${NC} Creating docker.io hosts configuration..."
-        sudo tee "$hosts_file" > /dev/null <<EOF
+    echo -e "${YELLOW}→${NC} Writing docker.io hosts configuration..."
+    sudo tee "$hosts_file" > /dev/null <<EOF
 server = "https://registry-1.docker.io"
 
 [host."${mirror_endpoint}"]
   capabilities = ["pull", "resolve"]
 EOF
-        echo -e "${GREEN}✓${NC} docker.io hosts configuration added"
-    fi
+    echo -e "${GREEN}✓${NC} docker.io hosts configuration written to $hosts_file"
 }
 
 echo -e "${GREEN}=== Mirror Setup Script ===${NC}"

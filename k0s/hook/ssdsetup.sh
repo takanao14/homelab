@@ -10,8 +10,8 @@ preflight_checks() {
     echo -e "${YELLOW}→${NC} Checking prerequisites..."
 
     if ! sudo -n true 2>/dev/null; then
-        echo -e "${YELLOW}→${NC} Script requires sudo access. Authenticating..."
-        sudo true
+        echo -e "${RED}✗${NC} Error: Passwordless sudo is required for non-interactive hook execution"
+        exit 1
     fi
 
     for cmd in blkid mkfs.ext4 mountpoint; do
@@ -73,7 +73,7 @@ setup_mount() {
 
     echo -e "${GREEN}✓${NC} Found UUID for $device: $uuid"
 
-    if ! grep -q "$mountpoint" /etc/fstab; then
+    if ! awk -v mp="$mountpoint" '$1 !~ /^#/ && $2 == mp { found=1 } END { exit !found }' /etc/fstab; then
         echo -e "${YELLOW}→${NC} Adding $mountpoint to /etc/fstab"
         echo "UUID=$uuid $mountpoint ext4 defaults 0 2" | sudo tee -a /etc/fstab > /dev/null
     else
