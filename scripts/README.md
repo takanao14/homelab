@@ -336,8 +336,11 @@ Switches which single GPU workload runs on the `prd-homelab` cluster by scaling
 deployments. Only runs against the `prd-homelab` kube context.
 
 ```bash
-./gpu-switch.sh <workload|off|status>   # e.g. ./gpu-switch.sh ollama
+./gpu-switch.sh [--wait] <workload|off|status>   # e.g. ./gpu-switch.sh ollama
 ```
+
+Pass `--wait` to wait for stopped pods to release the GPU before scaling up the
+target deployment and confirming it becomes ready.
 
 `status` answers "which workload currently holds the GPU":
 
