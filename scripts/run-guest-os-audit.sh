@@ -93,26 +93,23 @@ fi
 prometheus_url=${PROMETHEUS_URL:-}
 if [ -z "$prometheus_url" ]; then
     command -v kubectl >/dev/null || fail 'kubectl is required without PROMETHEUS_URL.'
-    # The OS chooses a free port; read readiness through an in-memory pipe.
-    mkfifo "$workdir/forward"
+    # kubectl continues writing connection logs to stdout after reporting readiness.
     kubectl --context "${AUDIT_KUBE_CONTEXT:-prd-homelab}" \
         --kubeconfig "${AUDIT_KUBECONFIG:-$HOME/.kube/prd.yaml}" \
         -n monitoring port-forward --address 127.0.0.1 \
         svc/prometheus-kube-prometheus-prometheus :9090 \
         > "$workdir/forward" 2>/dev/null &
     forward_pid=$!
-    exec 3< "$workdir/forward"
     port=
-    for ((attempt=0; attempt<10; attempt++)); do
+    for ((attempt=0; attempt<50; attempt++)); do
         kill -0 "$forward_pid" 2>/dev/null || fail 'Prometheus port-forward failed.'
-        if IFS= read -r -t 1 line <&3; then
-            if [[ "$line" =~ ^Forwarding\ from\ 127\.0\.0\.1:([0-9]+)\ -\>\ 9090$ ]]; then
-                port=${BASH_REMATCH[1]}
-                break
-            fi
+        if [[ -s "$workdir/forward" ]] && IFS= read -r line < "$workdir/forward" &&
+            [[ "$line" =~ ^Forwarding\ from\ 127\.0\.0\.1:([0-9]+)\ -\>\ 9090$ ]]; then
+            port=${BASH_REMATCH[1]}
+            break
         fi
+        sleep 0.2
     done
-    exec 3<&-
     [ -n "$port" ] || fail 'Prometheus port-forward timed out.'
     prometheus_url="http://127.0.0.1:$port"
 fi
