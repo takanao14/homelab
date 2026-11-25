@@ -226,6 +226,7 @@ dependency order:
 | -1 | envoy-gateway | Controller after its CRDs |
 | 0 | cert-manager, eso, gateway | Foundation: CRDs, ClusterSecretStore, shared Gateway |
 | 1 | everything else | Consumers of wave 0 (ExternalSecrets, HTTPRoutes, issuers) |
+| 2 | reloader | Watches ConfigMaps and Secrets created in wave 1 |
 
 The custom Application health check gates waves. Explicit retries handle failed
 sync operations; an operation waiting for resource health may still require

@@ -95,7 +95,8 @@ cat "${OUT_DIR}/terragrunt.hcl"
 echo "---"
 echo ""
 
-direnv exec "$OUT_DIR" bash -c "cd '$OUT_DIR' && terragrunt init -upgrade && terragrunt destroy"
+# shellcheck disable=SC2016
+direnv exec "$OUT_DIR" bash -c 'cd "$1" && terragrunt init -upgrade && terragrunt destroy' _ "$OUT_DIR"
 
 if [[ "$KEEP" == false ]]; then
   rm -rf "$OUT_DIR"

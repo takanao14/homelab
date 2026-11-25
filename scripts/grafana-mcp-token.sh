@@ -41,19 +41,24 @@ fi
 
 api() {
   local user_config
+  local curl_args=(-fsS --config - -H 'Content-Type: application/json')
+  if [ -n "${GRAFANA_CACERT:-}" ]; then
+    curl_args+=(--cacert "${GRAFANA_CACERT}")
+  fi
   user_config="$(jq -nc --arg user "${admin_user}" --arg pass "${admin_pass}" '$user + ":" + $pass')"
   printf 'user = %s\n' "${user_config}" |
-    curl -fsSk --config - -H 'Content-Type: application/json' "$@"
+    curl "${curl_args[@]}" "$@"
 }
 
 sa_id="$(api "${GRAFANA_URL}/api/serviceaccounts/search?query=${SA_NAME}" \
   | jq -r --arg n "${SA_NAME}" '.serviceAccounts[]? | select(.name==$n) | .id' | head -n1)"
 
-if [ -z "${sa_id}" ]; then
+if [ -z "${sa_id}" ] || [ "${sa_id}" = "null" ]; then
   echo "Creating service account '${SA_NAME}' (role=${SA_ROLE})..." >&2
   sa_id="$(api -X POST "${GRAFANA_URL}/api/serviceaccounts" \
     -d "$(jq -nc --arg n "${SA_NAME}" --arg r "${SA_ROLE}" '{name:$n, role:$r, isDisabled:false}')" \
     | jq -r '.id')"
+  [ -n "${sa_id}" ] && [ "${sa_id}" != "null" ] || { echo "failed to create service account" >&2; exit 1; }
 else
   echo "Reusing existing service account '${SA_NAME}' (id=${sa_id})." >&2
 fi

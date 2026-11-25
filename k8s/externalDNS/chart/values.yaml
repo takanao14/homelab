@@ -9,10 +9,12 @@ pdns:
 ownerId: ""
 domainFilter: ""
 policy: ""
+logLevel: info
+
+logLevel: info
 
 sources:
   - service
-  - ingress
   - gateway-httproute
 
 serviceTypeFilter:
