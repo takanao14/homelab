@@ -33,6 +33,7 @@ variable "vms" {
       snippet_datastore = optional(string, "local")
       user_data         = optional(string)
       network_data      = optional(string)
+      netplan_virtio    = optional(bool, false)
     }), {})
     pci_devices = optional(map(object({
       id      = optional(string)
@@ -61,6 +62,20 @@ variable "vms" {
       vm.cloud_init.type == null ? true : contains(["nocloud", "configdrive2", "opennebula"], vm.cloud_init.type)
     ])
     error_message = "cloud_init.type must be nocloud, configdrive2, or opennebula."
+  }
+
+  validation {
+    condition = alltrue([for vm in values(var.vms) :
+      !(vm.cloud_init.netplan_virtio && vm.cloud_init.network_data != null)
+    ])
+    error_message = "cloud_init.netplan_virtio cannot be combined with cloud_init.network_data."
+  }
+
+  validation {
+    condition = alltrue([for vm in values(var.vms) :
+      vm.cloud_init.netplan_virtio ? vm.ipv4 != "dhcp" : true
+    ])
+    error_message = "cloud_init.netplan_virtio requires a static CIDR ipv4 address."
   }
 }
 

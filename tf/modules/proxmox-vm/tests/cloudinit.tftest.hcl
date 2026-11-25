@@ -282,3 +282,59 @@ run "invalid_type" {
   }
   expect_failures = [var.vms]
 }
+
+run "netplan_virtio" {
+  command = plan
+  variables {
+    vms = {
+      test = {
+        node_name        = "test"
+        config_datastore = "local-zfs"
+        cores            = 2
+        memory           = 1024
+        qemu_guest_agent = false
+        on_boot          = false
+        username         = "test"
+        ipv4             = "192.0.2.2/24"
+        ipv4gw           = "192.0.2.1"
+        bridge           = "vmbr0"
+        dns_domain       = "example.internal"
+        dns_servers      = ["192.0.2.53"]
+        os_type          = "other"
+        disks            = {}
+        cloud_init       = { netplan_virtio = true }
+      }
+    }
+  }
+  assert {
+    condition     = toset(keys(module.cloudinit_snippets["test"].file_ids)) == toset(["network"]) && length(proxmox_virtual_environment_vm.vm["test"].initialization[0].user_account) == 1 && length(proxmox_virtual_environment_vm.vm["test"].initialization[0].ip_config) == 0 && length(proxmox_virtual_environment_vm.vm["test"].initialization[0].dns) == 0 && length(regexall("driver.*virtio_net", local.network_data["test"])) == 1
+    error_message = "netplan_virtio must generate a network snippet and suppress native ip_config and dns."
+  }
+}
+
+run "netplan_virtio_conflict" {
+  command = plan
+  variables {
+    vms = {
+      test = {
+        node_name        = "test"
+        config_datastore = "local-zfs"
+        cores            = 2
+        memory           = 1024
+        qemu_guest_agent = false
+        on_boot          = false
+        username         = "test"
+        ipv4             = "192.0.2.2/24"
+        ipv4gw           = "192.0.2.1"
+        bridge           = "vmbr0"
+        os_type          = "other"
+        disks            = {}
+        cloud_init = {
+          netplan_virtio = true
+          network_data   = "version: 2\nethernets: {}\n"
+        }
+      }
+    }
+  }
+  expect_failures = [var.vms]
+}

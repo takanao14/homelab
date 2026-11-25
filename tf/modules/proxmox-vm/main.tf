@@ -84,7 +84,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
     network_data_file_id = try(module.cloudinit_snippets[each.key].file_ids["network"], null)
 
     dynamic "ip_config" {
-      for_each = each.value.cloud_init.network_data == null ? [each.value] : []
+      for_each = local.network_data[each.key] == null ? [each.value] : []
       content {
         ipv4 {
           address = ip_config.value.ipv4
@@ -94,7 +94,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
     }
 
     dynamic "dns" {
-      for_each = each.value.cloud_init.network_data == null ? [each.value] : []
+      for_each = local.network_data[each.key] == null ? [each.value] : []
       content {
         domain  = dns.value.dns_domain
         servers = dns.value.dns_servers
