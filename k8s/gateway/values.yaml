@@ -12,6 +12,12 @@ envoyProxy:
     provider:
       type: Kubernetes
       kubernetes:
+        envoyDeployment:
+          container:
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
         envoyService:
           # Cluster policy avoids blackholes when Cilium advertises from another node.
           externalTrafficPolicy: Cluster

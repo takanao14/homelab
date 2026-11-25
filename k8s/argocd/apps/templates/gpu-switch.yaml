@@ -15,6 +15,7 @@ spec:
       path: k8s/gpu-switch/chart
       helm:
         releaseName: gpu-switch
+        ignoreMissingValueFiles: true
         valueFiles:
           - $values/k8s/gpu-switch/values.yaml
           - $values/k8s/gpu-switch/{{ include "argocd-apps.env" . }}/values.yaml

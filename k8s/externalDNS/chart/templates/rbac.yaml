@@ -14,9 +14,6 @@ rules:
   - apiGroups: ["discovery.k8s.io"]
     resources: ["endpointslices"]
     verbs: ["get","watch","list"]
-  - apiGroups: ["extensions","networking.k8s.io"]
-    resources: ["ingresses"]
-    verbs: ["get","watch","list"]
   - apiGroups: [""]
     resources: ["nodes"]
     verbs: ["get","watch","list"]
@@ -38,4 +35,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: external-dns
-    namespace: {{ .Values.namespace | default .Release.Namespace }}
+    namespace: {{ .Release.Namespace }}

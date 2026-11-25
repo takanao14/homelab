@@ -16,6 +16,7 @@ spec:
       labels:
         app: external-dns
     spec:
+      automountServiceAccountToken: true
       serviceAccountName: external-dns
       securityContext:
         runAsNonRoot: true
@@ -35,7 +36,7 @@ spec:
             - --pdns-api-key=$(PDNS_HTTP_API_KEY)
             - --txt-owner-id=$(OWNER_ID_FOR_THIS_EXTERNAL_DNS)
             - --domain-filter=$(DOMAIN_FILTER)
-            - --log-level={{ .Values.logLevel }}
+            - --log-level={{ .Values.logLevel | default "info" }}
             - --interval=30s
             {{- range .Values.serviceTypeFilter }}
             - --service-type-filter={{ . }}
