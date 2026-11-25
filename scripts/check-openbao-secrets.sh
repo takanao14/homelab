@@ -56,14 +56,18 @@ collect_declared() {
 
 # KV v2 lists metadata, so a soft-deleted secret still counts as stored.
 walk() {
-    local prefix="$1" key
+    local prefix="$1" list_json key
+    if ! list_json="$(bao kv list -format=json "secret/${prefix}")"; then
+        echo "Error: failed to list OpenBao path secret/${prefix}" >&2
+        return 1
+    fi
     while IFS= read -r key; do
         [[ -n "$key" ]] || continue
         case "$key" in
         */) walk "${prefix}${key}" ;;
         *) echo "secret/${prefix}${key}" ;;
         esac
-    done < <(bao kv list -format=json "secret/${prefix}" 2>/dev/null | jq -r '.[]?')
+    done < <(jq -r '.[]?' <<<"$list_json")
 }
 
 BAO_USERNAME="${BAO_USERNAME:-homelab}"
@@ -106,6 +110,6 @@ if [[ -n "$orphans" ]]; then
     status=1
 fi
 
-echo "$(comm -12 "$declared" "$stored" | grep -c '' | tr -d ' ') paths matched."
+echo "$(comm -12 "$declared" "$stored" | wc -l | tr -d ' ') paths matched."
 
 exit "$status"
