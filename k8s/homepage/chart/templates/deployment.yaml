@@ -29,14 +29,20 @@ spec:
         - containerPort: 3000
         livenessProbe:
           httpGet:
-            path: /
+            path: /api/healthcheck
             port: 3000
+            httpHeaders:
+            - name: Host
+              value: {{ .Values.hostname | default "localhost:3000" | quote }}
           initialDelaySeconds: 10
           periodSeconds: 20
         readinessProbe:
           httpGet:
-            path: /
+            path: /api/healthcheck
             port: 3000
+            httpHeaders:
+            - name: Host
+              value: {{ .Values.hostname | default "localhost:3000" | quote }}
           initialDelaySeconds: 5
           periodSeconds: 10
         resources:
