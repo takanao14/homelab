@@ -54,8 +54,9 @@ parse_env_value() {
   fi
 }
 
-# Build key=value arguments, skipping comments and blank lines.
-kv_args=()
+# Build key/value arrays, skipping comments and blank lines.
+kv_keys=()
+kv_vals=()
 while IFS= read -r line || [[ -n "$line" ]]; do
   [[ "$line" =~ ^[[:space:]]*# ]] && continue
   [[ "$line" =~ ^[[:space:]]*$ ]] && continue
@@ -69,14 +70,24 @@ while IFS= read -r line || [[ -n "$line" ]]; do
       echo "Error: unsupported .env value for ${key}" >&2
       exit 1
     fi
-    kv_args+=("${key}=${REPLY}")
+    kv_keys+=("$key")
+    kv_vals+=("$REPLY")
   else
     echo "Error: unsupported .env line: ${line}" >&2
     exit 1
   fi
 done < "$ENV_FILE"
 
-bao kv put secret/provision/env "${kv_args[@]}"
-echo "  secret/provision/env (${#kv_args[@]} keys)"
+if (( ${#kv_keys[@]} == 0 )); then
+  echo "Error: ${ENV_FILE} contains no variables to store." >&2
+  exit 1
+fi
+
+for i in "${!kv_keys[@]}"; do
+  printf '%s\0%s\0' "${kv_keys[$i]}" "${kv_vals[$i]}"
+done |
+  jq -Rsc 'split("\u0000")[:-1] | [range(0; length; 2) as $i | {(.[$i]): .[$i+1]}] | add' |
+  bao kv put secret/provision/env -
+echo "  secret/provision/env (${#kv_keys[@]} keys)"
 
 echo "Done."
