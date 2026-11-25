@@ -11,4 +11,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: external-secrets
-    namespace: external-secrets
+    namespace: {{ .Release.Namespace }}

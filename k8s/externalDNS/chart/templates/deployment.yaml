@@ -16,7 +16,12 @@ spec:
       labels:
         app: external-dns
     spec:
+      automountServiceAccountToken: true
       serviceAccountName: external-dns
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: external-dns
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -31,7 +36,7 @@ spec:
             - --pdns-api-key=$(PDNS_HTTP_API_KEY)
             - --txt-owner-id=$(OWNER_ID_FOR_THIS_EXTERNAL_DNS)
             - --domain-filter=$(DOMAIN_FILTER)
-            - --log-level=debug
+            - --log-level={{ .Values.logLevel | default "info" }}
             - --interval=30s
             {{- range .Values.serviceTypeFilter }}
             - --service-type-filter={{ . }}
@@ -52,6 +57,12 @@ spec:
             initialDelaySeconds: 10
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           envFrom:
             - secretRef:
                 name: external-dns-env
