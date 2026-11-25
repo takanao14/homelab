@@ -57,6 +57,15 @@ spec:
           ports:
             - containerPort: 13305
           resources: {{ toYaml .Values.resources | nindent 12 }}
+          startupProbe:
+            tcpSocket:
+              port: 13305
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 13305
+            periodSeconds: 10
           volumeMounts:
             - name: huggingface
               mountPath: /opt/lemonade/.cache/huggingface
