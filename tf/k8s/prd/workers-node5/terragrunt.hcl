@@ -22,11 +22,12 @@ inputs = {
     "k0s-worker2" = merge(local.base_vars, {
       os_recipe_audit = true
       # Leave the node5 host with ~2 threads and ~3 GiB of memory.
-      cores  = 10
-      memory = 28672
-      bridge = local.common.locals.node5.net70.bridge
-      ipv4gw = local.common.locals.node5.net70.ipv4gw
-      ipv4   = "192.168.70.13/24"
+      cores      = 10
+      memory     = 28672
+      bridge     = local.common.locals.node5.net70.bridge
+      ipv4gw     = local.common.locals.node5.net70.ipv4gw
+      ipv4       = "192.168.70.13/24"
+      cloud_init = { netplan_virtio_static = true }
       disks = {
         scsi0 = merge(local.env.locals.disk_defaults, {
           size    = 64
