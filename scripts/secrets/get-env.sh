@@ -12,10 +12,12 @@ ENV_FILE="${HOME}/.env"
 BAO_ADDR="${OPENBAO_ADDR:-https://openbao.home.butaco.net}"
 export BAO_ADDR
 
-if ! command -v bao &>/dev/null; then
-  echo "Error: bao CLI not found" >&2
-  exit 1
-fi
+for command in bao jq; do
+  if ! command -v "$command" &>/dev/null; then
+    echo "Error: ${command} CLI not found" >&2
+    exit 1
+  fi
+done
 
 BAO_USERNAME="${BAO_USERNAME:-homelab}"
 openbao_authenticate

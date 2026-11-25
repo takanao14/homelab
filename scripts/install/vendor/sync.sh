@@ -15,11 +15,11 @@ REPO="${REPO:-takanao14/dotfiles}"
 REF_PROVIDED="${REF+x}"
 REF="${REF:-main}"
 
-# Map: <vendored filename, the chezmoi target name> -> <path within the dotfiles repo>
-declare -A FILES=(
-  ["10_linux_package.sh"]=".chezmoiscripts/run_onchange_10_linux_package.sh"
-  ["20_linux_terminal.sh"]=".chezmoiscripts/run_onchange_20_linux_terminal.sh"
-  ["30_linux_fonts.sh"]=".chezmoiscripts/run_onchange_30_linux_fonts.sh"
+# Map: <vendored filename, the chezmoi target name>:<path within the dotfiles repo>
+FILE_SOURCES=(
+  "10_linux_package.sh:.chezmoiscripts/run_onchange_10_linux_package.sh"
+  "20_linux_terminal.sh:.chezmoiscripts/run_onchange_20_linux_terminal.sh"
+  "30_linux_fonts.sh:.chezmoiscripts/run_onchange_30_linux_fonts.sh"
 )
 MISE_INSTALLER_SOURCE=".chezmoiscripts/run_onchange_after_40_linux_mise.sh.tmpl"
 MISE_INSTALLER_DEST="40_linux_mise.sh"
@@ -64,8 +64,10 @@ tmp_dir="$(mktemp -d)"
 cleanup() { rm -rf "$tmp_dir"; }
 trap cleanup EXIT
 
-for name in "${!FILES[@]}"; do
-  curl -fsSL "https://raw.githubusercontent.com/${REPO}/${SHA}/${FILES[$name]}" \
+for entry in "${FILE_SOURCES[@]}"; do
+  name="${entry%%:*}"
+  src="${entry#*:}"
+  curl -fsSL "https://raw.githubusercontent.com/${REPO}/${SHA}/${src}" \
     -o "${tmp_dir}/${name}"
 done
 curl -fsSL "https://raw.githubusercontent.com/${REPO}/${SHA}/${KITTY_CONFIG_SOURCE}" \
@@ -96,7 +98,8 @@ fi
 
 if [[ "$CHECK" -eq 1 ]]; then
   drift=0
-  for name in "${!FILES[@]}"; do
+  for entry in "${FILE_SOURCES[@]}"; do
+    name="${entry%%:*}"
     if ! diff -q "${VENDOR_DIR}/${name}" "${tmp_dir}/${name}" >/dev/null 2>&1; then
       echo "DRIFT: ${name} differs from ${REPO}@${SHA}" >&2
       drift=1
@@ -120,7 +123,8 @@ if [[ "$CHECK" -eq 1 ]]; then
   exit 0
 fi
 
-for name in "${!FILES[@]}"; do
+for entry in "${FILE_SOURCES[@]}"; do
+  name="${entry%%:*}"
   install -m 0755 "${tmp_dir}/${name}" "${VENDOR_DIR}/${name}"
 done
 install -m 0755 "${tmp_dir}/${MISE_INSTALLER_DEST}" "${VENDOR_DIR}/${MISE_INSTALLER_DEST}"

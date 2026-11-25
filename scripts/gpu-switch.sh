@@ -8,14 +8,30 @@ LABEL_SELECTOR="homelab/gpu-switchable=true"
 EXPECTED_CONTEXT="prd-homelab"
 
 usage() {
-  echo "Usage: $0 <workload|off|status>"
+  echo "Usage: $0 [--wait] <workload|off|status>"
   echo "  workload  a deployment labelled ${LABEL_SELECTOR}"
   echo "  off       stop every GPU workload"
   echo "  status    show which workload currently holds the GPU"
+  echo "  --wait    wait for stopped workloads to terminate and the target to become ready"
   exit 1
 }
 
-[[ $# -ne 1 ]] && usage
+WAIT=false
+target=""
+for arg in "$@"; do
+  case "$arg" in
+    --wait) WAIT=true ;;
+    -*) usage ;;
+    *)
+      if [[ -n "$target" ]]; then
+        usage
+      fi
+      target="$arg"
+      ;;
+  esac
+done
+
+[[ -z "$target" ]] && usage
 
 current_context=$(kubectl config current-context)
 if [[ "$current_context" != "$EXPECTED_CONTEXT" ]]; then
@@ -33,9 +49,24 @@ if [[ -z "$gpu_workloads" ]]; then
 fi
 
 scale_all_down() {
+  local workload pods deadline
   while IFS=$'\t' read -r workload _ _; do
     kubectl scale deployment "${workload##*/}" -n "${workload%%/*}" --replicas=0
   done <<<"$gpu_workloads"
+
+  if [[ "$WAIT" == true ]]; then
+    deadline=$((SECONDS + 120))
+    while true; do
+      # Terminating pods can still hold the GPU after Deployment replica counts drop.
+      pods=$(kubectl --request-timeout=5s get pods -A -l "$LABEL_SELECTOR" -o name)
+      [[ -z "$pods" ]] && break
+      if (( SECONDS >= deadline )); then
+        echo "Error: timed out waiting for GPU workload pods to terminate." >&2
+        return 1
+      fi
+      sleep 1
+    done
+  fi
 }
 
 list_targets() {
@@ -70,8 +101,6 @@ show_status() {
   return 0
 }
 
-target="$1"
-
 if [[ "$target" == "status" ]]; then
   show_status
   exit 0
@@ -104,4 +133,7 @@ fi
 # Release the GPU before scaling up the target.
 scale_all_down
 kubectl scale deployment "${match##*/}" -n "${match%%/*}" --replicas=1
+if [[ "$WAIT" == true ]]; then
+  kubectl rollout status deployment "${match##*/}" -n "${match%%/*}" --timeout=300s
+fi
 echo "$target started, others stopped."

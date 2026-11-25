@@ -19,20 +19,46 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/secret-config.yaml") . | sha256sum }}
     spec:
       serviceAccountName: homepage-sa
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: homepage
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
         ports:
         - containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /api/healthcheck
+            port: 3000
+            httpHeaders:
+            - name: Host
+              value: {{ .Values.hostname | default "localhost:3000" | quote }}
+          initialDelaySeconds: 10
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /api/healthcheck
+            port: 3000
+            httpHeaders:
+            - name: Host
+              value: {{ .Values.hostname | default "localhost:3000" | quote }}
+          initialDelaySeconds: 5
+          periodSeconds: 10
         resources:
           requests:
             cpu: 100m
             memory: 256Mi
           limits:
             memory: 384Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
         env:
         - name: HOMEPAGE_ALLOWED_HOSTS
-          value: "*"
+          value: {{ .Values.hostname | default "*" | quote }}
         envFrom:
         - secretRef:
             name: homepage-secrets

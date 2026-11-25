@@ -176,7 +176,11 @@ run_shell_stdin() {
 
 wait_cloud_init() {
   echo "Waiting for cloud-init to complete..."
-  run_shell_stdin "CLOUD_INIT_WAIT_TIMEOUT=$(shell_quote "$CLOUD_INIT_WAIT_TIMEOUT")" <<'REMOTE'
+  local timeout_arg="$CLOUD_INIT_WAIT_TIMEOUT"
+  if ! $LOCAL_MODE; then
+    timeout_arg="$(shell_quote "$CLOUD_INIT_WAIT_TIMEOUT")"
+  fi
+  run_shell_stdin "CLOUD_INIT_WAIT_TIMEOUT=${timeout_arg}" <<'REMOTE'
 set -euo pipefail
 
 timeout_seconds="${CLOUD_INIT_WAIT_TIMEOUT:-600}"

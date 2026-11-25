@@ -25,7 +25,9 @@ mcp_load_sops_env() {
   export SOPS_AGE_KEY_FILE
 
   if [ -f "${secret_file}" ] && command -v sops >/dev/null 2>&1; then
-    eval "$(sops --decrypt "${secret_file}")"
+    local decrypted
+    decrypted="$(sops --decrypt "${secret_file}")"
+    eval "${decrypted}"
   fi
 }
 
