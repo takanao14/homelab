@@ -49,13 +49,24 @@ if [[ -z "$gpu_workloads" ]]; then
 fi
 
 scale_all_down() {
-  while IFS=$'\t' read -r workload desired _; do
+  local workload pods deadline
+  while IFS=$'\t' read -r workload _ _; do
     kubectl scale deployment "${workload##*/}" -n "${workload%%/*}" --replicas=0
-    if [[ "$WAIT" == true && "${desired:-0}" -gt 0 ]]; then
-      kubectl wait --for=jsonpath='{.status.replicas}'=0 \
-        deployment "${workload##*/}" -n "${workload%%/*}" --timeout=120s
-    fi
   done <<<"$gpu_workloads"
+
+  if [[ "$WAIT" == true ]]; then
+    deadline=$((SECONDS + 120))
+    while true; do
+      # Terminating pods can still hold the GPU after Deployment replica counts drop.
+      pods=$(kubectl --request-timeout=5s get pods -A -l "$LABEL_SELECTOR" -o name)
+      [[ -z "$pods" ]] && break
+      if (( SECONDS >= deadline )); then
+        echo "Error: timed out waiting for GPU workload pods to terminate." >&2
+        return 1
+      fi
+      sleep 1
+    done
+  fi
 }
 
 list_targets() {
