@@ -570,21 +570,21 @@ url = "https://github.com/sxyazi/yazi/releases/download/v26.9.1/yazi-x86_64-unkn
 url_api = "https://api.github.com/repos/sxyazi/yazi/releases/assets/539261400"
 
 [[tools."aqua:zellij-org/zellij"]]
-version = "0.46.0"
+version = "0.46.1"
 backend = "aqua:zellij-org/zellij"
-specifiers = ["0.46.0"]
+specifiers = ["0.46.1"]
 
 [tools."aqua:zellij-org/zellij"."platforms.linux-arm64"]
-checksum = "sha256:7ce8501136dab30767fea809191f39ca41d66d100082a96534539f49c7a53f0d"
+checksum = "sha256:f2ff1bc9dddda79d7c019dfb17f95b3c8a180b1fb2011ee339c6882711ae9bbd"
 checksum_source = "mise-versions"
-url = "https://github.com/zellij-org/zellij/releases/download/v0.46.0/zellij-aarch64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/zellij-org/zellij/releases/assets/734910083"
+url = "https://github.com/zellij-org/zellij/releases/download/v0.46.1/zellij-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/zellij-org/zellij/releases/assets/786102743"
 
 [tools."aqua:zellij-org/zellij"."platforms.linux-x64"]
-checksum = "sha256:0940e467f99ca57aec5a63edcad633450d49cd6f22e8a7d9c686771a0d9f86ae"
+checksum = "sha256:5bbfb977f383b78e9c3cc9342511f9a84d05f2283fb53f158737dcea2d59e2a6"
 checksum_source = "mise-versions"
-url = "https://github.com/zellij-org/zellij/releases/download/v0.46.0/zellij-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/zellij-org/zellij/releases/assets/734911871"
+url = "https://github.com/zellij-org/zellij/releases/download/v0.46.1/zellij-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/zellij-org/zellij/releases/assets/786116478"
 
 [[tools."github:DNSControl/dnscontrol"]]
 version = "5.10.1"
