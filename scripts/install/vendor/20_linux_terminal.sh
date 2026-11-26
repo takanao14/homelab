@@ -4,7 +4,7 @@ set -euo pipefail
 [[ "$(uname -s)" == "Linux" ]] || exit 0
 
 # renovate: datasource=github-releases depName=kovidgoyal/kitty
-readonly KITTY_VERSION="${KITTY_VERSION:-0.51.0}"
+readonly KITTY_VERSION="${KITTY_VERSION:-0.51.1}"
 
 # Defaults to per-user paths; system-wide TOOL_* paths require root.
 # Use /usr/local/share/tool-versions so per-user installs see the baseline.
