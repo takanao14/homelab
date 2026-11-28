@@ -99,7 +99,7 @@ is replaced.
 |----------|---------|-------------|
 | `netbox_version` | [defaults/main.yaml](defaults/main.yaml) | NetBox release half of the image tag |
 | `netbox_docker_version` | [defaults/main.yaml](defaults/main.yaml) | netbox-docker release half of the image tag |
-| `netbox_pg_image` | `docker.io/postgres:18-alpine` | PostgreSQL image; track the upstream compose file |
+| `netbox_pg_image` | `docker.io/postgres:19-alpine` | PostgreSQL image; track the upstream compose file |
 | `netbox_redis_image` | [defaults/main.yaml](defaults/main.yaml) | Valkey image; track the upstream compose file |
 | `netbox_domain` | `netbox.home.butaco.net` | `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` entry |
 | `netbox_port` | `8080` | Published port Caddy proxies to |
