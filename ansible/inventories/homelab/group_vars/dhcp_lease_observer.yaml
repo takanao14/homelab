@@ -1,8 +1,6 @@
 ---
-# renovate: datasource=github-releases depName=takanao14/dhcp-lease-observer
 dhcp_lease_observer_version: "v0.1.2"
-dhcp_lease_observer_archive_checksum: >-
-  sha256:76a53ce8c55ead6546aea799736bc859606c0abebaa9e53e3208890d7f8569a5
+dhcp_lease_observer_archive_checksum: "sha256:b3b8e92c2a20d0b0546846cf92e9195acdb13c278cdee87d81794fb7267ed5e1"
 
 dhcp_lease_observer_source_instance: bgw1
 dhcp_lease_observer_scope: lan

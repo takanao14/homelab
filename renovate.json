@@ -69,7 +69,8 @@
         "seaweedfs/seaweedfs",
         "forgejo/forgejo",
         "forgejo/runner",
-        "coder/code-server"
+        "coder/code-server",
+        "takanao14/dhcp-lease-observer"
       ],
       "automerge": false,
       "labels": ["dependencies", "renovate", "manual-review"]
@@ -77,12 +78,6 @@
     {
       "description": "Terraform provider updates must refresh committed .terraform.lock.hcl files across all Terragrunt stacks.",
       "matchManagers": ["terraform"],
-      "automerge": false,
-      "labels": ["dependencies", "renovate", "manual-review"]
-    },
-    {
-      "description": "DHCP lease observer releases require a reviewed SHA-256 update in the deployment inventory.",
-      "matchPackageNames": ["takanao14/dhcp-lease-observer"],
       "automerge": false,
       "labels": ["dependencies", "renovate", "manual-review"]
     },
@@ -223,6 +218,17 @@
         "code_server_release_tag: \"(?<currentValue>[^\"]+)\"\\ncode_server_sha256: \"(?<currentDigest>[a-f0-9]{64})\""
       ],
       "depNameTemplate": "coder/code-server",
+      "datasourceTemplate": "github-release-attachments"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^ansible/inventories/homelab/group_vars/dhcp_lease_observer\\.yaml$/"
+      ],
+      "matchStrings": [
+        "dhcp_lease_observer_version: \"(?<currentValue>[^\"]+)\"\\ndhcp_lease_observer_archive_checksum: \"sha256:(?<currentDigest>[a-f0-9]{64})\""
+      ],
+      "depNameTemplate": "takanao14/dhcp-lease-observer",
       "datasourceTemplate": "github-release-attachments"
     },
     {
