@@ -7,6 +7,7 @@ Run from the repository root; CI runs a trusted copy outside the checkout.
 import argparse
 import hashlib
 import re
+import subprocess
 import sys
 import urllib.request
 from pathlib import Path
@@ -14,6 +15,13 @@ from pathlib import Path
 import yaml
 
 SHA_RE = r'[a-f0-9]{64}'
+CADDY_PINS_PATH = 'ansible/roles/caddy/defaults/main.yaml'
+CADDY_BUILD_PIN_KEYS = (
+    'caddy_version',
+    'caddy_cloudflare_version',
+    'caddy_xcaddy_version',
+    'caddy_go_version',
+)
 
 # checksum_url marks targets whose digest Renovate cannot update natively
 # (non-GitHub hosts); --update refreshes only those.
@@ -123,10 +131,47 @@ def update(target):
     print(f"{target['name']} release checksum updated")
 
 
+def read_caddy_pins(text):
+    pins = yaml.safe_load(text)
+    values = {key: str(pins[key]) for key in CADDY_BUILD_PIN_KEYS}
+    sha = str(pins['caddy_sha256'])
+    if any(not value for value in values.values()) or not re.fullmatch(SHA_RE, sha):
+        fail('Invalid caddy build pins')
+    return values, sha
+
+
+def check_caddy(base_ref=None):
+    current_pins, current_sha = read_caddy_pins(Path(CADDY_PINS_PATH).read_text())
+    if base_ref:
+        result = subprocess.run(
+            ['git', 'show', f'{base_ref}:{CADDY_PINS_PATH}'],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            fail(f'Could not read {CADDY_PINS_PATH} at {base_ref}')
+        base_pins, base_sha = read_caddy_pins(result.stdout)
+        changed = [key for key in CADDY_BUILD_PIN_KEYS if current_pins[key] != base_pins[key]]
+        if changed and current_sha == base_sha:
+            fail(
+                f'Caddy build pins changed ({", ".join(changed)}) without updating caddy_sha256; '
+                'run `ansible-playbook playbooks/services/caddy.yaml --tags caddy --check -l caddy1 -e caddy_sha256=pending`'
+            )
+    print('caddy build pins verified')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--update', action='store_true', help='refresh checksums from upstream')
+    parser.add_argument('--caddy-base-ref', help='base git ref to verify caddy_sha256 updates against')
+    parser.add_argument('--caddy-only', action='store_true', help='only verify Caddy build pins')
     args = parser.parse_args()
+    if args.caddy_only:
+        check_caddy(args.caddy_base_ref)
+        return
+    if not args.update:
+        check_caddy(args.caddy_base_ref)
     for target in TARGETS:
         if not args.update:
             check(target)
