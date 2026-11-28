@@ -107,7 +107,7 @@
           {{ forgejo_audit_marker_version
              if forgejo_audit_marker_version != ''
              else (forgejo_audit_output
-                   | regex_search('v?[0-9]+\\.[0-9]+\\.[0-9]+')
+                   | regex_search('v?[0-9]+\.[0-9]+\.[0-9]+')
                    | default('unknown', true)
                    | regex_replace('^v', '')) }}
         forgejo_audit_marker_version: >-
@@ -151,7 +151,7 @@
           {{ forgejo_runner_audit_marker_version
              if forgejo_runner_audit_marker_version != ''
              else (forgejo_runner_audit_output
-                   | regex_search('v?[0-9]+\\.[0-9]+\\.[0-9]+')
+                   | regex_search('v?[0-9]+\.[0-9]+\.[0-9]+')
                    | default('unknown', true)
                    | regex_replace('^v', '')) }}
         forgejo_runner_audit_marker_version: >-
@@ -231,7 +231,7 @@
           {{ dnscollector_audit_marker_version
              if dnscollector_audit_marker_version != ''
              else (dnscollector_audit_output
-                   | regex_search('v?[0-9]+\\.[0-9]+\\.[0-9]+')
+                   | regex_search('v?[0-9]+\.[0-9]+\.[0-9]+')
                    | default('unknown', true)
                    | regex_replace('^v', '')) }}
         dnscollector_audit_marker_version: >-
@@ -275,7 +275,7 @@
           {{ seaweedfs_audit_marker_version
              if seaweedfs_audit_marker_version != ''
              else (seaweedfs_audit_output
-                   | regex_search('v?[0-9]+\\.[0-9]+(?:\\.[0-9]+)?')
+                   | regex_search('v?[0-9]+\.[0-9]+(?:\.[0-9]+)?')
                    | default('unknown', true)
                    | regex_replace('^v', '')) }}
         seaweedfs_audit_marker_version: >-
@@ -503,7 +503,7 @@
           {{ code_server_audit_marker_version
              if code_server_audit_marker_version != ''
              else (code_server_audit_version.stdout
-                   | regex_search('[0-9]+\\.[0-9]+\\.[0-9]+')
+                   | regex_search('[0-9]+\.[0-9]+\.[0-9]+')
                    | default('unknown', true)) }}
         code_server_audit_marker_version: >-
           {{ (code_server_audit_marker.content | default('') | b64decode | trim) }}
@@ -624,7 +624,7 @@
       vars:
         caddy_audit_installed: >-
           {{ (caddy_audit_version.stdout
-              | regex_search('v?[0-9]+\\.[0-9]+\\.[0-9]+')
+              | regex_search('v?[0-9]+\.[0-9]+\.[0-9]+')
               | default('unknown', true)
               | regex_replace('^v', '')) }}
 
