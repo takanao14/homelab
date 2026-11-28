@@ -107,4 +107,11 @@ jobs:
 
       - name: Verify pinned release checksums
         if: steps.refresh.outputs.pending != 'true'
-        run: python scripts/release-checksums.py
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
+        run: |
+          if [ -n "$BASE_SHA" ]; then
+            python scripts/release-checksums.py --caddy-base-ref "$BASE_SHA"
+          else
+            python scripts/release-checksums.py
+          fi

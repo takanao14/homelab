@@ -31,9 +31,47 @@
     checksum_algorithm: sha256
   register: caddy_installed_binary
 
+- name: Read installed Caddy build info
+  become: true
+  ansible.builtin.command:
+    argv: ["{{ caddy_binary }}", build-info]
+  register: caddy_installed_build_info
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: caddy_installed_binary.stat.exists
+
+# Check both the pinned hash and embedded build metadata so stale caddy_sha256
+# values cannot silently skip a pin upgrade.
+- name: Determine whether Caddy needs rebuild or reinstall
+  ansible.builtin.set_fact:
+    caddy_install_required: >-
+      {{
+        (caddy_installed_binary.stat.checksum | default('') != caddy_sha256)
+        or (caddy_installed_build_info.rc | default(1) != 0)
+        or (not caddy_installed_go_matches)
+        or (not caddy_installed_caddy_matches)
+        or (not caddy_installed_cloudflare_matches)
+      }}
+  vars:
+    caddy_installed_build_lines: "{{ caddy_installed_build_info.stdout_lines | default([]) }}"
+    caddy_installed_go_matches: >-
+      {{ caddy_installed_build_lines
+         | map('split')
+         | select('equalto', ['go', 'go' ~ caddy_go_version])
+         | list | length > 0 }}
+    caddy_installed_caddy_matches: >-
+      {{ caddy_installed_build_lines
+         | select('match', '^dep\s+github\.com/caddyserver/caddy/v2\s+v' ~ (caddy_version | regex_escape) ~ '(?:\s|$)')
+         | list | length > 0 }}
+    caddy_installed_cloudflare_matches: >-
+      {{ caddy_installed_build_lines
+         | select('match', '^dep\s+github\.com/caddy-dns/cloudflare\s+v' ~ (caddy_cloudflare_version | regex_escape) ~ '(?:\s|$)')
+         | list | length > 0 }}
+
 - name: Build and install pinned Caddy binary
   ansible.builtin.import_tasks: install.yaml
-  when: caddy_installed_binary.stat.checksum | default('') != caddy_sha256
+  when: caddy_install_required | bool
 
 - name: Set CAP_NET_BIND_SERVICE on Caddy binary
   become: true

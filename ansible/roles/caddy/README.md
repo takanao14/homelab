@@ -10,7 +10,7 @@ other ingress paths, see [`docs/service-routing.md`](../../../docs/service-routi
 ## Functionality
 
 - Creates a dedicated system user/group (`caddy`).
-- Builds Caddy with the Cloudflare DNS plugin on the controller with xcaddy ([ADR-0068](../../../docs/adr/0068-build-caddy-on-the-ansible-controller.md)) and installs it only when the host binary differs from `caddy_sha256`. The controller needs `go`; it downloads the pinned toolchain itself.
+- Builds Caddy with the Cloudflare DNS plugin on the controller with xcaddy ([ADR-0068](../../../docs/adr/0068-build-caddy-on-the-ansible-controller.md)) and installs it only when the host binary differs from `caddy_sha256` or its embedded build info differs from the pinned versions. The controller needs `go`; it downloads the pinned toolchain itself.
 - Sets `CAP_NET_BIND_SERVICE` to allow binding to ports 80/443 without root.
 - Deploys `/etc/caddy/Caddyfile` from a Jinja2 template.
 - Deploys `/etc/caddy/caddy.env` with the Cloudflare API token, and removes it again when ACME is disabled.
