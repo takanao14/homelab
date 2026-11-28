@@ -45,7 +45,7 @@ jobs:
       - name: Install ansible-lint
         env:
           # renovate: datasource=pypi depName=ansible-lint
-          ANSIBLE_LINT_VERSION: "26.11.0"
+          ANSIBLE_LINT_VERSION: "26.11.1"
         run: uv pip install --system "ansible-lint==${ANSIBLE_LINT_VERSION}"
 
       # requirements.yaml pins exact versions, so its hash fully identifies the
