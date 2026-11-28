@@ -112,6 +112,12 @@
       "allowedVersions": "<3.15"
     },
     {
+      "description": "The NetBox PostgreSQL image refuses to start on a data directory from an older major, so a major bump needs a planned dump/restore or pg_upgrade before merge.",
+      "matchFileNames": ["ansible/roles/netbox/**"],
+      "matchDepNames": ["docker.io/postgres"],
+      "allowedVersions": "<19"
+    },
+    {
       "description": "powerdns-webui is vendored into the pdns-ui chart. Renovate only bumps the ref in REVISION; the vendored bytes must be refreshed by sync.sh, and vendor-sync CI fails until they are.",
       "matchPackageNames": ["james-stevens/powerdns-webui"],
       "automerge": false,
